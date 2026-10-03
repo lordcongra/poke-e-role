@@ -31,6 +31,7 @@ import {
     executeGmClaimOverride,
     type GmClaimConflict
 } from '../../../utils/pc/pcClaimOverrideOps';
+import { initiatePointPlacement, getPlacementModePreference } from '../../../utils/pc/pcPlacementInteraction';
 
 interface UsePcModalHandlersParams {
     pcData: PcStorageData;
@@ -176,7 +177,13 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         const summary = pcData.pokemonSummaries[entityId];
         if (!summary) return;
 
-        const result = await spawnPokemonToMap(summary, undefined, role || 'PLAYER', trainer);
+        const useManual = OBR.isAvailable && getPlacementModePreference() === 'manual';
+        const result = useManual
+            ? await initiatePointPlacement(summary, trainer, role || 'PLAYER')
+            : await spawnPokemonToMap(summary, undefined, role || 'PLAYER', trainer);
+
+        if (result.cancelled) return;
+
         if (result.alreadyOnMap) {
             if (OBR.isAvailable) {
                 OBR.notification.show(`${summary.name || summary.species} is already on the board!`, 'WARNING');

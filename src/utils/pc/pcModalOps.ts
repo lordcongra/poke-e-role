@@ -47,8 +47,9 @@ export async function spawnPokemonToMap(
     summary: PcPokemonSummary,
     ownerId?: string,
     role: 'PLAYER' | 'GM' = 'PLAYER',
-    trainer?: TrainerRoster
-): Promise<{ success: boolean; newMapTokenId?: string; alreadyOnMap?: boolean }> {
+    trainer?: TrainerRoster,
+    targetPosition?: { x: number; y: number }
+): Promise<{ success: boolean; newMapTokenId?: string; alreadyOnMap?: boolean; cancelled?: boolean }> {
     if (!OBR.isAvailable) {
         return { success: true };
     }
@@ -75,36 +76,41 @@ export async function spawnPokemonToMap(
             }
         }
 
-        // 3. Drop adjacent to trainer (or currently selected token) if present on scene
-        let anchorPos: { x: number; y: number } = { x: 0, y: 0 };
-        try {
-            const activeTokenId = useCharacterStore.getState().tokenId;
-            const selectedTokenIds = await OBR.player.getSelection().catch(() => []);
-            const anchorToken = resolveSpawnAnchorToken(trainer, sceneItems, activeTokenId, selectedTokenIds);
+        // 3. Drop at targetPosition if provided, or adjacent to trainer / anchor token
+        let landingPos: { x: number; y: number };
+        if (targetPosition) {
+            landingPos = targetPosition;
+        } else {
+            let anchorPos: { x: number; y: number } = { x: 0, y: 0 };
+            try {
+                const activeTokenId = useCharacterStore.getState().tokenId;
+                const selectedTokenIds = await OBR.player.getSelection().catch(() => []);
+                const anchorToken = resolveSpawnAnchorToken(trainer, sceneItems, activeTokenId, selectedTokenIds);
 
-            if (anchorToken) {
-                anchorPos = getAbsoluteItemPosition(anchorToken, sceneItems);
-                setBatchAnchorPos(anchorPos);
-            } else {
-                const sessionAnchor = getBatchAnchorPos();
-                if (sessionAnchor) {
-                    anchorPos = sessionAnchor;
-                } else {
-                    const vpWidth = (await OBR.viewport.getWidth()) || 800;
-                    const vpHeight = (await OBR.viewport.getHeight()) || 600;
-                    anchorPos = await OBR.viewport.inverseTransformPoint({
-                        x: vpWidth / 2,
-                        y: vpHeight / 2
-                    });
+                if (anchorToken) {
+                    anchorPos = getAbsoluteItemPosition(anchorToken, sceneItems);
                     setBatchAnchorPos(anchorPos);
+                } else {
+                    const sessionAnchor = getBatchAnchorPos();
+                    if (sessionAnchor) {
+                        anchorPos = sessionAnchor;
+                    } else {
+                        const vpWidth = (await OBR.viewport.getWidth()) || 800;
+                        const vpHeight = (await OBR.viewport.getHeight()) || 600;
+                        anchorPos = await OBR.viewport.inverseTransformPoint({
+                            x: vpWidth / 2,
+                            y: vpHeight / 2
+                        });
+                        setBatchAnchorPos(anchorPos);
+                    }
                 }
+            } catch {
+                anchorPos = { x: 0, y: 0 };
             }
-        } catch {
-            anchorPos = { x: 0, y: 0 };
-        }
 
-        // Concentric 2D grid search guarantees tokens never stack on top of each other
-        const landingPos = findOpenGridPosition(anchorPos, gridDpi, sceneItems);
+            // Concentric 2D grid search guarantees tokens never stack on top of each other
+            landingPos = findOpenGridPosition(anchorPos, gridDpi, sceneItems);
+        }
 
         // 4. Resolve safe, valid map artwork (handles local-img, scene match, and pokeball fallback)
         const resolvedImg = await resolveTokenImageForMap(summary, sceneItems);

@@ -254,6 +254,13 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
 
                         for (const activeSum of rehydratableSummaries) {
                             if (!hasPendingUpdates() && activeSum.fullMetadata) {
+                                if (typeof window !== 'undefined') {
+                                    window.dispatchEvent(
+                                        new CustomEvent('pkr-remote-summary-applied', {
+                                            detail: { entityId: activeSum.entityId, summary: activeSum }
+                                        })
+                                    );
+                                }
                                 useCharacterStore.getState().loadFromOwlbear(activeSum.fullMetadata);
                             }
                         }

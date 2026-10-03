@@ -85,9 +85,14 @@ export function IdentityHeader() {
     const isTransformed = identityStore.activeTransformation !== 'None';
 
     const handleDeselect = async () => {
+        (document.activeElement as HTMLElement)?.blur();
         if (OBR.isAvailable) {
             try {
                 await OBR.player.select([]);
+                const activeTool = await OBR.tool.getActiveTool().catch(() => null);
+                if (activeTool) {
+                    await OBR.tool.activateTool(activeTool).catch(() => {});
+                }
             } catch (e) {
                 console.warn('[IdentityHeader] Failed to deselect OBR token:', e);
             }
@@ -133,6 +138,8 @@ export function IdentityHeader() {
                 <button
                     type="button"
                     className="action-button action-button--dark identity-header__btn"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onContextMenu={(e) => e.preventDefault()}
                     onClick={handleDeselect}
                     title={
                         isStandaloneMode

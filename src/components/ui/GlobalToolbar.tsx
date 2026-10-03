@@ -200,9 +200,14 @@ export function GlobalToolbar() {
     };
 
     const handleReturnToMenu = async () => {
+        (document.activeElement as HTMLElement)?.blur();
         if (OBR.isAvailable) {
             try {
                 await OBR.player.select([]);
+                const activeTool = await OBR.tool.getActiveTool().catch(() => null);
+                if (activeTool) {
+                    await OBR.tool.activateTool(activeTool).catch(() => {});
+                }
             } catch (e) {
                 console.warn('[GlobalToolbar] Failed to deselect OBR player selection:', e);
             }
@@ -423,6 +428,8 @@ export function GlobalToolbar() {
                         <button
                             type="button"
                             className="global-toolbar__btn--back-header action-button"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onContextMenu={(e) => e.preventDefault()}
                             onClick={handleReturnToMenu}
                             title={
                                 isStandaloneMode

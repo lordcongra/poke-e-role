@@ -144,8 +144,19 @@ export function usePcSheetSync({
         onUpdateSummaryRef.current(updatedSummary);
 
         if (OBR.isAvailable) {
+            const targetCampId =
+                curr.campaignId || currentStore.identity.activeRoomCampaignId || currentStore.pcData.activeCampaignId;
+            const targetCamp = targetCampId ? currentStore.pcData.campaigns[targetCampId] : undefined;
+            const targetTrainer =
+                (curr.trainerId ? targetCamp?.trainers?.[curr.trainerId] : undefined) ||
+                (targetCamp?.activeTrainerId ? targetCamp.trainers?.[targetCamp.activeTrainerId] : undefined);
+
             if (currentStore.role === 'GM') {
-                broadcastGmPc({ summaries: [updatedSummary] }).catch(() => {});
+                broadcastGmPc({
+                    campaignId: targetCampId,
+                    trainer: targetTrainer,
+                    summaries: [updatedSummary]
+                }).catch(() => {});
             } else {
                 broadcastPlayerPc().catch(() => {});
             }
@@ -333,8 +344,26 @@ export function usePcSheetSync({
         });
         activeUnsubRef.current = unsub;
 
+        const handleRemoteApplied = (e: Event) => {
+            const customEvt = e as CustomEvent<{ entityId: string; summary: PcPokemonSummary }>;
+            if (customEvt.detail?.entityId === activeEntity.entityId) {
+                isHydratingRef.current = true;
+                currentSummaryRef.current = customEvt.detail.summary;
+                setTimeout(() => {
+                    if (!isCancelled) isHydratingRef.current = false;
+                }, 300);
+            }
+        };
+
+        if (typeof window !== 'undefined') {
+            window.addEventListener('pkr-remote-summary-applied', handleRemoteApplied);
+        }
+
         return () => {
             isCancelled = true;
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('pkr-remote-summary-applied', handleRemoteApplied);
+            }
             if (activeUnsubRef.current) {
                 activeUnsubRef.current();
                 activeUnsubRef.current = null;

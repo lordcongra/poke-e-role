@@ -122,6 +122,8 @@ export async function broadcastGmPc(params?: {
         let activeTrainer: TrainerRoster | undefined = undefined;
         if (params?.trainer) {
             activeTrainer = campaign.trainers?.[params.trainer.id] || params.trainer;
+        } else if (params?.summaries?.[0]?.trainerId && campaign.trainers?.[params.summaries[0].trainerId]) {
+            activeTrainer = campaign.trainers[params.summaries[0].trainerId];
         } else if (campaign.activeTrainerId && campaign.activeTrainerId !== '__none__') {
             activeTrainer = campaign.trainers?.[campaign.activeTrainerId];
         }

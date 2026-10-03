@@ -5,15 +5,13 @@ import { hasUnbackedData, storageAdapter, BACKUP_STATUS_EVENT } from '../../../u
 import { PcPromptModal } from './PcPromptModal';
 import { PcDeleteConfirmModal } from './PcDeleteConfirmModal';
 import { CampaignEditModal } from './CampaignEditModal';
+import { PcBoxNavigator } from './PcBoxNavigator';
 import { isCampaignRoomActive } from '../../../utils/pc/pcCampaignTrainerOps';
 import './PcStorageHeader.css';
 import {
-    ChevronLeft,
-    ChevronRight,
     Plus,
     Trash2,
     Edit2,
-    Palette,
     CloudUpload,
     CloudDownload,
     Download,
@@ -22,7 +20,6 @@ import {
     Lock,
     Globe,
     X,
-    Check,
     HelpCircle,
     RefreshCw
 } from 'lucide-react';
@@ -105,8 +102,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
             window.removeEventListener('pkr-local-data-changed', checkBackupStatus);
         };
     }, []);
-    const [isRenaming, setIsRenaming] = useState(false);
-    const [renameValue, setRenameValue] = useState('');
+
     const [deleteTarget, setDeleteTarget] = useState<{
         type: 'trainer' | 'campaign';
         id: string;
@@ -124,8 +120,6 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
     const isActiveRoom = isCampaignRoomActive(activeCampaign, activeRoomCampaignId, activeRoomCampaignName);
 
     const currentBox = boxes[activeBoxIndex] || boxes[0];
-    const canGoPrev = activeBoxIndex > 0;
-    const canGoNext = activeBoxIndex < boxes.length - 1;
 
     const activeTrainerPartyCount = (activeTrainer?.party || []).filter(Boolean).length;
     const activeTrainerBoxes = activeTrainer?.boxes && activeTrainer.boxes.length > 0 ? activeTrainer.boxes : boxes;
@@ -135,18 +129,6 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
             if (s) activeTrainerStoredCount++;
         }
     }
-
-    const handleStartRename = () => {
-        setRenameValue(currentBox.name);
-        setIsRenaming(true);
-    };
-
-    const handleConfirmRename = () => {
-        if (renameValue.trim()) {
-            onRenameBox(activeBoxIndex, renameValue.trim());
-        }
-        setIsRenaming(false);
-    };
 
     return (
         <header className="pc-header">
@@ -329,105 +311,15 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
             </div>
 
             {/* Bottom Row: Box Navigator & Theme/Settings */}
-            <div className="pc-header__box-nav-row">
-                <div className="pc-header__box-nav">
-                    <button
-                        type="button"
-                        className="pc-header__nav-arrow"
-                        onClick={() => canGoPrev && onSelectBox(activeBoxIndex - 1)}
-                        disabled={!canGoPrev}
-                        aria-label="Previous Box"
-                    >
-                        <ChevronLeft size={18} />
-                    </button>
-
-                    {isRenaming ? (
-                        <div className="pc-header__rename-wrap">
-                            <input
-                                type="text"
-                                className="pc-header__rename-input"
-                                value={renameValue}
-                                onChange={(e) => setRenameValue(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleConfirmRename();
-                                    if (e.key === 'Escape') setIsRenaming(false);
-                                }}
-                                autoFocus
-                            />
-                            <button
-                                type="button"
-                                className="pc-header__rename-ok"
-                                onClick={handleConfirmRename}
-                                aria-label="Confirm Box Rename"
-                            >
-                                <Check size={14} />
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="pc-header__box-title-wrap">
-                            <select
-                                className="pc-header__box-select text-title-primary"
-                                value={activeBoxIndex}
-                                onChange={(e) => onSelectBox(Number(e.target.value))}
-                            >
-                                {boxes.map((b, idx) => (
-                                    <option key={b.id} value={idx}>
-                                        {b.name}
-                                    </option>
-                                ))}
-                            </select>
-                            <button
-                                type="button"
-                                className="pc-header__icon-btn"
-                                onClick={handleStartRename}
-                                title="Rename this Box"
-                            >
-                                <Edit2 size={13} />
-                            </button>
-                        </div>
-                    )}
-
-                    <button
-                        type="button"
-                        className="pc-header__nav-arrow"
-                        onClick={() => canGoNext && onSelectBox(activeBoxIndex + 1)}
-                        disabled={!canGoNext}
-                        aria-label="Next Box"
-                    >
-                        <ChevronRight size={18} />
-                    </button>
-                </div>
-
-                <div className="pc-header__box-extra-actions">
-                    {/* Direct Native Color Picker (Matching App Themes) */}
-                    <label
-                        className="pc-header__theme-picker-label"
-                        title="Pick Box Color Theme"
-                        style={{
-                            borderColor: currentBox.themeColor ? `${currentBox.themeColor}88` : undefined,
-                            background: currentBox.themeColor ? `${currentBox.themeColor}1a` : undefined
-                        }}
-                    >
-                        <Palette size={14} style={{ color: currentBox.themeColor || 'var(--primary)' }} />
-                        <span className="text-subtext">Theme</span>
-                        <input
-                            type="color"
-                            className="pc-header__color-picker-input"
-                            value={currentBox.themeColor || '#3b82f6'}
-                            onChange={(e) => onSetBoxTheme(activeBoxIndex, e.target.value)}
-                        />
-                    </label>
-
-                    <button
-                        type="button"
-                        className="action-button action-button--dark pc-header__new-box-btn"
-                        onClick={onAddBox}
-                        title="Add a new empty Box"
-                    >
-                        <Plus size={13} /> New Box
-                    </button>
-                </div>
-            </div>
+            <PcBoxNavigator
+                boxes={boxes}
+                activeBoxIndex={activeBoxIndex}
+                currentBox={currentBox}
+                onSelectBox={onSelectBox}
+                onAddBox={onAddBox}
+                onRenameBox={onRenameBox}
+                onSetBoxTheme={onSetBoxTheme}
+            />
 
             {/* In-App Themed Prompt Modal for New Trainer / Campaign */}
             {promptConfig && (

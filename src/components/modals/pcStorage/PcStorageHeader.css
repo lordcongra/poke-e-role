@@ -333,6 +333,16 @@
     background: transparent;
 }
 
+.pc-header__placement-btn {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
 .pc-header__new-box-btn {
     font-size: 0.8rem;
     padding: 4px 10px;

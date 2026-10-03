@@ -179,6 +179,79 @@ export async function importPcBackupJson(file: File, currentData: PcStorageData)
         const rawCampaigns = (parsed.campaigns as Record<string, CampaignProfile>) || {};
         const rawSummaries = (parsed.pokemonSummaries as Record<string, PcPokemonSummary>) || {};
 
+        const isSingleCharacter = Boolean(
+            parsed['species'] ||
+            parsed['moves-data'] ||
+            parsed['hp-curr'] ||
+            (parsed['identity'] && typeof parsed['identity'] === 'object')
+        );
+
+        if (isSingleCharacter) {
+            const rawMeta = parsed;
+            const entityId = (rawMeta.entityId as string) || (rawMeta['entityId'] as string) || crypto.randomUUID();
+            const rawSpecies = (rawMeta.species as string) || (rawMeta['species'] as string) || 'Pokémon';
+            const rawName =
+                (rawMeta.nickname as string) ||
+                (rawMeta['nickname'] as string) ||
+                (rawMeta.name as string) ||
+                rawSpecies;
+            const rawHp = Number(rawMeta['hp-curr'] ?? rawMeta['hp'] ?? 4);
+            const rawMaxHp = Number(rawMeta['hp-max-display'] ?? rawMeta['hp-base'] ?? 4);
+            const rawWill = Number(rawMeta['will-curr'] ?? rawMeta['will'] ?? 2);
+            const rawMaxWill = Number(rawMeta['will-max-display'] ?? rawMeta['will-base'] ?? 2);
+            const rawType1 = (rawMeta.type1 as string) || (rawMeta['type1'] as string) || 'Normal';
+            const rawType2 = (rawMeta.type2 as string) || (rawMeta['type2'] as string) || undefined;
+            const rawRank = (rawMeta.rank as string) || (rawMeta['identity-rank'] as string) || 'Starter';
+            const rawImg = (rawMeta['token-image-url'] as string) || (rawMeta['tokenImageUrl'] as string) || undefined;
+
+            const summary: PcPokemonSummary = {
+                entityId,
+                name: rawName,
+                species: rawSpecies,
+                rank: rawRank,
+                type1: rawType1,
+                type2: rawType2 && rawType2.toLowerCase() !== 'none' ? rawType2 : undefined,
+                hp: rawHp,
+                maxHp: rawMaxHp,
+                will: rawWill,
+                maxWill: rawMaxWill,
+                tokenImageUrl: rawImg,
+                fullMetadata: rawMeta,
+                lastModified: Date.now()
+            };
+
+            const mergedCampaigns = JSON.parse(JSON.stringify(currentData.campaigns || {})) as Record<
+                string,
+                CampaignProfile
+            >;
+            const mergedSummaries = JSON.parse(JSON.stringify(currentData.pokemonSummaries || {})) as Record<
+                string,
+                PcPokemonSummary
+            >;
+
+            mergedSummaries[entityId] = summary;
+
+            const activeCamp = mergedCampaigns[currentData.activeCampaignId] || Object.values(mergedCampaigns)[0];
+            if (activeCamp) {
+                const targetBoxes = activeCamp.boxes && activeCamp.boxes.length > 0 ? activeCamp.boxes : [];
+                depositEntityIntoBoxes(targetBoxes, entityId, 'Imported');
+                activeCamp.boxes = targetBoxes;
+            }
+
+            const candidateData: PcStorageData = {
+                ...currentData,
+                campaigns: mergedCampaigns,
+                pokemonSummaries: mergedSummaries
+            };
+
+            return {
+                success: true,
+                nextData: sanitizePcData(candidateData),
+                importedPokemonCount: 1,
+                importedCampaignCount: 0
+            };
+        }
+
         if (Object.keys(rawCampaigns).length === 0 && Object.keys(rawSummaries).length === 0) {
             return {
                 success: false,
