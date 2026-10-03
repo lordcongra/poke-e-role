@@ -372,8 +372,8 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 'dex-description': newIdentity.dexDescription
             };
 
-            // Always run the sync engine to ensure Max HP and Max Will match the latest stat limits
-            syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave);
+            // Always run the sync engine to ensure Max HP and Max Will match the latest stat limits (preventing current gain)
+            syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave, true);
 
             if (shouldSave) {
                 try {

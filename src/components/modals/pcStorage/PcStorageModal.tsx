@@ -15,7 +15,7 @@ import {
 } from '../../../utils/pc/pcModalOps';
 import { buildTrainerSummary } from '../../../utils/pc/pcTrainerOps';
 import { savePcStorage, sanitizePcData } from '../../../utils/pc/pcStorageAdapter';
-import { broadcastPlayerPc, requestPlayerPcSync } from '../../../hooks/owlbearSync/setupOwlbearPcSync';
+import { broadcastPlayerPc, broadcastGmPc, requestPlayerPcSync } from '../../../hooks/owlbearSync/setupOwlbearPcSync';
 import {
     refreshSummariesFromLocalStorage,
     buildSheetAvailableSummaries,
@@ -36,8 +36,6 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     const pcData = useCharacterStore((s) => s.pcData);
     const activeBoxIndex = useCharacterStore((s) => s.activeBoxIndex);
     const selectedPcSlot = useCharacterStore((s) => s.selectedPcSlot);
-    const pendingReview = useCharacterStore((s) => s.pendingReview);
-    const isReviewModalOpen = useCharacterStore((s) => s.isReviewModalOpen);
     const role = useCharacterStore((s) => s.role);
     const identity = useCharacterStore((s) => s.identity);
     const health = useCharacterStore((s) => s.health);
@@ -64,13 +62,10 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         deleteCampaign,
         updatePokemonSummary,
         updateTrainerProfile,
-        deletePokemonFromPc,
-        closeReviewModal,
-        applyReviewDiffs
+        deletePokemonFromPc
     } = useCharacterStore.getState();
 
     const [dragSource, setDragSource] = useState<PcDragItem | null>(null);
-
     const [contextMenu, setContextMenu] = useState<{
         x: number;
         y: number;
@@ -78,7 +73,6 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         index: number;
         entityId: string;
     } | null>(null);
-
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
@@ -112,25 +106,23 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         };
     }, []);
 
-    useEffect(() => {
-        if (pendingReview && !isReviewModalOpen) {
-            useCharacterStore.setState({ isReviewModalOpen: true });
-        }
-    }, [pendingReview, isReviewModalOpen]);
-
-    const handleModalClose = () => {
-        if (OBR.isAvailable && role !== 'GM') {
-            broadcastPlayerPc();
-        }
-        onClose();
-    };
-
     // Active Campaign & Trainer resolution
     const campaign = pcData.campaigns[pcData.activeCampaignId] || Object.values(pcData.campaigns)[0];
     const isPmdMode = campaign?.activeTrainerId === '__none__';
     const trainer = isPmdMode
         ? undefined
         : resolveEffectiveActiveTrainer(campaign, myPlayerId) || Object.values(campaign?.trainers || {})[0];
+
+    const handleModalClose = () => {
+        if (OBR.isAvailable) {
+            if (role !== 'GM') {
+                broadcastPlayerPc();
+            } else if (trainer) {
+                broadcastGmPc({ trainer });
+            }
+        }
+        onClose();
+    };
     const partySlots = trainer ? trainer.party : campaign?.teamParty || Array(6).fill(null);
     const trainerBoxes = trainer?.boxes && trainer.boxes.length > 0 ? trainer.boxes : campaign?.boxes || [];
     const currentBox = trainerBoxes[activeBoxIndex] || trainerBoxes[0];
@@ -498,10 +490,6 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                 currentActiveSummary={currentActiveSummary}
                 trainerPokemonSummaries={trainerPokemonSummaries}
                 handleCompleteDeposit={handleCompleteDeposit}
-                isReviewModalOpen={isReviewModalOpen}
-                pendingReview={pendingReview}
-                applyReviewDiffs={applyReviewDiffs}
-                closeReviewModal={closeReviewModal}
                 activeSheetSummary={activeSheetSummary}
                 sheetAvailableSummaries={sheetAvailableSummaries}
                 setSheetViewEntityId={setSheetViewEntityId}

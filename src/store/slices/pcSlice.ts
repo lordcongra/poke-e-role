@@ -1,12 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState } from '../storeTypes';
-import type {
-    PcSlice,
-    PcStorageData,
-    PcPokemonSummary,
-    SheetReviewPayload,
-    SheetFieldDiff
-} from '../../types/pcStorageTypes';
+import type { PcSlice, PcStorageData, PcPokemonSummary } from '../../types/pcStorageTypes';
 import {
     createInitialPcStorageData,
     createDefaultCampaign,
@@ -28,7 +22,6 @@ import {
     applyUpdateSummary,
     applyDeleteSummary
 } from '../../utils/pc/pcStateMutations';
-import { applyReviewDiffsToSummary } from '../../utils/pc/pcDiffUtils';
 import { EXTENSION_ID } from '../../hooks/owlbearSync/owlbearSyncConstants';
 import {
     applyDeleteCampaign,
@@ -50,8 +43,6 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
     activeBoxIndex: 0,
     selectedPcSlot: null,
     isPcModalOpen: false,
-    pendingReview: null,
-    isReviewModalOpen: false,
 
     initPcStorage: async () => {
         try {
@@ -511,34 +502,6 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             }
         } catch (e) {
             console.error('[PcSlice] Failed to delete pokemon from PC:', e);
-        }
-    },
-
-    setPendingReview: (payload: SheetReviewPayload | null) => {
-        set({ pendingReview: payload });
-    },
-
-    openReviewModal: (payload: SheetReviewPayload) => {
-        set({ pendingReview: payload, isReviewModalOpen: true });
-    },
-
-    closeReviewModal: () => {
-        set({ pendingReview: null, isReviewModalOpen: false });
-    },
-
-    applyReviewDiffs: (entityId: string, diffs: SheetFieldDiff[]) => {
-        try {
-            const { pcData, pendingReview } = get();
-            const summary = pcData.pokemonSummaries[entityId];
-            if (!summary) return;
-
-            const updatedSummary = applyReviewDiffsToSummary(summary, diffs, pendingReview?.incomingSummary);
-            const nextData = applyUpdateSummary(pcData, updatedSummary);
-
-            set({ pcData: nextData, pendingReview: null, isReviewModalOpen: false });
-            savePcStorage(nextData);
-        } catch (e) {
-            console.error('[PcSlice] Failed to apply review diffs:', e);
         }
     }
 });

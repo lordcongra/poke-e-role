@@ -46,6 +46,16 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                                 unknown
                             >) || {};
 
+                        const tokenLastMod = Number(tMeta.lastModified) || 0;
+                        const sumLastMod = Number(sum.lastModified) || 0;
+
+                        // Anti-Reversion Guard: If local PC storage is strictly newer than the scene token
+                        // (e.g. modified in PC, leveled up, or returning to an older scene map with an old snapshot),
+                        // NEVER let the older scene token overwrite the newer PC summary!
+                        if (tokenLastMod > 0 && sumLastMod > tokenLastMod) {
+                            continue;
+                        }
+
                         const curHp =
                             typeof tMeta['hp-curr'] === 'number'
                                 ? tMeta['hp-curr']
@@ -75,10 +85,7 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                         const hasLiveMoves = Boolean(tMeta['moves-data'] && tMeta['moves-data'] !== '[]');
                         const missingLocalMoves =
                             !sum.fullMetadata?.['moves-data'] || sum.fullMetadata['moves-data'] === '[]';
-                        const mergedMeta =
-                            hasLiveMoves && missingLocalMoves
-                                ? { ...(sum.fullMetadata || {}), ...tMeta }
-                                : { ...tMeta, ...(sum.fullMetadata || {}) };
+                        const mergedMeta = { ...(sum.fullMetadata || {}), ...tMeta };
 
                         if (
                             sum.hp !== curHp ||

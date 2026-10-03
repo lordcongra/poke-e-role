@@ -283,7 +283,16 @@ export async function setupOwlbearTokenSync(params: {
                         const lastKnown = lastTransform?.metaStr;
 
                         if (lastKnown !== metaStr && !hasPendingUpdates()) {
-                            storeState.loadFromOwlbear(meta);
+                            const eId = extractEntityId(item);
+                            const existingSum = eId ? storeState.pcData.pokemonSummaries[eId] : undefined;
+                            const tMod = Number(meta.lastModified) || 0;
+                            const pMod = Number(existingSum?.lastModified) || 0;
+
+                            if (existingSum && existingSum.fullMetadata && pMod > tMod) {
+                                storeState.loadFromOwlbear(existingSum.fullMetadata);
+                            } else {
+                                storeState.loadFromOwlbear(meta);
+                            }
                         }
 
                         const imgItem = item as Image;
@@ -297,6 +306,13 @@ export async function setupOwlbearTokenSync(params: {
                     if (entityId) {
                         const pcSummary = storeState.pcData.pokemonSummaries[entityId];
                         if (pcSummary && pcSummary.isOnMap) {
+                            const tokenLastMod = Number(meta.lastModified) || 0;
+                            const pcLastMod = Number(pcSummary.lastModified) || 0;
+
+                            // Anti-Reversion Guard: if local PC storage is strictly newer, do not overwrite from older token
+                            if (tokenLastMod > 0 && pcLastMod > tokenLastMod) {
+                                continue;
+                            }
                             const curHp =
                                 typeof meta['hp-curr'] === 'number'
                                     ? meta['hp-curr']
@@ -340,10 +356,7 @@ export async function setupOwlbearTokenSync(params: {
                             const missingLocalMoves =
                                 !pcSummary.fullMetadata?.['moves-data'] ||
                                 pcSummary.fullMetadata['moves-data'] === '[]';
-                            const nextMeta =
-                                hasLiveMoves && missingLocalMoves
-                                    ? { ...(pcSummary.fullMetadata || {}), ...meta }
-                                    : { ...meta, ...(pcSummary.fullMetadata || {}) };
+                            const nextMeta = { ...(pcSummary.fullMetadata || {}), ...meta };
 
                             if (
                                 curHp !== pcSummary.hp ||

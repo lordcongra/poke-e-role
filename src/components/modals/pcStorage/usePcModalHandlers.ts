@@ -26,7 +26,7 @@ import {
 import { isEntityLockedByGm } from '../../../utils/pc/pcCandidateMatching';
 import { executeCloudExport, executeCloudRestore } from '../../../utils/pc/pcCloudModalOps';
 import { relinkPokemonArtworkOps } from '../../../utils/pc/pcTokenImageOps';
-import { broadcastPlayerPc } from '../../../hooks/owlbearSync/setupOwlbearPcSync';
+import { broadcastPlayerPc, broadcastGmPc } from '../../../hooks/owlbearSync/setupOwlbearPcSync';
 
 interface UsePcModalHandlersParams {
     pcData: PcStorageData;
@@ -456,6 +456,8 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
                 }
                 if (role !== 'GM') {
                     broadcastPlayerPc();
+                } else if (trainer) {
+                    broadcastGmPc({ trainer, summaries: [finalSummary] });
                 }
                 OBR.notification.show(`Deposited ${finalSummary.name || finalSummary.species} to storage!`, 'INFO');
             }

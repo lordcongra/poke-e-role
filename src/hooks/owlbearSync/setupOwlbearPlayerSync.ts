@@ -5,7 +5,7 @@ import { fetchPokemonData, fetchMoveData } from '../../utils/api/api';
 import { saveToOwlbear, setActiveTokenId, getIsPcSheetActive } from '../../utils/sync/obr';
 import { harvestTokensItemArt } from '../../utils/graphics/itemArtCatalog';
 import { METADATA_ID } from './owlbearSyncConstants';
-import { renderTokenGraphicsForMeta } from './setupOwlbearTokenSync';
+import { renderTokenGraphicsForMeta, extractEntityId } from './setupOwlbearTokenSync';
 
 export interface OwlbearPlayerSyncResult {
     loadTokenAndLearnset: (targetTokenId: string, overrideRole?: 'PLAYER' | 'GM') => Promise<void>;
@@ -53,7 +53,16 @@ export async function setupOwlbearPlayerSync(params: { role: 'PLAYER' | 'GM' }):
 
                 if (meta) {
                     try {
-                        store.loadFromOwlbear(meta);
+                        const entityId = extractEntityId(tokenItem);
+                        const existingSum = entityId ? store.pcData.pokemonSummaries[entityId] : undefined;
+                        const tMod = Number(meta.lastModified) || 0;
+                        const pMod = Number(existingSum?.lastModified) || 0;
+
+                        if (existingSum && existingSum.fullMetadata && pMod > tMod) {
+                            store.loadFromOwlbear(existingSum.fullMetadata);
+                        } else {
+                            store.loadFromOwlbear(meta);
+                        }
                         // Self-healing: ensure graphics are rendered for the selected token
                         renderTokenGraphicsForMeta(tokenItem, meta, currentRole, false).catch((err) =>
                             console.warn('[SyncEngine] Failed to render graphics on token selection:', err)

@@ -69,30 +69,11 @@ export interface PcStorageData {
     version: number;
 }
 
-export interface SheetFieldDiff {
-    id: string;
-    category: 'stats' | 'moves' | 'items' | 'passives' | 'identity';
-    label: string;
-    gmValue: string | number | boolean;
-    playerValue: string | number | boolean;
-    accepted: boolean;
-}
-
-export interface SheetReviewPayload {
-    entityId: string;
-    pokemonName: string;
-    playerName: string;
-    diffs: SheetFieldDiff[];
-    incomingSummary?: PcPokemonSummary;
-}
-
 export interface PcSlice {
     pcData: PcStorageData;
     activeBoxIndex: number;
     selectedPcSlot: { type: 'party' | 'box'; index: number } | null;
     isPcModalOpen: boolean;
-    pendingReview: SheetReviewPayload | null;
-    isReviewModalOpen: boolean;
 
     initPcStorage: () => Promise<void>;
     setActiveBoxIndex: (index: number) => void;
@@ -120,8 +101,4 @@ export interface PcSlice {
     updatePokemonSummary: (summary: PcPokemonSummary) => void;
     updateTrainerProfile: (trainerId: string, updates: Partial<TrainerRoster>) => void;
     deletePokemonFromPc: (entityId: string, options?: { wasUnlinked?: boolean; pokemonName?: string }) => void;
-    setPendingReview: (payload: SheetReviewPayload | null) => void;
-    openReviewModal: (payload: SheetReviewPayload) => void;
-    closeReviewModal: () => void;
-    applyReviewDiffs: (entityId: string, diffs: SheetFieldDiff[]) => void;
 }

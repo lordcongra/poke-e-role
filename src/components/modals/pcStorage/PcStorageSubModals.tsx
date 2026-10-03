@@ -3,7 +3,6 @@ import OBR from '@owlbear-rodeo/sdk';
 import { PcCloudExportModal } from './PcCloudExportModal';
 import { PcImportModal } from './PcImportModal';
 import { PcDepositDrawerModal } from './PcDepositDrawerModal';
-import { PcReviewModal } from './PcReviewModal';
 import { PcSheetModal } from './PcSheetModal';
 import { PcReleaseConfirmModal } from './PcReleaseConfirmModal';
 import { PcGuideModal } from './PcGuideModal';
@@ -12,9 +11,7 @@ import type {
     CampaignProfile,
     TrainerRoster,
     PcPokemonSummary,
-    PcStorageData,
-    SheetReviewPayload,
-    SheetFieldDiff
+    PcStorageData
 } from '../../../types/pcStorageTypes';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { savePcStorage } from '../../../utils/pc/pcStorageAdapter';
@@ -47,10 +44,6 @@ interface PcStorageSubModalsProps {
         summary: PcPokemonSummary,
         targetSlotOverride?: { type: 'party' | 'box'; index: number }
     ) => Promise<void>;
-    isReviewModalOpen: boolean;
-    pendingReview: SheetReviewPayload | null;
-    applyReviewDiffs: (entityId: string, diffs: SheetFieldDiff[]) => void;
-    closeReviewModal: () => void;
     activeSheetSummary: PcPokemonSummary | null;
     sheetAvailableSummaries: PcPokemonSummary[];
     setSheetViewEntityId: (id: string | null) => void;
@@ -83,10 +76,6 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
     currentActiveSummary,
     trainerPokemonSummaries,
     handleCompleteDeposit,
-    isReviewModalOpen,
-    pendingReview,
-    applyReviewDiffs,
-    closeReviewModal,
     activeSheetSummary,
     sheetAvailableSummaries,
     setSheetViewEntityId,
@@ -162,20 +151,6 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
                     boxTheme={boxTheme}
                     onDepositSummary={handleCompleteDeposit}
                     onClose={() => setDepositTarget(null)}
-                />
-            )}
-
-            {/* Review Modal for GM Sheet Diffs */}
-            {isReviewModalOpen && pendingReview && (
-                <PcReviewModal
-                    payload={pendingReview}
-                    onApply={(diffs, notify) => {
-                        applyReviewDiffs(pendingReview.entityId, diffs);
-                        if (notify) {
-                            console.log(`[PC Storage] Notifying player ${pendingReview.playerName} of sheet updates.`);
-                        }
-                    }}
-                    onClose={closeReviewModal}
                 />
             )}
 

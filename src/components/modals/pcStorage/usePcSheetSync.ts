@@ -7,6 +7,7 @@ import { setActiveTokenId, setIsPcSheetActive, METADATA_ID } from '../../../util
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
 import { resolveCharacterThemeColors, applyDynamicThemeColors } from '../../../utils/common/colorUtils';
 import { extractEntityId, renderTokenGraphicsForMeta } from '../../../hooks/owlbearSync/setupOwlbearTokenSync';
+import { broadcastGmPc } from '../../../hooks/owlbearSync/setupOwlbearPcSync';
 
 /**
  * Pure predicate checking if any persistent character sheet slice changed in Zustand.
@@ -119,7 +120,7 @@ export function usePcSheetSync({
             };
         }
 
-        onUpdateSummaryRef.current({
+        const updatedSummary: PcPokemonSummary = {
             ...curr,
             name: nextName,
             species: currentStore.identity.species || curr.species,
@@ -137,7 +138,13 @@ export function usePcSheetSync({
             fullMetadata: nextMeta,
             savedTokenItem: updatedSavedTokenItem,
             lastModified: Date.now()
-        });
+        };
+
+        onUpdateSummaryRef.current(updatedSummary);
+
+        if (OBR.isAvailable && currentStore.role === 'GM') {
+            broadcastGmPc({ summaries: [updatedSummary] }).catch(() => {});
+        }
 
         // If the token IS currently placed on the map, push metadata to OBR scene item
         if (curr.isOnMap && OBR.isAvailable) {

@@ -445,5 +445,3 @@ export function applyDeleteSummary(pcData: PcStorageData, entityId: string): PcS
         pokemonSummaries: nextSummaries
     };
 }
-
-export { applyReviewDiffsToSummary } from './pcDiffUtils';

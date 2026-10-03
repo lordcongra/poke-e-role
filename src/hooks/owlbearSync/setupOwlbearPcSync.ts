@@ -1,77 +1,20 @@
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import type { TrainerRoster, PcPokemonSummary, SheetFieldDiff } from '../../types/pcStorageTypes';
+import type { TrainerRoster, PcPokemonSummary } from '../../types/pcStorageTypes';
 import { savePcStorage } from '../../utils/pc/pcStorageAdapter';
 import { resolveEffectiveActiveTrainer } from '../../utils/pc/pcCampaignTrainerOps';
 import { EXTENSION_ID } from './owlbearSyncConstants';
 import { sendSafeBroadcastPayload, registerSafeBroadcastListener } from './owlbearBroadcastUtils';
-import { computeSheetFieldDiffs } from '../../utils/pc/pcDiffUtils';
 import { applyDeleteSummary } from '../../utils/pc/pcStateMutations';
+import { hasPendingUpdates } from '../../utils/sync/obr';
+import {
+    type PlayerPcSyncPayload,
+    type GmPcSyncPayload,
+    sanitizeSummaryForSync,
+    sanitizeTrainerForSync
+} from './owlbearPcSyncUtils';
 
-export interface PlayerPcSyncPayload {
-    campaignId: string;
-    trainer: TrainerRoster;
-    summaries: PcPokemonSummary[];
-    chunkIndex?: number;
-    totalChunks?: number;
-}
-
-/**
- * Strips bulky canvas attachments, raw scene items, and massive base64 URIs
- * before transmitting summaries over the Owlbear broadcast channel.
- */
-function sanitizeSummaryForSync(s: PcPokemonSummary): PcPokemonSummary {
-    const cleanImageUrl =
-        s.tokenImageUrl && s.tokenImageUrl.startsWith('data:') && s.tokenImageUrl.length > 2048
-            ? undefined
-            : s.tokenImageUrl;
-
-    let slimMeta: Record<string, unknown> | undefined = undefined;
-    if (s.fullMetadata && typeof s.fullMetadata === 'object') {
-        slimMeta = {};
-        for (const [k, v] of Object.entries(s.fullMetadata)) {
-            if (typeof v === 'string' && v.startsWith('data:') && v.length > 1024) continue;
-            if (k === 'savedTokenItem' || k === 'attachedItems') continue;
-            slimMeta[k] = v;
-        }
-    }
-
-    return {
-        entityId: s.entityId,
-        name: s.name,
-        species: s.species,
-        rank: s.rank,
-        type1: s.type1,
-        type2: s.type2,
-        hp: s.hp,
-        maxHp: s.maxHp,
-        will: s.will,
-        maxWill: s.maxWill,
-        tokenImageUrl: cleanImageUrl,
-        shiny: s.shiny,
-        heldItem: s.heldItem,
-        isOnMap: s.isOnMap,
-        mapTokenId: s.mapTokenId,
-        trainerId: s.trainerId,
-        campaignId: s.campaignId,
-        lastModified: s.lastModified,
-        fullMetadata: slimMeta
-    };
-}
-
-function sanitizeTrainerForSync(t: TrainerRoster): TrainerRoster {
-    const cleanAvatar =
-        t.avatarUrl && t.avatarUrl.startsWith('data:') && t.avatarUrl.length > 2048 ? undefined : t.avatarUrl;
-    return {
-        id: t.id,
-        name: t.name,
-        avatarUrl: cleanAvatar,
-        party: t.party || [],
-        boxes: t.boxes || [],
-        isLinked: t.isLinked,
-        mapTokenId: t.mapTokenId
-    };
-}
+export type { PlayerPcSyncPayload, GmPcSyncPayload };
 
 /**
  * Broadcasts the active player's PC trainer, party, and Pokémon summaries to the GM.
@@ -146,6 +89,74 @@ export async function broadcastPlayerPc(): Promise<void> {
 }
 
 /**
+ * Broadcasts GM edits to player PC storage (trainer party/boxes or specific Pokémon summaries).
+ * Slices into safe 16kB chunks for Owlbear broadcast channel.
+ */
+export async function broadcastGmPc(params: {
+    campaignId?: string;
+    trainer?: TrainerRoster;
+    summaries?: PcPokemonSummary[];
+}): Promise<void> {
+    if (!OBR.isAvailable) return;
+    try {
+        const state = useCharacterStore.getState();
+        if (state.role !== 'GM') return;
+
+        const { pcData } = state;
+        const targetCampId = params.campaignId || pcData.activeCampaignId;
+        const campaign = pcData.campaigns[targetCampId];
+        if (!campaign) return;
+
+        const cleanTrainer = params.trainer ? sanitizeTrainerForSync(params.trainer) : undefined;
+        let cleanSummaries: PcPokemonSummary[] = [];
+
+        if (params.summaries && params.summaries.length > 0) {
+            cleanSummaries = params.summaries.map(sanitizeSummaryForSync);
+        } else if (cleanTrainer) {
+            const referencedIds = new Set<string>();
+            for (const s of cleanTrainer.party || []) {
+                if (s) referencedIds.add(s);
+            }
+            if (Array.isArray(cleanTrainer.boxes)) {
+                for (const b of cleanTrainer.boxes) {
+                    for (const s of b.slots || []) {
+                        if (s) referencedIds.add(s);
+                    }
+                }
+            }
+            for (const id of referencedIds) {
+                const sum = pcData.pokemonSummaries[id];
+                if (sum) cleanSummaries.push(sanitizeSummaryForSync(sum));
+            }
+        }
+
+        if (!cleanTrainer && cleanSummaries.length === 0) return;
+
+        const CHUNK_SIZE = 1;
+        const totalChunks = Math.max(1, Math.ceil(cleanSummaries.length / CHUNK_SIZE));
+        const syncTimestamp = Date.now();
+
+        for (let i = 0; i < totalChunks; i++) {
+            const chunkSlice = cleanSummaries.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+            const payload: GmPcSyncPayload = {
+                campaignId: targetCampId,
+                trainer: cleanTrainer,
+                summaries: chunkSlice,
+                chunkIndex: i,
+                totalChunks,
+                timestamp: syncTimestamp
+            };
+
+            await sendSafeBroadcastPayload(`${EXTENSION_ID}/pc-gm-sync`, payload).catch((err) => {
+                console.warn(`[PcSync] Failed to broadcast GM PC chunk ${i + 1}/${totalChunks}:`, err);
+            });
+        }
+    } catch (e) {
+        console.warn('[PcSync] Failed to broadcast GM PC data:', e);
+    }
+}
+
+/**
  * GM action to trigger an on-demand PC sync request to all connected players.
  */
 export function requestPlayerPcSync(): void {
@@ -167,92 +178,210 @@ export interface OwlbearPcSyncResult {
 export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
     const unsubs: Array<() => void> = [];
 
-    const processPayload = async (payload: PlayerPcSyncPayload) => {
-        if (!payload || !payload.trainer || !payload.trainer.id) return;
-
-        try {
-            const state = useCharacterStore.getState();
-            const { pcData } = state;
-            const targetCampId = pcData.campaigns[payload.campaignId] ? payload.campaignId : pcData.activeCampaignId;
-            const currentCamp = pcData.campaigns[targetCampId];
-            if (!currentCamp) return;
-
-            const updatedTrainers = {
-                ...currentCamp.trainers,
-                [payload.trainer.id]: payload.trainer
-            };
-
-            const updatedSummaries = { ...pcData.pokemonSummaries };
-            let diffFoundForReview: { summary: PcPokemonSummary; diffs: SheetFieldDiff[] } | null = null;
-
-            for (const s of payload.summaries || []) {
-                if (s && s.entityId) {
-                    const existing = pcData.pokemonSummaries[s.entityId];
-                    const hasExistingMetadata =
-                        existing && existing.fullMetadata && Object.keys(existing.fullMetadata).length >= 5;
-
-                    if (hasExistingMetadata) {
-                        const diffs = computeSheetFieldDiffs(existing, s);
-                        if (diffs.length > 0 && !diffFoundForReview) {
-                            diffFoundForReview = { summary: s, diffs };
-                            // Preserve GM copy until GM reviews diffs
-                            continue;
-                        }
-                    }
-                    updatedSummaries[s.entityId] = s;
-                }
-            }
-
-            const nextData = {
-                ...pcData,
-                campaigns: {
-                    ...pcData.campaigns,
-                    [targetCampId]: {
-                        ...currentCamp,
-                        trainers: updatedTrainers
-                    }
-                },
-                pokemonSummaries: updatedSummaries
-            };
-
-            useCharacterStore.setState({ pcData: nextData });
-            await savePcStorage(nextData);
-
-            if (diffFoundForReview) {
-                const isPcOpen = useCharacterStore.getState().isPcModalOpen;
-                const reviewPayload = {
-                    entityId: diffFoundForReview.summary.entityId,
-                    pokemonName: diffFoundForReview.summary.name || diffFoundForReview.summary.species,
-                    playerName: payload.trainer.name,
-                    diffs: diffFoundForReview.diffs,
-                    incomingSummary: diffFoundForReview.summary
-                };
-
-                if (isPcOpen) {
-                    state.openReviewModal(reviewPayload);
-                } else {
-                    state.setPendingReview(reviewPayload);
-                }
-
-                OBR.notification.show(
-                    `Sheet changes detected for ${diffFoundForReview.summary.name || diffFoundForReview.summary.species} (${payload.trainer.name})!`,
-                    'INFO'
-                );
-            }
-        } catch (e) {
-            console.error('[PcSync] Failed to merge remote player PC payload:', e);
-        }
-    };
-
-    // 1. GM listens for player PC updates with automatic chunk reassembly
+    // 1. GM listens for player PC updates with automatic chunk reassembly and timestamp guard
     if (role === 'GM') {
         const unsubPlayerSync = registerSafeBroadcastListener<PlayerPcSyncPayload>(
             `${EXTENSION_ID}/pc-player-sync`,
             async (payload) => {
-                await processPayload(payload);
+                if (!payload || !payload.trainer || !payload.trainer.id) return;
+
+                try {
+                    const state = useCharacterStore.getState();
+                    const { pcData } = state;
+                    const targetCampId = pcData.campaigns[payload.campaignId]
+                        ? payload.campaignId
+                        : pcData.activeCampaignId;
+                    const currentCamp = pcData.campaigns[targetCampId];
+                    if (!currentCamp) return;
+
+                    const existingTrainer = currentCamp.trainers[payload.trainer.id];
+                    const updatedTrainers = {
+                        ...currentCamp.trainers,
+                        [payload.trainer.id]: existingTrainer
+                            ? { ...existingTrainer, ...payload.trainer }
+                            : payload.trainer
+                    };
+
+                    const updatedSummaries = { ...pcData.pokemonSummaries };
+                    let hasChanges = false;
+
+                    for (const s of payload.summaries || []) {
+                        if (s && s.entityId) {
+                            const existing = updatedSummaries[s.entityId];
+                            const existingMod = Number(existing?.lastModified) || 0;
+                            const incomingMod = Number(s.lastModified) || 0;
+
+                            // Anti-Reversion Guard: if GM already has a newer modification, NEVER overwrite!
+                            if (existing && existingMod > incomingMod) {
+                                continue;
+                            }
+
+                            // If token is live on the canvas, GM canvas is the authority for combat stats
+                            if (existing?.isOnMap && existing.savedTokenItem) {
+                                updatedSummaries[s.entityId] = {
+                                    ...s,
+                                    hp: existing.hp,
+                                    maxHp: existing.maxHp,
+                                    will: existing.will,
+                                    maxWill: existing.maxWill,
+                                    isOnMap: true,
+                                    mapTokenId: existing.mapTokenId,
+                                    savedTokenItem: existing.savedTokenItem,
+                                    lastModified: Math.max(existingMod, incomingMod)
+                                };
+                            } else {
+                                updatedSummaries[s.entityId] = s;
+                            }
+                            hasChanges = true;
+                        }
+                    }
+
+                    if (hasChanges) {
+                        const nextData = {
+                            ...pcData,
+                            campaigns: {
+                                ...pcData.campaigns,
+                                [targetCampId]: {
+                                    ...currentCamp,
+                                    trainers: updatedTrainers
+                                }
+                            },
+                            pokemonSummaries: updatedSummaries
+                        };
+
+                        useCharacterStore.setState({ pcData: nextData });
+                        await savePcStorage(nextData);
+                        if (typeof window !== 'undefined') {
+                            window.dispatchEvent(new Event('pkr-local-data-changed'));
+                        }
+                    }
+                } catch (e) {
+                    console.error('[PcSync] Failed to merge remote player PC payload:', e);
+                }
             }
         );
         unsubs.push(unsubPlayerSync);
+    }
+
+    // 2. Players listen for GM PC updates with automatic chunk reassembly, timestamp guard & live rehydration
+    if (role !== 'GM') {
+        const unsubGmSync = registerSafeBroadcastListener<GmPcSyncPayload>(
+            `${EXTENSION_ID}/pc-gm-sync`,
+            async (payload) => {
+                if (!payload || !payload.campaignId) return;
+
+                try {
+                    const state = useCharacterStore.getState();
+                    const { pcData } = state;
+                    const targetCampId = pcData.campaigns[payload.campaignId]
+                        ? payload.campaignId
+                        : pcData.activeCampaignId;
+                    let currentCamp = pcData.campaigns[targetCampId];
+                    if (!currentCamp) return;
+
+                    let campChanged = false;
+                    let updatedTrainers = currentCamp.trainers;
+
+                    if (payload.trainer && payload.trainer.id) {
+                        const existingTrainer = currentCamp.trainers[payload.trainer.id];
+                        if (existingTrainer) {
+                            updatedTrainers = {
+                                ...currentCamp.trainers,
+                                [payload.trainer.id]: {
+                                    ...existingTrainer,
+                                    ...payload.trainer,
+                                    party: payload.trainer.party || existingTrainer.party,
+                                    boxes: payload.trainer.boxes || existingTrainer.boxes
+                                }
+                            };
+                            campChanged = true;
+                        } else if (
+                            currentCamp.activeTrainerId === '__none__' &&
+                            payload.trainer.id.startsWith('__pmd_')
+                        ) {
+                            currentCamp = {
+                                ...currentCamp,
+                                teamParty: payload.trainer.party || currentCamp.teamParty,
+                                boxes: payload.trainer.boxes || currentCamp.boxes
+                            };
+                            campChanged = true;
+                        }
+                    }
+
+                    const updatedSummaries = { ...pcData.pokemonSummaries };
+                    let summariesChanged = false;
+                    const rehydratableSummaries: PcPokemonSummary[] = [];
+
+                    for (const incoming of payload.summaries || []) {
+                        if (!incoming || !incoming.entityId) continue;
+
+                        const existing = pcData.pokemonSummaries[incoming.entityId];
+                        const existingMod = Number(existing?.lastModified) || 0;
+                        const incomingMod = Number(incoming.lastModified) || Number(payload.timestamp) || Date.now();
+
+                        // Anti-Reversion Guard: if local summary is strictly newer than incoming packet, skip!
+                        if (existing && existingMod > incomingMod) {
+                            continue;
+                        }
+
+                        const mergedSummary: PcPokemonSummary = {
+                            ...existing,
+                            ...incoming,
+                            isOnMap: existing?.isOnMap ?? incoming.isOnMap,
+                            mapTokenId: existing?.mapTokenId ?? incoming.mapTokenId,
+                            savedTokenItem: existing?.savedTokenItem ?? incoming.savedTokenItem,
+                            lastModified: incomingMod
+                        };
+
+                        updatedSummaries[incoming.entityId] = mergedSummary;
+                        summariesChanged = true;
+
+                        const currentTokenId = state.tokenId;
+                        const currentEntityId = state.identity.entityId;
+                        if (
+                            currentTokenId === incoming.entityId ||
+                            currentEntityId === incoming.entityId ||
+                            (mergedSummary.mapTokenId && currentTokenId === mergedSummary.mapTokenId)
+                        ) {
+                            rehydratableSummaries.push(mergedSummary);
+                        }
+                    }
+
+                    if (campChanged || summariesChanged) {
+                        const nextData = {
+                            ...pcData,
+                            campaigns: campChanged
+                                ? {
+                                      ...pcData.campaigns,
+                                      [targetCampId]: {
+                                          ...currentCamp,
+                                          trainers: updatedTrainers
+                                      }
+                                  }
+                                : pcData.campaigns,
+                            pokemonSummaries: updatedSummaries
+                        };
+
+                        useCharacterStore.setState({ pcData: nextData });
+                        await savePcStorage(nextData);
+
+                        // If player currently viewing this Pokémon, reload sheet safely
+                        for (const activeSum of rehydratableSummaries) {
+                            if (!hasPendingUpdates() && activeSum.fullMetadata) {
+                                useCharacterStore.getState().loadFromOwlbear(activeSum.fullMetadata);
+                            }
+                        }
+
+                        if (typeof window !== 'undefined') {
+                            window.dispatchEvent(new Event('pkr-local-data-changed'));
+                        }
+                    }
+                } catch (e) {
+                    console.error('[PcSync] Failed to process GM PC sync payload:', e);
+                }
+            }
+        );
+        unsubs.push(unsubGmSync);
     }
 
     // 2. Both GM and Players listen for trainer deletions across the room
