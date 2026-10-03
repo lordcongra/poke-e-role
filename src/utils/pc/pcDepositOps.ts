@@ -355,6 +355,13 @@ export async function prepareDepositSummary(
     if (!finalSummary.fullMetadata) {
         finalSummary.fullMetadata = flattenStateToMetadata(activeStore);
     }
+    if (!finalSummary.entityId || finalSummary.entityId === 'active-sheet') {
+        finalSummary.entityId = crypto.randomUUID();
+    }
+    finalSummary.fullMetadata = {
+        ...finalSummary.fullMetadata,
+        entityId: finalSummary.entityId
+    };
 
     // 1. Unify with existing summary if it is the same token
     if (pokemonSummaries && finalSummary.mapTokenId) {

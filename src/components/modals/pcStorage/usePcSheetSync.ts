@@ -6,6 +6,7 @@ import { useCharacterStore } from '../../../store/useCharacterStore';
 import { setActiveTokenId, setIsPcSheetActive, METADATA_ID } from '../../../utils/sync/obr';
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
 import { resolveCharacterThemeColors, applyDynamicThemeColors } from '../../../utils/common/colorUtils';
+import { extractEntityId, renderTokenGraphicsForMeta } from '../../../hooks/owlbearSync/setupOwlbearTokenSync';
 
 /**
  * Pure predicate checking if any persistent character sheet slice changed in Zustand.
@@ -59,8 +60,10 @@ export function usePcSheetSync({
     const [loading, setLoading] = useState(true);
 
     const isHydratingRef = useRef(false);
+    const isUnmountingRef = useRef(false);
     const isDirtyRef = useRef(false);
     const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const activeUnsubRef = useRef<(() => void) | null>(null);
 
     const prevThemeRef = useRef<{ primary: string; secondary: string } | null>(null);
     const prevMetaRef = useRef<Record<string, unknown> | null>(null);
@@ -74,7 +77,7 @@ export function usePcSheetSync({
 
     // Core two-way persistence: serializes active Zustand store into metadata and summaries
     const syncNow = useCallback((targetSummary?: PcPokemonSummary) => {
-        if (isHydratingRef.current) return;
+        if (isHydratingRef.current && !isUnmountingRef.current) return;
         if (syncTimeoutRef.current) {
             clearTimeout(syncTimeoutRef.current);
             syncTimeoutRef.current = null;
@@ -82,8 +85,11 @@ export function usePcSheetSync({
         isDirtyRef.current = false;
 
         const currentStore = useCharacterStore.getState();
-        const curr = targetSummary || currentSummaryRef.current;
+        const curr = { ...(targetSummary || {}), ...currentSummaryRef.current };
         const nextMeta = flattenStateToMetadata(currentStore);
+        nextMeta.entityId = curr.entityId;
+        nextMeta.lastModified = Date.now();
+
         const nextHp = currentStore.health.hpCurr ?? curr.hp;
         const nextMaxHp = currentStore.health.hpMax ?? curr.maxHp;
         const nextWill = currentStore.will.willCurr ?? curr.will;
@@ -131,20 +137,41 @@ export function usePcSheetSync({
         });
 
         // If the token IS currently placed on the map, push metadata to OBR scene item
-        if (curr.isOnMap && curr.mapTokenId && OBR.isAvailable) {
+        if (curr.isOnMap && OBR.isAvailable) {
+            const targetMapId = curr.mapTokenId;
             OBR.scene.items
-                .updateItems([curr.mapTokenId], (items) => {
-                    for (const item of items) {
-                        if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
-                        Object.assign(item.metadata[METADATA_ID] as Record<string, unknown>, nextMeta);
-                        if (!item.metadata['pokerole-pmd-extension/stats']) {
-                            item.metadata['pokerole-pmd-extension/stats'] = {};
+                .updateItems(
+                    (it) => it.id === targetMapId || (Boolean(curr.entityId) && extractEntityId(it) === curr.entityId),
+                    (items) => {
+                        for (const item of items) {
+                            if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
+                            Object.assign(item.metadata[METADATA_ID] as Record<string, unknown>, nextMeta);
+                            if (!item.metadata['pokerole-pmd-extension/stats']) {
+                                item.metadata['pokerole-pmd-extension/stats'] = {};
+                            }
+                            Object.assign(
+                                item.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>,
+                                nextMeta
+                            );
                         }
-                        Object.assign(
-                            item.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>,
-                            nextMeta
-                        );
                     }
+                )
+                .then(async () => {
+                    try {
+                        const items = await OBR.scene.items.getItems(
+                            (it) =>
+                                it.id === targetMapId ||
+                                (Boolean(curr.entityId) && extractEntityId(it) === curr.entityId)
+                        );
+                        const currentRole = (currentStore.role as 'PLAYER' | 'GM') || 'PLAYER';
+                        for (const item of items) {
+                            const meta = (item.metadata[METADATA_ID] ||
+                                item.metadata['pokerole-pmd-extension/stats']) as Record<string, unknown>;
+                            if (meta) {
+                                renderTokenGraphicsForMeta(item, meta, currentRole, false).catch(() => {});
+                            }
+                        }
+                    } catch {}
                 })
                 .catch((err) => {
                     console.error('[usePcSheetSync] Failed to sync live map token item:', err);
@@ -154,9 +181,7 @@ export function usePcSheetSync({
 
     const flushSync = useCallback(
         (targetSummary?: PcPokemonSummary) => {
-            if (isDirtyRef.current || syncTimeoutRef.current) {
-                syncNow(targetSummary || currentSummaryRef.current);
-            }
+            syncNow(targetSummary || currentSummaryRef.current);
         },
         [syncNow]
     );
@@ -184,22 +209,41 @@ export function usePcSheetSync({
         };
 
         return () => {
+            isUnmountingRef.current = true;
+            isHydratingRef.current = true;
             setIsPcSheetActive(false);
-            if (isDirtyRef.current || syncTimeoutRef.current) {
-                syncNow(currentSummaryRef.current);
+
+            // Destroy active store subscriber BEFORE any character rollback so it can NEVER trigger sync!
+            if (activeUnsubRef.current) {
+                activeUnsubRef.current();
+                activeUnsubRef.current = null;
             }
             if (syncTimeoutRef.current) {
                 clearTimeout(syncTimeoutRef.current);
                 syncTimeoutRef.current = null;
             }
 
-            // Restore previous character
-            if (prevMetaRef.current) {
+            // Unconditionally push the final state of the edited Pokémon
+            syncNow(currentSummaryRef.current);
+
+            // Restore previous character ONLY if it was a distinct token from the one edited
+            const targetId = currentSummaryRef.current.entityId;
+            const targetMapId = currentSummaryRef.current.mapTokenId;
+            const isSameEntity =
+                (prevTokenIdRef.current && prevTokenIdRef.current === targetId) ||
+                (prevTokenIdRef.current && targetMapId && prevTokenIdRef.current === targetMapId) ||
+                (prevMetaRef.current &&
+                    (prevMetaRef.current.entityId === targetId || prevMetaRef.current['entityId'] === targetId));
+
+            if (prevTokenIdRef.current && !isSameEntity) {
                 setActiveTokenId(prevTokenIdRef.current);
                 const s = useCharacterStore.getState();
-                s.setTokenData(prevTokenIdRef.current || '', s.role || 'PLAYER');
-                s.loadFromOwlbear(prevMetaRef.current);
+                s.setTokenData(prevTokenIdRef.current, s.role || 'PLAYER');
+                if (prevMetaRef.current) {
+                    s.loadFromOwlbear(prevMetaRef.current);
+                }
             }
+
             // Restore previous theme
             if (prevThemeRef.current) {
                 applyDynamicThemeColors(prevThemeRef.current.primary, prevThemeRef.current.secondary);
@@ -251,7 +295,7 @@ export function usePcSheetSync({
         }, 100);
 
         const unsub = useCharacterStore.subscribe((state, prevState) => {
-            if (isHydratingRef.current) return;
+            if (isHydratingRef.current || isUnmountingRef.current) return;
             if (hasCharacterSheetChanged(state, prevState)) {
                 isDirtyRef.current = true;
                 if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
@@ -260,11 +304,15 @@ export function usePcSheetSync({
                 }, 150);
             }
         });
+        activeUnsubRef.current = unsub;
 
         return () => {
             clearTimeout(timer);
-            unsub();
-            if (isDirtyRef.current || syncTimeoutRef.current) {
+            if (activeUnsubRef.current) {
+                activeUnsubRef.current();
+                activeUnsubRef.current = null;
+            }
+            if (!isUnmountingRef.current && (isDirtyRef.current || syncTimeoutRef.current)) {
                 syncNow(activeEntity);
             }
         };

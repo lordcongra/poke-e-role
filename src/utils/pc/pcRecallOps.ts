@@ -84,15 +84,23 @@ export async function recallPokemonFromMap(
                   ? Number(meta['will-max-display'])
                   : undefined;
 
-        // Delete parent and all accessories (including HUD graphics) from active scene
-        const idsToDelete = [parent.id, ...allAttachedChildren.map((c) => c.id)];
-        await OBR.scene.items.deleteItems(idsToDelete);
+        // Delete parent, any scene clones of this Pokémon, and all attached accessories
+        const idsToDelete = new Set<string>([parent.id, ...allAttachedChildren.map((c) => c.id)]);
+        if (summary) {
+            const clones = sceneItems.filter((i) => i.id !== parent.id && isMatchingPokemonItem(i, summary));
+            for (const c of clones) {
+                idsToDelete.add(c.id);
+                const att = sceneItems.filter((a) => a.attachedTo === c.id);
+                for (const a of att) idsToDelete.add(a.id);
+            }
+        }
+        await OBR.scene.items.deleteItems(Array.from(idsToDelete));
 
         return {
             success: true,
             attachedItems: bundles.length > 0 ? bundles : summary?.attachedItems || [],
             savedTokenItem: parent,
-            fullMetadata: meta,
+            fullMetadata: { ...(summary?.fullMetadata || {}), ...meta },
             currentHp,
             maxHp,
             currentWill,

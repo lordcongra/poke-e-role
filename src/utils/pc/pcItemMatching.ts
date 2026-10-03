@@ -23,27 +23,27 @@ export function isMatchingPokemonItem(item: Item, summary: PcPokemonSummary): bo
     if (item.layer !== 'CHARACTER') return false;
     if (isItemTrainer(item)) return false;
 
-    const meta = (item.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
+    const meta = (item.metadata?.[METADATA_ID] || item.metadata?.['pokerole-pmd-extension/stats']) as
+        | Record<string, unknown>
+        | undefined;
     const claimMeta = item.metadata?.['pokerole-pmd-extension/claimed-by'] as { entityId?: string } | undefined;
+    const itemEntityId =
+        (meta?.entityId as string) ||
+        (claimMeta?.entityId as string) ||
+        (item.metadata?.['entityId'] as string) ||
+        undefined;
 
-    // Check entityId match
-    if (summary.entityId) {
-        if (
-            (meta.entityId && meta.entityId === summary.entityId) ||
-            (claimMeta?.entityId && claimMeta.entityId === summary.entityId)
-        ) {
-            return true;
-        }
+    // Strict entityId match
+    if (summary.entityId && itemEntityId) {
+        return itemEntityId === summary.entityId;
     }
 
-    // Check mapTokenId match: ONLY if it also shares species or name!
+    // Direct token ID match (only if no conflicting entityId)
     if (summary.mapTokenId && item.id === summary.mapTokenId) {
-        const itemSpecies = ((meta.species as string) || (meta.name as string) || item.name || '').trim().toLowerCase();
-        const sumSpecies = (summary.species || '').trim().toLowerCase();
-        const sumName = (summary.name || '').trim().toLowerCase();
-        if (itemSpecies && (itemSpecies === sumSpecies || itemSpecies === sumName)) {
-            return true;
+        if (itemEntityId && summary.entityId && itemEntityId !== summary.entityId) {
+            return false;
         }
+        return true;
     }
 
     return false;
@@ -58,11 +58,7 @@ export function findMatchingSceneCandidate<
     if (!summary) return undefined;
     return candidates.find(
         (c) =>
-            (summary.mapTokenId && c.id === summary.mapTokenId) ||
             (summary.entityId && c.matchedEntityId === summary.entityId) ||
-            (c.species &&
-                summary.species &&
-                c.species.toLowerCase() === summary.species.toLowerCase() &&
-                (c.name || c.species).toLowerCase() === (summary.name || summary.species).toLowerCase())
+            (summary.mapTokenId && c.id === summary.mapTokenId)
     );
 }

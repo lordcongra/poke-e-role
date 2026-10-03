@@ -98,12 +98,25 @@ export async function syncBackupSceneTokens(sceneItems: Item[]): Promise<void> {
 
             const summary = store.pcData.pokemonSummaries[entityId];
             if (summary) {
+                const sumTempHp = Number(summary.fullMetadata?.['temporary-hit-points']) || 0;
+                const metaTempHp = Number(meta['temporary-hit-points']) || 0;
+                const sumTempWill = Number(summary.fullMetadata?.['temporary-will']) || 0;
+                const metaTempWill = Number(meta['temporary-will']) || 0;
+                const sumStatusStr = JSON.stringify(summary.fullMetadata?.['status-list'] || '');
+                const metaStatusStr = JSON.stringify(meta['status-list'] || '');
+                const sumMovesStr = JSON.stringify(summary.fullMetadata?.['moves-data'] || '');
+                const metaMovesStr = JSON.stringify(meta['moves-data'] || '');
+
                 // Strict diffing: only update if core fields actually changed
                 const hasChanged =
                     meta['hp-curr'] !== summary.hp ||
                     meta['hp-max-display'] !== summary.maxHp ||
                     meta['will-curr'] !== summary.will ||
                     meta['will-max-display'] !== summary.maxWill ||
+                    sumTempHp !== metaTempHp ||
+                    sumTempWill !== metaTempWill ||
+                    sumStatusStr !== metaStatusStr ||
+                    sumMovesStr !== metaMovesStr ||
                     meta.name !== summary.name ||
                     (summary.tokenImageUrl && meta['token-image-url'] !== summary.tokenImageUrl) ||
                     meta.species !== summary.species;
@@ -121,6 +134,10 @@ export async function syncBackupSceneTokens(sceneItems: Item[]): Promise<void> {
                     'hp-max-display': summary.maxHp,
                     'will-curr': summary.will,
                     'will-max-display': summary.maxWill,
+                    'temporary-hit-points': sumTempHp,
+                    'temporary-hit-points-max': Number(summary.fullMetadata?.['temporary-hit-points-max']) || sumTempHp,
+                    'temporary-will': sumTempWill,
+                    'temporary-will-max': Number(summary.fullMetadata?.['temporary-will-max']) || sumTempWill,
                     'token-image-url': summary.tokenImageUrl || (meta['token-image-url'] as string),
                     lastModified: summary.lastModified || Date.now()
                 };

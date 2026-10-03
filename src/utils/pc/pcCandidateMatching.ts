@@ -45,11 +45,11 @@ export function isEntityLockedByGm(
  * to an existing Pokémon in the trainer's party or stored summaries.
  */
 export function resolveExistingCharacterEntityId(
-    identity: { nickname?: string; species?: string },
+    _identity: { nickname?: string; species?: string },
     activeTokenId: string | null,
     fullMetadata: Record<string, unknown>,
     existingSummaries?: Record<string, PcPokemonSummary>,
-    partySlots?: (string | null)[]
+    _partySlots?: (string | null)[]
 ): string | null {
     if (!existingSummaries) return null;
 
@@ -69,37 +69,6 @@ export function resolveExistingCharacterEntityId(
             (s) => s.mapTokenId === activeTokenId || s.savedTokenItem?.id === activeTokenId
         );
         if (byMap) return byMap.entityId;
-    }
-
-    const activeSpecies = identity.species || '';
-    const activeName = identity.nickname || identity.species || '';
-    if (!activeSpecies && !activeName) return null;
-
-    // 3. Match against trainer's party slots
-    if (partySlots && partySlots.length > 0) {
-        for (const pId of partySlots) {
-            if (!pId) continue;
-            const pSum = existingSummaries[pId];
-            if (pSum) {
-                const pName = pSum.name || pSum.species;
-                if (
-                    pSum.species.toLowerCase() === activeSpecies.toLowerCase() &&
-                    pName.toLowerCase() === activeName.toLowerCase()
-                ) {
-                    return pSum.entityId;
-                }
-            }
-        }
-    }
-
-    // 4. Match against all stored summaries if single unique match by species & name
-    const matches = summariesList.filter(
-        (s) =>
-            s.species.toLowerCase() === activeSpecies.toLowerCase() &&
-            (s.name || s.species).toLowerCase() === activeName.toLowerCase()
-    );
-    if (matches.length === 1) {
-        return matches[0].entityId;
     }
 
     return null;
@@ -165,36 +134,6 @@ export function resolveSceneCandidateMatch(
         const rawEntityId = (meta.entityId as string) || (claimMeta?.entityId as string);
         if (rawEntityId && pokemonSummaries[rawEntityId]) {
             matchedEntityId = rawEntityId;
-        }
-    }
-
-    // 3. By party member name and species
-    const species = (meta.species as string) || (meta.name as string) || '';
-    const name = (meta.name as string) || (meta.nickname as string) || item.name || species;
-    if (!matchedEntityId && species) {
-        for (const pId of partySlots) {
-            if (!pId) continue;
-            const pSum = pokemonSummaries[pId];
-            if (
-                pSum &&
-                pSum.species.toLowerCase() === species.toLowerCase() &&
-                (pSum.name || pSum.species).toLowerCase() === name.toLowerCase()
-            ) {
-                matchedEntityId = pSum.entityId;
-                break;
-            }
-        }
-    }
-
-    // 4. By any summary name and species if unique match
-    if (!matchedEntityId && species) {
-        const nameMatches = summariesList.filter(
-            (s) =>
-                s.species.toLowerCase() === species.toLowerCase() &&
-                (s.name || s.species).toLowerCase() === name.toLowerCase()
-        );
-        if (nameMatches.length === 1) {
-            matchedEntityId = nameMatches[0].entityId;
         }
     }
 

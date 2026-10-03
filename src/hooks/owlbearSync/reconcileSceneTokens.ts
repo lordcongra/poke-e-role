@@ -55,10 +55,20 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                 continue;
             }
 
-            // 2. Prune duplicate clones on the SAME active scene if more than one exists
+            // 2. If Pokémon is stored away in PC boxes or belt, purge any ghost tokens on the scene!
+            if (sum && !sum.isOnMap) {
+                for (const t of tokens) {
+                    duplicateIdsToDelete.push(t.id);
+                    const attached = sceneItems.filter((a) => a.attachedTo === t.id);
+                    duplicateIdsToDelete.push(...attached.map((a) => a.id));
+                }
+                continue;
+            }
+
+            // 3. Prune duplicate clones on the SAME active scene if more than one exists
             let primaryToken: Item;
             if (tokens.length > 1) {
-                const preferred = tokens.find((t) => t.id === sum?.mapTokenId) || tokens[0];
+                const preferred = (sum && tokens.find((t) => t.id === sum.mapTokenId)) || tokens[0];
                 primaryToken = preferred;
                 for (const t of tokens) {
                     if (t.id !== preferred.id) {
@@ -71,8 +81,8 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                 primaryToken = tokens[0];
             }
 
-            // 3. Reconcile Pokémon tokens with latest PC storage data
-            if (sum) {
+            // 4. Reconcile Pokémon tokens left sent out on the map with latest PC storage data
+            if (sum && sum.isOnMap) {
                 const tMeta =
                     ((primaryToken.metadata[METADATA_ID] ||
                         primaryToken.metadata['pokerole-pmd-extension/stats']) as Record<string, unknown>) || {};
@@ -82,12 +92,19 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                 const movesStr = JSON.stringify(sum.fullMetadata?.['moves-data'] || '');
                 const tMovesStr = JSON.stringify(tMeta['moves-data'] || '');
 
+                const sumTempHp = Number(sum.fullMetadata?.['temporary-hit-points']) || 0;
+                const tTempHp = Number(tMeta['temporary-hit-points']) || 0;
+                const sumTempWill = Number(sum.fullMetadata?.['temporary-will']) || 0;
+                const tTempWill = Number(tMeta['temporary-will']) || 0;
+
                 const isOutdated =
-                    (sum.lastModified && tMeta.lastModified && Number(tMeta.lastModified) < sum.lastModified) ||
+                    (sum.lastModified && (!tMeta.lastModified || Number(tMeta.lastModified) < sum.lastModified)) ||
                     tMeta['hp-curr'] !== sum.hp ||
                     tMeta['hp-max-display'] !== sum.maxHp ||
                     tMeta['will-curr'] !== sum.will ||
                     tMeta['will-max-display'] !== sum.maxWill ||
+                    tTempHp !== sumTempHp ||
+                    tTempWill !== sumTempWill ||
                     tMeta.name !== sum.name ||
                     (sum.tokenImageUrl && tMeta['token-image-url'] !== sum.tokenImageUrl) ||
                     statusStr !== tStatusStr ||
@@ -105,6 +122,10 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                         'hp-max-display': sum.maxHp,
                         'will-curr': sum.will,
                         'will-max-display': sum.maxWill,
+                        'temporary-hit-points': sumTempHp,
+                        'temporary-hit-points-max': Number(sum.fullMetadata?.['temporary-hit-points-max']) || sumTempHp,
+                        'temporary-will': sumTempWill,
+                        'temporary-will-max': Number(sum.fullMetadata?.['temporary-will-max']) || sumTempWill,
                         'token-image-url': sum.tokenImageUrl || (tMeta['token-image-url'] as string),
                         lastModified: sum.lastModified || Date.now()
                     };
@@ -120,8 +141,8 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                     });
                 }
 
-                // Ensure PC storage recognizes this token on the active scene
-                if (sum.mapTokenId !== primaryToken.id || !sum.isOnMap) {
+                // Ensure the "Recall" button on the UI works for this token on this scene
+                if (sum.mapTokenId !== primaryToken.id) {
                     freshStore.updatePokemonSummary({
                         ...sum,
                         isOnMap: true,

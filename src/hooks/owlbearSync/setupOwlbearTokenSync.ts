@@ -327,11 +327,24 @@ export async function setupOwlbearTokenSync(params: {
                                 pcSummary.savedTokenItem?.scale?.x !== item.scale?.x ||
                                 pcSummary.savedTokenItem?.scale?.y !== item.scale?.y;
 
+                            const sumTempHp = Number(pcSummary.fullMetadata?.['temporary-hit-points']) || 0;
+                            const liveTempHp = Number(meta['temporary-hit-points']) || 0;
+                            const sumTempWill = Number(pcSummary.fullMetadata?.['temporary-will']) || 0;
+                            const liveTempWill = Number(meta['temporary-will']) || 0;
+                            const sumStatusStr = JSON.stringify(pcSummary.fullMetadata?.['status-list'] || '');
+                            const liveStatusStr = JSON.stringify(meta['status-list'] || '');
+                            const sumMovesStr = JSON.stringify(pcSummary.fullMetadata?.['moves-data'] || '');
+                            const liveMovesStr = JSON.stringify(meta['moves-data'] || '');
+
                             if (
                                 curHp !== pcSummary.hp ||
                                 mHp !== pcSummary.maxHp ||
                                 curWill !== pcSummary.will ||
                                 mWill !== pcSummary.maxWill ||
+                                sumTempHp !== liveTempHp ||
+                                sumTempWill !== liveTempWill ||
+                                sumStatusStr !== liveStatusStr ||
+                                sumMovesStr !== liveMovesStr ||
                                 pokeName !== pcSummary.name ||
                                 pcSummary.mapTokenId !== item.id ||
                                 scaleChanged
@@ -345,7 +358,7 @@ export async function setupOwlbearTokenSync(params: {
                                     name: pokeName,
                                     mapTokenId: item.id,
                                     savedTokenItem: item,
-                                    fullMetadata: meta,
+                                    fullMetadata: { ...(pcSummary.fullMetadata || {}), ...meta },
                                     lastModified: Date.now()
                                 });
                             }

@@ -39,6 +39,7 @@ const EXCLUDED_FROM_TOKEN_SAVE = new Set([
 ]);
 
 const OBR_KEY_MAP: Record<string, string> = {
+    entityId: 'entityId',
     abilityActive: 'ability-active',
     abilityBoostActive: 'ability-boost-active',
     abilityBoostLevel: 'ability-boost-level',
@@ -218,6 +219,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
     tokenId: null,
     role: isStandaloneMode ? 'GM' : 'PLAYER',
     identity: {
+        entityId: '',
         nickname: '',
         species: '',
         nature: '',

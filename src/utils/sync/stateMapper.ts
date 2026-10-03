@@ -464,6 +464,7 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
 
     return {
         ...state.identity,
+        entityId: String(meta['entityId'] || meta.entityId || state.identity.entityId || ''),
         nickname: String(meta['nickname'] || ''),
         species: String(meta['species'] || ''),
         nature: String(meta['nature'] || ''),
@@ -658,6 +659,8 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
         // --- IDENTITY FIELDS ---
         if (state.identity) {
             // Core Identity
+            if (state.identity.entityId !== undefined && state.identity.entityId !== '')
+                flatMetadata['entityId'] = state.identity.entityId;
             if (state.identity.nickname !== undefined) flatMetadata['nickname'] = state.identity.nickname;
             if (state.identity.species !== undefined) flatMetadata['species'] = state.identity.species;
             if (state.identity.nature !== undefined) flatMetadata['nature'] = state.identity.nature;

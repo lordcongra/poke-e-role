@@ -365,6 +365,7 @@ export interface IdentitySlice {
     tokenId: string | null;
     role: 'GM' | 'PLAYER';
     identity: {
+        entityId?: string;
         nickname: string;
         species: string;
         nature: string;

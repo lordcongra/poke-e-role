@@ -113,6 +113,9 @@ export async function spawnPokemonToMap(
         let parentItem: Item;
         const validEntityId = summary.entityId || crypto.randomUUID();
 
+        const sumTempHp = Number(summary.fullMetadata?.['temporary-hit-points']) || 0;
+        const sumTempWill = Number(summary.fullMetadata?.['temporary-will']) || 0;
+
         const metadataObj: Record<string, unknown> = {
             ...(summary.fullMetadata || {}),
             entityId: validEntityId,
@@ -125,8 +128,13 @@ export async function spawnPokemonToMap(
             'hp-max-display': summary.maxHp,
             'will-curr': summary.will,
             'will-max-display': summary.maxWill,
+            'temporary-hit-points': sumTempHp,
+            'temporary-hit-points-max': Number(summary.fullMetadata?.['temporary-hit-points-max']) || sumTempHp,
+            'temporary-will': sumTempWill,
+            'temporary-will-max': Number(summary.fullMetadata?.['temporary-will-max']) || sumTempWill,
             rank: summary.rank || 'Starter',
-            'token-image-url': resolvedImg.url
+            'token-image-url': resolvedImg.url,
+            lastModified: summary.lastModified || Date.now()
         };
 
         if (summary.savedTokenItem && isImage(summary.savedTokenItem)) {
@@ -170,10 +178,10 @@ export async function spawnPokemonToMap(
             const existingMeta =
                 (parentItem.metadata?.[METADATA_ID] as Record<string, unknown>) ||
                 (parentItem.metadata?.['pokerole-pmd-extension/stats'] as Record<string, unknown>) ||
-                summary.fullMetadata ||
                 {};
             const fullSpawnMeta = {
                 ...existingMeta,
+                ...(summary.fullMetadata || {}),
                 ...metadataObj,
                 'token-image-url': resolvedImg.url
             };
@@ -319,8 +327,15 @@ export function buildActiveCharacterSummary(
         partySlots
     );
 
-    const entityId = matchedEntityId || (fullMetadata.entityId as string) || activeTokenId || crypto.randomUUID();
-    const existingSummary = matchedEntityId && existingSummaries ? existingSummaries[matchedEntityId] : undefined;
+    const entityId =
+        matchedEntityId ||
+        (fullMetadata.entityId as string) ||
+        (identity as { entityId?: string }).entityId ||
+        activeTokenId ||
+        'active-sheet';
+    const existingSummary = existingSummaries
+        ? existingSummaries[entityId] || (matchedEntityId ? existingSummaries[matchedEntityId] : undefined)
+        : undefined;
 
     let resolvedMapTokenId: string | undefined = undefined;
     let resolvedIsOnMap = false;
