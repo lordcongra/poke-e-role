@@ -324,7 +324,7 @@ export async function scanStandaloneCandidates(
                 will: willCurr,
                 maxWill: willMax,
                 type1: (meta.type1 as string) || 'Normal',
-                type2: meta.type2 as string | undefined,
+                type2: meta.type2 && String(meta.type2).toLowerCase() !== 'none' ? (meta.type2 as string) : undefined,
                 rank: (meta.rank as string) || 'Starter',
                 item: { id: char.id, name: char.name, layer: 'CHARACTER', metadata: meta } as unknown as Item,
                 metadata: {
@@ -366,7 +366,8 @@ export function refreshSummariesFromLocalStorage(summaries: Record<string, PcPok
             if (!meta || typeof meta !== 'object') continue;
 
             const newType1 = (meta.type1 as string) ?? summary.type1;
-            const newType2 = (meta.type2 as string) ?? summary.type2;
+            const rawType2 = (meta.type2 as string) ?? summary.type2;
+            const newType2 = rawType2 && rawType2.toLowerCase() !== 'none' ? rawType2 : undefined;
             const newName = (meta.nickname as string) || (meta.species as string) || summary.name;
             const newSpecies = (meta.species as string) || summary.species;
             const newRank = (meta.rank as string) || summary.rank;

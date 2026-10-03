@@ -93,7 +93,10 @@ export function useSceneCandidates({
                             will: willCurr,
                             maxWill: willMax,
                             type1: (meta.type1 as string) || 'Normal',
-                            type2: meta.type2 as string | undefined,
+                            type2:
+                                meta.type2 && String(meta.type2).toLowerCase() !== 'none'
+                                    ? (meta.type2 as string)
+                                    : undefined,
                             rank: (meta.rank as string) || 'Starter',
                             item,
                             metadata: meta,

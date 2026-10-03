@@ -125,7 +125,10 @@ export function usePcSheetSync({
             species: currentStore.identity.species || curr.species,
             rank: currentStore.identity.rank || curr.rank,
             type1: currentStore.identity.type1 || curr.type1,
-            type2: currentStore.identity.type2,
+            type2:
+                currentStore.identity.type2 && currentStore.identity.type2.toLowerCase() !== 'none'
+                    ? currentStore.identity.type2
+                    : undefined,
             hp: nextHp,
             maxHp: nextMaxHp,
             will: nextWill,
@@ -144,6 +147,7 @@ export function usePcSheetSync({
                     (it) => it.id === targetMapId || (Boolean(curr.entityId) && extractEntityId(it) === curr.entityId),
                     (items) => {
                         for (const item of items) {
+                            item.name = nextName;
                             if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
                             Object.assign(item.metadata[METADATA_ID] as Record<string, unknown>, nextMeta);
                             if (!item.metadata['pokerole-pmd-extension/stats']) {
@@ -265,34 +269,66 @@ export function usePcSheetSync({
         setActiveTokenId(targetTokenId);
         store.setTokenData(targetTokenId, store.role || 'PLAYER');
 
-        if (activeEntity.fullMetadata && Object.keys(activeEntity.fullMetadata).length > 0) {
-            store.loadFromOwlbear(activeEntity.fullMetadata);
-        } else {
-            // Fallback basic hydration via metadata
-            store.loadFromOwlbear({
-                name: activeEntity.name,
-                nickname: activeEntity.name,
-                species: activeEntity.species,
-                rank: activeEntity.rank || 'Starter',
-                type1: activeEntity.type1 || 'Normal',
-                type2: activeEntity.type2 || '',
-                'hp-curr': activeEntity.hp,
-                'hp-max-display': activeEntity.maxHp,
-                'will-curr': activeEntity.will,
-                'will-max-display': activeEntity.maxWill,
-                'token-image-url': activeEntity.tokenImageUrl || ''
-            });
-        }
+        let isCancelled = false;
+        const hydrateEntity = async () => {
+            let metaToLoad = activeEntity.fullMetadata;
 
-        if (activeEntity.tokenImageUrl) {
-            store.setIdentity('tokenImageUrl', activeEntity.tokenImageUrl);
-        }
+            // If local metadata is sparse or missing moves, check if live map token has full metadata
+            if (
+                (!metaToLoad || Object.keys(metaToLoad).length <= 5 || !metaToLoad['moves-data']) &&
+                activeEntity.isOnMap &&
+                activeEntity.mapTokenId &&
+                OBR.isAvailable
+            ) {
+                try {
+                    const items = await OBR.scene.items.getItems([activeEntity.mapTokenId]);
+                    if (items.length > 0) {
+                        const tMeta =
+                            ((items[0].metadata[METADATA_ID] ||
+                                items[0].metadata['pokerole-pmd-extension/stats']) as Record<string, unknown>) || {};
+                        if (tMeta && Object.keys(tMeta).length > 5) {
+                            metaToLoad = { ...(metaToLoad || {}), ...tMeta };
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[usePcSheetSync] Failed to fetch live token metadata for sheet hydration:', e);
+                }
+            }
 
-        setLoading(false);
+            if (isCancelled) return;
 
-        const timer = setTimeout(() => {
-            isHydratingRef.current = false;
-        }, 100);
+            if (metaToLoad && Object.keys(metaToLoad).length > 0) {
+                store.loadFromOwlbear(metaToLoad);
+            } else {
+                // Fallback basic hydration via metadata
+                store.loadFromOwlbear({
+                    name: activeEntity.name,
+                    nickname: activeEntity.name,
+                    species: activeEntity.species,
+                    rank: activeEntity.rank || 'Starter',
+                    type1: activeEntity.type1 || 'Normal',
+                    type2: activeEntity.type2 || '',
+                    'hp-curr': activeEntity.hp,
+                    'hp-max-display': activeEntity.maxHp,
+                    'will-curr': activeEntity.will,
+                    'will-max-display': activeEntity.maxWill,
+                    'token-image-url': activeEntity.tokenImageUrl || ''
+                });
+            }
+
+            if (activeEntity.tokenImageUrl) {
+                store.setIdentity('tokenImageUrl', activeEntity.tokenImageUrl);
+            }
+
+            setLoading(false);
+            setTimeout(() => {
+                if (!isCancelled) {
+                    isHydratingRef.current = false;
+                }
+            }, 100);
+        };
+
+        hydrateEntity();
 
         const unsub = useCharacterStore.subscribe((state, prevState) => {
             if (isHydratingRef.current || isUnmountingRef.current) return;
@@ -307,7 +343,7 @@ export function usePcSheetSync({
         activeUnsubRef.current = unsub;
 
         return () => {
-            clearTimeout(timer);
+            isCancelled = true;
             if (activeUnsubRef.current) {
                 activeUnsubRef.current();
                 activeUnsubRef.current = null;

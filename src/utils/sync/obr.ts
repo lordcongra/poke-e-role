@@ -21,7 +21,7 @@ export function setActiveTokenId(id: string | null) {
     if (activeTokenId !== id) {
         if (activeTokenId && Object.keys(pendingUpdates).length > 0) {
             const tokenToFlush = pendingTokenId || activeTokenId;
-            const updatesToPush = { ...pendingUpdates };
+            const updatesToPush = { ...pendingUpdates, lastModified: Date.now() };
             clearTimeout(saveTimeout);
             pendingUpdates = {};
             pendingTokenId = null;
@@ -48,7 +48,7 @@ export async function saveToOwlbear(updates: Record<string, unknown>) {
     // If there were pending updates from a different token, flush them first
     if (pendingTokenId && pendingTokenId !== currentToken && Object.keys(pendingUpdates).length > 0) {
         const oldToken = pendingTokenId;
-        const oldUpdates = { ...pendingUpdates };
+        const oldUpdates = { ...pendingUpdates, lastModified: Date.now() };
         clearTimeout(saveTimeout);
         pendingUpdates = {};
         pendingTokenId = null;
@@ -62,7 +62,7 @@ export async function saveToOwlbear(updates: Record<string, unknown>) {
     clearTimeout(saveTimeout);
 
     saveTimeout = setTimeout(async () => {
-        const updatesToPush = { ...pendingUpdates };
+        const updatesToPush = { ...pendingUpdates, lastModified: Date.now() };
         const tokenToSave = pendingTokenId || currentToken;
         pendingUpdates = {};
         pendingTokenId = null;

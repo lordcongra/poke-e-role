@@ -471,7 +471,10 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
         rank: loadedRank,
 
         type1: String(meta['type1'] || meta['Type1'] || ''),
-        type2: String(meta['type2'] || meta['Type2'] || ''),
+        type2: (() => {
+            const raw = String(meta['type2'] || meta['Type2'] || '').trim();
+            return raw.toLowerCase() === 'none' ? '' : raw;
+        })(),
 
         ability: loadedAbility,
         abilityActive:

@@ -8,7 +8,6 @@ import {
     syncHealthAndWill,
     type RestoreConfig,
     getLimit,
-    getBase,
     extractAbilities,
     parseLearnset,
     parseHeight,
@@ -20,7 +19,7 @@ import {
     handleTokenImageSwap,
     type TransformationDraft
 } from '../../utils/common/transformationLogic';
-import { getKnownAbility } from '../../data/abilities/knownAbilities';
+import { executeSpeciesChange, sanitizeType } from '../../utils/common/speciesChangeLogic';
 
 export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> = (set, get) => ({
     setMode: (newMode) =>
@@ -269,91 +268,13 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
     applySpeciesData: (data, wipeData = true, updateStats = true) => {
         set((state) => {
             if (!data || (!data.Name && !data.Moves)) return state;
-            const newStats = { ...state.stats };
-            const updatesToSave: Record<string, unknown> = {};
-            const newHealth = { ...state.health };
-            const newWill = { ...state.will };
 
-            if (updateStats) {
-                const applyStat = (statKey: CombatStat, dataBase: number, dataMax: number) => {
-                    newStats[statKey] = { ...newStats[statKey], base: dataBase, limit: dataMax };
-                    updatesToSave[`${statKey}-base`] = dataBase;
-                    updatesToSave[`${statKey}-limit`] = dataMax;
-                };
-
-                applyStat(CombatStat.STR, getBase(data, 'Strength', 2), getLimit(data, 'Strength'));
-                applyStat(CombatStat.DEX, getBase(data, 'Dexterity', 2), getLimit(data, 'Dexterity'));
-                applyStat(CombatStat.VIT, getBase(data, 'Vitality', 2), getLimit(data, 'Vitality'));
-                applyStat(CombatStat.SPE, getBase(data, 'Special', 2), getLimit(data, 'Special'));
-                applyStat(CombatStat.INS, getBase(data, 'Insight', 1), getLimit(data, 'Insight'));
-
-                const baseStats = data.BaseStats as Record<string, unknown> | undefined;
-                newHealth.hpBase = Number(data.BaseHP || (baseStats && baseStats.HP)) || 4;
-                updatesToSave['hp-base'] = newHealth.hpBase;
-            }
-
-            const abilities = extractAbilities(data);
-            const learnsetArray = parseLearnset(data.Moves);
-            const defaultAbility = abilities.length > 0 ? abilities[0] : '';
-            const cleanDefAbility = defaultAbility.replace(/\s*\(HA\)$/i, '').trim();
-            const known = getKnownAbility(cleanDefAbility, state.identity.rank);
-            const custom = state.roomCustomAbilities?.find(
-                (ca) => ca.name.trim().toLowerCase() === cleanDefAbility.toLowerCase()
+            const { nextState, updatesToSave } = executeSpeciesChange(
+                state,
+                data as Record<string, unknown>,
+                wipeData,
+                updateStats
             );
-            const initialTags =
-                known?.tags || (custom ? `${custom.effect || ''} ${custom.description || ''}`.trim() : '');
-
-            const newIdentity = {
-                ...state.identity,
-                species: String(data.Name || state.identity.species),
-                type1: String(data.Type1 || ''),
-                type2: String(data.Type2 || ''),
-                availableAbilities: abilities,
-                ability: defaultAbility,
-                abilityActive: known?.autoActive ?? true,
-                abilityBoostActive: false,
-                abilityBoostLevel: 0,
-                abilityTags: initialTags,
-                learnset: learnsetArray,
-                dexId: String(data.DexID || ''),
-                dexCategory: String(data.DexCategory || ''),
-                height: parseHeight(data.Height),
-                weight: parseWeight(data.Weight),
-                dexDescription: String(data.DexDescription || '')
-            };
-
-            updatesToSave['species'] = newIdentity.species;
-            updatesToSave['type1'] = newIdentity.type1;
-            updatesToSave['type2'] = newIdentity.type2;
-            updatesToSave['ability'] = newIdentity.ability;
-            updatesToSave['ability-active'] = newIdentity.abilityActive;
-            updatesToSave['ability-boost-active'] = false;
-            updatesToSave['ability-boost-level'] = 0;
-            updatesToSave['ability-tags'] = newIdentity.abilityTags;
-            updatesToSave['ability-list'] = abilities.join(',');
-            updatesToSave['dex-id'] = newIdentity.dexId;
-            updatesToSave['dex-category'] = newIdentity.dexCategory;
-            updatesToSave['height'] = newIdentity.height;
-            updatesToSave['weight'] = newIdentity.weight;
-            updatesToSave['dex-description'] = newIdentity.dexDescription;
-
-            syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave);
-
-            const newSkills = { ...state.skills };
-            let newMoves = [...state.moves];
-            let newChecks = [...state.skillChecks];
-
-            if (wipeData) {
-                Object.values(Skill).forEach((sk) => {
-                    newSkills[sk as Skill] = { ...newSkills[sk as Skill], base: 0, buff: 0 };
-                    updatesToSave[`${sk}-base`] = 0;
-                    updatesToSave[`${sk}-buff`] = 0;
-                });
-                newMoves = [];
-                updatesToSave['moves-data'] = '[]';
-                newChecks = [];
-                updatesToSave['skill-checks-data'] = '[]';
-            }
 
             try {
                 saveToOwlbear(updatesToSave);
@@ -361,15 +282,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 console.error('[MacroSlice] Failed to save applied species data to Owlbear.', e);
             }
 
-            return {
-                stats: newStats,
-                health: newHealth,
-                will: newWill,
-                identity: newIdentity,
-                skills: newSkills,
-                moves: newMoves,
-                skillChecks: newChecks
-            };
+            return nextState;
         });
 
         // NATIVE OBR SYNC SIDE EFFECT
@@ -411,7 +324,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
             // DO NOT override types if the user already has custom types set!
             const newType1 = state.identity.type1 || String(dataRecord.Type1 || '');
-            const newType2 = state.identity.type2 || String(dataRecord.Type2 || '');
+            const newType2 = sanitizeType(state.identity.type2 || String(dataRecord.Type2 || ''));
 
             const heightStr = state.identity.height || parseHeight(dataRecord.Height);
             const weightStr = state.identity.weight || parseWeight(dataRecord.Weight);

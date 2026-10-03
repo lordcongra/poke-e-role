@@ -12,8 +12,13 @@ let isReconciling = false;
  * When switching maps/scenes, tokens left on prior maps are NOT deleted.
  * Instead, they are recognized by entityId, re-linked to PC storage, and their
  * metadata (HP, Will, statuses, moves, inventory, stats) is synchronized with
- * the latest character sheet data.
+ * the latest character sheet data IF AND ONLY IF PC storage is genuinely newer.
  * Duplicate tokens on the SAME active scene are pruned.
+ *
+ * Gameplay Authority:
+ * - Only the GM may mutate, update, or delete scene tokens.
+ * - Non-GM players passively synchronize their local PC summaries from the live canvas tokens.
+ * - Live canvas tokens are the source of truth during gameplay (HP loss, Will usage, Temp HP, Statuses).
  */
 export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 'GM'): Promise<void> {
     if (!OBR.isAvailable || isReconciling) return;
@@ -24,6 +29,86 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
             return;
         }
 
+        // NON-GM PLAYERS: Passive local store synchronization only.
+        // Never call updateItems or deleteItems on the scene from background reconciliation.
+        if (role !== 'GM') {
+            const freshStore = useCharacterStore.getState();
+            const summaries = freshStore.pcData.pokemonSummaries || {};
+
+            for (const item of sceneItems) {
+                if (item.layer === 'CHARACTER' && !recentlySpawnedTokenIds.has(item.id)) {
+                    const entityId = extractEntityId(item);
+                    if (entityId && summaries[entityId]) {
+                        const sum = summaries[entityId];
+                        const tMeta =
+                            ((item.metadata[METADATA_ID] || item.metadata['pokerole-pmd-extension/stats']) as Record<
+                                string,
+                                unknown
+                            >) || {};
+
+                        const curHp =
+                            typeof tMeta['hp-curr'] === 'number'
+                                ? tMeta['hp-curr']
+                                : !isNaN(Number(tMeta['hp-curr'])) && tMeta['hp-curr'] !== ''
+                                  ? Number(tMeta['hp-curr'])
+                                  : sum.hp;
+                        const curMaxHp =
+                            typeof tMeta['hp-max-display'] === 'number'
+                                ? tMeta['hp-max-display']
+                                : !isNaN(Number(tMeta['hp-max-display'])) && tMeta['hp-max-display'] !== ''
+                                  ? Number(tMeta['hp-max-display'])
+                                  : sum.maxHp;
+                        const curWill =
+                            typeof tMeta['will-curr'] === 'number'
+                                ? tMeta['will-curr']
+                                : !isNaN(Number(tMeta['will-curr'])) && tMeta['will-curr'] !== ''
+                                  ? Number(tMeta['will-curr'])
+                                  : sum.will;
+                        const curMaxWill =
+                            typeof tMeta['will-max-display'] === 'number'
+                                ? tMeta['will-max-display']
+                                : !isNaN(Number(tMeta['will-max-display'])) && tMeta['will-max-display'] !== ''
+                                  ? Number(tMeta['will-max-display'])
+                                  : sum.maxWill;
+
+                        // If the live token on the canvas has moves and local summary was missing them, adopt them!
+                        const hasLiveMoves = Boolean(tMeta['moves-data'] && tMeta['moves-data'] !== '[]');
+                        const missingLocalMoves =
+                            !sum.fullMetadata?.['moves-data'] || sum.fullMetadata['moves-data'] === '[]';
+                        const mergedMeta =
+                            hasLiveMoves && missingLocalMoves
+                                ? { ...(sum.fullMetadata || {}), ...tMeta }
+                                : { ...tMeta, ...(sum.fullMetadata || {}) };
+
+                        if (
+                            sum.hp !== curHp ||
+                            sum.maxHp !== curMaxHp ||
+                            sum.will !== curWill ||
+                            sum.maxWill !== curMaxWill ||
+                            sum.mapTokenId !== item.id ||
+                            !sum.isOnMap ||
+                            (hasLiveMoves && missingLocalMoves)
+                        ) {
+                            freshStore.updatePokemonSummary({
+                                ...sum,
+                                hp: curHp,
+                                maxHp: curMaxHp,
+                                will: curWill,
+                                maxWill: curMaxWill,
+                                isOnMap: true,
+                                mapTokenId: item.id,
+                                savedTokenItem: item,
+                                fullMetadata: mergedMeta,
+                                lastModified: Number(tMeta.lastModified) || sum.lastModified || Date.now()
+                            });
+                        }
+                    }
+                }
+            }
+            return;
+        }
+
+        // GM AUTHORITY ONLY BELOW THIS POINT
         isReconciling = true;
         const freshStore = useCharacterStore.getState();
         const summaries = freshStore.pcData.pokemonSummaries || {};
@@ -51,7 +136,7 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
             const tr = trainers[entityId];
 
             if (!sum && !tr) {
-                // Wild encounter or external NPC not managed by player PC storage; do not delete or alter
+                // Wild encounter or external NPC not managed by GM PC storage; do not delete or alter
                 continue;
             }
 
@@ -87,30 +172,21 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                     ((primaryToken.metadata[METADATA_ID] ||
                         primaryToken.metadata['pokerole-pmd-extension/stats']) as Record<string, unknown>) || {};
 
-                const statusStr = JSON.stringify(sum.fullMetadata?.['status-list'] || '');
-                const tStatusStr = JSON.stringify(tMeta['status-list'] || '');
-                const movesStr = JSON.stringify(sum.fullMetadata?.['moves-data'] || '');
-                const tMovesStr = JSON.stringify(tMeta['moves-data'] || '');
+                const tokenLastMod = Number(tMeta.lastModified) || 0;
+                const sumLastMod = Number(sum.lastModified) || 0;
+                const hasValidFullMeta = Boolean(sum.fullMetadata && Object.keys(sum.fullMetadata).length > 5);
 
-                const sumTempHp = Number(sum.fullMetadata?.['temporary-hit-points']) || 0;
-                const tTempHp = Number(tMeta['temporary-hit-points']) || 0;
-                const sumTempWill = Number(sum.fullMetadata?.['temporary-will']) || 0;
-                const tTempWill = Number(tMeta['temporary-will']) || 0;
-
-                const isOutdated =
-                    (sum.lastModified && (!tMeta.lastModified || Number(tMeta.lastModified) < sum.lastModified)) ||
-                    tMeta['hp-curr'] !== sum.hp ||
-                    tMeta['hp-max-display'] !== sum.maxHp ||
-                    tMeta['will-curr'] !== sum.will ||
-                    tMeta['will-max-display'] !== sum.maxWill ||
-                    tTempHp !== sumTempHp ||
-                    tTempWill !== sumTempWill ||
-                    tMeta.name !== sum.name ||
-                    (sum.tokenImageUrl && tMeta['token-image-url'] !== sum.tokenImageUrl) ||
-                    statusStr !== tStatusStr ||
-                    movesStr !== tMovesStr;
+                // A token on the map is ONLY outdated if PC storage was explicitly modified
+                // AFTER the token (e.g. edited in PcSheetModal or cross-scene return from another map)
+                // AND PC storage has valid sheet data.
+                // Combat mutations (HP/Will decrease, Temp HP, Statuses) on the canvas token MUST NEVER
+                // be considered "outdated" or overwritten by stale PC values!
+                const isOutdated = tokenLastMod > 0 && sumLastMod > tokenLastMod && hasValidFullMeta;
 
                 if (isOutdated) {
+                    const sumTempHp = Number(sum.fullMetadata?.['temporary-hit-points']) || 0;
+                    const sumTempWill = Number(sum.fullMetadata?.['temporary-will']) || 0;
+
                     const nextMeta: Record<string, unknown> = {
                         ...tMeta,
                         ...(sum.fullMetadata || {}),
@@ -139,6 +215,52 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                             'pokerole-pmd-extension/stats': nextMeta
                         }
                     });
+                } else {
+                    // Token on the map is live or newer: update local GM PC storage to mirror live combat stats!
+                    const curHp =
+                        typeof tMeta['hp-curr'] === 'number'
+                            ? tMeta['hp-curr']
+                            : !isNaN(Number(tMeta['hp-curr'])) && tMeta['hp-curr'] !== ''
+                              ? Number(tMeta['hp-curr'])
+                              : sum.hp;
+                    const curMaxHp =
+                        typeof tMeta['hp-max-display'] === 'number'
+                            ? tMeta['hp-max-display']
+                            : !isNaN(Number(tMeta['hp-max-display'])) && tMeta['hp-max-display'] !== ''
+                              ? Number(tMeta['hp-max-display'])
+                              : sum.maxHp;
+                    const curWill =
+                        typeof tMeta['will-curr'] === 'number'
+                            ? tMeta['will-curr']
+                            : !isNaN(Number(tMeta['will-curr'])) && tMeta['will-curr'] !== ''
+                              ? Number(tMeta['will-curr'])
+                              : sum.will;
+                    const curMaxWill =
+                        typeof tMeta['will-max-display'] === 'number'
+                            ? tMeta['will-max-display']
+                            : !isNaN(Number(tMeta['will-max-display'])) && tMeta['will-max-display'] !== ''
+                              ? Number(tMeta['will-max-display'])
+                              : sum.maxWill;
+
+                    if (
+                        sum.hp !== curHp ||
+                        sum.maxHp !== curMaxHp ||
+                        sum.will !== curWill ||
+                        sum.maxWill !== curMaxWill ||
+                        sum.mapTokenId !== primaryToken.id
+                    ) {
+                        freshStore.updatePokemonSummary({
+                            ...sum,
+                            hp: curHp,
+                            maxHp: curMaxHp,
+                            will: curWill,
+                            maxWill: curMaxWill,
+                            mapTokenId: primaryToken.id,
+                            savedTokenItem: primaryToken,
+                            fullMetadata: { ...(sum.fullMetadata || {}), ...tMeta },
+                            lastModified: tokenLastMod || Date.now()
+                        });
+                    }
                 }
 
                 // Ensure the "Recall" button on the UI works for this token on this scene
@@ -150,7 +272,7 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                     });
                 }
             } else if (tr && tr.fullMetadata) {
-                // 4. Reconcile Trainer tokens with latest roster data
+                // Reconcile Trainer tokens with latest roster data
                 const tMeta =
                     ((primaryToken.metadata[METADATA_ID] ||
                         primaryToken.metadata['pokerole-pmd-extension/stats']) as Record<string, unknown>) || {};
@@ -181,13 +303,13 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
             }
         }
 
-        // 5. Delete intra-scene duplicates
+        // 5. Delete intra-scene duplicates & ghost tokens (GM only)
         if (duplicateIdsToDelete.length > 0) {
             const unique = Array.from(new Set(duplicateIdsToDelete));
             await OBR.scene.items.deleteItems(unique);
         }
 
-        // 6. Update outdated tokens on the scene & refresh their HUD graphics
+        // 6. Update genuinely outdated tokens on the scene & refresh their HUD graphics (GM only)
         if (tokensToUpdate.length > 0) {
             const updateMap = new Map(tokensToUpdate.map((t) => [t.id, t]));
             await OBR.scene.items.updateItems(

@@ -74,18 +74,20 @@ export function computeSheetFieldDiffs(existing: PcPokemonSummary, incoming: PcP
         });
     }
 
-    if ((existing.type2 || 'None') !== (incoming.type2 || 'None')) {
+    const eType2 = existing.type2 && existing.type2.toLowerCase() !== 'none' ? existing.type2.trim() : '';
+    const iType2 = incoming.type2 && incoming.type2.toLowerCase() !== 'none' ? incoming.type2.trim() : '';
+    if (eType2 !== iType2) {
         diffs.push({
             id: 'type2',
             category: 'identity',
             label: 'Secondary Type',
-            gmValue: existing.type2 || 'None',
-            playerValue: incoming.type2 || 'None',
+            gmValue: eType2 || 'None',
+            playerValue: iType2 || 'None',
             accepted: true
         });
     }
 
-    // 2. Health & Will pools
+    // 2. Health & Will pools (Max values only - current pools are volatile combat resources)
     if (existing.maxHp !== incoming.maxHp) {
         diffs.push({
             id: 'maxHp',
@@ -93,17 +95,6 @@ export function computeSheetFieldDiffs(existing: PcPokemonSummary, incoming: PcP
             label: 'Max HP',
             gmValue: existing.maxHp,
             playerValue: incoming.maxHp,
-            accepted: true
-        });
-    }
-
-    if (existing.hp !== incoming.hp) {
-        diffs.push({
-            id: 'hp',
-            category: 'stats',
-            label: 'Current HP',
-            gmValue: existing.hp,
-            playerValue: incoming.hp,
             accepted: true
         });
     }
@@ -119,30 +110,21 @@ export function computeSheetFieldDiffs(existing: PcPokemonSummary, incoming: PcP
         });
     }
 
-    if (existing.will !== incoming.will) {
-        diffs.push({
-            id: 'will',
-            category: 'stats',
-            label: 'Current Will',
-            gmValue: existing.will,
-            playerValue: incoming.will,
-            accepted: true
-        });
-    }
-
     // 3. Held Item
-    if ((existing.heldItem || 'None') !== (incoming.heldItem || 'None')) {
+    const eItem = existing.heldItem && existing.heldItem.toLowerCase() !== 'none' ? existing.heldItem.trim() : '';
+    const iItem = incoming.heldItem && incoming.heldItem.toLowerCase() !== 'none' ? incoming.heldItem.trim() : '';
+    if (eItem !== iItem) {
         diffs.push({
             id: 'heldItem',
             category: 'items',
             label: 'Held Item',
-            gmValue: existing.heldItem || 'None',
-            playerValue: incoming.heldItem || 'None',
+            gmValue: eItem || 'None',
+            playerValue: iItem || 'None',
             accepted: true
         });
     }
 
-    // 4. Base Attributes in fullMetadata
+    // 4. Base Attributes in fullMetadata (only compare if both GM and Player copies have the stat defined)
     const eMeta = existing.fullMetadata || {};
     const iMeta = incoming.fullMetadata || {};
 
@@ -155,9 +137,10 @@ export function computeSheetFieldDiffs(existing: PcPokemonSummary, incoming: PcP
     ];
 
     for (const stat of statsToCheck) {
-        const eVal = Number(eMeta[stat.key] ?? 1);
-        const iVal = Number(iMeta[stat.key] ?? 1);
-        if (eVal !== iVal) {
+        if (eMeta[stat.key] === undefined || iMeta[stat.key] === undefined) continue;
+        const eVal = Number(eMeta[stat.key]);
+        const iVal = Number(iMeta[stat.key]);
+        if (!isNaN(eVal) && !isNaN(iVal) && eVal !== iVal) {
             diffs.push({
                 id: `meta-${stat.key}`,
                 category: 'stats',
@@ -169,21 +152,24 @@ export function computeSheetFieldDiffs(existing: PcPokemonSummary, incoming: PcP
         }
     }
 
-    // 5. Moveset comparison
+    // 5. Moveset comparison (only compare if GM already had recorded moves to prevent false stubs)
     const eMoves = parseMoveNames(eMeta);
     const iMoves = parseMoveNames(iMeta);
-    const areMovesEqual =
-        eMoves.length === iMoves.length && eMoves.every((val, idx) => val.toLowerCase() === iMoves[idx].toLowerCase());
+    if (eMoves.length > 0 && iMoves.length > 0) {
+        const areMovesEqual =
+            eMoves.length === iMoves.length &&
+            eMoves.every((val, idx) => val.toLowerCase() === iMoves[idx].toLowerCase());
 
-    if (!areMovesEqual && (eMoves.length > 0 || iMoves.length > 0)) {
-        diffs.push({
-            id: 'moves',
-            category: 'moves',
-            label: 'Moveset',
-            gmValue: eMoves.join(', ') || 'None',
-            playerValue: iMoves.join(', ') || 'None',
-            accepted: true
-        });
+        if (!areMovesEqual) {
+            diffs.push({
+                id: 'moves',
+                category: 'moves',
+                label: 'Moveset',
+                gmValue: eMoves.join(', '),
+                playerValue: iMoves.join(', '),
+                accepted: true
+            });
+        }
     }
 
     return diffs;

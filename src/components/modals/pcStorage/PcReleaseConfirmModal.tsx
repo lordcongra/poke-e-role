@@ -54,7 +54,13 @@ export const PcReleaseConfirmModal: React.FC<PcReleaseConfirmModalProps> = ({
                             <span className="pc-release-modal__card-meta text-subtext">
                                 {pokemon.species} • {pokemon.rank || 'Starter'}
                                 {pokemon.type1
-                                    ? ` • ${pokemon.type1}${pokemon.type2 ? ` / ${pokemon.type2}` : ''}`
+                                    ? ` • ${pokemon.type1}${
+                                          pokemon.type2 &&
+                                          pokemon.type2.toLowerCase() !== 'none' &&
+                                          pokemon.type2.trim() !== ''
+                                              ? ` / ${pokemon.type2}`
+                                              : ''
+                                      }`
                                     : ''}
                             </span>
                             <span className="pc-release-modal__card-meta text-subtext">

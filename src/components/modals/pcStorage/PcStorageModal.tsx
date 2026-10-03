@@ -112,6 +112,12 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         };
     }, []);
 
+    useEffect(() => {
+        if (pendingReview && !isReviewModalOpen) {
+            useCharacterStore.setState({ isReviewModalOpen: true });
+        }
+    }, [pendingReview, isReviewModalOpen]);
+
     const handleModalClose = () => {
         if (OBR.isAvailable && role !== 'GM') {
             broadcastPlayerPc();

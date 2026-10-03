@@ -697,7 +697,12 @@ export function buildTokenMetadataFromBuild(
         species: build.species,
         rank: rank,
         type1: String(pd.Type1 || pd.type1 || 'Normal'),
-        type2: String(pd.Type2 || pd.type2 || 'None'),
+        type2:
+            pd.Type2 && String(pd.Type2).toLowerCase() !== 'none'
+                ? String(pd.Type2)
+                : pd.type2 && String(pd.type2).toLowerCase() !== 'none'
+                  ? String(pd.type2)
+                  : '',
         ability: abilityName,
         'ability-list': abilities.join(','),
         nature: build.nature || '-- Select --',

@@ -120,6 +120,7 @@ export interface PcSlice {
     updatePokemonSummary: (summary: PcPokemonSummary) => void;
     updateTrainerProfile: (trainerId: string, updates: Partial<TrainerRoster>) => void;
     deletePokemonFromPc: (entityId: string, options?: { wasUnlinked?: boolean; pokemonName?: string }) => void;
+    setPendingReview: (payload: SheetReviewPayload | null) => void;
     openReviewModal: (payload: SheetReviewPayload) => void;
     closeReviewModal: () => void;
     applyReviewDiffs: (entityId: string, diffs: SheetFieldDiff[]) => void;

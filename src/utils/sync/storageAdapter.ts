@@ -184,10 +184,24 @@ export const storageAdapter = {
         } else {
             try {
                 await waitForObr();
+                const now = Date.now();
+                const safeUpdates = {
+                    ...updates,
+                    lastModified: updates.lastModified || now
+                };
                 await OBR.scene.items.updateItems([id], (items) => {
                     for (const item of items) {
                         if (!item.metadata[metadataId]) item.metadata[metadataId] = {};
-                        Object.assign(item.metadata[metadataId] as Record<string, unknown>, updates);
+                        Object.assign(item.metadata[metadataId] as Record<string, unknown>, safeUpdates);
+                        if (metadataId !== 'pokerole-pmd-extension/stats') {
+                            if (!item.metadata['pokerole-pmd-extension/stats']) {
+                                item.metadata['pokerole-pmd-extension/stats'] = {};
+                            }
+                            Object.assign(
+                                item.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>,
+                                safeUpdates
+                            );
+                        }
                     }
                 });
             } catch (error) {

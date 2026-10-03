@@ -188,7 +188,10 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
             for (const s of payload.summaries || []) {
                 if (s && s.entityId) {
                     const existing = pcData.pokemonSummaries[s.entityId];
-                    if (existing) {
+                    const hasExistingMetadata =
+                        existing && existing.fullMetadata && Object.keys(existing.fullMetadata).length >= 5;
+
+                    if (hasExistingMetadata) {
                         const diffs = computeSheetFieldDiffs(existing, s);
                         if (diffs.length > 0 && !diffFoundForReview) {
                             diffFoundForReview = { summary: s, diffs };
@@ -216,15 +219,23 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
             await savePcStorage(nextData);
 
             if (diffFoundForReview) {
-                state.openReviewModal({
+                const isPcOpen = useCharacterStore.getState().isPcModalOpen;
+                const reviewPayload = {
                     entityId: diffFoundForReview.summary.entityId,
                     pokemonName: diffFoundForReview.summary.name || diffFoundForReview.summary.species,
                     playerName: payload.trainer.name,
                     diffs: diffFoundForReview.diffs,
                     incomingSummary: diffFoundForReview.summary
-                });
+                };
+
+                if (isPcOpen) {
+                    state.openReviewModal(reviewPayload);
+                } else {
+                    state.setPendingReview(reviewPayload);
+                }
+
                 OBR.notification.show(
-                    `Sheet changes detected for ${diffFoundForReview.summary.name || diffFoundForReview.summary.species}!`,
+                    `Sheet changes detected for ${diffFoundForReview.summary.name || diffFoundForReview.summary.species} (${payload.trainer.name})!`,
                     'INFO'
                 );
             }

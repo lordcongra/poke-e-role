@@ -188,11 +188,17 @@ export async function scanSceneBackupTokens(): Promise<Item[]> {
         const myPlayerId = await OBR.player.getId().catch(() => undefined);
         return items.filter((it) => {
             if (it.layer !== 'CHARACTER') return false;
-            // Security: Locked tokens and tokens claimed by other players are excluded for non-GMs
-            if (role !== 'GM' && it.locked) return false;
-            const claim = it.metadata?.['pokerole-pmd-extension/claimed-by'] as { playerId?: string } | undefined;
-            if (role !== 'GM' && claim?.playerId && myPlayerId && claim.playerId !== myPlayerId) {
-                return false;
+            // Security: Locked tokens, tokens claimed by others, or unclaimed GM tokens are excluded for non-GMs
+            if (role !== 'GM') {
+                if (it.locked) return false;
+                const claim = it.metadata?.['pokerole-pmd-extension/claimed-by'] as { playerId?: string } | undefined;
+                if (claim?.playerId) {
+                    if (myPlayerId && claim.playerId !== myPlayerId) return false;
+                } else {
+                    // Unclaimed token: player must be the creator of the token to import it
+                    if (myPlayerId && it.createdUserId !== myPlayerId) return false;
+                    if (!it.createdUserId && !myPlayerId) return false;
+                }
             }
             const meta = (it.metadata?.[METADATA_ID] || it.metadata?.['pokerole-pmd-extension/stats']) as
                 | Record<string, unknown>

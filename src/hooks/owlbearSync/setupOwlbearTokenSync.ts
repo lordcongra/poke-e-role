@@ -293,7 +293,7 @@ export async function setupOwlbearTokenSync(params: {
                     }
 
                     // Sync live Pokémon stats and metadata to PC storage if this token belongs to PC
-                    const entityId = meta.entityId as string | undefined;
+                    const entityId = extractEntityId(item);
                     if (entityId) {
                         const pcSummary = storeState.pcData.pokemonSummaries[entityId];
                         if (pcSummary && pcSummary.isOnMap) {
@@ -336,6 +336,15 @@ export async function setupOwlbearTokenSync(params: {
                             const sumMovesStr = JSON.stringify(pcSummary.fullMetadata?.['moves-data'] || '');
                             const liveMovesStr = JSON.stringify(meta['moves-data'] || '');
 
+                            const hasLiveMoves = Boolean(meta['moves-data'] && meta['moves-data'] !== '[]');
+                            const missingLocalMoves =
+                                !pcSummary.fullMetadata?.['moves-data'] ||
+                                pcSummary.fullMetadata['moves-data'] === '[]';
+                            const nextMeta =
+                                hasLiveMoves && missingLocalMoves
+                                    ? { ...(pcSummary.fullMetadata || {}), ...meta }
+                                    : { ...meta, ...(pcSummary.fullMetadata || {}) };
+
                             if (
                                 curHp !== pcSummary.hp ||
                                 mHp !== pcSummary.maxHp ||
@@ -347,7 +356,8 @@ export async function setupOwlbearTokenSync(params: {
                                 sumMovesStr !== liveMovesStr ||
                                 pokeName !== pcSummary.name ||
                                 pcSummary.mapTokenId !== item.id ||
-                                scaleChanged
+                                scaleChanged ||
+                                (hasLiveMoves && missingLocalMoves)
                             ) {
                                 storeState.updatePokemonSummary({
                                     ...pcSummary,
@@ -358,8 +368,8 @@ export async function setupOwlbearTokenSync(params: {
                                     name: pokeName,
                                     mapTokenId: item.id,
                                     savedTokenItem: item,
-                                    fullMetadata: { ...(pcSummary.fullMetadata || {}), ...meta },
-                                    lastModified: Date.now()
+                                    fullMetadata: nextMeta,
+                                    lastModified: Number(meta.lastModified) || pcSummary.lastModified || Date.now()
                                 });
                             }
                         }

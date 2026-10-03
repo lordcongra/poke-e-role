@@ -4,6 +4,7 @@ import type { PcBox, CampaignProfile, PcPokemonSummary, PcStorageData } from '..
 import { sanitizeImageUrl } from '../generators/trainerTokenSpawner';
 import { downloadBoxFromObrCloud } from './pcStorageAdapter';
 import { getTrainerBoxes } from './pcStateMutations';
+import { isEntityLockedByGm } from './pcCandidateMatching';
 
 export interface RestoreTokensResult {
     success: boolean;
@@ -31,6 +32,9 @@ export async function importBoxCloud(campaign: CampaignProfile): Promise<PcPokem
             const hpMax = Number(meta['hp-max-display']) || (typeof meta.hpMax === 'number' ? meta.hpMax : 10);
             const willCurr = Number(meta['will-curr']) || (typeof meta.will === 'number' ? meta.will : 5);
             const willMax = Number(meta['will-max-display']) || (typeof meta.willMax === 'number' ? meta.willMax : 5);
+            const rawType2 = meta.type2 as string | undefined;
+            const cleanType2 =
+                rawType2 && rawType2.toLowerCase() !== 'none' && rawType2.trim() !== '' ? rawType2 : undefined;
 
             importedSummaries.push({
                 entityId,
@@ -38,7 +42,7 @@ export async function importBoxCloud(campaign: CampaignProfile): Promise<PcPokem
                 species: (meta.species as string) || item.name || 'Unknown',
                 rank: (meta.rank as string) || 'Starter',
                 type1: (meta.type1 as string) || 'Normal',
-                type2: meta.type2 as string | undefined,
+                type2: cleanType2,
                 hp: hpCurr,
                 maxHp: hpMax,
                 will: willCurr,
@@ -115,16 +119,24 @@ export function restoreTokensIntoPcStorage(
     let partyCount = 0;
     let boxCount = 0;
     let trainerRestored = false;
-
     for (const item of items) {
+        const meta = (item.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
+
         // Security check: Ignore locked tokens or tokens claimed by other players for non-GMs
         if (role !== 'GM') {
-            if (item.locked) continue;
+            if (isEntityLockedByGm(item, meta)) continue;
             const claimMeta = item.metadata?.['pokerole-pmd-extension/claimed-by'] as { playerId?: string } | undefined;
-            if (claimMeta?.playerId && myPlayerId && claimMeta.playerId !== myPlayerId) continue;
+            if (claimMeta?.playerId) {
+                if (myPlayerId && claimMeta.playerId !== myPlayerId) continue;
+            } else {
+                // If unclaimed: non-GM players can only import tokens created by themselves or tokens already in their PC
+                const isCreatedByMe = Boolean(myPlayerId && item.createdUserId === myPlayerId);
+                const isAlreadyInMyPc = Boolean(
+                    meta.entityId && currentPcData.pokemonSummaries[meta.entityId as string]
+                );
+                if (!isCreatedByMe && !isAlreadyInMyPc) continue;
+            }
         }
-
-        const meta = (item.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
 
         // 1. Trainer Token Detection - NEVER deposit into a Pokémon Box!
         const isTrainer =
@@ -136,7 +148,7 @@ export function restoreTokensIntoPcStorage(
         if (isTrainer) {
             if (trainer) {
                 if (role !== 'GM') {
-                    if (item.locked) continue;
+                    if (isEntityLockedByGm(item, meta)) continue;
                     const claimMeta = item.metadata?.['pokerole-pmd-extension/claimed-by'] as
                         | { playerId?: string }
                         | undefined;
@@ -157,6 +169,9 @@ export function restoreTokensIntoPcStorage(
         const willCurr = Number(meta['will-curr']) || (typeof meta.will === 'number' ? meta.will : 5);
         const willMax = Number(meta['will-max-display']) || (typeof meta.willMax === 'number' ? meta.willMax : 5);
         const tokenImg = (meta['token-image-url'] as string) || (item as { image?: { url?: string } }).image?.url;
+        const rawType2 = meta.type2 as string | undefined;
+        const cleanType2 =
+            rawType2 && rawType2.toLowerCase() !== 'none' && rawType2.trim() !== '' ? rawType2 : undefined;
 
         const summary: PcPokemonSummary = {
             entityId,
@@ -164,7 +179,7 @@ export function restoreTokensIntoPcStorage(
             species: (meta.species as string) || item.name || 'Unknown',
             rank: (meta.rank as string) || 'Starter',
             type1: (meta.type1 as string) || 'Normal',
-            type2: meta.type2 as string | undefined,
+            type2: cleanType2,
             hp: hpCurr,
             maxHp: hpMax,
             will: willCurr,

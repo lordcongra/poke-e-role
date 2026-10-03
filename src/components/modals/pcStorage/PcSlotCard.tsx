@@ -47,6 +47,9 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
               ? 'var(--hp-yellow, #eab308)'
               : 'var(--hp-red, #ef4444)';
 
+    const hasType2 = Boolean(summary.type2 && summary.type2.toLowerCase() !== 'none' && summary.type2.trim() !== '');
+    const type1Display = summary.type1 && summary.type1.toLowerCase() !== 'none' ? summary.type1 : 'Normal';
+
     return (
         <div
             className={`pc-slot-card ${isSelected ? 'pc-slot-card--selected' : ''} ${isPartySlot ? 'pc-slot-card--party' : 'pc-slot-card--box'}`}
@@ -114,11 +117,11 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
                             <span className="pc-slot-card__species text-subtext">{summary.species}</span>
                             <div className="pc-slot-card__types">
                                 <span
-                                    className={`pc-slot-card__type-pill pc-slot-card__type--${summary.type1?.toLowerCase()}`}
+                                    className={`pc-slot-card__type-pill pc-slot-card__type--${type1Display.toLowerCase()}`}
                                 >
-                                    {summary.type1 || 'Normal'}
+                                    {type1Display}
                                 </span>
-                                {summary.type2 && (
+                                {hasType2 && (
                                     <span
                                         className={`pc-slot-card__type-pill pc-slot-card__type--${summary.type2?.toLowerCase()}`}
                                     >
@@ -145,14 +148,14 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
 
                         <div className="pc-slot-card__meta-row pc-slot-card__meta-row--box">
                             <div
-                                className={`pc-slot-card__types pc-slot-card__types--box ${summary.type2 ? 'pc-slot-card__types--dual' : ''}`}
+                                className={`pc-slot-card__types pc-slot-card__types--box ${hasType2 ? 'pc-slot-card__types--dual' : ''}`}
                             >
                                 <span
-                                    className={`pc-slot-card__type-pill pc-slot-card__type--${summary.type1?.toLowerCase()}`}
+                                    className={`pc-slot-card__type-pill pc-slot-card__type--${type1Display.toLowerCase()}`}
                                 >
-                                    {summary.type1 || 'Normal'}
+                                    {type1Display}
                                 </span>
-                                {summary.type2 && (
+                                {hasType2 && (
                                     <span
                                         className={`pc-slot-card__type-pill pc-slot-card__type--${summary.type2?.toLowerCase()}`}
                                     >

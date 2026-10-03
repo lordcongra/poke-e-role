@@ -514,8 +514,12 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
         }
     },
 
+    setPendingReview: (payload: SheetReviewPayload | null) => {
+        set({ pendingReview: payload });
+    },
+
     openReviewModal: (payload: SheetReviewPayload) => {
-        set({ pendingReview: payload, isReviewModalOpen: true, isPcModalOpen: true });
+        set({ pendingReview: payload, isReviewModalOpen: true });
     },
 
     closeReviewModal: () => {
