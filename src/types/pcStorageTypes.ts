@@ -60,6 +60,8 @@ export interface CampaignProfile {
     boxes: PcBox[];
     teamParty?: (string | null)[]; // Active Team party for PMD / no-trainer campaigns
     lastSynced?: number;
+    isPrivate?: boolean;
+    isRoomActive?: boolean;
 }
 
 export interface PcStorageData {
@@ -96,7 +98,8 @@ export interface PcSlice {
     addTrainer: (name: string) => void;
     deleteTrainer: (trainerId: string, options?: { deletePc?: boolean; deleteBelt?: boolean }) => boolean;
     switchCampaign: (campaignId: string) => void;
-    addCampaign: (name: string) => void;
+    addCampaign: (name: string, options?: { isPrivate?: boolean; isRoomActive?: boolean }) => void;
+    editCampaign: (campaignId: string, updates: { name?: string; isPrivate?: boolean; isRoomActive?: boolean }) => void;
     deleteCampaign: (campaignId: string) => boolean;
     updatePokemonSummary: (summary: PcPokemonSummary) => void;
     updateTrainerProfile: (trainerId: string, updates: Partial<TrainerRoster>) => void;

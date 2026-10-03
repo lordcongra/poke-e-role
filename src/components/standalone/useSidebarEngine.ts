@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { storageAdapter, markDataChanged, hasUnbackedData, BACKUP_STATUS_EVENT } from '../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { setActiveTokenId } from '../../utils/sync/obr';
+import { hydrateActiveSheet } from '../../utils/sync/unifiedSheetHydration';
 import { fetchPokemonData } from '../../utils/api/api';
 import { imageManager } from '../../utils/graphics/imageManager';
 import { useSidebarTouchDrag, type TouchDragOverInfo } from './useSidebarTouchDrag';
@@ -186,10 +187,14 @@ export function useSidebarEngine() {
     }, []);
 
     const handleSelectCharacter = useCallback(async (id: string, meta: Record<string, unknown>) => {
-        setActiveTokenId(id);
+        await hydrateActiveSheet({
+            targetId: id,
+            sourceMeta: meta,
+            overrideRole: 'GM',
+            applyTheme: true
+        });
+
         const store = useCharacterStore.getState();
-        store.setTokenData(id, 'GM');
-        store.loadFromOwlbear(meta);
 
         // Harvest any item artwork from selected character into catalog
         const rawInv = meta['inv-data'];

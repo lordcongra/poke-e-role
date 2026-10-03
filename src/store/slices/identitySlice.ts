@@ -295,6 +295,8 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         hpLocked: true,
         willLocked: true,
         gmDemoMode: false,
+        activeRoomCampaignName: undefined,
+        activeRoomCampaignId: undefined,
 
         // Apply Local Settings
         initiativeTrackerPreset: initialInitSettings.preset,

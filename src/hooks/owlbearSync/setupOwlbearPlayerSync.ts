@@ -1,11 +1,10 @@
 import OBR from '@owlbear-rodeo/sdk';
-import type { Image } from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { fetchPokemonData, fetchMoveData } from '../../utils/api/api';
-import { saveToOwlbear, setActiveTokenId, getIsPcSheetActive } from '../../utils/sync/obr';
+import { fetchMoveData } from '../../utils/api/api';
+import { saveToOwlbear, getIsPcSheetActive } from '../../utils/sync/obr';
 import { harvestTokensItemArt } from '../../utils/graphics/itemArtCatalog';
 import { METADATA_ID } from './owlbearSyncConstants';
-import { renderTokenGraphicsForMeta, extractEntityId } from './setupOwlbearTokenSync';
+import { hydrateActiveSheet } from '../../utils/sync/unifiedSheetHydration';
 
 export interface OwlbearPlayerSyncResult {
     loadTokenAndLearnset: (targetTokenId: string, overrideRole?: 'PLAYER' | 'GM') => Promise<void>;
@@ -47,26 +46,19 @@ export async function setupOwlbearPlayerSync(params: { role: 'PLAYER' | 'GM' }):
                     }
                 }
                 const store = useCharacterStore.getState();
-                setActiveTokenId(targetTokenId);
-                store.setTokenData(targetTokenId, currentRole);
                 const meta = rawMeta as Record<string, unknown> | undefined;
 
                 if (meta) {
                     try {
-                        const entityId = extractEntityId(tokenItem);
-                        const existingSum = entityId ? store.pcData.pokemonSummaries[entityId] : undefined;
-                        const tMod = Number(meta.lastModified) || 0;
-                        const pMod = Number(existingSum?.lastModified) || 0;
-
-                        if (existingSum && existingSum.fullMetadata && pMod > tMod) {
-                            store.loadFromOwlbear(existingSum.fullMetadata);
-                        } else {
-                            store.loadFromOwlbear(meta);
-                        }
-                        // Self-healing: ensure graphics are rendered for the selected token
-                        renderTokenGraphicsForMeta(tokenItem, meta, currentRole, false).catch((err) =>
-                            console.warn('[SyncEngine] Failed to render graphics on token selection:', err)
-                        );
+                        await hydrateActiveSheet({
+                            targetId: targetTokenId,
+                            overrideRole: currentRole,
+                            sourceMeta: meta,
+                            tokenItem,
+                            saveIfNewer: true,
+                            applyTheme: true,
+                            fetchSpecies: true
+                        });
                     } catch (e) {
                         console.error(
                             '[SyncEngine] CRITICAL: Corrupted token metadata detected. Resetting sheet to protect engine.',
@@ -76,16 +68,8 @@ export async function setupOwlbearPlayerSync(params: { role: 'PLAYER' | 'GM' }):
                             OBR.notification.show('Corrupted character data on token! Please re-import.', 'ERROR');
                         }
                     }
-                }
 
-                const imgItem = tokenItem as Image;
-                if (imgItem.image?.url) {
-                    store.setIdentity('tokenImageUrl', imgItem.image.url);
-                } else if (!meta || (!meta['token-image-url'] && !meta['tokenImageUrl'])) {
-                    store.setIdentity('tokenImageUrl', null);
-                }
-
-                if (meta) {
+                    // Legacy v2 token move migration (GM only)
                     try {
                         const isOldToken = meta['v2-migrated'] !== true;
                         const migrationTokenId = targetTokenId;
@@ -108,24 +92,8 @@ export async function setupOwlbearPlayerSync(params: { role: 'PLAYER' | 'GM' }):
                                 saveToOwlbear({ 'v2-migrated': true });
                             }
                         }
-
-                        if (meta['species']) {
-                            fetchPokemonData(String(meta['species']))
-                                .then((data) => {
-                                    if (data && useCharacterStore.getState().tokenId === migrationTokenId) {
-                                        useCharacterStore
-                                            .getState()
-                                            .refreshSpeciesData(data as Record<string, unknown>, false);
-                                    }
-                                })
-                                .catch((e) =>
-                                    console.warn('[SyncEngine] Failed to fetch species data on token load:', e)
-                                );
-                        } else {
-                            store.applyLearnset({ Moves: [] });
-                        }
                     } catch (e) {
-                        console.error('[SyncEngine] Error during post-load fetches:', e);
+                        console.error('[SyncEngine] Error during legacy v2 migration:', e);
                     }
                 } else {
                     store.loadFromOwlbear({});

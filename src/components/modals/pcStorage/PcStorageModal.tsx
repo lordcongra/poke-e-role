@@ -4,7 +4,6 @@ import { useCharacterStore } from '../../../store/useCharacterStore';
 import { PcStorageHeader } from './PcStorageHeader';
 import { PcPartyDock } from './PcPartyDock';
 import { PcBoxGrid } from './PcBoxGrid';
-import { PcSlotContextMenu } from './PcSlotContextMenu';
 import { PcBackupWarningBanner } from './PcBackupWarningBanner';
 import { PcStorageSubModals } from './PcStorageSubModals';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
@@ -59,6 +58,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         deleteTrainer,
         switchCampaign,
         addCampaign,
+        editCampaign,
         deleteCampaign,
         updatePokemonSummary,
         updateTrainerProfile,
@@ -334,7 +334,11 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         activeCampaignId={pcData.activeCampaignId}
                         onSwitchCampaign={switchCampaign}
                         onAddCampaign={addCampaign}
+                        onEditCampaign={editCampaign}
                         onDeleteCampaign={deleteCampaign}
+                        isGm={role === 'GM'}
+                        activeRoomCampaignId={identity.activeRoomCampaignId}
+                        activeRoomCampaignName={identity.activeRoomCampaignName}
                         activeTrainer={trainer}
                         trainers={campaign.trainers}
                         onSwitchTrainer={switchTrainer}
@@ -437,37 +441,6 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                             onDragEnd={() => setDragSource(null)}
                         />
                     </div>
-
-                    {contextMenu && contextSummary && (
-                        <PcSlotContextMenu
-                            x={contextMenu.x}
-                            y={contextMenu.y}
-                            isPartySlot={contextMenu.isPartySlot}
-                            isOnMap={!!contextSummary.isOnMap}
-                            isLocked={role !== 'GM' && isEntityLockedByGm(contextSummary)}
-                            pokemonName={contextSummary.name || contextSummary.species}
-                            onClose={() => setContextMenu(null)}
-                            onOpenSheet={() => handleOpenCharacterSheet(contextMenu.entityId)}
-                            onTogglePartyBox={() => {
-                                if (contextMenu.isPartySlot) {
-                                    depositPokemonToBox(contextMenu.entityId, activeBoxIndex);
-                                } else {
-                                    movePokemonToParty(contextMenu.entityId);
-                                }
-                            }}
-                            onToggleMap={() => {
-                                if (contextSummary.isOnMap) {
-                                    handleRecall(contextMenu.entityId);
-                                } else {
-                                    handleSendOut(contextMenu.entityId);
-                                }
-                            }}
-                            onRelinkArtwork={() => handleRelinkArtwork(contextMenu.entityId)}
-                            onClone={() => handleClonePokemon(contextMenu.entityId)}
-                            onUnlink={() => handleUnlinkPokemon(contextMenu.entityId)}
-                            onRelease={() => handleReleasePokemon(contextMenu.entityId)}
-                        />
-                    )}
                 </div>
             </div>
 
@@ -501,6 +474,19 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                 handleUnlinkPokemon={handleUnlinkPokemon}
                 isGuideModalOpen={isGuideModalOpen}
                 setIsGuideModalOpen={setIsGuideModalOpen}
+                contextMenu={contextMenu}
+                contextSummary={contextSummary}
+                role={role}
+                activeBoxIndex={activeBoxIndex}
+                onCloseContextMenu={() => setContextMenu(null)}
+                onOpenCharacterSheet={handleOpenCharacterSheet}
+                depositPokemonToBox={depositPokemonToBox}
+                movePokemonToParty={movePokemonToParty}
+                handleRecall={handleRecall}
+                handleSendOut={handleSendOut}
+                handleRelinkArtwork={handleRelinkArtwork}
+                handleClonePokemon={handleClonePokemon}
+                handleReleasePokemon={handleReleasePokemon}
             />
         </>
     );

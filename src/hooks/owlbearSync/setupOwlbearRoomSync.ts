@@ -11,6 +11,7 @@ import type {
 } from '../../store/storeTypes';
 import { SCENE_SETTINGS_META_ID } from '../../utils/sync/obr';
 import { ROOM_META_ID, mapRoomSettings } from './owlbearSyncConstants';
+import { handlePlayerRoomCampaignSync } from '../../utils/pc/pcRoomSyncOps';
 
 export interface OwlbearRoomSyncResult {
     syncSceneSettings: () => Promise<void>;
@@ -96,6 +97,9 @@ export async function setupOwlbearRoomSync(
 
             const mapped = mapRoomSettings(data);
             store.applyRoomSettings(mapped);
+            if (role !== 'GM' && mapped.activeRoomCampaignName) {
+                handlePlayerRoomCampaignSync(mapped.activeRoomCampaignName, mapped.activeRoomCampaignId);
+            }
             if (mapped.roomDefaultScale !== undefined) {
                 lastSyncedRoomScale = mapped.roomDefaultScale;
             }
@@ -136,7 +140,11 @@ export async function setupOwlbearRoomSync(
             if (meta[ROOM_META_ID]) {
                 const data = meta[ROOM_META_ID] as Record<string, unknown>;
                 const store = useCharacterStore.getState();
-                store.applyRoomSettings(mapRoomSettings(data));
+                const mapped = mapRoomSettings(data);
+                store.applyRoomSettings(mapped);
+                if (role !== 'GM' && mapped.activeRoomCampaignName) {
+                    handlePlayerRoomCampaignSync(mapped.activeRoomCampaignName, mapped.activeRoomCampaignId);
+                }
 
                 if (data.gmOnlyTrackers !== undefined) {
                     const incomingGmTrackers = Boolean(data.gmOnlyTrackers);

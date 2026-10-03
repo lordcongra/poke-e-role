@@ -4,6 +4,8 @@ import type { CampaignProfile, TrainerRoster, PcBox } from '../../../types/pcSto
 import { hasUnbackedData, storageAdapter, BACKUP_STATUS_EVENT } from '../../../utils/sync/storageAdapter';
 import { PcPromptModal } from './PcPromptModal';
 import { PcDeleteConfirmModal } from './PcDeleteConfirmModal';
+import { CampaignEditModal } from './CampaignEditModal';
+import { isCampaignRoomActive } from '../../../utils/pc/pcCampaignTrainerOps';
 import './PcStorageHeader.css';
 import {
     ChevronLeft,
@@ -17,6 +19,8 @@ import {
     Download,
     Users,
     FolderKanban,
+    Lock,
+    Globe,
     X,
     Check,
     HelpCircle,
@@ -27,8 +31,15 @@ interface PcStorageHeaderProps {
     campaigns: Record<string, CampaignProfile>;
     activeCampaignId: string;
     onSwitchCampaign: (id: string) => void;
-    onAddCampaign: (name: string) => void;
+    onAddCampaign: (name: string, options?: { isPrivate?: boolean; isRoomActive?: boolean }) => void;
+    onEditCampaign?: (
+        campaignId: string,
+        updates: { name?: string; isPrivate?: boolean; isRoomActive?: boolean }
+    ) => void;
     onDeleteCampaign?: (id: string) => void;
+    isGm?: boolean;
+    activeRoomCampaignId?: string;
+    activeRoomCampaignName?: string;
     activeTrainer?: TrainerRoster;
     trainers: Record<string, TrainerRoster>;
     onSwitchTrainer: (id: string) => void;
@@ -52,7 +63,11 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
     activeCampaignId,
     onSwitchCampaign,
     onAddCampaign,
+    onEditCampaign,
     onDeleteCampaign,
+    isGm,
+    activeRoomCampaignId,
+    activeRoomCampaignName,
     activeTrainer,
     trainers,
     onSwitchTrainer,
@@ -103,6 +118,10 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
         description: string;
         placeholder: string;
     } | null>(null);
+    const [campaignModalMode, setCampaignModalMode] = useState<'create' | 'edit' | null>(null);
+
+    const activeCampaign = campaigns[activeCampaignId];
+    const isActiveRoom = isCampaignRoomActive(activeCampaign, activeRoomCampaignId, activeRoomCampaignName);
 
     const currentBox = boxes[activeBoxIndex] || boxes[0];
     const canGoPrev = activeBoxIndex > 0;
@@ -142,43 +161,53 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                             value={activeCampaignId}
                             onChange={(e) => onSwitchCampaign(e.target.value)}
                         >
-                            {Object.values(campaigns).map((c) => (
-                                <option key={c.id} value={c.id}>
-                                    {c.name}
-                                </option>
-                            ))}
+                            {Object.values(campaigns).map((c) => {
+                                const isRoom = isCampaignRoomActive(c, activeRoomCampaignId, activeRoomCampaignName);
+                                const prefix = c.isPrivate ? '🔒 ' : isRoom ? '🌐 ' : '';
+                                const suffix = isRoom ? ' (Room Active)' : c.isPrivate ? ' (Private)' : '';
+                                return (
+                                    <option key={c.id} value={c.id}>
+                                        {prefix}
+                                        {c.name}
+                                        {suffix}
+                                    </option>
+                                );
+                            })}
                         </select>
+                        {activeCampaign?.isPrivate && (
+                            <span
+                                className="pc-header__campaign-badge pc-header__campaign-badge--private"
+                                title="Private Folder: Encounters & prep (isolated from players)"
+                            >
+                                <Lock size={10} /> Private
+                            </span>
+                        )}
+                        {!activeCampaign?.isPrivate && isActiveRoom && (
+                            <span
+                                className="pc-header__campaign-badge pc-header__campaign-badge--room"
+                                title="Active Room Campaign: Connected players sync here"
+                            >
+                                <Globe size={10} /> Room Active
+                            </span>
+                        )}
                         <button
                             type="button"
                             className="pc-header__mini-btn"
-                            onClick={() =>
-                                setPromptConfig({
-                                    type: 'campaign',
-                                    title: 'Create New Campaign',
-                                    description:
-                                        'Set up an isolated campaign profile for PC boxes and trainer parties.',
-                                    placeholder: 'e.g. Hoenn League, Kanto S2'
-                                })
-                            }
+                            onClick={() => setCampaignModalMode('edit')}
+                            title="Edit active campaign (rename, privacy, room active)"
+                            aria-label="Edit active campaign"
+                        >
+                            <Edit2 size={13} />
+                        </button>
+                        <button
+                            type="button"
+                            className="pc-header__mini-btn"
+                            onClick={() => setCampaignModalMode('create')}
                             title="Create a new campaign"
+                            aria-label="Create a new campaign"
                         >
                             <Plus size={13} />
                         </button>
-                        {Object.keys(campaigns).length > 1 && onDeleteCampaign && (
-                            <button
-                                type="button"
-                                className="pc-header__mini-btn pc-header__mini-btn--danger"
-                                onClick={() => {
-                                    const c = campaigns[activeCampaignId];
-                                    if (c) {
-                                        setDeleteTarget({ type: 'campaign', id: c.id, name: c.name });
-                                    }
-                                }}
-                                title="Delete active campaign"
-                            >
-                                <Trash2 size={13} />
-                            </button>
-                        )}
                     </div>
 
                     {/* Trainer Switcher */}
@@ -434,6 +463,30 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                         setDeleteTarget(null);
                     }}
                     onCancel={() => setDeleteTarget(null)}
+                />
+            )}
+
+            {/* Campaign Edit / Create Modal */}
+            {campaignModalMode && (
+                <CampaignEditModal
+                    mode={campaignModalMode}
+                    campaign={campaignModalMode === 'edit' ? activeCampaign : undefined}
+                    allCampaigns={campaigns}
+                    isGm={Boolean(isGm)}
+                    isInRoom={OBR.isAvailable}
+                    activeRoomCampaignId={activeRoomCampaignId}
+                    activeRoomCampaignName={activeRoomCampaignName}
+                    onSave={(data) => {
+                        const opts = { isPrivate: data.isPrivate, isRoomActive: data.isRoomActive };
+                        if (campaignModalMode === 'create') {
+                            onAddCampaign(data.name, opts);
+                        } else if (onEditCampaign && activeCampaign) {
+                            onEditCampaign(activeCampaign.id, { name: data.name, ...opts });
+                        }
+                        setCampaignModalMode(null);
+                    }}
+                    onDelete={onDeleteCampaign ? (id) => onDeleteCampaign(id) : undefined}
+                    onClose={() => setCampaignModalMode(null)}
                 />
             )}
         </header>

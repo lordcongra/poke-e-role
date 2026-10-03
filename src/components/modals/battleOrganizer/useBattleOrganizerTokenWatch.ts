@@ -58,10 +58,9 @@ export function useBattleOrganizerTokenWatch({
                             const matchingItem = candidateItems.find((item) => {
                                 if (combatant.tokenId && item.id === combatant.tokenId) return true;
                                 if (!combatant.tokenId && combatant.name.trim()) {
-                                    const meta = (item.metadata['pokerole-extension/stats'] || item.metadata) as Record<
-                                        string,
-                                        unknown
-                                    >;
+                                    const meta = (item.metadata['pokerole-extension/stats'] ||
+                                        item.metadata['pokerole-pmd-extension/stats'] ||
+                                        item.metadata) as Record<string, unknown>;
                                     const resolvedName = extractCharacterName(meta, item.name);
                                     if (resolvedName.toLowerCase().trim() === combatant.name.toLowerCase().trim()) {
                                         return true;
@@ -83,6 +82,7 @@ export function useBattleOrganizerTokenWatch({
                             }
 
                             const meta = (matchingItem.metadata['pokerole-extension/stats'] ||
+                                matchingItem.metadata['pokerole-pmd-extension/stats'] ||
                                 matchingItem.metadata) as Record<string, unknown>;
                             if (!meta) return combatant;
 

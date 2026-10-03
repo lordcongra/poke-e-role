@@ -6,6 +6,8 @@ import { PcDepositDrawerModal } from './PcDepositDrawerModal';
 import { PcSheetModal } from './PcSheetModal';
 import { PcReleaseConfirmModal } from './PcReleaseConfirmModal';
 import { PcGuideModal } from './PcGuideModal';
+import { PcSlotContextMenu } from './PcSlotContextMenu';
+import { isEntityLockedByGm } from '../../../utils/pc/pcCandidateMatching';
 import type {
     PcBox,
     CampaignProfile,
@@ -55,6 +57,25 @@ interface PcStorageSubModalsProps {
     handleUnlinkPokemon: (id: string) => void;
     isGuideModalOpen: boolean;
     setIsGuideModalOpen: (open: boolean) => void;
+    contextMenu?: {
+        x: number;
+        y: number;
+        isPartySlot: boolean;
+        index: number;
+        entityId: string;
+    } | null;
+    contextSummary?: PcPokemonSummary | null;
+    role?: string;
+    activeBoxIndex?: number;
+    onCloseContextMenu?: () => void;
+    onOpenCharacterSheet?: (entityId: string) => void;
+    depositPokemonToBox?: (entityId: string, boxIndex: number) => void;
+    movePokemonToParty?: (entityId: string) => void;
+    handleRecall?: (entityId: string) => void;
+    handleSendOut?: (entityId: string) => void;
+    handleRelinkArtwork?: (entityId: string) => void;
+    handleClonePokemon?: (entityId: string) => void;
+    handleReleasePokemon?: (entityId: string) => void;
 }
 
 export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
@@ -86,7 +107,20 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
     handleConfirmRelease,
     handleUnlinkPokemon,
     isGuideModalOpen,
-    setIsGuideModalOpen
+    setIsGuideModalOpen,
+    contextMenu,
+    contextSummary,
+    role,
+    activeBoxIndex,
+    onCloseContextMenu,
+    onOpenCharacterSheet,
+    depositPokemonToBox,
+    movePokemonToParty,
+    handleRecall,
+    handleSendOut,
+    handleRelinkArtwork,
+    handleClonePokemon,
+    handleReleasePokemon
 }) => {
     return (
         <>
@@ -178,6 +212,38 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
 
             {/* Workflow Guide & Help Modal */}
             {isGuideModalOpen && <PcGuideModal boxTheme={boxTheme} onClose={() => setIsGuideModalOpen(false)} />}
+
+            {/* Right-click Context Menu */}
+            {contextMenu && contextSummary && (
+                <PcSlotContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    isPartySlot={contextMenu.isPartySlot}
+                    isOnMap={!!contextSummary.isOnMap}
+                    isLocked={role !== 'GM' && isEntityLockedByGm(contextSummary)}
+                    pokemonName={contextSummary.name || contextSummary.species}
+                    onClose={onCloseContextMenu || (() => {})}
+                    onOpenSheet={() => onOpenCharacterSheet?.(contextMenu.entityId)}
+                    onTogglePartyBox={() => {
+                        if (contextMenu.isPartySlot) {
+                            depositPokemonToBox?.(contextMenu.entityId, activeBoxIndex || 0);
+                        } else {
+                            movePokemonToParty?.(contextMenu.entityId);
+                        }
+                    }}
+                    onToggleMap={() => {
+                        if (contextSummary.isOnMap) {
+                            handleRecall?.(contextMenu.entityId);
+                        } else {
+                            handleSendOut?.(contextMenu.entityId);
+                        }
+                    }}
+                    onRelinkArtwork={() => handleRelinkArtwork?.(contextMenu.entityId)}
+                    onClone={() => handleClonePokemon?.(contextMenu.entityId)}
+                    onUnlink={() => handleUnlinkPokemon(contextMenu.entityId)}
+                    onRelease={() => handleReleasePokemon?.(contextMenu.entityId)}
+                />
+            )}
         </>
     );
 };

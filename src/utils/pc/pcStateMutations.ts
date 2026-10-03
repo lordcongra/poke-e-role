@@ -404,7 +404,7 @@ export function applySetBoxTheme(
     return updateCampaignBoxes(pcData, camp, activeTrainer, nextBoxes);
 }
 
-export { applyAddTrainer, applyAddCampaign } from './pcCampaignTrainerOps';
+export { applyAddTrainer, applyAddCampaign, applyEditCampaign } from './pcCampaignTrainerOps';
 
 export function applyUpdateSummary(pcData: PcStorageData, summary: PcPokemonSummary): PcStorageData {
     return {

@@ -2,7 +2,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { TrainerRoster, PcPokemonSummary } from '../../types/pcStorageTypes';
 import { savePcStorage } from '../../utils/pc/pcStorageAdapter';
-import { resolveEffectiveActiveTrainer } from '../../utils/pc/pcCampaignTrainerOps';
+import { resolveEffectiveActiveTrainer, resolveGmTargetCampaignId } from '../../utils/pc/pcCampaignTrainerOps';
 import { EXTENSION_ID } from './owlbearSyncConstants';
 import { sendSafeBroadcastPayload, registerSafeBroadcastListener } from './owlbearBroadcastUtils';
 import { applyDeleteSummary } from '../../utils/pc/pcStateMutations';
@@ -11,8 +11,10 @@ import {
     type PlayerPcSyncPayload,
     type GmPcSyncPayload,
     sanitizeSummaryForSync,
-    sanitizeTrainerForSync
+    sanitizeTrainerForSync,
+    mergeIncomingPlayerSummaries
 } from './owlbearPcSyncUtils';
+import { reconcileSceneTokens } from './reconcileSceneTokens';
 
 export type { PlayerPcSyncPayload, GmPcSyncPayload };
 
@@ -26,7 +28,7 @@ export async function broadcastPlayerPc(): Promise<void> {
         const state = useCharacterStore.getState();
         const { pcData } = state;
         const campaign = pcData.campaigns[pcData.activeCampaignId];
-        if (!campaign) return;
+        if (!campaign || campaign.isPrivate) return;
 
         const myPlayerId = await OBR.player.getId().catch(() => undefined);
         const resolvedTrainer = resolveEffectiveActiveTrainer(campaign, myPlayerId);
@@ -73,6 +75,7 @@ export async function broadcastPlayerPc(): Promise<void> {
             const chunkSlice = cleanSummaries.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
             const payload: PlayerPcSyncPayload = {
                 campaignId: pcData.activeCampaignId,
+                campaignName: campaign.name,
                 trainer,
                 summaries: chunkSlice,
                 chunkIndex: i,
@@ -102,8 +105,16 @@ export async function broadcastGmPc(params: {
         const state = useCharacterStore.getState();
         if (state.role !== 'GM') return;
 
-        const { pcData } = state;
-        const targetCampId = params.campaignId || pcData.activeCampaignId;
+        const { pcData, identity } = state;
+        let targetCampId = params.campaignId;
+        if (!targetCampId) {
+            const designatedId = identity.activeRoomCampaignId;
+            if (designatedId && pcData.campaigns[designatedId] && !pcData.campaigns[designatedId].isPrivate) {
+                targetCampId = designatedId;
+            } else {
+                targetCampId = pcData.activeCampaignId;
+            }
+        }
         const campaign = pcData.campaigns[targetCampId];
         if (!campaign) return;
 
@@ -187,10 +198,14 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
 
                 try {
                     const state = useCharacterStore.getState();
-                    const { pcData } = state;
-                    const targetCampId = pcData.campaigns[payload.campaignId]
-                        ? payload.campaignId
-                        : pcData.activeCampaignId;
+                    const { pcData, identity } = state;
+                    const targetCampId = resolveGmTargetCampaignId(
+                        pcData,
+                        payload.campaignId,
+                        payload.campaignName,
+                        identity.activeRoomCampaignId,
+                        identity.activeRoomCampaignName
+                    );
                     const currentCamp = pcData.campaigns[targetCampId];
                     if (!currentCamp) return;
 
@@ -202,39 +217,11 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                             : payload.trainer
                     };
 
-                    const updatedSummaries = { ...pcData.pokemonSummaries };
-                    let hasChanges = false;
-
-                    for (const s of payload.summaries || []) {
-                        if (s && s.entityId) {
-                            const existing = updatedSummaries[s.entityId];
-                            const existingMod = Number(existing?.lastModified) || 0;
-                            const incomingMod = Number(s.lastModified) || 0;
-
-                            // Anti-Reversion Guard: if GM already has a newer modification, NEVER overwrite!
-                            if (existing && existingMod > incomingMod) {
-                                continue;
-                            }
-
-                            // If token is live on the canvas, GM canvas is the authority for combat stats
-                            if (existing?.isOnMap && existing.savedTokenItem) {
-                                updatedSummaries[s.entityId] = {
-                                    ...s,
-                                    hp: existing.hp,
-                                    maxHp: existing.maxHp,
-                                    will: existing.will,
-                                    maxWill: existing.maxWill,
-                                    isOnMap: true,
-                                    mapTokenId: existing.mapTokenId,
-                                    savedTokenItem: existing.savedTokenItem,
-                                    lastModified: Math.max(existingMod, incomingMod)
-                                };
-                            } else {
-                                updatedSummaries[s.entityId] = s;
-                            }
-                            hasChanges = true;
-                        }
-                    }
+                    const { updatedSummaries, hasChanges } = mergeIncomingPlayerSummaries(
+                        pcData.pokemonSummaries || {},
+                        payload.summaries || [],
+                        targetCampId
+                    );
 
                     if (hasChanges) {
                         const nextData = {
@@ -253,6 +240,12 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                         await savePcStorage(nextData);
                         if (typeof window !== 'undefined') {
                             window.dispatchEvent(new Event('pkr-local-data-changed'));
+                        }
+
+                        // Reconcile scene tokens so any outdated map tokens instantly adopt the newer player PC info!
+                        if (OBR.isAvailable) {
+                            const sceneItems = await OBR.scene.items.getItems((i) => i.layer === 'CHARACTER');
+                            await reconcileSceneTokens(sceneItems, 'GM');
                         }
                     }
                 } catch (e) {

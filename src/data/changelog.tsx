@@ -237,6 +237,20 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     Added an &quot;Update Open Scene&quot; option so you can sync backups directly into your open scene
                     without creating duplicate scene assets.
                 </li>
+                <li>
+                    <strong>Campaign Privacy & Active Room Adventures:</strong> Organize your PC with Public and
+                    Private folders. GMs can designate an Active Room Campaign so joining players automatically swap
+                    to that adventure. Keep encounter vaults and boss prep strictly private without player rosters
+                    mixing in.
+                </li>
+                <li>
+                    <strong>Campaign Edit Settings:</strong> Easily rename campaigns, adjust public vs. private
+                    visibility, and set room campaign designations from the new campaign edit menu.
+                </li>
+                <li>
+                    <strong>Scene Token Anti-Reversion Guard:</strong> Older tokens left on previous map scenes are
+                    safeguarded from overwriting newer Pokémon stats or progress saved in your PC.
+                </li>
             </ul>
         ]
     },

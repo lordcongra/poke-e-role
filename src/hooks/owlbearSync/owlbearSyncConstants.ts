@@ -39,7 +39,10 @@ export function mapRoomSettings(sData: Record<string, unknown>) {
         gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined,
         roomDefaultScale: sData.roomDefaultScale !== undefined ? Number(sData.roomDefaultScale) : undefined,
         roomDefaultOffsetX: sData.roomDefaultOffsetX !== undefined ? Number(sData.roomDefaultOffsetX) : undefined,
-        roomDefaultOffsetY: sData.roomDefaultOffsetY !== undefined ? Number(sData.roomDefaultOffsetY) : undefined
+        roomDefaultOffsetY: sData.roomDefaultOffsetY !== undefined ? Number(sData.roomDefaultOffsetY) : undefined,
+        activeRoomCampaignName:
+            sData.activeRoomCampaignName !== undefined ? String(sData.activeRoomCampaignName) : undefined,
+        activeRoomCampaignId: sData.activeRoomCampaignId !== undefined ? String(sData.activeRoomCampaignId) : undefined
     };
 }
 

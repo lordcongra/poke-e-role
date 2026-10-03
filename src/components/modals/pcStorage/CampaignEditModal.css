@@ -1,0 +1,291 @@
+/* ==========================================================================
+   Campaign Edit Modal (Public/Private & Room Active Designation)
+   ========================================================================== */
+
+.campaign-edit-backdrop {
+    z-index: 10020;
+}
+
+.campaign-edit-modal {
+    width: 100%;
+    max-width: 480px;
+    background: var(--panel-bg, #1e293b);
+    border: 1px solid var(--primary, #3b82f6);
+    border-radius: 12px;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.65);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.campaign-edit-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--panel-alt, #0f172a);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.campaign-edit-modal__title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.campaign-edit-modal__header-icon {
+    color: var(--primary, #3b82f6);
+}
+
+.campaign-edit-modal__body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.campaign-edit-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.campaign-edit-field__label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted, #94a3b8);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.campaign-edit-field__input {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: var(--text-main, #fff);
+    padding: 9px 12px;
+    font-size: 0.95rem;
+    outline: none;
+    transition:
+        border-color 0.15s,
+        box-shadow 0.15s;
+}
+
+.campaign-edit-field__input:focus {
+    border-color: var(--primary, #3b82f6);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+/* Visibility Type Grid */
+.campaign-edit-type-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.campaign-type-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease-in-out;
+}
+
+.campaign-type-card:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.campaign-type-card--selected {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: var(--primary, #3b82f6);
+    box-shadow: 0 0 0 1px var(--primary, #3b82f6);
+}
+
+.campaign-type-card__header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.campaign-type-card__icon--public {
+    color: #38bdf8;
+}
+
+.campaign-type-card__icon--private {
+    color: #f59e0b;
+}
+
+.campaign-type-card__title {
+    font-size: 0.85rem;
+    color: var(--text-main, #fff);
+    flex: 1;
+}
+
+.campaign-type-card__check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary, #3b82f6);
+    color: #fff;
+}
+
+.campaign-type-card__desc {
+    margin: 0;
+    font-size: 0.75rem;
+    line-height: 1.35;
+    color: var(--text-muted, #94a3b8);
+}
+
+/* Room Active Toggle */
+.campaign-edit-room-toggle {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px 12px;
+    transition: all 0.15s ease;
+}
+
+.campaign-edit-room-toggle--active {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+.campaign-edit-room-toggle--disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.campaign-edit-room-toggle__label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.campaign-edit-room-toggle__checkbox {
+    margin-top: 3px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--primary, #3b82f6);
+}
+
+.campaign-edit-room-toggle__text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.campaign-edit-room-toggle__title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main, #fff);
+}
+
+.campaign-edit-badge--active {
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid rgba(16, 185, 129, 0.5);
+    color: #34d399;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.campaign-edit-room-toggle__desc {
+    margin: 0;
+    font-size: 0.75rem;
+    line-height: 1.35;
+    color: var(--text-muted, #94a3b8);
+}
+
+/* Danger Zone / Delete */
+.campaign-edit-danger-zone {
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.campaign-delete-trigger-btn {
+    background: none;
+    border: none;
+    color: var(--semantic-danger, #ef4444);
+    font-size: 0.78rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    opacity: 0.85;
+    transition:
+        opacity 0.15s,
+        background 0.15s;
+}
+
+.campaign-delete-trigger-btn:hover {
+    opacity: 1;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.campaign-delete-disabled-note {
+    font-size: 0.75rem;
+    color: var(--text-muted, #64748b);
+    font-style: italic;
+}
+
+.campaign-delete-confirm-box {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.campaign-delete-confirm-box__warning {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-main, #fff);
+}
+
+.campaign-delete-confirm-box__icon {
+    color: var(--semantic-danger, #ef4444);
+    flex-shrink: 0;
+}
+
+.campaign-delete-confirm-box__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.campaign-edit-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 480px) {
+    .campaign-edit-type-grid {
+        grid-template-columns: 1fr;
+    }
+}

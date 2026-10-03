@@ -158,7 +158,9 @@ export async function resolveCombatantTokenId(combatant: CombatantRowData): Prom
         try {
             const items = await OBR.scene.items.getItems((item) => {
                 if (item.layer !== 'CHARACTER') return false;
-                const meta = (item.metadata['pokerole-extension/stats'] || item.metadata) as Record<string, unknown>;
+                const meta = (item.metadata['pokerole-extension/stats'] ||
+                    item.metadata['pokerole-pmd-extension/stats'] ||
+                    item.metadata) as Record<string, unknown>;
                 const resolvedName = extractCharacterName(meta, item.name);
                 return (
                     resolvedName.toLowerCase().trim() === combatant.name.toLowerCase().trim() ||

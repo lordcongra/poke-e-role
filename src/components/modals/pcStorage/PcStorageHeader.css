@@ -41,6 +41,32 @@
     flex-shrink: 1;
 }
 
+.pc-header__campaign-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.pc-header__campaign-badge--private {
+    background: rgba(245, 158, 11, 0.18);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    color: #fbbf24;
+}
+
+.pc-header__campaign-badge--room {
+    background: rgba(16, 185, 129, 0.18);
+    border: 1px solid rgba(16, 185, 129, 0.45);
+    color: #34d399;
+}
+
 .pc-header__selector-icon {
     color: var(--primary, #3b82f6);
 }

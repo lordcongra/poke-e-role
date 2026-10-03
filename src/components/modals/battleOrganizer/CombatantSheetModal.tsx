@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import type { CombatantRowData } from '../../../types/battleOrganizerTypes';
 import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { setActiveTokenId } from '../../../utils/sync/obr';
 import { imageManager } from '../../../utils/graphics/imageManager';
 import OBR, { type Image } from '@owlbear-rodeo/sdk';
+import { hydrateActiveSheet } from '../../../utils/sync/unifiedSheetHydration';
 import { extractCharacterName, extractTokenImage } from '../../../utils/combat/initiativeHelpers';
 import { resolveCharacterThemeColors, applyDynamicThemeColors } from '../../../utils/common/colorUtils';
 import { IdentityHeader } from '../../identity/IdentityHeader';
@@ -138,27 +138,18 @@ export function CombatantSheetModal({
                     }
                     if (match && isMounted) {
                         const meta = (match.metadata || {}) as Record<string, unknown>;
-                        setActiveTokenId(match.id);
-                        const store = useCharacterStore.getState();
-                        store.setTokenData(match.id, 'GM');
-                        store.loadFromOwlbear(meta);
+                        await hydrateActiveSheet({
+                            targetId: match.id,
+                            sourceMeta: meta,
+                            overrideRole: 'GM',
+                            applyTheme: true
+                        });
 
+                        const store = useCharacterStore.getState();
                         const tokenImgUrl = combatant.image || extractTokenImage(meta);
                         if (tokenImgUrl) {
                             store.setIdentity('tokenImageUrl', tokenImgUrl);
                         }
-
-                        // Immediately calculate and apply this combatant's theme colors
-                        const resolved = resolveCharacterThemeColors(
-                            {
-                                type1: store.identity.type1,
-                                type2: store.identity.type2,
-                                themePrimaryOverride: store.identity.themePrimaryOverride,
-                                themeSecondaryOverride: store.identity.themeSecondaryOverride
-                            },
-                            store.roomCustomTypes
-                        );
-                        applyDynamicThemeColors(resolved.primary, resolved.secondary);
                         setNoTokenLinked(false);
                     } else if (isMounted) {
                         setNoTokenLinked(true);
@@ -168,10 +159,9 @@ export function CombatantSheetModal({
                     if (!targetId && combatant.name.trim()) {
                         const found = await OBR.scene.items.getItems((item) => {
                             if (item.layer !== 'CHARACTER') return false;
-                            const meta = (item.metadata['pokerole-extension/stats'] || item.metadata) as Record<
-                                string,
-                                unknown
-                            >;
+                            const meta = (item.metadata['pokerole-extension/stats'] ||
+                                item.metadata['pokerole-pmd-extension/stats'] ||
+                                item.metadata) as Record<string, unknown>;
                             const resolvedName = extractCharacterName(meta, item.name);
                             return (
                                 resolvedName.toLowerCase().trim() === combatant.name.toLowerCase().trim() ||
@@ -185,32 +175,24 @@ export function CombatantSheetModal({
                         const items = await OBR.scene.items.getItems([targetId]);
                         if (items.length > 0 && isMounted) {
                             const item = items[0];
-                            const meta = (item.metadata['pokerole-extension/stats'] || item.metadata) as Record<
-                                string,
-                                unknown
-                            >;
-                            setActiveTokenId(item.id);
-                            const store = useCharacterStore.getState();
-                            store.setTokenData(item.id, store.role || 'PLAYER');
-                            store.loadFromOwlbear(meta);
+                            const meta = (item.metadata['pokerole-extension/stats'] ||
+                                item.metadata['pokerole-pmd-extension/stats'] ||
+                                item.metadata) as Record<string, unknown>;
 
+                            await hydrateActiveSheet({
+                                targetId: item.id,
+                                sourceMeta: meta,
+                                tokenItem: item,
+                                saveIfNewer: true,
+                                applyTheme: true
+                            });
+
+                            const store = useCharacterStore.getState();
                             const imgItem = item as Image;
                             const tokenImgUrl = imgItem.image?.url || combatant.image || extractTokenImage(meta);
                             if (tokenImgUrl) {
                                 store.setIdentity('tokenImageUrl', tokenImgUrl);
                             }
-
-                            // Immediately calculate and apply this combatant's theme colors
-                            const resolved = resolveCharacterThemeColors(
-                                {
-                                    type1: store.identity.type1,
-                                    type2: store.identity.type2,
-                                    themePrimaryOverride: store.identity.themePrimaryOverride,
-                                    themeSecondaryOverride: store.identity.themeSecondaryOverride
-                                },
-                                store.roomCustomTypes
-                            );
-                            applyDynamicThemeColors(resolved.primary, resolved.secondary);
                             setNoTokenLinked(false);
                         } else if (isMounted) {
                             setNoTokenLinked(true);

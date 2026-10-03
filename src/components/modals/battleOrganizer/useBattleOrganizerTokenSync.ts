@@ -47,10 +47,9 @@ export function useBattleOrganizerTokenSync({
                     (item) => item.layer === 'CHARACTER',
                     (items) => {
                         items.forEach((item) => {
-                            const rawMeta = (item.metadata['pokerole-extension/stats'] || item.metadata) as Record<
-                                string,
-                                unknown
-                            >;
+                            const rawMeta = (item.metadata['pokerole-extension/stats'] ||
+                                item.metadata['pokerole-pmd-extension/stats'] ||
+                                item.metadata) as Record<string, unknown>;
                             const charName = extractCharacterName(rawMeta, item.name);
 
                             // Match combatant by tokenId first, then fallback to character nickname/name

@@ -191,21 +191,165 @@ export function applyAddTrainer(pcData: PcStorageData, name: string): { nextData
     };
 }
 
-export function applyAddCampaign(pcData: PcStorageData, name: string): { nextData: PcStorageData; newId: string } {
+export function applyAddCampaign(
+    pcData: PcStorageData,
+    name: string,
+    options?: { isPrivate?: boolean; isRoomActive?: boolean }
+): { nextData: PcStorageData; newId: string } {
     const newCampId = `camp-${crypto.randomUUID().slice(0, 8)}`;
-    const newCamp = createDefaultCampaign(newCampId, name);
+    const newCamp = createDefaultCampaign(newCampId, name.trim());
+    if (options?.isPrivate) {
+        newCamp.isPrivate = true;
+    }
+    if (options?.isRoomActive && !options.isPrivate) {
+        newCamp.isRoomActive = true;
+    }
+
+    const nextCampaigns = { ...pcData.campaigns };
+    if (newCamp.isRoomActive) {
+        for (const [id, c] of Object.entries(nextCampaigns)) {
+            if (c.isRoomActive) {
+                nextCampaigns[id] = { ...c, isRoomActive: false };
+            }
+        }
+    }
+    nextCampaigns[newCampId] = newCamp;
 
     return {
         nextData: {
             ...pcData,
             activeCampaignId: newCampId,
-            campaigns: {
-                ...pcData.campaigns,
-                [newCampId]: newCamp
-            }
+            campaigns: nextCampaigns
         },
         newId: newCampId
     };
+}
+
+export function applyEditCampaign(
+    pcData: PcStorageData,
+    campaignId: string,
+    updates: { name?: string; isPrivate?: boolean; isRoomActive?: boolean }
+): { success: boolean; nextData: PcStorageData; error?: string } {
+    const campaign = pcData.campaigns[campaignId];
+    if (!campaign) {
+        return { success: false, nextData: pcData, error: 'Campaign not found.' };
+    }
+
+    const nextCampaigns = { ...pcData.campaigns };
+    const updatedCampaign: CampaignProfile = {
+        ...campaign,
+        ...(updates.name !== undefined ? { name: updates.name.trim() } : {}),
+        ...(updates.isPrivate !== undefined ? { isPrivate: updates.isPrivate } : {})
+    };
+
+    if (updatedCampaign.isPrivate) {
+        updatedCampaign.isRoomActive = false;
+    } else if (updates.isRoomActive !== undefined) {
+        updatedCampaign.isRoomActive = updates.isRoomActive;
+    }
+
+    if (updatedCampaign.isRoomActive) {
+        for (const [id, c] of Object.entries(nextCampaigns)) {
+            if (id !== campaignId && c.isRoomActive) {
+                nextCampaigns[id] = { ...c, isRoomActive: false };
+            }
+        }
+    }
+
+    nextCampaigns[campaignId] = updatedCampaign;
+
+    return {
+        success: true,
+        nextData: {
+            ...pcData,
+            campaigns: nextCampaigns
+        }
+    };
+}
+
+/**
+ * Checks if a campaign is designated as the active room campaign.
+ * Private campaigns are NEVER room active.
+ */
+export function isCampaignRoomActive(
+    campaign?: CampaignProfile,
+    activeRoomCampaignId?: string,
+    activeRoomCampaignName?: string
+): boolean {
+    if (!campaign || campaign.isPrivate) return false;
+    if (campaign.isRoomActive) return true;
+    if (activeRoomCampaignId && campaign.id === activeRoomCampaignId) return true;
+    if (
+        activeRoomCampaignName &&
+        activeRoomCampaignName.trim() &&
+        campaign.name.trim().toLowerCase() === activeRoomCampaignName.trim().toLowerCase()
+    ) {
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Resolves the target campaign for incoming player PC syncs on the GM side.
+ * Shields GM private campaigns (encounter prep/boss vaults) from player trainers.
+ * Routing priority:
+ * 1. Designated Public Active Room Campaign (isRoomActive or matching activeRoomCampaignId/activeRoomCampaignName)
+ * 2. Matching Public campaign by payload.campaignId
+ * 3. Matching Public campaign by payload.campaignName
+ * 4. GM's current active campaign (if public)
+ * 5. First available public campaign
+ * 6. Fallback to GM activeCampaignId if no public campaigns exist
+ */
+export function resolveGmTargetCampaignId(
+    pcData: PcStorageData,
+    payloadCampaignId: string,
+    payloadCampaignName?: string,
+    activeRoomCampaignId?: string,
+    activeRoomCampaignName?: string
+): string {
+    const campaigns = pcData.campaigns || {};
+    const campaignList = Object.values(campaigns);
+
+    // 1. Check for GM's designated Active Room Campaign
+    const designated = campaignList.find(
+        (c) => !c.isPrivate && isCampaignRoomActive(c, activeRoomCampaignId, activeRoomCampaignName)
+    );
+    if (designated) return designated.id;
+
+    // 2. Check if payload campaignId matches an existing public campaign
+    if (campaigns[payloadCampaignId] && !campaigns[payloadCampaignId].isPrivate) {
+        return payloadCampaignId;
+    }
+
+    // 3. Check if payload campaignName matches an existing public campaign
+    if (payloadCampaignName && payloadCampaignName.trim()) {
+        const normPayloadName = payloadCampaignName.trim().toLowerCase();
+        const nameMatch = campaignList.find((c) => !c.isPrivate && c.name.trim().toLowerCase() === normPayloadName);
+        if (nameMatch) return nameMatch.id;
+    }
+
+    // 4. GM current active campaign if public
+    const currentActive = campaigns[pcData.activeCampaignId];
+    if (currentActive && !currentActive.isPrivate) {
+        return pcData.activeCampaignId;
+    }
+
+    // 5. First available public campaign
+    const firstPublic = campaignList.find((c) => !c.isPrivate);
+    if (firstPublic) return firstPublic.id;
+
+    // 6. Absolute fallback
+    return pcData.activeCampaignId;
+}
+
+export function persistTrainerSwitch(campId: string, trainerId: string, pid?: string): void {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    try {
+        localStorage.setItem(`pkr_active_trainer_${campId}`, trainerId);
+        if (pid) {
+            localStorage.setItem(`pkr_active_trainer_${pid}_${campId}`, trainerId);
+        }
+    } catch {}
 }
 
 let cachedObrPlayerId: string | undefined = undefined;

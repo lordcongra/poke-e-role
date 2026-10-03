@@ -1,4 +1,5 @@
 import React from 'react';
+import OBR from '@owlbear-rodeo/sdk';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
@@ -100,7 +101,7 @@ export const PcSheetModal: React.FC<PcSheetModalProps> = ({
                                         ? (currentSummary.fullMetadata?.trainerClass as string) || 'Trainer'
                                         : currentSummary.species}
                                 </span>
-                                {currentSummary.isOnMap ? (
+                                {OBR.isAvailable && currentSummary.isOnMap ? (
                                     <span className="pc-sheet-modal__map-badge">On Map</span>
                                 ) : (
                                     <span className="pc-sheet-modal__storage-badge">In Storage</span>

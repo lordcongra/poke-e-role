@@ -267,29 +267,35 @@ export async function setupOwlbearTokenSync(params: {
                         }
                     }
 
+                    const storeState = useCharacterStore.getState();
+                    const eId = extractEntityId(item);
+                    const existingSum = eId ? storeState.pcData.pokemonSummaries[eId] : undefined;
+                    const tMod = Number(meta.lastModified) || 0;
+                    const pMod = Number(existingSum?.lastModified) || 0;
+                    const isPcNewer = Boolean(existingSum && existingSum.fullMetadata && pMod > tMod);
+                    const effectiveMeta = isPcNewer ? existingSum!.fullMetadata! : meta;
+
                     if (needsGraphicsUpdate) {
-                        const freshStore = useCharacterStore.getState();
                         const { effectiveScale, effectiveOffsetX, effectiveOffsetY } = getEffectiveScaleAndOffsets(
-                            freshStore.identity
+                            storeState.identity
                         );
 
-                        const gData = buildGraphicsFromMeta(meta, effectiveScale, effectiveOffsetX, effectiveOffsetY);
-                        const currentRole = freshStore.role || role;
+                        const gData = buildGraphicsFromMeta(
+                            effectiveMeta,
+                            effectiveScale,
+                            effectiveOffsetX,
+                            effectiveOffsetY
+                        );
+                        const currentRole = storeState.role || role;
                         renderTokenGraphics(item, gData, currentRole);
                     }
 
-                    const storeState = useCharacterStore.getState();
                     if (item.id === storeState.tokenId) {
                         const lastKnown = lastTransform?.metaStr;
 
                         if (lastKnown !== metaStr && !hasPendingUpdates()) {
-                            const eId = extractEntityId(item);
-                            const existingSum = eId ? storeState.pcData.pokemonSummaries[eId] : undefined;
-                            const tMod = Number(meta.lastModified) || 0;
-                            const pMod = Number(existingSum?.lastModified) || 0;
-
-                            if (existingSum && existingSum.fullMetadata && pMod > tMod) {
-                                storeState.loadFromOwlbear(existingSum.fullMetadata);
+                            if (isPcNewer) {
+                                storeState.loadFromOwlbear(existingSum!.fullMetadata!);
                             } else {
                                 storeState.loadFromOwlbear(meta);
                             }
@@ -302,7 +308,7 @@ export async function setupOwlbearTokenSync(params: {
                     }
 
                     // Sync live Pokémon stats and metadata to PC storage if this token belongs to PC
-                    const entityId = extractEntityId(item);
+                    const entityId = eId;
                     if (entityId) {
                         const pcSummary = storeState.pcData.pokemonSummaries[entityId];
                         if (pcSummary && pcSummary.isOnMap) {
@@ -310,7 +316,7 @@ export async function setupOwlbearTokenSync(params: {
                             const pcLastMod = Number(pcSummary.lastModified) || 0;
 
                             // Anti-Reversion Guard: if local PC storage is strictly newer, do not overwrite from older token
-                            if (tokenLastMod > 0 && pcLastMod > tokenLastMod) {
+                            if (pcLastMod > tokenLastMod) {
                                 continue;
                             }
                             const curHp =

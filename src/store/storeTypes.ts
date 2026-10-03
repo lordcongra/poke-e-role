@@ -442,6 +442,8 @@ export interface IdentitySlice {
         willLocked?: boolean;
         pmdSkills?: boolean;
         gmDemoMode: boolean;
+        activeRoomCampaignName?: string;
+        activeRoomCampaignId?: string;
 
         // Initiative HUD User Settings
         initiativeTrackerPreset: string;
@@ -526,6 +528,8 @@ export interface RoomSettings {
     roomDefaultScale: number;
     roomDefaultOffsetX?: number;
     roomDefaultOffsetY?: number;
+    activeRoomCampaignName?: string;
+    activeRoomCampaignId?: string;
 }
 
 export type SheetMode = 'Pokémon' | 'Trainer' | 'Trainer (Special)';

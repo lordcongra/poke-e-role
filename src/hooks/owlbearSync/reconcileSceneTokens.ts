@@ -50,9 +50,10 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                         const sumLastMod = Number(sum.lastModified) || 0;
 
                         // Anti-Reversion Guard: If local PC storage is strictly newer than the scene token
-                        // (e.g. modified in PC, leveled up, or returning to an older scene map with an old snapshot),
+                        // (e.g. modified in PC, leveled up, returning to an older scene map with an old snapshot,
+                        // or legacy tokens where tokenLastMod is 0 or undefined),
                         // NEVER let the older scene token overwrite the newer PC summary!
-                        if (tokenLastMod > 0 && sumLastMod > tokenLastMod) {
+                        if (sumLastMod > tokenLastMod) {
                             continue;
                         }
 
@@ -184,11 +185,12 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                 const hasValidFullMeta = Boolean(sum.fullMetadata && Object.keys(sum.fullMetadata).length > 5);
 
                 // A token on the map is ONLY outdated if PC storage was explicitly modified
-                // AFTER the token (e.g. edited in PcSheetModal or cross-scene return from another map)
+                // AFTER the token (e.g. edited in PcSheetModal or cross-scene return from another map,
+                // or legacy tokens where tokenLastMod is 0 or undefined)
                 // AND PC storage has valid sheet data.
                 // Combat mutations (HP/Will decrease, Temp HP, Statuses) on the canvas token MUST NEVER
                 // be considered "outdated" or overwritten by stale PC values!
-                const isOutdated = tokenLastMod > 0 && sumLastMod > tokenLastMod && hasValidFullMeta;
+                const isOutdated = sumLastMod > tokenLastMod && hasValidFullMeta;
 
                 if (isOutdated) {
                     const sumTempHp = Number(sum.fullMetadata?.['temporary-hit-points']) || 0;
@@ -222,7 +224,7 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                             'pokerole-pmd-extension/stats': nextMeta
                         }
                     });
-                } else {
+                } else if (tokenLastMod >= sumLastMod || !sumLastMod) {
                     // Token on the map is live or newer: update local GM PC storage to mirror live combat stats!
                     const curHp =
                         typeof tMeta['hp-curr'] === 'number'

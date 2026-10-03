@@ -7,7 +7,8 @@ import { setActiveTokenId, setIsPcSheetActive, METADATA_ID } from '../../../util
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
 import { resolveCharacterThemeColors, applyDynamicThemeColors } from '../../../utils/common/colorUtils';
 import { extractEntityId, renderTokenGraphicsForMeta } from '../../../hooks/owlbearSync/setupOwlbearTokenSync';
-import { broadcastGmPc } from '../../../hooks/owlbearSync/setupOwlbearPcSync';
+import { broadcastGmPc, broadcastPlayerPc } from '../../../hooks/owlbearSync/setupOwlbearPcSync';
+import { hydrateActiveSheet } from '../../../utils/sync/unifiedSheetHydration';
 
 /**
  * Pure predicate checking if any persistent character sheet slice changed in Zustand.
@@ -142,8 +143,12 @@ export function usePcSheetSync({
 
         onUpdateSummaryRef.current(updatedSummary);
 
-        if (OBR.isAvailable && currentStore.role === 'GM') {
-            broadcastGmPc({ summaries: [updatedSummary] }).catch(() => {});
+        if (OBR.isAvailable) {
+            if (currentStore.role === 'GM') {
+                broadcastGmPc({ summaries: [updatedSummary] }).catch(() => {});
+            } else {
+                broadcastPlayerPc().catch(() => {});
+            }
         }
 
         // If the token IS currently placed on the map, push metadata to OBR scene item
@@ -278,55 +283,34 @@ export function usePcSheetSync({
 
         let isCancelled = false;
         const hydrateEntity = async () => {
-            let metaToLoad = activeEntity.fullMetadata;
-
-            // If local metadata is sparse or missing moves, check if live map token has full metadata
-            if (
-                (!metaToLoad || Object.keys(metaToLoad).length <= 5 || !metaToLoad['moves-data']) &&
-                activeEntity.isOnMap &&
-                activeEntity.mapTokenId &&
-                OBR.isAvailable
-            ) {
+            let tokenItem: import('@owlbear-rodeo/sdk').Item | undefined;
+            if (activeEntity.isOnMap && activeEntity.mapTokenId && OBR.isAvailable) {
                 try {
                     const items = await OBR.scene.items.getItems([activeEntity.mapTokenId]);
-                    if (items.length > 0) {
-                        const tMeta =
-                            ((items[0].metadata[METADATA_ID] ||
-                                items[0].metadata['pokerole-pmd-extension/stats']) as Record<string, unknown>) || {};
-                        if (tMeta && Object.keys(tMeta).length > 5) {
-                            metaToLoad = { ...(metaToLoad || {}), ...tMeta };
-                        }
-                    }
+                    if (items.length > 0) tokenItem = items[0];
                 } catch (e) {
-                    console.warn('[usePcSheetSync] Failed to fetch live token metadata for sheet hydration:', e);
+                    console.warn('[usePcSheetSync] Failed to fetch live token for hydration:', e);
                 }
             }
 
             if (isCancelled) return;
 
-            if (metaToLoad && Object.keys(metaToLoad).length > 0) {
-                store.loadFromOwlbear(metaToLoad);
-            } else {
-                // Fallback basic hydration via metadata
-                store.loadFromOwlbear({
-                    name: activeEntity.name,
-                    nickname: activeEntity.name,
-                    species: activeEntity.species,
-                    rank: activeEntity.rank || 'Starter',
-                    type1: activeEntity.type1 || 'Normal',
-                    type2: activeEntity.type2 || '',
-                    'hp-curr': activeEntity.hp,
-                    'hp-max-display': activeEntity.maxHp,
-                    'will-curr': activeEntity.will,
-                    'will-max-display': activeEntity.maxWill,
-                    'token-image-url': activeEntity.tokenImageUrl || ''
+            try {
+                await hydrateActiveSheet({
+                    targetId: targetTokenId,
+                    entityId: activeEntity.entityId,
+                    overrideRole: (store.role as 'PLAYER' | 'GM') || 'PLAYER',
+                    sourceMeta: activeEntity.fullMetadata,
+                    tokenItem,
+                    saveIfNewer: false,
+                    applyTheme: true,
+                    fetchSpecies: true
                 });
+            } catch (e) {
+                console.error('[usePcSheetSync] Error during unified sheet hydration:', e);
             }
 
-            if (activeEntity.tokenImageUrl) {
-                store.setIdentity('tokenImageUrl', activeEntity.tokenImageUrl);
-            }
-
+            if (isCancelled) return;
             setLoading(false);
             setTimeout(() => {
                 if (!isCancelled) {
