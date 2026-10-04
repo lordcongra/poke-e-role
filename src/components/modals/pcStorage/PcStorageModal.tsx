@@ -300,8 +300,17 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     };
 
     const [dismissBackupWarning, setDismissBackupWarning] = useState(() => {
-        return typeof localStorage !== 'undefined' && localStorage.getItem('pkr_pc_backup_warn_dismissed') === 'true';
+        return (
+            typeof localStorage !== 'undefined' && localStorage.getItem('pkr_pc_backup_warn_dismissed_v2') === 'true'
+        );
     });
+
+    const handleDismissWarning = useCallback(() => {
+        setDismissBackupWarning(true);
+        try {
+            localStorage.setItem('pkr_pc_backup_warn_dismissed_v2', 'true');
+        } catch {}
+    }, []);
 
     useEffect(() => {
         const sanitized = sanitizePcData(pcData);
@@ -360,16 +369,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         onClose={handleModalClose}
                     />
 
-                    {!dismissBackupWarning && (
-                        <PcBackupWarningBanner
-                            onDismiss={() => {
-                                setDismissBackupWarning(true);
-                                try {
-                                    localStorage.setItem('pkr_pc_backup_warn_dismissed', 'true');
-                                } catch {}
-                            }}
-                        />
-                    )}
+                    {!dismissBackupWarning && <PcBackupWarningBanner onDismiss={handleDismissWarning} />}
 
                     <div className="pc-modal__layout">
                         <PcPartyDock

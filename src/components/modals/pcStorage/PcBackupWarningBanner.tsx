@@ -10,9 +10,11 @@ export const PcBackupWarningBanner: React.FC<PcBackupWarningBannerProps> = ({ on
         <div className="pc-modal__backup-warning">
             <AlertTriangle size={15} className="pc-modal__warning-icon" />
             <span className="pc-modal__warning-text text-subtext">
-                <strong>New Feature:</strong> PC Storage has undergone aggressive testing, but edge cases may still
-                exist that could delete data. Please back up your data before trying it out, and back up frequently
-                after!
+                <strong>New Feature:</strong> PC Storage has undergone aggressive bug-testing, but edge cases may still
+                occur that could cause unexpected behavior or data loss. If you encounter any bugs, please report them
+                using the <strong>Report Bug</strong> button in Table Tools &amp; Settings! Additionally, unless you are
+                actively wanting to bug test, please do not try to push the limits of the sheet without first backing up
+                your tokens, as stability cannot be guaranteed under extreme stress.
             </span>
             <button
                 type="button"

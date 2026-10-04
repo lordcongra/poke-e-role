@@ -26,8 +26,9 @@ export interface UseBattleOrganizerTokenImportProps {
 
 export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganizerTokenImportProps) {
     const pullFromInitiative = useCallback(
-        async (options?: { resetTrackers?: boolean }) => {
+        async (options?: { resetTrackers?: boolean; mergeOnly?: boolean }) => {
             const shouldReset = options?.resetTrackers !== false;
+            const isMergeOnly = options?.mergeOnly === true;
 
             try {
                 const combatantRows: CombatantRowData[] = [];
@@ -198,10 +199,53 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                 }
 
                 if (combatantRows.length > 0) {
+                    let newlyAddedCount = 0;
+                    let targetCombatantsToReset: CombatantRowData[] = combatantRows;
+
                     updateState((prev) => {
                         const currentRound = prev.rounds[prev.activeRoundIndex];
                         if (!currentRound) return prev;
 
+                        if (isMergeOnly) {
+                            const existingTokenIds = new Set(
+                                currentRound.combatants.map((c) => c.tokenId).filter(Boolean)
+                            );
+                            const existingEntityIds = new Set(
+                                currentRound.combatants.map((c) => c.entityId).filter(Boolean)
+                            );
+                            const existingNames = new Set(
+                                currentRound.combatants.map((c) => c.name.toLowerCase().trim()).filter(Boolean)
+                            );
+
+                            const newCombatants = combatantRows.filter((row) => {
+                                if (row.tokenId && existingTokenIds.has(row.tokenId)) return false;
+                                if (row.entityId && existingEntityIds.has(row.entityId)) return false;
+                                if (existingNames.has(row.name.toLowerCase().trim())) return false;
+                                return true;
+                            });
+
+                            if (newCombatants.length === 0) {
+                                targetCombatantsToReset = [];
+                                newlyAddedCount = 0;
+                                return prev;
+                            }
+
+                            targetCombatantsToReset = newCombatants;
+                            newlyAddedCount = newCombatants.length;
+                            const mergedCombatants = [...currentRound.combatants, ...newCombatants];
+
+                            const updatedRound: BattleRoundData = {
+                                ...currentRound,
+                                combatants: mergedCombatants
+                            };
+
+                            return {
+                                ...prev,
+                                rounds: prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r))
+                            };
+                        }
+
+                        targetCombatantsToReset = combatantRows;
                         const updatedRound: BattleRoundData = {
                             ...currentRound,
                             combatants: combatantRows
@@ -213,14 +257,24 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                         };
                     });
 
+                    if (isMergeOnly && newlyAddedCount === 0) {
+                        if (OBR.isAvailable) {
+                            OBR.notification.show(
+                                'All active initiative combatants are already in this round.',
+                                'INFO'
+                            );
+                        }
+                        return;
+                    }
+
                     // Reset tokens & character sheets if requested
-                    if (shouldReset) {
+                    if (shouldReset && targetCombatantsToReset.length > 0) {
                         if (OBR.isAvailable && !isStandaloneMode) {
                             await OBR.scene.items.updateItems(
                                 (item) => item.layer === 'CHARACTER',
                                 (items) => {
                                     items.forEach((item) => {
-                                        const matched = combatantRows.find((c) => c.tokenId === item.id);
+                                        const matched = targetCombatantsToReset.find((c) => c.tokenId === item.id);
                                         if (matched) {
                                             if (!item.metadata['pokerole-extension/stats']) {
                                                 item.metadata['pokerole-extension/stats'] = {};
@@ -241,7 +295,7 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                                 }
                             );
                         } else {
-                            for (const combatant of combatantRows) {
+                            for (const combatant of targetCombatantsToReset) {
                                 if (combatant.tokenId) {
                                     try {
                                         await storageAdapter.saveCharacter(
@@ -262,7 +316,7 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
 
                         const globalStore = useCharacterStore.getState();
                         if (globalStore.tokenId) {
-                            const isMatched = combatantRows.some((c) => c.tokenId === globalStore.tokenId);
+                            const isMatched = targetCombatantsToReset.some((c) => c.tokenId === globalStore.tokenId);
                             if (isMatched) {
                                 globalStore.updateTracker('actions', 0);
                                 globalStore.updateTracker('evade', false);
@@ -273,10 +327,17 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
 
                     if (OBR.isAvailable) {
                         const resetMsg = shouldReset ? ' and reset actions/reactions' : '';
-                        OBR.notification.show(
-                            `Pulled ${combatantRows.length} combatants from Initiative${resetMsg}!`,
-                            'SUCCESS'
-                        );
+                        if (isMergeOnly) {
+                            OBR.notification.show(
+                                `Added ${newlyAddedCount} new combatant(s) to this round${resetMsg}!`,
+                                'SUCCESS'
+                            );
+                        } else {
+                            OBR.notification.show(
+                                `Pulled ${combatantRows.length} combatants from Initiative${resetMsg}!`,
+                                'SUCCESS'
+                            );
+                        }
                     }
                 } else {
                     if (OBR.isAvailable) {

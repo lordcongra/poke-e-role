@@ -143,13 +143,23 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         onClose();
     };
 
+    const [pullModalMode, setPullModalMode] = useState<'replace' | 'merge'>('replace');
+
     const handlePullFromInitiative = () => {
         setResetPullTrackers(true);
+        setPullModalMode('replace');
         setShowPullConfirmModal(true);
     };
 
-    const handleConfirmPullFromInitiative = () => {
-        pullFromInitiative({ resetTrackers: resetPullTrackers });
+    const handlePullNewFromInitiative = () => {
+        setResetPullTrackers(true);
+        setPullModalMode('merge');
+        setShowPullConfirmModal(true);
+    };
+
+    const handleConfirmPullFromInitiative = (options?: { mergeOnly?: boolean }) => {
+        const isMerge = options?.mergeOnly !== undefined ? options.mergeOnly : pullModalMode === 'merge';
+        pullFromInitiative({ resetTrackers: resetPullTrackers, mergeOnly: isMerge });
         setShowPullConfirmModal(false);
     };
 
@@ -279,6 +289,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                     onToggleHeaderTools={() => setIsHeaderToolsOpen(!isHeaderToolsOpen)}
                     onClose={onClose}
                     onPullFromInitiative={handlePullFromInitiative}
+                    onPullNewFromInitiative={handlePullNewFromInitiative}
                     onManualRefresh={handleManualRefresh}
                     onPushActionsToSheets={handlePushActionsToSheets}
                     onPrintClick={handlePrintClick}
@@ -413,6 +424,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
 
                 <BattleOrganizerPullModal
                     isOpen={showPullConfirmModal}
+                    mode={pullModalMode}
                     hasExistingCombatants={Boolean(currentRound?.combatants && currentRound.combatants.length > 0)}
                     resetPullTrackers={resetPullTrackers}
                     onToggleResetTrackers={setResetPullTrackers}

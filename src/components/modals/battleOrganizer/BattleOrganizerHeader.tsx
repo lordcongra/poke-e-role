@@ -13,7 +13,8 @@ import {
     HelpCircle,
     Mountain,
     Swords,
-    Dices
+    Dices,
+    UserPlus
 } from 'lucide-react';
 import { TooltipIcon } from '../../ui/TooltipIcon';
 import { getRollLogModeLabel, getRollLogModeShortLabel } from './battleOrganizerUtils';
@@ -32,6 +33,7 @@ export interface BattleOrganizerHeaderProps {
     onToggleHeaderTools: () => void;
     onClose: () => void;
     onPullFromInitiative: () => void;
+    onPullNewFromInitiative?: () => void;
     onManualRefresh: () => void;
     onPushActionsToSheets: () => void;
     onPrintClick: () => void;
@@ -56,6 +58,7 @@ export function BattleOrganizerHeader({
     onToggleHeaderTools,
     onClose,
     onPullFromInitiative,
+    onPullNewFromInitiative,
     onManualRefresh,
     onPushActionsToSheets,
     onPrintClick,
@@ -142,6 +145,17 @@ export function BattleOrganizerHeader({
                     >
                         <Sparkles size={14} /> Pull from Initiative
                     </button>
+
+                    {onPullNewFromInitiative && (
+                        <button
+                            type="button"
+                            className="action-button action-button--secondary bo-header-btn"
+                            onClick={onPullNewFromInitiative}
+                            title="Pull only new tokens from Initiative into this round (great for swapped Pokémon)"
+                        >
+                            <UserPlus size={14} /> Add New from Initiative
+                        </button>
+                    )}
 
                     <div className="bo-header-refresh-container">
                         <button

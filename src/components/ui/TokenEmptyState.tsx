@@ -1,19 +1,7 @@
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { canViewHomebrew } from '../../utils/common/helper';
 import { getAbsolutePokeballUrl } from '../../utils/generators/trainerTokenSpawner';
-import OBR from '@owlbear-rodeo/sdk';
-import {
-    HardDrive,
-    Wand2,
-    Users,
-    Layers,
-    Hammer,
-    ArrowLeft,
-    MousePointerClick,
-    Sparkles,
-    Palette,
-    Box
-} from 'lucide-react';
+import { HardDrive, Wand2, Users, Layers, Hammer, ArrowLeft, MousePointerClick, Palette } from 'lucide-react';
 import './TokenEmptyState.css';
 
 interface TokenEmptyStateProps {
@@ -25,6 +13,7 @@ export function TokenEmptyState({ isStandalone = false, onOpenPcModal }: TokenEm
     const role = useCharacterStore((state) => state.role);
     const gmOnlyGenerators = useCharacterStore((state) => state.identity.gmOnlyGenerators);
     const homebrewAccess = useCharacterStore((state) => state.identity.homebrewAccess) || 'Full';
+    const openPcModal = useCharacterStore((state) => state.openPcModal);
 
     const isGm = isStandalone || role === 'GM';
     const canUseGenerators = isGm || !gmOnlyGenerators;
@@ -39,10 +28,8 @@ export function TokenEmptyState({ isStandalone = false, onOpenPcModal }: TokenEm
             onOpenPcModal();
             return;
         }
+        openPcModal();
         window.dispatchEvent(new CustomEvent('pkr-open-modal', { detail: 'pc' }));
-        if (OBR.isAvailable) {
-            OBR.notification.show('Pokémon PC Storage system ready to connect!', 'INFO');
-        }
     };
 
     return (
@@ -91,12 +78,6 @@ export function TokenEmptyState({ isStandalone = false, onOpenPcModal }: TokenEm
                     <div className="token-empty-state__card-content">
                         <div className="token-empty-state__card-header">
                             <h3 className="token-empty-state__card-title text-title-primary">Pokémon PC Storage</h3>
-                            <span
-                                className={`token-empty-state__badge ${isStandalone ? 'token-empty-state__badge--box' : 'token-empty-state__badge--cloud'}`}
-                            >
-                                {isStandalone ? <Box size={11} /> : <Sparkles size={11} />}
-                                {isStandalone ? 'Box System' : 'Cloud Depot'}
-                            </span>
                         </div>
                         <p className="token-empty-state__card-desc text-subtext">
                             {isStandalone

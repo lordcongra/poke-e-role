@@ -6,7 +6,7 @@ import {
     renderTokenGraphics,
     cleanupOrphanedGraphics
 } from '../../utils/graphics/graphicsManager';
-import { setActiveTokenId, hasPendingUpdates, getIsPcSheetActive } from '../../utils/sync/obr';
+import { setActiveTokenId, hasPendingUpdates, getIsPcSheetActive, setIsRemoteSyncActive } from '../../utils/sync/obr';
 import { harvestTokensItemArt } from '../../utils/graphics/itemArtCatalog';
 import { METADATA_ID, getEffectiveScaleAndOffsets, type TransformData } from './owlbearSyncConstants';
 import { reconcileSceneTokens } from './reconcileSceneTokens';
@@ -315,6 +315,7 @@ export async function setupOwlbearTokenSync(params: {
                         const lastKnown = lastTransform?.metaStr;
 
                         if (lastKnown !== metaStr && !hasPendingUpdates()) {
+                            setIsRemoteSyncActive(true, 150);
                             if (isPcNewer) {
                                 storeState.loadFromOwlbear(existingSum!.fullMetadata!);
                             } else {

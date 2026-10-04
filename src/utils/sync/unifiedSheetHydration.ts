@@ -1,6 +1,6 @@
 import OBR, { type Item, type Image } from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { setActiveTokenId } from './obr';
+import { setActiveTokenId, setIsRemoteSyncActive } from './obr';
 import { METADATA_ID } from '../../hooks/owlbearSync/owlbearSyncConstants';
 import { extractEntityId, renderTokenGraphicsForMeta } from '../../hooks/owlbearSync/setupOwlbearTokenSync';
 import { resolveCharacterThemeColors, applyDynamicThemeColors } from '../common/colorUtils';
@@ -202,13 +202,18 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
         if (summaryMeta?.['dex-description']) finalMeta['dex-description'] = summaryMeta['dex-description'];
         if (summaryMeta?.['token-image-url']) finalMeta['token-image-url'] = summaryMeta['token-image-url'];
 
-        // Safeguard: Core stats, socials, and limits from PC summary must never be overwritten by stale token metadata!
+        // Fallback: If live token metadata was missing any core stats, socials, or limits, pull from PC summary
         if (summaryMeta) {
             for (const stat of ['str', 'dex', 'vit', 'spe', 'ins', 'tou', 'coo', 'bea', 'cut', 'cle']) {
-                if (summaryMeta[`${stat}-base`] !== undefined) finalMeta[`${stat}-base`] = summaryMeta[`${stat}-base`];
-                if (summaryMeta[`${stat}-rank`] !== undefined) finalMeta[`${stat}-rank`] = summaryMeta[`${stat}-rank`];
-                if (summaryMeta[`${stat}-limit`] !== undefined)
+                if (finalMeta[`${stat}-base`] === undefined && summaryMeta[`${stat}-base`] !== undefined) {
+                    finalMeta[`${stat}-base`] = summaryMeta[`${stat}-base`];
+                }
+                if (finalMeta[`${stat}-rank`] === undefined && summaryMeta[`${stat}-rank`] !== undefined) {
+                    finalMeta[`${stat}-rank`] = summaryMeta[`${stat}-rank`];
+                }
+                if (finalMeta[`${stat}-limit`] === undefined && summaryMeta[`${stat}-limit`] !== undefined) {
                     finalMeta[`${stat}-limit`] = summaryMeta[`${stat}-limit`];
+                }
             }
         }
 
@@ -272,6 +277,7 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
 
     // 4. Hydrate character store with resolved metadata
     store.setTokenData(targetId, currentRole);
+    setIsRemoteSyncActive(true, 150);
     store.loadFromOwlbear(finalMeta);
     if (resolvedEntityId) {
         store.setIdentity('entityId', resolvedEntityId);

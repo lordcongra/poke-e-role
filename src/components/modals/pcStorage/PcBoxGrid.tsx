@@ -64,7 +64,8 @@ export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
                         <span className="pc-box-grid__banner-text text-subtext">
                             <strong>Token Tip:</strong> Held items, hats, and accessories attach smoothly with your
                             Pokémon! For best results, avoid attaching two Pokémon or Trainer tokens directly to each
-                            other.
+                            other. Do not try attaching two Pokémon that are in the PC together, as they could create a
+                            self-duplicating loop.
                         </span>
                     </div>
                     <button

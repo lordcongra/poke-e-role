@@ -303,7 +303,7 @@ export function setupActiveSheetStoreSync(): () => void {
                 } else {
                     broadcastPlayerPc({ summaries: [updatedSummary], senderId: LOCAL_CLIENT_ID }).catch(() => {});
                 }
-            }, 250);
+            }, 120);
         }
     });
 
