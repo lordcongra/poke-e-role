@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import type { PcBox, PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { PcSlotCard } from './PcSlotCard';
-import { Info, X, PlusCircle } from 'lucide-react';
+import { AlertTriangle, X, PlusCircle } from 'lucide-react';
 import './PcBoxGrid.css';
+
+// In-memory session tracker: resets only upon full page refresh/launch
+let hasTokenAttachmentTipDismissedThisSession = false;
 
 interface PcBoxGridProps {
     box: PcBox;
@@ -38,7 +41,19 @@ export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
     onDragStart,
     onDragEnd
 }) => {
-    const [dismissBanner, setDismissBanner] = useState(false);
+    const [dismissBanner, setDismissBanner] = useState(() => hasTokenAttachmentTipDismissedThisSession);
+
+    const handleDismissBanner = () => {
+        hasTokenAttachmentTipDismissedThisSession = true;
+        setDismissBanner(true);
+    };
+
+    // Automatically mark as dismissed for this session once viewed when modal closes
+    useEffect(() => {
+        return () => {
+            hasTokenAttachmentTipDismissedThisSession = true;
+        };
+    }, []);
 
     // Ensure 30 slots exist
     const slots = Array.from({ length: 30 }, (_, i) => box.slots[i] ?? null);
@@ -60,19 +75,21 @@ export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
             {!dismissBanner && OBR.isAvailable && (
                 <div className="pc-box-grid__banner">
                     <div className="pc-box-grid__banner-content">
-                        <Info size={15} className="pc-box-grid__banner-icon" />
+                        <AlertTriangle size={15} className="pc-box-grid__banner-icon" />
                         <span className="pc-box-grid__banner-text text-subtext">
-                            <strong>Token Tip:</strong> Held items, hats, and accessories attach smoothly with your
-                            Pokémon! For best results, avoid attaching two Pokémon or Trainer tokens directly to each
-                            other. Do not try attaching two Pokémon that are in the PC together, as they could create a
-                            self-duplicating loop.
+                            <strong style={{ color: 'var(--semantic-warning, #f59e0b)' }}>
+                                Token Attachment Warning:
+                            </strong>{' '}
+                            Held items, hats, and accessories attach smoothly with your Pokémon! For best results, avoid
+                            attaching two Pokémon or Trainer tokens directly to each other. Do not try attaching two
+                            Pokémon that are in the PC together, as they could create a self-duplicating loop.
                         </span>
                     </div>
                     <button
                         type="button"
                         className="pc-box-grid__banner-close"
-                        onClick={() => setDismissBanner(true)}
-                        aria-label="Dismiss hint"
+                        onClick={handleDismissBanner}
+                        aria-label="Dismiss warning"
                     >
                         <X size={13} />
                     </button>

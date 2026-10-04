@@ -104,9 +104,6 @@ export async function saveToOwlbear(updates: Record<string, unknown>) {
         pendingUpdates = {};
         pendingTokenId = null;
         isSaveInFlight = true;
-
-        console.log('🚀 PUSHING DATA VIA ADAPTER:', updatesToPush);
-
         try {
             await storageAdapter.saveCharacter(tokenToSave, updatesToPush, METADATA_ID);
         } catch (error) {

@@ -1,0 +1,115 @@
+/* ==========================================================================
+   Mobile Expanding Header Menu / Tools Drawer
+   ========================================================================== */
+
+/* Desktop: completely hidden */
+.pc-mobile-menu {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    .pc-mobile-menu {
+        display: flex;
+        flex-direction: column;
+        background: color-mix(in srgb, var(--panel-bg, #1e1e1e) 96%, transparent);
+        border-bottom: 1.5px solid var(--border, rgba(255, 255, 255, 0.15));
+        padding: 8px 10px;
+        gap: 8px;
+        animation: pcMobileMenuSlideDown 0.15s ease-out;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55);
+        z-index: 50;
+    }
+
+    @keyframes pcMobileMenuSlideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .pc-mobile-menu__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 4px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .pc-mobile-menu__title {
+        font-size: 0.74rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-muted, #94a3b8);
+    }
+
+    .pc-mobile-menu__close-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted, #94a3b8);
+        cursor: pointer;
+        padding: 2px;
+        display: flex;
+        align-items: center;
+        border-radius: 4px;
+    }
+
+    .pc-mobile-menu__close-btn:hover {
+        color: var(--text-main, #f8fafc);
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .pc-mobile-menu__section {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        width: 100%;
+    }
+
+    .pc-mobile-menu__placement-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 0.76rem;
+        padding: 6px 10px;
+        font-weight: 600;
+    }
+
+    .pc-mobile-menu__theme-picker {
+        background: rgba(0, 0, 0, 0.35);
+        border: 1.5px solid rgba(255, 255, 255, 0.18);
+        color: var(--text-main, #f8fafc);
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 0.76rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .pc-mobile-menu__grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+        gap: 6px;
+        width: 100%;
+    }
+
+    .pc-mobile-menu__grid-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        font-size: 0.74rem;
+        padding: 6px 4px;
+        white-space: nowrap;
+        position: relative;
+    }
+}

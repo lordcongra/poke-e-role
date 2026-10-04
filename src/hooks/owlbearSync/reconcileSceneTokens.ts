@@ -4,6 +4,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { isBackupScene, syncBackupSceneTokens } from '../../utils/pc/pcBackupSceneSync';
 import { recentlySpawnedTokenIds } from '../../utils/pc/pcModalOps';
 import { renderTokenGraphicsForMeta, extractEntityId } from './setupOwlbearTokenSync';
+import { separateAttachments, detachTokensFromParent } from '../../utils/pc/pcAttachmentOps';
 
 let isReconciling = false;
 
@@ -202,8 +203,16 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
             if (sum && !sum.isOnMap) {
                 for (const t of tokens) {
                     duplicateIdsToDelete.push(t.id);
-                    const attached = sceneItems.filter((a) => a.attachedTo === t.id);
-                    duplicateIdsToDelete.push(...attached.map((a) => a.id));
+                    const { characterTokens: attachedChars, allAttachedChildren } = separateAttachments(
+                        sceneItems,
+                        t.id
+                    );
+                    if (attachedChars.length > 0) {
+                        detachTokensFromParent(attachedChars, sceneItems).catch(() => {});
+                    }
+                    const attachedCharIds = new Set(attachedChars.map((c) => c.id));
+                    const nonCharAttached = allAttachedChildren.filter((a) => !attachedCharIds.has(a.id));
+                    duplicateIdsToDelete.push(...nonCharAttached.map((a) => a.id));
                 }
                 continue;
             }
@@ -216,8 +225,16 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                 for (const t of tokens) {
                     if (t.id !== preferred.id) {
                         duplicateIdsToDelete.push(t.id);
-                        const attached = sceneItems.filter((a) => a.attachedTo === t.id);
-                        duplicateIdsToDelete.push(...attached.map((a) => a.id));
+                        const { characterTokens: attachedChars, allAttachedChildren } = separateAttachments(
+                            sceneItems,
+                            t.id
+                        );
+                        if (attachedChars.length > 0) {
+                            detachTokensFromParent(attachedChars, sceneItems).catch(() => {});
+                        }
+                        const attachedCharIds = new Set(attachedChars.map((c) => c.id));
+                        const nonCharAttached = allAttachedChildren.filter((a) => !attachedCharIds.has(a.id));
+                        duplicateIdsToDelete.push(...nonCharAttached.map((a) => a.id));
                     }
                 }
             } else {

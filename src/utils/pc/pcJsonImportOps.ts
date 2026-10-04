@@ -101,22 +101,22 @@ export async function importPcBackupJson(
         let importedPokemonCount = 0;
 
         // 1. Merge baseline Pokémon summaries safely into global catalog if not cloning
-        for (const [pId, summary] of Object.entries(rawSummaries)) {
-            if (!summary) continue;
-            if (!mergedSummaries[pId]) {
-                mergedSummaries[pId] = summary;
-                importedPokemonCount++;
-            } else if (duplicateMode !== 'duplicate-fresh') {
-                const existing = mergedSummaries[pId];
-                const existingTime = existing.lastModified || 0;
-                const incomingTime = summary.lastModified || 0;
-                if (incomingTime >= existingTime) {
-                    mergedSummaries[pId] = {
-                        ...summary,
-                        isOnMap: existing.isOnMap || summary.isOnMap,
-                        mapTokenId: existing.mapTokenId || summary.mapTokenId
-                    };
+        if (duplicateMode !== 'duplicate-fresh') {
+            for (const [pId, summary] of Object.entries(rawSummaries)) {
+                if (!summary) continue;
+                if (!mergedSummaries[pId]) {
+                    mergedSummaries[pId] = summary;
                     importedPokemonCount++;
+                } else {
+                    const existing = mergedSummaries[pId];
+                    if ((summary.lastModified || 0) >= (existing.lastModified || 0)) {
+                        mergedSummaries[pId] = {
+                            ...summary,
+                            isOnMap: existing.isOnMap || summary.isOnMap,
+                            mapTokenId: existing.mapTokenId || summary.mapTokenId
+                        };
+                        importedPokemonCount++;
+                    }
                 }
             }
         }

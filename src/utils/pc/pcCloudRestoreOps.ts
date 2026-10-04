@@ -163,7 +163,18 @@ export function restoreTokensIntoPcStorage(
         }
 
         // 2. Parse Pokémon Summary
-        const entityId = (meta.entityId as string) || crypto.randomUUID();
+        let entityId = (meta.entityId as string) || crypto.randomUUID();
+        const existingEntity = currentPcData.pokemonSummaries?.[entityId];
+        const isClaimedByOther =
+            existingEntity &&
+            ((existingEntity.trainerId && trainer && existingEntity.trainerId !== trainer.id) ||
+                (!existingEntity.trainerId &&
+                    trainer &&
+                    existingEntity.campaignId &&
+                    existingEntity.campaignId !== camp.id));
+        if (isClaimedByOther) {
+            entityId = crypto.randomUUID();
+        }
         const hpCurr = Number(meta['hp-curr']) || (typeof meta.hp === 'number' ? meta.hp : 10);
         const hpMax = Number(meta['hp-max-display']) || (typeof meta.hpMax === 'number' ? meta.hpMax : 10);
         const willCurr = Number(meta['will-curr']) || (typeof meta.will === 'number' ? meta.will : 5);

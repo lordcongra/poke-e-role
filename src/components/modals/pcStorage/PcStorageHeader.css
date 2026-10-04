@@ -368,76 +368,143 @@
     gap: 5px;
 }
 
+.pc-header__mobile-tools-btn {
+    display: none;
+}
+
 /* --------------------------------------------------------------------------
    Mobile & Responsive Layouts
    -------------------------------------------------------------------------- */
 @media (max-width: 640px) {
     .pc-header__top-row {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         padding: 6px 8px;
         gap: 6px;
     }
 
     .pc-header__selector-group {
-        gap: 6px;
+        gap: 4px;
+        flex-wrap: wrap;
+        flex: 1;
+        min-width: 0;
     }
 
     .pc-header__dropdown-item {
         padding: 2px 4px;
-        gap: 4px;
+        gap: 3px;
+        flex: 1 1 auto;
+        min-width: 100px;
     }
 
     .pc-header__select {
-        max-width: 90px;
+        max-width: 80px;
         font-size: 0.75rem;
     }
 
     .pc-header__actions {
-        gap: 4px;
+        display: flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        flex-shrink: 0 !important;
     }
 
-    .pc-header__cloud-btn {
-        padding: 3px 6px;
-        font-size: 0.72rem;
-        gap: 4px;
+    .pc-header__backup-wrapper,
+    .pc-header__actions > .pc-header__cloud-btn {
+        display: none !important;
+    }
+
+    .pc-header__mobile-tools-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        font-size: 0.74rem !important;
+        padding: 4px 8px !important;
+        border-radius: 6px !important;
+        cursor: pointer !important;
+    }
+
+    .pc-header__mobile-tools-btn--active {
+        background: color-mix(in srgb, var(--primary, #3b82f6) 25%, var(--panel-alt, #0f172a)) !important;
+        border-color: var(--primary, #3b82f6) !important;
+        color: #fff !important;
+    }
+
+    .pc-header__close-btn {
+        position: static !important;
+        width: 28px !important;
+        height: 28px !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: rgba(0, 0, 0, 0.4) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 6px !important;
+        color: var(--text-muted, #94a3b8) !important;
+    }
+
+    .pc-header__close-btn:hover {
+        background: rgba(239, 68, 68, 0.25) !important;
+        color: #ef4444 !important;
+        border-color: rgba(239, 68, 68, 0.5) !important;
     }
 
     .pc-header__box-nav-row {
-        padding: 6px 8px;
-        gap: 6px;
+        padding: 4px 8px !important;
+        gap: 6px !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     .pc-header__box-nav {
+        display: flex;
+        align-items: center;
         gap: 6px;
+        flex: 1;
+        min-width: 0;
     }
 
-    .pc-header__nav-arrow {
-        width: 24px;
-        height: 24px;
+    .pc-header__box-title-wrap {
+        flex: 1;
+        justify-content: center;
+        min-width: 0;
     }
 
     .pc-header__box-select {
-        font-size: 0.95rem;
-        padding: 2px 4px;
+        max-width: 140px;
+        font-size: 0.88rem;
+        text-align: center;
+    }
+
+    .pc-header__nav-arrow {
+        width: 26px;
+        height: 26px;
     }
 
     .pc-header__box-extra-actions {
-        gap: 4px;
+        width: auto !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 5px !important;
     }
 
+    .pc-header__placement-btn,
     .pc-header__theme-picker-label {
-        padding: 3px 6px;
-        font-size: 0.72rem;
-        gap: 4px;
-    }
-
-    .pc-header__color-picker-input {
-        width: 16px;
-        height: 16px;
+        display: none !important;
     }
 
     .pc-header__new-box-btn {
-        padding: 3px 6px;
-        font-size: 0.72rem;
-        gap: 4px;
+        padding: 4px 8px;
+        font-size: 0.73rem;
+        white-space: nowrap;
     }
 }

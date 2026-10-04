@@ -1,11 +1,11 @@
 import OBR, { type Item } from '@owlbear-rodeo/sdk';
 import { METADATA_ID } from '../sync/obr';
-import { GRAPHICS_META_ID } from '../graphics/graphicsManager';
 import type { PcPokemonSummary, TrainerRoster } from '../../types/pcStorageTypes';
 import { calculateRelativeAttachment } from './rehomeEngine';
 import { broadcastPlayerPc, broadcastGmPc } from '../../hooks/owlbearSync/setupOwlbearPcSync';
 
 import { isMatchingPokemonItem, isItemTrainer } from './pcItemMatching';
+import { separateAttachments, detachTokensFromParent } from './pcAttachmentOps';
 
 export interface RecallPokemonResult {
     success: boolean;
@@ -43,14 +43,16 @@ export async function recallPokemonFromMap(
         }
 
         const resolvedParentId = parent.id;
-        const allAttachedChildren = sceneItems.filter((i) => i.attachedTo === resolvedParentId);
-        const realAttachedChildren = allAttachedChildren.filter(
-            (it) =>
-                !it.metadata[GRAPHICS_META_ID] &&
-                !it.metadata['pokerole-extension/graphic-v6'] &&
-                !it.id.startsWith(`${resolvedParentId}-`)
+        const { characterTokens, accessoryTokens, allAttachedChildren } = separateAttachments(
+            sceneItems,
+            resolvedParentId
         );
-        const bundles = realAttachedChildren.map((child) => calculateRelativeAttachment(parent, child));
+        const bundles = accessoryTokens.map((child) => calculateRelativeAttachment(parent, child));
+
+        // Safely detach any attached character tokens on scene so they stay in world coordinates and are preserved
+        if (characterTokens.length > 0) {
+            await detachTokensFromParent(characterTokens, sceneItems);
+        }
 
         const meta = {
             ...((parent.metadata?.['pokerole-pmd-extension/stats'] as Record<string, unknown>) || {}),
@@ -85,17 +87,32 @@ export async function recallPokemonFromMap(
                   ? Number(meta['will-max-display'])
                   : undefined;
 
-        // Delete parent, any scene clones of this Pokémon, and all attached accessories
-        const idsToDelete = new Set<string>([parent.id, ...allAttachedChildren.map((c) => c.id)]);
+        // Delete parent, any scene clones of this Pokémon, and genuine accessories/HUDs (NEVER attached character tokens)
+        const characterTokenIds = new Set(characterTokens.map((c) => c.id));
+        const nonCharacterChildren = allAttachedChildren.filter((c) => !characterTokenIds.has(c.id));
+        const idsToDelete = new Set<string>([parent.id, ...nonCharacterChildren.map((c) => c.id)]);
         if (summary) {
             const clones = sceneItems.filter((i) => i.id !== parent.id && isMatchingPokemonItem(i, summary));
             for (const c of clones) {
                 idsToDelete.add(c.id);
-                const att = sceneItems.filter((a) => a.attachedTo === c.id);
-                for (const a of att) idsToDelete.add(a.id);
+                const { characterTokens: cloneCharTokens, allAttachedChildren: cloneAllChildren } = separateAttachments(
+                    sceneItems,
+                    c.id
+                );
+                if (cloneCharTokens.length > 0) {
+                    await detachTokensFromParent(cloneCharTokens, sceneItems);
+                }
+                const cloneCharIds = new Set(cloneCharTokens.map((ct) => ct.id));
+                const cloneNonCharChildren = cloneAllChildren.filter((a) => !cloneCharIds.has(a.id));
+                for (const a of cloneNonCharChildren) idsToDelete.add(a.id);
             }
         }
         await OBR.scene.items.deleteItems(Array.from(idsToDelete));
+
+        // Disconnect recalled token from its parent if it was attached to another token
+        if (parent.attachedTo) {
+            delete (parent as { attachedTo?: unknown }).attachedTo;
+        }
 
         return {
             success: true,

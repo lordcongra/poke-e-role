@@ -5,7 +5,19 @@ import { PcSlotCard } from './PcSlotCard';
 import { PcTrainerCard } from './PcTrainerCard';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
 import { useResolvedImageUrl } from '../../../utils/graphics/useResolvedImageUrl';
-import { Shield, UserCheck, Plus, Unlink, FileText, MapPin, FolderPlus, Users, HelpCircle } from 'lucide-react';
+import {
+    Shield,
+    UserCheck,
+    Plus,
+    Unlink,
+    FileText,
+    MapPin,
+    FolderPlus,
+    Users,
+    HelpCircle,
+    Columns,
+    Rows
+} from 'lucide-react';
 import './PcPartyDock.css';
 
 interface PcPartyDockProps {
@@ -22,6 +34,8 @@ interface PcPartyDockProps {
     activeCharacterAvatarUrl?: string;
     canLinkActiveTrainer?: boolean;
     otherLinkedTrainerName?: string;
+    partyLayout?: 'vertical' | 'horizontal';
+    onTogglePartyLayout?: () => void;
     onSelectSlot: (index: number) => void;
     onEmptySlotClick?: (index: number) => void;
     onContextMenu: (e: React.MouseEvent, index: number, entityId: string) => void;
@@ -53,6 +67,8 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
     activeCharacterAvatarUrl,
     canLinkActiveTrainer = true,
     otherLinkedTrainerName,
+    partyLayout = 'vertical',
+    onTogglePartyLayout,
     onSelectSlot,
     onEmptySlotClick,
     onContextMenu,
@@ -84,7 +100,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
           : 'Active Pokémon carried on your trainer belt.';
 
     return (
-        <aside className="pc-party-dock">
+        <aside className={`pc-party-dock pc-party-dock--${partyLayout}`}>
             <div className="pc-party-dock__header">
                 <div className="pc-party-dock__title-group" title={beltHint}>
                     {isPmd ? (
@@ -103,12 +119,31 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                         <Shield size={16} className="pc-party-dock__icon" />
                     )}
                     <h3 className="pc-party-dock__title text-title-primary">{displayTitle}</h3>
+                    <span className="pc-party-dock__badge text-subtext">{occupiedCount} / 6</span>
                     <span className="pc-party-dock__hint-icon" aria-label={beltHint}>
                         <HelpCircle size={13} />
                     </span>
                 </div>
                 <div className="pc-party-dock__header-actions">
-                    <span className="pc-party-dock__badge text-subtext">{occupiedCount} / 6</span>
+                    {onTogglePartyLayout && (
+                        <button
+                            type="button"
+                            className="pc-party-dock__layout-toggle-btn action-button action-button--dark"
+                            onClick={onTogglePartyLayout}
+                            title={
+                                partyLayout === 'horizontal'
+                                    ? 'Switch to Vertical Sidebar View (1x6 List)'
+                                    : 'Switch to Horizontal Belt View (Top 2x3 Grid)'
+                            }
+                            aria-label={
+                                partyLayout === 'horizontal'
+                                    ? 'Switch to Vertical Sidebar View (1x6 List)'
+                                    : 'Switch to Horizontal Belt View (Top 2x3 Grid)'
+                            }
+                        >
+                            {partyLayout === 'horizontal' ? <Columns size={12} /> : <Rows size={12} />}
+                        </button>
+                    )}
                     {!OBR.isAvailable && onOrganizeFolders && (
                         <button
                             type="button"

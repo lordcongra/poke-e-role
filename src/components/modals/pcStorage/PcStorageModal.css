@@ -70,6 +70,78 @@ body.pc-modal-open .pc-sheet-modal__overlay {
     min-width: 0;
 }
 
+/* Horizontal Layout (Default: Party Belt on TOP with 2x3 Grid, Box on BOTTOM) */
+.pc-modal__layout--horizontal {
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.pc-modal__layout--horizontal .pc-party-dock {
+    width: 100%;
+    max-width: 100%;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1.5px solid var(--border, rgba(255, 255, 255, 0.12));
+    overflow: visible;
+    flex-shrink: 0;
+    padding: 10px 14px;
+    gap: 6px;
+}
+
+.pc-modal__layout--horizontal .pc-party-dock__slots {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+}
+
+@media (max-width: 860px) {
+    .pc-modal__layout--horizontal .pc-party-dock__slots {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.pc-modal__layout--horizontal .pc-box-grid-container {
+    border-left: none;
+    border-top: 1.5px solid var(--border, rgba(255, 255, 255, 0.12));
+    overflow: visible;
+}
+
+.pc-modal__layout--horizontal .pc-box-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    overflow: visible;
+}
+
+/* Vertical Layout (Party Belt on LEFT Sidebar with 1x6 Stack, Box on RIGHT) */
+.pc-modal__layout--vertical {
+    flex-direction: row;
+    overflow: hidden;
+}
+
+.pc-modal__layout--vertical .pc-party-dock {
+    width: 310px;
+    max-width: 100%;
+    border-right: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+    border-bottom: none;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.pc-modal__layout--vertical .pc-party-dock__slots {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.pc-modal__layout--vertical .pc-box-grid-container {
+    flex: 1;
+    border-left: 2px solid var(--border, rgba(255, 255, 255, 0.1));
+    border-top: none;
+}
+
 /* --------------------------------------------------------------------------
    Slot Context Menu
    -------------------------------------------------------------------------- */
@@ -211,41 +283,122 @@ body.pc-modal-open .pc-sheet-modal__overlay {
 }
 
 /* --------------------------------------------------------------------------
+   Mobile Segmented Tabs (Desktop: Hidden)
+   -------------------------------------------------------------------------- */
+.pc-modal__mobile-tabs {
+    display: none;
+}
+
+/* --------------------------------------------------------------------------
    Mobile & Responsive Layouts
    -------------------------------------------------------------------------- */
-@media (max-width: 860px) {
+@media (max-width: 640px) {
+    .pc-modal-backdrop {
+        padding: 0;
+        align-items: stretch;
+    }
+
+    .pc-modal {
+        max-width: 100vw;
+        width: 100vw;
+        height: 100%;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+        border: none;
+        box-sizing: border-box;
+    }
+
+    .pc-modal__mobile-tabs {
+        display: flex;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.45);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 4px 8px;
+        gap: 6px;
+        flex-shrink: 0;
+        box-sizing: border-box;
+    }
+
+    .pc-modal__mobile-tab {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        color: var(--text-muted, #94a3b8);
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .pc-modal__mobile-tab--active {
+        background: color-mix(in srgb, var(--primary) 22%, transparent);
+        border-color: var(--primary);
+        color: var(--text-main, #f8fafc);
+        font-weight: 700;
+    }
+
+    /* Segmented view switching on mobile */
+    .pc-modal--mobile-show-box .pc-party-dock {
+        display: none !important;
+    }
+
+    .pc-modal--mobile-show-party .pc-box-grid-container {
+        display: none !important;
+    }
+
+    /* Hide box navigation toolbar when viewing party tab on mobile to save vertical space */
+    .pc-modal--mobile-show-party .pc-header__box-nav-row {
+        display: none !important;
+    }
+
     .pc-modal__layout {
         flex-direction: column;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 100%;
     }
 
     .pc-party-dock {
         width: 100%;
+        max-width: 100%;
         max-height: none;
         border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: none;
         overflow: visible;
         flex-shrink: 0;
+        box-sizing: border-box;
+        padding: 6px 8px;
     }
 
     .pc-party-dock__slots {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 6px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     .pc-box-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
         overflow: visible;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 500px) {
     .pc-party-dock__slots {
-        grid-template-columns: 1fr;
-    }
-
-    .pc-box-grid {
         grid-template-columns: 1fr;
     }
 }

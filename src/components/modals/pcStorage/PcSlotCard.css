@@ -239,7 +239,7 @@
     width: 100%;
     min-width: 0;
     overflow: hidden;
-    padding-right: 46px;
+    padding-right: 0;
     box-sizing: border-box;
 }
 
@@ -266,7 +266,7 @@
 }
 
 .pc-slot-card__types--dual .pc-slot-card__type-pill {
-    font-size: 0.58rem;
+    font-size: 0.54rem;
     padding: 1px 3px;
     letter-spacing: -0.02em;
 }
@@ -402,13 +402,6 @@
     pointer-events: auto;
 }
 
-@media (hover: none) {
-    .pc-slot-card__box-actions {
-        opacity: 0.9;
-        pointer-events: auto;
-    }
-}
-
 .pc-slot-card__btn-box-sheet,
 .pc-slot-card__btn-box-action {
     width: 22px;
@@ -429,4 +422,31 @@
 .pc-slot-card__btn-box-sheet:hover,
 .pc-slot-card__btn-box-action:hover {
     transform: scale(1.08);
+}
+
+/* On mobile / narrow viewports, tapping the card directly opens the options menu */
+@media (max-width: 640px) {
+    .pc-slot-card__box-actions {
+        display: none !important;
+    }
+
+    .pc-slot-card__party-actions {
+        display: none !important;
+    }
+
+    .pc-slot-card {
+        box-sizing: border-box;
+        max-width: 100%;
+        min-width: 0;
+        cursor: pointer;
+    }
+
+    .pc-slot-card--party {
+        padding: 6px 10px;
+        min-height: 54px;
+    }
+
+    .pc-slot-card__meta-row--box {
+        padding-right: 0;
+    }
 }

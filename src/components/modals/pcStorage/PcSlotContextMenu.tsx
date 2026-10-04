@@ -67,8 +67,8 @@ export const PcSlotContextMenu: React.FC<PcSlotContextMenuProps> = ({
     }, [onClose]);
 
     // Ensure menu stays within window bounds
-    const adjustedX = Math.min(x, window.innerWidth - 220);
-    const adjustedY = Math.min(y, window.innerHeight - 280);
+    const adjustedX = Math.max(8, Math.min(x, window.innerWidth - 225));
+    const adjustedY = Math.max(8, Math.min(y, window.innerHeight - 340));
 
     return (
         <div ref={menuRef} className="pc-context-menu" style={{ left: `${adjustedX}px`, top: `${adjustedY}px` }}>

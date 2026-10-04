@@ -24,7 +24,8 @@ import {
     Package,
     Bookmark,
     Sparkles,
-    MousePointerClick
+    MousePointerClick,
+    HardDrive
 } from 'lucide-react';
 
 export const CURRENT_VERSION = '3.7.0';
@@ -130,8 +131,63 @@ export function getChangelogDiff(lastSeenVersion: string | null): ChangelogDiffR
 export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
         version: '3.7.0',
-        date: 'September 2026',
+        date: 'October 2026',
         highlights: [
+            {
+                id: 'pokemon-pc-storage',
+                version: '3.7.0',
+                title: 'Pokémon PC Storage & Adventure Vaults',
+                icon: HardDrive,
+                badge: 'Major System',
+                summary:
+                    'Complete persistent Pokémon PC Storage: manage multiple trainers, campaigns, and themed boxes, inspect sheets directly, send out and recall tokens, and preserve attachments across scenes.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Persistent Pokémon Boxes & Party Management:</strong> Store, deposit, and withdraw
+                            Pokémon between your active belt party and custom PC storage boxes with intuitive slot clicks
+                            or drag-and-drop. Each box supports up to 30 Pokémon with individual name editing and custom
+                            color themes.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Campaigns as Adventure Folders:</strong> Treat campaigns like folders to maintain
+                            separate trainer profiles, team parties, and PC boxes for different games or storylines.
+                            Switch between trainers with one click, run trainerless Pokémon Mystery Dungeon (PMD) teams,
+                            and designate private folders for GM encounter prep.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Send Out, Recall & Persistent Attachments:</strong> Summon stored Pokémon onto the
+                            map with either <em>Auto-Place</em> (spawns in front of your trainer) or <em>Click to Place</em> (choose
+                            an exact map location). 1-click recall brings tokens right back into storage. Held items, hats,
+                            and accessories attached to Pokémon tokens are remembered and restored across scenes!
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Direct Sheet Viewer & Portable Backups:</strong> View and edit full Pokémon and
+                            Trainer character sheets directly within the PC storage interface. Save scene backups to
+                            your Owlbear room or export and import portable JSON backup files with flexible duplication
+                            and ownership transfer modes.
+                        </p>
+                        <div
+                            style={{
+                                marginTop: '12px',
+                                padding: '10px 12px',
+                                borderRadius: '6px',
+                                backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                                border: '1px solid rgba(245, 158, 11, 0.4)',
+                                color: 'var(--text-main)',
+                                fontSize: '0.88em',
+                                lineHeight: 1.45
+                            }}
+                        >
+                            <strong style={{ color: '#fbbf24' }}>Important Safety Reminder:</strong> PC Storage is a
+                            major new system overhaul. While it has undergone aggressive testing, edge-case bugs may still
+                            exist. Before delving deep into testing or reorganizing your storage, please use the{' '}
+                            <strong>Backup</strong> button to export your important Pokémon to portable JSON backup
+                            files!
+                        </div>
+                    </div>
+                )
+            },
             {
                 id: 'welcome-overview',
                 version: '3.7.0',
@@ -164,6 +220,95 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
         ],
         changes: [
             <strong
+                key="pc-storage-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <HardDrive size={16} /> Pokémon PC Storage & Adventure Vaults
+            </strong>,
+            <ul
+                key="pc-storage-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Persistent Pokémon Boxes:</strong> Deposit, withdraw, and organize Pokémon between your active
+                    party and PC storage boxes. Each box holds up to 30 Pokémon and features custom names and color themes.
+                </li>
+                <li>
+                    <strong>Campaigns as Adventure Folders:</strong> Organize separate storylines and games. Maintain distinct
+                    trainer rosters, team parties, and PC boxes per campaign, or run in Trainerless PMD team mode.
+                </li>
+                <li>
+                    <strong>Campaign Privacy & Active Room Adventures:</strong> Organize your PC with Public and Private
+                    folders. GMs can designate an Active Room Campaign (marked with a green globe) so joining players
+                    automatically connect to the right adventure.
+                </li>
+                <li>
+                    <strong>Send Out with Auto-Place & Click to Place:</strong> Summon Pokémon directly from your party or
+                    boxes to the battle map. Choose <em>Auto-Place</em> to drop in front of your trainer token or <em>Click to
+                    Place</em> to target exact map coordinates.
+                </li>
+                <li>
+                    <strong>1-Click Token Recall:</strong> Return active map tokens back into your party or PC storage with a
+                    single click.
+                </li>
+                <li>
+                    <strong>Persistent Token Attachments:</strong> Held items, hats, and accessories attached to your Pokémon
+                    tokens are remembered and preserved when recalling to the PC or deploying onto brand-new scenes.
+                </li>
+                <li>
+                    <strong>Full Sheet Viewer & Quick Navigation:</strong> Inspect and edit full Pokémon and Trainer character
+                    sheets directly inside the PC modal without needing to spawn them onto the map first.
+                </li>
+                <li>
+                    <strong>Cloud Scene Backups & Portable JSON Restore:</strong> Back up stored Pokémon to Owlbear scene
+                    storage or export portable JSON files. Flexible import options allow duplicating as fresh Pokémon copies,
+                    auto-merging with matching trainers, or transferring ownership between characters.
+                </li>
+                <li>
+                    <strong>Pre-Testing Backup Recommended:</strong> Because PC Storage is a major new system overhaul,
+                    please back up your important Pokémon to a JSON file using the <strong>Backup</strong> tool before
+                    diving in to test the new storage features.
+                </li>
+            </ul>,
+            <strong
+                key="battle-organizer-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Swords size={16} /> Battle Organizer Enhancements
+            </strong>,
+            <ul
+                key="battle-organizer-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Add New from Initiative (Mid-Round Swaps):</strong> Added a dedicated &quot;Add New from Initiative&quot;
+                    button to pull newly swapped Pokémon or late arrivals directly into the current combat round without wiping
+                    out or resetting existing combatants.
+                </li>
+                <li>
+                    <strong>Flexible Tracker Reset Confirmation:</strong> Choose whether to reset action and clash/evade
+                    counters for newly pulled combatants or preserve their existing tracker state.
+                </li>
+            </ul>,
+            <strong
                 key="empty-state-title"
                 className="text-title-primary"
                 style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
@@ -188,68 +333,14 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     Organizer, and Homebrew Workshop.
                 </li>
                 <li>
-                    <strong>1-Click Deselect Button:</strong> Added a dedicated &quot;Deselect&quot; button to the
-                    character header and top toolbar, allowing you to easily close a character sheet and return to the
-                    overview without losing your place during combat.
+                    <strong>1-Click Deselect Button:</strong> Added a dedicated &quot;Deselect&quot; button to the character
+                    header and top toolbar, allowing you to easily close a character sheet and return to the overview without
+                    losing your place during combat.
                 </li>
                 <li>
                     <strong>Custom Base Overview Theme:</strong> Set your own preferred theme colors for the extension
-                    overview when no token is selected. Active Pokémon will still display their own typing colors (e.g.
-                    Fire orange, Water blue) unless you choose to override them globally.
-                </li>
-            </ul>,
-            <strong
-                key="pc-storage-title"
-                className="text-title-primary"
-                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-            >
-                <Layers size={16} /> Pokémon PC Storage & Scene Integration
-            </strong>,
-            <ul
-                key="pc-storage-list"
-                className="text-subtext"
-                style={{
-                    color: 'var(--text-main)',
-                    paddingLeft: '20px',
-                    marginTop: '6px',
-                    marginBottom: '16px',
-                    fontSize: '0.9em',
-                    lineHeight: '1.5'
-                }}
-            >
-                <li>
-                    <strong>1-Click Box Recall & Send Out:</strong> Added dedicated Recall and Send Out buttons
-                    directly on PC Box Pokémon cards, allowing map tokens to be summoned or recalled straight to/from
-                    storage boxes with one click.
-                </li>
-                <li>
-                    <strong>Smart Placement in Front of Trainer:</strong> Sent-out Pokémon now drop naturally in front of
-                    your trainer token on the map (avoiding token stacking), with an unobstructed viewport drop when no
-                    trainer is present.
-                </li>
-                <li>
-                    <strong>Trainer Sheet Access & Quick Spawn:</strong> Open your full Trainer Sheet directly within the
-                    PC modal and use the &quot;Drop Trainer&quot; button to place your trainer token onto any new scene.
-                </li>
-                <li>
-                    <strong>Clean Backup Grid & Open Scene Sync:</strong> Scene backups now arrange all tokens and
-                    trainer in an organized battle grid with accurate sprite proportions and clean health and will bars.
-                    Added an &quot;Update Open Scene&quot; option so you can sync backups directly into your open scene
-                    without creating duplicate scene assets.
-                </li>
-                <li>
-                    <strong>Campaign Privacy & Active Room Adventures:</strong> Organize your PC with Public and
-                    Private folders. GMs can designate an Active Room Campaign so joining players automatically swap
-                    to that adventure. Keep encounter vaults and boss prep strictly private without player rosters
-                    mixing in.
-                </li>
-                <li>
-                    <strong>Campaign Edit Settings:</strong> Easily rename campaigns, adjust public vs. private
-                    visibility, and set room campaign designations from the new campaign edit menu.
-                </li>
-                <li>
-                    <strong>Scene Token Anti-Reversion Guard:</strong> Older tokens left on previous map scenes are
-                    safeguarded from overwriting newer Pokémon stats or progress saved in your PC.
+                    overview when no token is selected. Active Pokémon will still display their own typing colors (e.g. Fire
+                    orange, Water blue) unless you choose to override them globally.
                 </li>
             </ul>
         ]

@@ -4,6 +4,8 @@
 
 .pc-party-dock {
     width: 310px;
+    max-width: 100%;
+    box-sizing: border-box;
     background: color-mix(in srgb, var(--panel-bg, #1e1e1e) 95%, transparent);
     border-right: 1px solid var(--border, rgba(255, 255, 255, 0.12));
     display: flex;
@@ -357,4 +359,43 @@
 .pc-trainer-card__btn--on-map {
     background: var(--primary, #3b82f6);
     color: #fff;
+}
+
+.pc-party-dock__layout-toggle-btn {
+    padding: 3px 6px;
+    font-size: 0.72rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.pc-party-dock--horizontal {
+    width: 100%;
+    max-width: 100%;
+}
+
+.pc-party-dock--horizontal .pc-party-dock__title {
+    max-width: 320px;
+}
+
+.pc-party-dock--horizontal .pc-trainer-card {
+    width: 100%;
+    max-width: 100%;
+}
+
+.pc-party-dock--horizontal .pc-trainer-card__actions {
+    flex-direction: row;
+    align-items: center;
+}
+
+@media (max-width: 640px) {
+    .pc-party-dock {
+        padding: 6px 8px;
+        gap: 6px;
+    }
+
+    .pc-party-dock__layout-toggle-btn {
+        display: none !important;
+    }
 }

@@ -2,10 +2,10 @@ import OBR from '@owlbear-rodeo/sdk';
 import type { PcPokemonSummary, TrainerRoster, CampaignProfile } from '../../types/pcStorageTypes';
 import type { CharacterState } from '../../store/storeTypes';
 import { flattenStateToMetadata } from '../sync/stateMapper';
-import { GRAPHICS_META_ID } from '../graphics/graphicsManager';
 import { calculateRelativeAttachment } from './rehomeEngine';
 import { isEntityLockedByGm } from './pcCandidateMatching';
 import { isItemTrainer } from './pcItemMatching';
+import { separateAttachments, detachTokensFromParent } from './pcAttachmentOps';
 
 /**
  * Resolves ownership status of a Pokémon entityId within the current campaign and across other campaigns.
@@ -389,16 +389,16 @@ export async function prepareDepositSummary(
             if (parent && !isItemTrainer(parent)) {
                 finalSummary.savedTokenItem = parent;
                 if (!finalSummary.attachedItems || finalSummary.attachedItems.length === 0) {
-                    const realAttachments = sceneItems.filter(
-                        (it) =>
-                            it.attachedTo === parent.id &&
-                            !it.metadata[GRAPHICS_META_ID] &&
-                            !it.metadata['pokerole-extension/graphic-v6'] &&
-                            !it.id.startsWith(`${parent.id}-`)
-                    );
-                    if (realAttachments.length > 0) {
-                        finalSummary.attachedItems = realAttachments.map((c) => calculateRelativeAttachment(parent, c));
+                    const { characterTokens, accessoryTokens } = separateAttachments(sceneItems, parent.id);
+                    if (accessoryTokens.length > 0) {
+                        finalSummary.attachedItems = accessoryTokens.map((c) => calculateRelativeAttachment(parent, c));
                     }
+                    if (characterTokens.length > 0) {
+                        await detachTokensFromParent(characterTokens, sceneItems);
+                    }
+                }
+                if (finalSummary.savedTokenItem.attachedTo) {
+                    delete (finalSummary.savedTokenItem as { attachedTo?: unknown }).attachedTo;
                 }
             } else if (parent && isItemTrainer(parent)) {
                 // Stale reference to Trainer token: clear to prevent state hijacking

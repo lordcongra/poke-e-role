@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { CharacterState, IdentitySlice, Rank } from '../storeTypes';
 import {
     saveToOwlbear,
+    getIsRemoteSyncActive,
     saveRoomSettingsToOwlbear,
     flushSceneSettingsToOwlbear,
     clearSceneScaleFromOwlbear,
@@ -14,6 +15,7 @@ import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { getKnownAbility } from '../../data/abilities/knownAbilities';
 
 const EXCLUDED_FROM_TOKEN_SAVE = new Set([
+    'entityId',
     'printConfig',
     'tokenImageUrl',
     'isPrinting',
@@ -577,6 +579,10 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 return { identity: newIdentity };
             }
 
+            if (state.identity[field] === value) {
+                return state;
+            }
+
             const newIdentity = { ...state.identity, [field]: value };
             const updatesToSave: Record<string, unknown> = {};
             const newHealth = { ...state.health };
@@ -661,7 +667,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 }
             }
 
-            if (!EXCLUDED_FROM_TOKEN_SAVE.has(field as string)) {
+            if (!EXCLUDED_FROM_TOKEN_SAVE.has(field as string) && !getIsRemoteSyncActive()) {
                 if (typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number') {
                     if (field === 'maxFormData') updatesToSave['max-form-data'] = value;
                     else if (field === 'activeFormId') updatesToSave['active-form-id'] = value;

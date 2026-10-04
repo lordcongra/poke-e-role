@@ -50,10 +50,53 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
     const hasType2 = Boolean(summary.type2 && summary.type2.toLowerCase() !== 'none' && summary.type2.trim() !== '');
     const type1Display = summary.type1 && summary.type1.toLowerCase() !== 'none' ? summary.type1 : 'Normal';
 
+    // Touch tap detection: on mobile, clean tap opens options menu, swiping to scroll does not
+    const touchStartRef = React.useRef<{ x: number; y: number; time: number } | null>(null);
+    const isSwipingRef = React.useRef(false);
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (e.touches.length === 1) {
+            const t = e.touches[0];
+            touchStartRef.current = { x: t.clientX, y: t.clientY, time: Date.now() };
+            isSwipingRef.current = false;
+        }
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (touchStartRef.current && e.touches.length === 1) {
+            const t = e.touches[0];
+            const dx = Math.abs(t.clientX - touchStartRef.current.x);
+            const dy = Math.abs(t.clientY - touchStartRef.current.y);
+            if (dx > 10 || dy > 10) {
+                isSwipingRef.current = true;
+            }
+        }
+    };
+
+    const handleTouchEnd = (_e: React.TouchEvent) => {
+        if (touchStartRef.current && !isSwipingRef.current) {
+            const elapsed = Date.now() - touchStartRef.current.time;
+            if (elapsed < 350) {
+                const synthEvent = {
+                    preventDefault: () => {},
+                    stopPropagation: () => {},
+                    clientX: touchStartRef.current.x,
+                    clientY: touchStartRef.current.y
+                } as unknown as React.MouseEvent;
+                onContextMenu(synthEvent);
+            }
+        }
+        touchStartRef.current = null;
+        isSwipingRef.current = false;
+    };
+
     return (
         <div
             className={`pc-slot-card ${isSelected ? 'pc-slot-card--selected' : ''} ${isPartySlot ? 'pc-slot-card--party' : 'pc-slot-card--box'}`}
             onClick={onClick}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
             onDoubleClick={(e) => {
                 e.stopPropagation();
                 if (isLocked) {

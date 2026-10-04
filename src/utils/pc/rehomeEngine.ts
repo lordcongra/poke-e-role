@@ -1,5 +1,6 @@
 import type { Item } from '@owlbear-rodeo/sdk';
 import type { AttachmentBundle } from '../../types/pcStorageTypes';
+import { isCharacterOrRegisteredToken } from './pcAttachmentOps';
 
 /**
  * Calculates the relative transform of a child item attached to a parent token.
@@ -109,9 +110,12 @@ export function rehomeTokenSubtree(parentToken: Item, attachments: AttachmentBun
 
     const rehomedChildren: Item[] = [];
 
-    // Cycle detector & safeguard: ensure child is never parent
+    // Cycle detector & safeguard: ensure child is never parent and never a character token
     for (const bundle of attachments) {
         if (!bundle || !bundle.item || bundle.item.id === parentToken.id) {
+            continue;
+        }
+        if (isCharacterOrRegisteredToken(bundle.item)) {
             continue;
         }
         const rehomedChild = applyRelativeAttachment(clonedParent, bundle, freshParentId);

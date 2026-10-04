@@ -278,10 +278,10 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
     // 4. Hydrate character store with resolved metadata
     store.setTokenData(targetId, currentRole);
     setIsRemoteSyncActive(true, 150);
-    store.loadFromOwlbear(finalMeta);
     if (resolvedEntityId) {
-        store.setIdentity('entityId', resolvedEntityId);
+        finalMeta.entityId = resolvedEntityId;
     }
+    store.loadFromOwlbear(finalMeta);
 
     // 5. Reconcile token image
     const imgItem = tokenItem as Image | undefined;

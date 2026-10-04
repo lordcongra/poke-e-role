@@ -181,7 +181,23 @@ export function applyAddTrainer(pcData: PcStorageData, name: string): { nextData
                             id: newId,
                             name,
                             party: Array(6).fill(null),
-                            boxes: Array.from({ length: 8 }, (_, i) => createDefaultBox(i))
+                            boxes: Array.from({ length: 8 }, (_, i) => createDefaultBox(i)),
+                            fullMetadata: {
+                                name,
+                                nickname: name,
+                                species: name,
+                                mode: 'Trainer',
+                                rank: 'Trainer',
+                                'str-base': 1,
+                                'dex-base': 1,
+                                'vit-base': 1,
+                                'ins-base': 1,
+                                'spe-base': 1,
+                                'hp-curr': 10,
+                                'hp-max-display': 10,
+                                'will-curr': 5,
+                                'will-max-display': 5
+                            }
                         }
                     }
                 }

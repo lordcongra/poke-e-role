@@ -21,8 +21,10 @@ import {
     Globe,
     X,
     HelpCircle,
-    RefreshCw
+    RefreshCw,
+    SlidersHorizontal
 } from 'lucide-react';
+import { PcMobileHeaderMenu } from './PcMobileHeaderMenu';
 
 interface PcStorageHeaderProps {
     campaigns: Record<string, CampaignProfile>;
@@ -117,6 +119,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
         placeholder: string;
     } | null>(null);
     const [campaignModalMode, setCampaignModalMode] = useState<'create' | 'edit' | null>(null);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const activeCampaign = campaigns[activeCampaignId];
     const isActiveRoom = isCampaignRoomActive(activeCampaign, activeRoomCampaignId, activeRoomCampaignName);
@@ -257,6 +260,22 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                 </div>
 
                 <div className="pc-header__actions">
+                    {/* Mobile Only: Expanding Tools / Options Menu button */}
+                    <button
+                        type="button"
+                        className={`action-button action-button--dark pc-header__mobile-tools-btn ${
+                            isMobileMenuOpen ? 'pc-header__mobile-tools-btn--active' : ''
+                        }`}
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        title="Options & Tools (Send Out Mode, Theme, Backup, Import, Guide)"
+                        aria-label="Options & Tools"
+                        aria-expanded={isMobileMenuOpen}
+                    >
+                        <SlidersHorizontal size={14} />
+                        <span>Tools</span>
+                        {hasUnbackedChanges && <span className="pc-header__backup-badge" title="Unbacked changes" />}
+                    </button>
+
                     <div className="pc-header__backup-wrapper">
                         <button
                             type="button"
@@ -324,6 +343,22 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                     </button>
                 </div>
             </div>
+
+            {/* Mobile Only: Expanding Tools Menu Drawer */}
+            {isMobileMenuOpen && (
+                <PcMobileHeaderMenu
+                    isOpen={isMobileMenuOpen}
+                    onClose={() => setIsMobileMenuOpen(false)}
+                    currentBoxTheme={currentBox.themeColor}
+                    activeBoxIndex={activeBoxIndex}
+                    onSetBoxTheme={onSetBoxTheme}
+                    onUploadCloud={onUploadCloud}
+                    onOpenImport={onOpenImport}
+                    onSyncPlayers={onSyncPlayers}
+                    onOpenGuide={onOpenGuide}
+                    hasUnbackedChanges={hasUnbackedChanges}
+                />
+            )}
 
             {/* Bottom Row: Box Navigator & Theme/Settings */}
             <PcBoxNavigator

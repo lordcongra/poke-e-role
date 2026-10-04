@@ -55,11 +55,18 @@ const mapSkill = (val: string, parsedExtraCats: ExtraCategory[]): string => {
 };
 
 function parseStats(meta: Record<string, unknown>, state: CharacterState) {
+    const isTrainer =
+        meta.mode === 'Trainer' ||
+        meta.mode === 'Trainer (Special)' ||
+        meta.rank === 'Trainer' ||
+        state.identity.mode === 'Trainer' ||
+        (state.identity.rank as string) === 'Trainer';
+
     const newStats = { ...state.stats };
     Object.values(CombatStat).forEach((stat) => {
         newStats[stat] = { ...newStats[stat] };
         newStats[stat].base =
-            meta[`${stat}-base`] !== undefined ? Number(meta[`${stat}-base`]) : stat === 'ins' ? 1 : 2;
+            meta[`${stat}-base`] !== undefined ? Number(meta[`${stat}-base`]) : isTrainer ? 1 : stat === 'ins' ? 1 : 2;
         newStats[stat].rank = meta[`${stat}-rank`] !== undefined ? Number(meta[`${stat}-rank`]) : 0;
         newStats[stat].buff = meta[`${stat}-buff`] !== undefined ? Number(meta[`${stat}-buff`]) : 0;
         newStats[stat].debuff = meta[`${stat}-debuff`] !== undefined ? Number(meta[`${stat}-debuff`]) : 0;

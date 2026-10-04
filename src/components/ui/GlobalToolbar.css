@@ -340,17 +340,42 @@
 
 /* 🔥 MOBILE & NARROW VIEWPORT RESPONSIVE FIXES (Screens <= 768px) 🔥 */
 @media (max-width: 768px) {
+    .global-toolbar-wrapper {
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .global-toolbar__header-title {
+        font-size: 0.78rem;
+        letter-spacing: -0.01em;
+    }
+
     .global-toolbar__content {
         grid-template-columns: 1fr;
         gap: 6px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        max-height: calc(85vh - 46px);
+        padding: 6px 8px;
     }
 
     .global-toolbar__main-tools,
     .global-toolbar__side-tools {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px;
+    }
+
+    .global-toolbar__btn {
+        padding: 6px 6px;
+        font-size: 0.76rem;
+        gap: 5px;
     }
 
     .global-toolbar__action-mini-btn {
         min-height: 32px;
+        padding: 4px 6px;
+        font-size: 0.74rem;
     }
 }
