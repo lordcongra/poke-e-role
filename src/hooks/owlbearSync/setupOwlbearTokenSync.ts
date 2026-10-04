@@ -298,7 +298,7 @@ export async function setupOwlbearTokenSync(params: {
                         renderTokenGraphics(item, gData, currentRole);
                     }
 
-                    if (item.id === storeState.tokenId) {
+                    if (item.id === storeState.tokenId && !getIsPcSheetActive()) {
                         const lastKnown = lastTransform?.metaStr;
 
                         if (lastKnown !== metaStr && !hasPendingUpdates()) {

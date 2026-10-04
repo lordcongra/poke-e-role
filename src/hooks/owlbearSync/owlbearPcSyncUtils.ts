@@ -37,6 +37,13 @@ export function sanitizeSummaryForSync(s: PcPokemonSummary): PcPokemonSummary {
             if (k === 'savedTokenItem' || k === 'attachedItems') continue;
             slimMeta[k] = v;
         }
+        if (s.hp !== undefined) slimMeta['hp-curr'] = s.hp;
+        if (s.maxHp !== undefined) slimMeta['hp-max-display'] = s.maxHp;
+        if (s.will !== undefined) slimMeta['will-curr'] = s.will;
+        if (s.maxWill !== undefined) slimMeta['will-max-display'] = s.maxWill;
+        if (s.name) slimMeta['nickname'] = s.name;
+        if (s.species) slimMeta['species'] = s.species;
+        if (s.lastModified) slimMeta['lastModified'] = s.lastModified;
     }
 
     return {
@@ -138,8 +145,8 @@ export function mergeIncomingPlayerSummaries(
         const existingMod = Number(existing?.lastModified) || 0;
         const incomingMod = Number(s.lastModified) || 0;
 
-        // Anti-Reversion Guard: if GM already has a strictly newer modification, NEVER overwrite!
-        if (existing && existingMod > incomingMod) {
+        // Anti-Reversion Guard: if GM already has this modification or newer, NEVER overwrite!
+        if (existing && existingMod >= incomingMod) {
             continue;
         }
 
@@ -150,14 +157,16 @@ export function mergeIncomingPlayerSummaries(
                 ...s,
                 campaignId: targetCampId,
                 isOnMap: false,
-                mapTokenId: undefined
+                mapTokenId: undefined,
+                savedTokenItem: existing?.savedTokenItem ?? s.savedTokenItem
             };
         } else if (s.isOnMap === true) {
             updatedSummaries[s.entityId] = {
                 ...s,
                 campaignId: targetCampId,
                 isOnMap: true,
-                mapTokenId: s.mapTokenId || existing?.mapTokenId
+                mapTokenId: s.mapTokenId || existing?.mapTokenId,
+                savedTokenItem: existing?.savedTokenItem ?? s.savedTokenItem
             };
         } else if (existing?.isOnMap && existing.savedTokenItem && incomingMod === existingMod) {
             updatedSummaries[s.entityId] = {
@@ -183,7 +192,8 @@ export function mergeIncomingPlayerSummaries(
         } else {
             updatedSummaries[s.entityId] = {
                 ...s,
-                campaignId: targetCampId
+                campaignId: targetCampId,
+                savedTokenItem: existing?.savedTokenItem ?? s.savedTokenItem
             };
         }
         hasChanges = true;

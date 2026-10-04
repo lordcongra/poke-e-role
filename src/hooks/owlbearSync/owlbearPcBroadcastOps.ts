@@ -26,12 +26,19 @@ export async function broadcastPlayerPc(params?: {
         const { pcData, identity } = state;
 
         let targetCampId = params?.campaignId;
-        if (!targetCampId) {
+        if (!targetCampId || !pcData.campaigns[targetCampId]) {
             const designatedId = identity.activeRoomCampaignId;
             if (designatedId && pcData.campaigns[designatedId] && !pcData.campaigns[designatedId].isPrivate) {
                 targetCampId = designatedId;
-            } else {
+            } else if (
+                pcData.campaigns[pcData.activeCampaignId] &&
+                !pcData.campaigns[pcData.activeCampaignId].isPrivate
+            ) {
                 targetCampId = pcData.activeCampaignId;
+            } else {
+                targetCampId =
+                    Object.keys(pcData.campaigns || {}).find((k) => !pcData.campaigns[k]?.isPrivate) ||
+                    pcData.activeCampaignId;
             }
         }
 
@@ -148,16 +155,25 @@ export async function broadcastGmPc(params?: {
     if (!OBR.isAvailable) return;
     try {
         const state = useCharacterStore.getState();
-        if (state.role !== 'GM') return;
+        const effectiveRole =
+            state.role || (OBR.isAvailable ? await OBR.player.getRole().catch(() => undefined) : undefined);
+        if (effectiveRole !== 'GM') return;
 
         const { pcData, identity } = state;
         let targetCampId = params?.campaignId;
-        if (!targetCampId) {
+        if (!targetCampId || !pcData.campaigns[targetCampId]) {
             const designatedId = identity.activeRoomCampaignId;
             if (designatedId && pcData.campaigns[designatedId] && !pcData.campaigns[designatedId].isPrivate) {
                 targetCampId = designatedId;
-            } else {
+            } else if (
+                pcData.campaigns[pcData.activeCampaignId] &&
+                !pcData.campaigns[pcData.activeCampaignId].isPrivate
+            ) {
                 targetCampId = pcData.activeCampaignId;
+            } else {
+                targetCampId =
+                    Object.keys(pcData.campaigns || {}).find((k) => !pcData.campaigns[k]?.isPrivate) ||
+                    pcData.activeCampaignId;
             }
         }
         const campaign = pcData.campaigns[targetCampId];
@@ -191,26 +207,6 @@ export async function broadcastGmPc(params?: {
             cleanSummaries = params.summaries.map((s) =>
                 sanitizeSummaryForSync({ ...s, lastModified: s.lastModified || Date.now() })
             );
-
-            // Also include referenced party and box summaries for this trainer
-            if (cleanTrainer) {
-                const referencedIds = new Set<string>();
-                for (const s of cleanTrainer.party || []) if (s) referencedIds.add(s);
-                for (const b of cleanTrainer.boxes || []) {
-                    for (const s of b.slots || []) if (s) referencedIds.add(s);
-                }
-                const alreadyIncluded = new Set(cleanSummaries.map((s) => s.entityId));
-                for (const id of referencedIds) {
-                    if (!alreadyIncluded.has(id)) {
-                        const sum = pcData.pokemonSummaries[id];
-                        if (sum) {
-                            cleanSummaries.push(
-                                sanitizeSummaryForSync({ ...sum, lastModified: sum.lastModified || Date.now() })
-                            );
-                        }
-                    }
-                }
-            }
         } else if (cleanTrainer) {
             const referencedIds = new Set<string>();
             for (const s of cleanTrainer.party || []) {

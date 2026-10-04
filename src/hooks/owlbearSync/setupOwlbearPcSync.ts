@@ -4,6 +4,7 @@ import { savePcStorage } from '../../utils/pc/pcStorageAdapter';
 import { resolveGmTargetCampaignId } from '../../utils/pc/pcCampaignTrainerOps';
 import { EXTENSION_ID, METADATA_ID } from './owlbearSyncConstants';
 import { registerSafeBroadcastListener } from './owlbearBroadcastUtils';
+import { setIsRemoteSyncActive } from '../../utils/sync/obr';
 import { applyDeleteSummary, stripEntityFromTrainer } from '../../utils/pc/pcStateMutations';
 import {
     type PlayerPcSyncPayload,
@@ -77,6 +78,7 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                     );
 
                     if (hasChanges || trainersChanged) {
+                        setIsRemoteSyncActive(true, 80);
                         const nextData = {
                             ...pcData,
                             campaigns: {
@@ -95,31 +97,47 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                             window.dispatchEvent(new Event('pkr-local-data-changed'));
                         }
 
-                        // Rehydrate active sheet if GM currently has this character open in PcSheetModal!
-                        const currentTokenId = state.tokenId;
-                        const currentEntityId = state.identity.entityId;
+                        // Rehydrate active sheet if GM currently has this character open in PcSheetModal or on canvas!
                         for (const incoming of payload.summaries || []) {
                             if (!incoming || !incoming.entityId) continue;
                             const merged = updatedSummaries[incoming.entityId];
-                            if (!merged || !merged.fullMetadata) continue;
+                            if (!merged) continue;
 
                             const existingMod = Number(pcData.pokemonSummaries?.[incoming.entityId]?.lastModified) || 0;
                             const incomingMod = Number(incoming.lastModified) || 0;
 
-                            if (
-                                currentTokenId === incoming.entityId ||
-                                currentEntityId === incoming.entityId ||
-                                (merged.mapTokenId && currentTokenId === merged.mapTokenId)
-                            ) {
-                                if (incomingMod >= existingMod) {
-                                    if (typeof window !== 'undefined') {
-                                        window.dispatchEvent(
-                                            new CustomEvent('pkr-remote-summary-applied', {
-                                                detail: { entityId: merged.entityId, summary: merged }
-                                            })
-                                        );
-                                    }
-                                    useCharacterStore.getState().loadFromOwlbear(merged.fullMetadata);
+                            if (incomingMod > existingMod) {
+                                if (typeof window !== 'undefined') {
+                                    window.dispatchEvent(
+                                        new CustomEvent('pkr-remote-summary-applied', {
+                                            detail: { entityId: merged.entityId, summary: merged }
+                                        })
+                                    );
+                                }
+
+                                const freshStore = useCharacterStore.getState();
+                                const currentTokenId = freshStore.tokenId;
+                                const currentEntityId = freshStore.identity.entityId;
+
+                                if (
+                                    (currentTokenId === incoming.entityId ||
+                                        currentEntityId === incoming.entityId ||
+                                        (merged.mapTokenId && currentTokenId === merged.mapTokenId)) &&
+                                    merged.fullMetadata
+                                ) {
+                                    freshStore.loadFromOwlbear(merged.fullMetadata);
+                                    useCharacterStore.setState((st) => ({
+                                        health: {
+                                            ...st.health,
+                                            ...(merged.hp !== undefined ? { hpCurr: merged.hp } : {}),
+                                            ...(merged.maxHp !== undefined ? { hpMax: merged.maxHp } : {})
+                                        },
+                                        will: {
+                                            ...st.will,
+                                            ...(merged.will !== undefined ? { willCurr: merged.will } : {}),
+                                            ...(merged.maxWill !== undefined ? { willMax: merged.maxWill } : {})
+                                        }
+                                    }));
                                 }
                             }
                         }
@@ -250,8 +268,8 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                         const existingMod = Number(existing?.lastModified) || 0;
                         const incomingMod = Number(incoming.lastModified) || Number(payload.timestamp) || Date.now();
 
-                        // Anti-Reversion Guard: if local summary is strictly newer than incoming packet, skip
-                        if (existing && existingMod > incomingMod) {
+                        // Anti-Reversion & Anti-Echo Guard: skip if local summary is equal or newer
+                        if (existing && existingMod >= incomingMod) {
                             continue;
                         }
 
@@ -283,6 +301,7 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                     }
 
                     if (campChanged || summariesChanged) {
+                        setIsRemoteSyncActive(true, 80);
                         const nextData = {
                             ...pcData,
                             campaigns: {
@@ -298,16 +317,35 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                         useCharacterStore.setState({ pcData: nextData });
                         await savePcStorage(nextData);
 
+                        for (const incoming of payload.summaries || []) {
+                            if (!incoming || !incoming.entityId) continue;
+                            const merged = updatedSummaries[incoming.entityId];
+                            if (!merged) continue;
+
+                            if (typeof window !== 'undefined') {
+                                window.dispatchEvent(
+                                    new CustomEvent('pkr-remote-summary-applied', {
+                                        detail: { entityId: merged.entityId, summary: merged }
+                                    })
+                                );
+                            }
+                        }
+
                         for (const activeSum of rehydratableSummaries) {
                             if (activeSum.fullMetadata) {
-                                if (typeof window !== 'undefined') {
-                                    window.dispatchEvent(
-                                        new CustomEvent('pkr-remote-summary-applied', {
-                                            detail: { entityId: activeSum.entityId, summary: activeSum }
-                                        })
-                                    );
-                                }
                                 useCharacterStore.getState().loadFromOwlbear(activeSum.fullMetadata);
+                                useCharacterStore.setState((st) => ({
+                                    health: {
+                                        ...st.health,
+                                        ...(activeSum.hp !== undefined ? { hpCurr: activeSum.hp } : {}),
+                                        ...(activeSum.maxHp !== undefined ? { hpMax: activeSum.maxHp } : {})
+                                    },
+                                    will: {
+                                        ...st.will,
+                                        ...(activeSum.will !== undefined ? { willCurr: activeSum.will } : {}),
+                                        ...(activeSum.maxWill !== undefined ? { willMax: activeSum.maxWill } : {})
+                                    }
+                                }));
                             }
                         }
 

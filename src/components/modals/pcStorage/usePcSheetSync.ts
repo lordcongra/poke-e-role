@@ -1,44 +1,21 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
-import type { CharacterState, CustomType } from '../../../store/storeTypes';
+import type { CustomType } from '../../../store/storeTypes';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { setActiveTokenId, setIsPcSheetActive, METADATA_ID } from '../../../utils/sync/obr';
-import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
-import { resolveCharacterThemeColors, applyDynamicThemeColors } from '../../../utils/common/colorUtils';
+import { setActiveTokenId, setIsPcSheetActive, getIsRemoteSyncActive, METADATA_ID } from '../../../utils/sync/obr';
+import { applyDynamicThemeColors } from '../../../utils/common/colorUtils';
 import { extractEntityId, renderTokenGraphicsForMeta } from '../../../hooks/owlbearSync/setupOwlbearTokenSync';
 import { broadcastGmPc, broadcastPlayerPc } from '../../../hooks/owlbearSync/setupOwlbearPcSync';
 import { hydrateActiveSheet } from '../../../utils/sync/unifiedSheetHydration';
+import {
+    hasCharacterSheetChanged,
+    buildSummaryFromStore,
+    resolvePcSheetThemeColors,
+    restorePreviousCharacterState
+} from './pcSheetSyncUtils';
 
-/**
- * Pure predicate checking if any persistent character sheet slice changed in Zustand.
- * Ignores non-character slices (pcData, homebrew, generatorConfig, etc.) to prevent infinite loops.
- */
-export function hasCharacterSheetChanged(state: CharacterState, prevState: CharacterState): boolean {
-    return (
-        state.health !== prevState.health ||
-        state.will !== prevState.will ||
-        state.derived !== prevState.derived ||
-        state.extras !== prevState.extras ||
-        state.stats !== prevState.stats ||
-        state.socials !== prevState.socials ||
-        state.skills !== prevState.skills ||
-        state.moves !== prevState.moves ||
-        state.skillChecks !== prevState.skillChecks ||
-        state.wishlist !== prevState.wishlist ||
-        state.inventory !== prevState.inventory ||
-        state.notes !== prevState.notes ||
-        state.customInfo !== prevState.customInfo ||
-        state.tp !== prevState.tp ||
-        state.currency !== prevState.currency ||
-        state.passives !== prevState.passives ||
-        state.statuses !== prevState.statuses ||
-        state.effects !== prevState.effects ||
-        state.trackers !== prevState.trackers ||
-        state.extraCategories !== prevState.extraCategories ||
-        state.identity !== prevState.identity
-    );
-}
+export { hasCharacterSheetChanged };
 
 export interface UsePcSheetSyncParams {
     currentSummary: PcPokemonSummary;
@@ -65,6 +42,7 @@ export function usePcSheetSync({
     const isUnmountingRef = useRef(false);
     const isDirtyRef = useRef(false);
     const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const remoteHydrateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const activeUnsubRef = useRef<(() => void) | null>(null);
 
     const prevThemeRef = useRef<{ primary: string; secondary: string } | null>(null);
@@ -81,9 +59,16 @@ export function usePcSheetSync({
     const onUpdateSummaryRef = useRef(onUpdateSummary);
     onUpdateSummaryRef.current = onUpdateSummary;
 
+    const modeRef = useRef(mode);
+    modeRef.current = mode;
+
+    const roomCustomTypesRef = useRef(roomCustomTypes);
+    roomCustomTypesRef.current = roomCustomTypes;
+
     // Core two-way persistence: serializes active Zustand store into metadata and summaries
     const syncNow = useCallback((targetSummary?: PcPokemonSummary) => {
-        if (isHydratingRef.current) return;
+        // Guard against running sync during remote hydration unless this is a dirty local edit
+        if (getIsRemoteSyncActive() || (isHydratingRef.current && !isDirtyRef.current)) return;
         if (syncTimeoutRef.current) {
             clearTimeout(syncTimeoutRef.current);
             syncTimeoutRef.current = null;
@@ -109,70 +94,33 @@ export function usePcSheetSync({
             return;
         }
 
-        const nextMeta = flattenStateToMetadata(currentStore);
-        nextMeta.entityId = curr.entityId;
-        nextMeta.lastModified = Date.now();
-
-        const nextHp = currentStore.health.hpCurr ?? curr.hp;
-        const nextMaxHp = currentStore.health.hpMax ?? curr.maxHp;
-        const nextWill = currentStore.will.willCurr ?? curr.will;
-        const nextMaxWill = currentStore.will.willMax ?? curr.maxWill;
-        const nextName = currentStore.identity.nickname || currentStore.identity.species || curr.name;
-
-        // Keep savedTokenItem metadata synchronized if cached token item exists
-        let updatedSavedTokenItem = curr.savedTokenItem;
-        if (updatedSavedTokenItem) {
-            updatedSavedTokenItem = {
-                ...updatedSavedTokenItem,
-                name: nextName,
-                metadata: {
-                    ...(updatedSavedTokenItem.metadata || {}),
-                    [METADATA_ID]: {
-                        ...((updatedSavedTokenItem.metadata?.[METADATA_ID] as Record<string, unknown>) || {}),
-                        ...nextMeta
-                    },
-                    'pokerole-pmd-extension/stats': {
-                        ...((updatedSavedTokenItem.metadata?.['pokerole-pmd-extension/stats'] as Record<
-                            string,
-                            unknown
-                        >) || {}),
-                        ...nextMeta
-                    }
-                }
-            };
-        }
-
-        const updatedSummary: PcPokemonSummary = {
-            ...curr,
-            name: nextName,
-            species: currentStore.identity.species || curr.species,
-            rank: currentStore.identity.rank || curr.rank,
-            type1: currentStore.identity.type1 || curr.type1,
-            type2:
-                currentStore.identity.type2 && currentStore.identity.type2.toLowerCase() !== 'none'
-                    ? currentStore.identity.type2
-                    : undefined,
-            hp: nextHp,
-            maxHp: nextMaxHp,
-            will: nextWill,
-            maxWill: nextMaxWill,
-            tokenImageUrl: currentStore.identity.tokenImageUrl || curr.tokenImageUrl,
-            fullMetadata: nextMeta,
-            savedTokenItem: updatedSavedTokenItem,
-            lastModified: Date.now()
-        };
-
+        const { updatedSummary, nextMeta } = buildSummaryFromStore(currentStore, curr);
+        currentSummaryRef.current = updatedSummary;
         onUpdateSummaryRef.current(updatedSummary);
 
         if (OBR.isAvailable) {
-            const targetCampId =
-                curr.campaignId || currentStore.identity.activeRoomCampaignId || currentStore.pcData.activeCampaignId;
+            let targetCampId =
+                curr.campaignId && currentStore.pcData.campaigns[curr.campaignId]
+                    ? curr.campaignId
+                    : currentStore.identity.activeRoomCampaignId &&
+                        currentStore.pcData.campaigns[currentStore.identity.activeRoomCampaignId]
+                      ? currentStore.identity.activeRoomCampaignId
+                      : currentStore.pcData.activeCampaignId;
+
+            if (!targetCampId || !currentStore.pcData.campaigns[targetCampId]) {
+                targetCampId =
+                    Object.keys(currentStore.pcData.campaigns || {}).find(
+                        (k) => !currentStore.pcData.campaigns[k]?.isPrivate
+                    ) || currentStore.pcData.activeCampaignId;
+            }
+
             const targetCamp = targetCampId ? currentStore.pcData.campaigns[targetCampId] : undefined;
             const targetTrainer =
                 (curr.trainerId ? targetCamp?.trainers?.[curr.trainerId] : undefined) ||
                 (targetCamp?.activeTrainerId ? targetCamp.trainers?.[targetCamp.activeTrainerId] : undefined);
 
-            if (currentStore.role === 'GM') {
+            const effectiveRole = (currentStore.role as 'PLAYER' | 'GM') || 'PLAYER';
+            if (effectiveRole === 'GM') {
                 broadcastGmPc({
                     campaignId: targetCampId,
                     trainer: targetTrainer,
@@ -195,7 +143,7 @@ export function usePcSheetSync({
                     (it) => it.id === targetMapId || (Boolean(curr.entityId) && extractEntityId(it) === curr.entityId),
                     (items) => {
                         for (const item of items) {
-                            item.name = nextName;
+                            item.name = updatedSummary.name;
                             if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
                             Object.assign(item.metadata[METADATA_ID] as Record<string, unknown>, nextMeta);
                             if (!item.metadata['pokerole-pmd-extension/stats']) {
@@ -233,13 +181,18 @@ export function usePcSheetSync({
 
     const flushSync = useCallback(
         (targetSummary?: PcPokemonSummary) => {
-            syncNow(targetSummary || currentSummaryRef.current);
+            if (isDirtyRef.current || syncTimeoutRef.current || targetSummary) {
+                syncNow(targetSummary || currentSummaryRef.current);
+            }
         },
         [syncNow]
     );
 
     // Save previous character state and theme on mount, restore on unmount
     useEffect(() => {
+        isUnmountingRef.current = false;
+        isHydratingRef.current = false;
+        isDirtyRef.current = false;
         setIsPcSheetActive(true);
         if (OBR.isAvailable) {
             OBR.player.select([]).catch(() => {});
@@ -247,7 +200,7 @@ export function usePcSheetSync({
 
         const store = useCharacterStore.getState();
         prevTokenIdRef.current = store.tokenId;
-        prevMetaRef.current = flattenStateToMetadata(store);
+        prevMetaRef.current = buildSummaryFromStore(store, currentSummaryRef.current).nextMeta;
 
         prevThemeRef.current = {
             primary:
@@ -273,11 +226,15 @@ export function usePcSheetSync({
                 clearTimeout(syncTimeoutRef.current);
                 syncTimeoutRef.current = null;
             }
+            if (remoteHydrateTimerRef.current) {
+                clearTimeout(remoteHydrateTimerRef.current);
+                remoteHydrateTimerRef.current = null;
+            }
 
-            // Push the final state of the edited Pokémon if matching and not hydrating
+            // Only flush if local state has dirty uncommitted edits!
             const storeAtUnmount = useCharacterStore.getState();
             if (
-                !isHydratingRef.current &&
+                isDirtyRef.current &&
                 currentSummaryRef.current?.entityId &&
                 storeAtUnmount.identity.entityId === currentSummaryRef.current.entityId
             ) {
@@ -285,63 +242,18 @@ export function usePcSheetSync({
             }
             isHydratingRef.current = true;
 
-            // Restore previous character ONLY if it was a distinct token from the one edited
-            const targetId = currentSummaryRef.current.entityId;
-            const targetMapId = currentSummaryRef.current.mapTokenId;
-            const initialMapTokenId = initialMapTokenIdRef.current;
-            const initialEntityId = initialEntityIdRef.current;
-
-            const isSameEntity =
-                (prevTokenIdRef.current &&
-                    (prevTokenIdRef.current === targetId ||
-                        (targetMapId && prevTokenIdRef.current === targetMapId) ||
-                        (initialMapTokenId && prevTokenIdRef.current === initialMapTokenId) ||
-                        (initialEntityId && prevTokenIdRef.current === initialEntityId))) ||
-                (prevMetaRef.current &&
-                    (prevMetaRef.current.entityId === targetId ||
-                        prevMetaRef.current['entityId'] === targetId ||
-                        (initialEntityId &&
-                            (prevMetaRef.current.entityId === initialEntityId ||
-                                prevMetaRef.current['entityId'] === initialEntityId))));
-
-            if (prevTokenIdRef.current && !isSameEntity) {
-                setActiveTokenId(prevTokenIdRef.current);
-                const s = useCharacterStore.getState();
-                s.setTokenData(prevTokenIdRef.current, s.role || 'PLAYER');
-                if (prevMetaRef.current) {
-                    s.loadFromOwlbear(prevMetaRef.current);
-                }
-                if (prevThemeRef.current) {
-                    applyDynamicThemeColors(prevThemeRef.current.primary, prevThemeRef.current.secondary);
-                }
-            } else {
-                // Same entity or no previous token: ensure active token ID is valid (storage entity or live map ID)
-                const s = useCharacterStore.getState();
-                const finalTokenId =
-                    currentSummaryRef.current.isOnMap && currentSummaryRef.current.mapTokenId
-                        ? currentSummaryRef.current.mapTokenId
-                        : currentSummaryRef.current.entityId;
-                if (finalTokenId) {
-                    setActiveTokenId(finalTokenId);
-                    s.setTokenData(finalTokenId, s.role || 'PLAYER');
-                }
-                const colors = resolveCharacterThemeColors(
-                    {
-                        type1: s.identity.type1,
-                        type2: s.identity.type2,
-                        themePrimaryOverride: s.identity.themePrimaryOverride,
-                        themeSecondaryOverride: s.identity.themeSecondaryOverride
-                    },
-                    roomCustomTypes
-                );
-                applyDynamicThemeColors(colors.primary, colors.secondary);
-            }
-
-            if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('theme-override-updated'));
-            }
+            restorePreviousCharacterState({
+                prevTokenId: prevTokenIdRef.current,
+                prevMeta: prevMetaRef.current,
+                prevTheme: prevThemeRef.current,
+                currentSummary: currentSummaryRef.current,
+                initialMapTokenId: initialMapTokenIdRef.current,
+                initialEntityId: initialEntityIdRef.current,
+                mode: modeRef.current,
+                roomCustomTypes: roomCustomTypesRef.current
+            });
         };
-    }, [syncNow, roomCustomTypes]);
+    }, []);
 
     // Load Pokémon metadata whenever currentSummary changes & listen for store changes
     useEffect(() => {
@@ -398,12 +310,12 @@ export function usePcSheetSync({
         hydrateEntity();
 
         const unsub = useCharacterStore.subscribe((state, prevState) => {
-            if (isHydratingRef.current || isUnmountingRef.current) return;
+            if (getIsRemoteSyncActive() || isHydratingRef.current || isUnmountingRef.current) return;
             if (hasCharacterSheetChanged(state, prevState)) {
                 isDirtyRef.current = true;
                 if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
                 syncTimeoutRef.current = setTimeout(() => {
-                    syncNow(activeEntity);
+                    syncNow();
                 }, 150);
             }
         });
@@ -411,23 +323,39 @@ export function usePcSheetSync({
 
         const handleRemoteApplied = (e: Event) => {
             const customEvt = e as CustomEvent<{ entityId: string; summary: PcPokemonSummary }>;
-            if (customEvt.detail?.entityId === activeEntity.entityId) {
-                isHydratingRef.current = true;
-                const nextSummary = customEvt.detail.summary;
-                currentSummaryRef.current = nextSummary;
-                onUpdateSummaryRef.current(nextSummary);
-
-                // Dynamically re-bind active token ID if on-map status changed (e.g. sent out or recalled)
-                const targetTokenId =
-                    nextSummary.isOnMap && nextSummary.mapTokenId ? nextSummary.mapTokenId : nextSummary.entityId;
-                setActiveTokenId(targetTokenId);
-                const s = useCharacterStore.getState();
-                s.setTokenData(targetTokenId, s.role || 'PLAYER');
-
-                setTimeout(() => {
-                    if (!isCancelled) isHydratingRef.current = false;
-                }, 300);
+            const nextSummary = customEvt.detail?.summary;
+            if (!nextSummary || customEvt.detail?.entityId !== activeEntity.entityId) {
+                return;
             }
+
+            const incomingMod = Number(nextSummary.lastModified) || 0;
+            const localMod = Number(currentSummaryRef.current.lastModified) || 0;
+
+            // Strict timestamp guard: only overwrite local state if incoming is strictly newer
+            if (localMod > 0 && incomingMod > 0 && incomingMod <= localMod) {
+                return;
+            }
+
+            // Cancel any pending debounced sync since remote update is authoritative
+            if (syncTimeoutRef.current) {
+                clearTimeout(syncTimeoutRef.current);
+                syncTimeoutRef.current = null;
+            }
+            isDirtyRef.current = false;
+
+            currentSummaryRef.current = nextSummary;
+
+            // Dynamically re-bind active token ID if on-map status changed (e.g. sent out or recalled)
+            const targetTokenId =
+                nextSummary.isOnMap && nextSummary.mapTokenId ? nextSummary.mapTokenId : nextSummary.entityId;
+            setActiveTokenId(targetTokenId);
+
+            const s = useCharacterStore.getState();
+            s.setTokenData(targetTokenId, s.role || 'PLAYER');
+
+            // Apply theme colors reactively
+            const colors = resolvePcSheetThemeColors(nextSummary, modeRef.current, s, roomCustomTypesRef.current);
+            applyDynamicThemeColors(colors.primary, colors.secondary);
         };
 
         if (typeof window !== 'undefined') {
@@ -443,43 +371,20 @@ export function usePcSheetSync({
                 activeUnsubRef.current();
                 activeUnsubRef.current = null;
             }
+            if (remoteHydrateTimerRef.current) {
+                clearTimeout(remoteHydrateTimerRef.current);
+                remoteHydrateTimerRef.current = null;
+            }
             if (!isUnmountingRef.current && (isDirtyRef.current || syncTimeoutRef.current)) {
-                syncNow(activeEntity);
+                syncNow();
             }
         };
     }, [currentSummary.entityId, syncNow]);
 
     // Reactive Theme Application
     useEffect(() => {
-        const isTrainer =
-            currentSummary.rank === 'Trainer' || currentSummary.fullMetadata?.mode === 'Trainer' || mode === 'Trainer';
-
         const storeState = useCharacterStore.getState();
-        const activePrimaryOverride = storeState.identity.themePrimaryOverride;
-        const activeSecondaryOverride = storeState.identity.themeSecondaryOverride;
-        const storeType1 = storeState.identity.type1;
-        const storeType2 = storeState.identity.type2;
-
-        const rawPrimary =
-            (currentSummary.fullMetadata?.['theme-primary-override'] as string) ||
-            (currentSummary.fullMetadata?.themePrimaryOverride as string) ||
-            activePrimaryOverride ||
-            '';
-
-        const rawSecondary =
-            (currentSummary.fullMetadata?.['theme-secondary-override'] as string) ||
-            (currentSummary.fullMetadata?.themeSecondaryOverride as string) ||
-            activeSecondaryOverride ||
-            '';
-
-        const themeIdentity = {
-            type1: isTrainer ? '' : currentSummary.type1 || storeType1 || '',
-            type2: isTrainer ? '' : currentSummary.type2 || storeType2 || '',
-            themePrimaryOverride: rawPrimary,
-            themeSecondaryOverride: rawSecondary
-        };
-
-        const colors = resolveCharacterThemeColors(themeIdentity, roomCustomTypes);
+        const colors = resolvePcSheetThemeColors(currentSummary, mode, storeState, roomCustomTypes);
         applyDynamicThemeColors(colors.primary, colors.secondary);
     }, [
         currentSummary.entityId,

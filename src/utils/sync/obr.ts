@@ -17,6 +17,27 @@ export function getIsPcSheetActive() {
     return isPcSheetActive;
 }
 
+let isRemoteSyncActive = false;
+let remoteSyncTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function setIsRemoteSyncActive(active: boolean, timeoutMs = 80) {
+    isRemoteSyncActive = active;
+    if (remoteSyncTimer) {
+        clearTimeout(remoteSyncTimer);
+        remoteSyncTimer = null;
+    }
+    if (active && timeoutMs > 0) {
+        remoteSyncTimer = setTimeout(() => {
+            isRemoteSyncActive = false;
+            remoteSyncTimer = null;
+        }, timeoutMs);
+    }
+}
+
+export function getIsRemoteSyncActive() {
+    return isRemoteSyncActive;
+}
+
 export function setActiveTokenId(id: string | null) {
     if (activeTokenId !== id) {
         if (activeTokenId && Object.keys(pendingUpdates).length > 0) {
