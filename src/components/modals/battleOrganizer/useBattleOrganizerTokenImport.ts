@@ -7,6 +7,7 @@ import {
     extractCharacterName,
     calculateBaseInitFromCharacterData
 } from '../../../utils/combat/initiativeHelpers';
+import { extractEntityId } from '../../../hooks/owlbearSync/setupOwlbearTokenSync';
 import type { BattleOrganizerState, BattleRoundData, CombatantRowData } from '../../../types/battleOrganizerTypes';
 import {
     parseStatusesFromMetadata,
@@ -88,6 +89,7 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                             combatantRows.push({
                                 id: crypto.randomUUID(),
                                 tokenId: charId,
+                                entityId: (matchingChar?.metadata?.entityId as string) || charId,
                                 initiative: initScore,
                                 baseInit: baseInitVal,
                                 name: displayName,
@@ -171,6 +173,7 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                         combatantRows.push({
                             id: crypto.randomUUID(),
                             tokenId: item.id,
+                            entityId: extractEntityId(item),
                             initiative: String(initVal),
                             baseInit,
                             name: charName,

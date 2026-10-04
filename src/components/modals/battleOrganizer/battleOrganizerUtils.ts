@@ -1,7 +1,4 @@
-import OBR from '@owlbear-rodeo/sdk';
-import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { extractCharacterName } from '../../../utils/combat/initiativeHelpers';
 import { STATUS_OPTIONS } from '../../../data/constants';
 import type { StatusItem } from '../../../store/storeTypes';
 import type {
@@ -132,50 +129,11 @@ export function mapStatusTextToStatusItems(
     });
 }
 
-export async function resolveCombatantTokenId(combatant: CombatantRowData): Promise<string | null> {
-    if (combatant.tokenId) return combatant.tokenId;
-    if (!combatant.name.trim()) return null;
-
-    if (isStandaloneMode) {
-        try {
-            const localChars = await storageAdapter.getLocalCharacters();
-            const match = localChars.find((c) => {
-                const meta = (c.metadata || {}) as Record<string, unknown>;
-                const resolvedName = extractCharacterName(meta, c.name);
-                return (
-                    resolvedName.toLowerCase().trim() === combatant.name.toLowerCase().trim() ||
-                    c.name.toLowerCase().trim() === combatant.name.toLowerCase().trim()
-                );
-            });
-            return match ? match.id : null;
-        } catch (e) {
-            console.warn('[battleOrganizerUtils] Failed to resolve standalone token ID:', e);
-            return null;
-        }
-    }
-
-    if (OBR.isAvailable) {
-        try {
-            const items = await OBR.scene.items.getItems((item) => {
-                if (item.layer !== 'CHARACTER') return false;
-                const meta = (item.metadata['pokerole-extension/stats'] ||
-                    item.metadata['pokerole-pmd-extension/stats'] ||
-                    item.metadata) as Record<string, unknown>;
-                const resolvedName = extractCharacterName(meta, item.name);
-                return (
-                    resolvedName.toLowerCase().trim() === combatant.name.toLowerCase().trim() ||
-                    item.name.toLowerCase().trim() === combatant.name.toLowerCase().trim()
-                );
-            });
-            return items.length > 0 ? items[0].id : null;
-        } catch (e) {
-            console.warn('[battleOrganizerUtils] Failed to resolve OBR token ID:', e);
-            return null;
-        }
-    }
-
-    return null;
-}
+export {
+    resolveCombatantTokenId,
+    resolveCombatantLiveToken,
+    resolveCombatantLiveTokenSync
+} from '../../../utils/combat/combatantTokenResolver';
 
 export function parseHealthAndWillFromMetadata(meta: Record<string, unknown>): {
     hpCurr: number;

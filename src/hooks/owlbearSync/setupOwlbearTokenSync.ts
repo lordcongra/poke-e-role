@@ -281,7 +281,20 @@ export async function setupOwlbearTokenSync(params: {
                     const tMod = Number(meta.lastModified) || 0;
                     const pMod = Number(existingSum?.lastModified) || 0;
                     const isPcNewer = Boolean(existingSum && existingSum.fullMetadata && pMod > tMod);
-                    const effectiveMeta = isPcNewer ? existingSum!.fullMetadata! : meta;
+                    const effectiveMeta = isPcNewer
+                        ? {
+                              ...existingSum!.fullMetadata!,
+                              'hp-curr': meta['hp-curr'] ?? existingSum!.fullMetadata!['hp-curr'],
+                              'hp-max-display': meta['hp-max-display'] ?? existingSum!.fullMetadata!['hp-max-display'],
+                              'will-curr': meta['will-curr'] ?? existingSum!.fullMetadata!['will-curr'],
+                              'will-max-display':
+                                  meta['will-max-display'] ?? existingSum!.fullMetadata!['will-max-display'],
+                              'temporary-hit-points':
+                                  meta['temporary-hit-points'] ?? existingSum!.fullMetadata!['temporary-hit-points'],
+                              'temporary-will': meta['temporary-will'] ?? existingSum!.fullMetadata!['temporary-will'],
+                              'status-list': meta['status-list'] ?? existingSum!.fullMetadata!['status-list']
+                          }
+                        : meta;
 
                     if (needsGraphicsUpdate) {
                         const { effectiveScale, effectiveOffsetX, effectiveOffsetY } = getEffectiveScaleAndOffsets(
@@ -370,9 +383,20 @@ export async function setupOwlbearTokenSync(params: {
                             const missingLocalMoves =
                                 !pcSummary.fullMetadata?.['moves-data'] ||
                                 pcSummary.fullMetadata['moves-data'] === '[]';
-                            const nextMeta = { ...(pcSummary.fullMetadata || {}), ...meta };
+                            const nextMeta = {
+                                ...(pcSummary.fullMetadata || {}),
+                                ...meta,
+                                'hp-curr': curHp,
+                                'hp-max-display': mHp,
+                                'will-curr': curWill,
+                                'will-max-display': mWill,
+                                lastModified: tokenLastMod || pcSummary.lastModified || Date.now()
+                            };
 
+                            const metaChanged = lastTransform?.metaStr !== metaStr;
                             if (
+                                metaChanged ||
+                                tokenLastMod > pcLastMod ||
                                 curHp !== pcSummary.hp ||
                                 mHp !== pcSummary.maxHp ||
                                 curWill !== pcSummary.will ||

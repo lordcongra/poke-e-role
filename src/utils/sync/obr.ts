@@ -17,10 +17,15 @@ export function getIsPcSheetActive() {
     return isPcSheetActive;
 }
 
+export const LOCAL_CLIENT_ID =
+    typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `client-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
 let isRemoteSyncActive = false;
 let remoteSyncTimer: ReturnType<typeof setTimeout> | null = null;
 
-export function setIsRemoteSyncActive(active: boolean, timeoutMs = 80) {
+export function setIsRemoteSyncActive(active: boolean, timeoutMs = 0) {
     isRemoteSyncActive = active;
     if (remoteSyncTimer) {
         clearTimeout(remoteSyncTimer);
@@ -58,8 +63,15 @@ export function setActiveTokenId(id: string | null) {
     activeTokenId = id;
 }
 
+let isSaveInFlight = false;
+let lastSaveTimestamp = 0;
+
 export function hasPendingUpdates() {
-    return Object.keys(pendingUpdates).length > 0;
+    return Object.keys(pendingUpdates).length > 0 || isSaveInFlight;
+}
+
+export function getLastSaveTimestamp() {
+    return lastSaveTimestamp;
 }
 
 export async function saveToOwlbear(updates: Record<string, unknown>) {
@@ -69,7 +81,9 @@ export async function saveToOwlbear(updates: Record<string, unknown>) {
     // If there were pending updates from a different token, flush them first
     if (pendingTokenId && pendingTokenId !== currentToken && Object.keys(pendingUpdates).length > 0) {
         const oldToken = pendingTokenId;
-        const oldUpdates = { ...pendingUpdates, lastModified: Date.now() };
+        const now = Date.now();
+        lastSaveTimestamp = now;
+        const oldUpdates = { ...pendingUpdates, lastModified: now };
         clearTimeout(saveTimeout);
         pendingUpdates = {};
         pendingTokenId = null;
@@ -83,10 +97,13 @@ export async function saveToOwlbear(updates: Record<string, unknown>) {
     clearTimeout(saveTimeout);
 
     saveTimeout = setTimeout(async () => {
-        const updatesToPush = { ...pendingUpdates, lastModified: Date.now() };
+        const now = Date.now();
+        lastSaveTimestamp = now;
+        const updatesToPush = { ...pendingUpdates, lastModified: now };
         const tokenToSave = pendingTokenId || currentToken;
         pendingUpdates = {};
         pendingTokenId = null;
+        isSaveInFlight = true;
 
         console.log('🚀 PUSHING DATA VIA ADAPTER:', updatesToPush);
 
@@ -96,6 +113,8 @@ export async function saveToOwlbear(updates: Record<string, unknown>) {
             console.warn('[OBR Engine] Failed to securely save data via adapter:', error);
             pendingUpdates = {};
             pendingTokenId = null;
+        } finally {
+            isSaveInFlight = false;
         }
     }, 150);
 }

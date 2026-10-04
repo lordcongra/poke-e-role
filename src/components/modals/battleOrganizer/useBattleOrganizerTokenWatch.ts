@@ -5,7 +5,11 @@ import { useCharacterStore } from '../../../store/useCharacterStore';
 import { extractTokenImage, extractCharacterName } from '../../../utils/combat/initiativeHelpers';
 import { getBattleOrganizerSettings } from './battleOrganizerSettingsHelper';
 import type { BattleOrganizerState, BattleRoundData } from '../../../types/battleOrganizerTypes';
-import { parseStatusesFromMetadata, parseHealthAndWillFromMetadata } from './battleOrganizerUtils';
+import {
+    parseStatusesFromMetadata,
+    parseHealthAndWillFromMetadata,
+    resolveCombatantLiveTokenSync
+} from './battleOrganizerUtils';
 
 export interface UseBattleOrganizerTokenWatchProps {
     updateState: (
@@ -55,24 +59,32 @@ export function useBattleOrganizerTokenWatch({
 
                         let hasChanges = false;
                         const newCombatants = currentRound.combatants.map((combatant) => {
-                            const matchingItem = candidateItems.find((item) => {
-                                if (combatant.tokenId && item.id === combatant.tokenId) return true;
-                                if (!combatant.tokenId && combatant.name.trim()) {
-                                    const meta = (item.metadata['pokerole-extension/stats'] ||
-                                        item.metadata['pokerole-pmd-extension/stats'] ||
-                                        item.metadata) as Record<string, unknown>;
-                                    const resolvedName = extractCharacterName(meta, item.name);
-                                    if (resolvedName.toLowerCase().trim() === combatant.name.toLowerCase().trim()) {
-                                        return true;
-                                    }
-                                    if (item.name.toLowerCase().trim() === combatant.name.toLowerCase().trim()) {
-                                        return true;
-                                    }
-                                }
-                                return false;
-                            });
+                            const resolved = resolveCombatantLiveTokenSync(combatant, candidateItems);
+                            const matchingItem = resolved.tokenItem;
 
                             if (!matchingItem) return combatant;
+
+                            const isReboundToken = Boolean(combatant.tokenId && combatant.tokenId !== matchingItem.id);
+                            if (isReboundToken && OBR.isAvailable && !isStandaloneMode) {
+                                if (
+                                    matchingItem.metadata['pokerole-pmd-extension/initiative'] === undefined &&
+                                    combatant.initiative
+                                ) {
+                                    const initNum = parseFloat(combatant.initiative) || 0;
+                                    const baseInit = combatant.baseInit ?? 0;
+                                    OBR.scene.items
+                                        .updateItems([matchingItem.id], (items) => {
+                                            for (const it of items) {
+                                                it.metadata['pokerole-pmd-extension/initiative'] = {
+                                                    value: initNum,
+                                                    base: baseInit
+                                                };
+                                            }
+                                        })
+                                        .catch(() => {});
+                                }
+                            }
+
                             const pending = pendingTokenSyncRef.current.get(matchingItem.id);
                             if (pending) {
                                 if (Date.now() < pending.until) {
@@ -101,6 +113,7 @@ export function useBattleOrganizerTokenWatch({
                             const fingerprint = `${matchingItem.id}|${hpCurr}|${hpMax}|${willCurr}|${willMax}|${tempHp}|${tempWill}|${statusText}|${statusFainted}|${activeTransformation}|${resolvedName}|${resolvedImg}|${isNPC}`;
                             const lastFingerprint = lastTokenFingerprintsRef.current.get(matchingItem.id);
                             if (
+                                !isReboundToken &&
                                 lastFingerprint === fingerprint &&
                                 combatant.hpCurr === hpCurr &&
                                 combatant.hpMax === hpMax &&
@@ -116,7 +129,7 @@ export function useBattleOrganizerTokenWatch({
                             }
                             lastTokenFingerprintsRef.current.set(matchingItem.id, fingerprint);
 
-                            let updated = false;
+                            let updated = isReboundToken;
 
                             let nextName = combatant.name;
                             if (resolvedName && resolvedName !== combatant.name && resolvedName !== matchingItem.name) {
@@ -207,6 +220,7 @@ export function useBattleOrganizerTokenWatch({
                                     tempWill,
                                     activeTransformation: nextTrans,
                                     tokenId: matchingItem.id,
+                                    entityId: resolved.entityId || combatant.entityId,
                                     evadeUsed: nextEvade,
                                     clashUsed: nextClash,
                                     isNPC: nextIsNPC
@@ -303,6 +317,17 @@ export function useBattleOrganizerTokenWatch({
                 const targetTokenId = currState.tokenId;
                 const charName = (currState.identity.nickname || currState.identity.species || '').toLowerCase().trim();
                 if (targetTokenId || charName) {
+                    if (targetTokenId) {
+                        const { statusText } = parseStatusesFromMetadata({
+                            'status-list': JSON.stringify(currState.statuses)
+                        });
+                        pendingTokenSyncRef.current.set(targetTokenId, {
+                            statusText,
+                            hpCurr: currState.health.hpCurr,
+                            willCurr: currState.will.willCurr,
+                            until: Date.now() + 2500
+                        });
+                    }
                     updateState(
                         (prev) => {
                             const currentRound = prev.rounds[prev.activeRoundIndex];
@@ -401,8 +426,6 @@ export function useBattleOrganizerTokenWatch({
                         true
                     );
                 }
-
-                triggerRefresh(150);
             }
         });
 

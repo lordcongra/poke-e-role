@@ -34,6 +34,7 @@ export interface ActionSlotData {
 export interface CombatantRowData {
     id: string;
     tokenId?: string;
+    entityId?: string;
     initiative: string;
     baseInit?: number;
     name: string;

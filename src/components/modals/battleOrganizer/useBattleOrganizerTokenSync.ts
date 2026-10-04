@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../../store/useCharacterStore';
@@ -26,6 +26,8 @@ export function useBattleOrganizerTokenSync({
     tokenSyncTimersRef,
     pendingTokenSyncRef
 }: UseBattleOrganizerTokenSyncProps) {
+    const accumulatedUpdatesRef = useRef<Map<string, Record<string, unknown>>>(new Map());
+
     // 1. Bulk Sync Back to Character Sheets
     const syncToSheets = useCallback(async () => {
         try {
@@ -245,15 +247,34 @@ export function useBattleOrganizerTokenSync({
                     }
                 }
 
+                const now = Date.now();
+                updates.lastModified = now;
+
+                // If combatant has an entity in PC storage, update the PC summary immediately in lockstep
+                const entityId = combatant.entityId;
+                if (entityId && globalStore.pcData.pokemonSummaries[entityId]) {
+                    const existing = globalStore.pcData.pokemonSummaries[entityId];
+                    globalStore.updatePokemonSummary({
+                        ...existing,
+                        hp: typeof combatant.hpCurr === 'number' ? combatant.hpCurr : existing.hp,
+                        will: typeof combatant.willCurr === 'number' ? combatant.willCurr : existing.will,
+                        lastModified: now
+                    });
+                }
+
                 // Register pending sync lock so soft-sync does not revert it before OBR syncs
                 pendingTokenSyncRef.current.set(targetTokenId, {
                     statusText: combatant.status,
                     hpCurr: combatant.hpCurr,
                     willCurr: combatant.willCurr,
-                    until: Date.now() + 2500
+                    until: now + 2500
                 });
 
-                // Debounce save to storageAdapter / Owlbear Rodeo (300ms)
+                // Accumulate updates per token across rapid clicks
+                const prevPending = accumulatedUpdatesRef.current.get(targetTokenId) || {};
+                accumulatedUpdatesRef.current.set(targetTokenId, { ...prevPending, ...updates });
+
+                // Debounce save to storageAdapter / Owlbear Rodeo (120ms for instant responsiveness)
                 const existingTimer = tokenSyncTimersRef.current.get(targetTokenId);
                 if (existingTimer) {
                     clearTimeout(existingTimer);
@@ -261,24 +282,33 @@ export function useBattleOrganizerTokenSync({
 
                 const timer = setTimeout(async () => {
                     tokenSyncTimersRef.current.delete(targetTokenId!);
+                    const toSave = accumulatedUpdatesRef.current.get(targetTokenId!) || updates;
+                    accumulatedUpdatesRef.current.delete(targetTokenId!);
+
                     try {
-                        await storageAdapter.saveCharacter(targetTokenId!, updates, 'pokerole-extension/stats');
+                        await storageAdapter.saveCharacter(targetTokenId!, toSave, 'pokerole-extension/stats');
                         if (OBR.isAvailable && !isStandaloneMode) {
-                            await OBR.scene.items.updateItems([targetTokenId!], (items) => {
-                                for (const item of items) {
-                                    if (typeof updates['actions-used'] === 'number') {
-                                        item.metadata['actions-used'] = updates['actions-used'];
+                            const hasTrackerFields =
+                                typeof toSave['actions-used'] === 'number' ||
+                                typeof toSave['evasions-used'] === 'boolean' ||
+                                typeof toSave['clashes-used'] === 'boolean';
+                            if (hasTrackerFields) {
+                                await OBR.scene.items.updateItems([targetTokenId!], (items) => {
+                                    for (const item of items) {
+                                        if (typeof toSave['actions-used'] === 'number') {
+                                            item.metadata['actions-used'] = toSave['actions-used'];
+                                        }
+                                        if (typeof toSave['evasions-used'] === 'boolean') {
+                                            item.metadata['evasions-used'] = toSave['evasions-used'];
+                                        }
+                                        if (typeof toSave['clashes-used'] === 'boolean') {
+                                            item.metadata['clashes-used'] = toSave['clashes-used'];
+                                        }
                                     }
-                                    if (typeof updates['evasions-used'] === 'boolean') {
-                                        item.metadata['evasions-used'] = updates['evasions-used'];
-                                    }
-                                    if (typeof updates['clashes-used'] === 'boolean') {
-                                        item.metadata['clashes-used'] = updates['clashes-used'];
-                                    }
-                                }
-                            });
+                                });
+                            }
                         }
-                        console.log(`[useBattleOrganizer] Synced updates for "${combatant.name}" to token:`, updates);
+                        console.log(`[useBattleOrganizer] Synced updates for "${combatant.name}" to token:`, toSave);
                     } catch (err) {
                         console.warn('[useBattleOrganizer] Failed to save token updates:', err);
                     } finally {
@@ -289,7 +319,7 @@ export function useBattleOrganizerTokenSync({
                             }
                         }
                     }
-                }, 300);
+                }, 120);
 
                 tokenSyncTimersRef.current.set(targetTokenId, timer);
             } catch (e) {

@@ -194,8 +194,14 @@ export async function spawnPokemonToMap(
                 ...metadataObj,
                 'token-image-url': resolvedImg.url
             };
+            const savedInit =
+                summary.savedTokenItem?.metadata?.['pokerole-pmd-extension/initiative'] ||
+                summary.fullMetadata?.['pokerole-pmd-extension/initiative'];
+            const initMeta = savedInit ? { 'pokerole-pmd-extension/initiative': savedInit } : {};
+
             parentItem.metadata = {
                 ...parentItem.metadata,
+                ...initMeta,
                 [METADATA_ID]: fullSpawnMeta,
                 'pokerole-pmd-extension/stats': fullSpawnMeta
             };
@@ -212,11 +218,17 @@ export async function spawnPokemonToMap(
                 offset: { x: resolvedImg.width / 2, y: resolvedImg.height / 2 }
             };
 
+            const savedInit =
+                summary.savedTokenItem?.metadata?.['pokerole-pmd-extension/initiative'] ||
+                summary.fullMetadata?.['pokerole-pmd-extension/initiative'];
+            const initMeta = savedInit ? { 'pokerole-pmd-extension/initiative': savedInit } : {};
+
             parentItem = buildImage(pokeImageContent, pokeGrid)
                 .name(summary.name || summary.species)
                 .position(landingPos)
                 .layer('CHARACTER')
                 .metadata({
+                    ...initMeta,
                     [METADATA_ID]: metadataObj,
                     'pokerole-pmd-extension/stats': metadataObj
                 })

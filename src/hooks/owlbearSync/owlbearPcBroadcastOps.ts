@@ -4,6 +4,8 @@ import type { TrainerRoster, PcPokemonSummary } from '../../types/pcStorageTypes
 import { resolveEffectiveActiveTrainer } from '../../utils/pc/pcCampaignTrainerOps';
 import { EXTENSION_ID } from './owlbearSyncConstants';
 import { sendSafeBroadcastPayload } from './owlbearBroadcastUtils';
+import { LOCAL_CLIENT_ID, getIsPcSheetActive, getIsRemoteSyncActive } from '../../utils/sync/obr';
+import { hasCharacterSheetChanged, buildSummaryFromStore } from '../../components/modals/pcStorage/pcSheetSyncUtils';
 import {
     type PlayerPcSyncPayload,
     type GmPcSyncPayload,
@@ -19,6 +21,7 @@ export async function broadcastPlayerPc(params?: {
     campaignId?: string;
     trainer?: TrainerRoster;
     summaries?: PcPokemonSummary[];
+    senderId?: string;
 }): Promise<void> {
     if (!OBR.isAvailable) return;
     try {
@@ -131,7 +134,8 @@ export async function broadcastPlayerPc(params?: {
                 trainer,
                 summaries: chunkSlice,
                 chunkIndex: i,
-                totalChunks
+                totalChunks,
+                senderId: params?.senderId || LOCAL_CLIENT_ID
             };
 
             await sendSafeBroadcastPayload(`${EXTENSION_ID}/pc-player-sync`, payload).catch((err) => {
@@ -151,6 +155,7 @@ export async function broadcastGmPc(params?: {
     campaignId?: string;
     trainer?: TrainerRoster;
     summaries?: PcPokemonSummary[];
+    senderId?: string;
 }): Promise<void> {
     if (!OBR.isAvailable) return;
     try {
@@ -244,7 +249,8 @@ export async function broadcastGmPc(params?: {
                 summaries: chunkSlice,
                 chunkIndex: i,
                 totalChunks,
-                timestamp: syncTimestamp
+                timestamp: syncTimestamp,
+                senderId: params?.senderId || LOCAL_CLIENT_ID
             };
 
             await sendSafeBroadcastPayload(`${EXTENSION_ID}/pc-gm-sync`, payload).catch((err) => {
@@ -269,4 +275,40 @@ export function requestPlayerPcSync(): void {
     } catch (e) {
         console.warn('[PcSync] Failed to send PC sync request to players:', e);
     }
+}
+
+/**
+ * Automatically syncs any active sheet edits made outside of the PC modal
+ * (such as in App.tsx or CombatantSheetModal) back to the PC summary and broadcasts to peers.
+ */
+export function setupActiveSheetStoreSync(): () => void {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const unsub = useCharacterStore.subscribe((state, prevState) => {
+        if (getIsPcSheetActive() || getIsRemoteSyncActive()) return;
+        const entityId = state.identity.entityId;
+        if (!entityId || !state.pcData?.pokemonSummaries?.[entityId]) return;
+
+        if (hasCharacterSheetChanged(state, prevState)) {
+            if (timer) clearTimeout(timer);
+            timer = setTimeout(() => {
+                const currentStore = useCharacterStore.getState();
+                const currSummary = currentStore.pcData?.pokemonSummaries?.[entityId];
+                if (!currSummary) return;
+                const { updatedSummary } = buildSummaryFromStore(currentStore, currSummary);
+                currentStore.updatePokemonSummary(updatedSummary);
+
+                const effectiveRole = (currentStore.role as 'PLAYER' | 'GM') || 'PLAYER';
+                if (effectiveRole === 'GM') {
+                    broadcastGmPc({ summaries: [updatedSummary], senderId: LOCAL_CLIENT_ID }).catch(() => {});
+                } else {
+                    broadcastPlayerPc({ summaries: [updatedSummary], senderId: LOCAL_CLIENT_ID }).catch(() => {});
+                }
+            }, 250);
+        }
+    });
+
+    return () => {
+        if (timer) clearTimeout(timer);
+        unsub();
+    };
 }

@@ -1,6 +1,6 @@
 import OBR, { type Item, type Image } from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { setActiveTokenId, saveToOwlbear } from './obr';
+import { setActiveTokenId } from './obr';
 import { METADATA_ID } from '../../hooks/owlbearSync/owlbearSyncConstants';
 import { extractEntityId, renderTokenGraphicsForMeta } from '../../hooks/owlbearSync/setupOwlbearTokenSync';
 import { resolveCharacterThemeColors, applyDynamicThemeColors } from '../common/colorUtils';
@@ -154,7 +154,7 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
     let source: 'pc_summary' | 'token_or_local';
     let finalMod: number;
 
-    const pcIsStrictlyNewer = Boolean(hasValidSummary && (pMod > tMod || !effectiveLiveTokenData));
+    const pcIsStrictlyNewer = Boolean(hasValidSummary && (pMod >= tMod || !effectiveLiveTokenData));
 
     if (pcIsStrictlyNewer && summaryMeta) {
         finalMeta = { ...summaryMeta };
@@ -163,7 +163,6 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
 
         // If the token is live on canvas and the PC is strictly newer, update the scene token
         if (saveIfNewer && OBR.isAvailable && isTokenEntityMatch && tokenItem) {
-            saveToOwlbear(summaryMeta).catch(() => {});
             OBR.scene.items
                 .updateItems([tokenItem.id], (items) => {
                     for (const item of items) {
@@ -202,6 +201,16 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
         if (summaryMeta?.['dex-category']) finalMeta['dex-category'] = summaryMeta['dex-category'];
         if (summaryMeta?.['dex-description']) finalMeta['dex-description'] = summaryMeta['dex-description'];
         if (summaryMeta?.['token-image-url']) finalMeta['token-image-url'] = summaryMeta['token-image-url'];
+
+        // Safeguard: Core stats, socials, and limits from PC summary must never be overwritten by stale token metadata!
+        if (summaryMeta) {
+            for (const stat of ['str', 'dex', 'vit', 'spe', 'ins', 'tou', 'coo', 'bea', 'cut', 'cle']) {
+                if (summaryMeta[`${stat}-base`] !== undefined) finalMeta[`${stat}-base`] = summaryMeta[`${stat}-base`];
+                if (summaryMeta[`${stat}-rank`] !== undefined) finalMeta[`${stat}-rank`] = summaryMeta[`${stat}-rank`];
+                if (summaryMeta[`${stat}-limit`] !== undefined)
+                    finalMeta[`${stat}-limit`] = summaryMeta[`${stat}-limit`];
+            }
+        }
 
         source = 'token_or_local';
         finalMod = tMod || Date.now();

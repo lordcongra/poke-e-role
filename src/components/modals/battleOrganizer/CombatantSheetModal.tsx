@@ -1,11 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import type { CombatantRowData } from '../../../types/battleOrganizerTypes';
-import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { imageManager } from '../../../utils/graphics/imageManager';
+import { useResolvedImageUrl } from '../../../utils/graphics/useResolvedImageUrl';
 import OBR, { type Image } from '@owlbear-rodeo/sdk';
 import { hydrateActiveSheet } from '../../../utils/sync/unifiedSheetHydration';
-import { extractCharacterName, extractTokenImage } from '../../../utils/combat/initiativeHelpers';
+import { setActiveTokenId, setIsPcSheetActive, hasPendingUpdates } from '../../../utils/sync/obr';
+import { hasCharacterSheetChanged } from '../pcStorage/pcSheetSyncUtils';
+import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
+import { extractTokenImage } from '../../../utils/combat/initiativeHelpers';
+import { resolveCombatantLiveToken } from './battleOrganizerUtils';
 import { resolveCharacterThemeColors, applyDynamicThemeColors } from '../../../utils/common/colorUtils';
 import { IdentityHeader } from '../../identity/IdentityHeader';
 import { DerivedBoard } from '../../board/DerivedBoard';
@@ -40,7 +44,7 @@ export function CombatantSheetModal({
 }: CombatantSheetModalProps) {
     const [loading, setLoading] = useState(true);
     const [noTokenLinked, setNoTokenLinked] = useState(false);
-    const [resolvedImage, setResolvedImage] = useState<string>('');
+    const resolvedImage = useResolvedImageUrl(combatant.image);
     const mode = useCharacterStore((state) => state.identity.mode);
     const type1 = useCharacterStore((state) => state.identity.type1);
     const type2 = useCharacterStore((state) => state.identity.type2);
@@ -52,10 +56,20 @@ export function CombatantSheetModal({
     const gmOnlyMatchups = useCharacterStore((state) => state.identity.gmOnlyMatchups);
     const isLocked = !isStandaloneMode && role === 'PLAYER' && (Boolean(combatant.isNPC) || Boolean(isNPC));
 
-    // Save previous window theme colors to restore when CombatantSheetModal is closed
+    // Save previous character state and window theme colors to restore when CombatantSheetModal is closed
+    const prevTokenIdRef = useRef<string | null>(null);
+    const prevMetaRef = useRef<Record<string, unknown> | null>(null);
     const initialThemeRef = useRef<{ primary: string; secondary: string } | null>(null);
+    const lastModifiedRef = useRef<number>(0);
+    const isDirtyRef = useRef(false);
+    const isHydratingRef = useRef(false);
 
     useEffect(() => {
+        setIsPcSheetActive(true);
+        const store = useCharacterStore.getState();
+        prevTokenIdRef.current = store.tokenId;
+        prevMetaRef.current = flattenStateToMetadata(store);
+
         initialThemeRef.current = {
             primary:
                 document.documentElement.style.getPropertyValue('--dynamic-type-color') ||
@@ -67,9 +81,48 @@ export function CombatantSheetModal({
                 ''
         };
 
+        const unsubStore = useCharacterStore.subscribe((state, prevState) => {
+            if (isHydratingRef.current) return;
+            if (hasCharacterSheetChanged(state, prevState)) {
+                isDirtyRef.current = true;
+                lastModifiedRef.current = Date.now();
+            }
+        });
+
         return () => {
-            if (initialThemeRef.current) {
-                applyDynamicThemeColors(initialThemeRef.current.primary, initialThemeRef.current.secondary);
+            unsubStore();
+            setIsPcSheetActive(false);
+            const prevId = prevTokenIdRef.current;
+            const prevMeta = prevMetaRef.current;
+            const prevTheme = initialThemeRef.current;
+            const currentRole = (useCharacterStore.getState().role as 'PLAYER' | 'GM') || 'PLAYER';
+
+            if (prevId) {
+                setActiveTokenId(prevId);
+                const s = useCharacterStore.getState();
+                s.setTokenData(prevId, currentRole);
+                if (prevMeta) {
+                    s.loadFromOwlbear(prevMeta);
+                }
+                if (prevTheme) {
+                    applyDynamicThemeColors(prevTheme.primary, prevTheme.secondary);
+                }
+            } else {
+                setActiveTokenId(null);
+                const s = useCharacterStore.getState();
+                s.setTokenData('', currentRole);
+                s.loadFromOwlbear({});
+                if (OBR.isAvailable) {
+                    OBR.player.select([]).catch(() => {});
+                }
+                if (prevTheme) {
+                    applyDynamicThemeColors(prevTheme.primary, prevTheme.secondary);
+                } else {
+                    applyDynamicThemeColors('', '');
+                }
+            }
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('theme-override-updated'));
             }
         };
     }, []);
@@ -91,127 +144,93 @@ export function CombatantSheetModal({
         applyDynamicThemeColors(resolved.primary, resolved.secondary);
     }, [loading, noTokenLinked, type1, type2, themePrimaryOverride, themeSecondaryOverride, roomCustomTypes]);
 
-    // Resolve combatant thumbnail
-    useEffect(() => {
-        let isMounted = true;
-        const resolveImg = async () => {
-            if (!combatant.image) {
-                if (isMounted) setResolvedImage('');
-                return;
-            }
-            if (isStandaloneMode && combatant.image.startsWith('local-img:')) {
-                try {
-                    const url = await imageManager.getImageUrl(combatant.image);
-                    if (isMounted) setResolvedImage(url || '');
-                } catch {
-                    if (isMounted) setResolvedImage('');
-                }
-            } else {
-                if (isMounted) setResolvedImage(combatant.image);
-            }
-        };
-        resolveImg();
-        return () => {
-            isMounted = false;
-        };
-    }, [combatant.image]);
-
     // Load full character metadata into useCharacterStore
     useEffect(() => {
         let isMounted = true;
         const loadCharacter = async () => {
             setLoading(true);
             setNoTokenLinked(false);
+            isHydratingRef.current = true;
             try {
-                if (isStandaloneMode) {
-                    const localChars = await storageAdapter.getLocalCharacters();
-                    let match = localChars.find((c) => c.id === combatant.tokenId);
-                    if (!match && combatant.name.trim()) {
-                        match = localChars.find((c) => {
-                            const meta = (c.metadata || {}) as Record<string, unknown>;
-                            const resolvedName = extractCharacterName(meta, c.name);
-                            return (
-                                resolvedName.toLowerCase().trim() === combatant.name.toLowerCase().trim() ||
-                                c.name.toLowerCase().trim() === combatant.name.toLowerCase().trim()
-                            );
-                        });
-                    }
-                    if (match && isMounted) {
-                        const meta = (match.metadata || {}) as Record<string, unknown>;
-                        await hydrateActiveSheet({
-                            targetId: match.id,
-                            sourceMeta: meta,
-                            overrideRole: 'GM',
-                            applyTheme: true
-                        });
+                const resolved = await resolveCombatantLiveToken(combatant);
+                if (resolved.tokenItem && isMounted) {
+                    const item = resolved.tokenItem;
+                    const meta = (item.metadata['pokerole-extension/stats'] ||
+                        item.metadata['pokerole-pmd-extension/stats'] ||
+                        item.metadata) as Record<string, unknown>;
 
-                        const store = useCharacterStore.getState();
-                        const tokenImgUrl = combatant.image || extractTokenImage(meta);
-                        if (tokenImgUrl) {
-                            store.setIdentity('tokenImageUrl', tokenImgUrl);
-                        }
-                        setNoTokenLinked(false);
-                    } else if (isMounted) {
-                        setNoTokenLinked(true);
-                    }
-                } else if (OBR.isAvailable) {
-                    let targetId = combatant.tokenId;
-                    if (!targetId && combatant.name.trim()) {
-                        const found = await OBR.scene.items.getItems((item) => {
-                            if (item.layer !== 'CHARACTER') return false;
-                            const meta = (item.metadata['pokerole-extension/stats'] ||
-                                item.metadata['pokerole-pmd-extension/stats'] ||
-                                item.metadata) as Record<string, unknown>;
-                            const resolvedName = extractCharacterName(meta, item.name);
-                            return (
-                                resolvedName.toLowerCase().trim() === combatant.name.toLowerCase().trim() ||
-                                item.name.toLowerCase().trim() === combatant.name.toLowerCase().trim()
-                            );
-                        });
-                        if (found.length > 0) targetId = found[0].id;
-                    }
+                    await hydrateActiveSheet({
+                        targetId: item.id,
+                        sourceMeta: meta,
+                        tokenItem: item,
+                        overrideRole: isStandaloneMode ? 'GM' : undefined,
+                        saveIfNewer: false,
+                        applyTheme: true
+                    });
+                    lastModifiedRef.current = Number(meta.lastModified) || Date.now();
 
-                    if (targetId) {
-                        const items = await OBR.scene.items.getItems([targetId]);
-                        if (items.length > 0 && isMounted) {
-                            const item = items[0];
-                            const meta = (item.metadata['pokerole-extension/stats'] ||
-                                item.metadata['pokerole-pmd-extension/stats'] ||
-                                item.metadata) as Record<string, unknown>;
-
-                            await hydrateActiveSheet({
-                                targetId: item.id,
-                                sourceMeta: meta,
-                                tokenItem: item,
-                                saveIfNewer: true,
-                                applyTheme: true
-                            });
-
-                            const store = useCharacterStore.getState();
-                            const imgItem = item as Image;
-                            const tokenImgUrl = imgItem.image?.url || combatant.image || extractTokenImage(meta);
-                            if (tokenImgUrl) {
-                                store.setIdentity('tokenImageUrl', tokenImgUrl);
-                            }
-                            setNoTokenLinked(false);
-                        } else if (isMounted) {
-                            setNoTokenLinked(true);
-                        }
-                    } else if (isMounted) {
-                        setNoTokenLinked(true);
+                    const store = useCharacterStore.getState();
+                    const imgItem = item as Image;
+                    const tokenImgUrl = imgItem.image?.url || combatant.image || extractTokenImage(meta);
+                    if (tokenImgUrl) {
+                        store.setIdentity('tokenImageUrl', tokenImgUrl);
                     }
+                    setNoTokenLinked(false);
+                } else if (isMounted) {
+                    setNoTokenLinked(true);
                 }
             } catch (err) {
                 console.error('[CombatantSheetModal] Error loading character data:', err);
                 if (isMounted) setNoTokenLinked(true);
             } finally {
+                isHydratingRef.current = false;
+                isDirtyRef.current = false;
                 if (isMounted) setLoading(false);
             }
         };
 
         loadCharacter();
+
+        let unsubScene: (() => void) | undefined;
+        if (OBR.isAvailable && !isStandaloneMode) {
+            unsubScene = OBR.scene.items.onChange(async (items) => {
+                if (!isMounted || isHydratingRef.current || hasPendingUpdates()) return;
+                const tId = combatant.tokenId;
+                if (!tId) return;
+                const matched = items.find((i) => i.id === tId);
+                if (!matched) return;
+                const meta = (matched.metadata['pokerole-extension/stats'] ||
+                    matched.metadata['pokerole-pmd-extension/stats'] ||
+                    matched.metadata) as Record<string, unknown>;
+                if (!meta) return;
+
+                const lastMod = Number(meta.lastModified) || 0;
+                if (lastModifiedRef.current > 0 && lastMod > 0 && lastMod <= lastModifiedRef.current) return;
+                lastModifiedRef.current = lastMod;
+                isDirtyRef.current = false;
+
+                try {
+                    isHydratingRef.current = true;
+                    await hydrateActiveSheet({
+                        targetId: matched.id,
+                        sourceMeta: meta,
+                        tokenItem: matched,
+                        saveIfNewer: false,
+                        applyTheme: true
+                    });
+                } catch (e) {
+                    console.error('[CombatantSheetModal] Error updating from live scene item:', e);
+                } finally {
+                    isHydratingRef.current = false;
+                }
+            });
+        }
+
         return () => {
             isMounted = false;
+            if (unsubScene) {
+                unsubScene();
+            }
         };
     }, [combatant]);
 

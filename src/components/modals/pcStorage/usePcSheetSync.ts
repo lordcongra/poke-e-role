@@ -3,7 +3,13 @@ import OBR from '@owlbear-rodeo/sdk';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import type { CustomType } from '../../../store/storeTypes';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { setActiveTokenId, setIsPcSheetActive, getIsRemoteSyncActive, METADATA_ID } from '../../../utils/sync/obr';
+import {
+    setActiveTokenId,
+    setIsPcSheetActive,
+    getIsRemoteSyncActive,
+    LOCAL_CLIENT_ID,
+    METADATA_ID
+} from '../../../utils/sync/obr';
 import { applyDynamicThemeColors } from '../../../utils/common/colorUtils';
 import { extractEntityId, renderTokenGraphicsForMeta } from '../../../hooks/owlbearSync/setupOwlbearTokenSync';
 import { broadcastGmPc, broadcastPlayerPc } from '../../../hooks/owlbearSync/setupOwlbearPcSync';
@@ -68,7 +74,14 @@ export function usePcSheetSync({
     // Core two-way persistence: serializes active Zustand store into metadata and summaries
     const syncNow = useCallback((targetSummary?: PcPokemonSummary) => {
         // Guard against running sync during remote hydration unless this is a dirty local edit
-        if (getIsRemoteSyncActive() || (isHydratingRef.current && !isDirtyRef.current)) return;
+        if (getIsRemoteSyncActive()) {
+            if (isDirtyRef.current) {
+                if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+                syncTimeoutRef.current = setTimeout(() => syncNow(targetSummary), 50);
+            }
+            return;
+        }
+        if (isHydratingRef.current && !isDirtyRef.current) return;
         if (syncTimeoutRef.current) {
             clearTimeout(syncTimeoutRef.current);
             syncTimeoutRef.current = null;
@@ -124,13 +137,15 @@ export function usePcSheetSync({
                 broadcastGmPc({
                     campaignId: targetCampId,
                     trainer: targetTrainer,
-                    summaries: [updatedSummary]
+                    summaries: [updatedSummary],
+                    senderId: LOCAL_CLIENT_ID
                 }).catch(() => {});
             } else {
                 broadcastPlayerPc({
                     campaignId: targetCampId,
                     trainer: targetTrainer,
-                    summaries: [updatedSummary]
+                    summaries: [updatedSummary],
+                    senderId: LOCAL_CLIENT_ID
                 }).catch(() => {});
             }
         }
@@ -342,8 +357,8 @@ export function usePcSheetSync({
                 syncTimeoutRef.current = null;
             }
             isDirtyRef.current = false;
-
             currentSummaryRef.current = nextSummary;
+            onUpdateSummaryRef.current(nextSummary);
 
             // Dynamically re-bind active token ID if on-map status changed (e.g. sent out or recalled)
             const targetTokenId =
@@ -358,12 +373,52 @@ export function usePcSheetSync({
             applyDynamicThemeColors(colors.primary, colors.secondary);
         };
 
+        let unsubScene: (() => void) | undefined;
+        if (OBR.isAvailable) {
+            unsubScene = OBR.scene.items.onChange(async (items) => {
+                if (isCancelled || isHydratingRef.current || isDirtyRef.current || isUnmountingRef.current) return;
+                const activeId = activeEntity.entityId;
+                const mapId = currentSummaryRef.current.mapTokenId;
+                const matched = items.find(
+                    (it) => (mapId && it.id === mapId) || (Boolean(activeId) && extractEntityId(it) === activeId)
+                );
+                if (!matched) return;
+                const rawMeta = matched.metadata[METADATA_ID] || matched.metadata['pokerole-pmd-extension/stats'];
+                if (!rawMeta) return;
+                const meta = rawMeta as Record<string, unknown>;
+                const itemMod = Number(meta.lastModified) || 0;
+                const localMod = Number(currentSummaryRef.current.lastModified) || 0;
+                if (localMod > 0 && itemMod > 0 && itemMod <= localMod) return;
+
+                try {
+                    isHydratingRef.current = true;
+                    await hydrateActiveSheet({
+                        targetId: matched.id,
+                        entityId: activeId,
+                        overrideRole: (useCharacterStore.getState().role as 'PLAYER' | 'GM') || 'PLAYER',
+                        sourceMeta: meta,
+                        tokenItem: matched,
+                        saveIfNewer: false,
+                        applyTheme: true,
+                        fetchSpecies: false
+                    });
+                } catch (e) {
+                    console.error('[usePcSheetSync] Failed to rehydrate from live scene item:', e);
+                } finally {
+                    isHydratingRef.current = false;
+                }
+            });
+        }
+
         if (typeof window !== 'undefined') {
             window.addEventListener('pkr-remote-summary-applied', handleRemoteApplied);
         }
 
         return () => {
             isCancelled = true;
+            if (unsubScene) {
+                unsubScene();
+            }
             if (typeof window !== 'undefined') {
                 window.removeEventListener('pkr-remote-summary-applied', handleRemoteApplied);
             }

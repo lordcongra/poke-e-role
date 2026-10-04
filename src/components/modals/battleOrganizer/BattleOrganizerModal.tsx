@@ -40,7 +40,6 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         pullFromInitiative,
         syncToSheets,
         refreshTokenStats,
-        openSheet,
         addRound,
         duplicateRound,
         deleteRound,
@@ -169,9 +168,6 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
             return;
         }
         setActiveSheetCombatant(combatant);
-        openSheet(combatant).catch((e) => {
-            console.warn('[BattleOrganizerModal] Background token select error:', e);
-        });
     };
 
     const handleMarkActionFromRoll = (

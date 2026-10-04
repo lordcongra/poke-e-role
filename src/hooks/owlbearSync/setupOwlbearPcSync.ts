@@ -4,16 +4,22 @@ import { savePcStorage } from '../../utils/pc/pcStorageAdapter';
 import { resolveGmTargetCampaignId } from '../../utils/pc/pcCampaignTrainerOps';
 import { EXTENSION_ID, METADATA_ID } from './owlbearSyncConstants';
 import { registerSafeBroadcastListener } from './owlbearBroadcastUtils';
-import { setIsRemoteSyncActive } from '../../utils/sync/obr';
+import { setIsRemoteSyncActive, LOCAL_CLIENT_ID } from '../../utils/sync/obr';
 import { applyDeleteSummary, stripEntityFromTrainer } from '../../utils/pc/pcStateMutations';
 import {
     type PlayerPcSyncPayload,
     type GmPcSyncPayload,
     sanitizeTrainerForSync,
-    mergeIncomingPlayerSummaries
+    mergeIncomingPlayerSummaries,
+    rehydrateActivePcCharacter
 } from './owlbearPcSyncUtils';
 import { reconcileSceneTokens } from './reconcileSceneTokens';
-import { broadcastPlayerPc, broadcastGmPc, requestPlayerPcSync } from './owlbearPcBroadcastOps';
+import {
+    broadcastPlayerPc,
+    broadcastGmPc,
+    requestPlayerPcSync,
+    setupActiveSheetStoreSync
+} from './owlbearPcBroadcastOps';
 import type { PcPokemonSummary } from '../../types/pcStorageTypes';
 
 export { broadcastPlayerPc, broadcastGmPc, requestPlayerPcSync };
@@ -26,12 +32,17 @@ export interface OwlbearPcSyncResult {
 export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
     const unsubs: Array<() => void> = [];
 
+    // Automatically sync active sheet edits made outside PC modal to PC storage & peers
+    const unsubActiveStore = setupActiveSheetStoreSync();
+    unsubs.push(unsubActiveStore);
+
     // 1. GM listens for player PC updates with automatic chunk reassembly and timestamp guard
     if (role === 'GM') {
         const unsubPlayerSync = registerSafeBroadcastListener<PlayerPcSyncPayload>(
             `${EXTENSION_ID}/pc-player-sync`,
             async (payload) => {
                 if (!payload) return;
+                if (payload.senderId && payload.senderId === LOCAL_CLIENT_ID) return;
 
                 try {
                     const state = useCharacterStore.getState();
@@ -78,68 +89,49 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                     );
 
                     if (hasChanges || trainersChanged) {
-                        setIsRemoteSyncActive(true, 80);
-                        const nextData = {
-                            ...pcData,
-                            campaigns: {
-                                ...pcData.campaigns,
-                                [targetCampId]: {
-                                    ...currentCamp,
-                                    trainers: updatedTrainers
-                                }
-                            },
-                            pokemonSummaries: updatedSummaries
-                        };
+                        try {
+                            setIsRemoteSyncActive(true);
+                            const nextData = {
+                                ...pcData,
+                                campaigns: {
+                                    ...pcData.campaigns,
+                                    [targetCampId]: {
+                                        ...currentCamp,
+                                        trainers: updatedTrainers
+                                    }
+                                },
+                                pokemonSummaries: updatedSummaries
+                            };
 
-                        useCharacterStore.setState({ pcData: nextData });
-                        await savePcStorage(nextData);
-                        if (typeof window !== 'undefined') {
-                            window.dispatchEvent(new Event('pkr-local-data-changed'));
-                        }
+                            useCharacterStore.setState({ pcData: nextData });
+                            await savePcStorage(nextData);
+                            if (typeof window !== 'undefined') {
+                                window.dispatchEvent(new Event('pkr-local-data-changed'));
+                            }
 
-                        // Rehydrate active sheet if GM currently has this character open in PcSheetModal or on canvas!
-                        for (const incoming of payload.summaries || []) {
-                            if (!incoming || !incoming.entityId) continue;
-                            const merged = updatedSummaries[incoming.entityId];
-                            if (!merged) continue;
+                            // Rehydrate active sheet if GM currently has this character open in PcSheetModal or on canvas!
+                            for (const incoming of payload.summaries || []) {
+                                if (!incoming || !incoming.entityId) continue;
+                                const merged = updatedSummaries[incoming.entityId];
+                                if (!merged) continue;
 
-                            const existingMod = Number(pcData.pokemonSummaries?.[incoming.entityId]?.lastModified) || 0;
-                            const incomingMod = Number(incoming.lastModified) || 0;
+                                const existingMod =
+                                    Number(pcData.pokemonSummaries?.[incoming.entityId]?.lastModified) || 0;
+                                const incomingMod = Number(incoming.lastModified) || 0;
 
-                            if (incomingMod > existingMod) {
-                                if (typeof window !== 'undefined') {
-                                    window.dispatchEvent(
-                                        new CustomEvent('pkr-remote-summary-applied', {
-                                            detail: { entityId: merged.entityId, summary: merged }
-                                        })
-                                    );
-                                }
-
-                                const freshStore = useCharacterStore.getState();
-                                const currentTokenId = freshStore.tokenId;
-                                const currentEntityId = freshStore.identity.entityId;
-
-                                if (
-                                    (currentTokenId === incoming.entityId ||
-                                        currentEntityId === incoming.entityId ||
-                                        (merged.mapTokenId && currentTokenId === merged.mapTokenId)) &&
-                                    merged.fullMetadata
-                                ) {
-                                    freshStore.loadFromOwlbear(merged.fullMetadata);
-                                    useCharacterStore.setState((st) => ({
-                                        health: {
-                                            ...st.health,
-                                            ...(merged.hp !== undefined ? { hpCurr: merged.hp } : {}),
-                                            ...(merged.maxHp !== undefined ? { hpMax: merged.maxHp } : {})
-                                        },
-                                        will: {
-                                            ...st.will,
-                                            ...(merged.will !== undefined ? { willCurr: merged.will } : {}),
-                                            ...(merged.maxWill !== undefined ? { willMax: merged.maxWill } : {})
-                                        }
-                                    }));
+                                if (incomingMod > existingMod) {
+                                    if (typeof window !== 'undefined') {
+                                        window.dispatchEvent(
+                                            new CustomEvent('pkr-remote-summary-applied', {
+                                                detail: { entityId: merged.entityId, summary: merged }
+                                            })
+                                        );
+                                    }
+                                    await rehydrateActivePcCharacter(merged, 'GM');
                                 }
                             }
+                        } finally {
+                            setIsRemoteSyncActive(false);
                         }
 
                         // Re-broadcast to all other connected players so everyone in the room stays synchronized!
@@ -147,7 +139,8 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                             broadcastGmPc({
                                 campaignId: targetCampId,
                                 trainer: payload.trainer,
-                                summaries: payload.summaries
+                                summaries: payload.summaries,
+                                senderId: payload.senderId
                             }).catch(() => {});
                         }
 
@@ -201,6 +194,7 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
             `${EXTENSION_ID}/pc-gm-sync`,
             async (payload) => {
                 if (!payload || !payload.campaignId) return;
+                if (payload.senderId && payload.senderId === LOCAL_CLIENT_ID) return;
 
                 try {
                     const state = useCharacterStore.getState();
@@ -301,52 +295,42 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                     }
 
                     if (campChanged || summariesChanged) {
-                        setIsRemoteSyncActive(true, 80);
-                        const nextData = {
-                            ...pcData,
-                            campaigns: {
-                                ...pcData.campaigns,
-                                [targetCampId]: {
-                                    ...currentCamp,
-                                    trainers: updatedTrainers
-                                }
-                            },
-                            pokemonSummaries: updatedSummaries
-                        };
-
-                        useCharacterStore.setState({ pcData: nextData });
-                        await savePcStorage(nextData);
-
-                        for (const incoming of payload.summaries || []) {
-                            if (!incoming || !incoming.entityId) continue;
-                            const merged = updatedSummaries[incoming.entityId];
-                            if (!merged) continue;
-
-                            if (typeof window !== 'undefined') {
-                                window.dispatchEvent(
-                                    new CustomEvent('pkr-remote-summary-applied', {
-                                        detail: { entityId: merged.entityId, summary: merged }
-                                    })
-                                );
-                            }
-                        }
-
-                        for (const activeSum of rehydratableSummaries) {
-                            if (activeSum.fullMetadata) {
-                                useCharacterStore.getState().loadFromOwlbear(activeSum.fullMetadata);
-                                useCharacterStore.setState((st) => ({
-                                    health: {
-                                        ...st.health,
-                                        ...(activeSum.hp !== undefined ? { hpCurr: activeSum.hp } : {}),
-                                        ...(activeSum.maxHp !== undefined ? { hpMax: activeSum.maxHp } : {})
-                                    },
-                                    will: {
-                                        ...st.will,
-                                        ...(activeSum.will !== undefined ? { willCurr: activeSum.will } : {}),
-                                        ...(activeSum.maxWill !== undefined ? { willMax: activeSum.maxWill } : {})
+                        try {
+                            setIsRemoteSyncActive(true);
+                            const nextData = {
+                                ...pcData,
+                                campaigns: {
+                                    ...pcData.campaigns,
+                                    [targetCampId]: {
+                                        ...currentCamp,
+                                        trainers: updatedTrainers
                                     }
-                                }));
+                                },
+                                pokemonSummaries: updatedSummaries
+                            };
+
+                            useCharacterStore.setState({ pcData: nextData });
+                            await savePcStorage(nextData);
+
+                            for (const incoming of payload.summaries || []) {
+                                if (!incoming || !incoming.entityId) continue;
+                                const merged = updatedSummaries[incoming.entityId];
+                                if (!merged) continue;
+
+                                if (typeof window !== 'undefined') {
+                                    window.dispatchEvent(
+                                        new CustomEvent('pkr-remote-summary-applied', {
+                                            detail: { entityId: merged.entityId, summary: merged }
+                                        })
+                                    );
+                                }
                             }
+
+                            for (const activeSum of rehydratableSummaries) {
+                                await rehydrateActivePcCharacter(activeSum, 'PLAYER');
+                            }
+                        } finally {
+                            setIsRemoteSyncActive(false);
                         }
 
                         // Synchronize live scene tokens on canvas with incoming GM metadata
@@ -465,11 +449,10 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
             useCharacterStore.setState({ pcData: nextData, selectedPcSlot: null });
             await savePcStorage(nextData);
 
-            if (wasUnlinked) {
-                OBR.notification.show(`"${pokemonName || 'Pokémon'}" was unlinked from PC.`, 'INFO');
-            } else {
-                OBR.notification.show(`"${pokemonName || 'Pokémon'}" was released from PC.`, 'INFO');
-            }
+            OBR.notification.show(
+                `"${pokemonName || 'Pokémon'}" was ${wasUnlinked ? 'unlinked from' : 'released from'} PC.`,
+                'INFO'
+            );
         } catch (e) {
             console.error('[PcSync] Failed to process remote pokemon deletion:', e);
         }

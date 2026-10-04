@@ -1,4 +1,7 @@
+import OBR from '@owlbear-rodeo/sdk';
 import type { TrainerRoster, PcPokemonSummary } from '../../types/pcStorageTypes';
+import { useCharacterStore } from '../../store/useCharacterStore';
+import { hydrateActiveSheet } from '../../utils/sync/unifiedSheetHydration';
 
 export interface PlayerPcSyncPayload {
     campaignId: string;
@@ -7,6 +10,7 @@ export interface PlayerPcSyncPayload {
     summaries: PcPokemonSummary[];
     chunkIndex?: number;
     totalChunks?: number;
+    senderId?: string;
 }
 
 export interface GmPcSyncPayload {
@@ -17,6 +21,7 @@ export interface GmPcSyncPayload {
     chunkIndex?: number;
     totalChunks?: number;
     timestamp: number;
+    senderId?: string;
 }
 
 /**
@@ -200,4 +205,45 @@ export function mergeIncomingPlayerSummaries(
     }
 
     return { updatedSummaries, hasChanges };
+}
+
+/**
+ * Unified sheet rehydration for PC storage sync.
+ * If the incoming summary corresponds to the active sheet open in the store,
+ * it runs unified sheet hydration to synchronize store, stats, and canvas tokens.
+ */
+export async function rehydrateActivePcCharacter(
+    summary: PcPokemonSummary,
+    overrideRole: 'PLAYER' | 'GM'
+): Promise<void> {
+    if (!summary || !summary.fullMetadata) return;
+    const store = useCharacterStore.getState();
+    const currentTokenId = store.tokenId;
+    const currentEntityId = store.identity.entityId;
+
+    const isMatch =
+        currentTokenId === summary.entityId ||
+        currentEntityId === summary.entityId ||
+        (Boolean(summary.mapTokenId) && currentTokenId === summary.mapTokenId);
+
+    if (!isMatch) return;
+
+    let tokenItem: import('@owlbear-rodeo/sdk').Item | undefined;
+    if (summary.isOnMap && summary.mapTokenId && OBR.isAvailable) {
+        try {
+            const items = await OBR.scene.items.getItems([summary.mapTokenId]);
+            if (items.length > 0) tokenItem = items[0];
+        } catch {}
+    }
+
+    await hydrateActiveSheet({
+        targetId: currentTokenId || summary.entityId,
+        overrideRole,
+        sourceMeta: summary.fullMetadata,
+        entityId: summary.entityId,
+        tokenItem,
+        saveIfNewer: true,
+        applyTheme: true,
+        fetchSpecies: false
+    });
 }

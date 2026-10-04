@@ -4,6 +4,7 @@ import type { CharacterState } from '../../store/storeTypes';
 
 export interface Combatant {
     id: string;
+    entityId?: string;
     name: string;
     image: string;
     d6: number;

@@ -12,6 +12,7 @@ import {
     calculateEncodedInitiative,
     resolveInitiativeRolls
 } from '../../utils/combat/initiativeHelpers';
+import { extractEntityId } from '../../hooks/owlbearSync/setupOwlbearTokenSync';
 import type { Combatant } from '../../utils/combat/initiativeHelpers';
 import { useInitiativeThemeSync } from './useInitiativeThemeSync';
 import type { StandaloneCharOption, ObrCharOption } from './AddCombatantModal';
@@ -330,6 +331,7 @@ export function useInitiativeEngine() {
 
                     return {
                         id: item.id,
+                        entityId: extractEntityId(item),
                         name: resolvedName,
                         image: imgItem.image?.url || '',
                         d6: rawD6,

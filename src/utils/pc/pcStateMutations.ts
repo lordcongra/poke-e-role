@@ -413,7 +413,7 @@ export function applyUpdateSummary(pcData: PcStorageData, summary: PcPokemonSumm
             ...pcData.pokemonSummaries,
             [summary.entityId]: {
                 ...summary,
-                lastModified: Date.now()
+                lastModified: summary.lastModified || Date.now()
             }
         }
     };

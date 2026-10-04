@@ -176,14 +176,14 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
                 flatMetadata['temporary-will-max'] = state.will.temporaryWillMax;
         }
 
-        // --- DERIVED & EXTRAS (Only write non-zero modifiers) ---
+        // --- DERIVED & EXTRAS ---
         if (state.derived) {
-            if (state.derived.defBuff) flatMetadata['def-buff'] = state.derived.defBuff;
-            if (state.derived.defDebuff) flatMetadata['def-debuff'] = state.derived.defDebuff;
-            if (state.derived.sdefBuff) flatMetadata['spd-buff'] = state.derived.sdefBuff;
-            if (state.derived.sdefDebuff) flatMetadata['spd-debuff'] = state.derived.sdefDebuff;
-            if (state.derived.happy) flatMetadata['happiness-curr'] = state.derived.happy;
-            if (state.derived.loyal) flatMetadata['loyalty-curr'] = state.derived.loyal;
+            flatMetadata['def-buff'] = state.derived.defBuff ?? 0;
+            flatMetadata['def-debuff'] = state.derived.defDebuff ?? 0;
+            flatMetadata['spd-buff'] = state.derived.sdefBuff ?? 0;
+            flatMetadata['spd-debuff'] = state.derived.sdefDebuff ?? 0;
+            flatMetadata['happiness-curr'] = state.derived.happy ?? 0;
+            flatMetadata['loyalty-curr'] = state.derived.loyal ?? 0;
         }
 
         if (state.extras) {
@@ -266,8 +266,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
         if (state.extraCategories && state.extraCategories.length > 0)
             flatMetadata['extra-skills-data'] = JSON.stringify(state.extraCategories);
 
-        // Only save status list if altered from single default Healthy status
-        if (state.statuses && state.statuses.some((s) => s.name !== 'Healthy' || s.customName || s.rounds > 0)) {
+        if (state.statuses) {
             flatMetadata['status-list'] = JSON.stringify(state.statuses);
         }
 
@@ -275,31 +274,31 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
         if (state.customInfo && state.customInfo.length > 0)
             flatMetadata['custom-info-data'] = JSON.stringify(state.customInfo);
 
-        // --- STATS, SOCIALS, SKILLS LOOP (Safely omit zero buffs/debuffs/ranks) ---
+        // --- STATS, SOCIALS, SKILLS LOOP (Explicitly persist zero ranks/buffs to prevent stale metadata leaks) ---
         if (state.stats) {
             Object.entries(state.stats).forEach(([stat, vals]) => {
                 flatMetadata[`${stat}-base`] = vals.base;
-                if (vals.rank) flatMetadata[`${stat}-rank`] = vals.rank;
-                if (vals.buff) flatMetadata[`${stat}-buff`] = vals.buff;
-                if (vals.debuff) flatMetadata[`${stat}-debuff`] = vals.debuff;
-                if (vals.limit !== undefined && vals.limit !== 5) flatMetadata[`${stat}-limit`] = vals.limit;
+                flatMetadata[`${stat}-rank`] = vals.rank ?? 0;
+                flatMetadata[`${stat}-buff`] = vals.buff ?? 0;
+                flatMetadata[`${stat}-debuff`] = vals.debuff ?? 0;
+                flatMetadata[`${stat}-limit`] = vals.limit ?? 5;
             });
         }
 
         if (state.socials) {
             Object.entries(state.socials).forEach(([stat, vals]) => {
                 flatMetadata[`${stat}-base`] = vals.base;
-                if (vals.rank) flatMetadata[`${stat}-rank`] = vals.rank;
-                if (vals.buff) flatMetadata[`${stat}-buff`] = vals.buff;
-                if (vals.debuff) flatMetadata[`${stat}-debuff`] = vals.debuff;
-                if (vals.limit !== undefined && vals.limit !== 5) flatMetadata[`${stat}-limit`] = vals.limit;
+                flatMetadata[`${stat}-rank`] = vals.rank ?? 0;
+                flatMetadata[`${stat}-buff`] = vals.buff ?? 0;
+                flatMetadata[`${stat}-debuff`] = vals.debuff ?? 0;
+                flatMetadata[`${stat}-limit`] = vals.limit ?? 5;
             });
         }
 
         if (state.skills) {
             Object.entries(state.skills).forEach(([skill, vals]) => {
-                if (vals.base) flatMetadata[`${skill}-base`] = vals.base;
-                if (vals.buff) flatMetadata[`${skill}-buff`] = vals.buff;
+                flatMetadata[`${skill}-base`] = vals.base ?? 0;
+                flatMetadata[`${skill}-buff`] = vals.buff ?? 0;
                 if (vals.customName && vals.customName.trim() !== '') flatMetadata[`label-${skill}`] = vals.customName;
             });
         }

@@ -45,7 +45,7 @@ export function buildSummaryFromStore(
 ): { updatedSummary: PcPokemonSummary; nextMeta: Record<string, unknown> } {
     const nextMeta = flattenStateToMetadata(currentStore);
     nextMeta.entityId = curr.entityId;
-    const now = Date.now();
+    const now = Math.max(Date.now(), (Number(curr.lastModified) || 0) + 1);
     nextMeta.lastModified = now;
 
     const nextHp = currentStore.health.hpCurr ?? curr.hp;
@@ -197,7 +197,19 @@ export function restorePreviousCharacterState(params: RestorePreviousCharacterPa
                 (initialEntityId &&
                     (prevMeta.entityId === initialEntityId || prevMeta['entityId'] === initialEntityId))));
 
-    if (prevTokenId && !isSameEntity) {
+    if (!prevTokenId) {
+        // No token was selected prior to opening PC: restore clean empty state
+        setActiveTokenId(null);
+        const s = useCharacterStore.getState();
+        s.setTokenData('', s.role || 'PLAYER');
+        s.loadFromOwlbear({});
+        if (prevTheme) {
+            applyDynamicThemeColors(prevTheme.primary, prevTheme.secondary);
+        } else {
+            applyDynamicThemeColors('', '');
+        }
+    } else if (!isSameEntity) {
+        // A different token was selected prior to opening PC: restore it
         setActiveTokenId(prevTokenId);
         const s = useCharacterStore.getState();
         s.setTokenData(prevTokenId, s.role || 'PLAYER');
@@ -207,17 +219,24 @@ export function restorePreviousCharacterState(params: RestorePreviousCharacterPa
         if (prevTheme) {
             applyDynamicThemeColors(prevTheme.primary, prevTheme.secondary);
         }
-    } else {
-        // Same entity or no previous token: ensure active token ID is valid (storage entity or live map ID)
+    } else if (currentSummary.isOnMap && currentSummary.mapTokenId && prevTokenId === currentSummary.mapTokenId) {
+        // Same entity was already selected on map before opening PC: keep map token active
+        setActiveTokenId(currentSummary.mapTokenId);
         const s = useCharacterStore.getState();
-        const finalTokenId =
-            currentSummary.isOnMap && currentSummary.mapTokenId ? currentSummary.mapTokenId : currentSummary.entityId;
-        if (finalTokenId) {
-            setActiveTokenId(finalTokenId);
-            s.setTokenData(finalTokenId, s.role || 'PLAYER');
-        }
+        s.setTokenData(currentSummary.mapTokenId, s.role || 'PLAYER');
         const colors = resolvePcSheetThemeColors(currentSummary, mode, s, roomCustomTypes);
         applyDynamicThemeColors(colors.primary, colors.secondary);
+    } else {
+        // Opened purely from storage without active map selection: clear to empty state
+        setActiveTokenId(null);
+        const s = useCharacterStore.getState();
+        s.setTokenData('', s.role || 'PLAYER');
+        s.loadFromOwlbear({});
+        if (prevTheme) {
+            applyDynamicThemeColors(prevTheme.primary, prevTheme.secondary);
+        } else {
+            applyDynamicThemeColors('', '');
+        }
     }
 
     if (typeof window !== 'undefined') {
