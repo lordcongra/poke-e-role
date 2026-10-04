@@ -87,13 +87,18 @@ export const PcReleaseConfirmModal: React.FC<PcReleaseConfirmModalProps> = ({
                             style={{
                                 color: isUnlink ? 'var(--secondary, #3b82f6)' : 'var(--semantic-danger, #ef4444)',
                                 fontWeight: 500,
-                                display: 'block',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
                                 marginTop: '6px'
                             }}
                         >
-                            ⚠️ <strong>Table Sync Notice:</strong> This action synchronizes across the table and will
-                            also {isUnlink ? 'unlink' : 'release'} this Pokémon on the other player&apos;s / GM&apos;s
-                            side.
+                            <AlertTriangle size={15} style={{ flexShrink: 0 }} />
+                            <span>
+                                <strong>Table Sync Notice:</strong> This action synchronizes across the table and will
+                                also {isUnlink ? 'unlink' : 'release'} this Pokémon on the other player&apos;s /
+                                GM&apos;s side.
+                            </span>
                         </span>
                     </div>
                 </div>

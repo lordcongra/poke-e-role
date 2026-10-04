@@ -97,6 +97,7 @@ export interface PcSlice {
     switchTrainer: (trainerId: string) => void;
     addTrainer: (name: string) => void;
     deleteTrainer: (trainerId: string, options?: { deletePc?: boolean; deleteBelt?: boolean }) => boolean;
+    renameTrainer: (trainerId: string, newName: string) => void;
     switchCampaign: (campaignId: string) => void;
     addCampaign: (name: string, options?: { isPrivate?: boolean; isRoomActive?: boolean }) => void;
     editCampaign: (campaignId: string, updates: { name?: string; isPrivate?: boolean; isRoomActive?: boolean }) => void;
@@ -105,3 +106,5 @@ export interface PcSlice {
     updateTrainerProfile: (trainerId: string, updates: Partial<TrainerRoster>) => void;
     deletePokemonFromPc: (entityId: string, options?: { wasUnlinked?: boolean; pokemonName?: string }) => void;
 }
+
+export type PcImportDuplicateMode = 'duplicate-fresh' | 'transfer-ownership' | 'update-existing';

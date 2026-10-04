@@ -55,8 +55,25 @@ export const PcCloudExportModal: React.FC<PcCloudExportModalProps> = ({
     // JSON Granular Selection States
     const [jsonScope, setJsonScope] = useState<'all' | 'custom'>('all');
     const [selectedCampaignIds, setSelectedCampaignIds] = useState<string[]>([campaign.id]);
-    const [selectedTrainerIds, setSelectedTrainerIds] = useState<string[]>(Object.keys(campaign.trainers || {}));
-    const [selectedBoxIndices, setSelectedBoxIndices] = useState<number[]>((campaign.boxes || []).map((_, i) => i));
+    const [selectedTrainerProfileIds, setSelectedTrainerProfileIds] = useState<string[]>(
+        Object.keys(campaign.trainers || {})
+    );
+    const [selectedTrainerPartyIds, setSelectedTrainerPartyIds] = useState<string[]>(
+        Object.keys(campaign.trainers || {})
+    );
+    const effectiveBoxes =
+        allBoxes && allBoxes.length > 0
+            ? allBoxes
+            : trainer?.boxes && trainer.boxes.length > 0
+              ? trainer.boxes
+              : campaign.boxes && campaign.boxes.length > 0
+                ? campaign.boxes
+                : [];
+    const defaultBoxIndices =
+        effectiveBoxes.length > 0 ? effectiveBoxes.map((_, i) => i) : Array.from({ length: 8 }, (_, i) => i);
+    const [selectedTrainerBoxIds, setSelectedTrainerBoxIds] = useState<string[]>(Object.keys(campaign.trainers || {}));
+    const [selectedBoxIndices, setSelectedBoxIndices] = useState<number[]>(defaultBoxIndices);
+    const [includeCampaignBoxes, setIncludeCampaignBoxes] = useState<boolean>(true);
 
     useEffect(() => {
         if (isObr) {
@@ -94,29 +111,31 @@ export const PcCloudExportModal: React.FC<PcCloudExportModalProps> = ({
         for (const cId of selectedCampaignIds) {
             const camp = pcData.campaigns[cId];
             if (!camp) continue;
-            for (const [tId, tr] of Object.entries(camp.trainers)) {
-                if (selectedTrainerIds.includes(tId)) {
+            for (const [tId, tr] of Object.entries(camp.trainers || {})) {
+                if (selectedTrainerPartyIds.includes(tId)) {
                     for (const s of tr.party || []) {
                         if (s) ids.add(s);
                     }
-                    if (Array.isArray(tr.boxes)) {
-                        tr.boxes.forEach((b, idx) => {
-                            if (selectedBoxIndices.includes(idx)) {
-                                for (const s of b.slots || []) {
-                                    if (s) ids.add(s);
-                                }
+                }
+                if (selectedTrainerBoxIds.includes(tId) && Array.isArray(tr.boxes)) {
+                    tr.boxes.forEach((b, idx) => {
+                        if (selectedBoxIndices.includes(idx)) {
+                            for (const s of b.slots || []) {
+                                if (s) ids.add(s);
                             }
-                        });
-                    }
+                        }
+                    });
                 }
             }
-            camp.boxes.forEach((b, idx) => {
-                if (selectedBoxIndices.includes(idx)) {
-                    for (const s of b.slots || []) {
-                        if (s) ids.add(s);
+            if (includeCampaignBoxes && Array.isArray(camp.boxes)) {
+                camp.boxes.forEach((b, idx) => {
+                    if (selectedBoxIndices.includes(idx)) {
+                        for (const s of b.slots || []) {
+                            if (s) ids.add(s);
+                        }
                     }
-                }
-            });
+                });
+            }
         }
         return Array.from(ids)
             .map((id) => pcData.pokemonSummaries[id])
@@ -130,8 +149,11 @@ export const PcCloudExportModal: React.FC<PcCloudExportModalProps> = ({
             downloadPcBackupJson(pcData, {
                 scope: jsonScope,
                 campaignIds: selectedCampaignIds,
-                trainerIds: jsonScope === 'custom' ? selectedTrainerIds : undefined,
-                boxIndices: jsonScope === 'custom' ? selectedBoxIndices : undefined
+                trainerProfileIds: jsonScope === 'custom' ? selectedTrainerProfileIds : undefined,
+                trainerPartyIds: jsonScope === 'custom' ? selectedTrainerPartyIds : undefined,
+                trainerBoxIds: jsonScope === 'custom' ? selectedTrainerBoxIds : undefined,
+                boxIndices: jsonScope === 'custom' ? selectedBoxIndices : undefined,
+                includeCampaignBoxes: jsonScope === 'custom' ? includeCampaignBoxes : undefined
             });
             markBackupComplete();
             if (isObr) {
@@ -195,10 +217,16 @@ export const PcCloudExportModal: React.FC<PcCloudExportModalProps> = ({
                             setScope={setJsonScope}
                             selectedCampaignIds={selectedCampaignIds}
                             setSelectedCampaignIds={setSelectedCampaignIds}
-                            selectedTrainerIds={selectedTrainerIds}
-                            setSelectedTrainerIds={setSelectedTrainerIds}
+                            selectedTrainerProfileIds={selectedTrainerProfileIds}
+                            setSelectedTrainerProfileIds={setSelectedTrainerProfileIds}
+                            selectedTrainerPartyIds={selectedTrainerPartyIds}
+                            setSelectedTrainerPartyIds={setSelectedTrainerPartyIds}
+                            selectedTrainerBoxIds={selectedTrainerBoxIds}
+                            setSelectedTrainerBoxIds={setSelectedTrainerBoxIds}
                             selectedBoxIndices={selectedBoxIndices}
                             setSelectedBoxIndices={setSelectedBoxIndices}
+                            includeCampaignBoxes={includeCampaignBoxes}
+                            setIncludeCampaignBoxes={setIncludeCampaignBoxes}
                         />
                     ) : (
                         <PcBackupSceneOptions
@@ -237,7 +265,10 @@ export const PcCloudExportModal: React.FC<PcCloudExportModalProps> = ({
                         trainerName={trainer?.name}
                         includeTrainer={
                             targetMode === 'json'
-                                ? jsonScope === 'all' || selectedTrainerIds.length > 0
+                                ? jsonScope === 'all' ||
+                                  (trainer
+                                      ? selectedTrainerProfileIds.includes(trainer.id)
+                                      : selectedTrainerProfileIds.length > 0)
                                 : includeTrainer
                         }
                         items={previewItems}

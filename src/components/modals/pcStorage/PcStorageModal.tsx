@@ -62,6 +62,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         deleteCampaign,
         updatePokemonSummary,
         updateTrainerProfile,
+        renameTrainer,
         deletePokemonFromPc
     } = useCharacterStore.getState();
 
@@ -86,10 +87,11 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     useEffect(() => {
         document.body.classList.add('pc-modal-open');
         document.documentElement.classList.add('pc-modal-open');
-        const prevBodyOverflow = document.body.style.overflow;
-        const prevHtmlOverflow = document.documentElement.style.overflow;
-        document.body.style.overflow = 'hidden';
-        document.documentElement.style.overflow = 'hidden';
+        const [prevBodyOverflow, prevHtmlOverflow] = [
+            document.body.style.overflow,
+            document.documentElement.style.overflow
+        ];
+        document.body.style.overflow = document.documentElement.style.overflow = 'hidden';
         if (OBR.isAvailable)
             OBR.player
                 .getId()
@@ -115,11 +117,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
 
     const handleModalClose = () => {
         if (OBR.isAvailable) {
-            if (role !== 'GM') {
-                broadcastPlayerPc();
-            } else {
-                broadcastGmPc({ campaignId: campaign?.id, trainer });
-            }
+            role !== 'GM' ? broadcastPlayerPc() : broadcastGmPc({ campaignId: campaign?.id, trainer });
         }
         onClose();
     };
@@ -290,20 +288,12 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     );
 
     const handleOpenContextMenu = (e: React.MouseEvent, isParty: boolean, index: number, entityId: string) => {
-        setContextMenu({
-            x: e.clientX,
-            y: e.clientY,
-            isPartySlot: isParty,
-            index,
-            entityId
-        });
+        setContextMenu({ x: e.clientX, y: e.clientY, isPartySlot: isParty, index, entityId });
     };
 
-    const [dismissBackupWarning, setDismissBackupWarning] = useState(() => {
-        return (
-            typeof localStorage !== 'undefined' && localStorage.getItem('pkr_pc_backup_warn_dismissed_v2') === 'true'
-        );
-    });
+    const [dismissBackupWarning, setDismissBackupWarning] = useState(
+        () => typeof localStorage !== 'undefined' && localStorage.getItem('pkr_pc_backup_warn_dismissed_v2') === 'true'
+    );
 
     const handleDismissWarning = useCallback(() => {
         setDismissBackupWarning(true);
@@ -355,11 +345,12 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         trainers={campaign.trainers}
                         onSwitchTrainer={switchTrainer}
                         onAddTrainer={addTrainer}
+                        onRenameTrainer={renameTrainer}
                         onDeleteTrainer={deleteTrainer}
                         boxes={trainerBoxes}
                         activeBoxIndex={activeBoxIndex}
                         onSelectBox={setActiveBoxIndex}
-                        onAddBox={() => addBox()}
+                        onAddBox={addBox}
                         onRenameBox={renameBox}
                         onSetBoxTheme={setBoxTheme}
                         onUploadCloud={() => setIsExportModalOpen(true)}

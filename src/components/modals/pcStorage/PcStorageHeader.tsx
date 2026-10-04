@@ -41,6 +41,7 @@ interface PcStorageHeaderProps {
     trainers: Record<string, TrainerRoster>;
     onSwitchTrainer: (id: string) => void;
     onAddTrainer: (name: string) => void;
+    onRenameTrainer?: (id: string, newName: string) => void;
     onDeleteTrainer?: (id: string, options?: { deletePc?: boolean; deleteBelt?: boolean }) => void;
     boxes: PcBox[];
     activeBoxIndex: number;
@@ -69,6 +70,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
     trainers,
     onSwitchTrainer,
     onAddTrainer,
+    onRenameTrainer,
     onDeleteTrainer,
     boxes,
     activeBoxIndex,
@@ -109,7 +111,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
         name: string;
     } | null>(null);
     const [promptConfig, setPromptConfig] = useState<{
-        type: 'campaign' | 'trainer';
+        type: 'campaign' | 'trainer' | 'rename-trainer';
         title: string;
         description: string;
         placeholder: string;
@@ -145,11 +147,9 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                         >
                             {Object.values(campaigns).map((c) => {
                                 const isRoom = isCampaignRoomActive(c, activeRoomCampaignId, activeRoomCampaignName);
-                                const prefix = c.isPrivate ? '🔒 ' : isRoom ? '🌐 ' : '';
                                 const suffix = isRoom ? ' (Room Active)' : c.isPrivate ? ' (Private)' : '';
                                 return (
                                     <option key={c.id} value={c.id}>
-                                        {prefix}
                                         {c.name}
                                         {suffix}
                                     </option>
@@ -168,8 +168,9 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                             <span
                                 className="pc-header__campaign-badge pc-header__campaign-badge--room"
                                 title="Active Room Campaign: Connected players sync here"
+                                aria-label="Active Room Campaign: Connected players sync here"
                             >
-                                <Globe size={10} /> Room Active
+                                <Globe size={13} />
                             </span>
                         )}
                         <button
@@ -207,6 +208,24 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                             ))}
                             <option value="__none__">None (PMD / Team Storage)</option>
                         </select>
+                        {activeTrainer && onRenameTrainer && (
+                            <button
+                                type="button"
+                                className="pc-header__mini-btn"
+                                onClick={() =>
+                                    setPromptConfig({
+                                        type: 'rename-trainer',
+                                        title: 'Rename Trainer Profile',
+                                        description: `Enter a new name for "${activeTrainer.name}".`,
+                                        placeholder: activeTrainer.name
+                                    })
+                                }
+                                title="Rename active trainer profile"
+                                aria-label="Rename active trainer profile"
+                            >
+                                <Edit2 size={13} />
+                            </button>
+                        )}
                         <button
                             type="button"
                             className="pc-header__mini-btn"
@@ -226,13 +245,9 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                             <button
                                 type="button"
                                 className="pc-header__mini-btn pc-header__mini-btn--danger"
-                                onClick={() => {
-                                    setDeleteTarget({
-                                        type: 'trainer',
-                                        id: activeTrainer.id,
-                                        name: activeTrainer.name
-                                    });
-                                }}
+                                onClick={() =>
+                                    setDeleteTarget({ type: 'trainer', id: activeTrainer.id, name: activeTrainer.name })
+                                }
                                 title="Delete active trainer profile"
                             >
                                 <Trash2 size={13} />
@@ -327,10 +342,14 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                     title={promptConfig.title}
                     description={promptConfig.description}
                     placeholder={promptConfig.placeholder}
-                    confirmText="Create"
+                    confirmText={promptConfig.type === 'rename-trainer' ? 'Save' : 'Create'}
                     onConfirm={(val) => {
                         if (promptConfig.type === 'trainer') {
                             onAddTrainer(val);
+                        } else if (promptConfig.type === 'rename-trainer') {
+                            if (onRenameTrainer && activeTrainer) {
+                                onRenameTrainer(activeTrainer.id, val);
+                            }
                         } else {
                             onAddCampaign(val);
                         }

@@ -140,7 +140,7 @@ export const PcBoxNavigator: React.FC<PcBoxNavigatorProps> = ({
                         type="button"
                         className={`action-button ${
                             placementMode === 'manual' ? 'action-button--theme' : 'action-button--dark'
-                        } pc-header__placement-btn`}
+                        } pc-header__placement-btn text-theme-header`}
                         onClick={togglePlacementMode}
                         title={
                             placementMode === 'manual'
@@ -149,7 +149,7 @@ export const PcBoxNavigator: React.FC<PcBoxNavigatorProps> = ({
                         }
                     >
                         {placementMode === 'manual' ? <MousePointerClick size={14} /> : <Compass size={14} />}
-                        <span className="text-subtext">
+                        <span className="text-theme-header">
                             {placementMode === 'manual' ? 'Click-to-Place' : 'Auto-Place'}
                         </span>
                     </button>
@@ -165,7 +165,9 @@ export const PcBoxNavigator: React.FC<PcBoxNavigatorProps> = ({
                     }}
                 >
                     <Palette size={14} style={{ color: currentBox.themeColor || 'var(--primary)' }} />
-                    <span className="text-subtext">Theme</span>
+                    <span className="text-label" style={{ color: 'var(--text-main, #f8fafc)' }}>
+                        Theme
+                    </span>
                     <input
                         type="color"
                         className="pc-header__color-picker-input"

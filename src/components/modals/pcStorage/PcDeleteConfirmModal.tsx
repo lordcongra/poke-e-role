@@ -104,12 +104,18 @@ export const PcDeleteConfirmModal: React.FC<PcDeleteConfirmModalProps> = ({
                         style={{
                             color: 'var(--semantic-danger, #ef4444)',
                             fontWeight: 500,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
                             marginTop: '10px'
                         }}
                     >
-                        ⚠️ <strong>Table Sync Notice:</strong> Deleting this{' '}
-                        {type === 'trainer' ? 'trainer' : 'campaign'} will synchronize across the room and remove it on
-                        both Player and GM ends.
+                        <AlertTriangle size={15} style={{ flexShrink: 0 }} />
+                        <span>
+                            <strong>Table Sync Notice:</strong> Deleting this{' '}
+                            {type === 'trainer' ? 'trainer' : 'campaign'} will synchronize across the room and remove it
+                            on both Player and GM ends.
+                        </span>
                     </div>
                 </div>
 

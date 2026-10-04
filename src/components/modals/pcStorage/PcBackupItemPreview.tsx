@@ -1,4 +1,5 @@
 import React from 'react';
+import { User } from 'lucide-react';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 
 interface PcBackupItemPreviewProps {
@@ -19,10 +20,14 @@ export const PcBackupItemPreview: React.FC<PcBackupItemPreviewProps> = ({ traine
                         className="pc-cloud-modal__pkmn-tag text-subtext"
                         style={{
                             borderColor: 'var(--primary, #3b82f6)',
-                            color: 'var(--primary, #3b82f6)'
+                            color: 'var(--primary, #3b82f6)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px'
                         }}
                     >
-                        ★ Trainer: {trainerName}
+                        <User size={13} />
+                        <span>Trainer: {trainerName}</span>
                     </span>
                 )}
                 {items.map((p) => (

@@ -27,6 +27,7 @@ import { EXTENSION_ID } from '../../hooks/owlbearSync/owlbearSyncConstants';
 import {
     applyDeleteCampaign,
     applyDeleteTrainer,
+    applyRenameTrainer,
     getCachedObrPlayerId,
     setCachedObrPlayerId,
     persistTrainerSwitch
@@ -36,7 +37,8 @@ import {
     syncSidebarOnMoveToParty,
     syncSidebarOnDeposit,
     syncStandaloneSummaryUpdate,
-    initStandaloneTrainerSheet
+    initStandaloneTrainerSheet,
+    syncStandaloneTrainerRename
 } from '../../utils/pc/pcStorageStoreOps';
 import { markDataChanged } from '../../utils/sync/storageAdapter';
 import OBR from '@owlbear-rodeo/sdk';
@@ -322,6 +324,18 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
         }
     },
 
+    renameTrainer: (trainerId: string, newName: string) => {
+        try {
+            const res = applyRenameTrainer(get().pcData, trainerId, newName);
+            if (!res.success) return;
+            set({ pcData: res.nextData });
+            savePcStorage(res.nextData);
+            syncStandaloneTrainerRename(trainerId, newName);
+        } catch (e) {
+            console.error('[PcSlice] Failed to rename trainer:', e);
+        }
+    },
+
     switchCampaign: (campaignId: string) => {
         try {
             const { pcData } = get();
@@ -441,20 +455,10 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             const camp = pcData.campaigns[pcData.activeCampaignId];
             if (!camp || !camp.trainers[trainerId]) return;
 
-            const existing = camp.trainers[trainerId];
-            const updatedTrainer = { ...existing, ...updates };
+            const trainers = { ...camp.trainers, [trainerId]: { ...camp.trainers[trainerId], ...updates } };
             const nextData = {
                 ...pcData,
-                campaigns: {
-                    ...pcData.campaigns,
-                    [pcData.activeCampaignId]: {
-                        ...camp,
-                        trainers: {
-                            ...camp.trainers,
-                            [trainerId]: updatedTrainer
-                        }
-                    }
-                }
+                campaigns: { ...pcData.campaigns, [pcData.activeCampaignId]: { ...camp, trainers } }
             };
             set({ pcData: nextData });
             savePcStorage(nextData);

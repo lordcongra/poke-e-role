@@ -65,6 +65,21 @@
     background: rgba(16, 185, 129, 0.18);
     border: 1px solid rgba(16, 185, 129, 0.45);
     color: #34d399;
+    padding: 2px 4px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: help;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.pc-header__campaign-badge--room:hover {
+    background: rgba(16, 185, 129, 0.3);
+    border-color: rgba(16, 185, 129, 0.7);
 }
 
 .pc-header__selector-icon {
@@ -335,12 +350,14 @@
 
 .pc-header__placement-btn {
     font-size: 0.8rem;
+    font-weight: 600;
     padding: 4px 10px;
     display: flex;
     align-items: center;
     gap: 5px;
     cursor: pointer;
     transition: all 0.15s ease;
+    white-space: nowrap;
 }
 
 .pc-header__new-box-btn {

@@ -1,11 +1,18 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
-import type { PcStorageData, CampaignProfile } from '../../../types/pcStorageTypes';
+import type {
+    PcStorageData,
+    CampaignProfile,
+    TrainerRoster,
+    PcImportDuplicateMode
+} from '../../../types/pcStorageTypes';
 import { importPcBackupJson } from '../../../utils/pc/pcJsonBackupOps';
 import { scanSceneBackupTokens } from '../../../utils/pc/pcBackupSceneSync';
 import { restoreTokensIntoPcStorage } from '../../../utils/pc/pcCloudRestoreOps';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { CloudDownload, FileJson, Upload, CheckCircle2, AlertCircle, X, Layers, Sparkles } from 'lucide-react';
+import { PcImportCloudSection } from './PcImportCloudSection';
+import { PcImportJsonSection } from './PcImportJsonSection';
+import { CloudDownload, FileJson, CheckCircle2, AlertCircle, X, Layers } from 'lucide-react';
 import './PcImportModal.css';
 
 interface PcImportModalProps {
@@ -13,18 +20,25 @@ interface PcImportModalProps {
     onClose: () => void;
     pcData: PcStorageData;
     activeCampaign: CampaignProfile;
+    trainer?: TrainerRoster;
     currentBoxName?: string;
     boxTheme?: string;
     onImportCloudScene: () => Promise<void>;
-    onImportJsonSuccess: (nextData: PcStorageData, importedPokemonCount: number, importedCampaignCount: number) => void;
-    onScanSceneSuccess?: (nextData: PcStorageData, importedCount: number, beltCount: number, boxCount: number) => void;
+    onImportJsonSuccess: (
+        nextData: PcStorageData,
+        importedCount: number,
+        importedCampCount: number,
+        targetTrainerId?: string
+    ) => void;
+    onScanSceneSuccess?: (nextData: PcStorageData, count: number, beltCount: number, boxCount: number) => void;
 }
 
 export const PcImportModal: React.FC<PcImportModalProps> = ({
     isOpen,
     onClose,
     pcData,
-    activeCampaign: _activeCampaign,
+    activeCampaign,
+    trainer,
     currentBoxName = 'Current Box',
     boxTheme,
     onImportCloudScene,
@@ -36,6 +50,21 @@ export const PcImportModal: React.FC<PcImportModalProps> = ({
     const [isProcessing, setIsProcessing] = useState(false);
     const [resultMessage, setResultMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const effectiveTrainer =
+        trainer ||
+        (activeCampaign?.activeTrainerId ? activeCampaign.trainers[activeCampaign.activeTrainerId] : undefined) ||
+        Object.values(activeCampaign?.trainers || {})[0];
+
+    const defaultDestination = effectiveTrainer ? `trainer:${effectiveTrainer.id}` : 'new-trainer';
+    const [destination, setDestination] = useState<string>(defaultDestination);
+    const [duplicateMode, setDuplicateMode] = useState<PcImportDuplicateMode>('duplicate-fresh');
+
+    useEffect(() => {
+        if (effectiveTrainer && isOpen) {
+            setDestination(`trainer:${effectiveTrainer.id}`);
+        }
+    }, [isOpen, effectiveTrainer?.id]);
 
     if (!isOpen) return null;
 
@@ -108,15 +137,50 @@ export const PcImportModal: React.FC<PcImportModalProps> = ({
             return;
         }
 
+        let importMode: 'active-trainer' | 'new-trainer' | 'merge-by-name' | 'campaign-boxes' = 'active-trainer';
+        let targetTrainerId: string | undefined = undefined;
+
+        if (destination.startsWith('trainer:')) {
+            importMode = 'active-trainer';
+            targetTrainerId = destination.replace('trainer:', '');
+        } else if (destination === 'new-trainer') {
+            importMode = 'new-trainer';
+        } else if (destination === 'merge-by-name') {
+            importMode = 'merge-by-name';
+        } else if (destination === 'campaign-boxes') {
+            importMode = 'campaign-boxes';
+        }
+
         setIsProcessing(true);
         setResultMessage(null);
         try {
-            const res = await importPcBackupJson(file, pcData);
+            const res = await importPcBackupJson(file, pcData, {
+                targetCampaignId: activeCampaign.id,
+                targetTrainerId,
+                importMode,
+                duplicateMode
+            });
             if (res.success && res.nextData) {
-                onImportJsonSuccess(res.nextData, res.importedPokemonCount || 0, res.importedCampaignCount || 0);
+                onImportJsonSuccess(
+                    res.nextData,
+                    res.importedPokemonCount || 0,
+                    res.importedCampaignCount || 0,
+                    res.targetTrainerId || targetTrainerId
+                );
+                const targetMsg = res.targetTrainerName
+                    ? ` into ${res.targetTrainerName}'s storage`
+                    : importMode === 'campaign-boxes'
+                      ? ' into Campaign boxes'
+                      : '';
+                const dupModeMsg =
+                    duplicateMode === 'duplicate-fresh'
+                        ? ' as fresh duplicate copies'
+                        : duplicateMode === 'transfer-ownership'
+                          ? ' with transferred ownership'
+                          : '';
                 setResultMessage({
                     type: 'success',
-                    text: `Successfully restored! Merged ${res.importedPokemonCount || 0} Pokémon and ${res.importedCampaignCount || 0} campaign(s).`
+                    text: `Successfully restored! Loaded ${res.importedPokemonCount || 0} Pokémon${targetMsg}${dupModeMsg}.`
                 });
             } else {
                 setResultMessage({
@@ -199,100 +263,26 @@ export const PcImportModal: React.FC<PcImportModalProps> = ({
                     )}
 
                     {activeTab === 'cloud' && isObr && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                            <div className="pc-import-card">
-                                <div className="pc-import-card__header">
-                                    <Sparkles size={16} />
-                                    <span>Option A: Import from Owlbear Cloud Scene Asset</span>
-                                </div>
-                                <p className="pc-import-card__desc">
-                                    Pulls Pokémon from a previously exported Owlbear Rodeo Scene Asset file (.json)
-                                    saved to your Owlbear asset library and loads them into &quot;{currentBoxName}
-                                    &quot;.
-                                </p>
-                                <button
-                                    type="button"
-                                    className="action-button action-button--theme"
-                                    onClick={handleImportCloud}
-                                    disabled={isProcessing}
-                                >
-                                    <Upload size={14} /> Select Cloud Scene Asset...
-                                </button>
-                            </div>
-
-                            <div className="pc-import-card">
-                                <div className="pc-import-card__header">
-                                    <Layers size={16} />
-                                    <span>Option B: Scan Open Backup Scene</span>
-                                </div>
-                                <p className="pc-import-card__desc">
-                                    Navigate to your dedicated Owlbear Rodeo backup scene where your Pokémon tokens are
-                                    placed. Once in the scene, click below to scan and sync all tokens into your PC
-                                    storage.
-                                </p>
-                                <button
-                                    type="button"
-                                    className="action-button action-button--dark"
-                                    onClick={handleScanOpenScene}
-                                    disabled={isProcessing}
-                                >
-                                    <Layers size={14} /> Scan & Sync Open Scene Tokens
-                                </button>
-                            </div>
-                        </div>
+                        <PcImportCloudSection
+                            currentBoxName={currentBoxName}
+                            isProcessing={isProcessing}
+                            onImportCloud={handleImportCloud}
+                            onScanOpenScene={handleScanOpenScene}
+                        />
                     )}
 
                     {activeTab === 'json' && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                            <div
-                                className="pc-import-dropzone"
-                                onClick={() => fileInputRef.current?.click()}
-                                onDragOver={(e) => e.preventDefault()}
-                                onDrop={(e) => {
-                                    e.preventDefault();
-                                    const file = e.dataTransfer.files?.[0];
-                                    if (file) handleFileSelected(file);
-                                }}
-                            >
-                                <FileJson size={32} className="pc-import-dropzone__icon" />
-                                <div>
-                                    <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>
-                                        Click or drop a PC Backup JSON file here
-                                    </div>
-                                    <div className="text-subtext" style={{ marginTop: '4px' }}>
-                                        Accepts .json backup files exported from Poké-e-Role
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    className="action-button action-button--theme"
-                                    style={{ marginTop: '6px' }}
-                                    disabled={isProcessing}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        fileInputRef.current?.click();
-                                    }}
-                                >
-                                    <Upload size={14} /> Browse Backup File...
-                                </button>
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept=".json"
-                                    style={{ display: 'none' }}
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) handleFileSelected(file);
-                                        e.target.value = '';
-                                    }}
-                                />
-                            </div>
-
-                            <p className="pc-import-card__desc" style={{ textAlign: 'center' }}>
-                                Restoring from JSON merges new campaigns and Pokémon safely without overwriting your
-                                existing data.
-                            </p>
-                        </div>
+                        <PcImportJsonSection
+                            activeCampaign={activeCampaign}
+                            effectiveTrainer={effectiveTrainer}
+                            destination={destination}
+                            setDestination={setDestination}
+                            duplicateMode={duplicateMode}
+                            setDuplicateMode={setDuplicateMode}
+                            isProcessing={isProcessing}
+                            fileInputRef={fileInputRef}
+                            onFileSelected={handleFileSelected}
+                        />
                     )}
                 </div>
 

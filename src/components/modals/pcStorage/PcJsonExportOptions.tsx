@@ -1,6 +1,6 @@
 import React from 'react';
 import type { PcStorageData, CampaignProfile, TrainerRoster } from '../../../types/pcStorageTypes';
-import { Database, FolderKanban, Users, Box as BoxIcon, CheckSquare } from 'lucide-react';
+import { Database, FolderKanban, Users, Box as BoxIcon, CheckSquare, ShieldCheck, Briefcase } from 'lucide-react';
 
 interface PcJsonExportOptionsProps {
     pcData: PcStorageData;
@@ -10,10 +10,16 @@ interface PcJsonExportOptionsProps {
     setScope: (scope: 'all' | 'custom') => void;
     selectedCampaignIds: string[];
     setSelectedCampaignIds: (ids: string[]) => void;
-    selectedTrainerIds: string[];
-    setSelectedTrainerIds: (ids: string[]) => void;
+    selectedTrainerProfileIds: string[];
+    setSelectedTrainerProfileIds: (ids: string[]) => void;
+    selectedTrainerPartyIds: string[];
+    setSelectedTrainerPartyIds: (ids: string[]) => void;
+    selectedTrainerBoxIds: string[];
+    setSelectedTrainerBoxIds: (ids: string[]) => void;
     selectedBoxIndices: number[];
     setSelectedBoxIndices: (indices: number[]) => void;
+    includeCampaignBoxes: boolean;
+    setIncludeCampaignBoxes: (val: boolean) => void;
 }
 
 export const PcJsonExportOptions: React.FC<PcJsonExportOptionsProps> = ({
@@ -24,14 +30,20 @@ export const PcJsonExportOptions: React.FC<PcJsonExportOptionsProps> = ({
     setScope,
     selectedCampaignIds,
     setSelectedCampaignIds,
-    selectedTrainerIds,
-    setSelectedTrainerIds,
+    selectedTrainerProfileIds,
+    setSelectedTrainerProfileIds,
+    selectedTrainerPartyIds,
+    setSelectedTrainerPartyIds,
+    selectedTrainerBoxIds,
+    setSelectedTrainerBoxIds,
     selectedBoxIndices,
-    setSelectedBoxIndices
+    setSelectedBoxIndices,
+    includeCampaignBoxes,
+    setIncludeCampaignBoxes
 }) => {
     const allCampaigns = Object.values(pcData.campaigns);
-    const trainers = Object.values(activeCampaign.trainers);
-    const effectiveBoxes = trainer?.boxes && trainer.boxes.length > 0 ? trainer.boxes : activeCampaign.boxes;
+    const trainers = Object.values(activeCampaign.trainers || {});
+    const effectiveBoxes = trainer?.boxes && trainer.boxes.length > 0 ? trainer.boxes : activeCampaign.boxes || [];
 
     const toggleCampaign = (cId: string) => {
         if (selectedCampaignIds.includes(cId)) {
@@ -43,11 +55,27 @@ export const PcJsonExportOptions: React.FC<PcJsonExportOptionsProps> = ({
         }
     };
 
-    const toggleTrainer = (tId: string) => {
-        if (selectedTrainerIds.includes(tId)) {
-            setSelectedTrainerIds(selectedTrainerIds.filter((id) => id !== tId));
+    const toggleTrainerProfile = (tId: string) => {
+        if (selectedTrainerProfileIds.includes(tId)) {
+            setSelectedTrainerProfileIds(selectedTrainerProfileIds.filter((id) => id !== tId));
         } else {
-            setSelectedTrainerIds([...selectedTrainerIds, tId]);
+            setSelectedTrainerProfileIds([...selectedTrainerProfileIds, tId]);
+        }
+    };
+
+    const toggleTrainerParty = (tId: string) => {
+        if (selectedTrainerPartyIds.includes(tId)) {
+            setSelectedTrainerPartyIds(selectedTrainerPartyIds.filter((id) => id !== tId));
+        } else {
+            setSelectedTrainerPartyIds([...selectedTrainerPartyIds, tId]);
+        }
+    };
+
+    const toggleTrainerBoxes = (tId: string) => {
+        if (selectedTrainerBoxIds.includes(tId)) {
+            setSelectedTrainerBoxIds(selectedTrainerBoxIds.filter((id) => id !== tId));
+        } else {
+            setSelectedTrainerBoxIds([...selectedTrainerBoxIds, tId]);
         }
     };
 
@@ -67,13 +95,31 @@ export const PcJsonExportOptions: React.FC<PcJsonExportOptionsProps> = ({
         }
     };
 
+    const selectAllForTrainer = (tId: string) => {
+        if (!selectedTrainerProfileIds.includes(tId)) {
+            setSelectedTrainerProfileIds([...selectedTrainerProfileIds, tId]);
+        }
+        if (!selectedTrainerPartyIds.includes(tId)) {
+            setSelectedTrainerPartyIds([...selectedTrainerPartyIds, tId]);
+        }
+        if (!selectedTrainerBoxIds.includes(tId)) {
+            setSelectedTrainerBoxIds([...selectedTrainerBoxIds, tId]);
+        }
+    };
+
+    const deselectAllForTrainer = (tId: string) => {
+        setSelectedTrainerProfileIds(selectedTrainerProfileIds.filter((id) => id !== tId));
+        setSelectedTrainerPartyIds(selectedTrainerPartyIds.filter((id) => id !== tId));
+        setSelectedTrainerBoxIds(selectedTrainerBoxIds.filter((id) => id !== tId));
+    };
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {/* Scope Selector */}
             <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                     type="button"
-                    className={`action-button ${scope === 'all' ? 'action-button--theme' : 'action-button--dark'}`}
+                    className={`action-button ${scope === 'all' ? 'action-button--theme text-theme-header' : 'action-button--dark'}`}
                     style={{ flex: 1, padding: '7px 10px', fontSize: '0.78rem' }}
                     onClick={() => setScope('all')}
                 >
@@ -81,7 +127,7 @@ export const PcJsonExportOptions: React.FC<PcJsonExportOptionsProps> = ({
                 </button>
                 <button
                     type="button"
-                    className={`action-button ${scope === 'custom' ? 'action-button--theme' : 'action-button--dark'}`}
+                    className={`action-button ${scope === 'custom' ? 'action-button--theme text-theme-header' : 'action-button--dark'}`}
                     style={{ flex: 1, padding: '7px 10px', fontSize: '0.78rem' }}
                     onClick={() => setScope('custom')}
                 >
@@ -99,9 +145,9 @@ export const PcJsonExportOptions: React.FC<PcJsonExportOptionsProps> = ({
                     }}
                     className="text-subtext"
                 >
-                    Exports every campaign ({allCampaigns.length}), all trainer parties, every PC storage box, and all{' '}
-                    {Object.keys(pcData.pokemonSummaries).length} Pokémon records into a single complete JSON backup
-                    file.
+                    Exports every campaign ({allCampaigns.length}), all trainer profiles & belt parties, every PC
+                    storage box, and all {Object.keys(pcData.pokemonSummaries).length} Pokémon records into a single
+                    complete JSON backup file.
                 </div>
             ) : (
                 <div
@@ -156,50 +202,136 @@ export const PcJsonExportOptions: React.FC<PcJsonExportOptionsProps> = ({
                         </div>
                     )}
 
-                    {/* Trainers Checkboxes */}
+                    {/* Granular Trainers & Pokémon Options */}
                     <div>
                         <div
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '6px',
-                                marginBottom: '6px'
+                                marginBottom: '8px'
                             }}
                             className="text-label"
                         >
-                            <Users size={13} /> Trainers ({activeCampaign.name}):
+                            <Users size={13} /> Trainers & Pokémon ({activeCampaign.name}):
                         </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             {trainers.map((t) => {
                                 const partyCount = (t.party || []).filter(Boolean).length;
                                 const boxCount = (t.boxes || []).reduce(
                                     (acc, b) => acc + (b.slots || []).filter(Boolean).length,
                                     0
                                 );
+                                const isProfileOn = selectedTrainerProfileIds.includes(t.id);
+                                const isPartyOn = selectedTrainerPartyIds.includes(t.id);
+                                const isBoxesOn = selectedTrainerBoxIds.includes(t.id);
+
                                 return (
-                                    <label
+                                    <div
                                         key={t.id}
-                                        className="text-subtext"
                                         style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            padding: '4px 8px',
+                                            padding: '8px 10px',
                                             background: 'rgba(0, 0, 0, 0.3)',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer'
+                                            borderRadius: '6px',
+                                            border: '1px solid rgba(255, 255, 255, 0.06)'
                                         }}
                                     >
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedTrainerIds.includes(t.id)}
-                                            onChange={() => toggleTrainer(t.id)}
-                                        />
-                                        <span>
-                                            {t.name} ({partyCount} on belt
-                                            {boxCount > 0 ? `, ${boxCount} in PC` : ''})
-                                        </span>
-                                    </label>
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                marginBottom: '6px'
+                                            }}
+                                        >
+                                            <span className="text-label" style={{ color: 'var(--primary)' }}>
+                                                {t.name}
+                                            </span>
+                                            <div style={{ display: 'flex', gap: '6px' }}>
+                                                <button
+                                                    type="button"
+                                                    className="action-button action-button--ghost"
+                                                    style={{ fontSize: '0.68rem', padding: '1px 6px' }}
+                                                    onClick={() => selectAllForTrainer(t.id)}
+                                                >
+                                                    All
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="action-button action-button--ghost"
+                                                    style={{ fontSize: '0.68rem', padding: '1px 6px' }}
+                                                    onClick={() => deselectAllForTrainer(t.id)}
+                                                >
+                                                    None
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            style={{
+                                                display: 'grid',
+                                                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                                                gap: '6px'
+                                            }}
+                                        >
+                                            <label
+                                                className="text-subtext"
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '5px',
+                                                    cursor: 'pointer'
+                                                }}
+                                                title="Include trainer character sheet stats and profile"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isProfileOn}
+                                                    onChange={() => toggleTrainerProfile(t.id)}
+                                                />
+                                                <ShieldCheck size={12} />
+                                                <span>Trainer Sheet</span>
+                                            </label>
+
+                                            <label
+                                                className="text-subtext"
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '5px',
+                                                    cursor: 'pointer'
+                                                }}
+                                                title="Include Pokemon on this trainer's active belt party"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isPartyOn}
+                                                    onChange={() => toggleTrainerParty(t.id)}
+                                                />
+                                                <Briefcase size={12} />
+                                                <span>Party ({partyCount})</span>
+                                            </label>
+
+                                            <label
+                                                className="text-subtext"
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '5px',
+                                                    cursor: 'pointer'
+                                                }}
+                                                title="Include Pokemon stored in this trainer's PC boxes"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isBoxesOn}
+                                                    onChange={() => toggleTrainerBoxes(t.id)}
+                                                />
+                                                <BoxIcon size={12} />
+                                                <span>PC Boxes ({boxCount})</span>
+                                            </label>
+                                        </div>
+                                    </div>
                                 );
                             })}
                         </div>
@@ -270,6 +402,36 @@ export const PcJsonExportOptions: React.FC<PcJsonExportOptionsProps> = ({
                             })}
                         </div>
                     </div>
+
+                    {/* Shared Campaign Boxes Option */}
+                    {Array.isArray(activeCampaign.boxes) && activeCampaign.boxes.length > 0 && (
+                        <label
+                            className="text-subtext"
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '6px 8px',
+                                background: 'rgba(0, 0, 0, 0.25)',
+                                borderRadius: '4px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={includeCampaignBoxes}
+                                onChange={(e) => setIncludeCampaignBoxes(e.target.checked)}
+                            />
+                            <span className="text-label" style={{ fontSize: '0.8rem' }}>
+                                Include Shared Campaign Boxes (
+                                {activeCampaign.boxes.reduce(
+                                    (acc, b) => acc + (b.slots || []).filter(Boolean).length,
+                                    0
+                                )}{' '}
+                                Pokémon)
+                            </span>
+                        </label>
+                    )}
                 </div>
             )}
         </div>

@@ -96,3 +96,31 @@ export function initStandaloneTrainerSheet(trainerId: string, name: string): voi
         window.dispatchEvent(new Event('pkr-local-data-changed'));
     } catch {}
 }
+
+/**
+ * Synchronizes a renamed trainer profile to standalone character sheet local storage.
+ */
+export function syncStandaloneTrainerRename(trainerId: string, newName: string): void {
+    if (OBR.isAvailable || typeof window === 'undefined' || !window.localStorage) {
+        return;
+    }
+    const cleanName = newName.trim();
+    if (!cleanName) return;
+    try {
+        const localKey = `pkr_char_${trainerId}`;
+        const existing = localStorage.getItem(localKey);
+        if (existing) {
+            const parsed = JSON.parse(existing);
+            localStorage.setItem(
+                localKey,
+                JSON.stringify({
+                    ...parsed,
+                    nickname: cleanName,
+                    name: cleanName,
+                    species: cleanName
+                })
+            );
+        }
+        window.dispatchEvent(new Event('pkr-local-data-changed'));
+    } catch {}
+}

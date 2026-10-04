@@ -172,3 +172,56 @@
     border-top: 1px solid var(--border, #383838);
     background: var(--panel-alt, #282828);
 }
+
+.pc-import-select {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.2));
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--text-main, #f8fafc);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.pc-import-select:focus {
+    border-color: var(--box-theme, var(--primary, #3b82f6));
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+.pc-import-select option {
+    background: var(--panel-bg, #1e1e1e);
+    color: var(--text-main, #f8fafc);
+    padding: 6px;
+}
+
+.pc-import-info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+    border-radius: 6px;
+    animation: pcImportFadeIn 0.15s ease-out;
+}
+
+.pc-import-info-box__icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--box-theme, var(--primary, #3b82f6));
+}
+
+.pc-import-info-box__content {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    line-height: 1.35;
+}

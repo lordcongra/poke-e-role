@@ -1,6 +1,12 @@
 import OBR, { buildSceneUpload } from '@owlbear-rodeo/sdk';
 import type { Item, SceneDownload } from '@owlbear-rodeo/sdk';
-import type { PcStorageData, PcBox, CampaignProfile, PcPokemonSummary } from '../../types/pcStorageTypes';
+import type {
+    PcStorageData,
+    PcBox,
+    CampaignProfile,
+    PcPokemonSummary,
+    TrainerRoster
+} from '../../types/pcStorageTypes';
 
 const DB_NAME = 'pkr_pc_db';
 const DB_VERSION = 1;
@@ -207,8 +213,10 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
             }
 
             if (!sum) return null; // Prune ghost slot!
-            if (targetTrainerId && sum.trainerId && sum.trainerId !== targetTrainerId) return null;
-            if (targetTrainerId) claimedByTrainer.set(pid, targetTrainerId);
+            if (targetTrainerId) {
+                sum.trainerId = targetTrainerId;
+                claimedByTrainer.set(pid, targetTrainerId);
+            }
             return pid;
         };
 
@@ -350,6 +358,28 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
                 delete summary.fullMetadata['dex-description'];
                 delete summary.fullMetadata['y-offset'];
                 delete summary.fullMetadata['token-image-url'];
+            }
+        }
+    }
+
+    // Auto-recovery: If any valid Pokémon summary in data.pokemonSummaries has a trainerId matching a trainer,
+    // but was accidentally unreferenced from slots due to prior cross-claim conflicts, recover it into their boxes.
+    for (const [id, summary] of Object.entries(data.pokemonSummaries)) {
+        if (!summary || referencedIds.has(id) || summary.isOnMap) continue;
+        if (summary.trainerId) {
+            for (const camp of Object.values(data.campaigns)) {
+                const tr: TrainerRoster | undefined = camp.trainers?.[summary.trainerId];
+                if (tr && Array.isArray(tr.boxes) && tr.boxes.length > 0) {
+                    for (const b of tr.boxes) {
+                        const emptyIdx = b.slots.findIndex((s: string | null) => s === null);
+                        if (emptyIdx !== -1) {
+                            b.slots[emptyIdx] = id;
+                            referencedIds.add(id);
+                            break;
+                        }
+                    }
+                    if (referencedIds.has(id)) break;
+                }
             }
         }
     }
