@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, Skill } from '../../types/enums';
 import { rollDicePlus } from '../../utils/combat/combatUtils';
@@ -98,7 +98,10 @@ export function DerivedBoard() {
     const [showTempWillConfirm, setShowTempWillConfirm] = useState(false);
 
     const abilityText = getAbilityText(ability, customAbilities);
-    const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText, passives);
+    const inventoryModifiers = useMemo(
+        () => parseCombatTags(inventory, extraCategories, undefined, abilityText, passives),
+        [inventory, extraCategories, abilityText, passives]
+    );
     const fullState = useCharacterStore.getState();
 
     const dexTotal = calculateStatTotal(CombatStat.DEX, fullState, inventoryModifiers);

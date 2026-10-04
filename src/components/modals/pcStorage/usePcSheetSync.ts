@@ -7,6 +7,8 @@ import {
     setActiveTokenId,
     setIsPcSheetActive,
     getIsRemoteSyncActive,
+    hasPendingUpdates,
+    getLastSaveTimestamp,
     LOCAL_CLIENT_ID,
     METADATA_ID
 } from '../../../utils/sync/obr';
@@ -47,6 +49,7 @@ export function usePcSheetSync({
     const isHydratingRef = useRef(false);
     const isUnmountingRef = useRef(false);
     const isDirtyRef = useRef(false);
+    const lastLocalSavedModRef = useRef<number>(0);
     const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const remoteHydrateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const activeUnsubRef = useRef<(() => void) | null>(null);
@@ -109,6 +112,7 @@ export function usePcSheetSync({
 
         const { updatedSummary, nextMeta } = buildSummaryFromStore(currentStore, curr);
         currentSummaryRef.current = updatedSummary;
+        lastLocalSavedModRef.current = Number(updatedSummary.lastModified) || Date.now();
         onUpdateSummaryRef.current(updatedSummary);
 
         if (OBR.isAvailable) {
@@ -388,7 +392,8 @@ export function usePcSheetSync({
                 const meta = rawMeta as Record<string, unknown>;
                 const itemMod = Number(meta.lastModified) || 0;
                 const localMod = Number(currentSummaryRef.current.lastModified) || 0;
-                if (localMod > 0 && itemMod > 0 && itemMod <= localMod) return;
+                const lastLocalSave = Math.max(getLastSaveTimestamp(), localMod, lastLocalSavedModRef.current);
+                if (hasPendingUpdates() || (lastLocalSave > 0 && itemMod <= lastLocalSave)) return;
 
                 try {
                     isHydratingRef.current = true;

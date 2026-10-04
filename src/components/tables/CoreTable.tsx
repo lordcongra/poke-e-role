@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useCharacterStore, getRankPoints, getAgePoints } from '../../store/useCharacterStore';
 import { CombatStat } from '../../types/enums';
 import { NumberSpinner } from '../ui/NumberSpinner';
@@ -44,14 +45,21 @@ export function CoreTable() {
     const agePoints = getAgePoints(currentAge).core;
 
     const abilityText = getAbilityText(ability, customAbilities);
-    const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText, passives);
+    const inventoryModifiers = useMemo(
+        () => parseCombatTags(inventory, extraCategories, undefined, abilityText, passives),
+        [inventory, extraCategories, abilityText, passives]
+    );
     const fullState = useCharacterStore.getState();
 
-    const visibleStatistics = Object.values(CombatStat).filter(
-        (statistic) => !(mode === 'Trainer' && statistic === CombatStat.SPE)
+    const visibleStatistics = useMemo(
+        () => Object.values(CombatStat).filter((statistic) => !(mode === 'Trainer' && statistic === CombatStat.SPE)),
+        [mode]
     );
 
-    const spentRank = visibleStatistics.reduce((accumulator, statistic) => accumulator + statistics[statistic].rank, 0);
+    const spentRank = useMemo(
+        () => visibleStatistics.reduce((accumulator, statistic) => accumulator + statistics[statistic].rank, 0),
+        [visibleStatistics, statistics]
+    );
     const remainingPoints = rankPoints + agePoints + extras.core - spentRank;
 
     const handleResetBuffs = () => {

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useCharacterStore, getRankPoints, getAgePoints } from '../../store/useCharacterStore';
 import { SocialStat } from '../../types/enums';
 import { NumberSpinner } from '../ui/NumberSpinner';
@@ -51,12 +52,15 @@ export function SocialTable() {
     const agePoints = getAgePoints(currentAge).social;
 
     const abilityText = getAbilityText(ability, customAbilities);
-    const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText, passives);
+    const inventoryModifiers = useMemo(
+        () => parseCombatTags(inventory, extraCategories, undefined, abilityText, passives),
+        [inventory, extraCategories, abilityText, passives]
+    );
     const fullState = useCharacterStore.getState();
 
-    const spentRank = Object.values(SocialStat).reduce(
-        (accumulator, statistic) => accumulator + socials[statistic].rank,
-        0
+    const spentRank = useMemo(
+        () => Object.values(SocialStat).reduce((accumulator, statistic) => accumulator + socials[statistic].rank, 0),
+        [socials]
     );
     const remainingPoints = rankPoints + agePoints + extras.social - spentRank;
 

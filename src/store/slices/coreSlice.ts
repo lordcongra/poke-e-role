@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState, CoreSlice } from '../storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
-import { saveToOwlbear } from '../../utils/sync/obr';
+import { saveToOwlbear, getIsRemoteSyncActive } from '../../utils/sync/obr';
 import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../../utils/combat/combatUtils';
 
 export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = (set) => ({
@@ -137,6 +137,8 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
 
     setStat: (stat, field, value) =>
         set((state) => {
+            if (state.stats[stat]?.[field] === value) return state;
+
             const newStats = { ...state.stats, [stat]: { ...state.stats[stat], [field]: value } };
             const updatesToSave: Record<string, unknown> = { [`${stat}-${field}`]: value };
 
@@ -170,33 +172,41 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
                 updatesToSave['will-max-display'] = newWill.willMax;
             }
 
-            try {
-                saveToOwlbear(updatesToSave);
-            } catch (e) {
-                console.warn(`[CoreSlice] Failed to save stat update (${stat}) to Owlbear.`, e);
+            if (!getIsRemoteSyncActive()) {
+                try {
+                    saveToOwlbear(updatesToSave);
+                } catch (e) {
+                    console.warn(`[CoreSlice] Failed to save stat update (${stat}) to Owlbear.`, e);
+                }
             }
             return { stats: newStats, health: newHealth, will: newWill };
         }),
 
     setSocialStat: (stat, field, value) =>
         set((state) => {
+            if (state.socials[stat]?.[field] === value) return state;
             const newSocials = { ...state.socials, [stat]: { ...state.socials[stat], [field]: value } };
-            try {
-                saveToOwlbear({ [`${stat}-${field}`]: value });
-            } catch (e) {
-                console.warn(`[CoreSlice] Failed to save social stat (${stat}) to Owlbear.`, e);
+            if (!getIsRemoteSyncActive()) {
+                try {
+                    saveToOwlbear({ [`${stat}-${field}`]: value });
+                } catch (e) {
+                    console.warn(`[CoreSlice] Failed to save social stat (${stat}) to Owlbear.`, e);
+                }
             }
             return { socials: newSocials };
         }),
 
     setSkill: (skill, field, value) =>
         set((state) => {
+            if (state.skills[skill]?.[field] === value) return state;
             const newSkills = { ...state.skills, [skill]: { ...state.skills[skill], [field]: value } };
-            try {
-                if (field === 'customName') saveToOwlbear({ [`label-${skill}`]: value });
-                else saveToOwlbear({ [`${skill}-${field}`]: value });
-            } catch (e) {
-                console.warn(`[CoreSlice] Failed to save skill (${skill}) to Owlbear.`, e);
+            if (!getIsRemoteSyncActive()) {
+                try {
+                    if (field === 'customName') saveToOwlbear({ [`label-${skill}`]: value });
+                    else saveToOwlbear({ [`${skill}-${field}`]: value });
+                } catch (e) {
+                    console.warn(`[CoreSlice] Failed to save skill (${skill}) to Owlbear.`, e);
+                }
             }
             return { skills: newSkills };
         })

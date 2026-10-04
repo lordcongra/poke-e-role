@@ -69,11 +69,11 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (id.hand !== undefined && id.hand !== '') flatMetadata['hand'] = id.hand;
             if (id.isNPC) flatMetadata['is-npc'] = true;
 
-            // Locks (only write if explicitly false to preserve default true state without bloat)
-            if (id.coreLocked === false) flatMetadata['core-locked'] = false;
-            if (id.socialLocked === false) flatMetadata['social-locked'] = false;
-            if (id.hpLocked === false) flatMetadata['hp-locked'] = false;
-            if (id.willLocked === false) flatMetadata['will-locked'] = false;
+            // Locks (explicitly write true or false to ensure re-locking overwrites previous false on tokens)
+            flatMetadata['core-locked'] = id.coreLocked !== false;
+            flatMetadata['social-locked'] = id.socialLocked !== false;
+            flatMetadata['hp-locked'] = id.hpLocked !== false;
+            flatMetadata['will-locked'] = id.willLocked !== false;
 
             // Forms & Images
             if (id.tokenImageUrl) flatMetadata['token-image-url'] = id.tokenImageUrl;
