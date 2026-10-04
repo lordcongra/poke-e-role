@@ -24,6 +24,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { Lock } from 'lucide-react';
 import { TokenEmptyState } from './components/ui/TokenEmptyState';
 import { initSettingsBackupSync } from './utils/sync/userPreferences';
+import { dismissPlacementTool } from './utils/pc/pcPlacementInteraction';
 import './App.css';
 import './style.css';
 
@@ -51,6 +52,10 @@ const STANDARD_TYPE_COLORS: Record<string, string> = {
 
 function App() {
     useOwlbearSync();
+
+    useEffect(() => {
+        dismissPlacementTool().catch(() => {});
+    }, []);
 
     const isNPC = useCharacterStore((state) => state.identity.isNPC);
     const role = useCharacterStore((state) => state.role);
@@ -269,6 +274,8 @@ function App() {
             console.warn('[App] Failed to sync popover theme colors', err);
         }
     }, [
+        activeTokenId,
+        unselectedOverride,
         type1,
         roomCustomTypes,
         themePrimaryOverride,

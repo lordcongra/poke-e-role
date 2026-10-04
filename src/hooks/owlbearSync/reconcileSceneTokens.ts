@@ -46,14 +46,25 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                                 unknown
                             >) || {};
 
+                        // Anti-Contamination Check: Ensure token species / name matches summary species / name
+                        const tokenSpecies = String(tMeta['species'] || item.name || '').toLowerCase();
+                        const sumSpecies = String(sum.species || sum.name || '').toLowerCase();
+                        const isSpeciesCompatible =
+                            !tokenSpecies ||
+                            !sumSpecies ||
+                            tokenSpecies.includes(sumSpecies) ||
+                            sumSpecies.includes(tokenSpecies);
+
+                        if (!isSpeciesCompatible) {
+                            continue;
+                        }
+
                         const tokenLastMod = Number(tMeta.lastModified) || 0;
                         const sumLastMod = Number(sum.lastModified) || 0;
 
                         // Anti-Reversion Guard: If local PC storage is strictly newer than the scene token
-                        // (e.g. modified in PC, leveled up, returning to an older scene map with an old snapshot,
-                        // or legacy tokens where tokenLastMod is 0 or undefined),
-                        // NEVER let the older scene token overwrite the newer PC summary!
-                        if (sumLastMod > tokenLastMod) {
+                        // (or token has no timestamp), NEVER let the older scene token overwrite the newer PC summary!
+                        if (sumLastMod >= tokenLastMod || !tokenLastMod) {
                             continue;
                         }
 
@@ -82,11 +93,17 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                                   ? Number(tMeta['will-max-display'])
                                   : sum.maxWill;
 
-                        // If the live token on the canvas has moves and local summary was missing them, adopt them!
-                        const hasLiveMoves = Boolean(tMeta['moves-data'] && tMeta['moves-data'] !== '[]');
-                        const missingLocalMoves =
-                            !sum.fullMetadata?.['moves-data'] || sum.fullMetadata['moves-data'] === '[]';
+                        // Authoritative fields from summary must NEVER be wiped out by live token:
                         const mergedMeta = { ...(sum.fullMetadata || {}), ...tMeta };
+                        if (sum.species) mergedMeta['species'] = sum.species;
+                        if (sum.name) mergedMeta['nickname'] = sum.name;
+                        if (sum.rank) mergedMeta['rank'] = sum.rank;
+                        if (sum.fullMetadata?.['moves-data'] && sum.fullMetadata['moves-data'] !== '[]') {
+                            mergedMeta['moves-data'] = sum.fullMetadata['moves-data'];
+                        }
+                        if (sum.type1) mergedMeta['type1'] = sum.type1;
+                        if (sum.type2 !== undefined) mergedMeta['type2'] = sum.type2;
+                        if (sum.fullMetadata?.['ability']) mergedMeta['ability'] = sum.fullMetadata['ability'];
 
                         if (
                             sum.hp !== curHp ||
@@ -94,8 +111,7 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                             sum.will !== curWill ||
                             sum.maxWill !== curMaxWill ||
                             sum.mapTokenId !== item.id ||
-                            !sum.isOnMap ||
-                            (hasLiveMoves && missingLocalMoves)
+                            !sum.isOnMap
                         ) {
                             freshStore.updatePokemonSummary({
                                 ...sum,
@@ -107,7 +123,7 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                                 mapTokenId: item.id,
                                 savedTokenItem: item,
                                 fullMetadata: mergedMeta,
-                                lastModified: Number(tMeta.lastModified) || sum.lastModified || Date.now()
+                                lastModified: tokenLastMod
                             });
                         }
                     }
@@ -146,6 +162,40 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
             if (!sum && !tr) {
                 // Wild encounter or external NPC not managed by GM PC storage; do not delete or alter
                 continue;
+            }
+
+            // Anti-Contamination Check: Ensure token species / name matches summary species / name
+            if (sum && tokens[0]) {
+                const tMeta =
+                    ((tokens[0].metadata[METADATA_ID] || tokens[0].metadata['pokerole-pmd-extension/stats']) as Record<
+                        string,
+                        unknown
+                    >) || {};
+                const tokenSpecies = String(tMeta['species'] || tokens[0].name || '').toLowerCase();
+                const sumSpecies = String(sum.species || sum.name || '').toLowerCase();
+                const isSpeciesCompatible =
+                    !tokenSpecies ||
+                    !sumSpecies ||
+                    tokenSpecies.includes(sumSpecies) ||
+                    sumSpecies.includes(tokenSpecies);
+
+                if (!isSpeciesCompatible) {
+                    // Contaminated token stole another entity's ID! Strip it from token and do not reconcile!
+                    OBR.scene.items
+                        .updateItems([tokens[0].id], (items) => {
+                            for (const it of items) {
+                                if (it.metadata[METADATA_ID])
+                                    delete (it.metadata[METADATA_ID] as Record<string, unknown>).entityId;
+                                if (it.metadata['pokerole-pmd-extension/stats']) {
+                                    delete (it.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>)
+                                        .entityId;
+                                }
+                                delete it.metadata['entityId'];
+                            }
+                        })
+                        .catch(() => {});
+                    continue;
+                }
             }
 
             // 2. If Pokémon is stored away in PC boxes or belt, purge any ghost tokens on the scene!
@@ -188,9 +238,7 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                 // AFTER the token (e.g. edited in PcSheetModal or cross-scene return from another map,
                 // or legacy tokens where tokenLastMod is 0 or undefined)
                 // AND PC storage has valid sheet data.
-                // Combat mutations (HP/Will decrease, Temp HP, Statuses) on the canvas token MUST NEVER
-                // be considered "outdated" or overwritten by stale PC values!
-                const isOutdated = sumLastMod > tokenLastMod && hasValidFullMeta;
+                const isOutdated = (sumLastMod > tokenLastMod || !tokenLastMod) && hasValidFullMeta;
 
                 if (isOutdated) {
                     const sumTempHp = Number(sum.fullMetadata?.['temporary-hit-points']) || 0;
@@ -224,7 +272,7 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                             'pokerole-pmd-extension/stats': nextMeta
                         }
                     });
-                } else if (tokenLastMod >= sumLastMod || !sumLastMod) {
+                } else if (tokenLastMod > sumLastMod && tokenLastMod > 0) {
                     // Token on the map is live or newer: update local GM PC storage to mirror live combat stats!
                     const curHp =
                         typeof tMeta['hp-curr'] === 'number'
@@ -251,6 +299,17 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                               ? Number(tMeta['will-max-display'])
                               : sum.maxWill;
 
+                    const mergedMeta = { ...(sum.fullMetadata || {}), ...tMeta };
+                    if (sum.species) mergedMeta['species'] = sum.species;
+                    if (sum.name) mergedMeta['nickname'] = sum.name;
+                    if (sum.rank) mergedMeta['rank'] = sum.rank;
+                    if (sum.fullMetadata?.['moves-data'] && sum.fullMetadata['moves-data'] !== '[]') {
+                        mergedMeta['moves-data'] = sum.fullMetadata['moves-data'];
+                    }
+                    if (sum.type1) mergedMeta['type1'] = sum.type1;
+                    if (sum.type2 !== undefined) mergedMeta['type2'] = sum.type2;
+                    if (sum.fullMetadata?.['ability']) mergedMeta['ability'] = sum.fullMetadata['ability'];
+
                     if (
                         sum.hp !== curHp ||
                         sum.maxHp !== curMaxHp ||
@@ -266,8 +325,8 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                             maxWill: curMaxWill,
                             mapTokenId: primaryToken.id,
                             savedTokenItem: primaryToken,
-                            fullMetadata: { ...(sum.fullMetadata || {}), ...tMeta },
-                            lastModified: tokenLastMod || Date.now()
+                            fullMetadata: mergedMeta,
+                            lastModified: tokenLastMod
                         });
                     }
                 }

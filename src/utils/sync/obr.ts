@@ -72,9 +72,9 @@ export async function saveToOwlbear(updates: Record<string, unknown>) {
         try {
             await storageAdapter.saveCharacter(tokenToSave, updatesToPush, METADATA_ID);
         } catch (error) {
-            console.error('[OBR Engine] Failed to securely save data. Queuing for retry...', error);
-            Object.assign(pendingUpdates, { ...updatesToPush, ...pendingUpdates });
-            pendingTokenId = tokenToSave;
+            console.warn('[OBR Engine] Failed to securely save data via adapter:', error);
+            pendingUpdates = {};
+            pendingTokenId = null;
         }
     }, 150);
 }

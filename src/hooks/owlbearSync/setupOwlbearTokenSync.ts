@@ -6,7 +6,7 @@ import {
     renderTokenGraphics,
     cleanupOrphanedGraphics
 } from '../../utils/graphics/graphicsManager';
-import { setActiveTokenId, hasPendingUpdates } from '../../utils/sync/obr';
+import { setActiveTokenId, hasPendingUpdates, getIsPcSheetActive } from '../../utils/sync/obr';
 import { harvestTokensItemArt } from '../../utils/graphics/itemArtCatalog';
 import { METADATA_ID, getEffectiveScaleAndOffsets, type TransformData } from './owlbearSyncConstants';
 import { reconcileSceneTokens } from './reconcileSceneTokens';
@@ -213,8 +213,16 @@ export async function setupOwlbearTokenSync(params: {
         if (deletedTokenIds.length > 0) {
             const store = useCharacterStore.getState();
             if (store.tokenId && deletedTokenIds.includes(store.tokenId)) {
-                setActiveTokenId(null);
-                store.setTokenData('', store.role || 'PLAYER');
+                if (
+                    store.identity.entityId &&
+                    (getIsPcSheetActive() || Boolean(store.pcData?.pokemonSummaries?.[store.identity.entityId]))
+                ) {
+                    setActiveTokenId(store.identity.entityId);
+                    store.setTokenData(store.identity.entityId, store.role || 'PLAYER');
+                } else {
+                    setActiveTokenId(null);
+                    store.setTokenData('', store.role || 'PLAYER');
+                }
             }
             cleanupOrphanedGraphics(currentItemIds).catch((err) =>
                 console.error('[SyncEngine] Failed to clean up orphaned graphics on token delete:', err)

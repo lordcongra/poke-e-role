@@ -96,6 +96,17 @@ export function sanitizeTrainerForSync(t: TrainerRoster): TrainerRoster {
     const cleanAvatar =
         t.avatarUrl && t.avatarUrl.startsWith('data:') && t.avatarUrl.length > 2048 ? undefined : t.avatarUrl;
     const deduped = deduplicateTrainerSlots(t);
+
+    let slimMeta: Record<string, unknown> | undefined = undefined;
+    if (deduped.fullMetadata && typeof deduped.fullMetadata === 'object') {
+        slimMeta = {};
+        for (const [k, v] of Object.entries(deduped.fullMetadata)) {
+            if (typeof v === 'string' && v.startsWith('data:') && v.length > 1024) continue;
+            if (k === 'savedTokenItem' || k === 'attachedItems') continue;
+            slimMeta[k] = v;
+        }
+    }
+
     return {
         id: deduped.id,
         name: deduped.name,
@@ -103,7 +114,8 @@ export function sanitizeTrainerForSync(t: TrainerRoster): TrainerRoster {
         party: deduped.party,
         boxes: deduped.boxes,
         isLinked: deduped.isLinked,
-        mapTokenId: deduped.mapTokenId
+        mapTokenId: deduped.mapTokenId,
+        fullMetadata: slimMeta
     };
 }
 
@@ -131,9 +143,23 @@ export function mergeIncomingPlayerSummaries(
             continue;
         }
 
-        // If the incoming summary is genuinely NEWER than the existing token snapshot, adopt incoming stats.
-        // If equal and live on canvas, preserve the canvas token's live combat stats.
-        if (existing?.isOnMap && existing.savedTokenItem && incomingMod === existingMod) {
+        // If the incoming summary explicitly sets isOnMap to false (e.g. recalled into PC storage),
+        // adopt isOnMap: false and clear mapTokenId.
+        if (s.isOnMap === false) {
+            updatedSummaries[s.entityId] = {
+                ...s,
+                campaignId: targetCampId,
+                isOnMap: false,
+                mapTokenId: undefined
+            };
+        } else if (s.isOnMap === true) {
+            updatedSummaries[s.entityId] = {
+                ...s,
+                campaignId: targetCampId,
+                isOnMap: true,
+                mapTokenId: s.mapTokenId || existing?.mapTokenId
+            };
+        } else if (existing?.isOnMap && existing.savedTokenItem && incomingMod === existingMod) {
             updatedSummaries[s.entityId] = {
                 ...s,
                 campaignId: targetCampId,

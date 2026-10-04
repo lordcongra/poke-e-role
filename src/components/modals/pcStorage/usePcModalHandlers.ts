@@ -11,9 +11,10 @@ import type {
 import {
     spawnPokemonToMap,
     spawnTrainerToMap,
-    recallPokemonFromMap,
     unlinkPokemonFromPcOps,
-    clearTokenClaimOps
+    clearTokenClaimOps,
+    executeRecallWorkflow,
+    executeSendOutWorkflow
 } from '../../../utils/pc/pcModalOps';
 import { checkTrainerOnMap, buildLinkedTrainer, executeLinkActiveTrainer } from '../../../utils/pc/pcTrainerOps';
 import { savePcStorage } from '../../../utils/pc/pcStorageAdapter';
@@ -88,14 +89,17 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
     const [isTrainerOnMap, setIsTrainerOnMap] = useState(false);
 
     const saveTrainerProfile = (nextTrainer: TrainerRoster) => {
-        if (!campaign) return;
+        const currentPcData = useCharacterStore.getState().pcData;
+        const targetCampId = campaign?.id || currentPcData.activeCampaignId;
+        const currentCamp = currentPcData.campaigns[targetCampId];
+        if (!currentCamp) return;
         const nextData = {
-            ...pcData,
+            ...currentPcData,
             campaigns: {
-                ...pcData.campaigns,
-                [pcData.activeCampaignId]: {
-                    ...campaign,
-                    trainers: { ...campaign.trainers, [nextTrainer.id]: nextTrainer }
+                ...currentPcData.campaigns,
+                [targetCampId]: {
+                    ...currentCamp,
+                    trainers: { ...currentCamp.trainers, [nextTrainer.id]: nextTrainer }
                 }
             }
         };
@@ -107,13 +111,9 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
     useEffect(() => {
         let mounted = true;
         const check = async () => {
-            const prevHp = trainer?.fullMetadata?.['hp-curr'];
             const onMap = await checkTrainerOnMap(trainer);
             if (mounted) {
                 setIsTrainerOnMap(onMap);
-                if (onMap && trainer && campaign && trainer.fullMetadata?.['hp-curr'] !== prevHp) {
-                    saveTrainerProfile({ ...trainer });
-                }
             }
         };
         check();
@@ -127,30 +127,42 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
     }, [trainer?.id, trainer?.name, trainer?.mapTokenId]);
 
     // Auto-sync trainer name and avatar if actively linked to current sheet
+    const lastSyncedTrainerRef = useRef<string>('');
     useEffect(() => {
         if (!trainer || !campaign || !isTrainerLinked || !canLinkActiveTrainer) return;
         const currentName = identity.nickname || identity.species;
         if (!currentName) return;
         const currentAvatar = identity.tokenImageUrl || undefined;
-        if (
-            trainer.name !== currentName ||
-            (currentAvatar && trainer.avatarUrl !== currentAvatar) ||
-            trainer.fullMetadata?.['theme-primary-override'] !== identity.themePrimaryOverride
-        ) {
+        const currentTheme = identity.themePrimaryOverride || '';
+        const prevTheme = (trainer.fullMetadata?.['theme-primary-override'] as string) || '';
+
+        const nameChanged = (trainer.name || '') !== currentName;
+        const avatarChanged = Boolean(currentAvatar && trainer.avatarUrl !== currentAvatar);
+        const themeChanged = prevTheme !== currentTheme;
+
+        const syncKey = `${trainer.id}_${currentName}_${currentAvatar || ''}_${currentTheme}`;
+        if (lastSyncedTrainerRef.current === syncKey) return;
+
+        if (nameChanged || avatarChanged || themeChanged) {
+            lastSyncedTrainerRef.current = syncKey;
             const store = useCharacterStore.getState();
             const nextTrainer = buildLinkedTrainer(trainer, store, currentName, currentAvatar);
+            if (!nextTrainer.fullMetadata) nextTrainer.fullMetadata = {};
+            nextTrainer.fullMetadata['theme-primary-override'] = currentTheme;
             saveTrainerProfile(nextTrainer);
         }
     }, [
         isTrainerLinked,
         canLinkActiveTrainer,
-        trainer,
-        campaign,
+        trainer?.id,
+        trainer?.name,
+        trainer?.avatarUrl,
+        (trainer?.fullMetadata?.['theme-primary-override'] as string) || '',
+        campaign?.id,
         identity.nickname,
         identity.species,
         identity.tokenImageUrl,
-        identity.themePrimaryOverride,
-        pcData
+        identity.themePrimaryOverride
     ]);
 
     const handleLinkActiveTrainer = async () => {
@@ -183,51 +195,30 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
             : await spawnPokemonToMap(summary, undefined, role || 'PLAYER', trainer);
 
         if (result.cancelled) return;
-
-        if (result.alreadyOnMap) {
-            if (OBR.isAvailable) {
-                OBR.notification.show(`${summary.name || summary.species} is already on the board!`, 'WARNING');
-            }
-            updatePokemonSummary({
-                ...summary,
-                isOnMap: true,
-                mapTokenId: result.newMapTokenId || summary.mapTokenId
-            });
-            return;
-        }
-        if (result.success && result.newMapTokenId) {
-            updatePokemonSummary({
-                ...summary,
-                isOnMap: true,
-                mapTokenId: result.newMapTokenId
-            });
-        } else {
-            console.error('[usePcModalHandlers] Failed to send out Pokémon to map:', summary);
-            if (OBR.isAvailable) {
-                OBR.notification.show(`Failed to send out ${summary.name || summary.species} to the map.`, 'ERROR');
-            }
-        }
+        await executeSendOutWorkflow(
+            summary,
+            {
+                success: result.success,
+                newMapTokenId: result.newMapTokenId,
+                alreadyOnBoard: result.alreadyOnMap
+            },
+            campaign?.id || pcData.activeCampaignId,
+            trainer,
+            role,
+            updatePokemonSummary
+        );
     };
 
     const handleRecall = async (entityId: string) => {
         const summary = pcData.pokemonSummaries[entityId];
         if (!summary) return;
-
-        const result = await recallPokemonFromMap(summary.mapTokenId, summary);
-        if (result.success) {
-            updatePokemonSummary({
-                ...summary,
-                isOnMap: false,
-                mapTokenId: undefined,
-                attachedItems: result.attachedItems !== undefined ? result.attachedItems : summary.attachedItems,
-                hp: result.currentHp ?? summary.hp,
-                maxHp: result.maxHp ?? summary.maxHp,
-                will: result.currentWill ?? summary.will,
-                maxWill: result.maxWill ?? summary.maxWill,
-                savedTokenItem: result.savedTokenItem ?? summary.savedTokenItem,
-                fullMetadata: result.fullMetadata ?? summary.fullMetadata
-            });
-        }
+        await executeRecallWorkflow(
+            summary,
+            campaign?.id || pcData.activeCampaignId,
+            trainer,
+            role,
+            updatePokemonSummary
+        );
     };
 
     const handleRelinkArtwork = async (entityId: string) => {

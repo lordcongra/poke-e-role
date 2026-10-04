@@ -16,6 +16,7 @@ import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { getKnownAbility } from '../../data/abilities/knownAbilities';
 import { getItemArt } from '../graphics/itemArtCatalog';
 import { KNOWN_ITEMS } from '../../data/constants';
+import { calculateMaxHp, calculateMaxWill } from '../combat/combatMath';
 
 // =========================================
 // OBR METADATA -> ZUSTAND HYDRATION PARSERS
@@ -469,7 +470,12 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
 
     return {
         ...state.identity,
-        entityId: String(meta['entityId'] || meta.entityId || state.identity.entityId || ''),
+        entityId: String(
+            meta['entityId'] ||
+                meta.entityId ||
+                (meta['pokerole-pmd-extension/claimed-by'] as { entityId?: string } | undefined)?.entityId ||
+                ''
+        ),
         nickname: String(meta['nickname'] || ''),
         species: String(meta['species'] || ''),
         nature: String(meta['nature'] || ''),
@@ -605,6 +611,37 @@ export function hydrateStateFromMetadata(
     const newDerived = parseDerived(meta);
     const newExtras = parseExtras(meta);
     const newTrackers = parseTrackers(meta);
+
+    try {
+        const tempState = {
+            ...state,
+            identity: { ...state.identity, ...newIdentity },
+            stats: newStats,
+            socials: newSocials,
+            skills: newSkills,
+            health: newHealth,
+            will: newWill,
+            inventory: parsedInv,
+            passives: parsedPassives,
+            extraCategories: parsedExtraCats
+        } as CharacterState;
+
+        const calculatedHpMax = calculateMaxHp(tempState);
+        if (calculatedHpMax > 0) {
+            newHealth.hpMax = calculatedHpMax;
+            if (newHealth.hpCurr > newHealth.hpMax) {
+                newHealth.hpCurr = newHealth.hpMax;
+            }
+        }
+
+        const calculatedWillMax = calculateMaxWill(tempState);
+        if (calculatedWillMax > 0) {
+            newWill.willMax = calculatedWillMax;
+            if (newWill.willCurr > newWill.willMax) {
+                newWill.willCurr = newWill.willMax;
+            }
+        }
+    } catch {}
 
     return {
         identity: {

@@ -1,8 +1,9 @@
 import OBR, { type Item } from '@owlbear-rodeo/sdk';
 import { METADATA_ID } from '../sync/obr';
 import { GRAPHICS_META_ID } from '../graphics/graphicsManager';
-import type { PcPokemonSummary } from '../../types/pcStorageTypes';
+import type { PcPokemonSummary, TrainerRoster } from '../../types/pcStorageTypes';
 import { calculateRelativeAttachment } from './rehomeEngine';
+import { broadcastPlayerPc, broadcastGmPc } from '../../hooks/owlbearSync/setupOwlbearPcSync';
 
 import { isMatchingPokemonItem, isItemTrainer } from './pcItemMatching';
 
@@ -171,4 +172,96 @@ export async function unlinkPokemonFromPcOps(
     } catch (e) {
         console.warn('[pcRecallOps] Failed to unlink Pokémon to map:', e);
     }
+}
+
+/**
+ * Broadcasts a Pokémon summary update (such as send out or recall) across all connected peers
+ * and dispatches a local event so any open sheet modals update immediately.
+ */
+export function broadcastSummaryMapChange(
+    summary: PcPokemonSummary,
+    campaignId?: string,
+    trainer?: TrainerRoster,
+    role: string = 'PLAYER'
+): void {
+    if (!OBR.isAvailable) return;
+    if (role === 'GM') {
+        broadcastGmPc({ campaignId, trainer, summaries: [summary] }).catch(() => {});
+    } else {
+        broadcastPlayerPc({ campaignId, trainer, summaries: [summary] }).catch(() => {});
+    }
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+            new CustomEvent('pkr-remote-summary-applied', {
+                detail: { entityId: summary.entityId, summary }
+            })
+        );
+    }
+}
+
+export async function executeRecallWorkflow(
+    summary: PcPokemonSummary,
+    campaignId?: string,
+    trainer?: TrainerRoster,
+    role: string = 'PLAYER',
+    updatePokemonSummary?: (summary: PcPokemonSummary) => void
+): Promise<PcPokemonSummary | null> {
+    const result = await recallPokemonFromMap(summary.mapTokenId, summary);
+    if (!result.success) return null;
+    const updated: PcPokemonSummary = {
+        ...summary,
+        isOnMap: false,
+        mapTokenId: undefined,
+        attachedItems: result.attachedItems !== undefined ? result.attachedItems : summary.attachedItems,
+        hp: result.currentHp ?? summary.hp,
+        maxHp: result.maxHp ?? summary.maxHp,
+        will: result.currentWill ?? summary.will,
+        maxWill: result.maxWill ?? summary.maxWill,
+        savedTokenItem: result.savedTokenItem ?? summary.savedTokenItem,
+        fullMetadata: result.fullMetadata ?? summary.fullMetadata,
+        lastModified: Date.now()
+    };
+    updatePokemonSummary?.(updated);
+    broadcastSummaryMapChange(updated, campaignId, trainer, role);
+    return updated;
+}
+
+export async function executeSendOutWorkflow(
+    summary: PcPokemonSummary,
+    spawnResult: { success: boolean; newMapTokenId?: string; alreadyOnBoard?: boolean },
+    campaignId?: string,
+    trainer?: TrainerRoster,
+    role: string = 'PLAYER',
+    updatePokemonSummary?: (summary: PcPokemonSummary) => void
+): Promise<PcPokemonSummary | null> {
+    if (spawnResult.alreadyOnBoard) {
+        if (OBR.isAvailable) {
+            OBR.notification.show(`${summary.name || summary.species} is already on the board!`, 'WARNING');
+        }
+        const updated: PcPokemonSummary = {
+            ...summary,
+            isOnMap: true,
+            mapTokenId: spawnResult.newMapTokenId || summary.mapTokenId,
+            lastModified: Date.now()
+        };
+        updatePokemonSummary?.(updated);
+        broadcastSummaryMapChange(updated, campaignId, trainer, role);
+        return updated;
+    }
+    if (spawnResult.success && spawnResult.newMapTokenId) {
+        const updated: PcPokemonSummary = {
+            ...summary,
+            isOnMap: true,
+            mapTokenId: spawnResult.newMapTokenId,
+            lastModified: Date.now()
+        };
+        updatePokemonSummary?.(updated);
+        broadcastSummaryMapChange(updated, campaignId, trainer, role);
+        return updated;
+    }
+    console.error('[pcRecallOps] Failed to send out Pokémon to map:', summary);
+    if (OBR.isAvailable) {
+        OBR.notification.show(`Failed to send out ${summary.name || summary.species} to the map.`, 'ERROR');
+    }
+    return null;
 }

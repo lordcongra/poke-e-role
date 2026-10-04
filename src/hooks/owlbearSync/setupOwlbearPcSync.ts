@@ -2,10 +2,9 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { savePcStorage } from '../../utils/pc/pcStorageAdapter';
 import { resolveGmTargetCampaignId } from '../../utils/pc/pcCampaignTrainerOps';
-import { EXTENSION_ID } from './owlbearSyncConstants';
+import { EXTENSION_ID, METADATA_ID } from './owlbearSyncConstants';
 import { registerSafeBroadcastListener } from './owlbearBroadcastUtils';
 import { applyDeleteSummary, stripEntityFromTrainer } from '../../utils/pc/pcStateMutations';
-import { hasPendingUpdates } from '../../utils/sync/obr';
 import {
     type PlayerPcSyncPayload,
     type GmPcSyncPayload,
@@ -31,7 +30,7 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
         const unsubPlayerSync = registerSafeBroadcastListener<PlayerPcSyncPayload>(
             `${EXTENSION_ID}/pc-player-sync`,
             async (payload) => {
-                if (!payload || !payload.trainer || !payload.trainer.id) return;
+                if (!payload) return;
 
                 try {
                     const state = useCharacterStore.getState();
@@ -46,24 +45,29 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                     const currentCamp = pcData.campaigns[targetCampId];
                     if (!currentCamp) return;
 
-                    const cleanIncoming = sanitizeTrainerForSync(payload.trainer);
-                    const existingTrainer = currentCamp.trainers[cleanIncoming.id];
-                    const updatedTrainers = {
-                        ...currentCamp.trainers,
-                        [cleanIncoming.id]: existingTrainer ? { ...existingTrainer, ...cleanIncoming } : cleanIncoming
-                    };
+                    let updatedTrainers = { ...currentCamp.trainers };
+                    let trainersChanged = false;
 
-                    // Prevent cross-trainer duplication bugs: strip claimed entity IDs from other trainers
-                    const incomingIds = new Set<string>();
-                    for (const s of cleanIncoming.party) if (s) incomingIds.add(s);
-                    for (const b of cleanIncoming.boxes || []) {
-                        for (const s of b.slots) if (s) incomingIds.add(s);
-                    }
-                    for (const otherId of Object.keys(updatedTrainers)) {
-                        if (otherId === cleanIncoming.id) continue;
-                        for (const entityId of incomingIds) {
-                            updatedTrainers[otherId] = stripEntityFromTrainer(updatedTrainers[otherId], entityId);
+                    if (payload.trainer && payload.trainer.id && !payload.trainer.id.startsWith('__player_')) {
+                        const cleanIncoming = sanitizeTrainerForSync(payload.trainer);
+                        const existingTrainer = currentCamp.trainers[cleanIncoming.id];
+                        updatedTrainers[cleanIncoming.id] = existingTrainer
+                            ? { ...existingTrainer, ...cleanIncoming }
+                            : cleanIncoming;
+
+                        // Prevent cross-trainer duplication bugs: strip claimed entity IDs from other trainers
+                        const incomingIds = new Set<string>();
+                        for (const s of cleanIncoming.party) if (s) incomingIds.add(s);
+                        for (const b of cleanIncoming.boxes || []) {
+                            for (const s of b.slots) if (s) incomingIds.add(s);
                         }
+                        for (const otherId of Object.keys(updatedTrainers)) {
+                            if (otherId === cleanIncoming.id) continue;
+                            for (const entityId of incomingIds) {
+                                updatedTrainers[otherId] = stripEntityFromTrainer(updatedTrainers[otherId], entityId);
+                            }
+                        }
+                        trainersChanged = JSON.stringify(currentCamp.trainers) !== JSON.stringify(updatedTrainers);
                     }
 
                     const { updatedSummaries, hasChanges } = mergeIncomingPlayerSummaries(
@@ -72,7 +76,7 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                         targetCampId
                     );
 
-                    if (hasChanges || JSON.stringify(currentCamp.trainers) !== JSON.stringify(updatedTrainers)) {
+                    if (hasChanges || trainersChanged) {
                         const nextData = {
                             ...pcData,
                             campaigns: {
@@ -89,6 +93,44 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                         await savePcStorage(nextData);
                         if (typeof window !== 'undefined') {
                             window.dispatchEvent(new Event('pkr-local-data-changed'));
+                        }
+
+                        // Rehydrate active sheet if GM currently has this character open in PcSheetModal!
+                        const currentTokenId = state.tokenId;
+                        const currentEntityId = state.identity.entityId;
+                        for (const incoming of payload.summaries || []) {
+                            if (!incoming || !incoming.entityId) continue;
+                            const merged = updatedSummaries[incoming.entityId];
+                            if (!merged || !merged.fullMetadata) continue;
+
+                            const existingMod = Number(pcData.pokemonSummaries?.[incoming.entityId]?.lastModified) || 0;
+                            const incomingMod = Number(incoming.lastModified) || 0;
+
+                            if (
+                                currentTokenId === incoming.entityId ||
+                                currentEntityId === incoming.entityId ||
+                                (merged.mapTokenId && currentTokenId === merged.mapTokenId)
+                            ) {
+                                if (incomingMod >= existingMod) {
+                                    if (typeof window !== 'undefined') {
+                                        window.dispatchEvent(
+                                            new CustomEvent('pkr-remote-summary-applied', {
+                                                detail: { entityId: merged.entityId, summary: merged }
+                                            })
+                                        );
+                                    }
+                                    useCharacterStore.getState().loadFromOwlbear(merged.fullMetadata);
+                                }
+                            }
+                        }
+
+                        // Re-broadcast to all other connected players so everyone in the room stays synchronized!
+                        if (payload.summaries && payload.summaries.length > 0) {
+                            broadcastGmPc({
+                                campaignId: targetCampId,
+                                trainer: payload.trainer,
+                                summaries: payload.summaries
+                            }).catch(() => {});
                         }
 
                         // Reconcile scene tokens so any outdated map tokens instantly adopt the newer player PC info
@@ -216,9 +258,13 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                         const mergedSummary: PcPokemonSummary = {
                             ...existing,
                             ...incoming,
-                            isOnMap: existing?.isOnMap ?? incoming.isOnMap,
-                            mapTokenId: existing?.mapTokenId ?? incoming.mapTokenId,
-                            savedTokenItem: existing?.savedTokenItem ?? incoming.savedTokenItem,
+                            isOnMap: incoming.isOnMap !== undefined ? incoming.isOnMap : existing?.isOnMap,
+                            mapTokenId:
+                                incoming.isOnMap === false ? undefined : (incoming.mapTokenId ?? existing?.mapTokenId),
+                            savedTokenItem:
+                                incoming.isOnMap === false
+                                    ? incoming.savedTokenItem || existing?.savedTokenItem
+                                    : (existing?.savedTokenItem ?? incoming.savedTokenItem),
                             lastModified: incomingMod
                         };
 
@@ -253,7 +299,7 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                         await savePcStorage(nextData);
 
                         for (const activeSum of rehydratableSummaries) {
-                            if (!hasPendingUpdates() && activeSum.fullMetadata) {
+                            if (activeSum.fullMetadata) {
                                 if (typeof window !== 'undefined') {
                                     window.dispatchEvent(
                                         new CustomEvent('pkr-remote-summary-applied', {
@@ -262,6 +308,35 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                                     );
                                 }
                                 useCharacterStore.getState().loadFromOwlbear(activeSum.fullMetadata);
+                            }
+                        }
+
+                        // Synchronize live scene tokens on canvas with incoming GM metadata
+                        if (OBR.isAvailable) {
+                            const updatedMapTokens = (payload.summaries || []).filter(
+                                (s) => s.isOnMap && s.mapTokenId && s.fullMetadata
+                            );
+                            for (const s of updatedMapTokens) {
+                                OBR.scene.items
+                                    .updateItems([s.mapTokenId!], (items) => {
+                                        for (const it of items) {
+                                            if (!it.metadata[METADATA_ID]) it.metadata[METADATA_ID] = {};
+                                            Object.assign(
+                                                it.metadata[METADATA_ID] as Record<string, unknown>,
+                                                s.fullMetadata!
+                                            );
+                                            if (it.metadata['pokerole-pmd-extension/stats']) {
+                                                Object.assign(
+                                                    it.metadata['pokerole-pmd-extension/stats'] as Record<
+                                                        string,
+                                                        unknown
+                                                    >,
+                                                    s.fullMetadata!
+                                                );
+                                            }
+                                        }
+                                    })
+                                    .catch(() => {});
                             }
                         }
 

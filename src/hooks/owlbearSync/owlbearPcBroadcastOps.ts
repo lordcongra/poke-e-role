@@ -15,20 +15,37 @@ import {
  * Broadcasts the active player's PC trainer, party, and Pokémon summaries to the GM.
  * Slices into safe 16kB chunks.
  */
-export async function broadcastPlayerPc(): Promise<void> {
+export async function broadcastPlayerPc(params?: {
+    campaignId?: string;
+    trainer?: TrainerRoster;
+    summaries?: PcPokemonSummary[];
+}): Promise<void> {
     if (!OBR.isAvailable) return;
     try {
         const state = useCharacterStore.getState();
-        const { pcData } = state;
-        const campaign = pcData.campaigns[pcData.activeCampaignId];
+        const { pcData, identity } = state;
+
+        let targetCampId = params?.campaignId;
+        if (!targetCampId) {
+            const designatedId = identity.activeRoomCampaignId;
+            if (designatedId && pcData.campaigns[designatedId] && !pcData.campaigns[designatedId].isPrivate) {
+                targetCampId = designatedId;
+            } else {
+                targetCampId = pcData.activeCampaignId;
+            }
+        }
+
+        const campaign = pcData.campaigns[targetCampId];
         if (!campaign || campaign.isPrivate) return;
 
         const myPlayerId = await OBR.player.getId().catch(() => undefined);
-        const resolvedTrainer = resolveEffectiveActiveTrainer(campaign, myPlayerId);
-        const isPmd = !resolvedTrainer && campaign.activeTrainerId === '__none__';
-        let rawTrainer: TrainerRoster | undefined = resolvedTrainer;
+        let rawTrainer: TrainerRoster | undefined = params?.trainer;
+        if (!rawTrainer) {
+            rawTrainer = resolveEffectiveActiveTrainer(campaign, myPlayerId);
+        }
+        const isPmd = !rawTrainer && campaign.activeTrainerId === '__none__';
 
-        if (isPmd) {
+        if (isPmd && !rawTrainer) {
             const myName = (await OBR.player.getName().catch(() => 'Player')) || 'Player';
             rawTrainer = {
                 id: `__pmd_${myName.toLowerCase().replace(/\s+/g, '_')}__`,
@@ -39,34 +56,62 @@ export async function broadcastPlayerPc(): Promise<void> {
             };
         }
 
-        if (!rawTrainer) return;
-        const trainer = sanitizeTrainerForSync(rawTrainer);
-
-        // Gather all summaries belonging to this trainer (party + trainer boxes)
-        const referencedIds = new Set<string>();
-        for (const s of rawTrainer.party || []) {
-            if (s) referencedIds.add(s);
+        if (!rawTrainer) {
+            const myName = (await OBR.player.getName().catch(() => 'Player')) || 'Player';
+            rawTrainer = {
+                id: `__player_${myPlayerId || 'anon'}__`,
+                name: myName,
+                party: [],
+                boxes: [],
+                isLinked: false
+            };
         }
-        if (Array.isArray(rawTrainer.boxes)) {
-            for (const b of rawTrainer.boxes) {
-                for (const s of b.slots || []) {
-                    if (s) referencedIds.add(s);
+
+        const trainer = sanitizeTrainerForSync(rawTrainer);
+        let cleanSummaries: PcPokemonSummary[] = [];
+
+        if (params?.summaries && params.summaries.length > 0) {
+            cleanSummaries = params.summaries.map((s) =>
+                sanitizeSummaryForSync({
+                    ...s,
+                    lastModified: s.lastModified || Date.now()
+                })
+            );
+        } else {
+            // Gather all summaries belonging to this trainer (party + trainer boxes + campaign boxes)
+            const referencedIds = new Set<string>();
+            for (const s of rawTrainer.party || []) {
+                if (s) referencedIds.add(s);
+            }
+            if (Array.isArray(rawTrainer.boxes)) {
+                for (const b of rawTrainer.boxes) {
+                    for (const s of b.slots || []) {
+                        if (s) referencedIds.add(s);
+                    }
+                }
+            }
+            if (Array.isArray(campaign.boxes)) {
+                for (const b of campaign.boxes) {
+                    for (const s of b.slots || []) {
+                        if (s) referencedIds.add(s);
+                    }
+                }
+            }
+
+            for (const id of referencedIds) {
+                const sum = pcData.pokemonSummaries[id];
+                if (sum) {
+                    cleanSummaries.push(
+                        sanitizeSummaryForSync({
+                            ...sum,
+                            lastModified: sum.lastModified || Date.now()
+                        })
+                    );
                 }
             }
         }
 
-        const cleanSummaries: PcPokemonSummary[] = [];
-        for (const id of referencedIds) {
-            const sum = pcData.pokemonSummaries[id];
-            if (sum) {
-                cleanSummaries.push(
-                    sanitizeSummaryForSync({
-                        ...sum,
-                        lastModified: sum.lastModified || Date.now()
-                    })
-                );
-            }
-        }
+        if (cleanSummaries.length === 0 && !params?.trainer) return;
 
         const CHUNK_SIZE = 1;
         const totalChunks = Math.max(1, Math.ceil(cleanSummaries.length / CHUNK_SIZE));
@@ -74,7 +119,7 @@ export async function broadcastPlayerPc(): Promise<void> {
         for (let i = 0; i < totalChunks; i++) {
             const chunkSlice = cleanSummaries.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
             const payload: PlayerPcSyncPayload = {
-                campaignId: pcData.activeCampaignId,
+                campaignId: targetCampId,
                 campaignName: campaign.name,
                 trainer,
                 summaries: chunkSlice,

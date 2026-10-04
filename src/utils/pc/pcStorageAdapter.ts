@@ -320,13 +320,37 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
         }
     }
 
-    // Sanitize any file:/// URLs from stored Pokémon summaries
+    // Sanitize any file:/// URLs from stored Pokémon summaries and auto-heal contaminated entities
     for (const summary of Object.values(data.pokemonSummaries)) {
         if (
             summary.tokenImageUrl &&
             (summary.tokenImageUrl.startsWith('file:') || summary.tokenImageUrl.startsWith('file:///'))
         ) {
             summary.tokenImageUrl = undefined;
+        }
+
+        // Auto-heal cross-entity contamination (e.g. Porygon contaminated with Rotom Fan traits)
+        const isPorygon =
+            summary.entityId === 'a0b92b6c-7399-4dc8-956d-7b29475c9cc1' || summary.name?.toLowerCase() === 'porygon';
+        if (isPorygon && summary.species?.toLowerCase().includes('rotom')) {
+            summary.species = 'Porygon';
+            summary.name = 'Porygon';
+            summary.type1 = 'Normal';
+            summary.type2 = undefined;
+            if (summary.fullMetadata) {
+                summary.fullMetadata['species'] = 'Porygon';
+                summary.fullMetadata['nickname'] = 'Porygon';
+                summary.fullMetadata['type1'] = 'Normal';
+                summary.fullMetadata['type2'] = '';
+                summary.fullMetadata['ability'] = 'Trace';
+                summary.fullMetadata['ability-tags'] = '';
+                summary.fullMetadata['ability-list'] = 'Trace,Download,Analytic';
+                delete summary.fullMetadata['dex-id'];
+                delete summary.fullMetadata['dex-category'];
+                delete summary.fullMetadata['dex-description'];
+                delete summary.fullMetadata['y-offset'];
+                delete summary.fullMetadata['token-image-url'];
+            }
         }
     }
 

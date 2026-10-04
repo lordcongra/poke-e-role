@@ -70,6 +70,10 @@ export function usePcSheetSync({
     const prevThemeRef = useRef<{ primary: string; secondary: string } | null>(null);
     const prevMetaRef = useRef<Record<string, unknown> | null>(null);
     const prevTokenIdRef = useRef<string | null>(null);
+    const initialMapTokenIdRef = useRef<string | undefined>(
+        currentSummary.mapTokenId || currentSummary.savedTokenItem?.id
+    );
+    const initialEntityIdRef = useRef<string>(currentSummary.entityId);
 
     const currentSummaryRef = useRef(currentSummary);
     currentSummaryRef.current = currentSummary;
@@ -79,7 +83,7 @@ export function usePcSheetSync({
 
     // Core two-way persistence: serializes active Zustand store into metadata and summaries
     const syncNow = useCallback((targetSummary?: PcPokemonSummary) => {
-        if (isHydratingRef.current && !isUnmountingRef.current) return;
+        if (isHydratingRef.current) return;
         if (syncTimeoutRef.current) {
             clearTimeout(syncTimeoutRef.current);
             syncTimeoutRef.current = null;
@@ -87,7 +91,24 @@ export function usePcSheetSync({
         isDirtyRef.current = false;
 
         const currentStore = useCharacterStore.getState();
-        const curr = { ...(targetSummary || {}), ...currentSummaryRef.current };
+        const curr = { ...currentSummaryRef.current, ...(targetSummary || {}) };
+        if (!curr.entityId) return;
+
+        // Ensure curr reflects latest map status from canonical PC storage
+        const targetSummaryFromStore = currentStore.pcData.pokemonSummaries[curr.entityId];
+        if (targetSummaryFromStore) {
+            curr.isOnMap = targetSummaryFromStore.isOnMap;
+            curr.mapTokenId = targetSummaryFromStore.mapTokenId;
+        }
+
+        // Anti-Contamination Guard: Never let Zustand serialize one entity into another entity's summary!
+        if (currentStore.identity.entityId && currentStore.identity.entityId !== curr.entityId) {
+            console.warn(
+                `[usePcSheetSync] Blocked syncNow: store entityId (${currentStore.identity.entityId}) does not match target summary (${curr.entityId})`
+            );
+            return;
+        }
+
         const nextMeta = flattenStateToMetadata(currentStore);
         nextMeta.entityId = curr.entityId;
         nextMeta.lastModified = Date.now();
@@ -158,7 +179,11 @@ export function usePcSheetSync({
                     summaries: [updatedSummary]
                 }).catch(() => {});
             } else {
-                broadcastPlayerPc().catch(() => {});
+                broadcastPlayerPc({
+                    campaignId: targetCampId,
+                    trainer: targetTrainer,
+                    summaries: [updatedSummary]
+                }).catch(() => {});
             }
         }
 
@@ -237,7 +262,6 @@ export function usePcSheetSync({
 
         return () => {
             isUnmountingRef.current = true;
-            isHydratingRef.current = true;
             setIsPcSheetActive(false);
 
             // Destroy active store subscriber BEFORE any character rollback so it can NEVER trigger sync!
@@ -250,17 +274,35 @@ export function usePcSheetSync({
                 syncTimeoutRef.current = null;
             }
 
-            // Unconditionally push the final state of the edited Pokémon
-            syncNow(currentSummaryRef.current);
+            // Push the final state of the edited Pokémon if matching and not hydrating
+            const storeAtUnmount = useCharacterStore.getState();
+            if (
+                !isHydratingRef.current &&
+                currentSummaryRef.current?.entityId &&
+                storeAtUnmount.identity.entityId === currentSummaryRef.current.entityId
+            ) {
+                syncNow(currentSummaryRef.current);
+            }
+            isHydratingRef.current = true;
 
             // Restore previous character ONLY if it was a distinct token from the one edited
             const targetId = currentSummaryRef.current.entityId;
             const targetMapId = currentSummaryRef.current.mapTokenId;
+            const initialMapTokenId = initialMapTokenIdRef.current;
+            const initialEntityId = initialEntityIdRef.current;
+
             const isSameEntity =
-                (prevTokenIdRef.current && prevTokenIdRef.current === targetId) ||
-                (prevTokenIdRef.current && targetMapId && prevTokenIdRef.current === targetMapId) ||
+                (prevTokenIdRef.current &&
+                    (prevTokenIdRef.current === targetId ||
+                        (targetMapId && prevTokenIdRef.current === targetMapId) ||
+                        (initialMapTokenId && prevTokenIdRef.current === initialMapTokenId) ||
+                        (initialEntityId && prevTokenIdRef.current === initialEntityId))) ||
                 (prevMetaRef.current &&
-                    (prevMetaRef.current.entityId === targetId || prevMetaRef.current['entityId'] === targetId));
+                    (prevMetaRef.current.entityId === targetId ||
+                        prevMetaRef.current['entityId'] === targetId ||
+                        (initialEntityId &&
+                            (prevMetaRef.current.entityId === initialEntityId ||
+                                prevMetaRef.current['entityId'] === initialEntityId))));
 
             if (prevTokenIdRef.current && !isSameEntity) {
                 setActiveTokenId(prevTokenIdRef.current);
@@ -269,14 +311,37 @@ export function usePcSheetSync({
                 if (prevMetaRef.current) {
                     s.loadFromOwlbear(prevMetaRef.current);
                 }
+                if (prevThemeRef.current) {
+                    applyDynamicThemeColors(prevThemeRef.current.primary, prevThemeRef.current.secondary);
+                }
+            } else {
+                // Same entity or no previous token: ensure active token ID is valid (storage entity or live map ID)
+                const s = useCharacterStore.getState();
+                const finalTokenId =
+                    currentSummaryRef.current.isOnMap && currentSummaryRef.current.mapTokenId
+                        ? currentSummaryRef.current.mapTokenId
+                        : currentSummaryRef.current.entityId;
+                if (finalTokenId) {
+                    setActiveTokenId(finalTokenId);
+                    s.setTokenData(finalTokenId, s.role || 'PLAYER');
+                }
+                const colors = resolveCharacterThemeColors(
+                    {
+                        type1: s.identity.type1,
+                        type2: s.identity.type2,
+                        themePrimaryOverride: s.identity.themePrimaryOverride,
+                        themeSecondaryOverride: s.identity.themeSecondaryOverride
+                    },
+                    roomCustomTypes
+                );
+                applyDynamicThemeColors(colors.primary, colors.secondary);
             }
 
-            // Restore previous theme
-            if (prevThemeRef.current) {
-                applyDynamicThemeColors(prevThemeRef.current.primary, prevThemeRef.current.secondary);
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('theme-override-updated'));
             }
         };
-    }, [syncNow]);
+    }, [syncNow, roomCustomTypes]);
 
     // Load Pokémon metadata whenever currentSummary changes & listen for store changes
     useEffect(() => {
@@ -313,7 +378,7 @@ export function usePcSheetSync({
                     overrideRole: (store.role as 'PLAYER' | 'GM') || 'PLAYER',
                     sourceMeta: activeEntity.fullMetadata,
                     tokenItem,
-                    saveIfNewer: false,
+                    saveIfNewer: true,
                     applyTheme: true,
                     fetchSpecies: true
                 });
@@ -348,7 +413,17 @@ export function usePcSheetSync({
             const customEvt = e as CustomEvent<{ entityId: string; summary: PcPokemonSummary }>;
             if (customEvt.detail?.entityId === activeEntity.entityId) {
                 isHydratingRef.current = true;
-                currentSummaryRef.current = customEvt.detail.summary;
+                const nextSummary = customEvt.detail.summary;
+                currentSummaryRef.current = nextSummary;
+                onUpdateSummaryRef.current(nextSummary);
+
+                // Dynamically re-bind active token ID if on-map status changed (e.g. sent out or recalled)
+                const targetTokenId =
+                    nextSummary.isOnMap && nextSummary.mapTokenId ? nextSummary.mapTokenId : nextSummary.entityId;
+                setActiveTokenId(targetTokenId);
+                const s = useCharacterStore.getState();
+                s.setTokenData(targetTokenId, s.role || 'PLAYER');
+
                 setTimeout(() => {
                     if (!isCancelled) isHydratingRef.current = false;
                 }, 300);

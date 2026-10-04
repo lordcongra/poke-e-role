@@ -23,6 +23,9 @@ export {
     recallPokemonFromMap,
     clearTokenClaimOps,
     unlinkPokemonFromPcOps,
+    broadcastSummaryMapChange,
+    executeRecallWorkflow,
+    executeSendOutWorkflow,
     type RecallPokemonResult
 } from './pcRecallOps';
 

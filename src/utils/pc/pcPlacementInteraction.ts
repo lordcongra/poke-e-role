@@ -22,6 +22,7 @@ export function setPlacementModePreference(mode: 'manual' | 'auto'): void {
 }
 
 let isToolRegistered = false;
+let placementTimeout: ReturnType<typeof setTimeout> | null = null;
 let activePlacementRequest: {
     summary: PcPokemonSummary;
     trainer?: TrainerRoster;
@@ -34,6 +35,37 @@ let activePlacementRequest: {
         cancelled?: boolean;
     }) => void;
 } | null = null;
+
+export async function dismissPlacementTool(previousTool?: string): Promise<void> {
+    if (placementTimeout) {
+        clearTimeout(placementTimeout);
+        placementTimeout = null;
+    }
+    if (!OBR.isAvailable) return;
+    try {
+        const candidates = [
+            previousTool && previousTool !== PLACEMENT_TOOL_ID ? previousTool : null,
+            'com.owlbear.rodeo:select',
+            'com.owlbear-rodeo.select',
+            'com.owlbear.tool/select',
+            'select'
+        ].filter(Boolean) as string[];
+
+        for (const candidate of candidates) {
+            try {
+                await OBR.tool.activateTool(candidate);
+                break;
+            } catch {}
+        }
+
+        await OBR.tool.removeMode(PLACEMENT_MODE_ID).catch(() => {});
+        await OBR.tool.remove(PLACEMENT_TOOL_ID).catch(() => {});
+    } catch (e) {
+        console.warn('[pcPlacementInteraction] Error during tool cleanup:', e);
+    } finally {
+        isToolRegistered = false;
+    }
+}
 
 /**
  * Ensures the OBR Placement Tool and ToolMode are registered on demand.
@@ -64,6 +96,14 @@ async function ensurePlacementToolRegistered(): Promise<void> {
                 }
             ],
             cursors: [{ cursor: 'crosshair' }],
+            onDeactivate: async () => {
+                if (activePlacementRequest) {
+                    const req = activePlacementRequest;
+                    activePlacementRequest = null;
+                    await dismissPlacementTool(req.previousTool);
+                    req.resolve({ success: false, cancelled: true });
+                }
+            },
             onToolClick: async (_context, event) => {
                 if (!activePlacementRequest) return;
                 const req = activePlacementRequest;
@@ -77,17 +117,15 @@ async function ensurePlacementToolRegistered(): Promise<void> {
 
                     const res = await spawnPokemonToMap(req.summary, undefined, req.role, req.trainer, landingPos);
 
+                    await dismissPlacementTool(req.previousTool);
                     if (OBR.isAvailable) {
-                        await OBR.tool.activateTool(req.previousTool).catch(() => {});
                         const name = req.summary.name || req.summary.species;
                         OBR.notification.show(`Sent out ${name}!`, 'INFO');
                     }
                     req.resolve(res);
                 } catch (err) {
                     console.error('[pcPlacementInteraction] Failed to place Pokémon on click:', err);
-                    if (OBR.isAvailable) {
-                        await OBR.tool.activateTool(req.previousTool).catch(() => {});
-                    }
+                    await dismissPlacementTool(req.previousTool);
                     req.resolve({ success: false });
                 }
             },
@@ -95,8 +133,8 @@ async function ensurePlacementToolRegistered(): Promise<void> {
                 if (event.key === 'Escape' && activePlacementRequest) {
                     const req = activePlacementRequest;
                     activePlacementRequest = null;
+                    await dismissPlacementTool(req.previousTool);
                     if (OBR.isAvailable) {
-                        await OBR.tool.activateTool(req.previousTool).catch(() => {});
                         OBR.notification.show('Placement cancelled.', 'INFO');
                     }
                     req.resolve({ success: false, cancelled: true });
@@ -144,6 +182,18 @@ export async function initiatePointPlacement(
                 previousTool,
                 resolve
             };
+
+            placementTimeout = setTimeout(async () => {
+                if (activePlacementRequest) {
+                    const req = activePlacementRequest;
+                    activePlacementRequest = null;
+                    await dismissPlacementTool(req.previousTool);
+                    if (OBR.isAvailable) {
+                        OBR.notification.show('Placement timed out.', 'INFO');
+                    }
+                    req.resolve({ success: false, cancelled: true });
+                }
+            }, 60000);
 
             OBR.tool.activateTool(PLACEMENT_TOOL_ID).catch(() => {});
             OBR.tool.activateMode(PLACEMENT_TOOL_ID, PLACEMENT_MODE_ID).catch(() => {});

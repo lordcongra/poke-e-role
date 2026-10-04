@@ -52,57 +52,120 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
     // 0. Bind active token ID immediately so any save operations target the correct token
     setActiveTokenId(targetId);
 
-    // 1. Resolve source metadata if not directly provided
-    const rawMeta =
-        sourceMeta ||
+    // 1. Resolve live token metadata vs source metadata
+    const tokenItemMeta =
         ((tokenItem?.metadata?.[METADATA_ID] ||
             tokenItem?.metadata?.['pokerole-pmd-extension/stats'] ||
-            tokenItem?.metadata) as Record<string, unknown> | undefined) ||
-        {};
+            tokenItem?.metadata) as Record<string, unknown> | undefined) || {};
+
+    const hasLiveTokenData = Boolean(
+        tokenItemMeta &&
+        Object.keys(tokenItemMeta).length > 0 &&
+        (tokenItemMeta['moves-data'] || tokenItemMeta['species'] || tokenItemMeta['hp-curr'] !== undefined)
+    );
+
+    const hasSourceData = Boolean(
+        sourceMeta &&
+        Object.keys(sourceMeta).length > 0 &&
+        (sourceMeta['moves-data'] || sourceMeta['species'] || sourceMeta['hp-curr'] !== undefined)
+    );
 
     // 2. Resolve entityId
     let resolvedEntityId = params.entityId;
     if (!resolvedEntityId && tokenItem) {
         resolvedEntityId = extractEntityId(tokenItem);
     }
-    if (!resolvedEntityId && rawMeta) {
-        resolvedEntityId = (rawMeta.entityId as string) || (rawMeta['entityId'] as string) || undefined;
+    if (!resolvedEntityId && hasSourceData) {
+        resolvedEntityId = (sourceMeta!['entityId'] as string) || (sourceMeta!.entityId as string) || undefined;
+    }
+    if (!resolvedEntityId && hasLiveTokenData) {
+        resolvedEntityId = (tokenItemMeta['entityId'] as string) || (tokenItemMeta.entityId as string) || undefined;
     }
     if (!resolvedEntityId && store.pcData?.pokemonSummaries?.[targetId]) {
         resolvedEntityId = targetId;
     }
 
     // 3. Lookup PC Summary & Trainer Roster to evaluate timestamps
+    // 3. Lookup PC Summary & Trainer Roster to evaluate timestamps
     const existingSum = resolvedEntityId ? store.pcData?.pokemonSummaries?.[resolvedEntityId] : undefined;
     const activeCamp = store.pcData?.campaigns?.[store.pcData?.activeCampaignId];
     const existingTrainer =
         resolvedEntityId && activeCamp?.trainers ? activeCamp.trainers[resolvedEntityId] : undefined;
 
-    const tMod = Number(rawMeta?.lastModified) || 0;
-    const pMod = Number(existingSum?.lastModified) || Number(existingTrainer?.fullMetadata?.lastModified) || 0;
+    const summaryMeta =
+        (hasSourceData ? sourceMeta : undefined) ||
+        existingSum?.fullMetadata ||
+        (existingTrainer?.fullMetadata as Record<string, unknown> | undefined);
+
+    const hasValidSummary = Boolean(
+        summaryMeta &&
+        Object.keys(summaryMeta).length > 0 &&
+        (summaryMeta['moves-data'] || summaryMeta['species'] || summaryMeta['hp-curr'] !== undefined)
+    );
+
+    // Verify whether the live tokenItem actually corresponds to this entity
+    const tokenEntityId = tokenItem ? extractEntityId(tokenItem) : undefined;
+    const tokenItemSpecies = String(tokenItemMeta['species'] || tokenItem?.name || '');
+    const summarySpecies = String(summaryMeta?.['species'] || existingSum?.species || existingSum?.name || '');
+    const isSpeciesCompatible =
+        !tokenItemSpecies ||
+        !summarySpecies ||
+        tokenItemSpecies.toLowerCase().includes(summarySpecies.toLowerCase()) ||
+        summarySpecies.toLowerCase().includes(tokenItemSpecies.toLowerCase());
+
+    // Clean up contaminated tokens that stole another entity's ID
+    if (
+        tokenItem &&
+        tokenEntityId &&
+        resolvedEntityId &&
+        tokenEntityId === resolvedEntityId &&
+        !isSpeciesCompatible &&
+        OBR.isAvailable
+    ) {
+        OBR.scene.items
+            .updateItems([tokenItem.id], (items) => {
+                for (const item of items) {
+                    if (item.metadata[METADATA_ID])
+                        delete (item.metadata[METADATA_ID] as Record<string, unknown>).entityId;
+                    if (item.metadata['pokerole-pmd-extension/stats']) {
+                        delete (item.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>).entityId;
+                    }
+                    delete item.metadata['entityId'];
+                }
+            })
+            .catch(() => {});
+    }
+
+    const isTokenEntityMatch = Boolean(
+        tokenItem && resolvedEntityId && tokenEntityId && tokenEntityId === resolvedEntityId && isSpeciesCompatible
+    );
+
+    const effectiveLiveTokenData = hasLiveTokenData && isTokenEntityMatch;
+
+    // Use extension's explicit lastModified timestamps.
+    const tMod = effectiveLiveTokenData ? Number(tokenItemMeta?.lastModified) || 0 : 0;
+    const pMod =
+        Number(summaryMeta?.lastModified) ||
+        Number(existingSum?.lastModified) ||
+        Number(existingTrainer?.fullMetadata?.lastModified) ||
+        0;
 
     let finalMeta: Record<string, unknown>;
     let source: 'pc_summary' | 'token_or_local';
     let finalMod: number;
 
-    const summaryMeta =
-        existingSum?.fullMetadata || (existingTrainer?.fullMetadata as Record<string, unknown> | undefined);
-
-    const hasValidLiveToken = Boolean(
-        rawMeta && (rawMeta['moves-data'] || rawMeta['species'] || rawMeta['hp-curr'] !== undefined)
-    );
-    const pcIsStrictlyNewer = Boolean(summaryMeta && pMod > tMod && (tMod > 0 || !hasValidLiveToken));
+    const pcIsStrictlyNewer = Boolean(hasValidSummary && (pMod > tMod || !effectiveLiveTokenData));
 
     if (pcIsStrictlyNewer && summaryMeta) {
-        finalMeta = summaryMeta;
+        finalMeta = { ...summaryMeta };
         source = 'pc_summary';
         finalMod = pMod;
 
         // If the token is live on canvas and the PC is strictly newer, update the scene token
-        if (saveIfNewer && OBR.isAvailable) {
+        if (saveIfNewer && OBR.isAvailable && isTokenEntityMatch && tokenItem) {
             saveToOwlbear(summaryMeta).catch(() => {});
             OBR.scene.items
-                .updateItems([targetId], (items) => {
+                .updateItems([tokenItem.id], (items) => {
                     for (const item of items) {
                         if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
                         Object.assign(item.metadata[METADATA_ID] as Record<string, unknown>, summaryMeta);
@@ -116,39 +179,59 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
                 })
                 .catch(() => {});
         }
-    } else {
-        finalMeta = rawMeta;
+    } else if (effectiveLiveTokenData) {
+        // Live token on canvas has valid data and is newer or equally recent.
+        // PC Summary holds authoritative character identity, species, rank, and move list.
+        // Canvas token provides live combat state (current HP, current Will, temp stats, statuses).
+        const baseMeta = summaryMeta && Object.keys(summaryMeta).length > 0 ? summaryMeta : tokenItemMeta;
+        finalMeta = { ...baseMeta, ...tokenItemMeta };
+
+        // Safeguard: Authoritative fields from PC summary MUST NEVER be overwritten by live token!
+        if (summaryMeta?.['species']) finalMeta['species'] = summaryMeta['species'];
+        if (summaryMeta?.['nickname']) finalMeta['nickname'] = summaryMeta['nickname'];
+        if (summaryMeta?.['rank']) finalMeta['rank'] = summaryMeta['rank'];
+        if (summaryMeta?.['moves-data'] && summaryMeta['moves-data'] !== '[]') {
+            finalMeta['moves-data'] = summaryMeta['moves-data'];
+        }
+        if (summaryMeta?.['type1']) finalMeta['type1'] = summaryMeta['type1'];
+        if (summaryMeta?.['type2'] !== undefined) finalMeta['type2'] = summaryMeta['type2'];
+        if (summaryMeta?.['ability']) finalMeta['ability'] = summaryMeta['ability'];
+        if (summaryMeta?.['ability-tags']) finalMeta['ability-tags'] = summaryMeta['ability-tags'];
+        if (summaryMeta?.['ability-list']) finalMeta['ability-list'] = summaryMeta['ability-list'];
+        if (summaryMeta?.['dex-id']) finalMeta['dex-id'] = summaryMeta['dex-id'];
+        if (summaryMeta?.['dex-category']) finalMeta['dex-category'] = summaryMeta['dex-category'];
+        if (summaryMeta?.['dex-description']) finalMeta['dex-description'] = summaryMeta['dex-description'];
+        if (summaryMeta?.['token-image-url']) finalMeta['token-image-url'] = summaryMeta['token-image-url'];
+
         source = 'token_or_local';
         finalMod = tMod || Date.now();
-        if (!finalMeta.lastModified) {
-            finalMeta.lastModified = finalMod;
-        }
+        if (!finalMeta.lastModified) finalMeta.lastModified = finalMod;
 
-        // If token on canvas is strictly newer than PC storage, update PC summary to reflect live combat stats
+        // If live token is strictly newer than PC storage, update PC summary to reflect live combat stats
         if (existingSum && tMod > pMod) {
             const curHp =
-                typeof rawMeta['hp-curr'] === 'number'
-                    ? rawMeta['hp-curr']
-                    : !isNaN(Number(rawMeta['hp-curr'])) && rawMeta['hp-curr'] !== ''
-                      ? Number(rawMeta['hp-curr'])
+                typeof tokenItemMeta['hp-curr'] === 'number'
+                    ? tokenItemMeta['hp-curr']
+                    : !isNaN(Number(tokenItemMeta['hp-curr'])) && tokenItemMeta['hp-curr'] !== ''
+                      ? Number(tokenItemMeta['hp-curr'])
                       : existingSum.hp;
             const curMaxHp =
-                typeof rawMeta['hp-max-display'] === 'number'
-                    ? rawMeta['hp-max-display']
-                    : !isNaN(Number(rawMeta['hp-max-display'])) && rawMeta['hp-max-display'] !== ''
-                      ? Number(rawMeta['hp-max-display'])
+                typeof tokenItemMeta['hp-max-display'] === 'number'
+                    ? tokenItemMeta['hp-max-display']
+                    : !isNaN(Number(tokenItemMeta['hp-max-display'])) && tokenItemMeta['hp-max-display'] !== ''
+                      ? Number(tokenItemMeta['hp-max-display'])
                       : existingSum.maxHp;
             const curWill =
-                typeof rawMeta['will-curr'] === 'number'
-                    ? rawMeta['will-curr']
-                    : !isNaN(Number(rawMeta['will-curr'])) && rawMeta['will-curr'] !== ''
-                      ? Number(rawMeta['will-curr'])
+                typeof tokenItemMeta['will-curr'] === 'number'
+                    ? tokenItemMeta['will-curr']
+                    : !isNaN(Number(tokenItemMeta['will-curr'])) && tokenItemMeta['will-curr'] !== ''
+                      ? Number(tokenItemMeta['will-curr'])
                       : existingSum.will;
             const curMaxWill =
-                typeof rawMeta['will-max-display'] === 'number'
-                    ? rawMeta['will-max-display']
-                    : !isNaN(Number(rawMeta['will-max-display'])) && rawMeta['will-max-display'] !== ''
-                      ? Number(rawMeta['will-max-display'])
+                typeof tokenItemMeta['will-max-display'] === 'number'
+                    ? tokenItemMeta['will-max-display']
+                    : !isNaN(Number(tokenItemMeta['will-max-display'])) && tokenItemMeta['will-max-display'] !== ''
+                      ? Number(tokenItemMeta['will-max-display'])
                       : existingSum.maxWill;
 
             store.updatePokemonSummary({
@@ -158,15 +241,24 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
                 will: curWill,
                 maxWill: curMaxWill,
                 mapTokenId: targetId,
-                fullMetadata: { ...(existingSum.fullMetadata || {}), ...rawMeta },
+                fullMetadata: finalMeta,
                 lastModified: tMod
             });
         } else if (existingTrainer && resolvedEntityId && tMod > pMod) {
             store.updateTrainerProfile(resolvedEntityId, {
                 mapTokenId: targetId,
-                fullMetadata: { ...(existingTrainer.fullMetadata || {}), ...rawMeta }
+                fullMetadata: { ...(existingTrainer.fullMetadata || {}), ...tokenItemMeta }
             });
         }
+    } else if (hasValidSummary && summaryMeta) {
+        finalMeta = { ...summaryMeta };
+        source = 'pc_summary';
+        finalMod = pMod || Date.now();
+    } else {
+        finalMeta = hasSourceData ? { ...sourceMeta! } : { ...tokenItemMeta };
+        source = hasSourceData ? 'pc_summary' : 'token_or_local';
+        finalMod = tMod || pMod || Date.now();
+        if (!finalMeta.lastModified) finalMeta.lastModified = finalMod;
     }
 
     // 4. Hydrate character store with resolved metadata
