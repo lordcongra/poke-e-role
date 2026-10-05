@@ -150,9 +150,12 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         currentBox,
         activeBoxIndex,
         role: role || 'PLAYER',
+        activeTokenId,
         identity: {
             nickname: identity.nickname,
             species: identity.species,
+            mode: identity.mode,
+            entityId: identity.entityId,
             tokenImageUrl: identity.tokenImageUrl,
             themePrimaryOverride: identity.themePrimaryOverride
         },

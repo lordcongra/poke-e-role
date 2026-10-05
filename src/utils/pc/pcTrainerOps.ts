@@ -442,3 +442,40 @@ export async function executeLinkActiveTrainer(params: {
         OBR.notification.show(`Linked "${trainerName}" to Pokéball Belt!`, 'SUCCESS');
     }
 }
+
+/**
+ * Determines whether a trainer profile in PC Storage is linked to the active character sheet/token.
+ */
+export function isTrainerLinkedToActiveSheet(
+    trainer: TrainerRoster | undefined,
+    activeTokenId: string | null | undefined,
+    identity: { mode?: string; nickname?: string; species?: string; entityId?: string }
+): boolean {
+    if (!trainer || !trainer.isLinked) return false;
+    const isTrainerMode = identity.mode === 'Trainer' || identity.mode === 'Trainer (Special)';
+    if (!isTrainerMode) return false;
+
+    if (activeTokenId && (trainer.mapTokenId === activeTokenId || trainer.savedTokenItem?.id === activeTokenId)) {
+        return true;
+    }
+    if (
+        identity.entityId &&
+        (trainer.id === identity.entityId || trainer.fullMetadata?.entityId === identity.entityId)
+    ) {
+        return true;
+    }
+    const activeName = (identity.nickname || identity.species || '').trim().toLowerCase();
+    const trainerName = (trainer.name || '').trim().toLowerCase();
+    if (
+        (!activeTokenId || !trainer.mapTokenId || activeTokenId === trainer.mapTokenId) &&
+        trainerName &&
+        activeName &&
+        trainerName !== 'trainer' &&
+        trainerName !== 'unnamed character' &&
+        trainerName === activeName
+    ) {
+        return true;
+    }
+
+    return false;
+}

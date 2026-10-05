@@ -61,10 +61,43 @@ export async function syncSidebarCharacterRenameToPc(
     }
 }
 
+function ensurePokemonSummaryInPc(characterId: string, trainerId?: string): void {
+    const pcData = useCharacterStore.getState().pcData;
+    if (pcData.pokemonSummaries[characterId]) return;
+
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    try {
+        const raw = window.localStorage.getItem(`pkr_char_${characterId}`);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (!parsed) return;
+
+        const newSummary = {
+            entityId: characterId,
+            trainerId,
+            name: parsed.nickname || parsed.species || parsed.name || 'Pokémon',
+            species: parsed.species || parsed.name || 'Unknown',
+            rank: parsed.rank || 'Starter',
+            type1: parsed.type1 || 'Normal',
+            type2: parsed.type2,
+            hp: Number(parsed['hp-curr']) || Number(parsed.hp) || 10,
+            maxHp: Number(parsed['hp-max-display']) || Number(parsed.hpMax) || 10,
+            will: Number(parsed['will-curr']) || Number(parsed.will) || 5,
+            maxWill: Number(parsed['will-max-display']) || Number(parsed.willMax) || 5,
+            tokenImageUrl: parsed['token-image-url'] || parsed.tokenImageUrl,
+            isOnMap: false,
+            fullMetadata: parsed,
+            lastModified: Date.now()
+        };
+        useCharacterStore.getState().updatePokemonSummary(newSummary);
+    } catch {}
+}
+
 /**
  * Synchronizes a drag-and-drop move in the Standalone Sidebar to the PC Storage system.
- * If moved into a "Belt" folder under a Trainer, adds to the Trainer's party.
+ * If moved into a "Belt" folder under a Trainer, adds to that Trainer's party.
  * If moved into a Box folder under a Trainer, deposits into that Box.
+ * Also supports root-level Active Team and Box folders in PMD mode.
  */
 export async function syncSidebarMoveToPc(
     characterId: string,
@@ -76,27 +109,64 @@ export async function syncSidebarMoveToPc(
     try {
         const folders = await storageAdapter.getFolders();
         const targetFolder = folders.find((f) => f.id === targetFolderId);
-        if (!targetFolder || !targetFolder.parentId) return;
+        if (!targetFolder) return;
+
+        const camp = pcData.campaigns[pcData.activeCampaignId];
+        if (!camp) return;
+
+        // PMD / No-Trainer Root Folder Support
+        if (!targetFolder.parentId) {
+            const { isActiveTeamFolderName } = await import('./pcPmdSidebarSync');
+            if (isActiveTeamFolderName(targetFolder.name)) {
+                ensurePokemonSummaryInPc(characterId);
+                useCharacterStore.getState().movePokemonToParty(characterId);
+            } else {
+                const boxes = camp.boxes || [];
+                const boxIndex = boxes.findIndex(
+                    (b) => b.name.trim().toLowerCase() === targetFolder.name.trim().toLowerCase()
+                );
+                if (boxIndex !== -1) {
+                    ensurePokemonSummaryInPc(characterId);
+                    useCharacterStore.getState().depositPokemonToBox(characterId, boxIndex);
+                }
+            }
+            return;
+        }
 
         const localChars = await storageAdapter.getLocalCharacters();
         const parentTrainer = localChars.find((c) => c.id === targetFolder.parentId && isTrainerMetadata(c.metadata));
         if (!parentTrainer) return;
 
-        const camp = pcData.campaigns[pcData.activeCampaignId];
-        if (!camp) return;
-
-        const trainerRoster = Object.values(camp.trainers).find(
+        let trainerRoster = Object.values(camp.trainers).find(
             (t) =>
                 t.id === parentTrainer.id ||
                 t.savedTokenItem?.id === parentTrainer.id ||
                 t.mapTokenId === parentTrainer.id ||
                 t.name.trim().toLowerCase() === parentTrainer.name.trim().toLowerCase()
         );
+
+        if (!trainerRoster) {
+            useCharacterStore.getState().addTrainer(parentTrainer.name, {
+                existingCharacterId: parentTrainer.id,
+                isLinked: true
+            });
+            const updatedCamp =
+                useCharacterStore.getState().pcData.campaigns[useCharacterStore.getState().pcData.activeCampaignId];
+            trainerRoster = Object.values(updatedCamp?.trainers || {}).find(
+                (t) =>
+                    t.id === parentTrainer.id ||
+                    t.savedTokenItem?.id === parentTrainer.id ||
+                    t.mapTokenId === parentTrainer.id ||
+                    t.name.trim().toLowerCase() === parentTrainer.name.trim().toLowerCase()
+            );
+        }
         if (!trainerRoster) return;
+
+        ensurePokemonSummaryInPc(characterId, trainerRoster.id);
 
         if (isBeltFolderName(targetFolder.name)) {
             if (!trainerRoster.party.includes(characterId)) {
-                useCharacterStore.getState().movePokemonToParty(characterId);
+                useCharacterStore.getState().movePokemonToParty(characterId, trainerRoster.id);
             }
         } else {
             const boxes = trainerRoster.boxes && trainerRoster.boxes.length > 0 ? trainerRoster.boxes : camp.boxes;
@@ -104,7 +174,7 @@ export async function syncSidebarMoveToPc(
                 (b) => b.name.trim().toLowerCase() === targetFolder.name.trim().toLowerCase()
             );
             if (boxIndex !== -1 && !boxes[boxIndex].slots.includes(characterId)) {
-                useCharacterStore.getState().depositPokemonToBox(characterId, boxIndex);
+                useCharacterStore.getState().depositPokemonToBox(characterId, boxIndex, trainerRoster.id);
             }
         }
     } catch (e) {

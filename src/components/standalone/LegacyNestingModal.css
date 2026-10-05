@@ -1,0 +1,115 @@
+.legacy-modal__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: color-mix(in srgb, var(--dark) 70%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.legacy-modal__content {
+    background: var(--panel-bg);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    width: 480px;
+    max-width: 92vw;
+    padding: 22px;
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--dark) 60%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.legacy-modal__title {
+    margin: 0;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legacy-modal__desc {
+    margin: 0;
+    line-height: 1.45;
+}
+
+.legacy-modal__badge {
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: var(--text-main);
+}
+
+.legacy-modal__options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.legacy-modal__option {
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    padding: 14px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color 0.15s ease;
+}
+
+.legacy-modal__option:hover {
+    border-color: var(--primary);
+}
+
+.legacy-modal__option-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legacy-modal__option h4 {
+    margin: 0;
+}
+
+.legacy-modal__option p {
+    margin: 0;
+    line-height: 1.4;
+    color: var(--text-muted);
+}
+
+.legacy-modal__btn {
+    align-self: flex-start;
+    padding: 6px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.legacy-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+}
+
+.legacy-modal__btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border);
+    padding: 6px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.legacy-modal__btn-cancel:hover {
+    background: var(--row-even);
+}

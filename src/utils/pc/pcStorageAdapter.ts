@@ -45,6 +45,23 @@ export function createDefaultCampaign(id = 'default', name = 'Main Adventure'): 
 }
 
 export function createInitialPcStorageData(): PcStorageData {
+    if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('pkr_pc_storage_default');
+            if (raw) {
+                const parsed = JSON.parse(raw) as PcStorageData;
+                if (
+                    parsed &&
+                    parsed.campaigns &&
+                    typeof parsed.campaigns === 'object' &&
+                    Object.keys(parsed.campaigns).length > 0
+                ) {
+                    return sanitizePcData(parsed);
+                }
+            }
+        } catch {}
+    }
+
     const defaultCamp = createDefaultCampaign();
     return {
         activeCampaignId: defaultCamp.id,
@@ -120,7 +137,7 @@ export async function loadPcStorage(): Promise<PcStorageData> {
     }
 
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('pkr_pc_storage_default');
         if (raw) {
             const parsed = JSON.parse(raw) as PcStorageData;
             if (parsed && parsed.campaigns && typeof parsed.campaigns === 'object') {

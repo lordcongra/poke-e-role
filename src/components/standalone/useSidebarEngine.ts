@@ -16,6 +16,7 @@ import {
     autoHealTrainerBeltPokemon
 } from '../../utils/pc/pcSidebarSync';
 import { useSidebarBackup } from './useSidebarBackup';
+import { useLegacyNestingModal } from './useLegacyNestingModal';
 
 export type TreeItem = {
     id: string;
@@ -57,6 +58,16 @@ export function useSidebarEngine() {
         confirmRestoreOverwrite,
         cancelRestore
     } = useSidebarBackup();
+
+    const {
+        isLegacyNestingModalOpen,
+        legacyNestedCount,
+        checkLegacyNesting,
+        resetLegacyCheck,
+        handleAutoFolderLegacyNesting: runAutoFolder,
+        handleFlattenLegacyNesting: runFlatten,
+        handleDismissLegacyNesting
+    } = useLegacyNestingModal();
 
     // Map of entityId -> active Belt slot number and Trainer name
     const partyMemberMap = useMemo(() => {
@@ -102,6 +113,7 @@ export function useSidebarEngine() {
             const chars = await storageAdapter.getLocalCharacters();
             const flds = await storageAdapter.getFolders();
             await autoHealTrainerBeltPokemon(chars, flds, useCharacterStore.getState().pcData);
+            checkLegacyNesting(chars, flds);
 
             const customOrder = JSON.parse(localStorage.getItem('pkr_sidebar_order') || '[]') as string[];
             const orderMap = new Map<string, number>();
@@ -148,7 +160,17 @@ export function useSidebarEngine() {
         } catch (error) {
             console.error('[SidebarEngine] Failed to load data:', error);
         }
-    }, [setHasUnbackedChanges]);
+    }, [setHasUnbackedChanges, checkLegacyNesting]);
+
+    const handleAutoFolderLegacyNesting = useCallback(async () => {
+        await runAutoFolder();
+        await loadData();
+    }, [runAutoFolder, loadData]);
+
+    const handleFlattenLegacyNesting = useCallback(async () => {
+        await runFlatten();
+        await loadData();
+    }, [runFlatten, loadData]);
 
     const updateInitTags = useCallback(() => {
         const savedList = localStorage.getItem('pkr_standalone_init_list');
@@ -233,7 +255,12 @@ export function useSidebarEngine() {
             loadData();
             updateInitTags();
         };
+        const handleBackupRestored = () => {
+            resetLegacyCheck();
+            loadData();
+        };
         window.addEventListener('pkr-local-data-changed', handleDataChange);
+        window.addEventListener('pkr-backup-restored', handleBackupRestored);
         window.addEventListener('pkr-standalone-init-update', updateInitTags);
 
         const handleActiveCharStorage = async (e: StorageEvent) => {
@@ -282,9 +309,19 @@ export function useSidebarEngine() {
         const closeContextMenu = () => setContextMenu(null);
         document.addEventListener('click', closeContextMenu);
 
+        const handleExpandNode = (e: Event) => {
+            const detail = (e as CustomEvent<{ id: string }>).detail;
+            if (detail?.id) {
+                setExpandedNodes((prev) => ({ ...prev, [detail.id]: true }));
+            }
+        };
+        window.addEventListener('pkr-expand-sidebar-node', handleExpandNode);
+
         return () => {
             window.removeEventListener('pkr-local-data-changed', handleDataChange);
+            window.removeEventListener('pkr-backup-restored', handleBackupRestored);
             window.removeEventListener('pkr-standalone-init-update', updateInitTags);
+            window.removeEventListener('pkr-expand-sidebar-node', handleExpandNode);
             window.removeEventListener(BACKUP_STATUS_EVENT, handleBackupStatus);
             window.removeEventListener('storage', handleActiveCharStorage);
             window.removeEventListener('pkr-select-character', handleActiveCharCustomEvent);
@@ -482,6 +519,24 @@ export function useSidebarEngine() {
                 await storageAdapter.deleteLocalCharacter(item.id);
                 // Clean up from PC storage if it was stored in party or box
                 useCharacterStore.getState().deletePokemonFromPc(item.id);
+
+                if (isTrainerMetadata(item.meta)) {
+                    const camp = pcData.campaigns[pcData.activeCampaignId];
+                    if (camp) {
+                        const match = Object.values(camp.trainers).find(
+                            (t) =>
+                                t.id === item.id ||
+                                t.mapTokenId === item.id ||
+                                t.savedTokenItem?.id === item.id ||
+                                t.name.trim().toLowerCase() === item.name.trim().toLowerCase()
+                        );
+                        if (match) {
+                            useCharacterStore
+                                .getState()
+                                .deleteTrainer(match.id, { deleteBelt: false, deletePc: false });
+                        }
+                    }
+                }
             }
 
             if (activeTokenId === item.id) {
@@ -504,17 +559,36 @@ export function useSidebarEngine() {
                 t.id === item.id ||
                 t.savedTokenItem?.id === item.id ||
                 t.mapTokenId === item.id ||
+                t.fullMetadata?.entityId === item.id ||
                 t.name.trim().toLowerCase() === item.name.trim().toLowerCase()
         );
+
+        if (!matchedTrainer) {
+            useCharacterStore.getState().addTrainer(item.name, {
+                existingCharacterId: item.id,
+                isLinked: true
+            });
+            const updatedCamp =
+                useCharacterStore.getState().pcData.campaigns[useCharacterStore.getState().pcData.activeCampaignId];
+            matchedTrainer = Object.values(updatedCamp?.trainers || {}).find(
+                (t) =>
+                    t.id === item.id ||
+                    t.savedTokenItem?.id === item.id ||
+                    t.mapTokenId === item.id ||
+                    t.fullMetadata?.entityId === item.id ||
+                    t.name.trim().toLowerCase() === item.name.trim().toLowerCase()
+            );
+        }
 
         if (!matchedTrainer) {
             matchedTrainer = {
                 id: item.id,
                 name: item.name,
+                isLinked: true,
+                mapTokenId: item.id,
                 party: [null, null, null, null, null, null],
                 boxes: [{ id: `box_1_${Date.now()}`, name: 'Box 1', slots: new Array(30).fill(null) }]
             };
-            useCharacterStore.getState().addTrainer(item.name);
         }
 
         const activeBoxes =
@@ -543,14 +617,23 @@ export function useSidebarEngine() {
                     t.id === item.id ||
                     t.savedTokenItem?.id === item.id ||
                     t.mapTokenId === item.id ||
+                    t.fullMetadata?.entityId === item.id ||
                     t.name.trim().toLowerCase() === item.name.trim().toLowerCase()
             );
             if (!matchedTrainer) {
-                useCharacterStore.getState().addTrainer(item.name);
+                useCharacterStore.getState().addTrainer(item.name, {
+                    existingCharacterId: item.id,
+                    isLinked: true
+                });
                 const updatedCamp =
                     useCharacterStore.getState().pcData.campaigns[useCharacterStore.getState().pcData.activeCampaignId];
                 matchedTrainer = Object.values(updatedCamp?.trainers || {}).find(
-                    (t) => t.name.trim().toLowerCase() === item.name.trim().toLowerCase()
+                    (t) =>
+                        t.id === item.id ||
+                        t.savedTokenItem?.id === item.id ||
+                        t.mapTokenId === item.id ||
+                        t.fullMetadata?.entityId === item.id ||
+                        t.name.trim().toLowerCase() === item.name.trim().toLowerCase()
                 );
             }
             if (matchedTrainer) {
@@ -747,6 +830,11 @@ export function useSidebarEngine() {
         touchGhostPos,
         isTouchDragActive,
         handleItemTouchStart,
-        isClickBlocked
+        isClickBlocked,
+        isLegacyNestingModalOpen,
+        legacyNestedCount,
+        handleAutoFolderLegacyNesting,
+        handleFlattenLegacyNesting,
+        handleDismissLegacyNesting
     };
 }

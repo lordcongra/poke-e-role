@@ -16,7 +16,11 @@ import {
     executeRecallWorkflow,
     executeSendOutWorkflow
 } from '../../../utils/pc/pcModalOps';
-import { checkTrainerOnMap, buildLinkedTrainer, executeLinkActiveTrainer } from '../../../utils/pc/pcTrainerOps';
+import {
+    checkTrainerOnMap,
+    executeLinkActiveTrainer,
+    isTrainerLinkedToActiveSheet
+} from '../../../utils/pc/pcTrainerOps';
 import { savePcStorage } from '../../../utils/pc/pcStorageAdapter';
 import {
     prepareDepositSummary,
@@ -41,11 +45,14 @@ interface UsePcModalHandlersParams {
     currentBox?: PcBox;
     activeBoxIndex: number;
     role?: 'PLAYER' | 'GM';
+    activeTokenId?: string | null;
     identity: {
         nickname?: string;
         species?: string;
         tokenImageUrl?: string | null;
         themePrimaryOverride?: string;
+        mode?: string;
+        entityId?: string;
     };
     canLinkActiveTrainer: boolean;
     depositTarget: { targetSlot?: { type: 'party' | 'box'; index: number } } | null;
@@ -70,6 +77,7 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         currentBox,
         activeBoxIndex,
         role,
+        activeTokenId,
         identity,
         canLinkActiveTrainer,
         depositTarget,
@@ -85,7 +93,7 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         setBoxSlot
     } = params;
 
-    const isTrainerLinked = !!trainer?.isLinked || !!trainer?.avatarUrl;
+    const isTrainerLinked = isTrainerLinkedToActiveSheet(trainer, activeTokenId, identity);
     const [isTrainerOnMap, setIsTrainerOnMap] = useState(false);
 
     const saveTrainerProfile = (nextTrainer: TrainerRoster) => {
@@ -126,41 +134,39 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         }
     }, [trainer?.id, trainer?.name, trainer?.mapTokenId]);
 
-    // Auto-sync trainer name and avatar if actively linked to current sheet
+    // Auto-sync trainer avatar and theme override ONLY if actively linked to current sheet
     const lastSyncedTrainerRef = useRef<string>('');
     useEffect(() => {
         if (!trainer || !campaign || !isTrainerLinked || !canLinkActiveTrainer) return;
-        const currentName = identity.nickname || identity.species;
-        if (!currentName) return;
         const currentAvatar = identity.tokenImageUrl || undefined;
         const currentTheme = identity.themePrimaryOverride || '';
         const prevTheme = (trainer.fullMetadata?.['theme-primary-override'] as string) || '';
 
-        const nameChanged = (trainer.name || '') !== currentName;
         const avatarChanged = Boolean(currentAvatar && trainer.avatarUrl !== currentAvatar);
         const themeChanged = prevTheme !== currentTheme;
 
-        const syncKey = `${trainer.id}_${currentName}_${currentAvatar || ''}_${currentTheme}`;
+        const syncKey = `${trainer.id}_${currentAvatar || ''}_${currentTheme}`;
         if (lastSyncedTrainerRef.current === syncKey) return;
 
-        if (nameChanged || avatarChanged || themeChanged) {
+        if (avatarChanged || themeChanged) {
             lastSyncedTrainerRef.current = syncKey;
-            const store = useCharacterStore.getState();
-            const nextTrainer = buildLinkedTrainer(trainer, store, currentName, currentAvatar);
-            if (!nextTrainer.fullMetadata) nextTrainer.fullMetadata = {};
-            nextTrainer.fullMetadata['theme-primary-override'] = currentTheme;
+            const nextTrainer: TrainerRoster = {
+                ...trainer,
+                avatarUrl: currentAvatar ?? trainer.avatarUrl,
+                fullMetadata: {
+                    ...(trainer.fullMetadata || {}),
+                    ['theme-primary-override']: currentTheme
+                }
+            };
             saveTrainerProfile(nextTrainer);
         }
     }, [
         isTrainerLinked,
         canLinkActiveTrainer,
         trainer?.id,
-        trainer?.name,
         trainer?.avatarUrl,
         (trainer?.fullMetadata?.['theme-primary-override'] as string) || '',
         campaign?.id,
-        identity.nickname,
-        identity.species,
         identity.tokenImageUrl,
         identity.themePrimaryOverride
     ]);

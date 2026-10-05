@@ -87,11 +87,14 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                 // Track our newly injected tag string
                 const isInitActive = initTag === 'init_active';
 
+                // Cap indentation so deep subfolders maintain readable names and accessible action buttons
+                const indentPx = (depth <= 4 ? depth * 16 : 64 + Math.min(depth - 4, 4) * 6) + 8;
+
                 return (
                     <div key={item.id} className="sidebar__node">
                         <div
                             className={`sidebar__item ${activeTokenId === item.id ? 'sidebar__item--active' : ''} ${getDragClass(item.id)}`}
-                            style={{ paddingLeft: `${depth * 16 + 8}px` }}
+                            style={{ paddingLeft: `${indentPx}px` }}
                             data-item-id={item.id}
                             data-item-type={item.type}
                             draggable={!liftedItemId && hoveredId === item.id}

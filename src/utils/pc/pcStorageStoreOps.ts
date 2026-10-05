@@ -79,16 +79,48 @@ export function initStandaloneTrainerSheet(trainerId: string, name: string): voi
         return;
     }
     const cleanName = name.trim();
+    if (!cleanName) return;
+
+    try {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('pkr_char_')) {
+                const charId = key.replace('pkr_char_', '');
+                if (charId === trainerId) return;
+                try {
+                    const data = JSON.parse(localStorage.getItem(key) || '{}');
+                    const charName = (data.nickname || data.name || data.species || '').trim().toLowerCase();
+                    const isTrainer = data.mode === 'Trainer' || data.mode === 'Trainer (Special)';
+                    if (isTrainer && charName === cleanName.toLowerCase()) {
+                        return;
+                    }
+                } catch {}
+            }
+        }
+    } catch {}
+
     const initialMetadata = {
         nickname: cleanName,
         name: cleanName,
         species: cleanName,
         mode: 'Trainer',
-        rank: 'Trainer',
-        'hp-curr': 10,
-        'hp-max-display': 10,
-        'will-curr': 5,
-        'will-max-display': 5,
+        rank: 'Starter',
+        'hp-curr': 5,
+        'hp-max-display': 5,
+        'hp-base': 4,
+        'will-curr': 4,
+        'will-max-display': 4,
+        'will-base': 3,
+        'str-base': 1,
+        'dex-base': 1,
+        'vit-base': 1,
+        'spe-base': 1,
+        'ins-base': 1,
+        'tou-base': 1,
+        'coo-base': 1,
+        'bea-base': 1,
+        'cut-base': 1,
+        'cle-base': 1,
         'v2-migrated': true
     };
     try {
@@ -123,4 +155,32 @@ export function syncStandaloneTrainerRename(trainerId: string, newName: string):
         }
         window.dispatchEvent(new Event('pkr-local-data-changed'));
     } catch {}
+}
+
+/**
+ * Broadcasts a Pokémon deletion from PC across Owlbear Rodeo peers.
+ */
+export function broadcastPcPokemonDelete(
+    campaignId: string,
+    entityId: string,
+    options?: { wasUnlinked?: boolean; pokemonName?: string },
+    summary?: PcPokemonSummary
+): void {
+    if (!OBR.isAvailable) return;
+    import('../../hooks/owlbearSync/owlbearSyncConstants')
+        .then(({ EXTENSION_ID }) => {
+            OBR.broadcast
+                .sendMessage(
+                    `${EXTENSION_ID}/pc-pokemon-delete`,
+                    {
+                        campaignId,
+                        entityId,
+                        pokemonName: options?.pokemonName || summary?.name || summary?.species,
+                        wasUnlinked: options?.wasUnlinked
+                    },
+                    { destination: 'REMOTE' }
+                )
+                .catch(() => {});
+        })
+        .catch(() => {});
 }

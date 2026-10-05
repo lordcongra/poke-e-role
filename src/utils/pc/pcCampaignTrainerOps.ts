@@ -1,4 +1,4 @@
-import type { PcStorageData, CampaignProfile } from '../../types/pcStorageTypes';
+import type { PcStorageData, CampaignProfile, TrainerRoster } from '../../types/pcStorageTypes';
 import { createDefaultBox, createDefaultCampaign } from './pcStorageAdapter';
 
 /**
@@ -162,10 +162,40 @@ export function applyDeleteTrainer(
     };
 }
 
-export function applyAddTrainer(pcData: PcStorageData, name: string): { nextData: PcStorageData; newId: string } {
+export function applyAddTrainer(
+    pcData: PcStorageData,
+    name: string,
+    options?: { existingCharacterId?: string; isLinked?: boolean }
+): { nextData: PcStorageData; newId: string } {
     const camp = pcData.campaigns[pcData.activeCampaignId];
-    const newId = `trainer-${crypto.randomUUID().slice(0, 8)}`;
+    const newId = options?.existingCharacterId || `trainer-${crypto.randomUUID().slice(0, 8)}`;
     if (!camp) return { nextData: pcData, newId };
+
+    const newTrainer: TrainerRoster = {
+        id: newId,
+        name,
+        isLinked: options?.isLinked ?? Boolean(options?.existingCharacterId),
+        mapTokenId: options?.existingCharacterId,
+        party: Array(6).fill(null),
+        boxes: Array.from({ length: 8 }, (_, i) => createDefaultBox(i)),
+        fullMetadata: {
+            entityId: options?.existingCharacterId,
+            name,
+            nickname: name,
+            species: name,
+            mode: 'Trainer',
+            rank: 'Trainer',
+            'str-base': 1,
+            'dex-base': 1,
+            'vit-base': 1,
+            'ins-base': 1,
+            'spe-base': 1,
+            'hp-curr': 10,
+            'hp-max-display': 10,
+            'will-curr': 5,
+            'will-max-display': 5
+        }
+    };
 
     return {
         nextData: {
@@ -177,28 +207,7 @@ export function applyAddTrainer(pcData: PcStorageData, name: string): { nextData
                     activeTrainerId: newId,
                     trainers: {
                         ...camp.trainers,
-                        [newId]: {
-                            id: newId,
-                            name,
-                            party: Array(6).fill(null),
-                            boxes: Array.from({ length: 8 }, (_, i) => createDefaultBox(i)),
-                            fullMetadata: {
-                                name,
-                                nickname: name,
-                                species: name,
-                                mode: 'Trainer',
-                                rank: 'Trainer',
-                                'str-base': 1,
-                                'dex-base': 1,
-                                'vit-base': 1,
-                                'ins-base': 1,
-                                'spe-base': 1,
-                                'hp-curr': 10,
-                                'hp-max-display': 10,
-                                'will-curr': 5,
-                                'will-max-display': 5
-                            }
-                        }
+                        [newId]: newTrainer
                     }
                 }
             }

@@ -88,14 +88,14 @@ export interface PcSlice {
         from: { type: 'party' | 'box'; index: number; boxIndex?: number },
         to: { type: 'party' | 'box'; index: number; boxIndex?: number }
     ) => void;
-    movePokemonToParty: (entityId: string) => boolean;
-    depositPokemonToBox: (entityId: string, boxIndex?: number) => boolean;
+    movePokemonToParty: (entityId: string, trainerId?: string) => boolean;
+    depositPokemonToBox: (entityId: string, boxIndex?: number, trainerId?: string) => boolean;
     addBox: (name?: string) => void;
     deleteBox: (boxIndex: number) => void;
     renameBox: (boxIndex: number, name: string) => void;
     setBoxTheme: (boxIndex: number, color: string, wallpaper?: string) => void;
     switchTrainer: (trainerId: string) => void;
-    addTrainer: (name: string) => void;
+    addTrainer: (name: string, options?: { existingCharacterId?: string; isLinked?: boolean }) => void;
     deleteTrainer: (trainerId: string, options?: { deletePc?: boolean; deleteBelt?: boolean }) => boolean;
     renameTrainer: (trainerId: string, newName: string) => void;
     switchCampaign: (campaignId: string) => void;

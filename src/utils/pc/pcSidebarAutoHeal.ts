@@ -1,7 +1,8 @@
 import { storageAdapter, type LocalFolder, type LocalCharacter, isStandaloneMode } from '../sync/storageAdapter';
 import type { PcStorageData } from '../../types/pcStorageTypes';
-import { isTrainerMetadata, isBeltFolderName } from './pcSidebarSync';
+import { isTrainerMetadata, isBeltFolderName, findTrainerSidebarId } from './pcSidebarSync';
 import { findAndLinkLocalCharacter } from './pcSidebarFolderMatching';
+import { cleanOrphanedCharacters } from './pcLegacyNestingOps';
 
 /**
  * Automatically repairs and heals Belt Pokémon placement in the Standalone Sidebar.
@@ -20,13 +21,7 @@ export async function autoHealTrainerBeltPokemon(
         for (const tr of Object.values(camp.trainers || {})) {
             if (!tr.party || tr.party.length === 0) continue;
 
-            const trainerSidebarId = localChars.find(
-                (c) =>
-                    c.id === tr.id ||
-                    c.id === tr.savedTokenItem?.id ||
-                    c.id === tr.mapTokenId ||
-                    (isTrainerMetadata(c.metadata) && c.name.trim().toLowerCase() === tr.name.trim().toLowerCase())
-            )?.id;
+            const trainerSidebarId = await findTrainerSidebarId(tr);
             if (!trainerSidebarId) continue;
 
             const beltFolder = folders.find((f) => f.parentId === trainerSidebarId && isBeltFolderName(f.name));
@@ -62,18 +57,13 @@ export async function autoHealTrainerBeltPokemon(
                     await storageAdapter.moveItem(c.id, trainerSidebarId);
                     c.parentId = trainerSidebarId;
                     anyMoved = true;
-                } else if (c.parentId && !folders.some((f) => f.id === c.parentId)) {
-                    // Corruption safeguard: c.parentId is set to another character sheet!
-                    // Heal by moving to the parent character's folder or parent
-                    const parentChar = localChars.find((p) => p.id === c.parentId);
-                    const safeParent = parentChar ? parentChar.parentId : null;
-                    await storageAdapter.moveItem(c.id, safeParent);
-                    c.parentId = safeParent;
-                    anyMoved = true;
                 }
             }
         }
     }
+
+    const orphansCleaned = await cleanOrphanedCharacters(localChars, folders);
+    if (orphansCleaned) anyMoved = true;
 
     return anyMoved;
 }

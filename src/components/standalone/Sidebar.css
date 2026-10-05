@@ -404,6 +404,7 @@ html.dnd-polyfilled .app-layout {
     align-items: center;
     gap: 2px;
     margin-left: 6px;
+    flex-shrink: 0;
 }
 
 .sidebar__more-btn {

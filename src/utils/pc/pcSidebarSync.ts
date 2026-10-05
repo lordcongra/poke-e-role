@@ -22,28 +22,53 @@ export async function findTrainerSidebarId(trainer?: TrainerRoster): Promise<str
     try {
         const localChars = await storageAdapter.getLocalCharacters();
 
-        // 1. Direct match by id, savedTokenItem or mapTokenId
-        if (trainer.id) {
-            const byId = localChars.find((c) => c.id === trainer.id);
-            if (byId) return byId.id;
+        const cleanName = (trainer.name || '').trim().toLowerCase();
+
+        // 1. Match by linked mapTokenId, savedTokenItem or entityId
+        if (trainer.mapTokenId) {
+            const byMap = localChars.find((c) => c.id === trainer.mapTokenId);
+            if (byMap) return byMap.id;
         }
         if (trainer.savedTokenItem?.id) {
             const byToken = localChars.find((c) => c.id === trainer.savedTokenItem?.id);
             if (byToken) return byToken.id;
         }
-        if (trainer.mapTokenId) {
-            const byMap = localChars.find((c) => c.id === trainer.mapTokenId);
-            if (byMap) return byMap.id;
+        if (trainer.fullMetadata?.entityId) {
+            const byEntity = localChars.find((c) => c.id === trainer.fullMetadata?.entityId);
+            if (byEntity) return byEntity.id;
         }
 
-        // 3. Match by Trainer mode & name
-        const cleanName = (trainer.name || '').trim().toLowerCase();
+        // 1b. Match by currently active sheet in store (if viewing this trainer)
+        const activeStore = useCharacterStore.getState();
+        if (activeStore.tokenId) {
+            const activeName = (activeStore.identity.nickname || activeStore.identity.species || '')
+                .trim()
+                .toLowerCase();
+            const isTrainerMode =
+                activeStore.identity.mode === 'Trainer' || activeStore.identity.mode === 'Trainer (Special)';
+            if (isTrainerMode && cleanName && activeName === cleanName) {
+                const byActive = localChars.find((c) => c.id === activeStore.tokenId);
+                if (byActive) return byActive.id;
+            }
+        }
+
+        // 2. Match by Trainer mode & name
         if (cleanName) {
             const byNameAndMode = localChars.find((c) => {
                 const isTrainer = isTrainerMetadata(c.metadata);
                 return isTrainer && c.name.trim().toLowerCase() === cleanName;
             });
             if (byNameAndMode) return byNameAndMode.id;
+        }
+
+        // 3. Fallback to direct trainer.id (only if it matches a Trainer or name)
+        if (trainer.id) {
+            const byId = localChars.find(
+                (c) =>
+                    c.id === trainer.id &&
+                    (!cleanName || c.name.trim().toLowerCase() === cleanName || isTrainerMetadata(c.metadata))
+            );
+            if (byId) return byId.id;
         }
 
         return null;
@@ -187,6 +212,13 @@ export async function organizeTrainerSidebarFolders(
                         movedPokemonCount++;
                     }
                 }
+            }
+        }
+
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('pkr-expand-sidebar-node', { detail: { id: trainerSidebarId } }));
+            if (beltFolder) {
+                window.dispatchEvent(new CustomEvent('pkr-expand-sidebar-node', { detail: { id: beltFolder.id } }));
             }
         }
 

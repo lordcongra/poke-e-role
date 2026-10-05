@@ -38,7 +38,8 @@ import {
     syncSidebarOnDeposit,
     syncStandaloneSummaryUpdate,
     initStandaloneTrainerSheet,
-    syncStandaloneTrainerRename
+    syncStandaloneTrainerRename,
+    broadcastPcPokemonDelete
 } from '../../utils/pc/pcStorageStoreOps';
 import { markDataChanged } from '../../utils/sync/storageAdapter';
 import OBR from '@owlbear-rodeo/sdk';
@@ -103,6 +104,10 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             set({ pcData: nextData });
             savePcStorage(nextData);
             markDataChanged();
+            if (!OBR.isAvailable && entityId) {
+                const camp = nextData.campaigns[nextData.activeCampaignId];
+                syncSidebarOnMoveToParty(camp?.trainers[trainerId], entityId);
+            }
         } catch (e) {
             console.error('[PcSlice] Failed to set party slot:', e);
         }
@@ -114,6 +119,10 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             set({ pcData: nextData });
             savePcStorage(nextData);
             markDataChanged();
+            if (!OBR.isAvailable && entityId) {
+                const camp = nextData.campaigns[nextData.activeCampaignId];
+                syncSidebarOnDeposit(camp, camp?.trainers[camp?.activeTrainerId], entityId, boxIndex);
+            }
         } catch (e) {
             console.error('[PcSlice] Failed to set box slot:', e);
         }
@@ -139,9 +148,9 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
         }
     },
 
-    movePokemonToParty: (entityId: string) => {
+    movePokemonToParty: (entityId: string, trainerId?: string) => {
         try {
-            const { nextData, success } = applyMovePokemonToParty(get().pcData, entityId);
+            const { nextData, success } = applyMovePokemonToParty(get().pcData, entityId, trainerId);
             if (!success) {
                 if (OBR.isAvailable) {
                     OBR.notification.show('Your Party is full (6/6)! Deposit a Pokémon first.', 'WARNING');
@@ -153,7 +162,8 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             markDataChanged();
 
             const camp = nextData.campaigns[nextData.activeCampaignId];
-            syncSidebarOnMoveToParty(camp?.trainers[camp?.activeTrainerId], entityId);
+            const targetTr = camp?.trainers[trainerId || camp?.activeTrainerId];
+            syncSidebarOnMoveToParty(targetTr, entityId);
             return true;
         } catch (e) {
             console.error('[PcSlice] Failed to move to party:', e);
@@ -161,14 +171,15 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
         }
     },
 
-    depositPokemonToBox: (entityId: string, boxIndex?: number) => {
+    depositPokemonToBox: (entityId: string, boxIndex?: number, trainerId?: string) => {
         try {
             const { pcData, activeBoxIndex } = get();
             const targetIdx = boxIndex ?? activeBoxIndex;
-            const { nextData, success } = applyDepositPokemonToBox(pcData, entityId, targetIdx);
+            const { nextData, success } = applyDepositPokemonToBox(pcData, entityId, targetIdx, trainerId);
             if (!success) {
                 const camp = pcData.campaigns[pcData.activeCampaignId];
-                const boxName = camp?.boxes[targetIdx]?.name || 'Box';
+                const targetTr = camp?.trainers[trainerId || camp?.activeTrainerId];
+                const boxName = (targetTr?.boxes?.[targetIdx] || camp?.boxes?.[targetIdx])?.name || 'Box';
                 if (OBR.isAvailable) {
                     OBR.notification.show(`Box "${boxName}" is full (30/30)!`, 'WARNING');
                 }
@@ -179,7 +190,8 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             markDataChanged();
 
             const camp = nextData.campaigns[nextData.activeCampaignId];
-            syncSidebarOnDeposit(camp, camp?.trainers[camp?.activeTrainerId], entityId, targetIdx);
+            const targetTr = camp?.trainers[trainerId || camp?.activeTrainerId];
+            syncSidebarOnDeposit(camp, targetTr, entityId, targetIdx);
             return true;
         } catch (e) {
             console.error('[PcSlice] Failed to deposit to box:', e);
@@ -285,10 +297,10 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
         }
     },
 
-    addTrainer: (name: string) => {
+    addTrainer: (name: string, options?: { existingCharacterId?: string; isLinked?: boolean }) => {
         try {
-            const { nextData, newId } = applyAddTrainer(get().pcData, name);
-            initStandaloneTrainerSheet(newId, name);
+            const { nextData, newId } = applyAddTrainer(get().pcData, name, options);
+            if (!options?.existingCharacterId) initStandaloneTrainerSheet(newId, name);
             set({ pcData: nextData });
             savePcStorage(nextData);
         } catch (e) {
@@ -474,21 +486,7 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             const nextData = applyDeleteSummary(pcData, entityId);
             set({ pcData: nextData, selectedPcSlot: null });
             savePcStorage(nextData);
-
-            if (OBR.isAvailable) {
-                OBR.broadcast
-                    .sendMessage(
-                        `${EXTENSION_ID}/pc-pokemon-delete`,
-                        {
-                            campaignId: pcData.activeCampaignId,
-                            entityId,
-                            pokemonName: options?.pokemonName || summary?.name || summary?.species,
-                            wasUnlinked: options?.wasUnlinked
-                        },
-                        { destination: 'REMOTE' }
-                    )
-                    .catch(() => {});
-            }
+            broadcastPcPokemonDelete(pcData.activeCampaignId, entityId, options, summary);
         } catch (e) {
             console.error('[PcSlice] Failed to delete pokemon from PC:', e);
         }

@@ -4,6 +4,7 @@ import { SidebarContextMenu } from './SidebarContextMenu';
 import { SidebarTreeNode } from './SidebarTreeNode';
 import { RestoreBackupModal } from './RestoreBackupModal';
 import { BackupModal } from './BackupModal';
+import { LegacyNestingModal } from './LegacyNestingModal';
 import { Menu, ChevronLeft, FolderPlus, FilePlus, Save, ArchiveRestore, AlertTriangle, X, Folder } from 'lucide-react';
 import { SidebarAvatar } from './SidebarAvatar';
 import './Sidebar.css';
@@ -59,7 +60,12 @@ export function Sidebar() {
         isTouchDragActive,
         handleItemTouchStart,
         isClickBlocked,
-        closeContextMenu
+        closeContextMenu,
+        isLegacyNestingModalOpen,
+        legacyNestedCount,
+        handleAutoFolderLegacyNesting,
+        handleFlattenLegacyNesting,
+        handleDismissLegacyNesting
     } = useSidebarEngine();
 
     useEffect(() => {
@@ -287,6 +293,16 @@ export function Sidebar() {
                     onMerge={confirmRestoreMerge}
                     onOverwrite={confirmRestoreOverwrite}
                     onCancel={cancelRestore}
+                />
+            )}
+
+            {/* Legacy Nested Sheets Modal */}
+            {isLegacyNestingModalOpen && (
+                <LegacyNestingModal
+                    count={legacyNestedCount}
+                    onAutoFolder={handleAutoFolderLegacyNesting}
+                    onFlatten={handleFlattenLegacyNesting}
+                    onClose={handleDismissLegacyNesting}
                 />
             )}
         </div>

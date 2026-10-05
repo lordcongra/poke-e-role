@@ -222,11 +222,13 @@ export function applySwapPcSlots(
 
 export function applyMovePokemonToParty(
     pcData: PcStorageData,
-    entityId: string
+    entityId: string,
+    targetTrainerId?: string
 ): { nextData: PcStorageData; success: boolean } {
     const camp = pcData.campaigns[pcData.activeCampaignId];
     if (!camp) return { nextData: pcData, success: false };
-    const trainer = camp.trainers[camp.activeTrainerId];
+    const effectiveTrainerId = targetTrainerId || camp.activeTrainerId;
+    const trainer = camp.trainers[effectiveTrainerId];
     const party = trainer ? trainer.party : camp.teamParty || Array(6).fill(null);
 
     // Prevent duplicate: if already in party, do nothing
@@ -245,8 +247,8 @@ export function applyMovePokemonToParty(
     nextParty[emptyIndex] = entityId;
 
     const nextTrainers = { ...camp.trainers };
-    if (trainer && nextTrainers[camp.activeTrainerId]) {
-        nextTrainers[camp.activeTrainerId] = {
+    if (trainer && nextTrainers[effectiveTrainerId]) {
+        nextTrainers[effectiveTrainerId] = {
             ...trainer,
             party: nextParty,
             boxes: nextBoxes
@@ -273,12 +275,14 @@ export function applyMovePokemonToParty(
 export function applyDepositPokemonToBox(
     pcData: PcStorageData,
     entityId: string,
-    targetIdx: number
+    targetIdx: number,
+    targetTrainerId?: string
 ): { nextData: PcStorageData; success: boolean } {
     const camp = pcData.campaigns[pcData.activeCampaignId];
     if (!camp) return { nextData: pcData, success: false };
 
-    const trainer = camp.trainers[camp.activeTrainerId];
+    const effectiveTrainerId = targetTrainerId || camp.activeTrainerId;
+    const trainer = camp.trainers[effectiveTrainerId];
     const party = trainer ? trainer.party : camp.teamParty || Array(6).fill(null);
     const trainerBoxes = getTrainerBoxes(trainer, camp);
     if (targetIdx < 0 || targetIdx >= trainerBoxes.length) return { nextData: pcData, success: false };
@@ -294,8 +298,8 @@ export function applyDepositPokemonToBox(
     nextBoxes[targetIdx].slots[emptySlot] = entityId;
 
     const nextTrainers = { ...camp.trainers };
-    if (trainer && nextTrainers[camp.activeTrainerId]) {
-        nextTrainers[camp.activeTrainerId] = {
+    if (trainer && nextTrainers[effectiveTrainerId]) {
+        nextTrainers[effectiveTrainerId] = {
             ...trainer,
             party: nextParty,
             boxes: nextBoxes
