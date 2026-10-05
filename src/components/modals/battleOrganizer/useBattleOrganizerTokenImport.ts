@@ -287,6 +287,17 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                                             stats['evasions-used'] = false;
                                             stats['clashes-used'] = false;
 
+                                            if (!item.metadata['pokerole-pmd-extension/stats']) {
+                                                item.metadata['pokerole-pmd-extension/stats'] = {};
+                                            }
+                                            const pmdStats = item.metadata['pokerole-pmd-extension/stats'] as Record<
+                                                string,
+                                                unknown
+                                            >;
+                                            pmdStats['actions-used'] = 0;
+                                            pmdStats['evasions-used'] = false;
+                                            pmdStats['clashes-used'] = false;
+
                                             item.metadata['actions-used'] = 0;
                                             item.metadata['evasions-used'] = false;
                                             item.metadata['clashes-used'] = false;

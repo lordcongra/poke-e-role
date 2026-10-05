@@ -126,6 +126,7 @@ export interface TempMove {
     rawAcc1?: string;
     rawAcc2?: string;
     rawDmg1?: string;
+    rawDmg2?: string;
     candidateAttrs?: string[];
     candidateDmgStats?: string[];
     candidateSkills?: string[];

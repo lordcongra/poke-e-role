@@ -105,6 +105,23 @@ export interface PrintConfig {
     blankSkills: boolean;
     blankAbilities: boolean;
     blankMoves: boolean;
+    blankItems?: boolean;
+    blankPassives?: boolean;
+
+    // Section Visibility Toggles
+    hidePortrait?: boolean;
+    hideCoreStats?: boolean;
+    hideSocialStats?: boolean;
+    hideCombatVitals?: boolean;
+    hideSkills?: boolean;
+    hideAbilities?: boolean;
+    hideMoves?: boolean;
+    hideItems?: boolean;
+    hidePassives?: boolean;
+    hideNotes?: boolean;
+    autoHideEmptySections?: boolean;
+
+    // Content Details
     hideMoveDesc: boolean;
     hideKnowledgeSkills: boolean;
     hideCustomSkills: boolean;
@@ -571,5 +588,6 @@ declare module './entityTypes' {
         rawAcc1?: string;
         rawAcc2?: string;
         rawDmg1?: string;
+        rawDmg2?: string;
     }
 }

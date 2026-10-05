@@ -124,6 +124,12 @@ export async function spawnPokemonToMap(
 
         const sumTempHp = Number(summary.fullMetadata?.['temporary-hit-points']) || 0;
         const sumTempWill = Number(summary.fullMetadata?.['temporary-will']) || 0;
+        const sumActions =
+            summary.fullMetadata?.['actions-used'] !== undefined ? Number(summary.fullMetadata['actions-used']) : 0;
+        const sumEvade = Boolean(summary.fullMetadata?.['evasions-used']);
+        const sumClash = Boolean(summary.fullMetadata?.['clashes-used']);
+        const sumChances = Number(summary.fullMetadata?.['chances-used']) || 0;
+        const sumFate = Number(summary.fullMetadata?.['fate-used']) || 0;
 
         const metadataObj: Record<string, unknown> = {
             ...(summary.fullMetadata || {}),
@@ -141,6 +147,11 @@ export async function spawnPokemonToMap(
             'temporary-hit-points-max': Number(summary.fullMetadata?.['temporary-hit-points-max']) || sumTempHp,
             'temporary-will': sumTempWill,
             'temporary-will-max': Number(summary.fullMetadata?.['temporary-will-max']) || sumTempWill,
+            'actions-used': sumActions,
+            'evasions-used': sumEvade,
+            'clashes-used': sumClash,
+            'chances-used': sumChances,
+            'fate-used': sumFate,
             rank: summary.rank || 'Starter',
             'token-image-url': resolvedImg.url,
             lastModified: summary.lastModified || Date.now()

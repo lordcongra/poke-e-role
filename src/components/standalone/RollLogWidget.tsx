@@ -3,7 +3,7 @@ import { imageManager } from '../../utils/graphics/imageManager';
 import { cropImageTransparencyUrl } from '../../utils/graphics/imageCropUtils';
 import { Dices, Trash2, ChevronDown, ChevronUp, X, Info } from 'lucide-react';
 import { parseRollLabel } from '../../utils/combat/rollLogParser';
-import { RollFactorsModal } from '../modals';
+import { RollFactorsModal } from '../modals/rollFactors';
 import './RollLogWidget.css';
 
 interface RollData {
@@ -73,6 +73,15 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
 
         resolveIcons();
 
+        return () => {
+            isMounted = false;
+        };
+    }, [rolls]);
+
+    // Permanent listener subscriptions across widget lifetime
+    useEffect(() => {
+        let isMounted = true;
+
         const handleUpdate = () => {
             try {
                 const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
@@ -92,7 +101,7 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
             window.removeEventListener('pkr-roll-log-update', handleUpdate);
             window.removeEventListener('storage', handleUpdate);
         };
-    }, [rolls]);
+    }, []);
 
     const dismiss = (id: string) => {
         try {

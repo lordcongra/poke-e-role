@@ -6,12 +6,16 @@ export const EXTENSION_ID = 'pokerole-pmd-extension';
 
 export interface RollSyncData {
     id: string;
-    targetVisibility: string;
-    playerId: string;
+    targetVisibility?: string;
+    playerId?: string;
     player: string;
+    characterName?: string;
+    tokenId?: string;
     label: string;
     result: string;
     icon: string;
+    rollType?: string;
+    isCrit?: boolean;
 }
 
 export interface TransformData {

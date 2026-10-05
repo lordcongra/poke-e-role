@@ -8,6 +8,7 @@ import {
     extractCharacterName,
     calculateBaseInitFromCharacterData
 } from '../../../utils/combat/initiativeHelpers';
+import { addRollLogEntry } from '../../../utils/combat/diceRoller';
 import type { BattleOrganizerState, BattleRoundData, CombatantRowData } from '../../../types/battleOrganizerTypes';
 import {
     STORAGE_KEY,
@@ -241,6 +242,15 @@ export function useBattleOrganizer() {
                             }
                         }
                         const total = base + roll;
+                        addRollLogEntry(
+                            `${c.name} rolled Initiative!`,
+                            `Total: ${total} (Base: ${base} + Roll: ${roll})`,
+                            c.image || '',
+                            c.name,
+                            c.name,
+                            c.tokenId,
+                            'init'
+                        );
                         return {
                             ...c,
                             baseInit: base,

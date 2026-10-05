@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import OBR from '@owlbear-rodeo/sdk';
 import type { CombatantRowData, RollLogLayoutMode } from '../../../types/battleOrganizerTypes';
 import { imageManager } from '../../../utils/graphics/imageManager';
 import { cropImageTransparencyUrl } from '../../../utils/graphics/imageCropUtils';
@@ -161,6 +162,15 @@ export function InModalRollLog({
 
         resolveIcons();
 
+        return () => {
+            isMounted = false;
+        };
+    }, [rolls, combatants]);
+
+    // Permanent listener subscriptions across InModalRollLog lifetime
+    useEffect(() => {
+        let isMounted = true;
+
         const handleReload = () => {
             try {
                 const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
@@ -181,13 +191,28 @@ export function InModalRollLog({
         window.addEventListener('pkr-roll-log-update', handleReload);
         window.addEventListener('storage', handleReload);
 
+        const unsubs: Array<() => void> = [];
+        if (OBR.isAvailable) {
+            unsubs.push(
+                OBR.broadcast.onMessage('pokerole-pmd-extension/roll-log-sync', () => {
+                    handleNewRoll();
+                })
+            );
+            unsubs.push(
+                OBR.broadcast.onMessage('pokerole-pmd-extension/roll-log-update', () => {
+                    handleReload();
+                })
+            );
+        }
+
         return () => {
             isMounted = false;
             window.removeEventListener('pkr-roll-log-event', handleNewRoll);
             window.removeEventListener('pkr-roll-log-update', handleReload);
             window.removeEventListener('storage', handleReload);
+            unsubs.forEach((unsub) => unsub());
         };
-    }, [rolls, combatants]);
+    }, []);
 
     const handleDismiss = (id: string) => {
         try {

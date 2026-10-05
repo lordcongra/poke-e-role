@@ -2,7 +2,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { isStandaloneMode } from '../sync/storageAdapter';
 import { calculateEncodedInitiative, calculateBaseInitFromCharacterData, sortCombatants } from './initiativeHelpers';
-import { isBattleOrganizerOpen } from '../../components/modals/battleOrganizer/battleOrganizerSettingsHelper';
+import { broadcastRollLog } from './rollLogSync';
 
 // Defines the structure exactly as saved in Local Storage
 export interface StandaloneCombatant {
@@ -15,7 +15,7 @@ export interface StandaloneCombatant {
     tiebreaker: number;
 }
 
-// Helper to push roll entries to local storage for the Standalone Roll Log widget
+// Universal helper to push and broadcast roll entries across the room
 export function addRollLogEntry(
     label: string,
     result: string,
@@ -28,6 +28,9 @@ export function addRollLogEntry(
 ) {
     const activeTokenId = tokenId || useCharacterStore.getState().tokenId || undefined;
     const detectedCrit = isCrit !== undefined ? isCrit : /critical hit/i.test(result) || /critical hit/i.test(label);
+    const state = useCharacterStore.getState();
+    const targetVisibility = state.identity.rolls === 'Private (GM)' ? 'gm_only' : 'everyone';
+
     const rollLogData = {
         id: crypto.randomUUID(),
         player,
@@ -37,18 +40,13 @@ export function addRollLogEntry(
         result,
         icon: icon || `${import.meta.env.BASE_URL || '/'}pokeball.svg`,
         rollType,
+        targetVisibility,
         isCrit: detectedCrit
     };
-    try {
-        const stored = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
-        const existing = Array.isArray(stored) ? stored : [];
-        localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existing].slice(0, 50)));
-        window.dispatchEvent(new CustomEvent('pkr-roll-log-event', { detail: rollLogData }));
-        window.dispatchEvent(new Event('pkr-roll-log-update'));
-        window.dispatchEvent(new Event('storage'));
-    } catch (e) {
-        console.error('[DiceRoller] Failed to log roll to localStorage:', e);
-    }
+
+    broadcastRollLog(rollLogData).catch((e) => {
+        console.error('[DiceRoller] Failed to broadcast roll from addRollLogEntry:', e);
+    });
 }
 
 export async function assignInitiative(tokenId: string, rollTotal: number, baseInit: number) {
@@ -251,34 +249,7 @@ export async function broadcastInfo(title: string, description: string) {
             targetVisibility
         };
 
-        let existingLog: Record<string, unknown>[] = [];
-        try {
-            const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
-            existingLog = Array.isArray(storedLog) ? storedLog : [];
-        } catch (parseError) {
-            console.warn('[DiceRoller] Roll log cache corrupted', parseError);
-        }
-        localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
-
-        window.dispatchEvent(new CustomEvent('pkr-roll-log-event', { detail: rollLogData }));
-        await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-sync', rollLogData, { destination: 'ALL' });
-        await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-update', {}, { destination: 'LOCAL' });
-
-        if (!isBattleOrganizerOpen()) {
-            const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-            await OBR.popover
-                .open({
-                    id: 'pkr-roll-log',
-                    url: `${baseUrl}/roll-log.html`,
-                    height: 380,
-                    width: 320,
-                    disableClickAway: true,
-                    anchorReference: 'POSITION',
-                    anchorPosition: { top: 99999, left: 99999 },
-                    transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
-                })
-                .catch((e) => console.warn('[DiceRoller] Failed to open roll log popover', e));
-        }
+        await broadcastRollLog(rollLogData);
     } catch (error) {
         console.error('[DiceRoller] Broadcast Info Error:', error);
     }
@@ -292,7 +263,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
     const playerName = state.identity.nickname || state.identity.species || 'Trainer';
     const icon = state.identity.tokenImageUrl || `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
 
-    if (diceEngine === 'car') {
+    if (diceEngine === 'car' || diceEngine === 'dice-plus') {
         const cleanNotation = notation.replace(/\s/g, '');
         const isSuccessRoll = cleanNotation.includes('>');
 
@@ -559,45 +530,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 isCrit
             };
 
-            try {
-                let existingLog: Record<string, unknown>[] = [];
-                try {
-                    const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
-                    existingLog = Array.isArray(storedLog) ? storedLog : [];
-                } catch (parseError) {
-                    console.warn('[DiceRoller] Roll log cache corrupted', parseError);
-                }
-                localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
-            } catch {
-                try {
-                    localStorage.removeItem('pkr_roll_log');
-                    localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData]));
-                } catch (e) {
-                    console.error('[DiceRoller] Local storage totally failed', e);
-                }
-            }
-
-            window.dispatchEvent(new CustomEvent('pkr-roll-log-event', { detail: rollLogData }));
-            await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-sync', rollLogData, {
-                destination: 'ALL'
-            });
-            await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-update', {}, { destination: 'LOCAL' });
-
-            if (!isBattleOrganizerOpen()) {
-                const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-                await OBR.popover
-                    .open({
-                        id: 'pkr-roll-log',
-                        url: `${baseUrl}/roll-log.html`,
-                        height: 380,
-                        width: 320,
-                        disableClickAway: true,
-                        anchorReference: 'POSITION',
-                        anchorPosition: { top: 99999, left: 99999 },
-                        transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
-                    })
-                    .catch((e) => console.warn('[DiceRoller] Roll log popover failed', e));
-            }
+            await broadcastRollLog(rollLogData);
         }, delayMs);
     }
 }

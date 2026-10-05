@@ -21,7 +21,7 @@ export function RestModal({ onClose }: RestModalProps) {
                     <Tent size={22} /> Take a Long Rest?
                 </h3>
                 <p className="rest-modal__description text-subtext">
-                    This will fully heal HP and Will, clear all Status Conditions, and reset Ignored Pain.
+                    This will fully heal HP and Will, reset Trackers and Temp HP/Will, and clear all Status Conditions.
                 </p>
                 <div className="rest-modal__actions">
                     <button

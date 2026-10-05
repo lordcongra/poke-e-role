@@ -28,10 +28,19 @@ export async function importBoxCloud(campaign: CampaignProfile): Promise<PcPokem
         for (const item of scene.items) {
             const meta = (item.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
             const entityId = (meta.entityId as string) || crypto.randomUUID();
-            const hpCurr = Number(meta['hp-curr']) || (typeof meta.hp === 'number' ? meta.hp : 10);
-            const hpMax = Number(meta['hp-max-display']) || (typeof meta.hpMax === 'number' ? meta.hpMax : 10);
-            const willCurr = Number(meta['will-curr']) || (typeof meta.will === 'number' ? meta.will : 5);
-            const willMax = Number(meta['will-max-display']) || (typeof meta.willMax === 'number' ? meta.willMax : 5);
+            const rawHpCurr = meta['hp-curr'] ?? meta.hp;
+            const hpCurr =
+                rawHpCurr !== undefined && rawHpCurr !== '' && !isNaN(Number(rawHpCurr)) ? Number(rawHpCurr) : 10;
+            const rawHpMax = meta['hp-max-display'] ?? meta.hpMax;
+            const hpMax = rawHpMax !== undefined && rawHpMax !== '' && !isNaN(Number(rawHpMax)) ? Number(rawHpMax) : 10;
+            const rawWillCurr = meta['will-curr'] ?? meta.will;
+            const willCurr =
+                rawWillCurr !== undefined && rawWillCurr !== '' && !isNaN(Number(rawWillCurr))
+                    ? Number(rawWillCurr)
+                    : 5;
+            const rawWillMax = meta['will-max-display'] ?? meta.willMax;
+            const willMax =
+                rawWillMax !== undefined && rawWillMax !== '' && !isNaN(Number(rawWillMax)) ? Number(rawWillMax) : 5;
             const rawType2 = meta.type2 as string | undefined;
             const cleanType2 =
                 rawType2 && rawType2.toLowerCase() !== 'none' && rawType2.trim() !== '' ? rawType2 : undefined;
@@ -175,10 +184,17 @@ export function restoreTokensIntoPcStorage(
         if (isClaimedByOther) {
             entityId = crypto.randomUUID();
         }
-        const hpCurr = Number(meta['hp-curr']) || (typeof meta.hp === 'number' ? meta.hp : 10);
-        const hpMax = Number(meta['hp-max-display']) || (typeof meta.hpMax === 'number' ? meta.hpMax : 10);
-        const willCurr = Number(meta['will-curr']) || (typeof meta.will === 'number' ? meta.will : 5);
-        const willMax = Number(meta['will-max-display']) || (typeof meta.willMax === 'number' ? meta.willMax : 5);
+        const rawHpCurr = meta['hp-curr'] ?? meta.hp;
+        const hpCurr =
+            rawHpCurr !== undefined && rawHpCurr !== '' && !isNaN(Number(rawHpCurr)) ? Number(rawHpCurr) : 10;
+        const rawHpMax = meta['hp-max-display'] ?? meta.hpMax;
+        const hpMax = rawHpMax !== undefined && rawHpMax !== '' && !isNaN(Number(rawHpMax)) ? Number(rawHpMax) : 10;
+        const rawWillCurr = meta['will-curr'] ?? meta.will;
+        const willCurr =
+            rawWillCurr !== undefined && rawWillCurr !== '' && !isNaN(Number(rawWillCurr)) ? Number(rawWillCurr) : 5;
+        const rawWillMax = meta['will-max-display'] ?? meta.willMax;
+        const willMax =
+            rawWillMax !== undefined && rawWillMax !== '' && !isNaN(Number(rawWillMax)) ? Number(rawWillMax) : 5;
         const tokenImg = (meta['token-image-url'] as string) || (item as { image?: { url?: string } }).image?.url;
         const rawType2 = meta.type2 as string | undefined;
         const cleanType2 =

@@ -214,9 +214,19 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
                                 rank: parsed.rank || 'Starter',
                                 type1: parsed.type1 || 'Normal',
                                 type2: parsed.type2,
-                                hp: Number(parsed['hp-curr']) || Number(parsed.hp) || 10,
+                                hp:
+                                    parsed['hp-curr'] !== undefined &&
+                                    parsed['hp-curr'] !== '' &&
+                                    !isNaN(Number(parsed['hp-curr']))
+                                        ? Number(parsed['hp-curr'])
+                                        : Number(parsed.hp) || 10,
                                 maxHp: Number(parsed['hp-max-display']) || Number(parsed.hpMax) || 10,
-                                will: Number(parsed['will-curr']) || Number(parsed.will) || 5,
+                                will:
+                                    parsed['will-curr'] !== undefined &&
+                                    parsed['will-curr'] !== '' &&
+                                    !isNaN(Number(parsed['will-curr']))
+                                        ? Number(parsed['will-curr'])
+                                        : Number(parsed.will) || 5,
                                 maxWill: Number(parsed['will-max-display']) || Number(parsed.willMax) || 5,
                                 tokenImageUrl: parsed['token-image-url'] || parsed.tokenImageUrl,
                                 isOnMap: false,

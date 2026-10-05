@@ -1,4 +1,4 @@
-import type { CharacterState, TransformationType } from '../../store/storeTypes';
+import type { CharacterState } from '../../store/storeTypes';
 
 /**
  * Sanitizes legacy backup strings to avoid bloating token metadata.
@@ -24,8 +24,9 @@ function sanitizeBackup(
 /**
  * Serializes Zustand character state into a flat, lightweight Owlbear Rodeo metadata dictionary.
  *
- * Performance & Optimization Safeguards:
- * 1. Safely omits default zeroes, empty strings, and empty JSON structures (shaves ~70% of redundant keys).
+ * Performance & Serialization Safeguards:
+ * 1. Explicitly serializes numeric zeroes, boolean flags, and empty collection arrays
+ *    to guarantee shallow delta merging (Object.assign) correctly overwrites stale token state.
  * 2. 100% Preservation of player modifications: Custom power, stat scaling, tags, descriptions,
  *    and homebrew moves/items are NEVER stripped or lost.
  * 3. 100% Backward-compatible with existing tokens and older extension versions.
@@ -35,22 +36,21 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
 
     try {
         // --- ROOT FIELDS ---
-        if (state.notes && state.notes.trim() !== '') flatMetadata['notes'] = state.notes;
-        if (state.tp !== undefined && state.tp !== 0) flatMetadata['training-points'] = state.tp;
-        if (state.currency !== undefined && state.currency !== 0) flatMetadata['currency'] = state.currency;
+        if (state.notes !== undefined) flatMetadata['notes'] = state.notes;
+        if (state.tp !== undefined) flatMetadata['training-points'] = state.tp;
+        if (state.currency !== undefined) flatMetadata['currency'] = state.currency;
 
         // --- IDENTITY FIELDS ---
         if (state.identity) {
             const id = state.identity;
             if (id.entityId && id.entityId !== '') flatMetadata['entityId'] = id.entityId;
-            if (id.nickname !== undefined && id.nickname !== '') flatMetadata['nickname'] = id.nickname;
+            if (id.nickname !== undefined) flatMetadata['nickname'] = id.nickname;
             if (id.species !== undefined && id.species !== '') flatMetadata['species'] = id.species;
             if (id.nature !== undefined && id.nature !== '') flatMetadata['nature'] = id.nature;
             if (id.ability !== undefined && id.ability !== '') flatMetadata['ability'] = id.ability;
-            if (id.abilityActive) flatMetadata['ability-active'] = true;
-            if (id.abilityBoostActive) flatMetadata['ability-boost-active'] = true;
-            if (id.abilityBoostLevel !== undefined && id.abilityBoostLevel !== 0)
-                flatMetadata['ability-boost-level'] = id.abilityBoostLevel;
+            flatMetadata['ability-active'] = id.abilityActive !== false;
+            flatMetadata['ability-boost-active'] = Boolean(id.abilityBoostActive);
+            flatMetadata['ability-boost-level'] = id.abilityBoostLevel ?? 0;
             if (id.abilityTags !== undefined && id.abilityTags !== '') flatMetadata['ability-tags'] = id.abilityTags;
             if (id.availableAbilities && id.availableAbilities.length > 0)
                 flatMetadata['ability-list'] = id.availableAbilities.join(',');
@@ -67,7 +67,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (id.combat !== undefined && id.combat !== '') flatMetadata['combat'] = id.combat;
             if (id.social !== undefined && id.social !== '') flatMetadata['social'] = id.social;
             if (id.hand !== undefined && id.hand !== '') flatMetadata['hand'] = id.hand;
-            if (id.isNPC) flatMetadata['is-npc'] = true;
+            flatMetadata['is-npc'] = Boolean(id.isNPC);
 
             // Locks (explicitly write true or false to ensure re-locking overwrites previous false on tokens)
             flatMetadata['core-locked'] = id.coreLocked !== false;
@@ -77,28 +77,25 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
 
             // Forms & Images
             if (id.tokenImageUrl) flatMetadata['token-image-url'] = id.tokenImageUrl;
-            if (id.activeTransformation && id.activeTransformation !== ('None' as TransformationType))
-                flatMetadata['active-transformation'] = id.activeTransformation;
-            if (id.activeFormId && id.activeFormId !== '') flatMetadata['active-form-id'] = id.activeFormId;
+            if (id.activeTransformation !== undefined) flatMetadata['active-transformation'] = id.activeTransformation;
+            if (id.activeFormId !== undefined) flatMetadata['active-form-id'] = id.activeFormId;
 
-            if (id.formSaves && Object.keys(id.formSaves).length > 0)
-                flatMetadata['form-saves'] = JSON.stringify(id.formSaves);
-            if (id.customFormConfig && Object.keys(id.customFormConfig).length > 0)
+            if (id.formSaves !== undefined) flatMetadata['form-saves'] = JSON.stringify(id.formSaves);
+            if (id.customFormConfig !== undefined)
                 flatMetadata['custom-form-config'] = JSON.stringify(id.customFormConfig);
-            if (id.customFormImages && Object.keys(id.customFormImages).length > 0)
+            if (id.customFormImages !== undefined)
                 flatMetadata['custom-form-images'] = JSON.stringify(id.customFormImages);
-            if (id.badges && id.badges.length > 0) flatMetadata['badges-data'] = JSON.stringify(id.badges);
+            if (id.badges !== undefined) flatMetadata['badges-data'] = JSON.stringify(id.badges);
 
-            if (id.terastallizeAffinity && id.terastallizeAffinity !== '')
-                flatMetadata['terastallize-affinity'] = id.terastallizeAffinity;
-            if (id.terastallizeBonusActive) flatMetadata['terastallize-bonus-active'] = true;
+            if (id.terastallizeAffinity !== undefined) flatMetadata['terastallize-affinity'] = id.terastallizeAffinity;
+            flatMetadata['terastallize-bonus-active'] = Boolean(id.terastallizeBonusActive);
 
             if (id.megaImageUrl) flatMetadata['mega-image-url'] = id.megaImageUrl;
             if (id.maxImageUrl) flatMetadata['max-image-url'] = id.maxImageUrl;
             if (id.teraImageUrl) flatMetadata['tera-image-url'] = id.teraImageUrl;
 
-            if (id.customFormFirstHitAccActive) flatMetadata['custom-form-first-hit-acc'] = true;
-            if (id.customFormFirstHitDmgActive) flatMetadata['custom-form-first-hit-dmg'] = true;
+            flatMetadata['custom-form-first-hit-acc'] = Boolean(id.customFormFirstHitAccActive);
+            flatMetadata['custom-form-first-hit-dmg'] = Boolean(id.customFormFirstHitDmgActive);
 
             // Pokédex Info
             if (id.dexId && id.dexId !== '') flatMetadata['dex-id'] = id.dexId;
@@ -107,43 +104,41 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (id.weight && id.weight !== '') flatMetadata['weight'] = id.weight;
             if (id.dexDescription && id.dexDescription !== '') flatMetadata['dex-description'] = id.dexDescription;
 
-            // UI & Trackers (only write if altered from defaults)
-            if (id.showTrackers === false) flatMetadata['show-trackers'] = false;
-            if (id.settingHpBar === false) flatMetadata['setting-hp-bar'] = false;
-            if (id.gmHpBar === true) flatMetadata['gm-hp-bar'] = true;
-            if (id.settingHpText === false) flatMetadata['setting-hp-text'] = false;
-            if (id.gmHpText === true) flatMetadata['gm-hp-text'] = true;
-            if (id.settingWillBar === false) flatMetadata['setting-will-bar'] = false;
-            if (id.gmWillBar === true) flatMetadata['gm-will-bar'] = true;
-            if (id.settingWillText === false) flatMetadata['setting-will-text'] = false;
-            if (id.gmWillText === true) flatMetadata['gm-will-text'] = true;
-            if (id.settingDefBadge === false) flatMetadata['setting-def-badge'] = false;
-            if (id.gmDefBadge === true) flatMetadata['gm-def-badge'] = true;
-            if (id.settingEcoBadge === false) flatMetadata['setting-eco-badge'] = false;
-            if (id.gmEcoBadge === true) flatMetadata['gm-eco-badge'] = true;
+            // UI & Trackers (symmetrically persist booleans so toggling off/on updates merged token metadata)
+            flatMetadata['show-trackers'] = id.showTrackers !== false;
+            flatMetadata['setting-hp-bar'] = id.settingHpBar !== false;
+            flatMetadata['gm-hp-bar'] = Boolean(id.gmHpBar);
+            flatMetadata['setting-hp-text'] = id.settingHpText !== false;
+            flatMetadata['gm-hp-text'] = Boolean(id.gmHpText);
+            flatMetadata['setting-will-bar'] = id.settingWillBar !== false;
+            flatMetadata['gm-will-bar'] = Boolean(id.gmWillBar);
+            flatMetadata['setting-will-text'] = id.settingWillText !== false;
+            flatMetadata['gm-will-text'] = Boolean(id.gmWillText);
+            flatMetadata['setting-def-badge'] = id.settingDefBadge !== false;
+            flatMetadata['gm-def-badge'] = Boolean(id.gmDefBadge);
+            flatMetadata['setting-eco-badge'] = id.settingEcoBadge !== false;
+            flatMetadata['gm-eco-badge'] = Boolean(id.gmEcoBadge);
 
-            if (id.colorAct && id.colorAct !== '#4890fc') flatMetadata['color-act'] = id.colorAct;
-            if (id.colorEva && id.colorEva !== '#c387fc') flatMetadata['color-eva'] = id.colorEva;
-            if (id.colorCla && id.colorCla !== '#dfad43') flatMetadata['color-cla'] = id.colorCla;
+            if (id.colorAct !== undefined) flatMetadata['color-act'] = id.colorAct;
+            if (id.colorEva !== undefined) flatMetadata['color-eva'] = id.colorEva;
+            if (id.colorCla !== undefined) flatMetadata['color-cla'] = id.colorCla;
 
-            if (id.trackerScale !== undefined && id.trackerScale !== 100)
-                flatMetadata['tracker-scale'] = id.trackerScale;
-            if (id.trackerLayer !== undefined && id.trackerLayer !== 'ATTACHMENT')
-                flatMetadata['tracker-layer'] = id.trackerLayer;
-            if (id.xOffset) flatMetadata['x-offset'] = id.xOffset;
-            if (id.yOffset) flatMetadata['y-offset'] = id.yOffset;
-            if (id.hpOffsetX) flatMetadata['hp-offset-x'] = id.hpOffsetX;
-            if (id.hpOffsetY) flatMetadata['hp-offset-y'] = id.hpOffsetY;
-            if (id.willOffsetX) flatMetadata['will-offset-x'] = id.willOffsetX;
-            if (id.willOffsetY) flatMetadata['will-offset-y'] = id.willOffsetY;
-            if (id.defOffsetX) flatMetadata['def-offset-x'] = id.defOffsetX;
-            if (id.defOffsetY) flatMetadata['def-offset-y'] = id.defOffsetY;
-            if (id.actOffsetX) flatMetadata['act-offset-x'] = id.actOffsetX;
-            if (id.actOffsetY) flatMetadata['act-offset-y'] = id.actOffsetY;
-            if (id.evaOffsetX) flatMetadata['eva-offset-x'] = id.evaOffsetX;
-            if (id.evaOffsetY) flatMetadata['eva-offset-y'] = id.evaOffsetY;
-            if (id.claOffsetX) flatMetadata['cla-offset-x'] = id.claOffsetX;
-            if (id.claOffsetY) flatMetadata['cla-offset-y'] = id.claOffsetY;
+            flatMetadata['tracker-scale'] = id.trackerScale ?? 100;
+            flatMetadata['tracker-layer'] = id.trackerLayer ?? 'ATTACHMENT';
+            flatMetadata['x-offset'] = id.xOffset ?? 0;
+            flatMetadata['y-offset'] = id.yOffset ?? 0;
+            flatMetadata['hp-offset-x'] = id.hpOffsetX ?? 0;
+            flatMetadata['hp-offset-y'] = id.hpOffsetY ?? 0;
+            flatMetadata['will-offset-x'] = id.willOffsetX ?? 0;
+            flatMetadata['will-offset-y'] = id.willOffsetY ?? 0;
+            flatMetadata['def-offset-x'] = id.defOffsetX ?? 0;
+            flatMetadata['def-offset-y'] = id.defOffsetY ?? 0;
+            flatMetadata['act-offset-x'] = id.actOffsetX ?? 0;
+            flatMetadata['act-offset-y'] = id.actOffsetY ?? 0;
+            flatMetadata['eva-offset-x'] = id.evaOffsetX ?? 0;
+            flatMetadata['eva-offset-y'] = id.evaOffsetY ?? 0;
+            flatMetadata['cla-offset-x'] = id.claOffsetX ?? 0;
+            flatMetadata['cla-offset-y'] = id.claOffsetY ?? 0;
 
             if (id.themePrimaryOverride) flatMetadata['theme-primary-override'] = id.themePrimaryOverride;
             if (id.themeSecondaryOverride) flatMetadata['theme-secondary-override'] = id.themeSecondaryOverride;
@@ -160,20 +155,16 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.health.hpCurr !== undefined) flatMetadata['hp-curr'] = state.health.hpCurr;
             if (state.health.hpMax !== undefined) flatMetadata['hp-max-display'] = state.health.hpMax;
             if (state.health.hpBase !== undefined) flatMetadata['hp-base'] = state.health.hpBase;
-            if (state.health.temporaryHitPoints !== undefined && state.health.temporaryHitPoints > 0)
-                flatMetadata['temporary-hit-points'] = state.health.temporaryHitPoints;
-            if (state.health.temporaryHitPointsMax !== undefined && state.health.temporaryHitPointsMax > 0)
-                flatMetadata['temporary-hit-points-max'] = state.health.temporaryHitPointsMax;
+            flatMetadata['temporary-hit-points'] = state.health.temporaryHitPoints ?? 0;
+            flatMetadata['temporary-hit-points-max'] = state.health.temporaryHitPointsMax ?? 0;
         }
 
         if (state.will) {
             if (state.will.willCurr !== undefined) flatMetadata['will-curr'] = state.will.willCurr;
             if (state.will.willMax !== undefined) flatMetadata['will-max-display'] = state.will.willMax;
             if (state.will.willBase !== undefined) flatMetadata['will-base'] = state.will.willBase;
-            if (state.will.temporaryWill !== undefined && state.will.temporaryWill > 0)
-                flatMetadata['temporary-will'] = state.will.temporaryWill;
-            if (state.will.temporaryWillMax !== undefined && state.will.temporaryWillMax > 0)
-                flatMetadata['temporary-will-max'] = state.will.temporaryWillMax;
+            flatMetadata['temporary-will'] = state.will.temporaryWill ?? 0;
+            flatMetadata['temporary-will-max'] = state.will.temporaryWillMax ?? 0;
         }
 
         // --- DERIVED & EXTRAS ---
@@ -187,37 +178,35 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
         }
 
         if (state.extras) {
-            if (state.extras.core) flatMetadata['extra-core'] = state.extras.core;
-            if (state.extras.social) flatMetadata['extra-social'] = state.extras.social;
-            if (state.extras.skill) flatMetadata['extra-skill'] = state.extras.skill;
+            if (state.extras.core !== undefined) flatMetadata['extra-core'] = state.extras.core;
+            if (state.extras.social !== undefined) flatMetadata['extra-social'] = state.extras.social;
+            if (state.extras.skill !== undefined) flatMetadata['extra-skill'] = state.extras.skill;
         }
 
-        // --- TRACKERS (Only write non-zero/active values) ---
+        // --- TRACKERS (Explicitly persist zero and false values to prevent stale metadata leaks) ---
         if (state.trackers) {
             const tr = state.trackers;
-            if (tr.actions) flatMetadata['actions-used'] = tr.actions;
-            if (tr.evade) flatMetadata['evasions-used'] = true;
-            if (tr.clash) flatMetadata['clashes-used'] = true;
-            if (tr.chances) flatMetadata['chances-used'] = tr.chances;
-            if (tr.fate) flatMetadata['fate-used'] = tr.fate;
+            flatMetadata['actions-used'] = tr.actions !== undefined ? tr.actions : 0;
+            flatMetadata['evasions-used'] = Boolean(tr.evade);
+            flatMetadata['clashes-used'] = Boolean(tr.clash);
+            flatMetadata['chances-used'] = tr.chances ?? 0;
+            flatMetadata['fate-used'] = tr.fate ?? 0;
 
-            if (tr.globalAcc) flatMetadata['global-acc-mod'] = tr.globalAcc;
-            if (tr.globalDmg) flatMetadata['global-dmg-mod'] = tr.globalDmg;
-            if (tr.globalSucc) flatMetadata['global-succ-mod'] = tr.globalSucc;
-            if (tr.globalChance) flatMetadata['global-chance-mod'] = tr.globalChance;
-            if (tr.ignoredPain) flatMetadata['ignored-pain-mod'] = tr.ignoredPain;
+            flatMetadata['global-acc-mod'] = tr.globalAcc ?? 0;
+            flatMetadata['global-dmg-mod'] = tr.globalDmg ?? 0;
+            flatMetadata['global-succ-mod'] = tr.globalSucc ?? 0;
+            flatMetadata['global-chance-mod'] = tr.globalChance ?? 0;
+            flatMetadata['ignored-pain-mod'] = tr.ignoredPain ?? 0;
 
-            if (tr.firstHitAcc) flatMetadata['first-hit-acc-active'] = true;
-            if (tr.firstHitDmg) flatMetadata['first-hit-dmg-active'] = true;
+            flatMetadata['first-hit-acc-active'] = Boolean(tr.firstHitAcc);
+            flatMetadata['first-hit-dmg-active'] = Boolean(tr.firstHitDmg);
 
-            if (tr.bankedAccDice && Object.keys(tr.bankedAccDice).length > 0)
-                flatMetadata['banked-acc-dice'] = JSON.stringify(tr.bankedAccDice);
-            if (tr.boostLevels && Object.keys(tr.boostLevels).length > 0)
-                flatMetadata['boost-levels'] = JSON.stringify(tr.boostLevels);
+            flatMetadata['banked-acc-dice'] = JSON.stringify(tr.bankedAccDice || {});
+            flatMetadata['boost-levels'] = JSON.stringify(tr.boostLevels || {});
         }
 
         // --- MOVES DATA (100% Fidelity: preserves custom power, scaling, tags, and descriptions) ---
-        if (state.moves && state.moves.length > 0) {
+        if (state.moves !== undefined) {
             const cleanedMoves = state.moves.map((m) => {
                 const item: Record<string, unknown> = {
                     id: m.id,
@@ -238,7 +227,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
         }
 
         // --- INVENTORY DATA (100% Fidelity: preserves custom items, tags, descriptions, boost levels) ---
-        if (state.inventory && state.inventory.length > 0) {
+        if (state.inventory !== undefined) {
             const cleanedInv = state.inventory.map((item) => {
                 const entry: Record<string, unknown> = {
                     id: item.id,
@@ -247,32 +236,28 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
                 };
                 if (item.desc && item.desc.trim() !== '') entry.desc = item.desc;
                 if (item.tags && item.tags.trim() !== '') entry.tags = item.tags;
-                if (item.active !== undefined && item.active !== false) entry.active = item.active;
+                if (item.active !== undefined) entry.active = item.active;
                 if (item.imageUrl && item.imageUrl !== 'none') entry.imageUrl = item.imageUrl;
-                if (item.showInRollLog !== undefined && item.showInRollLog !== true)
-                    entry.showInRollLog = item.showInRollLog;
-                if (item.boostLevel !== undefined && item.boostLevel !== 0) entry.boostLevel = item.boostLevel;
+                if (item.showInRollLog !== undefined) entry.showInRollLog = item.showInRollLog;
+                if (item.boostLevel !== undefined) entry.boostLevel = item.boostLevel;
                 return entry;
             });
             flatMetadata['inv-data'] = JSON.stringify(cleanedInv);
         }
 
-        // --- OPTIONAL COLLECTIONS (Only serialize if non-empty) ---
-        if (state.wishlist && state.wishlist.length > 0)
-            flatMetadata['moves-wishlist-data'] = JSON.stringify(state.wishlist);
-        if (state.passives && state.passives.length > 0) flatMetadata['passives-data'] = JSON.stringify(state.passives);
-        if (state.skillChecks && state.skillChecks.length > 0)
-            flatMetadata['skill-checks-data'] = JSON.stringify(state.skillChecks);
-        if (state.extraCategories && state.extraCategories.length > 0)
+        // --- OPTIONAL COLLECTIONS (Explicitly serialize to allow emptying lists) ---
+        if (state.wishlist !== undefined) flatMetadata['moves-wishlist-data'] = JSON.stringify(state.wishlist);
+        if (state.passives !== undefined) flatMetadata['passives-data'] = JSON.stringify(state.passives);
+        if (state.skillChecks !== undefined) flatMetadata['skill-checks-data'] = JSON.stringify(state.skillChecks);
+        if (state.extraCategories !== undefined)
             flatMetadata['extra-skills-data'] = JSON.stringify(state.extraCategories);
 
-        if (state.statuses) {
+        if (state.statuses !== undefined) {
             flatMetadata['status-list'] = JSON.stringify(state.statuses);
         }
 
-        if (state.effects && state.effects.length > 0) flatMetadata['effects-data'] = JSON.stringify(state.effects);
-        if (state.customInfo && state.customInfo.length > 0)
-            flatMetadata['custom-info-data'] = JSON.stringify(state.customInfo);
+        if (state.effects !== undefined) flatMetadata['effects-data'] = JSON.stringify(state.effects);
+        if (state.customInfo !== undefined) flatMetadata['custom-info-data'] = JSON.stringify(state.customInfo);
 
         // --- STATS, SOCIALS, SKILLS LOOP (Explicitly persist zero ranks/buffs to prevent stale metadata leaks) ---
         if (state.stats) {
@@ -299,7 +284,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             Object.entries(state.skills).forEach(([skill, vals]) => {
                 flatMetadata[`${skill}-base`] = vals.base ?? 0;
                 flatMetadata[`${skill}-buff`] = vals.buff ?? 0;
-                if (vals.customName && vals.customName.trim() !== '') flatMetadata[`label-${skill}`] = vals.customName;
+                flatMetadata[`label-${skill}`] = vals.customName ?? '';
             });
         }
     } catch (error) {

@@ -187,9 +187,17 @@ export async function spawnTrainerAndTeam(
                 if (shouldGeneratePc && idx < 6) {
                     generatedPartyIds.push(pokeId);
                     const hpMax = Number(member.metadata['hp-max-display']) || 10;
-                    const hpCurr = Number(member.metadata['hp-curr']) || hpMax;
+                    const rawHpCurr = member.metadata['hp-curr'];
+                    const hpCurr =
+                        rawHpCurr !== undefined && rawHpCurr !== null && !isNaN(Number(rawHpCurr))
+                            ? Number(rawHpCurr)
+                            : hpMax;
                     const willMax = Number(member.metadata['will-max-display']) || 5;
-                    const willCurr = Number(member.metadata['will-curr']) || willMax;
+                    const rawWillCurr = member.metadata['will-curr'];
+                    const willCurr =
+                        rawWillCurr !== undefined && rawWillCurr !== null && !isNaN(Number(rawWillCurr))
+                            ? Number(rawWillCurr)
+                            : willMax;
                     newSummaries[pokeId] = {
                         entityId: pokeId,
                         name: member.species,

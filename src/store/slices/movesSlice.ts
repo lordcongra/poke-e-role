@@ -109,64 +109,79 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
             if (!data) return state;
 
             const mapAttrOptions = (val: string) => {
-                const options = (val || '')
-                    .split('/')
-                    .map((v) => {
-                        const clean = v.toLowerCase().trim();
-                        if (clean.includes('str')) return 'str';
-                        if (clean.includes('dex')) return 'dex';
-                        if (clean.includes('vit')) return 'vit';
-                        if (clean.includes('spe')) return 'spe';
-                        if (clean.includes('ins')) return 'ins';
-                        if (clean.includes('will')) return 'will';
-                        if (clean.includes('tou')) return 'tou';
-                        if (clean.includes('coo')) return 'coo';
-                        if (clean.includes('bea')) return 'bea';
-                        if (clean.includes('cut')) return 'cut';
-                        if (clean.includes('cle')) return 'cle';
-                        return '';
-                    })
+                const rawParts = (val || '')
+                    .split(/[/,]|(?:\s+or\s+)/i)
+                    .map((v) => v.trim())
                     .filter(Boolean);
+                const options: string[] = [];
+                for (const clean of rawParts.map((v) => v.toLowerCase())) {
+                    let matched = '';
+                    if (clean.includes('str')) matched = 'str';
+                    else if (clean.includes('dex')) matched = 'dex';
+                    else if (clean.includes('vit')) matched = 'vit';
+                    else if (clean.includes('spe')) matched = 'spe';
+                    else if (clean.includes('ins')) matched = 'ins';
+                    else if (clean.includes('will')) matched = 'will';
+                    else if (clean.includes('tou')) matched = 'tou';
+                    else if (clean.includes('coo')) matched = 'coo';
+                    else if (clean.includes('bea')) matched = 'bea';
+                    else if (clean.includes('cut')) matched = 'cut';
+                    else if (clean.includes('cle')) matched = 'cle';
+                    if (matched && !options.includes(matched)) {
+                        options.push(matched);
+                    }
+                }
                 return options.length > 0 ? options : [''];
             };
 
             const mapSkillOptions = (val: string) => {
-                const options = (val || '')
-                    .split('/')
-                    .map((v) => {
-                        const clean = v.toLowerCase().trim();
-                        const skills = [
-                            'brawl',
-                            'channel',
-                            'clash',
-                            'evasion',
-                            'alert',
-                            'athletic',
-                            'nature',
-                            'stealth',
-                            'charm',
-                            'etiquette',
-                            'intimidate',
-                            'perform',
-                            'crafts',
-                            'lore',
-                            'medicine',
-                            'magic'
-                        ];
+                const rawParts = (val || '')
+                    .split(/[/,]|(?:\s+or\s+)/i)
+                    .map((v) => v.trim())
+                    .filter(Boolean);
+                const options: string[] = [];
+                const skills = [
+                    'brawl',
+                    'channel',
+                    'clash',
+                    'evasion',
+                    'alert',
+                    'athletic',
+                    'nature',
+                    'stealth',
+                    'charm',
+                    'etiquette',
+                    'intimidate',
+                    'perform',
+                    'crafts',
+                    'lore',
+                    'medicine',
+                    'magic'
+                ];
 
-                        for (const s of skills) {
-                            if (clean.includes(s)) return s;
+                for (const clean of rawParts.map((v) => v.toLowerCase())) {
+                    let matched = '';
+                    for (const s of skills) {
+                        if (clean.includes(s)) {
+                            matched = s;
+                            break;
                         }
-
+                    }
+                    if (!matched) {
                         for (const cat of state.extraCategories) {
                             for (const sk of cat.skills) {
-                                if (clean === sk.id.toLowerCase() || (sk.name && clean === sk.name.toLowerCase()))
-                                    return sk.id;
+                                if (clean === sk.id.toLowerCase() || (sk.name && clean === sk.name.toLowerCase())) {
+                                    matched = sk.id;
+                                    break;
+                                }
                             }
+                            if (matched) break;
                         }
-                        return 'none';
-                    })
-                    .filter(Boolean);
+                    }
+                    if (matched && !options.includes(matched)) {
+                        options.push(matched);
+                    }
+                }
                 return options.length > 0 ? options : ['none'];
             };
 
@@ -188,7 +203,12 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
 
                     const acc1Opts = mapAttrOptions(String(data.Accuracy1 || 'str'));
                     const acc2Opts = mapSkillOptions(String(data.Accuracy2 || 'none'));
-                    const dmg1Opts = mapAttrOptions(String(data.Damage1 === 'None' ? '' : data.Damage1 || ''));
+
+                    // Combine Damage1 and Damage2 to capture both "Strength/Dexterity" and Damage1: Strength, Damage2: Dexterity
+                    const rawDamageCandidate = [data.Damage1, data.Damage2]
+                        .filter((d) => d && d !== 'None' && String(d).trim() !== '')
+                        .join('/');
+                    const dmg1Opts = mapAttrOptions(rawDamageCandidate);
 
                     if (acc1Opts.length > 1 || acc2Opts.length > 1 || dmg1Opts.length > 1 || catOpts) {
                         newPendingDualScale = {
@@ -206,18 +226,42 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                         const trimmed = raw.trim();
                         if (!trimmed) return '';
                         return trimmed
-                            .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-                            .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
-                            .trim();
+                            .split('/')
+                            .map((segment) =>
+                                segment
+                                    .trim()
+                                    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+                                    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+                                    .trim()
+                            )
+                            .join(' / ');
+                    };
+
+                    const formatDamageDesc = (dmg1?: string, dmg2?: string): string => {
+                        const d1 = formatStatName(dmg1);
+                        const d2 = formatStatName(dmg2);
+                        if (!d1 && !d2) return 'None';
+                        if (!d2 || d2 === 'None') return d1 || 'None';
+                        if (!d1 || d1 === 'None') return d2;
+
+                        const d2Attrs = mapAttrOptions(d2);
+                        const isD2Attribute = d2Attrs.length > 0 && d2Attrs[0] !== '';
+                        if (isD2Attribute) {
+                            return `${d1} / ${d2}`;
+                        }
+                        return `${d1} + ${d2}`;
                     };
 
                     const rawAcc1 = formatStatName(String(data.Accuracy1 || 'STR'));
                     const rawAcc2 = formatStatName(String(data.Accuracy2 || 'None'));
-                    const rawDmg1 = formatStatName(String(data.Damage1 || 'None'));
+                    const rawDmgDesc = formatDamageDesc(
+                        data.Damage1 !== undefined ? String(data.Damage1) : undefined,
+                        data.Damage2 !== undefined ? String(data.Damage2) : undefined
+                    );
 
                     const accString =
                         rawAcc2.toLowerCase() === 'none' ? `Accuracy: ${rawAcc1}` : `Accuracy: ${rawAcc1} + ${rawAcc2}`;
-                    const dmgString = cat === 'Status' ? '' : `Damage: ${rawDmg1}`;
+                    const dmgString = cat === 'Status' ? '' : `Damage: ${rawDmgDesc}`;
 
                     const rawDesc = String(data.Effect || data.Description || m.desc || '');
                     const retainedTags = rawDesc.match(/\[.*?\]/g)?.join(' ') || '';

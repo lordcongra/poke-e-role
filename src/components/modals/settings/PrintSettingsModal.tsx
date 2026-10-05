@@ -1,17 +1,64 @@
 import { Printer, X } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
+import type { PrintConfig } from '../../../store/storeTypes';
 import './PrintSettingsModal.css';
 
 interface PrintSettingsModalProps {
     onClose: () => void;
 }
 
+interface ToggleOption {
+    key: keyof PrintConfig;
+    label: string;
+    fullWidth?: boolean;
+}
+
+const SECTION_VISIBILITY_OPTIONS: ToggleOption[] = [
+    { key: 'hidePortrait', label: 'Hide Portrait' },
+    { key: 'hideCoreStats', label: 'Hide Core Stats' },
+    { key: 'hideSocialStats', label: 'Hide Social Stats' },
+    { key: 'hideCombatVitals', label: 'Hide Combat Vitals' },
+    { key: 'hideSkills', label: 'Hide Skills' },
+    { key: 'hideAbilities', label: 'Hide Abilities' },
+    { key: 'hideMoves', label: 'Hide Moves' },
+    { key: 'hideItems', label: 'Hide Items' },
+    { key: 'hidePassives', label: 'Hide Passives' },
+    { key: 'hideNotes', label: 'Hide Notes' },
+    { key: 'autoHideEmptySections', label: 'Auto-hide Empty Sections', fullWidth: true }
+];
+
+const CONTENT_VISIBILITY_OPTIONS: ToggleOption[] = [
+    { key: 'hideMoveDesc', label: 'Hide Move Descriptions' },
+    { key: 'hideKnowledgeSkills', label: 'Hide Knowledge Skills' },
+    { key: 'hideCustomSkills', label: 'Hide Custom Skills' },
+    { key: 'hideAge', label: 'Hide Age (Gender Only)' },
+    { key: 'showOnlyActiveAbility', label: 'Show Active Ability Only' },
+    { key: 'compactMode', label: 'Compact Layout (Fit More on Page 1)', fullWidth: true },
+    { key: 'coreSkillsOnly', label: 'Display Core 3 Skill Categories Only (Centered)', fullWidth: true }
+];
+
+const BLANK_FIELD_OPTIONS: ToggleOption[] = [
+    { key: 'blankName', label: 'Blank Name' },
+    { key: 'blankSpecies', label: 'Blank Species' },
+    { key: 'blankType', label: 'Blank Type' },
+    { key: 'blankNature', label: 'Blank Nature' },
+    { key: 'blankRank', label: 'Blank Rank' },
+    { key: 'blankAgeGender', label: 'Blank Age/Gender' },
+    { key: 'blankStats', label: 'Blank Core Stats' },
+    { key: 'blankSocials', label: 'Blank Socials' },
+    { key: 'blankSkills', label: 'Blank Skills' },
+    { key: 'blankAbilities', label: 'Blank Abilities' },
+    { key: 'blankMoves', label: 'Blank Moves' },
+    { key: 'blankItems', label: 'Blank Items' },
+    { key: 'blankPassives', label: 'Blank Passives' }
+];
+
 export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
     const printConfig = useCharacterStore((state) => state.identity.printConfig);
     const setPrintConfig = useCharacterStore((state) => state.setPrintConfig);
     const setIdentity = useCharacterStore((state) => state.setIdentity);
 
-    const toggle = (field: keyof typeof printConfig) => {
+    const toggle = (field: keyof PrintConfig) => {
         setPrintConfig({ [field]: !printConfig[field] });
     };
 
@@ -19,6 +66,26 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
         setIdentity('isPrinting', true);
         onClose();
     };
+
+    const renderToggleGrid = (options: ToggleOption[]) => (
+        <div className="print-settings__grid">
+            {options.map(({ key, label, fullWidth }) => (
+                <label
+                    key={key}
+                    className={`print-settings__checkbox-label text-subtext ${fullWidth ? 'print-settings__checkbox-label--full' : ''}`}
+                    style={{ color: 'var(--text-main)' }}
+                >
+                    <input
+                        type="checkbox"
+                        checked={Boolean(printConfig[key])}
+                        onChange={() => toggle(key)}
+                        className="print-settings__checkbox"
+                    />
+                    {label}
+                </label>
+            ))}
+        </div>
+    );
 
     return (
         <div className="print-settings__overlay">
@@ -33,231 +100,23 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                 </div>
                 <p className="print-settings__desc text-subtext">Customize how your sheet will look on paper.</p>
 
-                <div className="print-settings__grid">
-                    <label
-                        className="print-settings__checkbox-label text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.blankName}
-                            onChange={() => toggle('blankName')}
-                            className="print-settings__checkbox"
-                        />
-                        Blank Name
-                    </label>
-                    <label
-                        className="print-settings__checkbox-label text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.blankSpecies}
-                            onChange={() => toggle('blankSpecies')}
-                            className="print-settings__checkbox"
-                        />
-                        Blank Species
-                    </label>
-                    <label
-                        className="print-settings__checkbox-label text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.blankType}
-                            onChange={() => toggle('blankType')}
-                            className="print-settings__checkbox"
-                        />
-                        Blank Type
-                    </label>
-                    <label
-                        className="print-settings__checkbox-label text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.blankNature}
-                            onChange={() => toggle('blankNature')}
-                            className="print-settings__checkbox"
-                        />
-                        Blank Nature
-                    </label>
-                    <label
-                        className="print-settings__checkbox-label text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.blankRank}
-                            onChange={() => toggle('blankRank')}
-                            className="print-settings__checkbox"
-                        />
-                        Blank Rank
-                    </label>
-                    <label
-                        className="print-settings__checkbox-label text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.blankAgeGender}
-                            onChange={() => toggle('blankAgeGender')}
-                            className="print-settings__checkbox"
-                        />
-                        Blank Age/Gender
-                    </label>
-                    <label
-                        className="print-settings__checkbox-label text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.blankStats}
-                            onChange={() => toggle('blankStats')}
-                            className="print-settings__checkbox"
-                        />
-                        Blank Core Stats
-                    </label>
-                    <label
-                        className="print-settings__checkbox-label text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.blankSocials}
-                            onChange={() => toggle('blankSocials')}
-                            className="print-settings__checkbox"
-                        />
-                        Blank Socials
-                    </label>
-                    <label
-                        className="print-settings__checkbox-label text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.blankSkills}
-                            onChange={() => toggle('blankSkills')}
-                            className="print-settings__checkbox"
-                        />
-                        Blank Skills
-                    </label>
-                    <label
-                        className="print-settings__checkbox-label text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.blankAbilities}
-                            onChange={() => toggle('blankAbilities')}
-                            className="print-settings__checkbox"
-                        />
-                        Blank Abilities
-                    </label>
-                    <label
-                        className="print-settings__checkbox-label text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.blankMoves}
-                            onChange={() => toggle('blankMoves')}
-                            className="print-settings__checkbox"
-                        />
-                        Blank Moves
-                    </label>
-                </div>
+                {/* Section Visibility */}
+                <p className="print-settings__desc print-settings__desc--sub text-label">Section Visibility (Hide)</p>
+                {renderToggleGrid(SECTION_VISIBILITY_OPTIONS)}
 
+                {/* Content Options */}
                 <div className="print-settings__divider" />
-                <p className="print-settings__desc print-settings__desc--sub text-label">Visibility Options</p>
+                <p className="print-settings__desc print-settings__desc--sub text-label">Content Options</p>
+                {renderToggleGrid(CONTENT_VISIBILITY_OPTIONS)}
 
-                <div className="print-settings__grid">
-                    <label
-                        className="print-settings__checkbox-label text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.hideMoveDesc}
-                            onChange={() => toggle('hideMoveDesc')}
-                            className="print-settings__checkbox"
-                        />
-                        Hide Move Descriptions
-                    </label>
-                    <label
-                        className="print-settings__checkbox-label text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.hideKnowledgeSkills}
-                            onChange={() => toggle('hideKnowledgeSkills')}
-                            className="print-settings__checkbox"
-                        />
-                        Hide Knowledge Skills
-                    </label>
-                    <label
-                        className="print-settings__checkbox-label text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.hideCustomSkills}
-                            onChange={() => toggle('hideCustomSkills')}
-                            className="print-settings__checkbox"
-                        />
-                        Hide Custom Skills
-                    </label>
-                    <label
-                        className="print-settings__checkbox-label text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.hideAge}
-                            onChange={() => toggle('hideAge')}
-                            className="print-settings__checkbox"
-                        />
-                        Hide Age (Gender Only)
-                    </label>
-                    <label
-                        className="print-settings__checkbox-label print-settings__checkbox-label--full text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.compactMode}
-                            onChange={() => toggle('compactMode')}
-                            className="print-settings__checkbox"
-                        />
-                        Compact Layout (Fit More on Page 1)
-                    </label>
-                    <label
-                        className="print-settings__checkbox-label print-settings__checkbox-label--full text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.coreSkillsOnly}
-                            onChange={() => toggle('coreSkillsOnly')}
-                            className="print-settings__checkbox"
-                        />
-                        Display Core 3 Skill Categories Only (Centered)
-                    </label>
-                    <label
-                        className="print-settings__checkbox-label print-settings__checkbox-label--full text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={printConfig.showOnlyActiveAbility}
-                            onChange={() => toggle('showOnlyActiveAbility')}
-                            className="print-settings__checkbox"
-                        />
-                        Show Active Ability Only
-                    </label>
-                </div>
+                {/* Blank Fields for Hand-filling */}
+                <div className="print-settings__divider" />
+                <p className="print-settings__desc print-settings__desc--sub text-label">
+                    Blank Fields (For Pencil Writing)
+                </p>
+                {renderToggleGrid(BLANK_FIELD_OPTIONS)}
 
+                {/* Display Styles */}
                 <div className="print-settings__divider" />
                 <p className="print-settings__desc print-settings__desc--sub text-label">Display Styles</p>
 

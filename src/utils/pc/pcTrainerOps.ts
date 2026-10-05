@@ -256,16 +256,16 @@ export async function spawnTrainerToMap(
         });
 
         const hpMax = Number(trainer.fullMetadata?.['hp-max-display'] || trainer.fullMetadata?.['hpMax']) || 10;
+        const rawHpCurr = trainer.fullMetadata?.['hp-curr'] ?? trainer.fullMetadata?.['hpCurr'];
         const hpCurr =
-            typeof trainer.fullMetadata?.['hp-curr'] === 'number'
-                ? (trainer.fullMetadata['hp-curr'] as number)
-                : Number(trainer.fullMetadata?.['hp-curr']) || hpMax;
+            rawHpCurr !== undefined && rawHpCurr !== null && !isNaN(Number(rawHpCurr)) ? Number(rawHpCurr) : hpMax;
 
         const willMax = Number(trainer.fullMetadata?.['will-max-display'] || trainer.fullMetadata?.['willMax']) || 5;
+        const rawWillCurr = trainer.fullMetadata?.['will-curr'] ?? trainer.fullMetadata?.['willCurr'];
         const willCurr =
-            typeof trainer.fullMetadata?.['will-curr'] === 'number'
-                ? (trainer.fullMetadata['will-curr'] as number)
-                : Number(trainer.fullMetadata?.['will-curr']) || willMax;
+            rawWillCurr !== undefined && rawWillCurr !== null && !isNaN(Number(rawWillCurr))
+                ? Number(rawWillCurr)
+                : willMax;
 
         const metaObj: Record<string, unknown> = {
             ...(trainer.fullMetadata || {}),

@@ -59,7 +59,7 @@ function normalizeSingleStatistic(token: string): string {
 export function parseStatOptions(value: string): string[] {
     if (!value) return [];
     const parts = value
-        .split(/[/,]/)
+        .split(/[/,]|(?:\s+or\s+)/i)
         .map((p) => p.trim())
         .filter(Boolean);
     const results: string[] = [];
@@ -85,7 +85,7 @@ function normalizeSingleSkill(token: string): string {
 export function parseSkillOptions(value: string): string[] {
     if (!value) return [];
     const parts = value
-        .split(/[/,]/)
+        .split(/[/,]|(?:\s+or\s+)/i)
         .map((p) => p.trim())
         .filter(Boolean);
     const results: string[] = [];
@@ -424,9 +424,18 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         const rawAcc1 = String(data.Accuracy1 || '');
         const rawAcc2 = String(data.Accuracy2 || '');
         const rawDmg1 = String(data.Damage1 || '');
+        const rawDmg2 = String(data.Damage2 || '');
 
-        const accString = `Accuracy: ${rawAcc1} + ${rawAcc2}`;
-        const dmgString = cat === 'Status' ? '' : `Damage: ${rawDmg1}`;
+        const accString = `Accuracy: ${rawAcc1}${rawAcc2 && rawAcc2.toLowerCase() !== 'none' ? ` + ${rawAcc2}` : ''}`;
+
+        let dmgText = rawDmg1;
+        if (rawDmg1 && rawDmg2 && rawDmg2 !== 'None') {
+            const isAttr = parseStatOptions(rawDmg2).length > 0;
+            dmgText = isAttr ? `${rawDmg1} / ${rawDmg2}` : `${rawDmg1} + ${rawDmg2}`;
+        } else if (!rawDmg1 && rawDmg2 && rawDmg2 !== 'None') {
+            dmgText = rawDmg2;
+        }
+        const dmgString = cat === 'Status' ? '' : `Damage: ${dmgText}`;
 
         const rawDesc = String(data.Effect || data.Description || '');
         const retainedTags = rawDesc.match(/\[.*?\]/g)?.join(' ') || '';
@@ -437,7 +446,8 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         const finalDesc =
             `${cleanDesc}\n\n${accString}${dmgString ? '\n' + dmgString : ''}${retainedTags ? '\n\n' + retainedTags : ''}`.trim();
 
-        const candidateDmgStats = parseStatOptions(rawDmg1);
+        const rawDmgCombined = [rawDmg1, rawDmg2].filter((d) => d && d !== 'None' && d.trim() !== '').join('/');
+        const candidateDmgStats = parseStatOptions(rawDmgCombined);
         const candidateAttrs = parseStatOptions(rawAcc1);
         const candidateSkills = parseSkillOptions(rawAcc2);
 
@@ -457,6 +467,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             rawAcc1: rawAcc1,
             rawAcc2: rawAcc2,
             rawDmg1: rawDmg1,
+            rawDmg2: rawDmg2,
             marker: ''
         };
     };

@@ -1,23 +1,12 @@
-import { StrictMode, useEffect, useState } from 'react';
+import { StrictMode, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import OBR from '@owlbear-rodeo/sdk';
-import { imageManager } from './utils/graphics/imageManager';
-import { cropImageTransparencyUrl } from './utils/graphics/imageCropUtils';
-import { Dices, Trash2, X, Info } from 'lucide-react';
-import { parseRollLabel } from './utils/combat/rollLogParser';
-import { RollFactorsModal } from './components/modals';
+import { Dices, Trash2 } from 'lucide-react';
+import { useRollLogSync } from './hooks/useRollLogSync';
+import { RollLogEntryItem } from './components/rollLog/RollLogEntryItem';
+import { RollFactorsModal } from './components/modals/rollFactors';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import './style.css';
 import './roll-log.css';
-
-interface RollData {
-    id: string;
-    player: string;
-    characterName?: string;
-    label: string;
-    result: string;
-    icon: string;
-    isCrit?: boolean;
-}
 
 // Strictly type the custom Window property for HMR to avoid 'any'
 interface WindowWithReactRoot extends Window {
@@ -25,16 +14,7 @@ interface WindowWithReactRoot extends Window {
 }
 
 export function RollLog() {
-    const [rolls, setRolls] = useState<RollData[]>(() => {
-        try {
-            const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
-            return Array.isArray(data) ? data : [];
-        } catch (error) {
-            console.error('[RollLog] Failed to parse roll log from local storage. Resetting log.', error);
-            return [];
-        }
-    });
-    const [resolvedIcons, setResolvedIcons] = useState<Record<string, string>>({});
+    const { rolls, resolvedIcons, dismiss, clearAll } = useRollLogSync();
     const [factorsModalData, setFactorsModalData] = useState<{
         title: string;
         characterName?: string;
@@ -43,159 +23,30 @@ export function RollLog() {
         result?: string;
     } | null>(null);
 
-    // 🔥 Default to dark instead of light
-    const [theme, setTheme] = useState(localStorage.getItem('pokerole-theme') || 'dark');
-
-    const applyDynamicColors = (data?: { enabled: boolean; primary?: string; secondary?: string }) => {
-        if (data?.enabled && data?.primary) {
-            document.body.style.setProperty('--dynamic-type-color', data.primary);
-            document.documentElement.style.setProperty('--dynamic-type-color', data.primary);
-            if (data.secondary) {
-                document.body.style.setProperty('--dynamic-secondary-color', data.secondary);
-                document.documentElement.style.setProperty('--dynamic-secondary-color', data.secondary);
-            } else {
-                document.body.style.removeProperty('--dynamic-secondary-color');
-                document.documentElement.style.removeProperty('--dynamic-secondary-color');
-            }
-        } else {
-            document.body.style.removeProperty('--dynamic-type-color');
-            document.documentElement.style.removeProperty('--dynamic-type-color');
-            document.body.style.removeProperty('--dynamic-secondary-color');
-            document.documentElement.style.removeProperty('--dynamic-secondary-color');
-        }
-    };
-
-    useEffect(() => {
-        try {
-            const raw = localStorage.getItem('pkr_active_theme_colors');
-            if (raw) applyDynamicColors(JSON.parse(raw));
-        } catch (e) {
-            console.warn('[RollLog] Failed to parse active theme colors from localStorage:', e);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (theme === 'light') {
-            document.body.classList.remove('dark-mode');
-            document.body.setAttribute('data-theme', 'light');
-            document.documentElement.setAttribute('data-theme', 'light');
-        } else {
-            document.body.classList.add('dark-mode');
-            document.body.setAttribute('data-theme', 'dark');
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-    }, [theme]);
-
-    useEffect(() => {
-        let isMounted = true;
-
-        const resolveIcons = async () => {
-            const newIcons: Record<string, string> = {};
-            for (const r of rolls) {
-                let resolved = r.icon;
-                if (resolved && resolved.startsWith('local-img:')) {
-                    try {
-                        const url = await imageManager.getImageUrl(resolved);
-                        if (url) resolved = url;
-                    } catch (e) {
-                        console.warn('[RollLog] Failed to resolve local image for roll log.', e);
-                    }
-                }
-                if (resolved && !resolved.includes('pokeball.svg')) {
-                    try {
-                        const cropped = await cropImageTransparencyUrl(resolved, true);
-                        if (cropped && isMounted) newIcons[r.id] = cropped;
-                    } catch {
-                        if (resolved && isMounted) newIcons[r.id] = resolved;
-                    }
-                } else if (resolved && isMounted) {
-                    newIcons[r.id] = resolved;
-                }
-            }
-            if (isMounted) {
-                setResolvedIcons((prev) => ({ ...prev, ...newIcons }));
-            }
-        };
-
-        resolveIcons();
-
-        const handleReload = () => {
-            try {
-                const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
-                const rawRolls: RollData[] = Array.isArray(data) ? data : [];
-                if (isMounted) setRolls(rawRolls);
-            } catch (error) {
-                console.error('[RollLog] Failed to parse roll log from local storage. Resetting log.', error);
-                if (isMounted) setRolls([]);
-            }
-        };
-
-        const handleStorage = (e: StorageEvent) => {
-            if (e.key === 'pkr_roll_log') {
-                handleReload();
-            }
-            if (e.key === 'pkr_active_theme_colors') {
-                try {
-                    applyDynamicColors(JSON.parse(e.newValue || '{}'));
-                } catch (err) {
-                    console.warn('[RollLog] Failed to parse dynamic colors on storage update:', err);
-                }
-            }
-        };
-        window.addEventListener('storage', handleStorage);
-
-        const unsubs: Array<() => void> = [];
-        if (OBR.isAvailable) {
-            OBR.onReady(() => {
-                unsubs.push(
-                    OBR.broadcast.onMessage('pokerole-pmd-extension/roll-log-update', () => {
-                        handleReload();
-                    })
-                );
-
-                unsubs.push(
-                    OBR.broadcast.onMessage('pokerole-pmd-extension/theme-sync', (event) => {
-                        setTheme(event.data as string);
-                    })
-                );
-
-                unsubs.push(
-                    OBR.broadcast.onMessage('pokerole-pmd-extension/popover-theme-sync', (event) => {
-                        applyDynamicColors(event.data as { enabled: boolean; primary?: string; secondary?: string });
-                    })
-                );
-            });
-        }
-
-        return () => {
-            isMounted = false;
-            window.removeEventListener('storage', handleStorage);
-            unsubs.forEach((unsub) => unsub());
-        };
-    }, [rolls]);
-
-    const dismiss = (id: string) => {
-        const next = rolls.filter((r) => r.id !== id);
-        try {
-            localStorage.setItem('pkr_roll_log', JSON.stringify(next));
-        } catch (error) {
-            console.error('[RollLog] Failed to save to localStorage', error);
-        }
-        setRolls(next);
-        if (next.length === 0 && OBR.isAvailable) OBR.popover.close('pkr-roll-log');
-    };
-
-    const clearAll = () => {
-        try {
-            localStorage.setItem('pkr_roll_log', '[]');
-        } catch (error) {
-            console.error('[RollLog] Failed to clear localStorage', error);
-        }
-        setRolls([]);
-        if (OBR.isAvailable) OBR.popover.close('pkr-roll-log');
-    };
-
-    if (rolls.length === 0) return null;
+    if (rolls.length === 0) {
+        return (
+            <div className="roll-log-wrapper">
+                <div className="roll-log__container" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div className="roll-log__header">
+                        <h3 className="roll-log__title text-title-primary">
+                            <Dices size={20} /> Roll Log
+                        </h3>
+                    </div>
+                    <div
+                        className="text-subtext"
+                        style={{
+                            margin: 'auto',
+                            textAlign: 'center',
+                            padding: '30px 16px',
+                            color: 'var(--text-muted, #888)'
+                        }}
+                    >
+                        Waiting for rolls...
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="roll-log-wrapper">
@@ -213,76 +64,15 @@ export function RollLog() {
                     </button>
                 </div>
                 <div className="roll-log__list">
-                    {rolls.map((r) => {
-                        const isCrit = Boolean(
-                            r.isCrit ||
-                            /critical hit/i.test(r.result) ||
-                            /CRITICAL HIT/i.test(r.label) ||
-                            /It's a critical hit/i.test(r.result)
-                        );
-                        const { cleanLabel, coreTags, factorTags } = parseRollLabel(r.label);
-
-                        return (
-                            <div key={r.id} className={`roll-log__entry ${isCrit ? 'roll-log__entry--crit' : ''}`}>
-                                <div className="roll-log__entry-header">
-                                    <img
-                                        src={resolvedIcons[r.id] || r.icon}
-                                        alt="Token"
-                                        className="roll-log__entry-icon"
-                                        onError={(e) => {
-                                            e.currentTarget.src = `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
-                                        }}
-                                    />
-                                    <strong className="text-title-primary" style={{ fontSize: '0.9rem' }}>
-                                        {r.player}
-                                    </strong>
-                                    {isCrit && <span className="roll-log__crit-badge">Critical Hit!</span>}
-                                    <button
-                                        type="button"
-                                        onClick={() => dismiss(r.id)}
-                                        className="roll-log__entry-dismiss text-subtext"
-                                        title="Dismiss"
-                                    >
-                                        <X size={16} />
-                                    </button>
-                                </div>
-                                <div className="roll-log__entry-label text-label" style={{ color: 'var(--primary)' }}>
-                                    <span>{cleanLabel}</span>
-                                    {coreTags.length > 0 && (
-                                        <span className="roll-log__core-tags">[ {coreTags.join(' | ')} ]</span>
-                                    )}
-                                    {factorTags.length > 0 && (
-                                        <button
-                                            type="button"
-                                            className="roll-log__factors-btn"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setFactorsModalData({
-                                                    title: cleanLabel,
-                                                    characterName: r.characterName || r.player,
-                                                    coreTags,
-                                                    factors: factorTags,
-                                                    result: r.result
-                                                });
-                                            }}
-                                            title="View contributing factors, items, passives, and abilities"
-                                        >
-                                            <Info size={11} />
-                                            <span>
-                                                {factorTags.length} {factorTags.length === 1 ? 'Factor' : 'Factors'}
-                                            </span>
-                                        </button>
-                                    )}
-                                </div>
-                                <div
-                                    className="roll-log__entry-result text-subtext"
-                                    style={{ color: 'var(--text-main)' }}
-                                >
-                                    {r.result}
-                                </div>
-                            </div>
-                        );
-                    })}
+                    {rolls.map((r) => (
+                        <RollLogEntryItem
+                            key={r.id}
+                            roll={r}
+                            resolvedIcon={resolvedIcons[r.id]}
+                            onDismiss={dismiss}
+                            onOpenFactors={setFactorsModalData}
+                        />
+                    ))}
                 </div>
             </div>
 
@@ -308,6 +98,8 @@ if (!win.__REACT_ROOT__) {
 }
 win.__REACT_ROOT__.render(
     <StrictMode>
-        <RollLog />
+        <ErrorBoundary>
+            <RollLog />
+        </ErrorBoundary>
     </StrictMode>
 );

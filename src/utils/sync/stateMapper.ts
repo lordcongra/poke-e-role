@@ -23,32 +23,42 @@ import { calculateMaxHp, calculateMaxWill } from '../combat/combatMath';
 // =========================================
 
 const mapAttr = (val: string): string => {
-    const v = (val || '').toLowerCase().trim();
-    if (v.includes('str')) return 'str';
-    if (v.includes('dex')) return 'dex';
-    if (v.includes('vit')) return 'vit';
-    if (v.includes('spe')) return 'spe';
-    if (v.includes('ins')) return 'ins';
-    if (v.includes('will')) return 'will';
-    if (v.includes('tou')) return 'tou';
-    if (v.includes('coo')) return 'coo';
-    if (v.includes('bea')) return 'bea';
-    if (v.includes('cut')) return 'cut';
-    if (v.includes('cle')) return 'cle';
+    const rawParts = (val || '')
+        .split(/[/,]|(?:\s+or\s+)/i)
+        .map((p) => p.toLowerCase().trim())
+        .filter(Boolean);
+    for (const v of rawParts) {
+        if (v.includes('str')) return 'str';
+        if (v.includes('dex')) return 'dex';
+        if (v.includes('vit')) return 'vit';
+        if (v.includes('spe')) return 'spe';
+        if (v.includes('ins')) return 'ins';
+        if (v.includes('will')) return 'will';
+        if (v.includes('tou')) return 'tou';
+        if (v.includes('coo')) return 'coo';
+        if (v.includes('bea')) return 'bea';
+        if (v.includes('cut')) return 'cut';
+        if (v.includes('cle')) return 'cle';
+    }
     return '';
 };
 
 const mapSkill = (val: string, parsedExtraCats: ExtraCategory[]): string => {
-    const v = (val || '').split('/')[0].toLowerCase().trim();
+    const rawParts = (val || '')
+        .split(/[/,]|(?:\s+or\s+)/i)
+        .map((p) => p.toLowerCase().trim())
+        .filter(Boolean);
     const officialSkills = Object.values(Skill).map((s) => s.toLowerCase());
 
-    for (const s of officialSkills) {
-        if (v.includes(s)) return s;
-    }
+    for (const v of rawParts) {
+        for (const s of officialSkills) {
+            if (v.includes(s)) return s;
+        }
 
-    for (const cat of parsedExtraCats) {
-        for (const sk of cat.skills) {
-            if (v === sk.id.toLowerCase() || (sk.name && v === sk.name.toLowerCase())) return sk.id;
+        for (const cat of parsedExtraCats) {
+            for (const sk of cat.skills) {
+                if (v === sk.id.toLowerCase() || (sk.name && v === sk.name.toLowerCase())) return sk.id;
+            }
         }
     }
     return 'none';
@@ -122,6 +132,10 @@ function parseMoves(meta: Record<string, unknown>, parsedExtraCats: ExtraCategor
             const rawCat = String(m.category || m.Category || 'Physical');
             const cat = rawCat.startsWith('Phys') ? 'Physical' : rawCat.startsWith('Spec') ? 'Special' : 'Status';
 
+            const rawDmgCandidate = [m.dmg1, m.Damage1, m.Damage2]
+                .filter((d) => d && d !== 'None' && String(d).trim() !== '')
+                .join('/');
+
             return {
                 id: (m.id as string) || crypto.randomUUID(),
                 active: m.active === true || m.active === 'true',
@@ -130,7 +144,7 @@ function parseMoves(meta: Record<string, unknown>, parsedExtraCats: ExtraCategor
                 category: cat as 'Physical' | 'Special' | 'Status',
                 acc1: mapAttr(String(m.acc1 || m.Accuracy1 || 'str')) || 'str',
                 acc2: mapSkill(String(m.acc2 || m.Accuracy2 || 'none'), parsedExtraCats),
-                dmg1: mapAttr(String(m.dmg1 || m.Damage1 || '')),
+                dmg1: mapAttr(rawDmgCandidate),
                 power: Number(m.power !== undefined ? m.power : m.Power || 0),
                 desc: String(m.desc || m.Description || m.Effect || ''),
                 marker: String(m.marker || m.Marker || '')

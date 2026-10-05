@@ -281,20 +281,7 @@ export async function setupOwlbearTokenSync(params: {
                     const tMod = Number(meta.lastModified) || 0;
                     const pMod = Number(existingSum?.lastModified) || 0;
                     const isPcNewer = Boolean(existingSum && existingSum.fullMetadata && pMod > tMod);
-                    const effectiveMeta = isPcNewer
-                        ? {
-                              ...existingSum!.fullMetadata!,
-                              'hp-curr': meta['hp-curr'] ?? existingSum!.fullMetadata!['hp-curr'],
-                              'hp-max-display': meta['hp-max-display'] ?? existingSum!.fullMetadata!['hp-max-display'],
-                              'will-curr': meta['will-curr'] ?? existingSum!.fullMetadata!['will-curr'],
-                              'will-max-display':
-                                  meta['will-max-display'] ?? existingSum!.fullMetadata!['will-max-display'],
-                              'temporary-hit-points':
-                                  meta['temporary-hit-points'] ?? existingSum!.fullMetadata!['temporary-hit-points'],
-                              'temporary-will': meta['temporary-will'] ?? existingSum!.fullMetadata!['temporary-will'],
-                              'status-list': meta['status-list'] ?? existingSum!.fullMetadata!['status-list']
-                          }
-                        : meta;
+                    const effectiveMeta = isPcNewer ? { ...meta, ...existingSum!.fullMetadata! } : meta;
 
                     if (needsGraphicsUpdate) {
                         const { effectiveScale, effectiveOffsetX, effectiveOffsetY } = getEffectiveScaleAndOffsets(
@@ -394,6 +381,13 @@ export async function setupOwlbearTokenSync(params: {
                                 lastModified: tokenLastMod || pcSummary.lastModified || Date.now()
                             };
 
+                            const sumActions = Number(pcSummary.fullMetadata?.['actions-used']) || 0;
+                            const liveActions = Number(meta['actions-used']) || 0;
+                            const sumEvade = Boolean(pcSummary.fullMetadata?.['evasions-used']);
+                            const liveEvade = Boolean(meta['evasions-used']);
+                            const sumClash = Boolean(pcSummary.fullMetadata?.['clashes-used']);
+                            const liveClash = Boolean(meta['clashes-used']);
+
                             const metaChanged = lastTransform?.metaStr !== metaStr;
                             if (
                                 metaChanged ||
@@ -404,6 +398,9 @@ export async function setupOwlbearTokenSync(params: {
                                 mWill !== pcSummary.maxWill ||
                                 sumTempHp !== liveTempHp ||
                                 sumTempWill !== liveTempWill ||
+                                sumActions !== liveActions ||
+                                sumEvade !== liveEvade ||
+                                sumClash !== liveClash ||
                                 sumStatusStr !== liveStatusStr ||
                                 sumMovesStr !== liveMovesStr ||
                                 pokeName !== pcSummary.name ||

@@ -13,22 +13,46 @@ export const BO_ROLL_LOG_MODE_KEY = 'pkr_bo_roll_log_mode';
 export const BO_IS_OPEN_KEY = 'pkr_battle_organizer_open';
 export const BO_SETTINGS_UPDATE_EVENT = 'pkr-bo-settings-update';
 
+let isBoModalOpenInMemory = false;
+
+// Proactively clear any legacy persistent localStorage key from prior versions
+try {
+    if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(BO_IS_OPEN_KEY);
+    }
+} catch {
+    // Ignore storage restrictions
+}
+
 export function isBattleOrganizerOpen(): boolean {
-    if (typeof window !== 'undefined' && window.location.pathname.includes('battle-organizer')) {
-        return true;
+    if (typeof window !== 'undefined') {
+        if (window.location.pathname.includes('battle-organizer')) {
+            return true;
+        }
+        if (isBoModalOpenInMemory) {
+            return true;
+        }
+        if (
+            typeof document !== 'undefined' &&
+            document.querySelector('.battle-organizer-modal__overlay, .battle-organizer-modal')
+        ) {
+            return true;
+        }
     }
     try {
-        return localStorage.getItem(BO_IS_OPEN_KEY) === 'true';
+        return sessionStorage.getItem(BO_IS_OPEN_KEY) === 'true';
     } catch {
         return false;
     }
 }
 
 export function setBattleOrganizerOpen(isOpen: boolean): void {
+    isBoModalOpenInMemory = isOpen;
     try {
         if (isOpen) {
-            localStorage.setItem(BO_IS_OPEN_KEY, 'true');
+            sessionStorage.setItem(BO_IS_OPEN_KEY, 'true');
         } else {
+            sessionStorage.removeItem(BO_IS_OPEN_KEY);
             localStorage.removeItem(BO_IS_OPEN_KEY);
         }
     } catch (e) {

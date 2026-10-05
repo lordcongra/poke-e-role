@@ -112,6 +112,10 @@
         gap: 15px;
     }
 
+    .print-sheet__top-grid--no-portrait {
+        grid-template-columns: 1fr;
+    }
+
     .print-sheet__portrait-box {
         border: 2px solid black;
         border-radius: 8px;
@@ -131,8 +135,16 @@
 
     .print-sheet__stats-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .print-sheet__vitals-val {
+        font-size: 0.95rem;
+        font-weight: bold;
+        min-width: 24px;
+        text-align: right;
+        color: black !important;
     }
 
     /* --- Sections --- */
@@ -327,23 +339,55 @@
     .print-sheet__items-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 10px;
+        gap: 8px;
     }
 
     .print-sheet__item-box {
         border: 1px solid black;
-        height: 35px;
+        min-height: 28px;
+        padding: 3px 6px;
+        display: flex;
+        align-items: center;
+        background: white !important;
+    }
+
+    .print-sheet__item-content {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        line-height: 1.2;
+    }
+
+    .print-sheet__item-name {
+        font-size: 0.78rem;
+        color: black !important;
+    }
+
+    .print-sheet__item-desc {
+        font-size: 0.68rem;
+        color: #444 !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .print-sheet__notes-container {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
+    }
+
+    .print-sheet__notes-text {
+        font-size: 0.8rem;
+        line-height: 1.35;
+        white-space: pre-wrap;
+        color: black !important;
+        padding: 2px 4px;
     }
 
     .print-sheet__note-line {
         border-bottom: 1px solid black;
-        height: 25px;
+        height: 22px;
     }
 
     /* --- COMPACT MODE --- */
@@ -412,14 +456,25 @@
         padding: 2px;
         font-size: 0.7rem;
     }
+    .print-sheet-wrapper--compact .print-sheet__vitals-val {
+        font-size: 0.8rem;
+    }
     .print-sheet-wrapper--compact .print-sheet__items-grid {
         gap: 4px;
     }
     .print-sheet-wrapper--compact .print-sheet__item-box {
-        height: 20px;
+        min-height: 20px;
+        padding: 1px 4px;
+    }
+    .print-sheet-wrapper--compact .print-sheet__item-name {
+        font-size: 0.7rem;
     }
     .print-sheet-wrapper--compact .print-sheet__notes-container {
         gap: 4px;
+    }
+    .print-sheet-wrapper--compact .print-sheet__notes-text {
+        font-size: 0.75rem;
+        line-height: 1.25;
     }
     .print-sheet-wrapper--compact .print-sheet__note-line {
         height: 16px;

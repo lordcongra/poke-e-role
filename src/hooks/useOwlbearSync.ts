@@ -43,6 +43,10 @@ export function useOwlbearSync() {
             waitForObr().then(async () => {
                 if (!isMounted) return;
 
+                // 1. Set up Roll Results & Roll Log Broadcasts FIRST so rolls are NEVER dropped during scene loading
+                const rollSync = setupOwlbearRollSync();
+                unsubs.push(...rollSync.unsubs);
+
                 const role = await OBR.player.getRole();
                 const currentStore = useCharacterStore.getState();
                 currentStore.setTokenData(currentStore.tokenId || '', role);
@@ -54,14 +58,14 @@ export function useOwlbearSync() {
                 // Forward declaration for token re-rendering
                 let renderTokens: ((forceRebuild?: boolean | 'badges-only') => Promise<void>) | null = null;
 
-                // 1. Load Room Settings and Scene Settings FIRST
+                // 2. Load Room Settings and Scene Settings
                 const roomSync = await setupOwlbearRoomSync(role, async (forceRebuild) => {
                     if (renderTokens) await renderTokens(forceRebuild);
                 });
                 unsubs.push(...roomSync.unsubs);
                 if (!isMounted) return;
 
-                // 2. Set up Token Sync with scene sync and ready management
+                // 3. Set up Token Sync with scene sync and ready management
                 const tokenSync = await setupOwlbearTokenSync({
                     role,
                     syncSceneSettings: roomSync.syncSceneSettings,
@@ -72,21 +76,17 @@ export function useOwlbearSync() {
                 cleanupTokenSync = tokenSync.cleanup;
                 if (!isMounted) return;
 
-                // 3. Set up Player Sync (active token selection & role changes)
+                // 4. Set up Player Sync (active token selection & role changes)
                 const playerSync = await setupOwlbearPlayerSync({ role });
                 unsubs.push(...playerSync.unsubs);
 
-                // 4. Set up Homebrew P2P Broadcasts
+                // 5. Set up Homebrew P2P Broadcasts
                 const homebrewSync = setupOwlbearHomebrewSync(role);
                 unsubs.push(...homebrewSync.unsubs);
 
-                // 5. Set up Item Art P2P Broadcasts
+                // 6. Set up Item Art P2P Broadcasts
                 const itemArtSync = setupOwlbearItemArtSync(() => isMounted);
                 cleanupItemArtSync = itemArtSync.cleanup;
-
-                // 6. Set up Roll Results & Roll Log Broadcasts
-                const rollSync = setupOwlbearRollSync();
-                unsubs.push(...rollSync.unsubs);
 
                 // 7. Set up PC Storage P2P Broadcasts
                 const pcSync = setupOwlbearPcSync(role);

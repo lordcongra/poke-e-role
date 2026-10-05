@@ -43,16 +43,24 @@ export function formatStatName(raw?: string): string {
     const trimmed = raw.trim();
     if (!trimmed) return '';
     return trimmed
-        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-        .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
-        .trim();
+        .split('/')
+        .map((segment) =>
+            segment
+                .trim()
+                .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+                .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+                .trim()
+        )
+        .join(' / ');
 }
 
 /**
  * Format Accuracy string from Accuracy1 and Accuracy2.
  */
 export function formatAccuracy(acc1?: string, acc2?: string): string {
-    const parts = [formatStatName(acc1), formatStatName(acc2)].filter(Boolean);
+    const s1 = formatStatName(acc1);
+    const s2 = formatStatName(acc2);
+    const parts = [s1, s2].filter((p) => Boolean(p) && p.toLowerCase() !== 'none');
     return parts.length > 0 ? parts.join(' + ') : 'None';
 }
 
@@ -60,10 +68,37 @@ export function formatAccuracy(acc1?: string, acc2?: string): string {
  * Format Damage string from Damage1, Damage2, and Power.
  */
 export function formatDamage(dmg1?: string, dmg2?: string, power?: number | string): string {
-    const parts = [formatStatName(dmg1), formatStatName(dmg2)].filter(Boolean);
+    const s1 = formatStatName(dmg1);
+    const s2 = formatStatName(dmg2);
     const hasPower = power !== undefined && power !== 0 && String(power).trim() !== '' && String(power).trim() !== '0';
-    if (parts.length === 0) return hasPower ? `+${power}` : '-';
-    return hasPower ? `${parts.join(' + ')} + ${power}` : parts.join(' + ');
+
+    let statPart = '';
+    if (s1 && s2 && s2 !== 'None') {
+        const s2Lower = s2.toLowerCase();
+        const isAttribute =
+            /^(?:str|dex|vit|spe|ins|will|tou|coo|bea|cut|cle)/.test(s2Lower) ||
+            [
+                'strength',
+                'dexterity',
+                'vitality',
+                'special',
+                'insight',
+                'will',
+                'tough',
+                'cool',
+                'beauty',
+                'cute',
+                'clever'
+            ].some((st) => s2Lower.includes(st));
+        statPart = isAttribute ? `${s1} / ${s2}` : `${s1} + ${s2}`;
+    } else if (s1 && s1 !== 'None') {
+        statPart = s1;
+    } else if (s2 && s2 !== 'None') {
+        statPart = s2;
+    }
+
+    if (!statPart) return hasPower ? `+${power}` : '-';
+    return hasPower ? `${statPart} + ${power}` : statPart;
 }
 
 /**

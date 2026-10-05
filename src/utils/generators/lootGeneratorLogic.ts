@@ -268,8 +268,18 @@ export async function rollLootItem(
         finalItemName = `TM: ${selectedRoll.data.name}`;
 
         if (moveData) {
-            const accuracyText = [moveData.Accuracy1, moveData.Accuracy2].filter(Boolean).join(' + ');
-            const damageText = moveData.Damage1 || 'None';
+            const accuracyText = [moveData.Accuracy1, moveData.Accuracy2]
+                .filter((v) => Boolean(v) && String(v).trim().toLowerCase() !== 'none')
+                .join(' + ');
+            let damageText = moveData.Damage1 || 'None';
+            if (moveData.Damage1 && moveData.Damage2 && moveData.Damage2 !== 'None') {
+                const isAttr = /^(?:str|dex|vit|spe|ins|will|tou|coo|bea|cut|cle)/i.test(moveData.Damage2);
+                damageText = isAttr
+                    ? `${moveData.Damage1} / ${moveData.Damage2}`
+                    : `${moveData.Damage1} + ${moveData.Damage2}`;
+            } else if (!moveData.Damage1 && moveData.Damage2 && moveData.Damage2 !== 'None') {
+                damageText = moveData.Damage2;
+            }
             const effectText = moveData.Effect ? `\n\nEffect: ${moveData.Effect}` : '';
             finalItemDescription = `Teaches the move ${selectedRoll.data.name}.\n\nType: ${moveData.Type} | Cat: ${moveData.Category} | Power: ${moveData.Power}\nAcc: ${accuracyText || 'None'} | Dmg: ${damageText}${effectText}\n\n${moveData.Description}`;
         } else {

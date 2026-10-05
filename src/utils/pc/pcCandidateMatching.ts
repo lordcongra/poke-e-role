@@ -297,10 +297,19 @@ export async function scanStandaloneCandidates(
                     console.warn('[pcCandidateMatching] Failed to resolve local image:', e);
                 }
             }
-            const hpCurr = Number(meta['hp-curr']) || (typeof meta.hp === 'number' ? meta.hp : 10);
-            const hpMax = Number(meta['hp-max-display']) || (typeof meta.hpMax === 'number' ? meta.hpMax : 10);
-            const willCurr = Number(meta['will-curr']) || (typeof meta.will === 'number' ? meta.will : 5);
-            const willMax = Number(meta['will-max-display']) || (typeof meta.willMax === 'number' ? meta.willMax : 5);
+            const rawHpCurr = meta['hp-curr'] ?? meta.hp;
+            const hpCurr =
+                rawHpCurr !== undefined && rawHpCurr !== '' && !isNaN(Number(rawHpCurr)) ? Number(rawHpCurr) : 10;
+            const rawHpMax = meta['hp-max-display'] ?? meta.hpMax;
+            const hpMax = rawHpMax !== undefined && rawHpMax !== '' && !isNaN(Number(rawHpMax)) ? Number(rawHpMax) : 10;
+            const rawWillCurr = meta['will-curr'] ?? meta.will;
+            const willCurr =
+                rawWillCurr !== undefined && rawWillCurr !== '' && !isNaN(Number(rawWillCurr))
+                    ? Number(rawWillCurr)
+                    : 5;
+            const rawWillMax = meta['will-max-display'] ?? meta.willMax;
+            const willMax =
+                rawWillMax !== undefined && rawWillMax !== '' && !isNaN(Number(rawWillMax)) ? Number(rawWillMax) : 5;
 
             let matchedEntityId: string | undefined;
             for (const [eId, sum] of Object.entries(pokemonSummaries)) {
@@ -371,12 +380,21 @@ export function refreshSummariesFromLocalStorage(summaries: Record<string, PcPok
             const newName = (meta.nickname as string) || (meta.species as string) || summary.name;
             const newSpecies = (meta.species as string) || summary.species;
             const newRank = (meta.rank as string) || summary.rank;
-            const newHp = typeof meta['hp-curr'] === 'number' ? (meta['hp-curr'] as number) : summary.hp;
+            const rawHp = meta['hp-curr'] ?? meta.hpCurr ?? meta.hp;
+            const newHp = rawHp !== undefined && rawHp !== '' && !isNaN(Number(rawHp)) ? Number(rawHp) : summary.hp;
+            const rawMaxHp = meta['hp-max-display'] ?? meta.hpMax;
             const newMaxHp =
-                typeof meta['hp-max-display'] === 'number' ? (meta['hp-max-display'] as number) : summary.maxHp;
-            const newWill = typeof meta['will-curr'] === 'number' ? (meta['will-curr'] as number) : summary.will;
+                rawMaxHp !== undefined && rawMaxHp !== '' && !isNaN(Number(rawMaxHp))
+                    ? Number(rawMaxHp)
+                    : summary.maxHp;
+            const rawWill = meta['will-curr'] ?? meta.willCurr ?? meta.will;
+            const newWill =
+                rawWill !== undefined && rawWill !== '' && !isNaN(Number(rawWill)) ? Number(rawWill) : summary.will;
+            const rawMaxWill = meta['will-max-display'] ?? meta.willMax;
             const newMaxWill =
-                typeof meta['will-max-display'] === 'number' ? (meta['will-max-display'] as number) : summary.maxWill;
+                rawMaxWill !== undefined && rawMaxWill !== '' && !isNaN(Number(rawMaxWill))
+                    ? Number(rawMaxWill)
+                    : summary.maxWill;
             const newAvatar = (meta['token-image-url'] as string) || summary.tokenImageUrl;
 
             if (

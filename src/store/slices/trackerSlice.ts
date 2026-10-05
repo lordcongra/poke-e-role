@@ -226,12 +226,28 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             if (newStatuses.length === 0)
                 newStatuses.push({ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 });
 
+            const newMoves = state.moves.map((m) => ({ ...m, active: false }));
+
             try {
                 saveToOwlbear({
                     'hp-curr': state.health.hpMax,
+                    'temporary-hit-points': 0,
+                    'temporary-hit-points-max': 0,
                     'will-curr': state.will.willMax,
+                    'temporary-will': 0,
+                    'temporary-will-max': 0,
+                    'actions-used': 0,
+                    'evasions-used': false,
+                    'clashes-used': false,
+                    'chances-used': 0,
+                    'fate-used': 0,
                     'ignored-pain-mod': 0,
+                    'first-hit-acc-active': false,
+                    'first-hit-dmg-active': false,
                     'banked-acc-dice': '{}',
+                    'boost-levels': '{}',
+                    'effects-data': '[]',
+                    'moves-data': JSON.stringify(newMoves),
                     'status-list': JSON.stringify(newStatuses)
                 });
             } catch (e) {
@@ -239,9 +255,33 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             }
 
             return {
-                health: { ...state.health, hpCurr: state.health.hpMax },
-                will: { ...state.will, willCurr: state.will.willMax },
-                trackers: { ...state.trackers, ignoredPain: 0, bankedAccDice: {} },
+                health: {
+                    ...state.health,
+                    hpCurr: state.health.hpMax,
+                    temporaryHitPoints: 0,
+                    temporaryHitPointsMax: 0
+                },
+                will: {
+                    ...state.will,
+                    willCurr: state.will.willMax,
+                    temporaryWill: 0,
+                    temporaryWillMax: 0
+                },
+                trackers: {
+                    ...state.trackers,
+                    actions: 0,
+                    evade: false,
+                    clash: false,
+                    chances: 0,
+                    fate: 0,
+                    ignoredPain: 0,
+                    firstHitAcc: false,
+                    firstHitDmg: false,
+                    bankedAccDice: {},
+                    boostLevels: {}
+                },
+                effects: [],
+                moves: newMoves,
                 statuses: newStatuses
             };
         })

@@ -77,6 +77,17 @@ export function useBattleOrganizerTokenSync({
                                 stats['evasions-used'] = combatant.evadeUsed;
                                 stats['clashes-used'] = combatant.clashUsed;
 
+                                if (!item.metadata['pokerole-pmd-extension/stats']) {
+                                    item.metadata['pokerole-pmd-extension/stats'] = {};
+                                }
+                                const pmdStats = item.metadata['pokerole-pmd-extension/stats'] as Record<
+                                    string,
+                                    unknown
+                                >;
+                                pmdStats['actions-used'] = usedActionsCount;
+                                pmdStats['evasions-used'] = combatant.evadeUsed;
+                                pmdStats['clashes-used'] = combatant.clashUsed;
+
                                 // Also mirror to root metadata for backward compatibility
                                 item.metadata['actions-used'] = usedActionsCount;
                                 item.metadata['evasions-used'] = combatant.evadeUsed;

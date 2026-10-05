@@ -23,7 +23,8 @@
 }
 
 .print-settings__content--expanded {
-    width: 380px;
+    width: 440px;
+    max-width: 95vw;
     max-height: 95vh;
     overflow-y: auto;
 }
