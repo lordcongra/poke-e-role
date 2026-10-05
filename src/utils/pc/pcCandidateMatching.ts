@@ -323,9 +323,13 @@ export async function scanStandaloneCandidates(
                 partyEntityIds.has(char.id) || (matchedEntityId && partyEntityIds.has(matchedEntityId))
             );
 
+            const rawNick = ((meta.nickname as string) || (meta['nickname'] as string) || '').trim();
+            const charNick = rawNick && rawNick.toLowerCase() !== species.toLowerCase() ? rawNick : '';
+            const charDisplayName = charNick || (meta.name as string) || char.name || species;
+
             found.push({
                 id: char.id,
-                name: (meta.nickname as string) || (meta.name as string) || char.name || species,
+                name: charDisplayName,
                 species,
                 imageUrl: imgUrl,
                 hp: hpCurr,
@@ -338,6 +342,8 @@ export async function scanStandaloneCandidates(
                 item: { id: char.id, name: char.name, layer: 'CHARACTER', metadata: meta } as unknown as Item,
                 metadata: {
                     ...meta,
+                    nickname: charNick,
+                    name: charDisplayName,
                     'token-image-url': rawImage || imgUrl,
                     tokenImageUrl: rawImage || imgUrl
                 },

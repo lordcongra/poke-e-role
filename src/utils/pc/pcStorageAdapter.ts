@@ -206,11 +206,20 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
                     if (raw) {
                         const parsed = JSON.parse(raw);
                         if (parsed && (parsed.nickname || parsed.species || parsed.name)) {
+                            const rawSpecies = (parsed.species as string) || (parsed.name as string) || 'Unknown';
+                            const rawNick = (
+                                (parsed.nickname as string) ||
+                                (parsed['nickname'] as string) ||
+                                ''
+                            ).trim();
+                            const cleanNick =
+                                rawNick && rawNick.toLowerCase() !== rawSpecies.toLowerCase() ? rawNick : '';
+                            const displayName = cleanNick || rawSpecies || 'Recovered Pokémon';
                             sum = {
                                 entityId: pid,
                                 trainerId: targetTrainerId,
-                                name: parsed.nickname || parsed.species || parsed.name || 'Recovered Pokémon',
-                                species: parsed.species || parsed.name || 'Unknown',
+                                name: displayName,
+                                species: rawSpecies,
                                 rank: parsed.rank || 'Starter',
                                 type1: parsed.type1 || 'Normal',
                                 type2: parsed.type2,
@@ -230,7 +239,12 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
                                 maxWill: Number(parsed['will-max-display']) || Number(parsed.willMax) || 5,
                                 tokenImageUrl: parsed['token-image-url'] || parsed.tokenImageUrl,
                                 isOnMap: false,
-                                fullMetadata: parsed,
+                                fullMetadata: {
+                                    ...parsed,
+                                    nickname: cleanNick,
+                                    name: displayName,
+                                    species: rawSpecies
+                                },
                                 lastModified: Date.now()
                             };
                             data.pokemonSummaries[pid] = sum;

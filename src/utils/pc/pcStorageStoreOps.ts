@@ -60,10 +60,18 @@ export function syncStandaloneSummaryUpdate(summary: PcPokemonSummary): void {
     if (existing) {
         try {
             const parsed = JSON.parse(existing);
+            const explicitNick = summary.fullMetadata?.nickname ?? summary.fullMetadata?.['nickname'];
+            const nickToSave =
+                explicitNick !== undefined
+                    ? explicitNick
+                    : summary.name && summary.species && summary.name !== summary.species
+                      ? summary.name
+                      : '';
             const merged = {
                 ...parsed,
                 ...(summary.fullMetadata || {}),
-                nickname: summary.name || parsed.nickname
+                name: summary.name,
+                nickname: nickToSave
             };
             localStorage.setItem(localKey, JSON.stringify(merged));
             window.dispatchEvent(new Event('pkr-local-data-changed'));

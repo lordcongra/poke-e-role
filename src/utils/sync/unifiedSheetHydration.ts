@@ -187,7 +187,9 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
 
         // Safeguard: Authoritative fields from PC summary MUST NEVER be overwritten by live token!
         if (summaryMeta?.['species']) finalMeta['species'] = summaryMeta['species'];
-        if (summaryMeta?.['nickname']) finalMeta['nickname'] = summaryMeta['nickname'];
+        if (summaryMeta && ('nickname' in summaryMeta || summaryMeta['nickname'] !== undefined)) {
+            finalMeta['nickname'] = summaryMeta['nickname'] ?? '';
+        }
         if (summaryMeta?.['rank']) finalMeta['rank'] = summaryMeta['rank'];
         if (summaryMeta?.['moves-data'] && summaryMeta['moves-data'] !== '[]') {
             finalMeta['moves-data'] = summaryMeta['moves-data'];

@@ -25,11 +25,18 @@ export async function buildBackupSceneItems(
         pos: { x: number; y: number },
         options?: { isParty?: boolean; beltSlot?: number; boxIndex?: number; boxName?: string }
     ): Promise<Item> => {
+        const explicitNick = summary.fullMetadata?.nickname ?? summary.fullMetadata?.['nickname'];
+        const cleanNick =
+            explicitNick !== undefined
+                ? explicitNick
+                : summary.name && summary.species && summary.name !== summary.species
+                  ? summary.name
+                  : '';
         const metaObj: Record<string, unknown> = {
             ...(summary.fullMetadata || {}),
             entityId: summary.entityId,
             name: summary.name,
-            nickname: summary.name,
+            nickname: cleanNick,
             species: summary.species,
             type1: summary.type1,
             type2: summary.type2,

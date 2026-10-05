@@ -52,7 +52,9 @@ export function buildSummaryFromStore(
     const nextMaxHp = currentStore.health.hpMax ?? curr.maxHp;
     const nextWill = currentStore.will.willCurr ?? curr.will;
     const nextMaxWill = currentStore.will.willMax ?? curr.maxWill;
-    const nextName = currentStore.identity.nickname || currentStore.identity.species || curr.name;
+    const cleanNick = (currentStore.identity.nickname || '').trim();
+    const cleanSpecies = (currentStore.identity.species || curr.species || '').trim();
+    const nextName = cleanNick || cleanSpecies || curr.name;
 
     // Keep savedTokenItem metadata synchronized if cached token item exists
     let updatedSavedTokenItem = curr.savedTokenItem;
@@ -64,12 +66,18 @@ export function buildSummaryFromStore(
                 ...(updatedSavedTokenItem.metadata || {}),
                 [METADATA_ID]: {
                     ...((updatedSavedTokenItem.metadata?.[METADATA_ID] as Record<string, unknown>) || {}),
-                    ...nextMeta
+                    ...nextMeta,
+                    name: nextName,
+                    nickname: cleanNick,
+                    species: cleanSpecies
                 },
                 'pokerole-pmd-extension/stats': {
                     ...((updatedSavedTokenItem.metadata?.['pokerole-pmd-extension/stats'] as Record<string, unknown>) ||
                         {}),
-                    ...nextMeta
+                    ...nextMeta,
+                    name: nextName,
+                    nickname: cleanNick,
+                    species: cleanSpecies
                 }
             }
         };
@@ -78,7 +86,7 @@ export function buildSummaryFromStore(
     const updatedSummary: PcPokemonSummary = {
         ...curr,
         name: nextName,
-        species: currentStore.identity.species || curr.species,
+        species: cleanSpecies,
         rank: currentStore.identity.rank || curr.rank,
         type1: currentStore.identity.type1 || curr.type1,
         type2:
@@ -90,7 +98,12 @@ export function buildSummaryFromStore(
         will: nextWill,
         maxWill: nextMaxWill,
         tokenImageUrl: currentStore.identity.tokenImageUrl || curr.tokenImageUrl,
-        fullMetadata: nextMeta,
+        fullMetadata: {
+            ...nextMeta,
+            name: nextName,
+            nickname: cleanNick,
+            species: cleanSpecies
+        },
         savedTokenItem: updatedSavedTokenItem,
         lastModified: now
     };
@@ -112,7 +125,18 @@ export function buildHydrationMetadataFromSummary(summary: PcPokemonSummary): Re
     if (summary.maxHp !== undefined) meta['hp-max-display'] = summary.maxHp;
     if (summary.will !== undefined) meta['will-curr'] = summary.will;
     if (summary.maxWill !== undefined) meta['will-max-display'] = summary.maxWill;
-    if (summary.name) meta['nickname'] = summary.name;
+
+    // Preserve actual nickname: If explicit nickname exists in fullMetadata, preserve it (even if empty string "")!
+    // Never overwrite an empty nickname with the species name.
+    const explicitNick = summary.fullMetadata?.nickname ?? summary.fullMetadata?.['nickname'];
+    if (explicitNick !== undefined) {
+        meta['nickname'] = explicitNick;
+    } else if (summary.name && summary.species && summary.name !== summary.species) {
+        meta['nickname'] = summary.name;
+    } else {
+        meta['nickname'] = '';
+    }
+
     if (summary.species) meta['species'] = summary.species;
     if (summary.rank) meta['rank'] = summary.rank;
     if (summary.type1) meta['type1'] = summary.type1;

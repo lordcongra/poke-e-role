@@ -704,7 +704,6 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
 
             let nextPcData = state.pcData;
             if (
-                state.tokenId &&
                 state.pcData?.pokemonSummaries &&
                 (field === 'type1' ||
                     field === 'type2' ||
@@ -716,18 +715,38 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 const summaries = state.pcData.pokemonSummaries;
                 const matchEntry = Object.entries(summaries).find(
                     ([k, s]) =>
-                        k === state.tokenId || s.mapTokenId === state.tokenId || s.savedTokenItem?.id === state.tokenId
+                        (state.tokenId &&
+                            (k === state.tokenId ||
+                                s.mapTokenId === state.tokenId ||
+                                s.savedTokenItem?.id === state.tokenId)) ||
+                        (state.identity.entityId &&
+                            (k === state.identity.entityId || s.entityId === state.identity.entityId))
                 );
                 if (matchEntry) {
                     const [matchedKey, sum] = matchEntry;
+                    const cleanNick =
+                        field === 'nickname'
+                            ? ((value as string) || '').trim()
+                            : (sum.fullMetadata?.nickname as string) || '';
+                    const nextSpecies = field === 'species' ? (value as string) : sum.species;
+                    const nextDisplayName = cleanNick || nextSpecies || sum.name;
                     const updatedSum = {
                         ...sum,
                         type1: field === 'type1' ? (value as string) : sum.type1,
                         type2: field === 'type2' ? (value as string) : sum.type2,
-                        name: field === 'nickname' ? (value as string) || sum.species : sum.name,
-                        species: field === 'species' ? (value as string) : sum.species,
+                        name: nextDisplayName,
+                        species: nextSpecies,
                         rank: field === 'rank' ? (value as Rank) : sum.rank,
-                        tokenImageUrl: field === 'tokenImageUrl' ? (value as string) : sum.tokenImageUrl
+                        tokenImageUrl: field === 'tokenImageUrl' ? (value as string) : sum.tokenImageUrl,
+                        fullMetadata: {
+                            ...(sum.fullMetadata || {}),
+                            nickname: cleanNick,
+                            species: nextSpecies,
+                            name: nextDisplayName,
+                            type1: field === 'type1' ? (value as string) : sum.type1,
+                            type2: field === 'type2' ? (value as string) : sum.type2,
+                            rank: field === 'rank' ? (value as Rank) : sum.rank
+                        }
                     };
                     nextPcData = {
                         ...state.pcData,

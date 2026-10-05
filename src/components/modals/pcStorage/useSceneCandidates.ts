@@ -83,9 +83,13 @@ export function useSceneCandidates({
                             currentRole
                         );
 
+                        const rawNick = ((meta.nickname as string) || (meta['nickname'] as string) || '').trim();
+                        const charNick = rawNick && rawNick.toLowerCase() !== species.toLowerCase() ? rawNick : '';
+                        const charDisplayName = charNick || (meta.name as string) || item.name || species;
+
                         found.push({
                             id: item.id,
-                            name: (meta.name as string) || (meta.nickname as string) || item.name || species,
+                            name: charDisplayName,
                             species,
                             imageUrl: imgUrl,
                             hp: hpCurr,
@@ -99,7 +103,11 @@ export function useSceneCandidates({
                                     : undefined,
                             rank: (meta.rank as string) || 'Starter',
                             item,
-                            metadata: meta,
+                            metadata: {
+                                ...meta,
+                                nickname: charNick,
+                                name: charDisplayName
+                            },
                             claimedBy: !isGm && item.locked ? 'Locked by GM (Ask GM to unlock)' : claimedBy,
                             isInParty,
                             isInBoxes,

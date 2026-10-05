@@ -8,15 +8,20 @@ import { isTrainerMetadata, isBeltFolderName } from './pcSidebarSync';
  * Synchronizes a nickname update to the corresponding Pokémon character in the Standalone Sidebar.
  */
 export async function syncPokemonNicknameToSidebar(pokemonId: string, newNickname: string): Promise<void> {
-    if (!isStandaloneMode || !pokemonId || !newNickname.trim()) return;
+    if (!isStandaloneMode || !pokemonId) return;
 
     try {
         const localChars = await storageAdapter.getLocalCharacters();
         const match = localChars.find((c) => c.id === pokemonId || c.metadata?.entityId === pokemonId);
         if (match) {
+            const cleanNick = (newNickname || '').trim();
+            const species = (match.metadata?.species as string) || match.name || 'Pokémon';
             await storageAdapter.saveCharacter(
                 match.id,
-                { nickname: newNickname.trim() },
+                {
+                    nickname: cleanNick,
+                    name: cleanNick || species
+                },
                 'pokerole-pmd-extension/stats'
             );
         }
@@ -37,15 +42,18 @@ export async function syncSidebarCharacterRenameToPc(
 
     try {
         const summary = pcData.pokemonSummaries[characterId];
-        if (summary && summary.name !== newNickname.trim()) {
+        const cleanNick = (newNickname || '').trim();
+        const effectiveName = cleanNick || summary?.species || '';
+        if (summary && (summary.name !== effectiveName || (summary.fullMetadata?.nickname as string) !== cleanNick)) {
             const nextSummaries = {
                 ...pcData.pokemonSummaries,
                 [characterId]: {
                     ...summary,
-                    name: newNickname.trim(),
+                    name: effectiveName,
                     fullMetadata: {
                         ...summary.fullMetadata,
-                        nickname: newNickname.trim()
+                        name: effectiveName,
+                        nickname: cleanNick
                     }
                 }
             };

@@ -123,12 +123,20 @@ export async function syncBackupSceneTokens(sceneItems: Item[]): Promise<void> {
 
                 if (!hasChanged) continue;
 
+                const explicitNick = summary.fullMetadata?.nickname ?? summary.fullMetadata?.['nickname'];
+                const cleanNick =
+                    explicitNick !== undefined
+                        ? explicitNick
+                        : summary.name && summary.species && summary.name !== summary.species
+                          ? summary.name
+                          : '';
+
                 const nextMeta = {
                     ...(summary.fullMetadata || {}),
                     ...meta,
                     entityId,
                     name: summary.name,
-                    nickname: summary.name,
+                    nickname: cleanNick,
                     species: summary.species,
                     'hp-curr': summary.hp,
                     'hp-max-display': summary.maxHp,

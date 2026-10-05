@@ -131,11 +131,20 @@ export async function spawnPokemonToMap(
         const sumChances = Number(summary.fullMetadata?.['chances-used']) || 0;
         const sumFate = Number(summary.fullMetadata?.['fate-used']) || 0;
 
+        const explicitNick =
+            (summary.fullMetadata?.nickname as string) ?? (summary.fullMetadata?.['nickname'] as string);
+        const nickToSet =
+            explicitNick !== undefined
+                ? explicitNick
+                : summary.name && summary.species && summary.name !== summary.species
+                  ? summary.name
+                  : '';
+
         const metadataObj: Record<string, unknown> = {
             ...(summary.fullMetadata || {}),
             entityId: validEntityId,
             name: summary.name || summary.species,
-            nickname: summary.name || summary.species,
+            nickname: nickToSet,
             species: summary.species || summary.name,
             type1: summary.type1 || 'Normal',
             type2: summary.type2,
