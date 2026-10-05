@@ -4,7 +4,11 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { isBackupScene, syncBackupSceneTokens } from '../../utils/pc/pcBackupSceneSync';
 import { recentlySpawnedTokenIds } from '../../utils/pc/pcModalOps';
 import { renderTokenGraphicsForMeta, extractEntityId } from './setupOwlbearTokenSync';
-import { separateAttachments, detachTokensFromParent } from '../../utils/pc/pcAttachmentOps';
+import {
+    separateAttachments,
+    detachTokensFromParent,
+    reconcileTokenAttachmentsOnScene
+} from '../../utils/pc/pcAttachmentOps';
 
 let isReconciling = false;
 
@@ -154,6 +158,7 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
         }
 
         const duplicateIdsToDelete: string[] = [];
+        const attachmentsToAdd: Item[] = [];
         const tokensToUpdate: Array<{ id: string; metadata: Item['metadata']; name: string }> = [];
 
         for (const [entityId, tokens] of tokensByEntity.entries()) {
@@ -258,6 +263,19 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                 const isOutdated = (sumLastMod > tokenLastMod || !tokenLastMod) && hasValidFullMeta;
 
                 if (isOutdated) {
+                    const { itemsToAdd: attachToAdd, idsToDelete: attachToDelete } = reconcileTokenAttachmentsOnScene(
+                        primaryToken,
+                        sum.attachedItems,
+                        sceneItems,
+                        false
+                    );
+                    if (attachToDelete.length > 0) {
+                        duplicateIdsToDelete.push(...attachToDelete);
+                    }
+                    if (attachToAdd.length > 0) {
+                        attachmentsToAdd.push(...attachToAdd);
+                    }
+
                     const sumTempHp = Number(sum.fullMetadata?.['temporary-hit-points']) || 0;
                     const sumTempWill = Number(sum.fullMetadata?.['temporary-will']) || 0;
 
@@ -392,6 +410,11 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
         if (duplicateIdsToDelete.length > 0) {
             const unique = Array.from(new Set(duplicateIdsToDelete));
             await OBR.scene.items.deleteItems(unique);
+        }
+
+        // 5.1 Add reconciled accessories for outdated tokens (GM only)
+        if (attachmentsToAdd.length > 0) {
+            await OBR.scene.items.addItems(attachmentsToAdd);
         }
 
         // 6. Update genuinely outdated tokens on the scene & refresh their HUD graphics (GM only)

@@ -290,6 +290,9 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 <li>
                     <strong>Nickname Synchronization & Fallback:</strong> Editing or clearing a Pokémon's nickname in the PC sheet now updates the storage display and party slots immediately. Deleting a nickname keeps the input field blank on the sheet while cleanly falling back to the species name across all displays.
                 </li>
+                <li>
+                    <strong>Attachment Detachment & Backup Sync:</strong> Detaching an accessory or held item from a token on the map now unlinks it from the token's persistent memory, preventing duplicate attachments upon recall or re-deployment. Backup scenes now include all attached accessories, and entering a scene with older tokens updates their stats and attachments to match the latest sheet data.
+                </li>
             </ul>,
             <strong
                 key="battle-organizer-title"

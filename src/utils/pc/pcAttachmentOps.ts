@@ -1,9 +1,10 @@
 import OBR, { type Item } from '@owlbear-rodeo/sdk';
 import { METADATA_ID } from '../sync/obr';
 import { GRAPHICS_META_ID } from '../graphics/graphicsManager';
-import type { PcPokemonSummary } from '../../types/pcStorageTypes';
+import type { PcPokemonSummary, AttachmentBundle } from '../../types/pcStorageTypes';
 import { isItemTrainer } from './pcItemMatching';
 import { getAbsoluteItemPosition } from './pcPlacementUtils';
+import { calculateRelativeAttachment, applyRelativeAttachment } from './rehomeEngine';
 
 /**
  * Checks whether an item is a Pokérole character token (Pokémon or Trainer)
@@ -116,4 +117,80 @@ export async function detachTokensFromParent(attachedTokens: Item[], sceneItems:
     } catch (e) {
         console.warn('[pcAttachmentOps] Failed to detach tokens from parent:', e);
     }
+}
+
+/**
+ * Extracts live relative attachment bundles for accessories attached to a parent token.
+ */
+export function extractLiveAccessoryBundles(sceneItems: Item[], parent: Item): AttachmentBundle[] {
+    const { accessoryTokens } = separateAttachments(sceneItems, parent.id);
+    return accessoryTokens.map((child) => calculateRelativeAttachment(parent, child));
+}
+
+/**
+ * Compares stored attachment bundles against live scene accessory bundles.
+ * Returns true if the count, child IDs, or relative transform has meaningfully changed.
+ */
+export function hasAttachmentDiff(
+    storedBundles: AttachmentBundle[] | undefined,
+    liveBundles: AttachmentBundle[]
+): boolean {
+    const stored = storedBundles || [];
+    if (stored.length !== liveBundles.length) return true;
+    if (stored.length === 0 && liveBundles.length === 0) return false;
+
+    for (let i = 0; i < liveBundles.length; i++) {
+        const l = liveBundles[i];
+        const s = stored[i];
+        if (!s || s.item.id !== l.item.id) return true;
+        const dx = Math.abs(s.relativeOffset.x - l.relativeOffset.x);
+        const dy = Math.abs(s.relativeOffset.y - l.relativeOffset.y);
+        const dr = Math.abs(s.relativeRotation - l.relativeRotation);
+        const dsx = Math.abs(s.relativeScale.x - l.relativeScale.x);
+        const dsy = Math.abs(s.relativeScale.y - l.relativeScale.y);
+        if (dx > 0.01 || dy > 0.01 || dr > 0.01 || dsx > 0.01 || dsy > 0.01) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Reconciles attached accessories on the live Owlbear Rodeo scene with desired bundles.
+ * Spawns missing accessories and marks stale or detached accessories for removal.
+ */
+export function reconcileTokenAttachmentsOnScene(
+    parent: Item,
+    desiredBundles: AttachmentBundle[] | undefined,
+    sceneItems: Item[],
+    tagAsBackupToken: boolean = false
+): { itemsToAdd: Item[]; idsToDelete: string[] } {
+    const { accessoryTokens } = separateAttachments(sceneItems, parent.id);
+    const desired = desiredBundles || [];
+    const itemsToAdd: Item[] = [];
+    const idsToDelete: string[] = [];
+
+    // Case 1: Attachment was detached or removed in PC storage; clear accessories from scene token
+    if (desired.length === 0) {
+        if (accessoryTokens.length > 0) {
+            idsToDelete.push(...accessoryTokens.map((a) => a.id));
+        }
+        return { itemsToAdd, idsToDelete };
+    }
+
+    // Case 2: Desired attachments exist but scene token is missing them
+    if (accessoryTokens.length === 0) {
+        for (const bundle of desired) {
+            const child = applyRelativeAttachment(parent, bundle, parent.id);
+            if (tagAsBackupToken) {
+                child.metadata = {
+                    ...(child.metadata || {}),
+                    'pokerole-pmd-extension/is-backup-token': true
+                };
+            }
+            itemsToAdd.push(child);
+        }
+    }
+
+    return { itemsToAdd, idsToDelete };
 }

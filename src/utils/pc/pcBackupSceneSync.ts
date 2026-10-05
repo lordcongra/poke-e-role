@@ -1,6 +1,7 @@
 import OBR, { type Item } from '@owlbear-rodeo/sdk';
 import { METADATA_ID } from '../sync/obr';
 import { useCharacterStore } from '../../store/useCharacterStore';
+import { reconcileTokenAttachmentsOnScene } from './pcAttachmentOps';
 
 export const BACKUP_SCENE_META_KEY = 'pokerole-pmd-extension/pc-backup';
 export const IS_BACKUP_SCENE_FLAG = 'pokerole-pmd-extension/is-backup-scene';
@@ -89,6 +90,8 @@ export async function syncBackupSceneTokens(sceneItems: Item[]): Promise<void> {
 
         const store = useCharacterStore.getState();
         const tokensToUpdate: Array<{ id: string; metadata: Item['metadata'] }> = [];
+        const allAttachmentsToAdd: Item[] = [];
+        const allAttachmentIdsToDelete: string[] = [];
         const characterTokens = sceneItems.filter((it) => it.layer === 'CHARACTER');
 
         for (const token of characterTokens) {
@@ -98,6 +101,16 @@ export async function syncBackupSceneTokens(sceneItems: Item[]): Promise<void> {
 
             const summary = store.pcData.pokemonSummaries[entityId];
             if (summary) {
+                // Reconcile attachments on backup token
+                const { itemsToAdd: attachToAdd, idsToDelete: attachToDelete } = reconcileTokenAttachmentsOnScene(
+                    token,
+                    summary.attachedItems,
+                    sceneItems,
+                    true
+                );
+                allAttachmentsToAdd.push(...attachToAdd);
+                allAttachmentIdsToDelete.push(...attachToDelete);
+
                 const sumTempHp = Number(summary.fullMetadata?.['temporary-hit-points']) || 0;
                 const metaTempHp = Number(meta['temporary-hit-points']) || 0;
                 const sumTempWill = Number(summary.fullMetadata?.['temporary-will']) || 0;
@@ -107,8 +120,13 @@ export async function syncBackupSceneTokens(sceneItems: Item[]): Promise<void> {
                 const sumMovesStr = JSON.stringify(summary.fullMetadata?.['moves-data'] || '');
                 const metaMovesStr = JSON.stringify(meta['moves-data'] || '');
 
-                // Strict diffing: only update if core fields actually changed
+                const sumLastMod = Number(summary.lastModified) || 0;
+                const tokenLastMod = Number(meta.lastModified) || 0;
+
+                // Strict diffing: update if core fields changed OR PC sheet is newer
                 const hasChanged =
+                    sumLastMod > tokenLastMod ||
+                    !tokenLastMod ||
                     meta['hp-curr'] !== summary.hp ||
                     meta['hp-max-display'] !== summary.maxHp ||
                     meta['will-curr'] !== summary.will ||
@@ -159,6 +177,15 @@ export async function syncBackupSceneTokens(sceneItems: Item[]): Promise<void> {
                     }
                 });
             }
+        }
+
+        if (allAttachmentIdsToDelete.length > 0) {
+            const uniqueDelete = Array.from(new Set(allAttachmentIdsToDelete));
+            await OBR.scene.items.deleteItems(uniqueDelete);
+        }
+
+        if (allAttachmentsToAdd.length > 0) {
+            await OBR.scene.items.addItems(allAttachmentsToAdd);
         }
 
         if (tokensToUpdate.length > 0) {

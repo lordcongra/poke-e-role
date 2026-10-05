@@ -388,14 +388,10 @@ export async function prepareDepositSummary(
             const parent = sceneItems.find((i) => i.id === finalSummary.mapTokenId);
             if (parent && !isItemTrainer(parent)) {
                 finalSummary.savedTokenItem = parent;
-                if (!finalSummary.attachedItems || finalSummary.attachedItems.length === 0) {
-                    const { characterTokens, accessoryTokens } = separateAttachments(sceneItems, parent.id);
-                    if (accessoryTokens.length > 0) {
-                        finalSummary.attachedItems = accessoryTokens.map((c) => calculateRelativeAttachment(parent, c));
-                    }
-                    if (characterTokens.length > 0) {
-                        await detachTokensFromParent(characterTokens, sceneItems);
-                    }
+                const { characterTokens, accessoryTokens } = separateAttachments(sceneItems, parent.id);
+                finalSummary.attachedItems = accessoryTokens.map((c) => calculateRelativeAttachment(parent, c));
+                if (characterTokens.length > 0) {
+                    await detachTokensFromParent(characterTokens, sceneItems);
                 }
                 if (finalSummary.savedTokenItem.attachedTo) {
                     delete (finalSummary.savedTokenItem as { attachedTo?: unknown }).attachedTo;

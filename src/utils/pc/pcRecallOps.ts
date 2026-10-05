@@ -116,7 +116,7 @@ export async function recallPokemonFromMap(
 
         return {
             success: true,
-            attachedItems: bundles.length > 0 ? bundles : summary?.attachedItems || [],
+            attachedItems: bundles,
             savedTokenItem: parent,
             fullMetadata: { ...(summary?.fullMetadata || {}), ...meta },
             currentHp,

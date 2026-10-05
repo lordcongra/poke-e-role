@@ -5,6 +5,7 @@ import { sanitizeImageUrl } from '../generators/trainerTokenSpawner';
 import { downloadBoxFromObrCloud } from './pcStorageAdapter';
 import { getTrainerBoxes } from './pcStateMutations';
 import { isEntityLockedByGm } from './pcCandidateMatching';
+import { extractLiveAccessoryBundles } from './pcAttachmentOps';
 
 export interface RestoreTokensResult {
     success: boolean;
@@ -45,6 +46,8 @@ export async function importBoxCloud(campaign: CampaignProfile): Promise<PcPokem
             const cleanType2 =
                 rawType2 && rawType2.toLowerCase() !== 'none' && rawType2.trim() !== '' ? rawType2 : undefined;
 
+            const attachedItems = extractLiveAccessoryBundles(scene.items, item);
+
             importedSummaries.push({
                 entityId,
                 name: (meta.name as string) || (meta.nickname as string) || item.name || 'Imported Pokémon',
@@ -59,6 +62,7 @@ export async function importBoxCloud(campaign: CampaignProfile): Promise<PcPokem
                 tokenImageUrl: (meta['token-image-url'] as string) || (item as { image?: { url?: string } }).image?.url,
                 isOnMap: false,
                 savedTokenItem: item,
+                attachedItems: attachedItems.length > 0 ? attachedItems : undefined,
                 fullMetadata: meta,
                 lastModified: Date.now()
             });
@@ -78,7 +82,8 @@ export function restoreTokensIntoPcStorage(
     currentPcData: PcStorageData,
     activeBoxIndex: number = 0,
     role: 'PLAYER' | 'GM' = 'PLAYER',
-    myPlayerId?: string
+    myPlayerId?: string,
+    allSceneItems?: Item[]
 ): RestoreTokensResult {
     if (!currentPcData?.campaigns) {
         return {
@@ -200,6 +205,9 @@ export function restoreTokensIntoPcStorage(
         const cleanType2 =
             rawType2 && rawType2.toLowerCase() !== 'none' && rawType2.trim() !== '' ? rawType2 : undefined;
 
+        const contextItems = allSceneItems || items;
+        const attachedItems = extractLiveAccessoryBundles(contextItems, item);
+
         const summary: PcPokemonSummary = {
             entityId,
             name: (meta.name as string) || (meta.nickname as string) || item.name || 'Imported Pokémon',
@@ -214,6 +222,7 @@ export function restoreTokensIntoPcStorage(
             tokenImageUrl: tokenImg ? sanitizeImageUrl(tokenImg) : undefined,
             isOnMap: false,
             savedTokenItem: item,
+            attachedItems: attachedItems.length > 0 ? attachedItems : undefined,
             fullMetadata: meta,
             lastModified: (meta.lastModified as number) || Date.now()
         };

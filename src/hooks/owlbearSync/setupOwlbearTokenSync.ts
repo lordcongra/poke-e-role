@@ -10,6 +10,7 @@ import { setActiveTokenId, hasPendingUpdates, getIsPcSheetActive, setIsRemoteSyn
 import { harvestTokensItemArt } from '../../utils/graphics/itemArtCatalog';
 import { METADATA_ID, getEffectiveScaleAndOffsets, type TransformData } from './owlbearSyncConstants';
 import { reconcileSceneTokens } from './reconcileSceneTokens';
+import { extractLiveAccessoryBundles, hasAttachmentDiff } from '../../utils/pc/pcAttachmentOps';
 
 export interface OwlbearTokenSyncResult {
     renderAllTokens: (forceRebuild?: boolean | 'badges-only') => Promise<void>;
@@ -388,9 +389,13 @@ export async function setupOwlbearTokenSync(params: {
                             const sumClash = Boolean(pcSummary.fullMetadata?.['clashes-used']);
                             const liveClash = Boolean(meta['clashes-used']);
 
+                            const liveBundles = extractLiveAccessoryBundles(items, item);
+                            const attachmentsChanged = hasAttachmentDiff(pcSummary.attachedItems, liveBundles);
+
                             const metaChanged = lastTransform?.metaStr !== metaStr;
                             if (
                                 metaChanged ||
+                                attachmentsChanged ||
                                 tokenLastMod > pcLastMod ||
                                 curHp !== pcSummary.hp ||
                                 mHp !== pcSummary.maxHp ||
@@ -417,6 +422,7 @@ export async function setupOwlbearTokenSync(params: {
                                     name: pokeName,
                                     mapTokenId: item.id,
                                     savedTokenItem: item,
+                                    attachedItems: liveBundles,
                                     fullMetadata: nextMeta,
                                     lastModified: Number(meta.lastModified) || pcSummary.lastModified || Date.now()
                                 });

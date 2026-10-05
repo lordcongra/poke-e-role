@@ -3,6 +3,7 @@ import { METADATA_ID } from '../sync/obr';
 import type { PcBox, CampaignProfile, PcPokemonSummary, TrainerRoster } from '../../types/pcStorageTypes';
 import { getAbsolutePokeballUrl, resolveImageDimensions, sanitizeImageUrl } from '../generators/trainerTokenSpawner';
 import { uploadBoxToObrCloud } from './pcStorageAdapter';
+import { applyRelativeAttachment } from './rehomeEngine';
 
 /**
  * Builds array of Character tokens for a Box (or all Boxes) and Trainer Belt arranged
@@ -145,6 +146,20 @@ export async function buildBackupSceneItems(
         startBeltCol = 1;
     }
 
+    const pushItemWithAttachments = (parentItem: Item, attachedBundles?: PcPokemonSummary['attachedItems']) => {
+        items.push(parentItem);
+        if (attachedBundles && attachedBundles.length > 0) {
+            for (const bundle of attachedBundles) {
+                const child = applyRelativeAttachment(parentItem, bundle, parentItem.id);
+                child.metadata = {
+                    ...(child.metadata || {}),
+                    'pokerole-pmd-extension/is-backup-token': true
+                };
+                items.push(child);
+            }
+        }
+    };
+
     // Row 0: Active Party Belt Pokémon
     const validPartyIds = (partyEntityIds || []).filter((id): id is string => Boolean(id));
     const processedIds = new Set<string>(validPartyIds);
@@ -155,7 +170,7 @@ export async function buildBackupSceneItems(
         if (summary) {
             const pos = { x: (startBeltCol + idx) * spacing, y: 0 };
             const item = await createPokemonItem(summary, pos, { isParty: true, beltSlot: idx });
-            items.push(item);
+            pushItemWithAttachments(item, summary.attachedItems);
         }
     }
 
@@ -180,7 +195,7 @@ export async function buildBackupSceneItems(
                     boxIndex: targetBoxes.indexOf(b),
                     boxName: b.name
                 });
-                items.push(item);
+                pushItemWithAttachments(item, summary.attachedItems);
             }
         }
         gridRowOffset += Math.ceil(boxSlots.length / 6);
@@ -247,23 +262,32 @@ export async function syncToActiveScene(
         }
         const partySet = new Set((partyEntityIds || []).filter(Boolean));
 
-        const idsToRemove = sceneItems
-            .filter((it) => {
-                if (it.layer !== 'CHARACTER') return false;
-                const meta = (it.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
-                const entityId = meta.entityId as string;
-                if (entityId && (allBoxSlotEntities.has(entityId) || partySet.has(entityId))) {
-                    return true;
-                }
-                if (trainer && (meta.name === trainer.name || meta.species === trainer.name)) {
-                    return true;
-                }
-                return false;
-            })
-            .map((it) => it.id);
+        const removedIdsSet = new Set(
+            sceneItems
+                .filter((it) => {
+                    if (it.layer !== 'CHARACTER') return false;
+                    const meta = (it.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
+                    const entityId = meta.entityId as string;
+                    if (entityId && (allBoxSlotEntities.has(entityId) || partySet.has(entityId))) {
+                        return true;
+                    }
+                    if (trainer && (meta.name === trainer.name || meta.species === trainer.name)) {
+                        return true;
+                    }
+                    return false;
+                })
+                .map((it) => it.id)
+        );
 
-        if (idsToRemove.length > 0) {
-            await OBR.scene.items.deleteItems(idsToRemove);
+        // Include any attached accessories belonging to these tokens
+        for (const it of sceneItems) {
+            if (it.attachedTo && removedIdsSet.has(it.attachedTo)) {
+                removedIdsSet.add(it.id);
+            }
+        }
+
+        if (removedIdsSet.size > 0) {
+            await OBR.scene.items.deleteItems(Array.from(removedIdsSet));
         }
 
         // 3. Add the newly arranged items
