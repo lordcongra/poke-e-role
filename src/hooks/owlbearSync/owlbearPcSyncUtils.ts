@@ -127,6 +127,7 @@ export function sanitizeTrainerForSync(t: TrainerRoster): TrainerRoster {
         boxes: deduped.boxes,
         isLinked: deduped.isLinked,
         mapTokenId: deduped.mapTokenId,
+        playerId: deduped.playerId,
         fullMetadata: slimMeta
     };
 }

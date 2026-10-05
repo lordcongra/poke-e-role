@@ -62,6 +62,9 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
 
                     if (payload.trainer && payload.trainer.id && !payload.trainer.id.startsWith('__player_')) {
                         const cleanIncoming = sanitizeTrainerForSync(payload.trainer);
+                        if (!cleanIncoming.playerId && payload.senderId) {
+                            cleanIncoming.playerId = payload.senderId;
+                        }
                         const existingTrainer = currentCamp.trainers[cleanIncoming.id];
                         updatedTrainers[cleanIncoming.id] = existingTrainer
                             ? { ...existingTrainer, ...cleanIncoming }
@@ -214,39 +217,52 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
 
                     if (payload.trainer && payload.trainer.id) {
                         const cleanIncoming = sanitizeTrainerForSync(payload.trainer);
-                        const existingTrainer = currentCamp.trainers[cleanIncoming.id];
+                        const myId = OBR.isAvailable ? await OBR.player.getId().catch(() => undefined) : undefined;
 
-                        if (existingTrainer) {
-                            updatedTrainers[cleanIncoming.id] = {
-                                ...existingTrainer,
-                                ...cleanIncoming,
-                                party: cleanIncoming.party,
-                                boxes: cleanIncoming.boxes
-                            };
-                            campChanged = true;
-                        } else if (cleanIncoming.id === '__pmd_team__' || cleanIncoming.id.startsWith('__pmd_')) {
-                            currentCamp = {
-                                ...currentCamp,
-                                teamParty: cleanIncoming.party,
-                                boxes: cleanIncoming.boxes || currentCamp.boxes
-                            };
-                            campChanged = true;
+                        // Non-GM players must never overwrite their personal PMD party & boxes with the GM's expedition team
+                        if (cleanIncoming.id === '__pmd_team__' || cleanIncoming.id.startsWith('__pmd_')) {
+                            // Ignore GM PMD team broadcast on player clients to protect personal PMD storage
                         } else {
-                            // New trainer created by GM that the player didn't have yet
-                            updatedTrainers[cleanIncoming.id] = cleanIncoming;
-                            campChanged = true;
-                        }
+                            const existingTrainer = currentCamp.trainers[cleanIncoming.id];
+                            const isOwnedByMe =
+                                (cleanIncoming.playerId && myId && cleanIncoming.playerId === myId) ||
+                                (existingTrainer && (!existingTrainer.playerId || existingTrainer.playerId === myId));
 
-                        // Prevent cross-trainer duplication bugs: strip claimed entity IDs from other trainers
-                        const incomingIds = new Set<string>();
-                        for (const s of cleanIncoming.party) if (s) incomingIds.add(s);
-                        for (const b of cleanIncoming.boxes || []) {
-                            for (const s of b.slots) if (s) incomingIds.add(s);
-                        }
-                        for (const otherId of Object.keys(updatedTrainers)) {
-                            if (otherId === cleanIncoming.id) continue;
-                            for (const entityId of incomingIds) {
-                                updatedTrainers[otherId] = stripEntityFromTrainer(updatedTrainers[otherId], entityId);
+                            if (existingTrainer && isOwnedByMe) {
+                                updatedTrainers[cleanIncoming.id] = {
+                                    ...existingTrainer,
+                                    ...cleanIncoming,
+                                    party: cleanIncoming.party,
+                                    boxes: cleanIncoming.boxes
+                                };
+                                campChanged = true;
+                            } else if (
+                                !existingTrainer &&
+                                cleanIncoming.playerId &&
+                                myId &&
+                                cleanIncoming.playerId === myId
+                            ) {
+                                // Only adopt new trainer if it explicitly belongs to this player
+                                updatedTrainers[cleanIncoming.id] = cleanIncoming;
+                                campChanged = true;
+                            }
+
+                            if (campChanged) {
+                                // Prevent cross-trainer duplication bugs: strip claimed entity IDs from other trainers
+                                const incomingIds = new Set<string>();
+                                for (const s of cleanIncoming.party) if (s) incomingIds.add(s);
+                                for (const b of cleanIncoming.boxes || []) {
+                                    for (const s of b.slots) if (s) incomingIds.add(s);
+                                }
+                                for (const otherId of Object.keys(updatedTrainers)) {
+                                    if (otherId === cleanIncoming.id) continue;
+                                    for (const entityId of incomingIds) {
+                                        updatedTrainers[otherId] = stripEntityFromTrainer(
+                                            updatedTrainers[otherId],
+                                            entityId
+                                        );
+                                    }
+                                }
                             }
                         }
                     }

@@ -54,7 +54,11 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
         filterRecommendedRank: false,
         recommendedRankMode: 'match',
         exactRecommendedRank: 'Standard',
-        customSlotRecommendedRanks: ['Starter', 'Starter', 'Starter', 'Starter', 'Starter', 'Starter']
+        customSlotRecommendedRanks: ['Starter', 'Starter', 'Starter', 'Starter', 'Starter', 'Starter'],
+        privacyDefaults: false,
+        privateNpcLock: true,
+        privateRolls: true,
+        privateGmTrackers: true
     },
 
     setGeneratorConfig: (config) => set((state) => ({ generatorConfig: { ...state.generatorConfig, ...config } })),
@@ -175,8 +179,34 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
             syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave);
 
             updatesToSave['moves-data'] = JSON.stringify(newMoves);
-            if (newExtraCategories !== state.extraCategories)
+            if (newExtraCategories !== state.extraCategories) {
                 updatesToSave['extra-skills-data'] = JSON.stringify(newExtraCategories);
+            }
+
+            if (state.generatorConfig.privacyDefaults) {
+                if (state.generatorConfig.privateNpcLock) {
+                    newIdentity.isNPC = true;
+                    updatesToSave['is-npc'] = true;
+                }
+                if (state.generatorConfig.privateRolls) {
+                    newIdentity.rolls = 'Private (GM)';
+                    updatesToSave['rolls'] = 'Private (GM)';
+                }
+                if (state.generatorConfig.privateGmTrackers) {
+                    newIdentity.gmHpBar = true;
+                    newIdentity.gmHpText = true;
+                    newIdentity.gmWillBar = true;
+                    newIdentity.gmWillText = true;
+                    newIdentity.gmDefBadge = true;
+                    newIdentity.gmEcoBadge = true;
+                    updatesToSave['gm-hp-bar'] = true;
+                    updatesToSave['gm-hp-text'] = true;
+                    updatesToSave['gm-will-bar'] = true;
+                    updatesToSave['gm-will-text'] = true;
+                    updatesToSave['gm-def-badge'] = true;
+                    updatesToSave['gm-eco-badge'] = true;
+                }
+            }
 
             try {
                 saveToOwlbear(updatesToSave);

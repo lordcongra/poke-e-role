@@ -669,7 +669,13 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 export function buildTokenMetadataFromBuild(
     build: TempBuild,
     nickname: string,
-    imageUrl: string
+    imageUrl: string,
+    privacy?: {
+        privacyDefaults?: boolean;
+        privateNpcLock?: boolean;
+        privateRolls?: boolean;
+        privateGmTrackers?: boolean;
+    }
 ): Record<string, unknown> {
     const pd = (build.pokemonData || {}) as Record<string, unknown>;
     const rank = build.rank || 'Starter';
@@ -810,6 +816,23 @@ export function buildTokenMetadataFromBuild(
     }
     if (build.happiness !== undefined) {
         metadata['happiness-curr'] = build.happiness;
+    }
+
+    if (privacy?.privacyDefaults) {
+        if (privacy.privateNpcLock) {
+            metadata['is-npc'] = true;
+        }
+        if (privacy.privateRolls) {
+            metadata['rolls'] = 'Private (GM)';
+        }
+        if (privacy.privateGmTrackers) {
+            metadata['gm-hp-bar'] = true;
+            metadata['gm-hp-text'] = true;
+            metadata['gm-will-bar'] = true;
+            metadata['gm-will-text'] = true;
+            metadata['gm-def-badge'] = true;
+            metadata['gm-eco-badge'] = true;
+        }
     }
 
     return metadata;

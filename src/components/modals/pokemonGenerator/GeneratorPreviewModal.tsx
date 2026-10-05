@@ -236,7 +236,7 @@ export function GeneratorPreviewModal({
                                     : b.species
                                 : sheetName?.trim() || b.species || 'Pokémon';
 
-                        const metadata = buildTokenMetadataFromBuild(b, tokenItemName, selectedUrl);
+                        const metadata = buildTokenMetadataFromBuild(b, tokenItemName, selectedUrl, config);
                         builtMetas.push(metadata);
 
                         const tokenItem = buildImage(imageContent, grid)

@@ -715,6 +715,90 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                         </div>
                     )}
 
+                    {/* GM Token Privacy Defaults */}
+                    <div className="generator-modal__destination-box" style={{ padding: '8px 12px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    flexWrap: 'wrap',
+                                    gap: '8px'
+                                }}
+                            >
+                                <label
+                                    className="generator-modal__checkbox-label text-label"
+                                    style={{ margin: 0, fontWeight: 600 }}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={Boolean(config.privacyDefaults)}
+                                        onChange={(e) => {
+                                            const val = e.target.checked;
+                                            setConfig({
+                                                privacyDefaults: val,
+                                                privateNpcLock: val ? (config.privateNpcLock ?? true) : false,
+                                                privateRolls: val ? (config.privateRolls ?? true) : false,
+                                                privateGmTrackers: val ? (config.privateGmTrackers ?? true) : false
+                                            });
+                                        }}
+                                        className="generator-modal__checkbox"
+                                    />
+                                    Private Token Defaults (GM Only)
+                                    <TooltipIcon
+                                        onClick={() =>
+                                            setTooltipInfo({
+                                                title: 'Private Token Defaults',
+                                                desc: 'Automatically configures generated Pokémon with GM-exclusive privacy settings so players cannot view rolls, stat modifications, or map token HUD trackers.'
+                                            })
+                                        }
+                                    />
+                                </label>
+                            </div>
+                            {config.privacyDefaults && (
+                                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', paddingLeft: '22px' }}>
+                                    <label
+                                        className="generator-modal__checkbox-label text-label"
+                                        style={{ margin: 0, fontSize: '0.82rem' }}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={Boolean(config.privateNpcLock)}
+                                            onChange={(e) => setConfig({ privateNpcLock: e.target.checked })}
+                                            className="generator-modal__checkbox"
+                                        />
+                                        NPC-locked
+                                    </label>
+                                    <label
+                                        className="generator-modal__checkbox-label text-label"
+                                        style={{ margin: 0, fontSize: '0.82rem' }}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={Boolean(config.privateRolls)}
+                                            onChange={(e) => setConfig({ privateRolls: e.target.checked })}
+                                            className="generator-modal__checkbox"
+                                        />
+                                        Private Rolls
+                                    </label>
+                                    <label
+                                        className="generator-modal__checkbox-label text-label"
+                                        style={{ margin: 0, fontSize: '0.82rem' }}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={Boolean(config.privateGmTrackers)}
+                                            onChange={(e) => setConfig({ privateGmTrackers: e.target.checked })}
+                                            className="generator-modal__checkbox"
+                                        />
+                                        GM-Only UI Trackers
+                                    </label>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     {/* Build Tier, Combat Bias & Defensive Preference */}
                     <div className="generator-modal__row">
                         <div className="generator-modal__col">

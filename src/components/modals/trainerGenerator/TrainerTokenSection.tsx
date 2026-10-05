@@ -16,6 +16,14 @@ export interface TrainerTokenSectionProps {
     setDestination: (dest: 'new' | 'overwrite') => void;
     generateTeam: boolean;
     teamSize: number;
+    privacyDefaults: boolean;
+    setPrivacyDefaults: (val: boolean) => void;
+    privateNpcLock: boolean;
+    setPrivateNpcLock: (val: boolean) => void;
+    privateRolls: boolean;
+    setPrivateRolls: (val: boolean) => void;
+    privateGmTrackers: boolean;
+    setPrivateGmTrackers: (val: boolean) => void;
     onOpenTooltip: (info: { title: string; desc: string }) => void;
 }
 
@@ -30,6 +38,14 @@ export const TrainerTokenSection: React.FC<TrainerTokenSectionProps> = ({
     setDestination,
     generateTeam,
     teamSize,
+    privacyDefaults,
+    setPrivacyDefaults,
+    privateNpcLock,
+    setPrivateNpcLock,
+    privateRolls,
+    setPrivateRolls,
+    privateGmTrackers,
+    setPrivateGmTrackers,
     onOpenTooltip
 }) => {
     const handlePickDefaultImage = async () => {
@@ -206,6 +222,86 @@ export const TrainerTokenSection: React.FC<TrainerTokenSectionProps> = ({
                             </label>
                         )}
                     </div>
+                </div>
+            </div>
+
+            {/* GM Token Privacy Defaults */}
+            <div className="trainer-gen-modal__section" style={{ padding: '10px 14px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '8px'
+                        }}
+                    >
+                        <label
+                            className="trainer-gen-modal__checkbox-label text-label"
+                            style={{ margin: 0, fontWeight: 600 }}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={privacyDefaults}
+                                onChange={(e) => {
+                                    const val = e.target.checked;
+                                    setPrivacyDefaults(val);
+                                    if (val) {
+                                        setPrivateNpcLock(true);
+                                        setPrivateRolls(true);
+                                        setPrivateGmTrackers(true);
+                                    }
+                                }}
+                            />
+                            <span>Private Token Defaults (GM Only)</span>
+                            <TooltipIcon
+                                onClick={() =>
+                                    onOpenTooltip({
+                                        title: 'Private Token Defaults',
+                                        desc: 'Automatically configures the generated Trainer and Team Pokémon with GM-exclusive privacy settings so players cannot view rolls, stat modifications, or map token HUD trackers.'
+                                    })
+                                }
+                            />
+                        </label>
+                    </div>
+                    {privacyDefaults && (
+                        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', paddingLeft: '22px' }}>
+                            <label
+                                className="trainer-gen-modal__checkbox-label text-label"
+                                style={{ margin: 0, fontSize: '0.82rem' }}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={privateNpcLock}
+                                    onChange={(e) => setPrivateNpcLock(e.target.checked)}
+                                />
+                                <span>NPC-locked</span>
+                            </label>
+                            <label
+                                className="trainer-gen-modal__checkbox-label text-label"
+                                style={{ margin: 0, fontSize: '0.82rem' }}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={privateRolls}
+                                    onChange={(e) => setPrivateRolls(e.target.checked)}
+                                />
+                                <span>Private Rolls</span>
+                            </label>
+                            <label
+                                className="trainer-gen-modal__checkbox-label text-label"
+                                style={{ margin: 0, fontSize: '0.82rem' }}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={privateGmTrackers}
+                                    onChange={(e) => setPrivateGmTrackers(e.target.checked)}
+                                />
+                                <span>GM-Only UI Trackers</span>
+                            </label>
+                        </div>
+                    )}
                 </div>
             </div>
         </>

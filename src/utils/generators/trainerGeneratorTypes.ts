@@ -42,6 +42,10 @@ export interface TrainerGeneratorConfig {
     recommendedRankMode?: 'match_pokemon' | 'exact' | 'custom';
     exactRecommendedRank?: Rank;
     customSlotRecommendedRanks?: (Rank | 'match_pokemon')[];
+    privacyDefaults?: boolean;
+    privateNpcLock?: boolean;
+    privateRolls?: boolean;
+    privateGmTrackers?: boolean;
 }
 
 export interface GeneratedTrainerResult {

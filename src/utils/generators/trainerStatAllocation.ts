@@ -313,7 +313,13 @@ export function buildTrainerTokenMetadata(
     isSpecialTrainer: boolean,
     profile: TrainerProfileType,
     assignBadges: boolean,
-    originBiomeId?: string
+    originBiomeId?: string,
+    privacy?: {
+        privacyDefaults?: boolean;
+        privateNpcLock?: boolean;
+        privateRolls?: boolean;
+        privateGmTrackers?: boolean;
+    }
 ): Record<string, unknown> {
     const { attr, soc, skills } = allocateTrainerStats(rank, age, profile, isSpecialTrainer);
 
@@ -386,6 +392,23 @@ export function buildTrainerTokenMetadata(
         metadata[`${skill}-buff`] = 0;
     });
     metadata['skills-ranks'] = { ...skills };
+
+    if (privacy?.privacyDefaults) {
+        if (privacy.privateNpcLock) {
+            metadata['is-npc'] = true;
+        }
+        if (privacy.privateRolls) {
+            metadata['rolls'] = 'Private (GM)';
+        }
+        if (privacy.privateGmTrackers) {
+            metadata['gm-hp-bar'] = true;
+            metadata['gm-hp-text'] = true;
+            metadata['gm-will-bar'] = true;
+            metadata['gm-will-text'] = true;
+            metadata['gm-def-badge'] = true;
+            metadata['gm-eco-badge'] = true;
+        }
+    }
 
     return metadata;
 }

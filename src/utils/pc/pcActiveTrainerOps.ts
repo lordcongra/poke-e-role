@@ -21,16 +21,68 @@ export function persistTrainerSwitch(campId: string, trainerId: string, pid?: st
 }
 
 /**
+ * Filters trainers based on player role:
+ * - GM sees all trainers in the room/campaign.
+ * - Non-GM players ONLY see their own trainers (matched by playerId, claim metadata, or active token).
+ */
+export function filterTrainersForRole(
+    trainers: Record<string, TrainerRoster> = {},
+    myPlayerId?: string,
+    isGm?: boolean,
+    activeTokenId?: string | null
+): Record<string, TrainerRoster> {
+    if (isGm) return trainers;
+    const resolvedPlayerId = myPlayerId || cachedObrPlayerId;
+    if (!resolvedPlayerId) return trainers;
+
+    const filtered: Record<string, TrainerRoster> = {};
+    for (const [id, t] of Object.entries(trainers)) {
+        // 1. Explicit playerId matches
+        if (t.playerId && t.playerId === resolvedPlayerId) {
+            filtered[id] = t;
+            continue;
+        }
+        // 2. Claim metadata matches
+        const claim = t.savedTokenItem?.metadata?.['pokerole-pmd-extension/claimed-by'] as
+            | { playerId?: string }
+            | undefined;
+        if (claim?.playerId && claim.playerId === resolvedPlayerId) {
+            filtered[id] = t;
+            continue;
+        }
+        const fullClaim =
+            (t.fullMetadata?.['pokerole-pmd-extension/claimed-by'] as { playerId?: string } | undefined)?.playerId ||
+            (t.fullMetadata?.['claimed-by'] as string | undefined);
+        if (fullClaim && fullClaim === resolvedPlayerId) {
+            filtered[id] = t;
+            continue;
+        }
+        // 3. Active token matches
+        if (activeTokenId && (t.mapTokenId === activeTokenId || t.id === activeTokenId)) {
+            filtered[id] = t;
+            continue;
+        }
+        // 4. If trainer has no playerId and no claim, only include if not claimed by someone else
+        if (!t.playerId && !claim?.playerId && !fullClaim) {
+            filtered[id] = t;
+        }
+    }
+    return filtered;
+}
+
+/**
  * Resolves the effective active trainer for a campaign, prioritizing local client preference
  * or player ID to ensure non-GM players never have their active trainer profile reset
  * to the GM's trainer (e.g. Brendan).
  */
 export function resolveEffectiveActiveTrainer(
     campaign?: CampaignProfile,
-    myPlayerId?: string
+    myPlayerId?: string,
+    overrideTrainers?: Record<string, TrainerRoster>
 ): TrainerRoster | undefined {
     if (!campaign) return undefined;
     const resolvedPlayerId = myPlayerId || cachedObrPlayerId;
+    const availableTrainers = overrideTrainers || campaign.trainers || {};
 
     // 1. Check player-scoped and global local storage preference
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -39,15 +91,15 @@ export function resolveEffectiveActiveTrainer(
                 const playerScoped = localStorage.getItem(`pkr_active_trainer_${resolvedPlayerId}_${campaign.id}`);
                 if (playerScoped === '__none__') {
                     if (campaign.activeTrainerId === '__none__') return undefined;
-                } else if (playerScoped && campaign.trainers?.[playerScoped]) {
-                    return campaign.trainers[playerScoped];
+                } else if (playerScoped && availableTrainers[playerScoped]) {
+                    return availableTrainers[playerScoped];
                 }
             }
             const localId = localStorage.getItem(`pkr_active_trainer_${campaign.id}`);
             if (localId === '__none__') {
                 if (campaign.activeTrainerId === '__none__') return undefined;
-            } else if (localId && campaign.trainers?.[localId]) {
-                return campaign.trainers[localId];
+            } else if (localId && availableTrainers[localId]) {
+                return availableTrainers[localId];
             }
         } catch {}
     }
@@ -57,17 +109,17 @@ export function resolveEffectiveActiveTrainer(
         const playerIdMatch = campaign.activeTrainerByPlayer[resolvedPlayerId];
         if (playerIdMatch === '__none__') {
             if (campaign.activeTrainerId === '__none__') return undefined;
-        } else if (campaign.trainers?.[playerIdMatch]) {
-            return campaign.trainers[playerIdMatch];
+        } else if (availableTrainers[playerIdMatch]) {
+            return availableTrainers[playerIdMatch];
         }
     }
 
     // 3. Check campaign.activeTrainerId (unless explicit PMD mode)
     if (campaign.activeTrainerId === '__none__') return undefined;
-    if (campaign.activeTrainerId && campaign.trainers?.[campaign.activeTrainerId]) {
-        return campaign.trainers[campaign.activeTrainerId];
+    if (campaign.activeTrainerId && availableTrainers[campaign.activeTrainerId]) {
+        return availableTrainers[campaign.activeTrainerId];
     }
 
     // 4. Fallback to first available trainer
-    return Object.values(campaign.trainers || {})[0];
+    return Object.values(availableTrainers)[0];
 }

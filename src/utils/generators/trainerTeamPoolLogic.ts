@@ -272,7 +272,13 @@ export async function generateSingleTeamMember(
     const pokeMeta = buildTokenMetadataFromBuild(
         pokeBuild,
         chosenMon.name,
-        `${import.meta.env.BASE_URL || '/'}pokeball.svg`
+        `${import.meta.env.BASE_URL || '/'}pokeball.svg`,
+        {
+            privacyDefaults: config.privacyDefaults,
+            privateNpcLock: config.privateNpcLock,
+            privateRolls: config.privateRolls,
+            privateGmTrackers: config.privateGmTrackers
+        }
     );
     pokeMeta['age'] = '';
 

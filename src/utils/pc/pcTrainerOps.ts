@@ -9,6 +9,8 @@ import { buildGraphicsFromMeta, renderTokenGraphics } from '../graphics/graphics
 import { markTokenAsRecentlySpawned } from './pcModalOps';
 import { isEntityLockedByGm } from './pcCandidateMatching';
 
+const VALID_RANKS = new Set(['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion']);
+
 /**
  * Checks if the trainer's token is actively placed on the current scene.
  */
@@ -177,11 +179,24 @@ export function buildTrainerSummary(trainer: TrainerRoster): import('../../types
         (storeMatchesTrainer ? store.identity.themeSecondaryOverride : '') ||
         '';
 
+    const rawRank =
+        (trainer.fullMetadata?.['rank'] as string) ||
+        (trainer.fullMetadata?.rank as string) ||
+        (tokenMeta?.rank as string) ||
+        (localMeta?.rank as string) ||
+        (storeMatchesTrainer ? store.identity.rank : 'Starter');
+    const trainerRank: import('../../store/entityTypes').Rank =
+        typeof rawRank === 'string' && VALID_RANKS.has(rawRank)
+            ? (rawRank as import('../../store/entityTypes').Rank)
+            : 'Starter';
+    const trainerSpecies = (trainer.fullMetadata?.species as string) || trainer.name;
+    const trainerMode = (trainer.fullMetadata?.mode as string) || 'Trainer';
+
     return {
         entityId: trainer.id,
         name: trainer.name,
-        species: trainer.name,
-        rank: 'Trainer',
+        species: trainerSpecies,
+        rank: trainerRank,
         type1: trainerType1,
         type2: trainerType2,
         hp: hpCurr,
@@ -196,9 +211,9 @@ export function buildTrainerSummary(trainer: TrainerRoster): import('../../types
             ...(trainer.fullMetadata || {}),
             name: trainer.name,
             nickname: trainer.name,
-            species: trainer.name,
-            mode: 'Trainer',
-            rank: 'Trainer',
+            species: trainerSpecies,
+            mode: trainerMode,
+            rank: trainerRank,
             'str-base': trainer.fullMetadata?.['str-base'] ?? 1,
             'dex-base': trainer.fullMetadata?.['dex-base'] ?? 1,
             'vit-base': trainer.fullMetadata?.['vit-base'] ?? 1,
@@ -267,13 +282,16 @@ export async function spawnTrainerToMap(
                 ? Number(rawWillCurr)
                 : willMax;
 
+        const rawRank = trainer.fullMetadata?.['rank'] || trainer.fullMetadata?.rank;
+        const trainerRank = typeof rawRank === 'string' && VALID_RANKS.has(rawRank) ? rawRank : 'Starter';
+
         const metaObj: Record<string, unknown> = {
             ...(trainer.fullMetadata || {}),
             name: trainer.name,
             nickname: trainer.name,
-            species: trainer.name,
-            mode: 'Trainer',
-            rank: 'Trainer',
+            species: trainer.fullMetadata?.species || trainer.name,
+            mode: trainer.fullMetadata?.mode || 'Trainer',
+            rank: trainerRank,
             'str-base': trainer.fullMetadata?.['str-base'] ?? 1,
             'dex-base': trainer.fullMetadata?.['dex-base'] ?? 1,
             'vit-base': trainer.fullMetadata?.['vit-base'] ?? 1,

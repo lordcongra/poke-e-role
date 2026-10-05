@@ -220,6 +220,12 @@ export interface GeneratorConfig {
     recommendedRankMode?: 'match' | 'exact' | 'custom';
     exactRecommendedRank?: Rank | string;
     customSlotRecommendedRanks?: (Rank | string)[];
+
+    // PRIVACY DEFAULTS (GM ONLY)
+    privacyDefaults?: boolean;
+    privateNpcLock?: boolean;
+    privateRolls?: boolean;
+    privateGmTrackers?: boolean;
 }
 
 export interface CustomAbility {

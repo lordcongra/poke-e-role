@@ -134,7 +134,13 @@ export async function generateFullTrainerTeam(
         isSpecial,
         resolvedProfile,
         effectiveConfig.assignBadges,
-        resolvedTrainerBiome
+        resolvedTrainerBiome,
+        {
+            privacyDefaults: effectiveConfig.privacyDefaults,
+            privateNpcLock: effectiveConfig.privateNpcLock,
+            privateRolls: effectiveConfig.privateRolls,
+            privateGmTrackers: effectiveConfig.privateGmTrackers
+        }
     );
 
     // 3. Resolve Pokémon Team

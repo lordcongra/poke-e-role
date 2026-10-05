@@ -17,7 +17,7 @@ import { broadcastPlayerPc, broadcastGmPc, requestPlayerPcSync } from '../../../
 import { buildSheetAvailableSummaries, isEntityLockedByGm } from '../../../utils/pc/pcCandidateMatching';
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
 import { runOrganizeFoldersAction } from '../../../utils/pc/pcSidebarSync';
-import { resolveEffectiveActiveTrainer } from '../../../utils/pc/pcCampaignTrainerOps';
+import { resolveEffectiveActiveTrainer, filterTrainersForRole } from '../../../utils/pc/pcCampaignTrainerOps';
 import { handlePcDragStart, handlePcDrop, type PcDragItem } from '../../../utils/pc/pcDragDropUtils';
 import { usePcModalHandlers } from './usePcModalHandlers';
 import { usePcStorageModalSetup } from './usePcStorageModalSetup';
@@ -59,6 +59,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         updatePokemonSummary,
         updateTrainerProfile,
         renameTrainer,
+        reorderTrainers,
         deletePokemonFromPc
     } = useCharacterStore.getState();
 
@@ -91,10 +92,15 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
 
     // Active Campaign & Trainer resolution
     const campaign = pcData.campaigns[pcData.activeCampaignId] || Object.values(pcData.campaigns)[0];
+    const isGm = role === 'GM';
+    const visibleTrainers = useMemo(
+        () => filterTrainersForRole(campaign?.trainers, myPlayerId, isGm, activeTokenId),
+        [campaign?.trainers, myPlayerId, isGm, activeTokenId]
+    );
     const isPmdMode = campaign?.activeTrainerId === '__none__';
     const trainer = isPmdMode
         ? undefined
-        : resolveEffectiveActiveTrainer(campaign, myPlayerId) || Object.values(campaign?.trainers || {})[0];
+        : resolveEffectiveActiveTrainer(campaign, myPlayerId, visibleTrainers) || Object.values(visibleTrainers)[0];
 
     const handleModalClose = () => {
         if (OBR.isAvailable) {
@@ -315,7 +321,9 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         activeRoomCampaignId={identity.activeRoomCampaignId}
                         activeRoomCampaignName={identity.activeRoomCampaignName}
                         activeTrainer={trainer}
-                        trainers={campaign.trainers}
+                        trainers={visibleTrainers}
+                        trainerOrder={campaign?.trainerOrder}
+                        onReorderTrainers={(order) => campaign && reorderTrainers(campaign.id, order)}
                         onSwitchTrainer={switchTrainer}
                         onAddTrainer={addTrainer}
                         onRenameTrainer={renameTrainer}

@@ -410,12 +410,23 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
     const abilityListStr = String(meta['ability-list'] || '');
     const loadedAbilities = abilityListStr ? abilityListStr.split(',') : [];
 
-    const loadedRank =
+    const rawRank =
         (meta['rank'] as Rank) ||
         (meta['Rank'] as Rank) ||
         ((meta.identity as { rank?: Rank })?.rank as Rank) ||
         state.identity.rank ||
         'Starter';
+    const VALID_RANKS = new Set<string>([
+        'Starter',
+        'Rookie',
+        'Standard',
+        'Advanced',
+        'Expert',
+        'Ace',
+        'Master',
+        'Champion'
+    ]);
+    const loadedRank: Rank = VALID_RANKS.has(rawRank) ? (rawRank as Rank) : 'Starter';
     const loadedAbility = String(meta['ability'] || '');
     let loadedTags = String(meta['ability-tags'] || '');
     const cleanLoadedAbility = loadedAbility.replace(/\s*\(HA\)$/i, '').trim();

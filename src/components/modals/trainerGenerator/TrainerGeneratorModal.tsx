@@ -116,6 +116,10 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
         name?: string;
     } | null>(null);
     const [autoMatchSceneImages, setAutoMatchSceneImages] = useState<boolean>(true);
+    const [privacyDefaults, setPrivacyDefaults] = useState<boolean>(false);
+    const [privateNpcLock, setPrivateNpcLock] = useState<boolean>(true);
+    const [privateRolls, setPrivateRolls] = useState<boolean>(true);
+    const [privateGmTrackers, setPrivateGmTrackers] = useState<boolean>(true);
 
     const effectiveTeamBiomeValue =
         teamThemeStrategy === 'biome'
@@ -336,7 +340,11 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                 filterRecommendedRank,
                 recommendedRankMode,
                 exactRecommendedRank,
-                customSlotRecommendedRanks
+                customSlotRecommendedRanks,
+                privacyDefaults,
+                privateNpcLock,
+                privateRolls,
+                privateGmTrackers
             };
 
             const imageOptions: TrainerSpawnImageOptions = {
@@ -424,7 +432,11 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                     filterRecommendedRank,
                     recommendedRankMode,
                     exactRecommendedRank,
-                    customSlotRecommendedRanks
+                    customSlotRecommendedRanks,
+                    privacyDefaults,
+                    privateNpcLock,
+                    privateRolls,
+                    privateGmTrackers
                 }}
                 pokedexLookup={pokedexLookup}
                 destination={spawnDestination}
@@ -566,6 +578,14 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                     setDestination={setDestination}
                     generateTeam={generateTeam}
                     teamSize={teamSize}
+                    privacyDefaults={privacyDefaults}
+                    setPrivacyDefaults={setPrivacyDefaults}
+                    privateNpcLock={privateNpcLock}
+                    setPrivateNpcLock={setPrivateNpcLock}
+                    privateRolls={privateRolls}
+                    setPrivateRolls={setPrivateRolls}
+                    privateGmTrackers={privateGmTrackers}
+                    setPrivateGmTrackers={setPrivateGmTrackers}
                     onOpenTooltip={setTooltipInfo}
                 />
 

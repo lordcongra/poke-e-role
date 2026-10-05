@@ -28,6 +28,7 @@ import {
     applyDeleteCampaign,
     applyDeleteTrainer,
     applyRenameTrainer,
+    applyReorderTrainers,
     getCachedObrPlayerId,
     setCachedObrPlayerId,
     persistTrainerSwitch
@@ -42,6 +43,7 @@ import {
     broadcastPcPokemonDelete
 } from '../../utils/pc/pcStorageStoreOps';
 import { markDataChanged } from '../../utils/sync/storageAdapter';
+import { broadcastGmPc } from '../../hooks/owlbearSync/owlbearPcBroadcastOps';
 import OBR from '@owlbear-rodeo/sdk';
 
 export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set, get) => ({
@@ -345,6 +347,19 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             syncStandaloneTrainerRename(trainerId, newName);
         } catch (e) {
             console.error('[PcSlice] Failed to rename trainer:', e);
+        }
+    },
+
+    reorderTrainers: (campaignId: string, trainerOrder: string[]) => {
+        try {
+            const nextData = applyReorderTrainers(get().pcData, campaignId, trainerOrder);
+            set({ pcData: nextData });
+            savePcStorage(nextData);
+            if (OBR.isAvailable) {
+                broadcastGmPc({ campaignId }).catch(() => {});
+            }
+        } catch (e) {
+            console.error('[PcSlice] Failed to reorder trainers:', e);
         }
     },
 

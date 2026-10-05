@@ -278,6 +278,15 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     please back up your important Pokémon to a JSON file using the <strong>Backup</strong> tool before
                     diving in to test the new storage features.
                 </li>
+                <li>
+                    <strong>Trainer Organization & Reordering:</strong> Game Masters can now reorder trainers in their campaign list via a dedicated organization modal (with top, up, down, and bottom controls) to keep player rosters tidy and easily accessible.
+                </li>
+                <li>
+                    <strong>Player Privacy & Storage Isolation:</strong> Non-GM players now only see their own trainers and their personal team storage in the PC, keeping the GM's encounter prep and other players' private rosters secluded.
+                </li>
+                <li>
+                    <strong>Trainer Map Deployment Rank Fix:</strong> Deploying a trainer to the battle map now properly preserves their allocated rank, rank limit, and available skill points.
+                </li>
             </ul>,
             <strong
                 key="battle-organizer-title"
@@ -341,6 +350,31 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     <strong>Custom Base Overview Theme:</strong> Set your own preferred theme colors for the extension
                     overview when no token is selected. Active Pokémon will still display their own typing colors (e.g. Fire
                     orange, Water blue) unless you choose to override them globally.
+                </li>
+            </ul>,
+            <strong
+                key="generator-privacy-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Lock size={16} /> Generator Privacy Defaults
+            </strong>,
+            <ul
+                key="generator-privacy-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Private Token Defaults (GM Only):</strong> Added a 1-click privacy toggle to both the Pokémon
+                    and Trainer Generators. When enabled, generated characters and teams can automatically roll as NPC-locked
+                    tokens with GM-private dice rolls and GM-only health and will trackers.
                 </li>
             </ul>
         ]

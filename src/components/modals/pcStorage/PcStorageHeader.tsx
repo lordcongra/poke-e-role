@@ -6,6 +6,7 @@ import { PcPromptModal } from './PcPromptModal';
 import { PcDeleteConfirmModal } from './PcDeleteConfirmModal';
 import { CampaignEditModal } from './CampaignEditModal';
 import { PcBoxNavigator } from './PcBoxNavigator';
+import { TrainerOrganizerModal } from './TrainerOrganizerModal';
 import { isCampaignRoomActive } from '../../../utils/pc/pcCampaignTrainerOps';
 import './PcStorageHeader.css';
 import {
@@ -41,6 +42,8 @@ interface PcStorageHeaderProps {
     activeRoomCampaignName?: string;
     activeTrainer?: TrainerRoster;
     trainers: Record<string, TrainerRoster>;
+    trainerOrder?: string[];
+    onReorderTrainers?: (newOrder: string[]) => void;
     onSwitchTrainer: (id: string) => void;
     onAddTrainer: (name: string) => void;
     onRenameTrainer?: (id: string, newName: string) => void;
@@ -70,6 +73,8 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
     activeRoomCampaignName,
     activeTrainer,
     trainers,
+    trainerOrder,
+    onReorderTrainers,
     onSwitchTrainer,
     onAddTrainer,
     onRenameTrainer,
@@ -120,6 +125,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
     } | null>(null);
     const [campaignModalMode, setCampaignModalMode] = useState<'create' | 'edit' | null>(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isTrainerOrgOpen, setIsTrainerOrgOpen] = useState(false);
 
     const activeCampaign = campaigns[activeCampaignId];
     const isActiveRoom = isCampaignRoomActive(activeCampaign, activeRoomCampaignId, activeRoomCampaignName);
@@ -134,6 +140,10 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
             if (s) activeTrainerStoredCount++;
         }
     }
+
+    const orderedTrainerIds = (trainerOrder || []).filter((id) => trainers[id]);
+    const unorderedTrainerIds = Object.keys(trainers).filter((id) => !orderedTrainerIds.includes(id));
+    const sortedTrainers = [...orderedTrainerIds, ...unorderedTrainerIds].map((id) => trainers[id]).filter(Boolean);
 
     return (
         <header className="pc-header">
@@ -204,7 +214,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                             value={activeTrainer?.id || '__none__'}
                             onChange={(e) => onSwitchTrainer(e.target.value)}
                         >
-                            {Object.values(trainers).map((t) => (
+                            {sortedTrainers.map((t) => (
                                 <option key={t.id} value={t.id}>
                                     {t.name}
                                 </option>
@@ -227,6 +237,17 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                                 aria-label="Rename active trainer profile"
                             >
                                 <Edit2 size={13} />
+                            </button>
+                        )}
+                        {isGm && onReorderTrainers && Object.keys(trainers).length > 1 && (
+                            <button
+                                type="button"
+                                className="pc-header__mini-btn"
+                                onClick={() => setIsTrainerOrgOpen(true)}
+                                title="Organize / Reorder trainer profiles"
+                                aria-label="Organize trainer profiles"
+                            >
+                                <SlidersHorizontal size={13} />
                             </button>
                         )}
                         <button
@@ -433,6 +454,19 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                     }}
                     onDelete={onDeleteCampaign ? (id) => onDeleteCampaign(id) : undefined}
                     onClose={() => setCampaignModalMode(null)}
+                />
+            )}
+
+            {/* GM Trainer Organizer Modal */}
+            {isTrainerOrgOpen && onReorderTrainers && (
+                <TrainerOrganizerModal
+                    isOpen={isTrainerOrgOpen}
+                    onClose={() => setIsTrainerOrgOpen(false)}
+                    trainers={trainers}
+                    trainerOrder={trainerOrder}
+                    activeTrainerId={activeTrainer?.id}
+                    onReorder={onReorderTrainers}
+                    onSelectTrainer={onSwitchTrainer}
                 />
             )}
         </header>

@@ -1,5 +1,6 @@
 import type { PcStorageData, CampaignProfile, TrainerRoster } from '../../types/pcStorageTypes';
 import { createDefaultBox, createDefaultCampaign } from './pcStorageAdapter';
+import { getCachedObrPlayerId } from './pcActiveTrainerOps';
 
 /**
  * Deletes a campaign from PC Storage, ensuring at least one campaign remains.
@@ -165,17 +166,20 @@ export function applyDeleteTrainer(
 export function applyAddTrainer(
     pcData: PcStorageData,
     name: string,
-    options?: { existingCharacterId?: string; isLinked?: boolean }
+    options?: { existingCharacterId?: string; isLinked?: boolean; playerId?: string }
 ): { nextData: PcStorageData; newId: string } {
     const camp = pcData.campaigns[pcData.activeCampaignId];
     const newId = options?.existingCharacterId || `trainer-${crypto.randomUUID().slice(0, 8)}`;
     if (!camp) return { nextData: pcData, newId };
+
+    const assignedPlayerId = options?.playerId || getCachedObrPlayerId();
 
     const newTrainer: TrainerRoster = {
         id: newId,
         name,
         isLinked: options?.isLinked ?? Boolean(options?.existingCharacterId),
         mapTokenId: options?.existingCharacterId,
+        playerId: assignedPlayerId,
         party: Array(6).fill(null),
         boxes: Array.from({ length: 8 }, (_, i) => createDefaultBox(i)),
         fullMetadata: {
@@ -184,7 +188,7 @@ export function applyAddTrainer(
             nickname: name,
             species: name,
             mode: 'Trainer',
-            rank: 'Trainer',
+            rank: 'Starter',
             'str-base': 1,
             'dex-base': 1,
             'vit-base': 1,
@@ -197,6 +201,8 @@ export function applyAddTrainer(
         }
     };
 
+    const nextTrainerOrder = camp.trainerOrder ? [...camp.trainerOrder, newId] : undefined;
+
     return {
         nextData: {
             ...pcData,
@@ -205,6 +211,7 @@ export function applyAddTrainer(
                 [pcData.activeCampaignId]: {
                     ...camp,
                     activeTrainerId: newId,
+                    trainerOrder: nextTrainerOrder,
                     trainers: {
                         ...camp.trainers,
                         [newId]: newTrainer
@@ -406,9 +413,25 @@ export function applyRenameTrainer(
     };
 }
 
+export function applyReorderTrainers(pcData: PcStorageData, campaignId: string, trainerOrder: string[]): PcStorageData {
+    const camp = pcData.campaigns[campaignId];
+    if (!camp) return pcData;
+    return {
+        ...pcData,
+        campaigns: {
+            ...pcData.campaigns,
+            [campaignId]: {
+                ...camp,
+                trainerOrder
+            }
+        }
+    };
+}
+
 export {
     persistTrainerSwitch,
     setCachedObrPlayerId,
     getCachedObrPlayerId,
-    resolveEffectiveActiveTrainer
+    resolveEffectiveActiveTrainer,
+    filterTrainersForRole
 } from './pcActiveTrainerOps';
