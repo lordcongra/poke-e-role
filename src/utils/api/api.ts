@@ -192,7 +192,7 @@ export async function fetchBasePokemonData(speciesName: string): Promise<Pokemon
     const cleanName = speciesName.trim().toLowerCase();
 
     await loadLocalDataset();
-    const selectedUrl = SPECIES_URLS[cleanName];
+    const selectedUrl = SPECIES_URLS[cleanName] || formatLocalPath(`/dataset/pokedex/${speciesName.trim()}.json`);
 
     if (!selectedUrl) {
         console.warn(`[Local Fetch] Failed to find base species ${speciesName} in local dataset.`);
@@ -223,7 +223,7 @@ export async function fetchPokemonData(speciesName: string): Promise<PokemonApiR
 
     // 2. Check Local Dataset
     await loadLocalDataset();
-    const selectedUrl = SPECIES_URLS[cleanName];
+    const selectedUrl = SPECIES_URLS[cleanName] || formatLocalPath(`/dataset/pokedex/${speciesName.trim()}.json`);
 
     // 3. Prevent Fetching non-existent Data
     if (!selectedUrl) {
@@ -353,7 +353,7 @@ export async function fetchNatureData(natureName: string): Promise<NatureApiResp
 
     // 1. Check Local Dataset
     await loadLocalDataset();
-    const selectedUrl = NATURES_URLS[cleanName];
+    const selectedUrl = NATURES_URLS[cleanName] || formatLocalPath(`/dataset/natures/${natureName.trim()}.json`);
 
     // 2. Prevent Fetching non-existent Data
     if (!selectedUrl) {
