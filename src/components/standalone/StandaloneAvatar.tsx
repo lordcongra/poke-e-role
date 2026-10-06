@@ -9,7 +9,6 @@ interface StandaloneAvatarProps {
 
 export function StandaloneAvatar({ onClick }: StandaloneAvatarProps) {
     const tokenImageUrl = useCharacterStore((state) => state.identity.tokenImageUrl);
-    const isTrainer = useCharacterStore((state) => state.identity.mode === 'Trainer');
     const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
 
     useEffect(() => {
@@ -54,11 +53,7 @@ export function StandaloneAvatar({ onClick }: StandaloneAvatarProps) {
             }}
         >
             {resolvedUrl ? (
-                <img
-                    src={resolvedUrl}
-                    alt="Character Portrait"
-                    className={`standalone-avatar__img ${isTrainer ? 'standalone-avatar__img--trainer' : ''}`}
-                />
+                <img src={resolvedUrl} alt="Character Portrait" className="standalone-avatar__img" />
             ) : (
                 <div className="standalone-avatar__placeholder">
                     {/* Fallback to the pokeball.svg in your public folder */}

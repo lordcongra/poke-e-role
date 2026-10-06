@@ -35,10 +35,6 @@
     object-position: center center;
 }
 
-.standalone-avatar__img--trainer {
-    object-position: top center;
-}
-
 .standalone-avatar__container {
     display: flex;
     justify-content: center;
