@@ -24,19 +24,23 @@ export function addRollLogEntry(
     characterName?: string,
     tokenId?: string,
     rollType?: string,
-    isCrit?: boolean
+    isCrit?: boolean,
+    explicitTargetVisibility?: string
 ) {
     const activeTokenId = tokenId || useCharacterStore.getState().tokenId || undefined;
     const detectedCrit = isCrit !== undefined ? isCrit : /critical hit/i.test(result) || /critical hit/i.test(label);
     const state = useCharacterStore.getState();
-    const targetVisibility = state.identity.rolls === 'Private (GM)' ? 'gm_only' : 'everyone';
+    const targetVisibility =
+        explicitTargetVisibility || (state.identity.rolls === 'Private (GM)' ? 'gm_only' : 'everyone');
+    const privacyTag = targetVisibility === 'gm_only' && !label.startsWith('[PRIVATE]') ? '[PRIVATE] ' : '';
+    const finalLabel = `${privacyTag}${label}`;
 
     const rollLogData = {
         id: crypto.randomUUID(),
         player,
         characterName: characterName || player,
         tokenId: activeTokenId,
-        label,
+        label: finalLabel,
         result,
         icon: icon || `${import.meta.env.BASE_URL || '/'}pokeball.svg`,
         rollType,
@@ -226,16 +230,28 @@ export async function broadcastInfo(title: string, description: string) {
     const state = useCharacterStore.getState();
     const playerName = state.identity.nickname || state.identity.species || 'Trainer';
     const icon = state.identity.tokenImageUrl || `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
+    const targetVisibility = state.identity.rolls === 'Private (GM)' ? 'gm_only' : 'everyone';
+    const privacyTag = targetVisibility === 'gm_only' && !title.startsWith('[PRIVATE]') ? '[PRIVATE] ' : '';
+    const finalTitle = `${privacyTag}${title}`;
 
     if (isStandaloneMode || !OBR.isAvailable) {
-        addRollLogEntry(title, description, icon, playerName);
+        addRollLogEntry(
+            finalTitle,
+            description,
+            icon,
+            playerName,
+            playerName,
+            state.tokenId || undefined,
+            'info',
+            false,
+            targetVisibility
+        );
         return;
     }
 
     try {
         const playerId = await OBR.player.getId();
         const obrPlayerName = await OBR.player.getName();
-        const targetVisibility = state.identity.rolls === 'Private (GM)' ? 'gm_only' : 'everyone';
 
         const rollLogData = {
             id: crypto.randomUUID(),
@@ -243,7 +259,7 @@ export async function broadcastInfo(title: string, description: string) {
             characterName: playerName,
             tokenId: state.tokenId || undefined,
             playerId: playerId,
-            label: title,
+            label: finalTitle,
             result: description,
             icon,
             targetVisibility
@@ -257,13 +273,23 @@ export async function broadcastInfo(title: string, description: string) {
 
 export async function rollDicePlus(notation: string, label: string, rollType = 'roll', payload = '') {
     const state = useCharacterStore.getState();
-    const diceEngine = state.identity.diceEngine || 'car';
-    const isGmDemo = state.identity.gmDemoMode && state.role === 'GM' && diceEngine === 'car';
+    const rawEngine = (state.identity.diceEngine as unknown as string) || 'car';
+    if (rawEngine === 'dice-plus') {
+        if (OBR.isAvailable) {
+            OBR.notification.show(
+                '[ ⚠️ ] Dice+ has been retired. Switched to Custom Action Rolls! If you do not have it installed, get it here: https://custom-action-rolls.narcolepticdracu.com/manifest.json',
+                'WARNING'
+            );
+        }
+        state.updateRoomSetting('diceEngine', 'car');
+    }
+    const diceEngine: 'car' | 'log-only' = rawEngine === 'log-only' ? 'log-only' : 'car';
+    const isGmDemo = Boolean(state.identity.gmDemoMode && state.role === 'GM');
     const targetVisibility = state.identity.rolls === 'Private (GM)' ? 'gm_only' : 'everyone';
     const playerName = state.identity.nickname || state.identity.species || 'Trainer';
     const icon = state.identity.tokenImageUrl || `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
 
-    if (diceEngine === 'car' || diceEngine === 'dice-plus') {
+    try {
         const cleanNotation = notation.replace(/\s/g, '');
         const isSuccessRoll = cleanNotation.includes('>');
 
@@ -444,11 +470,19 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                         finalMsg += `\nBank is full! (Max ${limit})`;
                     }
                 }
+            } else if (rollType === 'status' && payload && finalSuccesses > 0) {
+                const statusId = payload;
+                const store = useCharacterStore.getState();
+                const targetStatus = store.statuses.find((s) => s.id === statusId);
+                if (targetStatus) {
+                    store.updateStatus(statusId, 'rounds', targetStatus.rounds + finalSuccesses);
+                }
+                finalMsg += `\nReduced Status by ${finalSuccesses}`;
             }
             return finalMsg;
         };
 
-        // --- STANDALONE OVERRIDE: Log directly to Roll Log widget ---
+        // --- STANDALONE MODE (no OBR connection) ---
         if (isStandaloneMode || !OBR.isAvailable) {
             const compiledMessage = await executeStateIntercepts('');
             addRollLogEntry(
@@ -459,7 +493,8 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 playerName,
                 state.tokenId || undefined,
                 rollType,
-                isCrit
+                isCrit,
+                targetVisibility
             );
             return;
         }
@@ -467,6 +502,28 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
         // --- NATIVE OBR ROLL ---
         const playerId = await OBR.player.getId();
         const obrPlayerName = await OBR.player.getName();
+
+        // PERFORMANCE MODE (Pure Roll Log without 3D Dice)
+        if (diceEngine === 'log-only') {
+            const compiledMessage = await executeStateIntercepts('');
+            const rollLogData = {
+                id: crypto.randomUUID(),
+                player: obrPlayerName,
+                characterName: playerName,
+                tokenId: state.tokenId || undefined,
+                playerId: playerId,
+                label: finalLabel,
+                result: compiledMessage,
+                icon,
+                rollType,
+                targetVisibility,
+                isCrit
+            };
+            await broadcastRollLog(rollLogData);
+            return;
+        }
+
+        // --- NATIVE OBR 3D DICE ROLL (Custom Action Rolls) ---
         const critPrefix = isCrit ? 'CRITICAL HIT! | ' : '';
         const mensaje = `${obrPlayerName} | ${critPrefix}${finalLabel}`;
 
@@ -532,5 +589,10 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
 
             await broadcastRollLog(rollLogData);
         }, delayMs);
+    } catch (error) {
+        console.error('[DiceRoller] Broadcast Error:', error);
     }
 }
+
+// Export alias for cleaner naming while maintaining backward compatibility with all callers
+export const rollDice = rollDicePlus;

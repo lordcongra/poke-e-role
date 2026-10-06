@@ -167,9 +167,20 @@ export function useRollLogSync() {
                     );
 
                     unsubs.push(
-                        OBR.broadcast.onMessage('pokerole-pmd-extension/roll-log-sync', (event) => {
+                        OBR.broadcast.onMessage('pokerole-pmd-extension/roll-log-sync', async (event) => {
                             const roll = event.data as RollSyncData;
                             if (roll && roll.id && isMounted) {
+                                if (roll.targetVisibility === 'gm_only') {
+                                    try {
+                                        const myId = await OBR.player.getId();
+                                        const myRole = await OBR.player.getRole();
+                                        if (myRole !== 'GM' && roll.playerId !== myId) {
+                                            return;
+                                        }
+                                    } catch {
+                                        return;
+                                    }
+                                }
                                 setRolls((prev) => {
                                     if (prev.some((r) => r.id === roll.id)) return prev;
                                     const next = [roll, ...prev].slice(0, 50);

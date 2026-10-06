@@ -23,13 +23,14 @@ Don't want to use a VTT? You can now use the Pokerole Sheet completely standalon
 
 ## ⚠️ REQUIRED PLUGINS (For Owlbear Rodeo Users)
 
-If you are using this as an Owlbear Rodeo extension, you **MUST** install **at least one** of the following Dice Engines. **(Note: CAR is the strongly recommended default!)**:
+If you are using this as an Owlbear Rodeo extension, we recommend installing the **Custom Action Rolls (CAR)** dice engine for 3D physics dice:
 
-1. **[Custom Action Rolls (CAR)](https://owlbear.rogue.pub/extension/https://custom-action-rolls.narcolepticdracu.com/manifest.json):** The recommended engine. Handles 3D dice and features a persistent, pop-out chat log styled like the sheet to track roll history. It supports advanced mechanics like **Exploding Dice** and detailed roll breakdowns. This option tends to have better performance on Firefox.
-   _- AND/OR -_
-2. **[Dice+](https://extensions.owlbear.rodeo/dice-plus):** ⚠️ _DEPRECATION NOTICE: This legacy engine will be phased out in a future update._ The classic engine. Handles 1-click 3D physics dice. It is a pure physics-based engine, so it can sometimes lose accuracy at high dice counts, and it does _not_ support advanced features like homebrew exploding dice reading. Maintaining two dice rollers with different functions has been challenging as well which contributes to this deprecation.
+1. **[Custom Action Rolls (CAR)](https://owlbear.rogue.pub/extension/https://custom-action-rolls.narcolepticdracu.com/manifest.json):** The dedicated 3D dice engine for Pokérole. Handles 3D physics dice and features a persistent, pop-out chat log styled like the sheet to track roll history. It supports advanced mechanics like **Exploding Dice** and detailed roll breakdowns.
+    - **CAR Manifest URL:** `https://custom-action-rolls.narcolepticdracu.com/manifest.json`
 
-_(Note: You can swap between these engines at any time for the whole room using the "📜 Rules" menu on the sheet!)_
+2. **⚡ Pure Roll Log (Performance Mode - Built-in):** Don't want 3D dice cluttering the table or playing on a low-spec/mobile device? You can select **Pure Roll Log** in the "📜 Rules" menu! It calculates all rolls instantly and broadcasts results straight to the in-app roll log without requiring any external dice extension or 3D graphics rendering.
+
+> **Note on Dice+ Retirement:** Legacy **Dice+** support has been officially retired and removed from the math and broadcast engine. If your room was previously set to Dice+, it will automatically update to Custom Action Rolls (or Pure Roll Log)!
 
 ## 🎒 RECOMMENDED PLUGINS (Optional)
 
@@ -158,12 +159,12 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 - **Smart Item Auto-Fill:** The sheet automatically recognizes standard items! Type "Life Orb", "Choice Scarf", or "Eviolite" into the name box, and the engine will automatically fetch the description and inject the perfect mechanical tags for you!
 - **Training Points (TP) & Poké (PD):** Keep track of your character's progression currency and wealth with dedicated, auto-saving trackers at the bottom of the sheet.
 
-### 🎲 Dice Engine Integration (CAR vs. Dice+)
+### 🎲 Dice Engine Integration (CAR & Pure Roll Log)
 
-- **Pure Math Routing:** Our engine handles the math for you! Broadcasts are natively formatted to support both the **Dice+** and **Custom Action Rolls (CAR)** extensions.
-- **Which should I choose?**
-    - **Custom Action Rolls (CAR) - RECOMMENDED:** Uses internal math rather than pure physics, making it more performance-lite (especially on Firefox) and perfectly synced for all players, regardless of how massive the dice pool gets. It includes a persistent chat log and supports advanced tag mechanics like Exploding Dice!
-    - **Dice+ (DEPRECATED):** ⚠️ _This engine is slated for removal in an upcoming release. Please migrate to CAR!_ A pure 3D physics-based roller. It runs smoothly on Google Chrome, but does not support advanced die-face reading tags.
+- **Pure Math Routing:** Our engine handles the math for you! Broadcasts are natively formatted for the **Custom Action Rolls (CAR)** extension (`https://custom-action-rolls.narcolepticdracu.com/manifest.json`).
+- **Internal Math Engine:** Uses internal math rather than pure physics, making it performance-lite (especially on Firefox) and perfectly synced for all players, regardless of how massive the dice pool gets. It includes a persistent, pop-out chat roll log and supports advanced tag mechanics like Exploding Dice!
+- **⚡ Performance Mode (Pure Roll Log):** Prefer instantaneous rolls without 3D dice on the canvas? Toggle "Pure Roll Log" in the Rules menu to post all results directly to the in-app roll log without external plugins.
+- **Dice+ Retired:** Compatibility with the legacy Dice+ engine has been completely retired. If you still have Dice+ installed in your room, migrate to Custom Action Rolls using the manifest URL above.
 - **OBR Notifications:** Every roll triggers an Owlbear Rodeo broadcast notification announcing the move, pain penalties, active item buffs, and required successes to the whole table!
 - **Smart Combat:** Automatically accounts for global Accuracy/Damage modifiers, STAB bonuses, Protean/Libero, Super Luck, and even grants +3 dice on Critical Hits for the _Sniper_ ability.
 

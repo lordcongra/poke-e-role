@@ -141,7 +141,7 @@ export async function saveRoomSettingsToOwlbear(updates: Record<string, unknown>
                 for (const [k, v] of Object.entries(updatesToPush)) {
                     if (k === 'ruleset') roomMeta.ruleset = v;
                     else if (k === 'pain') roomMeta.painEnabled = v === 'Enabled';
-                    else if (k === 'diceEngine') roomMeta.diceEngine = v;
+                    else if (k === 'diceEngine') roomMeta.diceEngine = v === 'log-only' ? 'log-only' : 'car';
                     else if (k === 'homebrewAccess') roomMeta.homebrewAccess = v;
                     else if (k === 'gmOnlyLootGen') roomMeta.gmOnlyLootGen = Boolean(v);
                     else if (k === 'gmOnlyGenerators') roomMeta.gmOnlyGenerators = Boolean(v);
@@ -183,7 +183,7 @@ export async function flushRoomSettingsToOwlbear(updates?: Record<string, unknow
         for (const [k, v] of Object.entries(updatesToPush)) {
             if (k === 'ruleset') roomMeta.ruleset = v;
             else if (k === 'pain') roomMeta.painEnabled = v === 'Enabled';
-            else if (k === 'diceEngine') roomMeta.diceEngine = v;
+            else if (k === 'diceEngine') roomMeta.diceEngine = v === 'log-only' ? 'log-only' : 'car';
             else if (k === 'homebrewAccess') roomMeta.homebrewAccess = v;
             else if (k === 'gmOnlyLootGen') roomMeta.gmOnlyLootGen = Boolean(v);
             else if (k === 'gmOnlyGenerators') roomMeta.gmOnlyGenerators = Boolean(v);

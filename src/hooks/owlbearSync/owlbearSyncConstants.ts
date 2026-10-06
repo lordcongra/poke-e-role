@@ -30,7 +30,12 @@ export function mapRoomSettings(sData: Record<string, unknown>) {
     return {
         ruleset: sData.ruleset !== undefined ? String(sData.ruleset) : undefined,
         pain: sData.painEnabled !== undefined ? (sData.painEnabled ? 'Enabled' : 'Disabled') : undefined,
-        diceEngine: sData.diceEngine !== undefined ? (String(sData.diceEngine) as 'dice-plus' | 'car') : undefined,
+        diceEngine:
+            sData.diceEngine !== undefined
+                ? sData.diceEngine === 'log-only'
+                    ? ('log-only' as const)
+                    : ('car' as const)
+                : undefined,
         homebrewAccess: sData.homebrewAccess !== undefined ? String(sData.homebrewAccess) : undefined,
         gmOnlyLootGen: sData.gmOnlyLootGen !== undefined ? Boolean(sData.gmOnlyLootGen) : undefined,
         gmOnlyGenerators: sData.gmOnlyGenerators !== undefined ? Boolean(sData.gmOnlyGenerators) : undefined,

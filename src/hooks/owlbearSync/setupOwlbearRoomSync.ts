@@ -95,6 +95,22 @@ export async function setupOwlbearRoomSync(
                 }
             }
 
+            if (data.diceEngine === 'dice-plus') {
+                OBR.notification.show(
+                    '[ ⚠️ ] Dice+ has been retired and removed. The room has been migrated to Custom Action Rolls (CAR): https://custom-action-rolls.narcolepticdracu.com/manifest.json',
+                    'WARNING'
+                );
+                data.diceEngine = 'car';
+                if (role === 'GM') {
+                    const cleanedRoomSettings = { ...data, diceEngine: 'car' };
+                    OBR.room
+                        .setMetadata({ [ROOM_META_ID]: cleanedRoomSettings })
+                        .catch((e) =>
+                            console.warn('[SyncEngine] Failed to auto-migrate diceEngine in room metadata:', e)
+                        );
+                }
+            }
+
             const mapped = mapRoomSettings(data);
             store.applyRoomSettings(mapped);
             if (role !== 'GM' && mapped.activeRoomCampaignName) {
@@ -139,6 +155,21 @@ export async function setupOwlbearRoomSync(
         try {
             if (meta[ROOM_META_ID]) {
                 const data = meta[ROOM_META_ID] as Record<string, unknown>;
+                if (data.diceEngine === 'dice-plus') {
+                    OBR.notification.show(
+                        '[ ⚠️ ] Dice+ has been retired and removed. Please install Custom Action Rolls (CAR): https://custom-action-rolls.narcolepticdracu.com/manifest.json',
+                        'WARNING'
+                    );
+                    data.diceEngine = 'car';
+                    if (role === 'GM') {
+                        const cleaned = { ...data, diceEngine: 'car' };
+                        OBR.room
+                            .setMetadata({ [ROOM_META_ID]: cleaned })
+                            .catch((e) =>
+                                console.warn('[SyncEngine] Failed to auto-migrate diceEngine in room metadata:', e)
+                            );
+                    }
+                }
                 const store = useCharacterStore.getState();
                 const mapped = mapRoomSettings(data);
                 store.applyRoomSettings(mapped);

@@ -194,7 +194,19 @@ export function InModalRollLog({
         const unsubs: Array<() => void> = [];
         if (OBR.isAvailable) {
             unsubs.push(
-                OBR.broadcast.onMessage('pokerole-pmd-extension/roll-log-sync', () => {
+                OBR.broadcast.onMessage('pokerole-pmd-extension/roll-log-sync', async (event) => {
+                    const roll = event.data as { targetVisibility?: string; playerId?: string };
+                    if (roll?.targetVisibility === 'gm_only') {
+                        try {
+                            const myId = await OBR.player.getId();
+                            const myRole = await OBR.player.getRole();
+                            if (myRole !== 'GM' && roll.playerId !== myId) {
+                                return;
+                            }
+                        } catch {
+                            return;
+                        }
+                    }
                     handleNewRoll();
                 })
             );

@@ -35,7 +35,7 @@ export type {
 };
 
 // VITE MAGIC: Automatically detects your domain sub-folder!
-const BASE_URL = import.meta.env.BASE_URL || '/';
+const BASE_URL = (import.meta as any)?.env?.BASE_URL || '/';
 
 const formatLocalPath = (pathStr: string) => {
     const fullPath = pathStr.startsWith('/') ? BASE_URL + pathStr.slice(1) : pathStr;

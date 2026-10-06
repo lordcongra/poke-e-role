@@ -9,6 +9,24 @@ import { EXTENSION_ID, type RollSyncData } from '../../hooks/owlbearSync/owlbear
  */
 export async function broadcastRollLog(rollLogData: RollSyncData): Promise<void> {
     try {
+        // Resolve player credentials immediately if in native Owlbear Rodeo mode
+        if (OBR.isAvailable && !isStandaloneMode) {
+            if (!rollLogData.playerId) {
+                try {
+                    rollLogData.playerId = await OBR.player.getId();
+                } catch {
+                    rollLogData.playerId = '';
+                }
+            }
+            if (!rollLogData.player) {
+                try {
+                    rollLogData.player = await OBR.player.getName();
+                } catch {
+                    rollLogData.player = 'Trainer';
+                }
+            }
+        }
+
         let existingLog: RollSyncData[] = [];
         try {
             const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
@@ -39,14 +57,6 @@ export async function broadcastRollLog(rollLogData: RollSyncData): Promise<void>
 
         // 2. Broadcast to Owlbear Rodeo room if in VTT mode
         if (OBR.isAvailable && !isStandaloneMode) {
-            if (!rollLogData.playerId) {
-                try {
-                    rollLogData.playerId = await OBR.player.getId();
-                } catch {
-                    rollLogData.playerId = '';
-                }
-            }
-
             await OBR.broadcast.sendMessage(`${EXTENSION_ID}/roll-log-sync`, rollLogData, {
                 destination: 'ALL'
             });

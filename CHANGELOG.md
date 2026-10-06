@@ -4,6 +4,12 @@ This document archives older release notes and migration history from the **v2.x
 
 ---
 
+## v3.7.0 (October 2026)
+
+- **🎲 Dice+ Deprecation Complete:** Compatibility with the legacy Dice+ engine has been extracted and retired. All dice and combat rolls now route exclusively through **Custom Action Rolls (CAR)** (`https://custom-action-rolls.narcolepticdracu.com/manifest.json`). Rooms previously set to Dice+ are automatically migrated with in-app notice and access to the CAR manifest link.
+
+---
+
 ## v2.8.1 (August 2026)
 
 - **⚠️ Custom Action Rolls URL Change:** The **Custom Action Rolls (CAR)** extension moved to a new host (`https://custom-action-rolls.narcolepticdracu.com/manifest.json`).

@@ -401,7 +401,7 @@ export interface IdentitySlice {
         gender: string;
         ruleset: string;
         pain: string;
-        diceEngine: 'dice-plus' | 'car';
+        diceEngine: 'car' | 'log-only';
         rolls: string;
         homebrewAccess: string;
         combat: string;
@@ -532,7 +532,7 @@ export interface IdentitySlice {
 export interface RoomSettings {
     ruleset: string;
     pain: string;
-    diceEngine: 'dice-plus' | 'car';
+    diceEngine: 'car' | 'log-only';
     homebrewAccess: string;
     gmOnlyLootGen: boolean;
     gmOnlyGenerators: boolean;

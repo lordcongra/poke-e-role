@@ -382,6 +382,48 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     and Trainer Generators. When enabled, generated characters and teams can automatically roll as NPC-locked
                     tokens with GM-private dice rolls and GM-only health and will trackers.
                 </li>
+            </ul>,
+            <strong
+                key="dice-engine-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Dices size={16} /> Dice+ Retired & Custom Action Rolls Unified
+            </strong>,
+            <ul
+                key="dice-engine-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Dice+ Deprecation Complete:</strong> Support for the legacy Dice+ extension has been
+                    fully retired and removed from the dice engine. All sheet and combat rolls now route exclusively
+                    through <strong>Custom Action Rolls (CAR)</strong>.
+                </li>
+                <li>
+                    <strong>Install Custom Action Rolls:</strong> If your Owlbear room does not have Custom Action Rolls
+                    installed yet, you can copy the manifest link from the Room Rules menu or install it using:{' '}
+                    <code style={{ wordBreak: 'break-all', color: 'var(--primary)' }}>
+                        https://custom-action-rolls.narcolepticdracu.com/manifest.json
+                    </code>
+                </li>
+                <li>
+                    <strong>New Pure Roll Log (Performance Mode):</strong> Added a lightweight fallback roll mode in the
+                    Room Rules menu. When selected, calculations resolve instantly and output directly to the in-app roll
+                    log without rendering 3D dice—ideal for low-spec devices, tablets, or rooms without external dice
+                    plugins installed.
+                </li>
+                <li>
+                    <strong>Automatic Room Migration:</strong> Rooms and character profiles previously set to Dice+ are
+                    automatically transitioned to Custom Action Rolls with in-app notice and zero gameplay disruption.
+                </li>
             </ul>
         ]
     },

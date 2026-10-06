@@ -251,6 +251,11 @@ export function useBattleOrganizerSync({
             const settings = getBattleOrganizerSettings();
             if (!settings.autoSyncActions || !logData) return;
 
+            if (logData.targetVisibility === 'gm_only') {
+                const store = useCharacterStore.getState();
+                if (store.role !== 'GM') return;
+            }
+
             const parsedRoll = parseRollLogEntry(logData);
             if (!parsedRoll || !parsedRoll.shouldAddToRoundTracker) return;
 
