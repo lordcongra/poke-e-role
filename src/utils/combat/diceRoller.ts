@@ -3,6 +3,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { isStandaloneMode } from '../sync/storageAdapter';
 import { calculateEncodedInitiative, calculateBaseInitFromCharacterData, sortCombatants } from './initiativeHelpers';
 import { broadcastRollLog } from './rollLogSync';
+import { showDicePlusRetirementNotice } from '../../hooks/owlbearSync/owlbearSyncConstants';
 
 // Defines the structure exactly as saved in Local Storage
 export interface StandaloneCombatant {
@@ -275,12 +276,9 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
     const state = useCharacterStore.getState();
     const rawEngine = (state.identity.diceEngine as unknown as string) || 'car';
     if (rawEngine === 'dice-plus') {
-        if (OBR.isAvailable) {
-            OBR.notification.show(
-                '[ ⚠️ ] Dice+ has been retired. Switched to Custom Action Rolls! If you do not have it installed, get it here: https://custom-action-rolls.narcolepticdracu.com/manifest.json',
-                'WARNING'
-            );
-        }
+        showDicePlusRetirementNotice(
+            '[ ⚠️ ] Dice+ has been retired. Switched to Custom Action Rolls! If you do not have it installed, get it here: https://custom-action-rolls.narcolepticdracu.com/manifest.json'
+        );
         state.updateRoomSetting('diceEngine', 'car');
     }
     const diceEngine: 'car' | 'log-only' = rawEngine === 'log-only' ? 'log-only' : 'car';

@@ -1,7 +1,7 @@
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { isBattleOrganizerOpen } from '../../components/modals/battleOrganizer/battleOrganizerSettingsHelper';
-import { EXTENSION_ID, type RollSyncData } from './owlbearSyncConstants';
+import { EXTENSION_ID, type RollSyncData, showDicePlusRetirementNotice } from './owlbearSyncConstants';
 
 export interface OwlbearRollSyncResult {
     unsubs: Array<() => void>;
@@ -91,17 +91,15 @@ export function setupOwlbearRollSync(): OwlbearRollSyncResult {
 
     // Fallback handlers to inform users if legacy Dice+ extension events arrive
     const unsubRollResult = OBR.broadcast.onMessage(`${EXTENSION_ID}/roll-result`, async () => {
-        OBR.notification.show(
-            '[ ⚠️ ] Dice+ has been retired and is no longer supported. Please install Custom Action Rolls (CAR): https://custom-action-rolls.narcolepticdracu.com/manifest.json',
-            'WARNING'
+        showDicePlusRetirementNotice(
+            '[ ⚠️ ] Dice+ has been retired and is no longer supported. Please install Custom Action Rolls (CAR): https://custom-action-rolls.narcolepticdracu.com/manifest.json'
         );
     });
     unsubs.push(unsubRollResult);
 
     const unsubRollError = OBR.broadcast.onMessage(`${EXTENSION_ID}/roll-error`, async () => {
-        OBR.notification.show(
-            '[ ⚠️ ] Dice+ has been retired and is no longer supported. Please install Custom Action Rolls (CAR): https://custom-action-rolls.narcolepticdracu.com/manifest.json',
-            'WARNING'
+        showDicePlusRetirementNotice(
+            '[ ⚠️ ] Dice+ has been retired and is no longer supported. Please install Custom Action Rolls (CAR): https://custom-action-rolls.narcolepticdracu.com/manifest.json'
         );
     });
     unsubs.push(unsubRollError);

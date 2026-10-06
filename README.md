@@ -23,9 +23,9 @@ Don't want to use a VTT? You can now use the Pokerole Sheet completely standalon
 
 ## ⚠️ REQUIRED PLUGINS (For Owlbear Rodeo Users)
 
-If you are using this as an Owlbear Rodeo extension, we recommend installing the **Custom Action Rolls (CAR)** dice engine for 3D physics dice:
+If you are using this as an Owlbear Rodeo extension, we recommend installing the **Custom Action Rolls (CAR)** dice engine for 3D dice:
 
-1. **[Custom Action Rolls (CAR)](https://owlbear.rogue.pub/extension/https://custom-action-rolls.narcolepticdracu.com/manifest.json):** The dedicated 3D dice engine for Pokérole. Handles 3D physics dice and features a persistent, pop-out chat log styled like the sheet to track roll history. It supports advanced mechanics like **Exploding Dice** and detailed roll breakdowns.
+1. **[Custom Action Rolls (CAR)](https://owlbear.rogue.pub/extension/https://custom-action-rolls.narcolepticdracu.com/manifest.json):** The dedicated 3D dice engine for Pokérole. Handles 3D dice and features a persistent, pop-out chat log styled like the sheet to track roll history. It supports advanced mechanics like **Exploding Dice** and detailed roll breakdowns.
     - **CAR Manifest URL:** `https://custom-action-rolls.narcolepticdracu.com/manifest.json`
 
 2. **⚡ Pure Roll Log (Performance Mode - Built-in):** Don't want 3D dice cluttering the table or playing on a low-spec/mobile device? You can select **Pure Roll Log** in the "📜 Rules" menu! It calculates all rolls instantly and broadcasts results straight to the in-app roll log without requiring any external dice extension or 3D graphics rendering.

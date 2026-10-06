@@ -10,7 +10,7 @@ import type {
     CustomStatus
 } from '../../store/storeTypes';
 import { SCENE_SETTINGS_META_ID } from '../../utils/sync/obr';
-import { ROOM_META_ID, mapRoomSettings } from './owlbearSyncConstants';
+import { ROOM_META_ID, mapRoomSettings, showDicePlusRetirementNotice } from './owlbearSyncConstants';
 import { handlePlayerRoomCampaignSync } from '../../utils/pc/pcRoomSyncOps';
 
 export interface OwlbearRoomSyncResult {
@@ -96,9 +96,8 @@ export async function setupOwlbearRoomSync(
             }
 
             if (data.diceEngine === 'dice-plus') {
-                OBR.notification.show(
-                    '[ ⚠️ ] Dice+ has been retired and removed. The room has been migrated to Custom Action Rolls (CAR): https://custom-action-rolls.narcolepticdracu.com/manifest.json',
-                    'WARNING'
+                showDicePlusRetirementNotice(
+                    '[ ⚠️ ] Dice+ has been retired and removed. The room has been migrated to Custom Action Rolls (CAR): https://custom-action-rolls.narcolepticdracu.com/manifest.json'
                 );
                 data.diceEngine = 'car';
                 if (role === 'GM') {
@@ -156,9 +155,8 @@ export async function setupOwlbearRoomSync(
             if (meta[ROOM_META_ID]) {
                 const data = meta[ROOM_META_ID] as Record<string, unknown>;
                 if (data.diceEngine === 'dice-plus') {
-                    OBR.notification.show(
-                        '[ ⚠️ ] Dice+ has been retired and removed. Please install Custom Action Rolls (CAR): https://custom-action-rolls.narcolepticdracu.com/manifest.json',
-                        'WARNING'
+                    showDicePlusRetirementNotice(
+                        '[ ⚠️ ] Dice+ has been retired and removed. Please install Custom Action Rolls (CAR): https://custom-action-rolls.narcolepticdracu.com/manifest.json'
                     );
                     data.diceEngine = 'car';
                     if (role === 'GM') {

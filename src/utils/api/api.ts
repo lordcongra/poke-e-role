@@ -35,7 +35,7 @@ export type {
 };
 
 // VITE MAGIC: Automatically detects your domain sub-folder!
-const BASE_URL = (import.meta as any)?.env?.BASE_URL || '/';
+const BASE_URL = import.meta.env.BASE_URL || '/';
 
 const formatLocalPath = (pathStr: string) => {
     const fullPath = pathStr.startsWith('/') ? BASE_URL + pathStr.slice(1) : pathStr;
@@ -249,7 +249,7 @@ export async function fetchAbilityData(abilityName: string): Promise<AbilityApiR
 
     // 2. Check Local Dataset
     await loadLocalDataset();
-    const selectedUrl = ABILITIES_URLS[cleanName];
+    const selectedUrl = ABILITIES_URLS[cleanName] || formatLocalPath(`/dataset/abilities/${baseName}.json`);
 
     // 3. Prevent Fetching non-existent Data
     if (!selectedUrl) {
