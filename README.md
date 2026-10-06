@@ -46,10 +46,10 @@ While these extensions do not tie directly into the character sheet, they are hi
 
 If you are new to the Pokerole Extension, here are a few core concepts to get you started:
 
-1. **Selecting Tokens (OBR):** When playing in Owlbear Rodeo, the sheet is entirely tied to the VTT token system. Click on a token on the map to load its data. If you click away, the sheet will clear.
+1. **Selecting Tokens (OBR):** When playing in Owlbear Rodeo, the sheet is entirely tied to the VTT token system. Click on a token in the Character layer on the map to load its data. Click "deselect token" to swap back to the default view.
 2. **Token Scale Warning (OBR):** The visual UI (HP/Will bars, Defense badges) that hovers over your tokens works best on standard-sized or larger tokens. **Shrinking tokens to incredibly small scales can cause the UI graphics to break or overlap.**
-3. **Pokémon vs. Trainer Mode:** Near the top of the sheet is a dropdown to swap between "Pokémon" and "Trainer". Swapping to Trainer will safely back up your Pokémon's stats, limits, and typing into memory, change your skills (e.g., "Channel" becomes "Throw"), and clear your typing. Swapping back to Pokémon perfectly restores all your saved data!
-4. **Refreshing Data:** If your moves or abilities ever look blank or are missing their tooltips, click the `↻ Refresh` button at the top of the sheet to force the system to ping the database and backfill the missing descriptions.
+3. **Pokémon vs. Trainer Mode:** Swap your mode between Pokemon or Trainer/Trainer(Special) to set the sheet automatically to the correct Attributes and Skills for that mode. Some small homebrew changes have been applied for Special Trainers, replacing the Weapon Skill with the Channel Skill.
+4. **Refreshing Data:** If your moves or abilities ever look blank or are missing their tooltips, click the `↻` button at the top of the sheet to force the system to ping the database and backfill the missing descriptions.
 
 ---
 
@@ -58,12 +58,11 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 ### 🎨 Dynamic UI & Theming
 
 - **Adaptive Type Colors:** The sheet automatically checks your Pokémon's primary typing and dynamically restyles the entire UI (buttons, text highlights, table borders, and accents) to match!
-- **Custom Global Overrides:** Playing a shiny, a special regional variant, or just have a favorite color? Click the "Theme" button in the global toolbar to completely override the sheet's colors to anything you want!
-- **Clean Iconography:** The entire app utilizes crisp, accessible SVG icons rather than flat text emojis, ensuring it looks beautifully professional on any device. I called this "Project Demojification."
+- **Custom Global Overrides:** Playing a shiny, a special regional variant, or just have a favorite color? Click the "Theme" button in the global toolbar to completely override the sheet's colors to anything you want! You can set this for your default theme before selecting a sheet as well!
 
 ### ⚔️ The Initiative Tracker
 
-- **Native Integration:** A completely overhauled, lightning-fast initiative tracking HUD built directly into the sheet!
+- **Native Integration:** Integrated initiative tracker that you can populate with Pokemon or Trainers by rolling on their sheets or by clicking the "+" icon in the tracker to select any token by name to add! Combine this with the Battle Organizer (explained below) to keep track of your battles round by round, action by action.
 - **Fully Customizable:** Your tracker layout saves instantly to your personal browser memory. Do you want a horizontal tracker on the bottom of your screen, while your GM wants a vertical list on the right? You can both have it!
 - **Auto-Scrolling:** Set strict maximum dimension limits so the tracker never dominates your screen. If the turn passes to a Pokémon that is hidden off-screen, the tracker will elegantly smooth-scroll them right into the center of your view.
 
@@ -101,7 +100,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 ### 🏅 Trainer Badges & Achievements
 
 - **Trainer Progression:** When using the sheet in "Trainer Mode", players have access to a dedicated Badges section under their Social Attributes.
-- **Visual Identity:** Name your badges and use a sleek, native emoji-picker UI to proudly display your hard-earned Gym Badges or campaign achievements directly on your sheet!
+- **Visual Identity:** Name your badges and use a sleek, native emoji-picker UI or upload your own image to proudly display your hard-earned Gym Badges or campaign achievements directly on your sheet!
 
 ### 🎁 The Loot Generator
 
@@ -122,7 +121,6 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 ### 🌐 Live Database Fetching & Offline Resilience
 
 - **Offline-First Architecture:** The extension now ships with a pre-compiled local database of Pokémon, Abilities, Natures, Moves, and Items. It loads instantly and is completely immune to third-party API rate limits or network outages!
-- **Seamless Live Fallback:** If you type in the name of a brand-new Pokémon that isn't in your local database yet, the app intelligently falls back to the live Pokerole-Data repository to fetch the stats, completely bypassing API limits in the process.
 
 ### 📊 Fully Automated Stat Calculation
 
