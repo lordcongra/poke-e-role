@@ -18,12 +18,44 @@ export function applyDeleteCampaign(
         };
     }
 
-    if (!pcData.campaigns[campaignId]) {
+    const campaignToDelete = pcData.campaigns[campaignId];
+    if (!campaignToDelete) {
         return { success: false, nextData: pcData, error: 'Campaign not found.' };
     }
 
     const nextCampaigns = { ...pcData.campaigns };
     delete nextCampaigns[campaignId];
+
+    const nextSummaries = { ...pcData.pokemonSummaries };
+    const entityIdsToDelete = new Set<string>();
+
+    for (const pid of campaignToDelete.teamParty || []) {
+        if (pid) entityIdsToDelete.add(pid);
+    }
+    for (const box of campaignToDelete.boxes || []) {
+        for (const pid of box.slots || []) {
+            if (pid) entityIdsToDelete.add(pid);
+        }
+    }
+    for (const trainer of Object.values(campaignToDelete.trainers || {})) {
+        for (const pid of trainer.party || []) {
+            if (pid) entityIdsToDelete.add(pid);
+        }
+        for (const box of trainer.boxes || []) {
+            for (const pid of box.slots || []) {
+                if (pid) entityIdsToDelete.add(pid);
+            }
+        }
+    }
+    for (const [id, summary] of Object.entries(nextSummaries)) {
+        if (summary?.campaignId === campaignId) {
+            entityIdsToDelete.add(id);
+        }
+    }
+
+    for (const id of entityIdsToDelete) {
+        delete nextSummaries[id];
+    }
 
     const nextActiveCampaignId =
         pcData.activeCampaignId === campaignId ? Object.keys(nextCampaigns)[0] : pcData.activeCampaignId;
@@ -33,7 +65,8 @@ export function applyDeleteCampaign(
         nextData: {
             ...pcData,
             activeCampaignId: nextActiveCampaignId,
-            campaigns: nextCampaigns
+            campaigns: nextCampaigns,
+            pokemonSummaries: nextSummaries
         }
     };
 }

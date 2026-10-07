@@ -1,4 +1,5 @@
 import { LOCAL_STORAGE_PREFIX } from '../sync/storageAdapter';
+import { useCharacterStore } from '../../store/useCharacterStore';
 
 const DB_NAME = 'pkr_local_images';
 const STORE_NAME = 'images';
@@ -179,6 +180,35 @@ export const imageManager = {
             }
         } catch (e) {
             console.warn('[imageManager] Failed to check image references in storage:', e);
+        }
+
+        try {
+            const pcData = useCharacterStore.getState().pcData;
+            if (pcData) {
+                if (pcData.pokemonSummaries) {
+                    for (const summary of Object.values(pcData.pokemonSummaries)) {
+                        if (summary?.tokenImageUrl === formattedId) {
+                            return;
+                        }
+                    }
+                }
+                if (pcData.campaigns) {
+                    for (const camp of Object.values(pcData.campaigns)) {
+                        if ((camp as { avatarUrl?: string })?.avatarUrl === formattedId) {
+                            return;
+                        }
+                        if (camp?.trainers) {
+                            for (const trainer of Object.values(camp.trainers)) {
+                                if (trainer?.avatarUrl === formattedId) {
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('[imageManager] Failed to check PC storage image references:', e);
         }
 
         const id = formattedId.replace('local-img:', '');

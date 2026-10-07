@@ -362,6 +362,14 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
         }
     }
 
+    // Purge orphaned ghost summaries not in any campaign/trainer/box and not live on map
+    for (const [id, s] of Object.entries(data.pokemonSummaries)) {
+        const isLiveOnMap = Boolean(s && s.isOnMap && (s.mapTokenId || s.savedTokenItem?.id));
+        if (!referencedIds.has(id) && !isLiveOnMap) {
+            delete data.pokemonSummaries[id];
+        }
+    }
+
     // Prune invalid or corrupted Pokémon summaries
     for (const [id, s] of Object.entries(data.pokemonSummaries)) {
         if (!s || typeof s !== 'object' || (!s.name && !s.species)) {

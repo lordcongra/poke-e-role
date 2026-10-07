@@ -210,12 +210,18 @@ export function useBattleOrganizerTokenSync({
                     updates['status-list'] = JSON.stringify(statusItems);
                 }
 
-                if (syncOptions.syncHp && typeof combatant.hpCurr === 'number') {
-                    updates['hp-curr'] = combatant.hpCurr;
+                if (syncOptions.syncHp) {
+                    if (typeof combatant.hpCurr === 'number') {
+                        updates['hp-curr'] = combatant.hpCurr;
+                    }
+                    updates['temporary-hit-points'] = combatant.tempHp ?? 0;
                 }
 
-                if (syncOptions.syncWill && typeof combatant.willCurr === 'number') {
-                    updates['will-curr'] = combatant.willCurr;
+                if (syncOptions.syncWill) {
+                    if (typeof combatant.willCurr === 'number') {
+                        updates['will-curr'] = combatant.willCurr;
+                    }
+                    updates['temporary-will'] = combatant.tempWill ?? 0;
                 }
 
                 if (syncOptions.syncEvade) {
@@ -244,8 +250,14 @@ export function useBattleOrganizerTokenSync({
                     if (typeof updates['hp-curr'] === 'number') {
                         globalStore.updateHealth('hpCurr', updates['hp-curr']);
                     }
+                    if (syncOptions.syncHp) {
+                        globalStore.updateHealth('temporaryHitPoints', combatant.tempHp ?? 0);
+                    }
                     if (typeof updates['will-curr'] === 'number') {
                         globalStore.updateWill('willCurr', updates['will-curr']);
+                    }
+                    if (syncOptions.syncWill) {
+                        globalStore.updateWill('temporaryWill', combatant.tempWill ?? 0);
                     }
                     if (syncOptions.syncEvade) {
                         globalStore.updateTracker('evade', combatant.evadeUsed);

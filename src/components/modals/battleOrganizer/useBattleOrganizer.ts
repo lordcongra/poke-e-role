@@ -411,7 +411,22 @@ export function useBattleOrganizer() {
 
                     const curr = c.hpCurr ?? 0;
                     const max = c.hpMax && c.hpMax > 0 ? c.hpMax : 999;
-                    const nextHp = Math.max(0, Math.min(max, curr + delta));
+                    let nextHp = curr;
+                    let nextTempHp = c.tempHp ?? 0;
+
+                    if (delta < 0) {
+                        const damage = Math.abs(delta);
+                        if (nextTempHp > 0) {
+                            const absorbed = Math.min(nextTempHp, damage);
+                            const remainingDamage = damage - absorbed;
+                            nextTempHp = nextTempHp - absorbed;
+                            nextHp = Math.max(0, curr - remainingDamage);
+                        } else {
+                            nextHp = Math.max(0, curr - damage);
+                        }
+                    } else if (delta > 0) {
+                        nextHp = Math.max(0, Math.min(max, curr + delta));
+                    }
 
                     const nextFainted = nextHp <= 0 ? true : c.isFainted;
                     let nextStatus = c.status || 'Healthy';
@@ -422,6 +437,7 @@ export function useBattleOrganizer() {
                     const updated: CombatantRowData = {
                         ...c,
                         hpCurr: nextHp,
+                        tempHp: nextTempHp,
                         isFainted: nextFainted,
                         status: nextStatus
                     };
@@ -465,11 +481,27 @@ export function useBattleOrganizer() {
 
                     const curr = c.willCurr ?? 0;
                     const max = c.willMax && c.willMax > 0 ? c.willMax : 999;
-                    const nextWill = Math.max(0, Math.min(max, curr + delta));
+                    let nextWill = curr;
+                    let nextTempWill = c.tempWill ?? 0;
+
+                    if (delta < 0) {
+                        const drain = Math.abs(delta);
+                        if (nextTempWill > 0) {
+                            const absorbed = Math.min(nextTempWill, drain);
+                            const remainingDrain = drain - absorbed;
+                            nextTempWill = nextTempWill - absorbed;
+                            nextWill = Math.max(0, curr - remainingDrain);
+                        } else {
+                            nextWill = Math.max(0, curr - drain);
+                        }
+                    } else if (delta > 0) {
+                        nextWill = Math.max(0, Math.min(max, curr + delta));
+                    }
 
                     const updated: CombatantRowData = {
                         ...c,
-                        willCurr: nextWill
+                        willCurr: nextWill,
+                        tempWill: nextTempWill
                     };
                     updatedCombatant = updated;
                     return updated;
