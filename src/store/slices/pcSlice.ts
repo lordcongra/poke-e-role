@@ -21,7 +21,8 @@ import {
     applyAddCampaign,
     applyEditCampaign,
     applyUpdateSummary,
-    applyDeleteSummary
+    applyDeleteSummary,
+    getTrainerBoxes
 } from '../../utils/pc/pcStateMutations';
 import { EXTENSION_ID } from '../../hooks/owlbearSync/owlbearSyncConstants';
 import {
@@ -40,10 +41,11 @@ import {
     syncStandaloneSummaryUpdate,
     initStandaloneTrainerSheet,
     syncStandaloneTrainerRename,
-    broadcastPcPokemonDelete
+    broadcastPcPokemonDelete,
+    syncCampaignRoomSettingsOnEdit
 } from '../../utils/pc/pcStorageStoreOps';
 import { markDataChanged } from '../../utils/sync/storageAdapter';
-import { broadcastGmPc } from '../../hooks/owlbearSync/owlbearPcBroadcastOps';
+import { broadcastGmPc, triggerDebouncedPcBroadcast } from '../../hooks/owlbearSync/owlbearPcBroadcastOps';
 import OBR from '@owlbear-rodeo/sdk';
 
 export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set, get) => ({
@@ -67,11 +69,7 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             }
 
             set({ pcData: data });
-
-            // Notify Standalone Sidebar that full PC storage is loaded so belt auto-heal can run
-            if (typeof window !== 'undefined') {
-                window.dispatchEvent(new Event('pkr-local-data-changed'));
-            }
+            if (typeof window !== 'undefined') window.dispatchEvent(new Event('pkr-local-data-changed'));
         } catch (e) {
             console.error('[PcSlice] Failed to initialize PC storage:', e);
         }
@@ -88,17 +86,9 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
         set({ activeBoxIndex: index });
     },
 
-    setSelectedPcSlot: (slot) => {
-        set({ selectedPcSlot: slot });
-    },
-
-    openPcModal: () => {
-        set({ isPcModalOpen: true });
-    },
-
-    closePcModal: () => {
-        set({ isPcModalOpen: false, selectedPcSlot: null });
-    },
+    setSelectedPcSlot: (slot) => set({ selectedPcSlot: slot }),
+    openPcModal: () => set({ isPcModalOpen: true }),
+    closePcModal: () => set({ isPcModalOpen: false, selectedPcSlot: null }),
 
     setPartySlot: (trainerId: string, slotIndex: number, entityId: string | null) => {
         try {
@@ -141,9 +131,9 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             if (!OBR.isAvailable) {
                 const camp = nextData.campaigns[nextData.activeCampaignId];
                 const tr = camp?.trainers[camp?.activeTrainerId];
-                if (tr) {
-                    syncSwappedSlotsToSidebar(tr, from, to, nextData, activeBoxIndex).catch(console.warn);
-                }
+                if (tr) syncSwappedSlotsToSidebar(tr, from, to, nextData, activeBoxIndex).catch(console.warn);
+            } else {
+                triggerDebouncedPcBroadcast();
             }
         } catch (e) {
             console.error('[PcSlice] Failed to swap PC slots:', e);
@@ -166,6 +156,7 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             const camp = nextData.campaigns[nextData.activeCampaignId];
             const targetTr = camp?.trainers[trainerId || camp?.activeTrainerId];
             syncSidebarOnMoveToParty(targetTr, entityId);
+            if (OBR.isAvailable) triggerDebouncedPcBroadcast();
             return true;
         } catch (e) {
             console.error('[PcSlice] Failed to move to party:', e);
@@ -194,6 +185,7 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             const camp = nextData.campaigns[nextData.activeCampaignId];
             const targetTr = camp?.trainers[trainerId || camp?.activeTrainerId];
             syncSidebarOnDeposit(camp, targetTr, entityId, targetIdx);
+            if (OBR.isAvailable) triggerDebouncedPcBroadcast();
             return true;
         } catch (e) {
             console.error('[PcSlice] Failed to deposit to box:', e);
@@ -219,10 +211,24 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
         try {
             const { pcData, activeBoxIndex } = get();
             const camp = pcData.campaigns[pcData.activeCampaignId];
-            if (!camp || camp.boxes.length <= 1 || boxIndex < 0 || boxIndex >= camp.boxes.length) return;
+            if (!camp) return;
+
+            const activeTrainer = camp.trainers[camp.activeTrainerId];
+            const boxes = getTrainerBoxes(activeTrainer, camp);
+            if (boxes.length <= 1 || boxIndex < 0 || boxIndex >= boxes.length) return;
+
+            const targetBox = boxes[boxIndex];
+            if (targetBox?.slots?.some(Boolean)) {
+                if (OBR.isAvailable) {
+                    OBR.notification.show('Cannot delete box: please empty or move stored Pokémon first.', 'WARNING');
+                } else if (typeof window !== 'undefined' && window.alert) {
+                    window.alert('Cannot delete box: please empty or move stored Pokémon first.');
+                }
+                return;
+            }
 
             const nextData = applyDeleteBox(pcData, boxIndex);
-            const nextIdx = Math.min(activeBoxIndex, camp.boxes.length - 2);
+            const nextIdx = Math.min(activeBoxIndex, boxes.length - 2);
             set({ pcData: nextData, activeBoxIndex: Math.max(0, nextIdx) });
             savePcStorage(nextData);
         } catch (e) {
@@ -270,13 +276,10 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             persistTrainerSwitch(campId, trainerId, pid);
 
             if (OBR.isAvailable && !pid) {
-                OBR.player
-                    .getId()
-                    .then((id) => {
-                        setCachedObrPlayerId(id);
-                        persistTrainerSwitch(campId, trainerId, id);
-                    })
-                    .catch(() => {});
+                OBR.player.getId().then((id) => {
+                    setCachedObrPlayerId(id);
+                    persistTrainerSwitch(campId, trainerId, id);
+                }).catch(() => {});
             }
 
             const nextData = {
@@ -372,9 +375,7 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             let activeTrainerId = targetCamp.activeTrainerId;
             if (typeof window !== 'undefined' && window.localStorage) {
                 const localTr = localStorage.getItem(`pkr_active_trainer_${campaignId}`);
-                if (localTr && (localTr === '__none__' || targetCamp.trainers?.[localTr])) {
-                    activeTrainerId = localTr;
-                }
+                if (localTr && (localTr === '__none__' || targetCamp.trainers?.[localTr])) activeTrainerId = localTr;
             }
             if (activeTrainerId !== '__none__' && (!targetCamp.trainers || !targetCamp.trainers[activeTrainerId])) {
                 activeTrainerId = Object.keys(targetCamp.trainers || {})[0] || '__none__';
@@ -411,28 +412,21 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
 
     editCampaign: (campaignId: string, updates: { name?: string; isPrivate?: boolean; isRoomActive?: boolean }) => {
         try {
-            const { pcData, role } = get();
+            const { pcData, role, identity } = get();
             const res = applyEditCampaign(pcData, campaignId, updates);
             if (!res.success) return;
 
             set({ pcData: res.nextData });
             savePcStorage(res.nextData);
 
-            if (OBR.isAvailable && role === 'GM') {
-                const updated = res.nextData.campaigns[campaignId];
-                if (updates.isRoomActive === true && updated && !updated.isPrivate) {
-                    get().updateRoomSetting('activeRoomCampaignId', campaignId);
-                    get().updateRoomSetting('activeRoomCampaignName', updated.name);
-                } else if (updates.isRoomActive === false || updates.isPrivate === true) {
-                    const currentSettingId = get().identity.activeRoomCampaignId;
-                    if (currentSettingId === campaignId) {
-                        get().updateRoomSetting('activeRoomCampaignId', '');
-                        get().updateRoomSetting('activeRoomCampaignName', '');
-                    }
-                } else if (updates.name && updated?.isRoomActive) {
-                    get().updateRoomSetting('activeRoomCampaignName', updated.name);
-                }
-            }
+            syncCampaignRoomSettingsOnEdit(
+                role === 'GM',
+                campaignId,
+                res.nextData.campaigns[campaignId],
+                updates,
+                identity.activeRoomCampaignId,
+                get().updateRoomSetting
+            );
         } catch (e) {
             console.error('[PcSlice] Failed to edit campaign:', e);
         }
@@ -440,23 +434,19 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
 
     deleteCampaign: (campaignId: string) => {
         try {
-            const { pcData, role } = get();
+            const { pcData, role, identity } = get();
             const deleted = pcData.campaigns[campaignId];
             const res = applyDeleteCampaign(pcData, campaignId);
             if (!res.success) {
-                if (OBR.isAvailable && res.error) {
-                    OBR.notification.show(res.error, 'WARNING');
-                }
+                if (OBR.isAvailable && res.error) OBR.notification.show(res.error, 'WARNING');
                 return false;
             }
             set({ pcData: res.nextData, activeBoxIndex: 0 });
             savePcStorage(res.nextData);
 
-            if (OBR.isAvailable && role === 'GM') {
-                if (deleted?.isRoomActive || get().identity.activeRoomCampaignId === campaignId) {
-                    get().updateRoomSetting('activeRoomCampaignId', '');
-                    get().updateRoomSetting('activeRoomCampaignName', '');
-                }
+            if (OBR.isAvailable && role === 'GM' && (deleted?.isRoomActive || identity.activeRoomCampaignId === campaignId)) {
+                get().updateRoomSetting('activeRoomCampaignId', '');
+                get().updateRoomSetting('activeRoomCampaignName', '');
             }
             return true;
         } catch (e) {
@@ -483,10 +473,7 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             if (!camp || !camp.trainers[trainerId]) return;
 
             const trainers = { ...camp.trainers, [trainerId]: { ...camp.trainers[trainerId], ...updates } };
-            const nextData = {
-                ...pcData,
-                campaigns: { ...pcData.campaigns, [pcData.activeCampaignId]: { ...camp, trainers } }
-            };
+            const nextData = { ...pcData, campaigns: { ...pcData.campaigns, [pcData.activeCampaignId]: { ...camp, trainers } } };
             set({ pcData: nextData });
             savePcStorage(nextData);
         } catch (e) {

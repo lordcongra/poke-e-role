@@ -52,6 +52,7 @@ interface PcStorageHeaderProps {
     activeBoxIndex: number;
     onSelectBox: (index: number) => void;
     onAddBox: () => void;
+    onDeleteBox?: (index: number) => void;
     onRenameBox: (index: number, name: string) => void;
     onSetBoxTheme: (index: number, color: string) => void;
     onUploadCloud: () => void;
@@ -83,6 +84,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
     activeBoxIndex,
     onSelectBox,
     onAddBox,
+    onDeleteBox,
     onRenameBox,
     onSetBoxTheme,
     onUploadCloud,
@@ -388,6 +390,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                 currentBox={currentBox}
                 onSelectBox={onSelectBox}
                 onAddBox={onAddBox}
+                onDeleteBox={onDeleteBox}
                 onRenameBox={onRenameBox}
                 onSetBoxTheme={onSetBoxTheme}
             />

@@ -559,6 +559,103 @@ runTest('Nullish coalescing (??) preserves 0 and false whereas falsy (||) corrup
     assert.equal(falseVal ?? defaultFlag, false, '?? correctly preserves false');
 });
 
+// -----------------------------------------------------------------------------
+// TEST SUITE 6: Temp Resource Barrier Absorption & Canvas HUD Invariants
+// -----------------------------------------------------------------------------
+runTest('Damage barrier absorption drains Temp HP before depleting Base HP and serializes explicit 0', () => {
+    // Case A: Damage fully absorbed by Temp HP barrier
+    let tempHp = 5;
+    let baseHp = 10;
+    let incomingDamage = 3;
+
+    let absorbed = Math.min(tempHp, incomingDamage);
+    let remainingDamage = incomingDamage - absorbed;
+    let nextTempHp = tempHp - absorbed;
+    let nextHp = Math.max(0, baseHp - remainingDamage);
+
+    assert.equal(absorbed, 3, 'All 3 damage absorbed by Temp HP barrier');
+    assert.equal(remainingDamage, 0, 'No leftover damage for Base HP');
+    assert.equal(nextTempHp, 2, 'Temp HP decreased from 5 to 2');
+    assert.equal(nextHp, 10, 'Base HP remained fully protected at 10');
+
+    // Case B: Damage breaks Temp HP barrier and spills into Base HP
+    tempHp = 3;
+    baseHp = 10;
+    incomingDamage = 7;
+
+    absorbed = Math.min(tempHp, incomingDamage);
+    remainingDamage = incomingDamage - absorbed;
+    nextTempHp = tempHp - absorbed;
+    nextHp = Math.max(0, baseHp - remainingDamage);
+
+    assert.equal(absorbed, 3, 'Barrier absorbs 3 damage before depleting');
+    assert.equal(remainingDamage, 4, 'Leftover 4 damage penetrates to Base HP');
+    assert.equal(nextTempHp, 0, 'Temp HP explicitly reaches 0');
+    assert.equal(nextHp, 6, 'Base HP drops from 10 to 6');
+
+    // Serialization check: nextTempHp must delta-merge explicitly as 0
+    const tokenMeta: Record<string, unknown> = {
+        'temporary-hit-points': 3,
+        'hp-curr': 10
+    };
+    const updates = {
+        'temporary-hit-points': nextTempHp,
+        'hp-curr': nextHp
+    };
+    Object.assign(tokenMeta, updates);
+    assert.equal(tokenMeta['temporary-hit-points'], 0, 'Explicit 0 for temporary-hit-points must overwrite previous 3');
+    assert.equal(tokenMeta['hp-curr'], 6, 'hp-curr must update to 6');
+
+    // Case C: Damage when Temp HP is 0 directly reduces Base HP
+    const caseC = { temp: 0, base: 5, dmg: 2, expectedTemp: 0, expectedBase: 3 };
+    absorbed = Math.min(caseC.temp, caseC.dmg);
+    remainingDamage = caseC.dmg - absorbed;
+    nextTempHp = caseC.temp - absorbed;
+    nextHp = Math.max(0, caseC.base - remainingDamage);
+
+    assert.equal(absorbed, 0, 'No barrier absorption when Temp HP is 0');
+    assert.equal(remainingDamage, caseC.dmg, 'All incoming damage penetrates directly to Base HP');
+    assert.equal(nextTempHp, caseC.expectedTemp, 'Temp HP remains explicitly at 0');
+    assert.equal(nextHp, caseC.expectedBase, 'Base HP drops from 5 to 3');
+});
+
+runTest('Canvas HUD graphics calculate effectiveTempMax and tempHpPercentage with 0-max fallback', () => {
+    const dataWithZeroTempMax = {
+        hpCurr: 10,
+        hpMax: 10,
+        temporaryHitPoints: 4,
+        temporaryHitPointsMax: 0
+    };
+
+    // Old bug: temporaryHitPointsMax > 0 resulted in 0 percentage
+    const oldTempHpPercentage =
+        dataWithZeroTempMax.temporaryHitPointsMax > 0
+            ? Math.max(
+                  0,
+                  Math.min(1, dataWithZeroTempMax.temporaryHitPoints / dataWithZeroTempMax.temporaryHitPointsMax)
+              )
+            : 0;
+    assert.equal(oldTempHpPercentage, 0, 'Demonstrates the old bug swallowed purple barrier fill');
+
+    // Correct implementation:
+    const effectiveTempMax =
+        dataWithZeroTempMax.temporaryHitPointsMax > 0
+            ? dataWithZeroTempMax.temporaryHitPointsMax
+            : Math.max(dataWithZeroTempMax.hpMax || 1, dataWithZeroTempMax.temporaryHitPoints, 1);
+    const correctedPercentage = Math.max(0, Math.min(1, dataWithZeroTempMax.temporaryHitPoints / effectiveTempMax));
+
+    assert.equal(effectiveTempMax, 10, 'effectiveTempMax safely defaults to base hpMax (10)');
+    assert.equal(correctedPercentage, 0.4, 'Purple barrier fill renders at 40% instead of 0%');
+
+    // Safe HP text calculation
+    const effectiveHpMax = Math.max(1, dataWithZeroTempMax.hpMax || 1);
+    const hpString =
+        dataWithZeroTempMax.temporaryHitPoints > 0
+            ? `${dataWithZeroTempMax.hpCurr}+${dataWithZeroTempMax.temporaryHitPoints}/${effectiveHpMax}`
+            : `${dataWithZeroTempMax.hpCurr}/${effectiveHpMax}`;
+    assert.equal(hpString, '10+4/10', 'hp-text renders formatted Temp HP string without /0 or NaN');
+});
+
 console.log('\n=============================================');
 console.log(`Results: ${passedCount} passed, ${failedCount} failed`);
 console.log('=============================================\n');

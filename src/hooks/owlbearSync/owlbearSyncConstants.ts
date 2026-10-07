@@ -38,6 +38,17 @@ export interface RollSyncData {
     icon: string;
     rollType?: string;
     isCrit?: boolean;
+    targetTokenId?: string;
+    targetId?: string;
+    targetCombatantId?: string;
+    targetName?: string;
+    target?: string;
+    damage?: number;
+    damageValue?: number;
+    incomingDamage?: number;
+    isDirectDamage?: boolean;
+    isTarget?: boolean;
+    applyDamage?: boolean;
 }
 
 export interface TransformData {

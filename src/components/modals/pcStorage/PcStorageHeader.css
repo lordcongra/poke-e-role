@@ -283,6 +283,11 @@
     background: rgba(255, 255, 255, 0.1);
 }
 
+.pc-header__icon-btn--danger:hover {
+    color: var(--semantic-danger, #ef4444);
+    background: rgba(239, 68, 68, 0.15);
+}
+
 .pc-header__rename-wrap {
     display: flex;
     align-items: center;

@@ -192,3 +192,29 @@ export function broadcastPcPokemonDelete(
         })
         .catch(() => {});
 }
+
+/**
+ * Synchronizes Owlbear Rodeo room settings when a campaign is edited by the GM.
+ */
+export function syncCampaignRoomSettingsOnEdit(
+    isGm: boolean,
+    campaignId: string,
+    updatedCampaign: CampaignProfile | undefined,
+    updates: { name?: string; isPrivate?: boolean; isRoomActive?: boolean },
+    activeRoomCampaignId: string | undefined,
+    updateRoomSetting: (key: 'activeRoomCampaignId' | 'activeRoomCampaignName', value: string) => void
+): void {
+    if (!OBR.isAvailable || !isGm) return;
+    if (updates.isRoomActive === true && updatedCampaign && !updatedCampaign.isPrivate) {
+        updateRoomSetting('activeRoomCampaignId', campaignId);
+        updateRoomSetting('activeRoomCampaignName', updatedCampaign.name);
+    } else if (updates.isRoomActive === false || updates.isPrivate === true) {
+        if (activeRoomCampaignId === campaignId) {
+            updateRoomSetting('activeRoomCampaignId', '');
+            updateRoomSetting('activeRoomCampaignName', '');
+        }
+    } else if (updates.name && updatedCampaign?.isRoomActive) {
+        updateRoomSetting('activeRoomCampaignName', updatedCampaign.name);
+    }
+}
+

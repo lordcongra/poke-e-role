@@ -312,3 +312,31 @@ export function setupActiveSheetStoreSync(): () => void {
         unsub();
     };
 }
+
+let pcBroadcastTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Triggers a debounced (200-300ms) P2P broadcast of active PC & party data.
+ * Used when slots are swapped, moved to party, or deposited into boxes.
+ */
+export function triggerDebouncedPcBroadcast(delayMs = 250): void {
+    if (!OBR.isAvailable) return;
+    if (pcBroadcastTimer) {
+        clearTimeout(pcBroadcastTimer);
+    }
+    pcBroadcastTimer = setTimeout(() => {
+        pcBroadcastTimer = null;
+        try {
+            const state = useCharacterStore.getState();
+            const effectiveRole = state.role || 'PLAYER';
+            if (effectiveRole === 'GM') {
+                broadcastGmPc().catch((err) => console.warn('[PcBroadcast] GM debounced broadcast failed:', err));
+            } else {
+                broadcastPlayerPc().catch((err) => console.warn('[PcBroadcast] Player debounced broadcast failed:', err));
+            }
+        } catch (e) {
+            console.warn('[PcBroadcast] Error triggering debounced PC broadcast:', e);
+        }
+    }, delayMs);
+}
+

@@ -167,8 +167,11 @@ export const PcSlotContextMenu: React.FC<PcSlotContextMenuProps> = ({
 
                 <button
                     type="button"
-                    className="pc-context-menu__item"
+                    className={`pc-context-menu__item ${isLocked ? 'pc-context-menu__item--disabled' : ''}`}
+                    disabled={isLocked}
+                    title={isLocked ? 'This character is locked by the GM.' : 'Clone Pokémon'}
                     onClick={() => {
+                        if (isLocked) return;
                         onClone();
                         onClose();
                     }}
@@ -178,15 +181,19 @@ export const PcSlotContextMenu: React.FC<PcSlotContextMenuProps> = ({
 
                 <button
                     type="button"
-                    className="pc-context-menu__item"
+                    className={`pc-context-menu__item ${isLocked ? 'pc-context-menu__item--disabled' : ''}`}
+                    disabled={isLocked}
                     onClick={() => {
+                        if (isLocked) return;
                         onUnlink();
                         onClose();
                     }}
                     title={
-                        OBR.isAvailable
-                            ? 'Unlink Pokémon from PC / Party. If stored away, it will be placed onto the map.'
-                            : 'Unlink Pokémon from PC / Party.'
+                        isLocked
+                            ? 'This character is locked by the GM.'
+                            : OBR.isAvailable
+                              ? 'Unlink Pokémon from PC / Party. If stored away, it will be placed onto the map.'
+                              : 'Unlink Pokémon from PC / Party.'
                     }
                 >
                     <Unlink size={15} /> Unlink from Party/PC
@@ -196,8 +203,13 @@ export const PcSlotContextMenu: React.FC<PcSlotContextMenuProps> = ({
 
                 <button
                     type="button"
-                    className="pc-context-menu__item pc-context-menu__item--danger"
+                    className={`pc-context-menu__item pc-context-menu__item--danger ${
+                        isLocked ? 'pc-context-menu__item--disabled' : ''
+                    }`}
+                    disabled={isLocked}
+                    title={isLocked ? 'This character is locked by the GM.' : 'Release Pokémon'}
                     onClick={() => {
+                        if (isLocked) return;
                         onRelease();
                         onClose();
                     }}

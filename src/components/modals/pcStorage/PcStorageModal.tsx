@@ -47,6 +47,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         setPartySlot,
         setBoxSlot,
         addBox,
+        deleteBox,
         renameBox,
         setBoxTheme,
         switchTrainer,
@@ -332,6 +333,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         activeBoxIndex={activeBoxIndex}
                         onSelectBox={setActiveBoxIndex}
                         onAddBox={addBox}
+                        onDeleteBox={deleteBox}
                         onRenameBox={renameBox}
                         onSetBoxTheme={setBoxTheme}
                         onUploadCloud={() => setIsExportModalOpen(true)}

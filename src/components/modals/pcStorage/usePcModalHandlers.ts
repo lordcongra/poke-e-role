@@ -37,6 +37,7 @@ import {
     type GmClaimConflict
 } from '../../../utils/pc/pcClaimOverrideOps';
 import { initiatePointPlacement, getPlacementModePreference } from '../../../utils/pc/pcPlacementInteraction';
+import { isEntityLockedByGm } from '../../../utils/pc/pcCandidateMatching';
 
 interface UsePcModalHandlersParams {
     pcData: PcStorageData;
@@ -263,9 +264,17 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         }
     };
 
+    const guardLockedSummary = (summary: PcPokemonSummary) => {
+        if (role !== 'GM' && isEntityLockedByGm(summary)) {
+            if (OBR.isAvailable) OBR.notification.show('This character is locked by the GM.', 'WARNING');
+            return true;
+        }
+        return false;
+    };
+
     const handleClonePokemon = (entityId: string) => {
         const summary = pcData.pokemonSummaries[entityId];
-        if (!summary) return;
+        if (!summary || guardLockedSummary(summary)) return;
 
         const { clonedSummary, clonedId } = clonePokemonSummaryOps(summary);
         updatePokemonSummary(clonedSummary);
@@ -276,14 +285,14 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
 
     const handlePromptUnlinkPokemon = (entityId: string) => {
         const summary = pcData.pokemonSummaries[entityId];
-        if (!summary) return;
+        if (!summary || guardLockedSummary(summary)) return;
         setReleaseModalMode('unlink');
         setReleaseConfirmPokemon(summary);
     };
 
     const handleReleasePokemon = (entityId: string) => {
         const summary = pcData.pokemonSummaries[entityId];
-        if (!summary) return;
+        if (!summary || guardLockedSummary(summary)) return;
         setReleaseModalMode('release');
         setReleaseConfirmPokemon(summary);
     };
@@ -340,23 +349,16 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
 
     const handleConfirmCloudUpload = async (
         customSceneName: string,
-        includeParty: boolean = true,
-        includeTrainer: boolean = true,
+        includeParty = true,
+        includeTrainer = true,
         targetMode: 'cloud' | 'activeScene' = 'cloud',
-        backupAllBoxes: boolean = true
+        backupAllBoxes = true
     ) => {
         if (!currentBox || !campaign) return;
         setIsExportModalOpen(false);
         await executeCloudExport(
-            customSceneName,
-            currentBox,
-            campaign,
-            pcData,
-            trainer,
-            includeParty,
-            includeTrainer,
-            targetMode,
-            backupAllBoxes
+            customSceneName, currentBox, campaign, pcData, trainer,
+            includeParty, includeTrainer, targetMode, backupAllBoxes
         );
     };
 

@@ -36,15 +36,20 @@ export const TrainerOrganizerModal: React.FC<TrainerOrganizerModalProps> = ({
 
     const moveTrainer = (index: number, direction: 'up' | 'down' | 'top' | 'bottom') => {
         const newOrder = [...order];
-        const [removed] = newOrder.splice(index, 1);
         if (direction === 'up' && index > 0) {
-            newOrder.splice(index - 1, 0, removed);
-        } else if (direction === 'down' && index < newOrder.length) {
-            newOrder.splice(index + 1, 0, removed);
-        } else if (direction === 'top') {
+            const targetIndex = index - 1;
+            [newOrder[index], newOrder[targetIndex]] = [newOrder[targetIndex], newOrder[index]];
+        } else if (direction === 'down' && index < newOrder.length - 1) {
+            const targetIndex = index + 1;
+            [newOrder[index], newOrder[targetIndex]] = [newOrder[targetIndex], newOrder[index]];
+        } else if (direction === 'top' && index > 0) {
+            const [removed] = newOrder.splice(index, 1);
             newOrder.unshift(removed);
-        } else if (direction === 'bottom') {
+        } else if (direction === 'bottom' && index < newOrder.length - 1) {
+            const [removed] = newOrder.splice(index, 1);
             newOrder.push(removed);
+        } else {
+            return;
         }
         setOrder(newOrder);
         onReorder(newOrder);

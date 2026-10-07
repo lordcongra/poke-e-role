@@ -114,7 +114,7 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
                 e.preventDefault();
                 onContextMenu(e);
             }}
-            draggable={!!onDragStart}
+            draggable={!isLocked && !!onDragStart}
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
             title={`${summary.name || summary.species}${summary.species && summary.species !== summary.name ? ` (${summary.species})` : ''} - Double-click to open sheet, right-click for options`}
@@ -256,26 +256,30 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
                         (summary.isOnMap ? (
                             <button
                                 type="button"
-                                className="action-button action-button--dark pc-slot-card__btn-action pc-slot-card__btn-recall"
+                                className={`action-button action-button--dark pc-slot-card__btn-action pc-slot-card__btn-recall ${isLocked ? 'pc-slot-card__btn-sheet--disabled' : ''}`}
+                                disabled={isLocked}
                                 onClick={(e) => {
                                     e.stopPropagation();
+                                    if (isLocked) return;
                                     onRecall?.();
                                 }}
-                                title="Recall Pokémon back into Pokéball"
-                                aria-label="Recall Pokémon back into Pokéball"
+                                title={isLocked ? 'Locked by GM' : 'Recall Pokémon back into Pokéball'}
+                                aria-label={isLocked ? 'Locked by GM' : 'Recall Pokémon back into Pokéball'}
                             >
                                 <CornerDownLeft size={13} />
                             </button>
                         ) : (
                             <button
                                 type="button"
-                                className="action-button action-button--theme pc-slot-card__btn-action pc-slot-card__btn-send"
+                                className={`action-button action-button--theme pc-slot-card__btn-action pc-slot-card__btn-send ${isLocked ? 'pc-slot-card__btn-sheet--disabled' : ''}`}
+                                disabled={isLocked}
                                 onClick={(e) => {
                                     e.stopPropagation();
+                                    if (isLocked) return;
                                     onSendOut?.();
                                 }}
-                                title="Send Out Pokémon onto battle map"
-                                aria-label="Send Out Pokémon onto battle map"
+                                title={isLocked ? 'Locked by GM' : 'Send Out Pokémon onto battle map'}
+                                aria-label={isLocked ? 'Locked by GM' : 'Send Out Pokémon onto battle map'}
                             >
                                 <svg
                                     width={13}
@@ -303,13 +307,15 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
                             ? onRecall && (
                                   <button
                                       type="button"
-                                      className="action-button action-button--dark pc-slot-card__btn-box-action pc-slot-card__btn-recall"
+                                      className={`action-button action-button--dark pc-slot-card__btn-box-action pc-slot-card__btn-recall ${isLocked ? 'pc-slot-card__btn-sheet--disabled' : ''}`}
+                                      disabled={isLocked}
                                       onClick={(e) => {
                                           e.stopPropagation();
+                                          if (isLocked) return;
                                           onRecall();
                                       }}
-                                      title="Recall Pokémon from map into PC Box"
-                                      aria-label="Recall Pokémon from map into PC Box"
+                                      title={isLocked ? 'Locked by GM' : 'Recall Pokémon from map into PC Box'}
+                                      aria-label={isLocked ? 'Locked by GM' : 'Recall Pokémon from map into PC Box'}
                                   >
                                       <CornerDownLeft size={12} />
                                   </button>
@@ -317,13 +323,15 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
                             : onSendOut && (
                                   <button
                                       type="button"
-                                      className="action-button action-button--theme pc-slot-card__btn-box-action pc-slot-card__btn-send"
+                                      className={`action-button action-button--theme pc-slot-card__btn-box-action pc-slot-card__btn-send ${isLocked ? 'pc-slot-card__btn-sheet--disabled' : ''}`}
+                                      disabled={isLocked}
                                       onClick={(e) => {
                                           e.stopPropagation();
+                                          if (isLocked) return;
                                           onSendOut();
                                       }}
-                                      title="Send Out Pokémon onto battle map"
-                                      aria-label="Send Out Pokémon onto battle map"
+                                      title={isLocked ? 'Locked by GM' : 'Send Out Pokémon onto battle map'}
+                                      aria-label={isLocked ? 'Locked by GM' : 'Send Out Pokémon onto battle map'}
                                   >
                                       <svg
                                           width={11}
@@ -346,13 +354,15 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
                     {onMoveToParty && (
                         <button
                             type="button"
-                            className="action-button action-button--dark pc-slot-card__btn-box-action"
+                            className={`action-button action-button--dark pc-slot-card__btn-box-action ${isLocked ? 'pc-slot-card__btn-sheet--disabled' : ''}`}
+                            disabled={isLocked}
                             onClick={(e) => {
                                 e.stopPropagation();
+                                if (isLocked) return;
                                 onMoveToParty();
                             }}
-                            title="Move Pokémon to Trainer Belt (Party)"
-                            aria-label="Move Pokémon to Trainer Belt"
+                            title={isLocked ? 'Locked by GM' : 'Move Pokémon to Trainer Belt (Party)'}
+                            aria-label={isLocked ? 'Locked by GM' : 'Move Pokémon to Trainer Belt'}
                         >
                             <ArrowRightLeft size={11} />
                         </button>

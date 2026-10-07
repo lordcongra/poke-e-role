@@ -81,12 +81,12 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
             state.identity.mode !== 'Pokémon',
         hpCurr: state.health.hpCurr,
         hpMax: state.health.hpMax,
-        temporaryHitPoints: state.health.temporaryHitPoints || 0,
-        temporaryHitPointsMax: state.health.temporaryHitPointsMax || 0,
+        temporaryHitPoints: state.health.temporaryHitPoints ?? 0,
+        temporaryHitPointsMax: state.health.temporaryHitPointsMax ?? 0,
         willCurr: state.will.willCurr,
         willMax: state.will.willMax,
-        temporaryWill: state.will.temporaryWill || 0,
-        temporaryWillMax: state.will.temporaryWillMax || 0,
+        temporaryWill: state.will.temporaryWill ?? 0,
+        temporaryWillMax: state.will.temporaryWillMax ?? 0,
         defTotal,
         sdefTotal,
         actions: state.trackers.actions,
@@ -176,12 +176,24 @@ export function buildGraphicsFromMeta(
             String(meta['mode'] || 'Pokémon') !== 'Pokémon',
         hpCurr: Number(meta['hp-curr']) || 0,
         hpMax: Number(meta['hp-max-display']) || 1,
-        temporaryHitPoints: Number(meta['temporary-hit-points']) || 0,
-        temporaryHitPointsMax: Number(meta['temporary-hit-points-max']) || 0,
+        temporaryHitPoints:
+            meta['temporary-hit-points'] != null && !isNaN(Number(meta['temporary-hit-points']))
+                ? Number(meta['temporary-hit-points'])
+                : 0,
+        temporaryHitPointsMax:
+            meta['temporary-hit-points-max'] != null && !isNaN(Number(meta['temporary-hit-points-max']))
+                ? Number(meta['temporary-hit-points-max'])
+                : 0,
         willCurr: Number(meta['will-curr']) || 0,
         willMax: Number(meta['will-max-display']) || 1,
-        temporaryWill: Number(meta['temporary-will']) || 0,
-        temporaryWillMax: Number(meta['temporary-will-max']) || 0,
+        temporaryWill:
+            meta['temporary-will'] != null && !isNaN(Number(meta['temporary-will']))
+                ? Number(meta['temporary-will'])
+                : 0,
+        temporaryWillMax:
+            meta['temporary-will-max'] != null && !isNaN(Number(meta['temporary-will-max']))
+                ? Number(meta['temporary-will-max'])
+                : 0,
         defTotal,
         sdefTotal,
         actions: Number(meta['actions-used']) || 0,

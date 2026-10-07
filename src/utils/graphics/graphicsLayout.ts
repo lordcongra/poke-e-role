@@ -19,14 +19,16 @@ export function buildGraphicDefinitions(
     const scale = tokenScale * roomScale * userScale;
 
     const healthPercentage = Math.max(0, Math.min(1, data.hpCurr / Math.max(1, data.hpMax)));
-    const tempHpPercentage =
+    const effectiveTempMax =
         data.temporaryHitPointsMax > 0
-            ? Math.max(0, Math.min(1, data.temporaryHitPoints / data.temporaryHitPointsMax))
-            : 0;
+            ? data.temporaryHitPointsMax
+            : Math.max(data.hpMax || 1, data.temporaryHitPoints, 1);
+    const tempHpPercentage = Math.max(0, Math.min(1, data.temporaryHitPoints / effectiveTempMax));
 
     const willPercentage = Math.max(0, Math.min(1, data.willCurr / Math.max(1, data.willMax)));
-    const tempWillPercentage =
-        data.temporaryWillMax > 0 ? Math.max(0, Math.min(1, data.temporaryWill / data.temporaryWillMax)) : 0;
+    const effectiveTempWillMax =
+        data.temporaryWillMax > 0 ? data.temporaryWillMax : Math.max(data.willMax || 1, data.temporaryWill, 1);
+    const tempWillPercentage = Math.max(0, Math.min(1, data.temporaryWill / effectiveTempWillMax));
 
     const totalOffsetX = (data.roomDefaultOffsetX ?? 0) + (data.xOffset || 0);
     const totalOffsetY = (data.roomDefaultOffsetY ?? 0) + (data.yOffset || 0);
@@ -128,10 +130,11 @@ export function buildGraphicDefinitions(
 
     if (data.showHpText) {
         const isVisible = (!data.gmHpText || role === 'GM') && isTokenVisible;
+        const effectiveHpMax = Math.max(1, data.hpMax || 1);
         const hpString =
             data.temporaryHitPoints > 0
-                ? `${data.hpCurr}+${data.temporaryHitPoints}/${data.hpMax}`
-                : `${data.hpCurr}/${data.hpMax}`;
+                ? `${data.hpCurr}+${data.temporaryHitPoints}/${effectiveHpMax}`
+                : `${data.hpCurr}/${effectiveHpMax}`;
 
         graphicDefinitions['hp-text'] = {
             type: 'TEXT',
@@ -232,10 +235,11 @@ export function buildGraphicDefinitions(
 
     if (data.showWillText) {
         const isVisible = (!data.gmWillText || role === 'GM') && isTokenVisible;
+        const effectiveWillMax = Math.max(1, data.willMax || 1);
         const willString =
             data.temporaryWill > 0
-                ? `${data.willCurr}+${data.temporaryWill}/${data.willMax}`
-                : `${data.willCurr}/${data.willMax}`;
+                ? `${data.willCurr}+${data.temporaryWill}/${effectiveWillMax}`
+                : `${data.willCurr}/${effectiveWillMax}`;
 
         graphicDefinitions['will-text'] = {
             type: 'TEXT',

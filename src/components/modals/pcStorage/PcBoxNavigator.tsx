@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import type { PcBox } from '../../../types/pcStorageTypes';
 import { getPlacementModePreference, setPlacementModePreference } from '../../../utils/pc/pcPlacementInteraction';
-import { ChevronLeft, ChevronRight, Edit2, Check, Palette, Plus, MousePointerClick, Compass } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit2, Trash2, Check, Palette, Plus, MousePointerClick, Compass } from 'lucide-react';
 
 interface PcBoxNavigatorProps {
     boxes: PcBox[];
@@ -10,6 +10,7 @@ interface PcBoxNavigatorProps {
     currentBox: PcBox;
     onSelectBox: (index: number) => void;
     onAddBox: () => void;
+    onDeleteBox?: (index: number) => void;
     onRenameBox: (index: number, name: string) => void;
     onSetBoxTheme: (index: number, color: string) => void;
 }
@@ -20,6 +21,7 @@ export const PcBoxNavigator: React.FC<PcBoxNavigatorProps> = ({
     currentBox,
     onSelectBox,
     onAddBox,
+    onDeleteBox,
     onRenameBox,
     onSetBoxTheme
 }) => {
@@ -119,6 +121,36 @@ export const PcBoxNavigator: React.FC<PcBoxNavigatorProps> = ({
                         >
                             <Edit2 size={13} />
                         </button>
+                        {boxes.length > 1 && onDeleteBox && (
+                            <button
+                                type="button"
+                                className="pc-header__icon-btn pc-header__icon-btn--danger"
+                                onClick={() => {
+                                    if (currentBox.slots.some(Boolean)) {
+                                        if (OBR.isAvailable) {
+                                            OBR.notification.show(
+                                                'Cannot delete box: please empty or move stored Pokémon first.',
+                                                'WARNING'
+                                            );
+                                        } else if (typeof window !== 'undefined' && window.alert) {
+                                            window.alert('Cannot delete box: please empty or move stored Pokémon first.');
+                                        }
+                                        return;
+                                    }
+                                    if (
+                                        window.confirm(
+                                            `Are you sure you want to delete "${currentBox.name}"? This action cannot be undone.`
+                                        )
+                                    ) {
+                                        onDeleteBox(activeBoxIndex);
+                                    }
+                                }}
+                                title="Delete this Box"
+                                aria-label="Delete this Box"
+                            >
+                                <Trash2 size={13} />
+                            </button>
+                        )}
                     </div>
                 )}
 

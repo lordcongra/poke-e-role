@@ -367,6 +367,9 @@ export function applyDeleteBox(pcData: PcStorageData, boxIndex: number): PcStora
     const currentBoxes = getTrainerBoxes(activeTrainer, camp);
     if (currentBoxes.length <= 1 || boxIndex < 0 || boxIndex >= currentBoxes.length) return pcData;
 
+    const targetBox = currentBoxes[boxIndex];
+    if (targetBox?.slots?.some(Boolean)) return pcData;
+
     return updateCampaignBoxes(
         pcData,
         camp,
