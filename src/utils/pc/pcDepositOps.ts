@@ -418,27 +418,38 @@ export function clonePokemonSummaryOps(summary: PcPokemonSummary): {
 } {
     const clonedId = crypto.randomUUID();
     const cloneName = `${summary.name || summary.species} (Clone)`;
+    const cloneMeta = { ...(summary.fullMetadata || {}) };
+    cloneMeta.nickname = cloneName;
+    cloneMeta.name = cloneName;
+    cloneMeta.entityId = clonedId;
+    delete cloneMeta.parentId;
+
     const clonedSummary: PcPokemonSummary = {
         ...summary,
         entityId: clonedId,
         name: cloneName,
+        fullMetadata: cloneMeta,
         isOnMap: false,
         mapTokenId: undefined,
         savedTokenItem: undefined
     };
 
-    if (!OBR.isAvailable && typeof window !== 'undefined' && window.localStorage) {
+    if (typeof window !== 'undefined' && window.localStorage) {
         try {
             const origRaw =
                 localStorage.getItem(`pkr_char_${summary.entityId}`) ||
                 (summary.savedTokenItem?.id ? localStorage.getItem(`pkr_char_${summary.savedTokenItem.id}`) : null);
-            const cloneMeta = origRaw ? JSON.parse(origRaw) : { ...(summary.fullMetadata || {}) };
-            cloneMeta.nickname = cloneName;
-            cloneMeta.name = cloneName;
-            cloneMeta.entityId = clonedId;
-            delete cloneMeta.parentId;
-            localStorage.setItem(`pkr_char_${clonedId}`, JSON.stringify(cloneMeta));
-            clonedSummary.fullMetadata = cloneMeta;
+            if (origRaw) {
+                const storedCloneMeta = JSON.parse(origRaw);
+                storedCloneMeta.nickname = cloneName;
+                storedCloneMeta.name = cloneName;
+                storedCloneMeta.entityId = clonedId;
+                delete storedCloneMeta.parentId;
+                localStorage.setItem(`pkr_char_${clonedId}`, JSON.stringify(storedCloneMeta));
+                clonedSummary.fullMetadata = storedCloneMeta;
+            } else {
+                localStorage.setItem(`pkr_char_${clonedId}`, JSON.stringify(cloneMeta));
+            }
             window.dispatchEvent(new Event('pkr-local-data-changed'));
         } catch (e) {
             console.warn('[pcDepositOps] Failed to create local clone sheet:', e);

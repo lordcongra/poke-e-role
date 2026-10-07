@@ -97,7 +97,15 @@ export function CombatantSheetModal({
             const prevTheme = initialThemeRef.current;
             const currentRole = (useCharacterStore.getState().role as 'PLAYER' | 'GM') || 'PLAYER';
 
-            if (prevId) {
+            const isSameEntity = Boolean(combatant.tokenId && prevId && prevId === combatant.tokenId);
+
+            if (isSameEntity) {
+                // Same entity was already selected before opening modal: keep active edits in place, do NOT clobber with stale prevMeta
+                setActiveTokenId(combatant.tokenId!);
+                const s = useCharacterStore.getState();
+                s.setTokenData(combatant.tokenId!, currentRole);
+            } else if (prevId) {
+                // A different token was selected prior to opening modal: restore it
                 setActiveTokenId(prevId);
                 const s = useCharacterStore.getState();
                 s.setTokenData(prevId, currentRole);
@@ -108,12 +116,17 @@ export function CombatantSheetModal({
                     applyDynamicThemeColors(prevTheme.primary, prevTheme.secondary);
                 }
             } else {
+                // No token was selected prior to opening modal (e.g. Standalone mode or unselected canvas)
                 setActiveTokenId(null);
                 const s = useCharacterStore.getState();
                 s.setTokenData('', currentRole);
-                s.loadFromOwlbear({});
-                if (OBR.isAvailable) {
-                    OBR.player.select([]).catch(() => {});
+                if (prevMeta && Object.keys(prevMeta).length > 0) {
+                    s.loadFromOwlbear(prevMeta);
+                } else {
+                    s.loadFromOwlbear({});
+                    if (OBR.isAvailable) {
+                        OBR.player.select([]).catch(() => {});
+                    }
                 }
                 if (prevTheme) {
                     applyDynamicThemeColors(prevTheme.primary, prevTheme.secondary);

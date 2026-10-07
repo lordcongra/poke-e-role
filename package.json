@@ -12,6 +12,7 @@
         "lint": "eslint .",
         "preview": "vite preview",
         "format": "prettier --write .",
+        "check": "tsc -b",
         "check:size": "node scripts/checkFileSizes.js",
         "test:invariants": "npx tsx scripts/test_serialization_invariants.ts"
     },

@@ -16,6 +16,7 @@ import { applyDynamicThemeColors } from '../../../utils/common/colorUtils';
 import { extractEntityId, renderTokenGraphicsForMeta } from '../../../hooks/owlbearSync/setupOwlbearTokenSync';
 import { broadcastGmPc, broadcastPlayerPc } from '../../../hooks/owlbearSync/setupOwlbearPcSync';
 import { hydrateActiveSheet } from '../../../utils/sync/unifiedSheetHydration';
+import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
 import {
     hasCharacterSheetChanged,
     buildSummaryFromStore,
@@ -219,7 +220,7 @@ export function usePcSheetSync({
 
         const store = useCharacterStore.getState();
         prevTokenIdRef.current = store.tokenId;
-        prevMetaRef.current = buildSummaryFromStore(store, currentSummaryRef.current).nextMeta;
+        prevMetaRef.current = flattenStateToMetadata(store);
 
         prevThemeRef.current = {
             primary:
@@ -241,6 +242,18 @@ export function usePcSheetSync({
                 activeUnsubRef.current();
                 activeUnsubRef.current = null;
             }
+
+            // Flush pending dirty local edits before restoring previous character state
+            const storeAtUnmount = useCharacterStore.getState();
+            if (
+                (isDirtyRef.current || syncTimeoutRef.current) &&
+                currentSummaryRef.current?.entityId &&
+                (!storeAtUnmount.identity.entityId ||
+                    storeAtUnmount.identity.entityId === currentSummaryRef.current.entityId)
+            ) {
+                syncNow(currentSummaryRef.current);
+            }
+
             if (syncTimeoutRef.current) {
                 clearTimeout(syncTimeoutRef.current);
                 syncTimeoutRef.current = null;
@@ -250,15 +263,6 @@ export function usePcSheetSync({
                 remoteHydrateTimerRef.current = null;
             }
 
-            // Only flush if local state has dirty uncommitted edits!
-            const storeAtUnmount = useCharacterStore.getState();
-            if (
-                isDirtyRef.current &&
-                currentSummaryRef.current?.entityId &&
-                storeAtUnmount.identity.entityId === currentSummaryRef.current.entityId
-            ) {
-                syncNow(currentSummaryRef.current);
-            }
             isHydratingRef.current = true;
 
             restorePreviousCharacterState({

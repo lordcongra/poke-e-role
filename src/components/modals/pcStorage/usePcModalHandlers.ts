@@ -182,9 +182,22 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         });
     };
 
-    const handleUnlinkTrainer = () => {
+    const handleUnlinkTrainer = async () => {
         if (!trainer || !campaign) return;
-        saveTrainerProfile({ ...trainer, isLinked: false, avatarUrl: undefined });
+        const targetMapTokenId = trainer.mapTokenId;
+        saveTrainerProfile({ ...trainer, isLinked: false, avatarUrl: undefined, mapTokenId: undefined });
+
+        if (targetMapTokenId && OBR.isAvailable) {
+            try {
+                await OBR.scene.items.updateItems([targetMapTokenId], (items) => {
+                    for (const it of items) {
+                        delete it.metadata['pokerole-pmd-extension/claimed-by'];
+                    }
+                });
+            } catch (e) {
+                console.warn('[usePcModalHandlers] Failed to clear claim on unlinked trainer token:', e);
+            }
+        }
 
         if (OBR.isAvailable) {
             OBR.notification.show(`Unlinked "${trainer.name}" from Belt.`, 'INFO');

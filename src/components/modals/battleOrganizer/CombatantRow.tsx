@@ -296,12 +296,12 @@ export function CombatantRow({
 
     const hpMax = combatant.hpMax || 0;
     const hpCurr = combatant.hpCurr ?? 0;
-    const hpRatio = hpMax > 0 ? hpCurr / hpMax : 1;
+    const hpRatio = hpCurr <= 0 ? 0 : hpMax > 0 ? hpCurr / hpMax : 0;
 
     let hpThemeClass = 'bo-stat-stepper--hp-green';
     if (combatant.tempHp && combatant.tempHp > 0) {
         hpThemeClass = 'bo-stat-stepper--hp-temp';
-    } else if (hpRatio <= 0.2) {
+    } else if (hpCurr <= 0 || hpRatio <= 0.2) {
         hpThemeClass = 'bo-stat-stepper--hp-red';
     } else if (hpRatio <= 0.5) {
         hpThemeClass = 'bo-stat-stepper--hp-yellow';

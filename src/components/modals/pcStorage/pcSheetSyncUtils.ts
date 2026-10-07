@@ -222,11 +222,15 @@ export function restorePreviousCharacterState(params: RestorePreviousCharacterPa
                     (prevMeta.entityId === initialEntityId || prevMeta['entityId'] === initialEntityId))));
 
     if (!prevTokenId) {
-        // No token was selected prior to opening PC: restore clean empty state
+        // In Standalone mode or if no token was selected on map prior to opening PC
         setActiveTokenId(null);
         const s = useCharacterStore.getState();
         s.setTokenData('', s.role || 'PLAYER');
-        s.loadFromOwlbear({});
+        if (prevMeta && Object.keys(prevMeta).length > 0) {
+            s.loadFromOwlbear(prevMeta);
+        } else {
+            s.loadFromOwlbear({});
+        }
         if (prevTheme) {
             applyDynamicThemeColors(prevTheme.primary, prevTheme.secondary);
         } else {

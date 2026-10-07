@@ -302,7 +302,14 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                                         campaign,
                                         allCampaigns,
                                         (p.fullMetadata?.['pokerole-pmd-extension/claimed-by'] ||
-                                            pMatch?.metadata?.['pokerole-pmd-extension/claimed-by']) as any,
+                                            pMatch?.metadata?.['pokerole-pmd-extension/claimed-by']) as
+                                            | {
+                                                  trainerName?: string;
+                                                  playerName?: string;
+                                                  playerId?: string;
+                                                  entityId?: string;
+                                              }
+                                            | undefined,
                                         p,
                                         currentMyPlayerId,
                                         currentRole

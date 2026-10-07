@@ -136,8 +136,8 @@ export async function clearTokenClaimOps(mapTokenId?: string, entityId?: string)
         const sceneItems = await OBR.scene.items.getItems();
         const targets = sceneItems.filter((it) => {
             if (it.layer !== 'CHARACTER') return false;
-            if (isItemTrainer(it)) return false;
             if (mapTokenId && it.id === mapTokenId) return true;
+            if (isItemTrainer(it)) return false;
             if (entityId) {
                 const meta = (it.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
                 const claimMeta = it.metadata?.['pokerole-pmd-extension/claimed-by'] as
@@ -176,7 +176,7 @@ export async function unlinkPokemonFromPcOps(
 ): Promise<void> {
     if (!OBR.isAvailable) return;
     try {
-        let tokenId = summary.mapTokenId;
+        let tokenId = summary.mapTokenId || summary.savedTokenItem?.id;
         if (!summary.isOnMap && spawnFn) {
             const res = await spawnFn(summary, undefined, role);
             if (res.success && res.newMapTokenId) {
@@ -184,7 +184,33 @@ export async function unlinkPokemonFromPcOps(
             }
         }
         if (tokenId) {
-            await clearTokenClaimOps(tokenId);
+            const newEntityId = crypto.randomUUID();
+            await OBR.scene.items.updateItems([tokenId], (items) => {
+                for (const it of items) {
+                    delete it.metadata['pokerole-pmd-extension/claimed-by'];
+                    delete it.metadata['entityId'];
+
+                    const meta = it.metadata[METADATA_ID] as Record<string, unknown> | undefined;
+                    if (meta && typeof meta === 'object') {
+                        meta.entityId = newEntityId;
+                        delete meta.trainerId;
+                        delete meta.campaignId;
+                        delete meta['trainer-id'];
+                        delete meta['campaign-id'];
+                    }
+
+                    const statsMeta = it.metadata['pokerole-pmd-extension/stats'] as
+                        | Record<string, unknown>
+                        | undefined;
+                    if (statsMeta && typeof statsMeta === 'object') {
+                        statsMeta.entityId = newEntityId;
+                        delete statsMeta.trainerId;
+                        delete statsMeta.campaignId;
+                        delete statsMeta['trainer-id'];
+                        delete statsMeta['campaign-id'];
+                    }
+                }
+            });
         }
     } catch (e) {
         console.warn('[pcRecallOps] Failed to unlink Pokémon to map:', e);

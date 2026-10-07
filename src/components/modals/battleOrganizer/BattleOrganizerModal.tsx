@@ -436,6 +436,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
 
                 {activeSheetCombatant && (
                     <CombatantSheetModal
+                        key={activeSheetCombatant.id}
                         combatant={activeSheetCombatant}
                         allCombatants={currentRound?.combatants || []}
                         onSelectCombatant={(c) => {

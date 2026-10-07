@@ -63,12 +63,26 @@ export function useSceneCandidates({
                         const imgUrl =
                             (meta['token-image-url'] as string) ||
                             ((item as { image?: { url?: string } }).image?.url ?? getAbsolutePokeballUrl());
-                        const hpCurr = Number(meta['hp-curr']) || (typeof meta.hp === 'number' ? meta.hp : 10);
+                        const rawHpCurr = meta['hp-curr'] ?? meta.hp;
+                        const hpCurr =
+                            rawHpCurr !== undefined && rawHpCurr !== null && !isNaN(Number(rawHpCurr))
+                                ? Number(rawHpCurr)
+                                : 10;
+                        const rawHpMax = meta['hp-max-display'] ?? meta.hpMax;
                         const hpMax =
-                            Number(meta['hp-max-display']) || (typeof meta.hpMax === 'number' ? meta.hpMax : 10);
-                        const willCurr = Number(meta['will-curr']) || (typeof meta.will === 'number' ? meta.will : 5);
+                            rawHpMax !== undefined && rawHpMax !== null && !isNaN(Number(rawHpMax))
+                                ? Number(rawHpMax)
+                                : 10;
+                        const rawWillCurr = meta['will-curr'] ?? meta.will;
+                        const willCurr =
+                            rawWillCurr !== undefined && rawWillCurr !== null && !isNaN(Number(rawWillCurr))
+                                ? Number(rawWillCurr)
+                                : 5;
+                        const rawWillMax = meta['will-max-display'] ?? meta.willMax;
                         const willMax =
-                            Number(meta['will-max-display']) || (typeof meta.willMax === 'number' ? meta.willMax : 5);
+                            rawWillMax !== undefined && rawWillMax !== null && !isNaN(Number(rawWillMax))
+                                ? Number(rawWillMax)
+                                : 5;
 
                         const { matchedEntityId, isInParty, isInBoxes, claimedBy } = resolveSceneCandidateMatch(
                             item,
