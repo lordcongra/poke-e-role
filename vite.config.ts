@@ -10,7 +10,7 @@ export default defineConfig({
         VitePWA({
             registerType: 'autoUpdate',
             // Added manifest.json to include assets so the Service Worker knows it exists
-            includeAssets: ['pokeball.svg', 'favicon.ico', 'robots.txt', 'manifest.json'],
+            includeAssets: ['pokeball-token.svg', 'favicon.ico', 'robots.txt', 'manifest.json'],
             manifest: {
                 name: 'PokéRole Character Sheet',
                 short_name: 'PokéRole',
@@ -22,7 +22,7 @@ export default defineConfig({
                 start_url: '/poke-e-role/',
                 icons: [
                     {
-                        src: 'pokeball.svg',
+                        src: 'pokeball-token.svg',
                         sizes: '192x192',
                         type: 'image/svg+xml',
                         purpose: 'any maskable'

@@ -257,7 +257,7 @@ export function TrainerPreviewModal({
                 const freshMeta = buildTokenMetadataFromBuild(
                     member.build,
                     '',
-                    String(member.metadata['token-image-url'] || `${import.meta.env.BASE_URL || '/'}pokeball.svg`)
+                    String(member.metadata['token-image-url'] || `${import.meta.env.BASE_URL || '/'}pokeball-token.svg`)
                 );
                 freshMeta['age'] = '';
                 if (member.metadata['loyalty-curr'] !== undefined) {

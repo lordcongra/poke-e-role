@@ -135,6 +135,123 @@ export function buildSingleCharacterSummary(rawMeta: Record<string, unknown>): P
 }
 
 /**
+ * Unpacks campaigns and Pokémon summaries from an uploaded JSON object,
+ * extracting pcData if present (such as from a master backup) and converting legacy
+ * parsed.characters arrays into valid PcPokemonSummary objects.
+ */
+export function unpackBackupData(parsed: Record<string, unknown>): {
+    rawCampaigns: Record<string, CampaignProfile>;
+    rawSummaries: Record<string, PcPokemonSummary>;
+} {
+    const pcSource =
+        parsed.pcData && typeof parsed.pcData === 'object' ? (parsed.pcData as Record<string, unknown>) : parsed;
+
+    const rawCampaigns: Record<string, CampaignProfile> = {
+        ...((parsed.campaigns as Record<string, CampaignProfile>) || {}),
+        ...((pcSource.campaigns as Record<string, CampaignProfile>) || {})
+    };
+
+    const rawSummaries: Record<string, PcPokemonSummary> = {
+        ...((parsed.pokemonSummaries as Record<string, PcPokemonSummary>) || {}),
+        ...((pcSource.pokemonSummaries as Record<string, PcPokemonSummary>) || {})
+    };
+
+    if (Array.isArray(parsed.characters)) {
+        for (const charItem of parsed.characters) {
+            if (!charItem || typeof charItem !== 'object') continue;
+            const charObj = charItem as Record<string, unknown>;
+            const meta = (
+                charObj.metadata && typeof charObj.metadata === 'object' ? charObj.metadata : charObj
+            ) as Record<string, unknown>;
+            const effectiveMeta = { ...meta };
+            if (!effectiveMeta.entityId && charObj.id) {
+                effectiveMeta.entityId = String(charObj.id);
+            }
+            const summary = buildSingleCharacterSummary(effectiveMeta);
+            if (charObj.name && !summary.name) {
+                summary.name = String(charObj.name);
+            }
+            if (!rawSummaries[summary.entityId]) {
+                rawSummaries[summary.entityId] = summary;
+            }
+        }
+    }
+
+    return { rawCampaigns, rawSummaries };
+}
+
+/**
+ * Deposits any summaries not already placed in a trainer or box slot into the campaign boxes.
+ */
+export function depositUnassignedSummaries(
+    camp: CampaignProfile | undefined,
+    rawSummaries: Record<string, PcPokemonSummary>,
+    resolveEntityId: (id: string, trId?: string) => string,
+    existingDepositedIds: Set<string>
+): number {
+    if (!camp) return existingDepositedIds.size;
+    camp.boxes = camp.boxes || [];
+    if (camp.boxes.length === 0) {
+        camp.boxes.push(createDefaultBox(0));
+    }
+    for (const sId of Object.keys(rawSummaries)) {
+        const resolvedId = resolveEntityId(sId, undefined);
+        if (!existingDepositedIds.has(resolvedId)) {
+            depositEntityIntoBoxes(camp.boxes, resolvedId, 'Imported');
+            existingDepositedIds.add(resolvedId);
+        }
+    }
+    return existingDepositedIds.size;
+}
+
+/**
+ * Deposits all Pokémon from incoming campaigns into campaign boxes.
+ */
+export function depositCampaignPokemonIntoBoxes(
+    boxes: PcBox[],
+    rawCampaigns: Record<string, CampaignProfile>,
+    resolveEntityId: (id: string, trId?: string) => string,
+    depositedIds: Set<string>
+): void {
+    for (const inCamp of Object.values(rawCampaigns)) {
+        for (const inTr of Object.values(inCamp.trainers || {})) {
+            if (!inTr) continue;
+            for (const s of inTr.party || []) {
+                if (s) {
+                    const resolvedId = resolveEntityId(s, undefined);
+                    if (!depositedIds.has(resolvedId)) {
+                        depositEntityIntoBoxes(boxes, resolvedId, `${inTr.name}'s Belt`);
+                        depositedIds.add(resolvedId);
+                    }
+                }
+            }
+            for (const b of inTr.boxes || []) {
+                for (const s of b.slots || []) {
+                    if (s) {
+                        const resolvedId = resolveEntityId(s, undefined);
+                        if (!depositedIds.has(resolvedId)) {
+                            depositEntityIntoBoxes(boxes, resolvedId, b.name || 'Imported');
+                            depositedIds.add(resolvedId);
+                        }
+                    }
+                }
+            }
+        }
+        for (const b of inCamp.boxes || []) {
+            for (const s of b.slots || []) {
+                if (s) {
+                    const resolvedId = resolveEntityId(s, undefined);
+                    if (!depositedIds.has(resolvedId)) {
+                        depositEntityIntoBoxes(boxes, resolvedId, b.name || 'Imported');
+                        depositedIds.add(resolvedId);
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
  * Creates a clean duplicate of an existing summary with a brand-new entity ID and strips previous
  * trainer and map token claims so it acts as an independent entity.
  */

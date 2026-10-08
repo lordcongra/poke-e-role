@@ -134,7 +134,7 @@ export function GeneratorPreviewModal({
                             const metadata = buildTokenMetadataFromBuild(
                                 b,
                                 providedNickname,
-                                `${import.meta.env.BASE_URL || '/'}pokeball.svg`
+                                `${import.meta.env.BASE_URL || '/'}pokeball-token.svg`
                             );
                             await storageAdapter.saveCharacter(newId, metadata, METADATA_ID);
 
@@ -184,7 +184,7 @@ export function GeneratorPreviewModal({
                     }
 
                     if (!selectedUrl) {
-                        selectedUrl = `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
+                        selectedUrl = `${import.meta.env.BASE_URL || '/'}pokeball-token.svg`;
                     }
 
                     let resolvedWidth = selectedWidth;

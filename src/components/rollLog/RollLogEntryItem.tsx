@@ -33,7 +33,7 @@ export const RollLogEntryItem: React.FC<RollLogEntryItemProps> = ({ roll, resolv
                     alt="Token"
                     className="roll-log__entry-icon"
                     onError={(e) => {
-                        e.currentTarget.src = `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
+                        e.currentTarget.src = `${import.meta.env.BASE_URL || '/'}pokeball-token.svg`;
                     }}
                 />
                 <strong className="text-title-primary" style={{ fontSize: '0.9rem' }}>

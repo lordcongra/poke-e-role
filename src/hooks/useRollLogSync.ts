@@ -75,7 +75,7 @@ export function useRollLogSync() {
                         console.warn('[useRollLogSync] Failed to resolve local image for roll log.', e);
                     }
                 }
-                if (resolved && !resolved.includes('pokeball.svg')) {
+                if (resolved && !resolved.includes('pokeball-token.svg') && !resolved.includes('pokeball.svg')) {
                     try {
                         const cropped = await cropImageTransparencyUrl(resolved, true);
                         if (cropped && isMounted) newIcons[r.id] = cropped;

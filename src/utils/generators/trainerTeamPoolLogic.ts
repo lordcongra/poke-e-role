@@ -269,7 +269,7 @@ export async function generateSingleTeamMember(
     const pokeBuild = await generateBuild(pokeGenConfig, pokemonState);
     if (!pokeBuild) return null;
 
-    const pokeMeta = buildTokenMetadataFromBuild(pokeBuild, '', `${import.meta.env.BASE_URL || '/'}pokeball.svg`, {
+    const pokeMeta = buildTokenMetadataFromBuild(pokeBuild, '', `${import.meta.env.BASE_URL || '/'}pokeball-token.svg`, {
         privacyDefaults: config.privacyDefaults,
         privateNpcLock: config.privateNpcLock,
         privateRolls: config.privateRolls,

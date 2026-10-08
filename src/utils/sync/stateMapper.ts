@@ -544,11 +544,18 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
         pokemonBackup: String(meta['pokemon-backup'] || ''),
         trainerBackup: String(meta['trainer-backup'] || ''),
 
-        tokenImageUrl: meta['token-image-url']
-            ? String(meta['token-image-url'])
-            : meta['tokenImageUrl']
-              ? String(meta['tokenImageUrl'])
-              : '',
+        tokenImageUrl: (() => {
+            const raw = meta['token-image-url']
+                ? String(meta['token-image-url'])
+                : meta['tokenImageUrl']
+                  ? String(meta['tokenImageUrl'])
+                  : '';
+            const defaultTokenUrl = `${(import.meta.env.BASE_URL || '/').replace(/\/$/, '')}/pokeball-token.svg`;
+            if (!raw || raw.endsWith('pokeball.svg')) {
+                return defaultTokenUrl;
+            }
+            return raw;
+        })(),
 
         activeTransformation: (meta['active-transformation'] as TransformationType) || 'None',
         activeFormId: String(meta['active-form-id'] || ''),

@@ -116,6 +116,56 @@ export async function saveToOwlbear(updates: Record<string, unknown>) {
     }, 150);
 }
 
+/**
+ * Immediately flushes any pending or provided character updates to Owlbear Rodeo / storage adapter without debouncing.
+ */
+export async function flushCharacterToOwlbear(updates?: Record<string, unknown>): Promise<void> {
+    clearTimeout(saveTimeout);
+    const currentToken = activeTokenId;
+    if (!currentToken) return;
+
+    if (updates) {
+        Object.assign(pendingUpdates, updates);
+    }
+    const now = Date.now();
+    lastSaveTimestamp = now;
+    const updatesToPush = { ...pendingUpdates, lastModified: now };
+    const tokenToSave = pendingTokenId || currentToken;
+    pendingUpdates = {};
+    pendingTokenId = null;
+    isSaveInFlight = true;
+    try {
+        await storageAdapter.saveCharacter(tokenToSave, updatesToPush, METADATA_ID);
+    } catch (error) {
+        console.error('[OBR Engine] Failed to immediately flush character updates:', error);
+        throw error;
+    } finally {
+        isSaveInFlight = false;
+    }
+}
+
+/**
+ * Direct immediate save helper for a specific token ID without debouncing.
+ */
+export async function saveCharacterImmediate(
+    tokenId: string,
+    updates: Record<string, unknown>,
+    metadataId: string = METADATA_ID
+): Promise<void> {
+    clearTimeout(saveTimeout);
+    pendingUpdates = {};
+    pendingTokenId = null;
+    isSaveInFlight = true;
+    try {
+        await storageAdapter.saveCharacter(tokenId, updates, metadataId);
+    } catch (error) {
+        console.error('[OBR Engine] Failed to save character immediately:', error);
+        throw error;
+    } finally {
+        isSaveInFlight = false;
+    }
+}
+
 export const ROOM_SETTINGS_META_ID = 'pokerole-pmd-extension/room-settings';
 
 export { applyRoomUpdatesToMeta } from './roomSettingsMeta';

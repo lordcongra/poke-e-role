@@ -10,7 +10,10 @@ import {
     depositEntityIntoTrainer,
     unclaimEntityFromOtherTrainers,
     cloneSummaryWithFreshId,
-    handleSingleCharacterImport
+    handleSingleCharacterImport,
+    unpackBackupData,
+    depositUnassignedSummaries,
+    depositCampaignPokemonIntoBoxes
 } from './pcImportRoutingOps';
 
 export { depositEntityIntoBoxes } from './pcImportRoutingOps';
@@ -49,8 +52,7 @@ export async function importPcBackupJson(
             return { success: false, error: 'Invalid JSON file: root is not an object.' };
         }
 
-        const rawCampaigns = (parsed.campaigns as Record<string, CampaignProfile>) || {};
-        const rawSummaries = (parsed.pokemonSummaries as Record<string, PcPokemonSummary>) || {};
+        const { rawCampaigns, rawSummaries } = unpackBackupData(parsed);
 
         const isSingleCharacter = Boolean(
             parsed['species'] ||
@@ -251,42 +253,8 @@ export async function importPcBackupJson(
             }
 
             const depositedIds = new Set<string>();
-            for (const inCamp of Object.values(rawCampaigns)) {
-                for (const inTr of Object.values(inCamp.trainers || {})) {
-                    if (!inTr) continue;
-                    for (const s of inTr.party || []) {
-                        if (s) {
-                            const resolvedId = resolveEntityId(s, undefined);
-                            if (!depositedIds.has(resolvedId)) {
-                                depositEntityIntoBoxes(activeCamp.boxes, resolvedId, `${inTr.name}'s Belt`);
-                                depositedIds.add(resolvedId);
-                            }
-                        }
-                    }
-                    for (const b of inTr.boxes || []) {
-                        for (const s of b.slots || []) {
-                            if (s) {
-                                const resolvedId = resolveEntityId(s, undefined);
-                                if (!depositedIds.has(resolvedId)) {
-                                    depositEntityIntoBoxes(activeCamp.boxes, resolvedId, b.name || 'Imported');
-                                    depositedIds.add(resolvedId);
-                                }
-                            }
-                        }
-                    }
-                }
-                for (const b of inCamp.boxes || []) {
-                    for (const s of b.slots || []) {
-                        if (s) {
-                            const resolvedId = resolveEntityId(s, undefined);
-                            if (!depositedIds.has(resolvedId)) {
-                                depositEntityIntoBoxes(activeCamp.boxes, resolvedId, b.name || 'Imported');
-                                depositedIds.add(resolvedId);
-                            }
-                        }
-                    }
-                }
-            }
+            depositCampaignPokemonIntoBoxes(activeCamp.boxes, rawCampaigns, resolveEntityId, depositedIds);
+            depositUnassignedSummaries(activeCamp, rawSummaries, resolveEntityId, depositedIds);
             importedPokemonCount = Math.max(importedPokemonCount, depositedIds.size);
         } else {
             // 'new-trainer' or 'merge-by-name': standard multi-campaign merge
@@ -467,6 +435,12 @@ export async function importPcBackupJson(
                         }
                     }
                 }
+            }
+            if (Object.keys(rawCampaigns).length === 0) {
+                importedPokemonCount = Math.max(
+                    importedPokemonCount,
+                    depositUnassignedSummaries(activeCamp, rawSummaries, resolveEntityId, new Set<string>())
+                );
             }
         }
 

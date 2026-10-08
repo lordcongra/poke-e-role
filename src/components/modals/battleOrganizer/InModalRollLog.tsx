@@ -123,7 +123,7 @@ export function InModalRollLog({
                         // ignore icon error
                     }
                 }
-                if (resolved && !resolved.includes('pokeball.svg')) {
+                if (resolved && !resolved.includes('pokeball-token.svg') && !resolved.includes('pokeball.svg')) {
                     try {
                         const cropped = await cropImageTransparencyUrl(resolved, true);
                         if (cropped && isMounted) newIcons[r.id] = cropped;
@@ -144,7 +144,7 @@ export function InModalRollLog({
                         // ignore
                     }
                 }
-                if (resolved && !resolved.includes('pokeball.svg') && !newIcons[c.id]) {
+                if (resolved && !resolved.includes('pokeball-token.svg') && !resolved.includes('pokeball.svg') && !newIcons[c.id]) {
                     try {
                         const cropped = await cropImageTransparencyUrl(resolved, true);
                         if (cropped && isMounted) newIcons[c.id] = cropped;
@@ -355,10 +355,15 @@ export function InModalRollLog({
 
                             const currentStatus = markedStatus[r.id];
                             let effectiveIcon = resolvedIcons[r.id] || r.icon;
-                            if ((!effectiveIcon || effectiveIcon.includes('pokeball.svg')) && matchedCombatant?.image) {
+                            if (
+                                (!effectiveIcon ||
+                                    effectiveIcon.includes('pokeball.svg') ||
+                                    effectiveIcon.includes('pokeball-token.svg')) &&
+                                matchedCombatant?.image
+                            ) {
                                 effectiveIcon = resolvedIcons[matchedCombatant.id] || matchedCombatant.image;
                             }
-                            const iconSrc = effectiveIcon || `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
+                            const iconSrc = effectiveIcon || `${import.meta.env.BASE_URL || '/'}pokeball-token.svg`;
                             const displayChar = matchedCombatant?.name || charName || r.characterName || r.player;
 
                             const isActionRoll = parsed?.isActionRoll;

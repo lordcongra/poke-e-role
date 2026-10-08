@@ -458,7 +458,7 @@ export function useInitiativeEngine() {
                 addRollLogEntry(
                     'Roll All Initiative',
                     logSummary,
-                    `${import.meta.env.BASE_URL || '/'}pokeball.svg`,
+                    `${import.meta.env.BASE_URL || '/'}pokeball-token.svg`,
                     'Initiative Engine'
                 );
                 return;
@@ -507,7 +507,7 @@ export function useInitiativeEngine() {
             addRollLogEntry(
                 'Roll All Initiative',
                 logSummary,
-                `${import.meta.env.BASE_URL || '/'}pokeball.svg`,
+                `${import.meta.env.BASE_URL || '/'}pokeball-token.svg`,
                 'Initiative Engine'
             );
         } catch (error) {

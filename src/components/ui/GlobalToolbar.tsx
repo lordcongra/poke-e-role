@@ -4,10 +4,9 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { canViewHomebrew } from '../../utils/common/helper';
 import { CURRENT_VERSION } from '../../data/changelog';
 import { flattenStateToMetadata } from '../../utils/sync/stateMapper';
-import { saveToOwlbear } from '../../utils/sync/obr';
-import { isStandaloneMode } from '../../utils/sync/storageAdapter';
+import { setActiveTokenId, METADATA_ID } from '../../utils/sync/obr';
+import { isStandaloneMode, storageAdapter } from '../../utils/sync/storageAdapter';
 import { useObrReady } from '../../hooks/useObrReady';
-import { setActiveTokenId } from '../../utils/sync/obr';
 import { useInitiativePopover } from '../../hooks/useInitiativePopover';
 import { exportCharacterData, parseImportedFile } from '../../utils/common/fileSystemHelpers';
 import type { CharacterState } from '../../store/storeTypes';
@@ -30,6 +29,7 @@ import { PrintBattleOrganizer } from '../print/PrintBattleOrganizer';
 import { TrainerGeneratorModal } from '../modals/trainerGenerator';
 import { BugReportModal } from '../modals/settings';
 import { PcStorageModal } from '../modals/pcStorage/PcStorageModal';
+import { ToolbarImportModals } from './ToolbarImportModals';
 
 // Icons
 import {
@@ -44,8 +44,6 @@ import {
     Printer,
     Wand2,
     Palette,
-    AlertTriangle,
-    XCircle,
     Eye,
     ShieldCheck,
     Layers,
@@ -98,6 +96,7 @@ export function GlobalToolbar() {
     // Consolidated State
     const [activeModal, setActiveModal] = useState<ActiveModal>(null);
     const [importData, setImportData] = useState<Record<string, unknown> | null>(null);
+    const [showMasterBackupModal, setShowMasterBackupModal] = useState<boolean>(false);
     const [isPrintingBattleOrganizer, setIsPrintingBattleOrganizer] = useState(false);
 
     useEffect(() => {
@@ -253,25 +252,84 @@ export function GlobalToolbar() {
         setActiveModal(null);
     };
 
+    const handleImportClick = () => {
+        if (!useCharacterStore.getState().tokenId) {
+            const warningMsg = isStandaloneMode
+                ? 'Please select a character before importing character data.'
+                : 'Please select a token on the scene before importing character data.';
+            if (!isStandaloneMode && OBR.isAvailable && isObrReady) {
+                OBR.notification.show(warningMsg, 'WARNING');
+            } else {
+                alert(warningMsg);
+            }
+            return;
+        }
+        fileInputReference.current?.click();
+    };
+
     const handleImportChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
+
         try {
             const data = await parseImportedFile(file);
+            const isMasterBackup = Boolean(
+                data &&
+                (data.type === 'pokerole-master-backup' ||
+                    Array.isArray(data.characters) ||
+                    data.pcData ||
+                    data.campaigns)
+            );
+
+            if (isMasterBackup) {
+                setShowMasterBackupModal(true);
+                if (fileInputReference.current) fileInputReference.current.value = '';
+                return;
+            }
+
+            if (!useCharacterStore.getState().tokenId) {
+                const warningMsg = isStandaloneMode
+                    ? 'Please select a character before importing character data.'
+                    : 'Please select a token on the scene before importing character data.';
+                if (!isStandaloneMode && OBR.isAvailable && isObrReady) {
+                    OBR.notification.show(warningMsg, 'WARNING');
+                } else {
+                    alert(warningMsg);
+                }
+                if (fileInputReference.current) fileInputReference.current.value = '';
+                return;
+            }
+
             setImportData(data);
         } catch (error) {
             console.error('[GlobalToolbar] Failed to parse imported character JSON:', error);
-            if (OBR.isAvailable && isObrReady) OBR.notification.show('Invalid JSON file.', 'ERROR');
+            if (!isStandaloneMode && OBR.isAvailable && isObrReady) OBR.notification.show('Invalid JSON file.', 'ERROR');
             else alert('Invalid JSON file.');
         }
         if (fileInputReference.current) fileInputReference.current.value = '';
     };
 
-    const confirmImport = () => {
+    const confirmImport = async () => {
         if (!importData) return;
+        const currentActiveTokenId = useCharacterStore.getState().tokenId;
+        if (!currentActiveTokenId) {
+            const warningMsg = isStandaloneMode
+                ? 'Please select a character before importing character data.'
+                : 'Please select a token on the scene before importing character data.';
+            if (!isStandaloneMode && OBR.isAvailable && isObrReady) {
+                OBR.notification.show(warningMsg, 'WARNING');
+            } else {
+                alert(warningMsg);
+            }
+            setImportData(null);
+            return;
+        }
+
         try {
             const now = Date.now();
             importData.lastModified = now;
+
+            let metaToSave: Record<string, unknown>;
 
             if (
                 importData['moves-data'] !== undefined ||
@@ -279,13 +337,16 @@ export function GlobalToolbar() {
                 importData['v2-migrated']
             ) {
                 loadFromOwlbear(importData);
-                saveToOwlbear(importData);
+                metaToSave = { ...importData, lastModified: now };
             } else {
                 useCharacterStore.setState(importData as Partial<CharacterState>);
                 const fullState = useCharacterStore.getState();
-                const metaToSave = flattenStateToMetadata(fullState) as Record<string, unknown>;
+                metaToSave = flattenStateToMetadata(fullState) as Record<string, unknown>;
                 metaToSave.lastModified = now;
-                saveToOwlbear(metaToSave);
+            }
+
+            if (currentActiveTokenId) {
+                await storageAdapter.saveCharacter(currentActiveTokenId, metaToSave, METADATA_ID);
             }
 
             // Sync with PC Storage summary if this entityId exists in PC storage
@@ -299,10 +360,19 @@ export function GlobalToolbar() {
                     fullMetadata: { ...(existing.fullMetadata || {}), ...importData, lastModified: now }
                 });
             }
+
+            if (!isStandaloneMode && OBR.isAvailable && isObrReady) {
+                OBR.notification.show('Character imported successfully!', 'SUCCESS');
+            }
         } catch (error) {
             console.error('[GlobalToolbar] Failed to import character data:', error);
-            if (OBR.isAvailable && isObrReady) OBR.notification.show('Failed to import data.', 'ERROR');
-            else alert('Failed to import data.');
+            const errorMsg =
+                'Failed to update token: You do not have permission to modify this token. Ask your GM to grant token ownership or drop your own token.';
+            if (OBR.isAvailable && isObrReady) {
+                OBR.notification.show(errorMsg, 'ERROR');
+            } else {
+                alert(errorMsg);
+            }
         } finally {
             setImportData(null);
         }
@@ -618,7 +688,7 @@ export function GlobalToolbar() {
                             </button>
                             <button
                                 type="button"
-                                onClick={() => fileInputReference.current?.click()}
+                                onClick={handleImportClick}
                                 className="action-button action-button--dark global-toolbar__action-mini-btn"
                                 title="Import Character (Upload JSON)"
                                 aria-label="Import Character JSON"
@@ -646,35 +716,15 @@ export function GlobalToolbar() {
                 </div>
             )}
 
-            {/* Standalone Import Prompt */}
-            {importData && (
-                <div className="global-toolbar__modal-overlay">
-                    <div className="global-toolbar__modal-content">
-                        <h3 className="global-toolbar__modal-title">
-                            <AlertTriangle size={20} /> Confirm Import
-                        </h3>
-                        <p className="global-toolbar__modal-text text-subtext">
-                            Import character data? This will completely overwrite the current token.
-                        </p>
-                        <div className="global-toolbar__modal-actions">
-                            <button
-                                type="button"
-                                className="action-button action-button--dark global-toolbar__modal-btn"
-                                onClick={() => setImportData(null)}
-                            >
-                                <XCircle size={16} /> Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="action-button action-button--red global-toolbar__modal-btn"
-                                onClick={confirmImport}
-                            >
-                                <Upload size={16} /> Import
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Import Dialogs */}
+            <ToolbarImportModals
+                importData={importData}
+                showMasterBackupModal={showMasterBackupModal}
+                onCloseImport={() => setImportData(null)}
+                onConfirmImport={confirmImport}
+                onOpenPcStorage={openPcModal}
+                onCloseMasterBackup={() => setShowMasterBackupModal(false)}
+            />
 
             {/* Conditionally Rendered Modals */}
             {activeModal === 'homebrew' && <HomebrewModal onClose={() => setActiveModal(null)} />}

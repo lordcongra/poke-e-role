@@ -31,6 +31,7 @@ export function useResolvedImageUrl(rawUrl?: string | null, fallback?: string, a
                 autoCrop &&
                 !url.endsWith('.svg') &&
                 !url.includes('pokeball.svg') &&
+                !url.includes('pokeball-token.svg') &&
                 !url.startsWith('data:image/svg+xml')
             ) {
                 try {

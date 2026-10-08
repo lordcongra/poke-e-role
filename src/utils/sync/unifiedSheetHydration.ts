@@ -286,7 +286,8 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
 
     // Extract token image and name if available (especially on fresh or uninitialized tokens)
     const imgItem = tokenItem as Image | undefined;
-    const resolvedImgUrl =
+    const defaultTokenUrl = `${(import.meta.env.BASE_URL || '/').replace(/\/$/, '')}/pokeball-token.svg`;
+    let rawImgUrl =
         imgItem?.image?.url ||
         (finalMeta['token-image-url'] as string) ||
         (finalMeta['tokenImageUrl'] as string) ||
@@ -294,8 +295,21 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
         existingSum?.tokenImageUrl ||
         existingTrainer?.avatarUrl ||
         null;
-    if (resolvedImgUrl && !finalMeta['token-image-url'] && !finalMeta['tokenImageUrl']) {
+    if (!rawImgUrl || rawImgUrl.endsWith('pokeball.svg')) {
+        rawImgUrl = defaultTokenUrl;
+    }
+    const resolvedImgUrl = rawImgUrl;
+    if (
+        resolvedImgUrl &&
+        (!finalMeta['token-image-url'] || (finalMeta['token-image-url'] as string).endsWith('pokeball.svg'))
+    ) {
         finalMeta['token-image-url'] = resolvedImgUrl;
+    }
+    if (
+        resolvedImgUrl &&
+        (!finalMeta['tokenImageUrl'] || (finalMeta['tokenImageUrl'] as string).endsWith('pokeball.svg'))
+    ) {
+        finalMeta['tokenImageUrl'] = resolvedImgUrl;
     }
 
     store.loadFromOwlbear(finalMeta);

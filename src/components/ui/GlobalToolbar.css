@@ -338,6 +338,17 @@
     gap: 6px;
 }
 
+.global-toolbar__modal-content--master-backup {
+    max-width: 480px;
+    border-color: var(--primary);
+    text-align: left;
+}
+
+.global-toolbar__modal-title--info {
+    color: var(--primary);
+    justify-content: flex-start;
+}
+
 /* 🔥 MOBILE & NARROW VIEWPORT RESPONSIVE FIXES (Screens <= 768px) 🔥 */
 @media (max-width: 768px) {
     .global-toolbar-wrapper {

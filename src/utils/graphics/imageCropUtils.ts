@@ -9,8 +9,13 @@ const croppedCache = new Map<string, Promise<string>>();
 export async function cropImageTransparencyUrl(url: string, square = true): Promise<string> {
     if (!url || typeof document === 'undefined') return url;
 
-    // Do not attempt to pixel-scan SVG icons (like pokeball.svg) or empty strings
-    if (url.endsWith('.svg') || url.includes('pokeball.svg') || url.startsWith('data:image/svg+xml')) {
+    // Do not attempt to pixel-scan SVG icons (like pokeball-token.svg or pokeball.svg) or empty strings
+    if (
+        url.endsWith('.svg') ||
+        url.includes('pokeball.svg') ||
+        url.includes('pokeball-token.svg') ||
+        url.startsWith('data:image/svg+xml')
+    ) {
         return url;
     }
 

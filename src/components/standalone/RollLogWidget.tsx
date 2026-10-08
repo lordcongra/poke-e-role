@@ -55,7 +55,7 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
                         console.warn('[RollLogWidget] Failed to resolve local image for roll log.', e);
                     }
                 }
-                if (resolved && !resolved.includes('pokeball.svg')) {
+                if (resolved && !resolved.includes('pokeball-token.svg') && !resolved.includes('pokeball.svg')) {
                     try {
                         const cropped = await cropImageTransparencyUrl(resolved, true);
                         if (cropped && isMounted) newIcons[r.id] = cropped;
@@ -175,7 +175,7 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
                                         alt={r.player}
                                         className="roll-log-widget__icon"
                                         onError={(e) => {
-                                            e.currentTarget.src = `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
+                                            e.currentTarget.src = `${import.meta.env.BASE_URL || '/'}pokeball-token.svg`;
                                         }}
                                     />
                                     <strong className="text-title-primary" style={{ fontSize: '0.85rem' }}>

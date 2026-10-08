@@ -56,9 +56,9 @@ export function StandaloneAvatar({ onClick }: StandaloneAvatarProps) {
                 <img src={resolvedUrl} alt="Character Portrait" className="standalone-avatar__img" />
             ) : (
                 <div className="standalone-avatar__placeholder">
-                    {/* Fallback to the pokeball.svg in your public folder */}
+                    {/* Fallback to the pokeball-token.svg in your public folder */}
                     <img
-                        src={`${import.meta.env.BASE_URL || '/'}pokeball.svg`}
+                        src={`${import.meta.env.BASE_URL || '/'}pokeball-token.svg`}
                         alt="No Image"
                         className="standalone-avatar__fallback-icon"
                     />
