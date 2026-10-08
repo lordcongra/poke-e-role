@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import type { TrainerRoster } from '../../../types/pcStorageTypes';
+import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
 import { Users, X, ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Link, Check } from 'lucide-react';
 import './TrainerOrganizerModal.css';
 
@@ -16,6 +17,12 @@ interface TrainerOrganizerModalProps {
     onAssignTrainer?: (trainerId: string, playerId?: string, playerName?: string) => void;
 }
 
+interface RoomPlayerItem {
+    id: string;
+    name: string;
+    displayName?: string;
+}
+
 export const TrainerOrganizerModal: React.FC<TrainerOrganizerModalProps> = ({
     isOpen,
     onClose,
@@ -28,36 +35,72 @@ export const TrainerOrganizerModal: React.FC<TrainerOrganizerModalProps> = ({
     onAssignTrainer
 }) => {
     const [order, setOrder] = useState<string[]>([]);
-    const [roomPlayers, setRoomPlayers] = useState<{ id: string; name: string }[]>([]);
+    const [roomPlayers, setRoomPlayers] = useState<RoomPlayerItem[]>([]);
 
     useEffect(() => {
         if (!isOpen || !isGm || !OBR.isAvailable) return;
         let isMounted = true;
-        OBR.party
-            .getPlayers()
-            .then((players) => {
-                if (isMounted) {
-                    setRoomPlayers(players.map((p) => ({ id: p.id, name: p.name || 'Player' })));
-                }
-            })
-            .catch(() => {});
 
-        const unsub = OBR.party.onChange((players) => {
+        const updateRoomPlayers = async (partyPlayers?: { id: string; name?: string }[]) => {
+            try {
+                const [myId, myName, party] = await Promise.all([
+                    OBR.player.getId(),
+                    OBR.player.getName(),
+                    partyPlayers ? Promise.resolve(partyPlayers) : OBR.party.getPlayers()
+                ]);
+                if (!isMounted) return;
+
+                const list: RoomPlayerItem[] = [];
+                if (myId) {
+                    const cleanName = myName || 'GM';
+                    list.push({
+                        id: myId,
+                        name: cleanName,
+                        displayName: `${cleanName} (You)`
+                    });
+                }
+                for (const p of party) {
+                    if (p.id !== myId) {
+                        list.push({
+                            id: p.id,
+                            name: p.name || 'Player',
+                            displayName: p.name || 'Player'
+                        });
+                    }
+                }
+                setRoomPlayers(list);
+            } catch (err) {
+                console.error('[TrainerOrganizerModal] Failed to fetch room players', err);
+            }
+        };
+
+        updateRoomPlayers();
+
+        const unsubParty = OBR.party.onChange((players) => {
             if (isMounted) {
-                setRoomPlayers(players.map((p) => ({ id: p.id, name: p.name || 'Player' })));
+                updateRoomPlayers(players);
+            }
+        });
+
+        const unsubPlayer = OBR.player.onChange(() => {
+            if (isMounted) {
+                updateRoomPlayers();
             }
         });
 
         return () => {
             isMounted = false;
-            unsub();
+            unsubParty();
+            unsubPlayer();
         };
     }, [isOpen, isGm]);
 
     useEffect(() => {
         if (!isOpen) return;
-        const allIds = Object.keys(trainers);
-        const existingOrder = (trainerOrder || []).filter((id) => trainers[id]);
+        const allIds = Object.keys(trainers).filter(
+            (id) => trainers[id] && trainers[id].profileType !== 'storage' && !id.startsWith('__pmd_')
+        );
+        const existingOrder = (trainerOrder || []).filter((id) => allIds.includes(id));
         const remaining = allIds.filter((id) => !existingOrder.includes(id));
         setOrder([...existingOrder, ...remaining]);
     }, [isOpen, trainers, trainerOrder]);
@@ -116,10 +159,10 @@ export const TrainerOrganizerModal: React.FC<TrainerOrganizerModalProps> = ({
                 <div className="trainer-org-list">
                     {order.map((trainerId, idx) => {
                         const t = trainers[trainerId];
-                        if (!t) return null;
+                        if (!t || t.profileType === 'storage' || t.id.startsWith('__pmd_')) return null;
                         const isActive = activeTrainerId === t.id;
                         const partyCount = (t.party || []).filter(Boolean).length;
-                        const avatarSrc = t.avatarUrl || `${import.meta.env.BASE_URL || '/'}trainer.svg`;
+                        const avatarSrc = t.avatarUrl || getAbsolutePokeballUrl();
 
                         return (
                             <div
@@ -133,21 +176,14 @@ export const TrainerOrganizerModal: React.FC<TrainerOrganizerModalProps> = ({
                                         alt={t.name}
                                         className="trainer-org-avatar"
                                         onError={(e) => {
-                                            (e.currentTarget as HTMLImageElement).src =
-                                                `${import.meta.env.BASE_URL || '/'}trainer.svg`;
+                                            const img = e.currentTarget as HTMLImageElement;
+                                            img.onerror = null;
+                                            img.src = getAbsolutePokeballUrl();
                                         }}
                                     />
                                     <div className="trainer-org-info">
                                         <div className="trainer-org-name">
-                                            {t.name}
-                                            {t.profileType === 'storage' && (
-                                                <span
-                                                    className="trainer-org-badge trainer-org-badge--storage"
-                                                    style={{ marginLeft: 6 }}
-                                                >
-                                                    Storage
-                                                </span>
-                                            )}
+                                            <span className="trainer-org-name-text">{t.name}</span>
                                         </div>
                                         <div className="trainer-org-subinfo">
                                             <span>{partyCount}/6 Pokémon</span>
@@ -192,7 +228,7 @@ export const TrainerOrganizerModal: React.FC<TrainerOrganizerModalProps> = ({
                                                     <option value="">Unassigned / Anyone</option>
                                                     {roomPlayers.map((p) => (
                                                         <option key={p.id} value={p.id}>
-                                                            {p.name}
+                                                            {p.displayName || p.name}
                                                         </option>
                                                     ))}
                                                     {t.playerId && !roomPlayers.some((p) => p.id === t.playerId) && (

@@ -58,7 +58,7 @@ export async function broadcastPlayerPc(params?: {
 
         if (isPmd && !rawTrainer) {
             const resolvedName = myName || 'Player';
-            const storageName = campaign.teamStorageName || 'None / PMD Storage';
+            const storageName = campaign.teamStorageName || `${resolvedName}'s Storage`;
             rawTrainer = {
                 id: `__pmd_${myPlayerId || resolvedName.toLowerCase().replace(/\s+/g, '_')}__`,
                 name: storageName,

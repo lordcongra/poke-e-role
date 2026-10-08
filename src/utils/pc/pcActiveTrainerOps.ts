@@ -23,17 +23,17 @@ export function persistTrainerSwitch(campId: string, trainerId: string, pid?: st
 /**
  * Filters trainers based on player role:
  * - GM sees all trainers in the room/campaign.
- * - Non-GM players ONLY see their own trainers (matched by playerId, claim metadata, or active token).
+ * - Non-GM players ONLY see their own trainers (matched strictly by playerId or claim metadata).
  */
 export function filterTrainersForRole(
     trainers: Record<string, TrainerRoster> = {},
     myPlayerId?: string,
     isGm?: boolean,
-    activeTokenId?: string | null
+    _activeTokenId?: string | null
 ): Record<string, TrainerRoster> {
     if (isGm) return trainers;
     const resolvedPlayerId = myPlayerId || cachedObrPlayerId;
-    if (!resolvedPlayerId) return trainers;
+    if (!resolvedPlayerId) return {};
 
     const filtered: Record<string, TrainerRoster> = {};
     for (const [id, t] of Object.entries(trainers)) {
@@ -56,21 +56,6 @@ export function filterTrainersForRole(
         if (fullClaim && fullClaim === resolvedPlayerId) {
             filtered[id] = t;
             continue;
-        }
-        // 3. Active token matches (ONLY if not claimed by another player)
-        if (activeTokenId && (t.mapTokenId === activeTokenId || t.id === activeTokenId)) {
-            const isClaimedByOther =
-                (t.playerId && t.playerId !== resolvedPlayerId) ||
-                (claim?.playerId && claim.playerId !== resolvedPlayerId) ||
-                (fullClaim && fullClaim !== resolvedPlayerId);
-            if (!isClaimedByOther && (!t.playerId || t.playerId === resolvedPlayerId)) {
-                filtered[id] = t;
-                continue;
-            }
-        }
-        // 4. If trainer has no playerId and no claim, only include if not claimed by someone else
-        if (!t.playerId && !claim?.playerId && !fullClaim) {
-            filtered[id] = t;
         }
     }
     return filtered;

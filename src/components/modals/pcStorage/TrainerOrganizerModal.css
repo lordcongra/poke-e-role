@@ -28,7 +28,7 @@
     border: 1px solid var(--secondary, #3a3a4c);
     border-radius: 12px;
     width: 100%;
-    max-width: 480px;
+    max-width: 500px;
     max-height: 85vh;
     display: flex;
     flex-direction: column;
@@ -138,6 +138,7 @@
     height: 32px;
     border-radius: 50%;
     object-fit: cover;
+    object-position: top center;
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
     flex-shrink: 0;
@@ -150,12 +151,20 @@
 }
 
 .trainer-org-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.trainer-org-name-text {
     font-size: 0.88rem;
     font-weight: 600;
     color: var(--text-main, #ffffff);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .trainer-org-subinfo {
@@ -172,6 +181,8 @@
     font-size: 0.68rem;
     font-weight: 600;
     text-transform: uppercase;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .trainer-org-badge--active {

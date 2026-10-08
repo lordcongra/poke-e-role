@@ -222,19 +222,24 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                                 </optgroup>
                             )}
                             <optgroup label="PMD / Team Storage">
-                                {storageProfiles.map((t) => {
-                                    const displayName =
-                                        t.playerName && !t.name.toLowerCase().includes(t.playerName.toLowerCase())
-                                            ? `${t.playerName} - ${t.name}`
-                                            : t.name;
-                                    return (
-                                        <option key={t.id} value={t.id}>
-                                            📦 {displayName}
-                                        </option>
-                                    );
-                                })}
+                                {isGm &&
+                                    storageProfiles.map((t) => {
+                                        const displayName =
+                                            t.playerName && !t.name.toLowerCase().includes(t.playerName.toLowerCase())
+                                                ? `${t.playerName} - ${t.name}`
+                                                : t.name;
+                                        return (
+                                            <option key={t.id} value={t.id}>
+                                                📦 {displayName}
+                                            </option>
+                                        );
+                                    })}
                                 <option value="__none__">
-                                    📦 {activeCampaign?.teamStorageName || 'None (PMD / Team Storage)'}
+                                    📦{' '}
+                                    {activeCampaign?.teamStorageName ||
+                                        (isGm && storageProfiles.length > 0
+                                            ? 'Campaign Storage (GM)'
+                                            : 'Personal PMD Storage')}
                                 </option>
                             </optgroup>
                         </select>
@@ -269,7 +274,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                                 <Edit2 size={13} />
                             </button>
                         )}
-                        {isGm && onReorderTrainers && Object.keys(trainers).length > 1 && (
+                        {isGm && onReorderTrainers && trainerProfiles.length > 1 && (
                             <button
                                 type="button"
                                 className="pc-header__mini-btn"
@@ -493,7 +498,10 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                 <TrainerOrganizerModal
                     isOpen={isTrainerOrgOpen}
                     onClose={() => setIsTrainerOrgOpen(false)}
-                    trainers={trainers}
+                    trainers={trainerProfiles.reduce<Record<string, TrainerRoster>>((acc, t) => {
+                        acc[t.id] = t;
+                        return acc;
+                    }, {})}
                     trainerOrder={trainerOrder}
                     activeTrainerId={activeTrainer?.id}
                     onReorder={onReorderTrainers}
