@@ -51,10 +51,30 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 2. **Token Scale Warning (OBR):** The visual UI (HP/Will bars, Defense badges) that hovers over your tokens works best on standard-sized or larger tokens. **Shrinking tokens to incredibly small scales can cause the UI graphics to break or overlap.**
 3. **Pokémon vs. Trainer Mode:** Swap your mode between Pokemon or Trainer/Trainer(Special) to set the sheet automatically to the correct Attributes and Skills for that mode. Some small homebrew changes have been applied for Special Trainers, replacing the Weapon Skill with the Channel Skill.
 4. **Refreshing Data:** If your moves or abilities ever look blank or are missing their tooltips, click the `↻` button at the top of the sheet to force the system to ping the database and backfill the missing descriptions.
+5. **PC Storage & Team Management:** Access the PC Storage modal from the top toolbar or welcome overview to manage your party, organize boxes, inspect character sheets, and summon or recall Pokémon tokens directly to and from the map.
 
 ---
 
 ## 🌟 Features
+
+### 💾 Pokémon PC Storage & Adventure Vaults
+
+- **Persistent Pokémon Boxes:** Store, deposit, and withdraw Pokémon between your active belt party and custom PC storage boxes with intuitive slot clicks and drag-and-drop. Each box supports up to 30 Pokémon with customizable box names and color themes.
+- **Campaigns as Adventure Folders:** Treat campaigns like folders to maintain separate trainer rosters, team parties, and PC boxes for different storylines or settings. Easily switch between trainers, run trainerless Pokémon Mystery Dungeon (PMD) teams, or keep private folders for GM encounter prep.
+- **Campaign Privacy & Active Room Adventures:** Organize adventures into Public and Private folders. GMs can designate an Active Room Campaign (marked with a green globe) so joining players automatically connect to the intended campaign adventure.
+- **Map Deployment (Auto-Place & Click to Place):** Summon stored Pokémon directly from your party or storage boxes onto the battle map. Use *Auto-Place* to spawn right in front of your trainer token or *Click to Place* to deploy at exact map coordinates.
+- **1-Click Token Recall:** Return active map tokens back into your party or PC storage with a single click, keeping your tabletop clean and organized.
+- **Persistent Token Attachments:** Held items, hats, and accessories attached to your Pokémon tokens remain linked in storage and are automatically preserved when recalling tokens or deploying them onto brand-new scenes.
+- **Integrated Character Sheet Viewer:** Inspect and edit full Pokémon and Trainer character sheets directly inside the PC storage interface without needing to spawn them onto the battle map first.
+- **Trainer Organization & Roster Management:** Dedicated roster sorting controls (with Top, Up, Down, and Bottom ordering) allow Game Masters to easily organize and arrange campaign trainer rosters.
+- **Player Privacy & Role Isolation:** Non-GM players view only their own assigned trainers and personal team storage in the PC, keeping the GM's encounter prep and other players' private rosters secluded.
+- **Cloud Scene Backups & Portable JSON Export:** Protect your Pokémon rosters with Owlbear scene backups or export portable JSON files. Flexible import options support duplicating fresh Pokémon copies, auto-merging with matching trainers, or transferring ownership between characters.
+
+### 🏠 Welcome Overview & Sheet Controls
+
+- **Welcome Overview Hub:** When opening the extension without a token selected, a clean landing screen greets you with quick-launch cards for Pokémon PC Storage, Generators, the Battle Organizer, and Homebrew Workshop.
+- **1-Click Sheet Deselect Controls:** Dedicated deselect buttons in both the character header and top toolbar let you quickly close any active sheet and return to the main overview without losing your place during combat.
+- **Customizable Overview Theme:** Personalize your own preferred theme colors for the overview screen when no token is active, while active Pokémon continue to reflect their own vibrant type themes.
 
 ### 🎨 Dynamic UI & Theming
 
