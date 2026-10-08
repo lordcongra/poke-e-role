@@ -59,34 +59,7 @@ export interface TransformData {
     metaStr: string;
 }
 
-export function mapRoomSettings(sData: Record<string, unknown>) {
-    return {
-        ruleset: sData.ruleset !== undefined ? String(sData.ruleset) : undefined,
-        pain: sData.painEnabled !== undefined ? (sData.painEnabled ? 'Enabled' : 'Disabled') : undefined,
-        diceEngine:
-            sData.diceEngine !== undefined
-                ? sData.diceEngine === 'log-only'
-                    ? ('log-only' as const)
-                    : ('car' as const)
-                : undefined,
-        homebrewAccess: sData.homebrewAccess !== undefined ? String(sData.homebrewAccess) : undefined,
-        gmOnlyLootGen: sData.gmOnlyLootGen !== undefined ? Boolean(sData.gmOnlyLootGen) : undefined,
-        gmOnlyGenerators: sData.gmOnlyGenerators !== undefined ? Boolean(sData.gmOnlyGenerators) : undefined,
-        gmOnlyMatchups: sData.gmOnlyMatchups !== undefined ? Boolean(sData.gmOnlyMatchups) : undefined,
-        gmOnlyDamageOverride:
-            sData.gmOnlyDamageOverride !== undefined ? Boolean(sData.gmOnlyDamageOverride) : undefined,
-        gmOnlyTrackers: sData.gmOnlyTrackers !== undefined ? Boolean(sData.gmOnlyTrackers) : undefined,
-        gmOnlyAttributeLock: sData.gmOnlyAttributeLock !== undefined ? Boolean(sData.gmOnlyAttributeLock) : undefined,
-        pmdSkills: sData.pmdSkills !== undefined ? Boolean(sData.pmdSkills) : undefined,
-        gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined,
-        roomDefaultScale: sData.roomDefaultScale !== undefined ? Number(sData.roomDefaultScale) : undefined,
-        roomDefaultOffsetX: sData.roomDefaultOffsetX !== undefined ? Number(sData.roomDefaultOffsetX) : undefined,
-        roomDefaultOffsetY: sData.roomDefaultOffsetY !== undefined ? Number(sData.roomDefaultOffsetY) : undefined,
-        activeRoomCampaignName:
-            sData.activeRoomCampaignName !== undefined ? String(sData.activeRoomCampaignName) : undefined,
-        activeRoomCampaignId: sData.activeRoomCampaignId !== undefined ? String(sData.activeRoomCampaignId) : undefined
-    };
-}
+export { mapRoomSettings } from '../../utils/sync/roomSettingsMeta';
 
 export function getEffectiveScaleAndOffsets(identity: {
     sceneDefaultScale?: number | null;

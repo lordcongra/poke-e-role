@@ -11,6 +11,8 @@ export const handleRoomSelectChange = <K extends keyof RoomSettings>(
     e.target.blur();
     updateRoomSetting(field, val);
     if (!isStandaloneMode) {
-        flushRoomSettingsToOwlbear({ [field]: val }).catch(() => {});
+        flushRoomSettingsToOwlbear({ [field]: val }).catch((error) => {
+            console.error('[RulesModal] Failed to flush room setting change:', error);
+        });
     }
 };

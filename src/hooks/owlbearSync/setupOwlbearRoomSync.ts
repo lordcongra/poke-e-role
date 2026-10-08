@@ -48,7 +48,8 @@ export async function setupOwlbearRoomSync(
         const store = useCharacterStore.getState();
 
         if (roomMetaResult && ROOM_META_ID in roomMetaResult) {
-            const data = roomMetaResult[ROOM_META_ID] as Record<string, unknown>;
+            const data = { ...(roomMetaResult[ROOM_META_ID] as Record<string, unknown>) };
+            let roomSettingsNeedSave = false;
 
             // --- MIGRATION SCRIPT ---
             const hasLegacyHomebrew =
@@ -74,20 +75,15 @@ export async function setupOwlbearRoomSync(
                 );
 
                 if (role === 'GM') {
-                    const cleanedRoomSettings = { ...data };
-                    delete cleanedRoomSettings.customTypes;
-                    delete cleanedRoomSettings.customAbilities;
-                    delete cleanedRoomSettings.customMoves;
-                    delete cleanedRoomSettings.customPokemon;
-                    delete cleanedRoomSettings.customItems;
-                    delete cleanedRoomSettings.customForms;
-                    delete cleanedRoomSettings.customStatuses;
+                    delete data.customTypes;
+                    delete data.customAbilities;
+                    delete data.customMoves;
+                    delete data.customPokemon;
+                    delete data.customItems;
+                    delete data.customForms;
+                    delete data.customStatuses;
+                    roomSettingsNeedSave = true;
 
-                    OBR.room
-                        .setMetadata({ [ROOM_META_ID]: cleanedRoomSettings })
-                        .catch((e) =>
-                            console.warn('[SyncEngine] Failed to clean legacy homebrew in room metadata:', e)
-                        );
                     OBR.notification.show(
                         '[ ⚙ ] Legacy Homebrew Data successfully migrated to Local Storage!',
                         'SUCCESS'
@@ -101,12 +97,33 @@ export async function setupOwlbearRoomSync(
                 );
                 data.diceEngine = 'car';
                 if (role === 'GM') {
-                    const cleanedRoomSettings = { ...data, diceEngine: 'car' };
+                    roomSettingsNeedSave = true;
+                }
+            }
+
+            if (role === 'GM') {
+                const defaultPermissions: Record<string, boolean> = {
+                    gmOnlyGenerators: true,
+                    gmOnlyLootGen: true,
+                    gmOnlyDamageOverride: true,
+                    gmOnlyAttributeLock: true,
+                    gmOnlyMatchups: false,
+                    gmOnlyTrackers: false,
+                    pmdSkills: false,
+                    gmDemoMode: false
+                };
+
+                for (const [key, defaultVal] of Object.entries(defaultPermissions)) {
+                    if (data[key] === undefined) {
+                        data[key] = defaultVal;
+                        roomSettingsNeedSave = true;
+                    }
+                }
+
+                if (roomSettingsNeedSave) {
                     OBR.room
-                        .setMetadata({ [ROOM_META_ID]: cleanedRoomSettings })
-                        .catch((e) =>
-                            console.warn('[SyncEngine] Failed to auto-migrate diceEngine in room metadata:', e)
-                        );
+                        .setMetadata({ [ROOM_META_ID]: data })
+                        .catch((e) => console.warn('[SyncEngine] Failed to update room metadata on startup:', e));
                 }
             }
 
@@ -121,6 +138,26 @@ export async function setupOwlbearRoomSync(
             if (mapped.gmOnlyTrackers !== undefined) {
                 lastSyncedGmOnlyTrackers = mapped.gmOnlyTrackers;
             }
+        } else if (role === 'GM') {
+            const initialRoomSettings: Record<string, unknown> = {
+                ruleset: 'vg-vit-hp',
+                painEnabled: true,
+                diceEngine: 'car',
+                homebrewAccess: 'Full',
+                gmOnlyGenerators: true,
+                gmOnlyLootGen: true,
+                gmOnlyDamageOverride: true,
+                gmOnlyAttributeLock: true,
+                gmOnlyMatchups: false,
+                gmOnlyTrackers: false,
+                pmdSkills: false,
+                gmDemoMode: false
+            };
+            OBR.room
+                .setMetadata({ [ROOM_META_ID]: initialRoomSettings })
+                .catch((e) => console.warn('[SyncEngine] Failed to initialize default room metadata:', e));
+            const mapped = mapRoomSettings(initialRoomSettings);
+            store.applyRoomSettings(mapped);
         }
 
         if (sceneMetaResult && SCENE_SETTINGS_META_ID in sceneMetaResult) {

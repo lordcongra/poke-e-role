@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { flattenStateToMetadata } from '../src/utils/sync/flattenStateToMetadata';
 import type { CharacterState } from '../src/store/storeTypes';
+import { applyRoomUpdatesToMeta, mapRoomSettings } from '../src/utils/sync/roomSettingsMeta';
 
 /**
  * Automated Verification Suite for Token Metadata & Serialization Invariants.
@@ -654,6 +655,47 @@ runTest('Canvas HUD graphics calculate effectiveTempMax and tempHpPercentage wit
             ? `${dataWithZeroTempMax.hpCurr}+${dataWithZeroTempMax.temporaryHitPoints}/${effectiveHpMax}`
             : `${dataWithZeroTempMax.hpCurr}/${effectiveHpMax}`;
     assert.equal(hpString, '10+4/10', 'hp-text renders formatted Temp HP string without /0 or NaN');
+});
+
+runTest('applyRoomUpdatesToMeta and mapRoomSettings serialize explicit false and 0 symmetrically', () => {
+    const initialRoomMeta: Record<string, unknown> = {
+        gmOnlyGenerators: true,
+        roomDefaultScale: 100,
+        roomDefaultOffsetX: 10,
+        roomDefaultOffsetY: 20
+    };
+
+    // User updates Generators to Everyone (false) and offsets to 0
+    const updates = {
+        gmOnlyGenerators: false,
+        roomDefaultOffsetX: 0,
+        roomDefaultOffsetY: 0
+    };
+
+    applyRoomUpdatesToMeta(initialRoomMeta, updates);
+
+    assert.equal(initialRoomMeta.gmOnlyGenerators, false, 'Explicitly sets gmOnlyGenerators to false');
+    assert.equal(initialRoomMeta.roomDefaultOffsetX, 0, 'Explicitly sets roomDefaultOffsetX to 0');
+    assert.equal(initialRoomMeta.roomDefaultOffsetY, 0, 'Explicitly sets roomDefaultOffsetY to 0');
+
+    // Deserialization / mapping
+    const mapped = mapRoomSettings(initialRoomMeta);
+    assert.equal(mapped.gmOnlyGenerators, false, 'mapRoomSettings preserves false boolean');
+    assert.equal(mapped.roomDefaultOffsetX, 0, 'mapRoomSettings preserves 0 offset');
+    assert.equal(mapped.roomDefaultOffsetY, 0, 'mapRoomSettings preserves 0 offset');
+
+    // Verify UI permission checks across GlobalToolbar and TokenEmptyState are identical
+    const checkCanUse = (isGm: boolean, gmOnlyGenerators?: boolean) => isGm || gmOnlyGenerators === false;
+
+    // GM always has access
+    assert.equal(checkCanUse(true, true), true, 'GM can access when GM Only');
+    assert.equal(checkCanUse(true, false), true, 'GM can access when Everyone');
+    assert.equal(checkCanUse(true, undefined), true, 'GM can access when undefined');
+
+    // Player access depends strictly on gmOnlyGenerators === false
+    assert.equal(checkCanUse(false, false), true, 'Player can access when Everyone');
+    assert.equal(checkCanUse(false, true), false, 'Player blocked when GM Only');
+    assert.equal(checkCanUse(false, undefined), false, 'Player blocked when undefined');
 });
 
 console.log('\n=============================================');

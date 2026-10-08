@@ -17,7 +17,9 @@ export function RulesModal({ onClose }: RulesModalProps) {
 
     const handleClose = () => {
         if (!isStandaloneMode) {
-            flushRoomSettingsToOwlbear().catch(() => {});
+            flushRoomSettingsToOwlbear().catch((error) => {
+                console.error('[RulesModal] Failed to flush pending room settings on close:', error);
+            });
         }
         onClose();
     };

@@ -16,7 +16,7 @@ export function TokenEmptyState({ isStandalone = false, onOpenPcModal }: TokenEm
     const openPcModal = useCharacterStore((state) => state.openPcModal);
 
     const isGm = isStandalone || role === 'GM';
-    const canUseGenerators = isGm || !gmOnlyGenerators;
+    const canUseGenerators = isGm || gmOnlyGenerators === false;
     const showHomebrew = isStandalone || canViewHomebrew(role, homebrewAccess);
 
     const handleOpenModal = (modalName: string) => {
