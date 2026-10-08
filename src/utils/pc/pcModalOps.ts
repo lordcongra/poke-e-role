@@ -165,6 +165,8 @@ export async function spawnPokemonToMap(
             'token-image-url': resolvedImg.url,
             lastModified: summary.lastModified || Date.now()
         };
+        delete metadataObj['is-backup-token'];
+        delete metadataObj['pokerole-pmd-extension/is-backup-token'];
 
         if (summary.savedTokenItem && isImage(summary.savedTokenItem)) {
             parentItem = JSON.parse(JSON.stringify(summary.savedTokenItem)) as Item;
@@ -172,6 +174,10 @@ export async function spawnPokemonToMap(
             delete (parentItem as { attachedTo?: unknown }).attachedTo;
             if (parentItem.scale) {
                 parentItem.scale = { ...parentItem.scale };
+            }
+            if (parentItem.metadata) {
+                delete parentItem.metadata['pokerole-pmd-extension/is-backup-token'];
+                delete parentItem.metadata['is-backup-token'];
             }
 
             // Ensure image URL is map-safe and matches resolved artwork
@@ -208,12 +214,15 @@ export async function spawnPokemonToMap(
                 (parentItem.metadata?.[METADATA_ID] as Record<string, unknown>) ||
                 (parentItem.metadata?.['pokerole-pmd-extension/stats'] as Record<string, unknown>) ||
                 {};
-            const fullSpawnMeta = {
+            const fullSpawnMeta: Record<string, unknown> = {
                 ...existingMeta,
                 ...(summary.fullMetadata || {}),
                 ...metadataObj,
                 'token-image-url': resolvedImg.url
             };
+            delete fullSpawnMeta['is-backup-token'];
+            delete fullSpawnMeta['pokerole-pmd-extension/is-backup-token'];
+
             const savedInit =
                 summary.savedTokenItem?.metadata?.['pokerole-pmd-extension/initiative'] ||
                 summary.fullMetadata?.['pokerole-pmd-extension/initiative'];
@@ -227,16 +236,8 @@ export async function spawnPokemonToMap(
             };
         } else {
             const maxDim = Math.max(resolvedImg.width, resolvedImg.height);
-            const pokeImageContent = {
-                url: resolvedImg.url,
-                mime: resolvedImg.mime,
-                width: resolvedImg.width,
-                height: resolvedImg.height
-            };
-            const pokeGrid = {
-                dpi: maxDim,
-                offset: { x: resolvedImg.width / 2, y: resolvedImg.height / 2 }
-            };
+            const pokeImageContent = { url: resolvedImg.url, mime: resolvedImg.mime, width: resolvedImg.width, height: resolvedImg.height };
+            const pokeGrid = { dpi: maxDim, offset: { x: resolvedImg.width / 2, y: resolvedImg.height / 2 } };
 
             const savedInit =
                 summary.savedTokenItem?.metadata?.['pokerole-pmd-extension/initiative'] ||
@@ -276,6 +277,23 @@ export async function spawnPokemonToMap(
             landingPosition: landingPos,
             ownerId
         });
+
+        for (const it of rehomedItems) {
+            if (it.metadata) {
+                delete it.metadata['pokerole-pmd-extension/is-backup-token'];
+                delete it.metadata['is-backup-token'];
+                const m = it.metadata[METADATA_ID] as Record<string, unknown> | undefined;
+                if (m && typeof m === 'object') {
+                    delete m['is-backup-token'];
+                    delete m['pokerole-pmd-extension/is-backup-token'];
+                }
+                const s = it.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown> | undefined;
+                if (s && typeof s === 'object') {
+                    delete s['is-backup-token'];
+                    delete s['pokerole-pmd-extension/is-backup-token'];
+                }
+            }
+        }
 
         const newParent = rehomedItems[0] || parentItem;
         const newParentId = newParent.id;

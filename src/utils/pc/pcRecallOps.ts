@@ -114,11 +114,31 @@ export async function recallPokemonFromMap(
             delete (parent as { attachedTo?: unknown }).attachedTo;
         }
 
+        // Clean backup token flags so stored Pokémon never carry the backup flag
+        if (parent.metadata) {
+            delete parent.metadata['pokerole-pmd-extension/is-backup-token'];
+            delete parent.metadata['is-backup-token'];
+            const metaId = parent.metadata[METADATA_ID] as Record<string, unknown> | undefined;
+            if (metaId && typeof metaId === 'object') {
+                delete metaId['is-backup-token'];
+                delete metaId['pokerole-pmd-extension/is-backup-token'];
+            }
+            const statsMeta = parent.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown> | undefined;
+            if (statsMeta && typeof statsMeta === 'object') {
+                delete statsMeta['is-backup-token'];
+                delete statsMeta['pokerole-pmd-extension/is-backup-token'];
+            }
+        }
+
+        const cleanedFullMetadata: Record<string, unknown> = { ...(summary?.fullMetadata || {}), ...meta };
+        delete cleanedFullMetadata['is-backup-token'];
+        delete cleanedFullMetadata['pokerole-pmd-extension/is-backup-token'];
+
         return {
             success: true,
             attachedItems: bundles,
             savedTokenItem: parent,
-            fullMetadata: { ...(summary?.fullMetadata || {}), ...meta },
+            fullMetadata: cleanedFullMetadata,
             currentHp,
             maxHp,
             currentWill,
@@ -129,6 +149,8 @@ export async function recallPokemonFromMap(
         return { success: false };
     }
 }
+
+export const recallPokemonFromMapOps = recallPokemonFromMap;
 
 export async function clearTokenClaimOps(mapTokenId?: string, entityId?: string): Promise<void> {
     if (!OBR.isAvailable || (!mapTokenId && !entityId)) return;
@@ -251,6 +273,32 @@ export async function executeRecallWorkflow(
 ): Promise<PcPokemonSummary | null> {
     const result = await recallPokemonFromMap(summary.mapTokenId, summary);
     if (!result.success) return null;
+
+    const cleanedFullMetadata: Record<string, unknown> = {
+        ...(result.fullMetadata ?? summary.fullMetadata ?? {})
+    };
+    delete cleanedFullMetadata['is-backup-token'];
+    delete cleanedFullMetadata['pokerole-pmd-extension/is-backup-token'];
+
+    let cleanedSavedItem = result.savedTokenItem ?? summary.savedTokenItem;
+    if (cleanedSavedItem) {
+        cleanedSavedItem = JSON.parse(JSON.stringify(cleanedSavedItem)) as Item;
+        if (cleanedSavedItem.metadata) {
+            delete cleanedSavedItem.metadata['pokerole-pmd-extension/is-backup-token'];
+            delete cleanedSavedItem.metadata['is-backup-token'];
+            const metaId = cleanedSavedItem.metadata[METADATA_ID] as Record<string, unknown> | undefined;
+            if (metaId && typeof metaId === 'object') {
+                delete metaId['is-backup-token'];
+                delete metaId['pokerole-pmd-extension/is-backup-token'];
+            }
+            const statsMeta = cleanedSavedItem.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown> | undefined;
+            if (statsMeta && typeof statsMeta === 'object') {
+                delete statsMeta['is-backup-token'];
+                delete statsMeta['pokerole-pmd-extension/is-backup-token'];
+            }
+        }
+    }
+
     const updated: PcPokemonSummary = {
         ...summary,
         isOnMap: false,
@@ -260,8 +308,8 @@ export async function executeRecallWorkflow(
         maxHp: result.maxHp ?? summary.maxHp,
         will: result.currentWill ?? summary.will,
         maxWill: result.maxWill ?? summary.maxWill,
-        savedTokenItem: result.savedTokenItem ?? summary.savedTokenItem,
-        fullMetadata: result.fullMetadata ?? summary.fullMetadata,
+        savedTokenItem: cleanedSavedItem,
+        fullMetadata: cleanedFullMetadata,
         lastModified: Date.now()
     };
     updatePokemonSummary?.(updated);

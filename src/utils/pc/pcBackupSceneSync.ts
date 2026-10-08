@@ -14,29 +14,7 @@ export async function isBackupScene(): Promise<boolean> {
     if (!OBR.isAvailable) return false;
     try {
         const sceneMeta = await OBR.scene.getMetadata();
-        if (Boolean(sceneMeta[BACKUP_SCENE_META_KEY] || sceneMeta[IS_BACKUP_SCENE_FLAG])) {
-            return true;
-        }
-
-        // Secondary check: If scene was loaded from an OBR Cloud Asset without scene metadata,
-        // inspect items on scene for the is-backup-token flag and auto-flag the scene.
-        const items = await OBR.scene.items.getItems();
-        const hasBackupToken = items.some((it) => {
-            if (it.layer !== 'CHARACTER') return false;
-            const meta = (it.metadata?.[METADATA_ID] || it.metadata?.['pokerole-pmd-extension/stats']) as
-                | Record<string, unknown>
-                | undefined;
-            return (
-                meta?.['is-backup-token'] === true || it.metadata?.['pokerole-pmd-extension/is-backup-token'] === true
-            );
-        });
-
-        if (hasBackupToken) {
-            await setSceneBackupStatus(true);
-            return true;
-        }
-
-        return false;
+        return Boolean(sceneMeta[BACKUP_SCENE_META_KEY] || sceneMeta[IS_BACKUP_SCENE_FLAG]);
     } catch {
         return false;
     }

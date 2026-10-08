@@ -1,4 +1,4 @@
-import OBR, { isImage, type Item } from '@owlbear-rodeo/sdk';
+import OBR, { buildImage, isImage, type Item } from '@owlbear-rodeo/sdk';
 import { METADATA_ID } from '../sync/obr';
 import { getAbsolutePokeballUrl, resolveImageDimensions } from '../generators/trainerTokenSpawner';
 import { imageManager } from '../graphics/imageManager';
@@ -205,13 +205,14 @@ export async function relinkPokemonArtworkOps(
           ? selectedUrl.split(';')[0].replace('data:', '')
           : 'image/png';
 
+    const maxDim = Math.max(selectedWidth, selectedHeight);
+
     // 1. Update or create savedTokenItem
     let updatedSavedTokenItem = summary.savedTokenItem
         ? (JSON.parse(JSON.stringify(summary.savedTokenItem)) as Item)
         : undefined;
 
     if (updatedSavedTokenItem && isImage(updatedSavedTokenItem)) {
-        const maxDim = Math.max(selectedWidth, selectedHeight);
         updatedSavedTokenItem.image = {
             url: selectedUrl,
             mime,
@@ -227,11 +228,76 @@ export async function relinkPokemonArtworkOps(
         }
         if (updatedSavedTokenItem.metadata) {
             const existingMeta = (updatedSavedTokenItem.metadata[METADATA_ID] as Record<string, unknown>) || {};
-            updatedSavedTokenItem.metadata[METADATA_ID] = {
+            const statsMeta =
+                (updatedSavedTokenItem.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>) || {};
+            const cleanMeta: Record<string, unknown> = {
                 ...existingMeta,
                 'token-image-url': selectedUrl
             };
+            delete cleanMeta['is-backup-token'];
+            delete cleanMeta['pokerole-pmd-extension/is-backup-token'];
+            delete updatedSavedTokenItem.metadata['pokerole-pmd-extension/is-backup-token'];
+            delete updatedSavedTokenItem.metadata['is-backup-token'];
+
+            updatedSavedTokenItem.metadata[METADATA_ID] = cleanMeta;
+            const cleanStatsMeta: Record<string, unknown> = {
+                ...statsMeta,
+                'token-image-url': selectedUrl
+            };
+            delete cleanStatsMeta['is-backup-token'];
+            delete cleanStatsMeta['pokerole-pmd-extension/is-backup-token'];
+            updatedSavedTokenItem.metadata['pokerole-pmd-extension/stats'] = cleanStatsMeta;
         }
+    } else {
+        const entityId = summary.entityId || crypto.randomUUID();
+        const explicitNick =
+            (summary.fullMetadata?.nickname as string) ?? (summary.fullMetadata?.['nickname'] as string);
+        const nickToSet =
+            explicitNick !== undefined
+                ? explicitNick
+                : summary.name && summary.species && summary.name !== summary.species
+                  ? summary.name
+                  : '';
+
+        const metaObj: Record<string, unknown> = {
+            ...(summary.fullMetadata || {}),
+            entityId,
+            name: summary.name || summary.species,
+            nickname: nickToSet,
+            species: summary.species || summary.name,
+            type1: summary.type1 || 'Normal',
+            type2: summary.type2,
+            'hp-curr': summary.hp,
+            'hp-max-display': summary.maxHp,
+            'will-curr': summary.will,
+            'will-max-display': summary.maxWill,
+            rank: summary.rank || 'Starter',
+            'token-image-url': selectedUrl,
+            lastModified: summary.lastModified || Date.now()
+        };
+        delete metaObj['is-backup-token'];
+        delete metaObj['pokerole-pmd-extension/is-backup-token'];
+
+        const pokeImageContent = {
+            url: selectedUrl,
+            mime,
+            width: selectedWidth,
+            height: selectedHeight
+        };
+        const pokeGrid = {
+            dpi: maxDim,
+            offset: { x: selectedWidth / 2, y: selectedHeight / 2 }
+        };
+
+        updatedSavedTokenItem = buildImage(pokeImageContent, pokeGrid)
+            .name(summary.name || summary.species || 'Pokémon')
+            .position({ x: 0, y: 0 })
+            .layer('CHARACTER')
+            .metadata({
+                [METADATA_ID]: metaObj,
+                'pokerole-pmd-extension/stats': metaObj
+            })
+            .build();
     }
 
     // 2. Update fullMetadata
@@ -239,6 +305,8 @@ export async function relinkPokemonArtworkOps(
         ...(summary.fullMetadata || {}),
         'token-image-url': selectedUrl
     };
+    delete updatedFullMetadata['is-backup-token'];
+    delete updatedFullMetadata['pokerole-pmd-extension/is-backup-token'];
 
     // 3. Update active scene item if present on the map
     let targetTokenId = summary.mapTokenId;
