@@ -303,7 +303,8 @@ export function GlobalToolbar() {
             setImportData(data);
         } catch (error) {
             console.error('[GlobalToolbar] Failed to parse imported character JSON:', error);
-            if (!isStandaloneMode && OBR.isAvailable && isObrReady) OBR.notification.show('Invalid JSON file.', 'ERROR');
+            if (!isStandaloneMode && OBR.isAvailable && isObrReady)
+                OBR.notification.show('Invalid JSON file.', 'ERROR');
             else alert('Invalid JSON file.');
         }
         if (fileInputReference.current) fileInputReference.current.value = '';

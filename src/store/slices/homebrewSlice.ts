@@ -13,6 +13,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { homebrewStorage, type HomebrewStorageData } from '../../utils/sync/homebrewStorage';
 
 const saveHomebrewLocal = (state: CharacterState) => {
+    if (!state.isHomebrewInitialized) return;
     try {
         const data: HomebrewStorageData = {
             customTypes: state.roomCustomTypes,
@@ -33,6 +34,7 @@ const saveHomebrewLocal = (state: CharacterState) => {
 };
 
 export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewSlice> = (set, get) => ({
+    isHomebrewInitialized: false,
     roomCustomTypes: [],
     roomCustomAbilities: [],
     roomCustomMoves: [],
@@ -63,13 +65,16 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                     roomCustomItems: items,
                     roomCustomForms: forms,
                     roomCustomStatuses: statuses,
-                    needsBackup: needsBkp
+                    needsBackup: needsBkp,
+                    isHomebrewInitialized: true
                 });
 
                 syncHomebrewToApi(pokemon, moves, abilities, items);
             }
         } catch (error) {
             console.error('[HomebrewSlice] Failed to load homebrew data from storage.', error);
+        } finally {
+            set({ isHomebrewInitialized: true });
         }
     },
 

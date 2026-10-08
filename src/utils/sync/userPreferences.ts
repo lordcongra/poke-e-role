@@ -45,12 +45,36 @@ function getDB(): Promise<IDBDatabase> {
     });
 }
 
+function isLegacyEntityKey(key: string): boolean {
+    return (
+        key.startsWith('pkr_char_') ||
+        key.startsWith('pkr_pc_') ||
+        key === 'pkr_folders' ||
+        key.startsWith('pkr_homebrew_') ||
+        key.startsWith('pkr_idb_') ||
+        key.startsWith('pkr_storage_') ||
+        key === 'pkr_last_master_backup_time' ||
+        key === 'pkr_last_local_change_time'
+    );
+}
+
 /**
  * Checks whether a given key is a persistent Pokerole setting that should be backed up.
  */
 export function isPersistentSettingKey(key: string): boolean {
     if (!key || typeof key !== 'string') return false;
     if (key.startsWith('pkr_char_temp') || key.startsWith('_pkr_temp')) return false;
+    if (
+        key.startsWith('pkr_char_') ||
+        key.startsWith('pkr_pc_') ||
+        key === 'pkr_folders' ||
+        key.startsWith('pkr_homebrew_') ||
+        key.startsWith('pkr_idb_') ||
+        key.startsWith('pkr_storage_') ||
+        key === 'pkr_last_master_backup_time' ||
+        key === 'pkr_last_local_change_time'
+    )
+        return false;
     return key.startsWith('pkr_') || key.startsWith('pokerole-');
 }
 
@@ -228,7 +252,7 @@ export async function restoreSettingsFromIndexedDB(): Promise<number> {
         const db = await getDB();
 
         return new Promise<number>((resolve) => {
-            const tx = db.transaction(STORE_NAME, 'readonly');
+            const tx = db.transaction(STORE_NAME, 'readwrite');
             const store = tx.objectStore(STORE_NAME);
             const req = store.openCursor();
             let restoredCount = 0;
@@ -237,7 +261,14 @@ export async function restoreSettingsFromIndexedDB(): Promise<number> {
                 const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result;
                 if (cursor) {
                     const key = String(cursor.key);
-                    if (isPersistentSettingKey(key)) {
+                    if (isLegacyEntityKey(key)) {
+                        try {
+                            cursor.delete();
+                            console.warn(`[UserPreferences] Purged legacy entity key '${key}' from user preferences.`);
+                        } catch (delErr) {
+                            console.warn(`[UserPreferences] Failed to purge legacy entity key '${key}':`, delErr);
+                        }
+                    } else if (isPersistentSettingKey(key)) {
                         try {
                             const existing = localStorage.getItem(key);
                             if (existing === null) {

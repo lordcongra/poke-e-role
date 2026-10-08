@@ -144,7 +144,12 @@ export function InModalRollLog({
                         // ignore
                     }
                 }
-                if (resolved && !resolved.includes('pokeball-token.svg') && !resolved.includes('pokeball.svg') && !newIcons[c.id]) {
+                if (
+                    resolved &&
+                    !resolved.includes('pokeball-token.svg') &&
+                    !resolved.includes('pokeball.svg') &&
+                    !newIcons[c.id]
+                ) {
                     try {
                         const cropped = await cropImageTransparencyUrl(resolved, true);
                         if (cropped && isMounted) newIcons[c.id] = cropped;

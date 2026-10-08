@@ -269,12 +269,17 @@ export async function generateSingleTeamMember(
     const pokeBuild = await generateBuild(pokeGenConfig, pokemonState);
     if (!pokeBuild) return null;
 
-    const pokeMeta = buildTokenMetadataFromBuild(pokeBuild, '', `${import.meta.env.BASE_URL || '/'}pokeball-token.svg`, {
-        privacyDefaults: config.privacyDefaults,
-        privateNpcLock: config.privateNpcLock,
-        privateRolls: config.privateRolls,
-        privateGmTrackers: config.privateGmTrackers
-    });
+    const pokeMeta = buildTokenMetadataFromBuild(
+        pokeBuild,
+        '',
+        `${import.meta.env.BASE_URL || '/'}pokeball-token.svg`,
+        {
+            privacyDefaults: config.privacyDefaults,
+            privateNpcLock: config.privateNpcLock,
+            privateRolls: config.privateRolls,
+            privateGmTrackers: config.privateGmTrackers
+        }
+    );
     pokeMeta['age'] = '';
 
     if (config.scaleLoyaltyHappiness) {

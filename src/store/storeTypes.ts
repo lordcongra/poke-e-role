@@ -261,6 +261,7 @@ export interface HomebrewPayload {
 }
 
 export interface HomebrewSlice {
+    isHomebrewInitialized: boolean;
     roomCustomTypes: CustomType[];
     roomCustomAbilities: CustomAbility[];
     roomCustomMoves: CustomMove[];

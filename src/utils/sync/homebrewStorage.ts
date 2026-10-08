@@ -333,11 +333,32 @@ export const homebrewStorage = {
     async saveHomebrew(
         data: HomebrewStorageData,
         roomId?: string,
-        options?: { skipBroadcast?: boolean }
+        options?: { skipBroadcast?: boolean; allowEmpty?: boolean }
     ): Promise<void> {
         const activeRoomId = roomId || getEffectiveRoomId();
         const key = getHomebrewStorageKey(activeRoomId);
         const sanitized = sanitizeHomebrewData(data);
+
+        if (isEmptyHomebrew(sanitized) && !options?.allowEmpty) {
+            let existing = memoryCache.get(key) || null;
+            if (!existing || isEmptyHomebrew(existing)) {
+                try {
+                    existing = await readFromIndexedDB(key);
+                } catch {
+                    existing = null;
+                }
+                if (!existing || isEmptyHomebrew(existing)) {
+                    existing = loadFromLocalStorage(key);
+                }
+            }
+            if (existing && !isEmptyHomebrew(existing)) {
+                console.warn(
+                    `[HomebrewStorage] Blocked overwriting existing non-empty homebrew data for key '${key}' with empty payload.`
+                );
+                return;
+            }
+        }
+
         memoryCache.set(key, sanitized);
 
         try {

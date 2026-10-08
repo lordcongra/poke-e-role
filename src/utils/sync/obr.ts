@@ -75,6 +75,7 @@ export function getLastSaveTimestamp() {
 }
 
 export async function saveToOwlbear(updates: Record<string, unknown>) {
+    if (getIsRemoteSyncActive()) return;
     const currentToken = activeTokenId;
     if (!currentToken) return;
 
