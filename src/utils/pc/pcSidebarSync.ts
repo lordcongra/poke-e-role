@@ -139,13 +139,19 @@ export async function organizeTrainerSidebarFolders(
         return { success: false, createdBelt: false, createdBoxes: 0, movedPokemonCount: 0 };
     }
 
-    const trainerSidebarId = await findTrainerSidebarId(trainer);
-    if (!trainerSidebarId) {
-        return { success: false, createdBelt: false, createdBoxes: 0, movedPokemonCount: 0 };
-    }
-
     try {
         const localChars = await storageAdapter.getLocalCharacters();
+        let trainerSidebarId = await findTrainerSidebarId(trainer);
+        if (!trainerSidebarId) {
+            const { ensureSidebarTrainerSheet } = await import('./pcSidebarGenerator');
+            const trainerChar = await ensureSidebarTrainerSheet(trainer, localChars);
+            trainerSidebarId = trainerChar.id;
+        }
+
+        if (!trainerSidebarId) {
+            return { success: false, createdBelt: false, createdBoxes: 0, movedPokemonCount: 0 };
+        }
+
         const existingFolders = await storageAdapter.getFolders();
 
         // 1. Ensure "Belt" folder exists
@@ -161,12 +167,22 @@ export async function organizeTrainerSidebarFolders(
         let createdBoxes = 0;
 
         const summaries = useCharacterStore.getState().pcData.pokemonSummaries || {};
+        const { ensureSidebarPokemonSheet } = await import('./pcSidebarGenerator');
 
-        // 2. Move active belt Pokémon into the "Belt" folder
+        // 2. Move active belt Pokémon into the "Belt" folder (auto-creating missing sheets)
         const partyIds = (trainer.party || []).filter(Boolean) as string[];
         const beltCharIds = new Set<string>();
         for (const pId of partyIds) {
-            const charMatch = await findAndLinkLocalCharacter(pId, localChars, summaries, beltCharIds);
+            let charMatch = await findAndLinkLocalCharacter(pId, localChars, summaries, beltCharIds);
+            if (!charMatch && summaries[pId]) {
+                charMatch = await ensureSidebarPokemonSheet(
+                    pId,
+                    summaries[pId],
+                    beltFolder.id,
+                    localChars,
+                    beltCharIds
+                );
+            }
             if (charMatch) {
                 beltCharIds.add(charMatch.id);
                 // Verify this character is not a Trainer!
@@ -178,7 +194,7 @@ export async function organizeTrainerSidebarFolders(
             }
         }
 
-        // 3. Create Box folders and move stored Pokémon
+        // 3. Create Box folders and move stored Pokémon (auto-creating missing sheets)
         const activeBoxes = trainer.boxes && trainer.boxes.length > 0 ? trainer.boxes : boxes;
         for (let i = 0; i < activeBoxes.length; i++) {
             const box = activeBoxes[i];
@@ -200,7 +216,16 @@ export async function organizeTrainerSidebarFolders(
             }
 
             for (const sId of storedSlotIds) {
-                const charMatch = await findAndLinkLocalCharacter(sId, localChars, summaries, beltCharIds);
+                let charMatch = await findAndLinkLocalCharacter(sId, localChars, summaries, beltCharIds);
+                if (!charMatch && summaries[sId]) {
+                    charMatch = await ensureSidebarPokemonSheet(
+                        sId,
+                        summaries[sId],
+                        boxFolder.id,
+                        localChars,
+                        beltCharIds
+                    );
+                }
                 if (charMatch) {
                     if (
                         !isTrainerMetadata(charMatch.metadata) &&

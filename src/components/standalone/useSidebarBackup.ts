@@ -72,18 +72,30 @@ export function useSidebarBackup() {
         if (!pendingRestoreData) return;
         const data = pendingRestoreData;
 
-        const existingFoldersStr = localStorage.getItem('pkr_folders') || '[]';
-        const existingFolders = JSON.parse(existingFoldersStr) as Record<string, unknown>[];
+        const existingFolders = await storageAdapter.getFolders();
         const folderMap = new Map(existingFolders.map((f) => [String(f.id), f]));
-        const incomingFolders = (data.folders || []) as Record<string, unknown>[];
+        const incomingFolders = (data.folders || []) as LocalFolder[];
         incomingFolders.forEach((f) => {
             folderMap.set(String(f.id), f);
         });
-        localStorage.setItem('pkr_folders', JSON.stringify(Array.from(folderMap.values())));
+        const mergedFolders = Array.from(folderMap.values());
 
+        const existingChars = await storageAdapter.getLocalCharacters();
+        const charMap = new Map(existingChars.map((c) => [c.id, c]));
         for (const char of data.characters || []) {
-            localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));
+            const meta = char.metadata || {};
+            const nick = meta.nickname ? String(meta.nickname).trim() : '';
+            const spec = meta.species ? String(meta.species).trim() : '';
+            charMap.set(char.id, {
+                id: char.id,
+                name: nick || spec || 'Unnamed Character',
+                parentId: (meta.parentId as string | null) ?? null,
+                metadata: meta
+            });
         }
+        const mergedCharacters = Array.from(charMap.values());
+
+        await storageAdapter.overwriteAll(mergedCharacters, mergedFolders);
 
         if (data.itemArt && typeof data.itemArt === 'object') {
             mergeItemArt(data.itemArt, true);
@@ -111,10 +123,20 @@ export function useSidebarBackup() {
         }
 
         const data = pendingRestoreData;
-        localStorage.setItem('pkr_folders', JSON.stringify(data.folders || []));
-        for (const char of data.characters || []) {
-            localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));
-        }
+        const incomingFolders = (data.folders || []) as LocalFolder[];
+        const incomingChars = (data.characters || []).map((char) => {
+            const meta = char.metadata || {};
+            const nick = meta.nickname ? String(meta.nickname).trim() : '';
+            const spec = meta.species ? String(meta.species).trim() : '';
+            return {
+                id: char.id,
+                name: nick || spec || 'Unnamed Character',
+                parentId: (meta.parentId as string | null) ?? null,
+                metadata: meta
+            };
+        });
+
+        await storageAdapter.overwriteAll(incomingChars, incomingFolders);
 
         if (data.itemArt && typeof data.itemArt === 'object') {
             mergeItemArt(data.itemArt, true);

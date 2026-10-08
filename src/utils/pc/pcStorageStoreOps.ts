@@ -52,117 +52,101 @@ export function syncSidebarOnDeposit(
  * Writes updated character sheet metadata to local storage in standalone mode.
  */
 export function syncStandaloneSummaryUpdate(summary: PcPokemonSummary): void {
-    if (OBR.isAvailable || !summary.entityId || typeof window === 'undefined' || !window.localStorage) {
+    if (OBR.isAvailable || !summary.entityId || typeof window === 'undefined') {
         return;
     }
-    const localKey = `pkr_char_${summary.entityId}`;
-    const existing = localStorage.getItem(localKey);
-    if (existing) {
-        try {
-            const parsed = JSON.parse(existing);
-            const explicitNick = summary.fullMetadata?.nickname ?? summary.fullMetadata?.['nickname'];
-            const nickToSave =
-                explicitNick !== undefined
-                    ? explicitNick
-                    : summary.name && summary.species && summary.name !== summary.species
-                      ? summary.name
-                      : '';
-            const merged = {
-                ...parsed,
-                ...(summary.fullMetadata || {}),
-                name: summary.name,
-                nickname: nickToSave
-            };
-            localStorage.setItem(localKey, JSON.stringify(merged));
-            window.dispatchEvent(new Event('pkr-local-data-changed'));
-        } catch {}
-    }
+    const explicitNick = summary.fullMetadata?.nickname ?? summary.fullMetadata?.['nickname'];
+    const nickToSave =
+        explicitNick !== undefined
+            ? explicitNick
+            : summary.name && summary.species && summary.name !== summary.species
+              ? summary.name
+              : '';
+    const updates = {
+        ...(summary.fullMetadata || {}),
+        name: summary.name,
+        nickname: nickToSave
+    };
+
+    import('../sync/storageAdapter')
+        .then(({ storageAdapter }) => {
+            storageAdapter.saveCharacter(summary.entityId, updates, 'pokerole-pmd-extension/stats').catch(() => {});
+        })
+        .catch(() => {});
 }
 
 /**
  * Initializes local storage metadata for a newly created trainer profile in standalone mode.
  */
 export function initStandaloneTrainerSheet(trainerId: string, name: string): void {
-    if (OBR.isAvailable || typeof window === 'undefined' || !window.localStorage) {
+    if (OBR.isAvailable || typeof window === 'undefined') {
         return;
     }
     const cleanName = name.trim();
     if (!cleanName) return;
 
-    try {
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('pkr_char_')) {
-                const charId = key.replace('pkr_char_', '');
-                if (charId === trainerId) return;
-                try {
-                    const data = JSON.parse(localStorage.getItem(key) || '{}');
-                    const charName = (data.nickname || data.name || data.species || '').trim().toLowerCase();
-                    const isTrainer = data.mode === 'Trainer' || data.mode === 'Trainer (Special)';
-                    if (isTrainer && charName === cleanName.toLowerCase()) {
-                        return;
-                    }
-                } catch {}
-            }
-        }
-    } catch {}
+    import('../sync/storageAdapter')
+        .then(async ({ storageAdapter }) => {
+            try {
+                const localChars = await storageAdapter.getLocalCharacters();
+                const exists = localChars.some(
+                    (c) =>
+                        c.id === trainerId ||
+                        (c.metadata?.mode === 'Trainer' && c.name.trim().toLowerCase() === cleanName.toLowerCase())
+                );
+                if (exists) return;
 
-    const initialMetadata = {
-        nickname: cleanName,
-        name: cleanName,
-        species: cleanName,
-        mode: 'Trainer',
-        rank: 'Starter',
-        'hp-curr': 5,
-        'hp-max-display': 5,
-        'hp-base': 4,
-        'will-curr': 4,
-        'will-max-display': 4,
-        'will-base': 3,
-        'str-base': 1,
-        'dex-base': 1,
-        'vit-base': 1,
-        'spe-base': 1,
-        'ins-base': 1,
-        'tou-base': 1,
-        'coo-base': 1,
-        'bea-base': 1,
-        'cut-base': 1,
-        'cle-base': 1,
-        'v2-migrated': true
-    };
-    try {
-        localStorage.setItem(`pkr_char_${trainerId}`, JSON.stringify(initialMetadata));
-        window.dispatchEvent(new Event('pkr-local-data-changed'));
-    } catch {}
+                const initialMetadata = {
+                    nickname: cleanName,
+                    name: cleanName,
+                    species: cleanName,
+                    mode: 'Trainer',
+                    rank: 'Starter',
+                    'hp-curr': 5,
+                    'hp-max-display': 5,
+                    'hp-base': 4,
+                    'will-curr': 4,
+                    'will-max-display': 4,
+                    'will-base': 3,
+                    'str-base': 1,
+                    'dex-base': 1,
+                    'vit-base': 1,
+                    'spe-base': 1,
+                    'ins-base': 1,
+                    'tou-base': 1,
+                    'coo-base': 1,
+                    'bea-base': 1,
+                    'cut-base': 1,
+                    'cle-base': 1,
+                    'v2-migrated': true
+                };
+                await storageAdapter.saveCharacter(trainerId, initialMetadata, 'pokerole-pmd-extension/stats');
+            } catch {}
+        })
+        .catch(() => {});
 }
 
 /**
  * Synchronizes a renamed trainer profile to standalone character sheet local storage.
  */
 export function syncStandaloneTrainerRename(trainerId: string, newName: string): void {
-    if (OBR.isAvailable || typeof window === 'undefined' || !window.localStorage) {
+    if (OBR.isAvailable || typeof window === 'undefined') {
         return;
     }
     const cleanName = newName.trim();
     if (!cleanName) return;
-    try {
-        const localKey = `pkr_char_${trainerId}`;
-        const existing = localStorage.getItem(localKey);
-        if (existing) {
-            const parsed = JSON.parse(existing);
-            localStorage.setItem(
-                localKey,
-                JSON.stringify({
-                    ...parsed,
-                    nickname: cleanName,
-                    name: cleanName,
-                    species: cleanName
-                })
-            );
-        }
-        window.dispatchEvent(new Event('pkr-local-data-changed'));
-    } catch {}
+
+    import('../sync/storageAdapter')
+        .then(({ storageAdapter }) => {
+            storageAdapter
+                .saveCharacter(
+                    trainerId,
+                    { nickname: cleanName, name: cleanName, species: cleanName },
+                    'pokerole-pmd-extension/stats'
+                )
+                .catch(() => {});
+        })
+        .catch(() => {});
 }
 
 /**

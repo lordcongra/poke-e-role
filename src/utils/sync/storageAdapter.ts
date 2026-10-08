@@ -143,6 +143,17 @@ export const hasUnbackedData = (characterCount: number, folderCount: number): bo
     }
 };
 
+import {
+    idbGetAllCharacters,
+    idbGetCharacter,
+    idbPutCharacter,
+    idbDeleteCharacter,
+    idbGetAllFolders,
+    idbPutFolder,
+    idbDeleteFolder,
+    idbOverwriteAll
+} from './standaloneIdb';
+
 // Emits an event so the Sidebar instantly updates when data changes!
 const notifyChange = () => {
     if (isStandaloneMode) {
@@ -154,11 +165,46 @@ export const storageAdapter = {
     async saveCharacter(id: string, updates: Record<string, unknown>, metadataId: string): Promise<void> {
         if (isStandaloneMode) {
             try {
-                const existingStr = localStorage.getItem(`${LOCAL_STORAGE_PREFIX}${id}`);
-                const existing = existingStr ? JSON.parse(existingStr) : {};
-                const merged = { ...existing, ...updates };
-                localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${id}`, JSON.stringify(merged));
-                if (isTrackedBackupChange(updates, existing)) {
+                let existingChar = await idbGetCharacter(id).catch(() => undefined);
+                let existingMeta: Record<string, unknown> = (existingChar?.metadata as Record<string, unknown>) || {};
+
+                if (!existingChar) {
+                    try {
+                        const localRaw = localStorage.getItem(`${LOCAL_STORAGE_PREFIX}${id}`);
+                        if (localRaw) {
+                            existingMeta = JSON.parse(localRaw);
+                        }
+                    } catch {}
+                }
+
+                const merged = { ...existingMeta, ...updates };
+                const nickname = merged.nickname ? String(merged.nickname).trim() : '';
+                const species = merged.species ? String(merged.species).trim() : '';
+                const charName = nickname || species || existingChar?.name || 'Unnamed Character';
+                const parentId =
+                    (merged.parentId !== undefined
+                        ? (merged.parentId as string | null)
+                        : (existingChar?.parentId ?? null)) ?? null;
+
+                const updatedChar: LocalCharacter = {
+                    id,
+                    name: charName,
+                    parentId,
+                    metadata: merged
+                };
+
+                await idbPutCharacter(updatedChar).catch((e) => {
+                    console.warn('[storageAdapter] IndexedDB putCharacter warning:', e);
+                });
+
+                // Best-effort write to localStorage for compatibility, without throwing quota error
+                try {
+                    localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${id}`, JSON.stringify(merged));
+                } catch {
+                    // Ignore QuotaExceededError in localStorage; IndexedDB safely persisted the character!
+                }
+
+                if (isTrackedBackupChange(updates, existingMeta)) {
                     markDataChanged();
                 }
                 notifyChange();
@@ -214,7 +260,16 @@ export const storageAdapter = {
     async getLocalCharacters(): Promise<
         { id: string; name: string; parentId: string | null; metadata: Record<string, unknown> }[]
     > {
-        const characters = [];
+        try {
+            const idbChars = await idbGetAllCharacters();
+            if (idbChars && idbChars.length > 0) {
+                return idbChars;
+            }
+        } catch (e) {
+            console.warn('[storageAdapter] IndexedDB getLocalCharacters failed, falling back to localStorage:', e);
+        }
+
+        const characters: LocalCharacter[] = [];
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key && key.startsWith(LOCAL_STORAGE_PREFIX)) {
@@ -245,8 +300,20 @@ export const storageAdapter = {
             'v2-migrated': true
         };
 
+        const newChar: LocalCharacter = {
+            id: newId,
+            name: name.trim(),
+            parentId,
+            metadata: initialMetadata
+        };
+
         try {
-            localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${newId}`, JSON.stringify(initialMetadata));
+            await idbPutCharacter(newChar).catch((e) => {
+                console.warn('[storageAdapter] IndexedDB createLocalCharacter warning:', e);
+            });
+            try {
+                localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${newId}`, JSON.stringify(initialMetadata));
+            } catch {}
             markDataChanged();
             notifyChange();
         } catch (error) {
@@ -257,7 +324,13 @@ export const storageAdapter = {
 
     async deleteLocalCharacter(id: string): Promise<void> {
         try {
-            localStorage.removeItem(`${LOCAL_STORAGE_PREFIX}${id}`);
+            await idbDeleteCharacter(id).catch((e) => {
+                console.warn('[storageAdapter] IndexedDB deleteLocalCharacter warning:', e);
+            });
+            try {
+                localStorage.removeItem(`${LOCAL_STORAGE_PREFIX}${id}`);
+            } catch {}
+
             const chars = await this.getLocalCharacters();
             for (const char of chars) {
                 if (char.parentId === id) await this.moveItem(char.id, null);
@@ -275,11 +348,31 @@ export const storageAdapter = {
 
     async moveItem(id: string, parentId: string | null): Promise<void> {
         try {
-            const existingStr = localStorage.getItem(`${LOCAL_STORAGE_PREFIX}${id}`);
-            if (existingStr) {
-                const existing = JSON.parse(existingStr);
-                existing.parentId = parentId;
-                localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${id}`, JSON.stringify(existing));
+            let char = await idbGetCharacter(id).catch(() => undefined);
+            if (!char) {
+                const existingStr = localStorage.getItem(`${LOCAL_STORAGE_PREFIX}${id}`);
+                if (existingStr) {
+                    const existing = JSON.parse(existingStr);
+                    char = {
+                        id,
+                        name: existing.nickname || existing.species || 'Unnamed Character',
+                        parentId: null,
+                        metadata: existing
+                    };
+                }
+            }
+
+            if (char) {
+                char.parentId = parentId;
+                if (char.metadata) {
+                    char.metadata.parentId = parentId;
+                }
+                await idbPutCharacter(char).catch((e) => {
+                    console.warn('[storageAdapter] IndexedDB moveItem warning:', e);
+                });
+                try {
+                    localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${id}`, JSON.stringify(char.metadata));
+                } catch {}
                 markDataChanged();
                 notifyChange();
             }
@@ -290,6 +383,15 @@ export const storageAdapter = {
 
     async getFolders(): Promise<LocalFolder[]> {
         try {
+            const idbFolders = await idbGetAllFolders();
+            if (idbFolders && idbFolders.length > 0) {
+                return idbFolders;
+            }
+        } catch (e) {
+            console.warn('[storageAdapter] IndexedDB getFolders failed, falling back to localStorage:', e);
+        }
+
+        try {
             const str = localStorage.getItem(FOLDER_STORAGE_KEY);
             return str ? JSON.parse(str) : [];
         } catch {
@@ -298,11 +400,15 @@ export const storageAdapter = {
     },
 
     async createFolder(name: string, parentId: string | null = null): Promise<string> {
-        const folders = await this.getFolders();
         const newFolder: LocalFolder = { id: crypto.randomUUID(), name, parentId };
-        folders.push(newFolder);
         try {
-            localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(folders));
+            await idbPutFolder(newFolder).catch((e) => {
+                console.warn('[storageAdapter] IndexedDB createFolder warning:', e);
+            });
+            const folders = await this.getFolders();
+            try {
+                localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(folders));
+            } catch {}
             markDataChanged();
             notifyChange();
         } catch (error) {
@@ -316,7 +422,12 @@ export const storageAdapter = {
         const target = folders.find((f) => f.id === folderId);
         if (target) {
             target.parentId = newParentId;
-            localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(folders));
+            await idbPutFolder(target).catch((e) => {
+                console.warn('[storageAdapter] IndexedDB moveFolder warning:', e);
+            });
+            try {
+                localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(folders));
+            } catch {}
             markDataChanged();
             notifyChange();
         }
@@ -327,17 +438,27 @@ export const storageAdapter = {
         const target = folders.find((f) => f.id === id);
         if (target) {
             target.name = newName.trim();
-            localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(folders));
+            await idbPutFolder(target).catch((e) => {
+                console.warn('[storageAdapter] IndexedDB renameFolder warning:', e);
+            });
+            try {
+                localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(folders));
+            } catch {}
             markDataChanged();
             notifyChange();
         }
     },
 
     async deleteFolder(id: string): Promise<void> {
-        const folders = await this.getFolders();
-        const filtered = folders.filter((f) => f.id !== id);
         try {
-            localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(filtered));
+            await idbDeleteFolder(id).catch((e) => {
+                console.warn('[storageAdapter] IndexedDB deleteFolder warning:', e);
+            });
+            const folders = await this.getFolders();
+            const filtered = folders.filter((f) => f.id !== id);
+            try {
+                localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(filtered));
+            } catch {}
 
             const chars = await this.getLocalCharacters();
             for (const char of chars) {
@@ -350,6 +471,23 @@ export const storageAdapter = {
             notifyChange();
         } catch (error) {
             console.error('[storageAdapter] Failed to delete folder', error);
+        }
+    },
+
+    async overwriteAll(characters: LocalCharacter[], folders: LocalFolder[]): Promise<void> {
+        try {
+            await idbOverwriteAll(characters, folders);
+            try {
+                localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(folders));
+                for (const char of characters) {
+                    localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${char.id}`, JSON.stringify(char.metadata));
+                }
+            } catch {}
+            markBackupComplete();
+            notifyChange();
+        } catch (error) {
+            console.error('[storageAdapter] Failed to overwrite all characters/folders in IDB:', error);
+            throw error;
         }
     }
 };

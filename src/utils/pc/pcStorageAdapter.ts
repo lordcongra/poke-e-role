@@ -101,7 +101,7 @@ function openDatabase(): Promise<IDBDatabase> {
         }
     });
 
-    return withTimeout(openPromise, 1500, 'IndexedDB openDatabase timed out');
+    return withTimeout(openPromise, 8000, 'IndexedDB openDatabase timed out');
 }
 
 export async function loadPcStorage(): Promise<PcStorageData> {
@@ -116,6 +116,8 @@ export async function loadPcStorage(): Promise<PcStorageData> {
         return fresh;
     }
 
+    let idbReadSucceeded = false;
+
     try {
         const db = await openDatabase();
         const dataPromise = new Promise<PcStorageData | undefined>((resolve, reject) => {
@@ -126,9 +128,10 @@ export async function loadPcStorage(): Promise<PcStorageData> {
             req.onerror = () => reject(req.error);
         });
 
-        const data = await withTimeout(dataPromise, 1500, 'IndexedDB get master_record timed out');
+        const data = await withTimeout(dataPromise, 8000, 'IndexedDB get master_record timed out');
+        idbReadSucceeded = true;
 
-        if (data && data.campaigns && typeof data.campaigns === 'object') {
+        if (data && data.campaigns && typeof data.campaigns === 'object' && Object.keys(data.campaigns).length > 0) {
             const sanitized = sanitizePcData(data);
             return sanitized;
         }
@@ -140,16 +143,31 @@ export async function loadPcStorage(): Promise<PcStorageData> {
         const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('pkr_pc_storage_default');
         if (raw) {
             const parsed = JSON.parse(raw) as PcStorageData;
-            if (parsed && parsed.campaigns && typeof parsed.campaigns === 'object') {
-                return sanitizePcData(parsed);
+            if (
+                parsed &&
+                parsed.campaigns &&
+                typeof parsed.campaigns === 'object' &&
+                Object.keys(parsed.campaigns).length > 0
+            ) {
+                const sanitized = sanitizePcData(parsed);
+                if (idbReadSucceeded) {
+                    savePcStorage(sanitized);
+                }
+                return sanitized;
             }
         }
     } catch (e) {
         console.warn('[PcStorageAdapter] localStorage read failed:', e);
     }
 
+    // SAFE HANDLING: If IndexedDB read failed or timed out, NEVER overwrite the record with an empty campaign!
+    // Overwriting master_record on read timeout or startup lag wipes the user's data.
     const initial = createInitialPcStorageData();
-    savePcStorage(initial);
+    if (!idbReadSucceeded) {
+        console.warn(
+            '[PcStorageAdapter] CRITICAL SAFETY: IndexedDB read was not confirmed. Skipping automatic save of empty initial campaign to protect master record.'
+        );
+    }
     return initial;
 }
 

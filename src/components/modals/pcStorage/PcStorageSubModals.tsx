@@ -20,6 +20,8 @@ import type {
 } from '../../../types/pcStorageTypes';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { savePcStorage } from '../../../utils/pc/pcStorageAdapter';
+import { generateSidebarSheetsFromPc } from '../../../utils/pc/pcSidebarGenerator';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 
 interface PcStorageSubModalsProps {
     isExportModalOpen: boolean;
@@ -170,6 +172,18 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
                         savePcStorage(nextData);
                         if (targetTrainerId) {
                             useCharacterStore.getState().switchTrainer(targetTrainerId);
+                        }
+                        if (isStandaloneMode) {
+                            generateSidebarSheetsFromPc(nextData, {
+                                targetTrainerId,
+                                includeBoxes: false,
+                                organizeFolders: true
+                            }).catch((err) => {
+                                console.warn(
+                                    '[PcStorageSubModals] Failed to auto-generate sidebar sheets from imported PC:',
+                                    err
+                                );
+                            });
                         }
                         if (typeof window !== 'undefined') {
                             window.dispatchEvent(new Event('pkr-local-data-changed'));

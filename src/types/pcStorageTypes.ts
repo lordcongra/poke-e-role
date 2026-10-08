@@ -77,6 +77,7 @@ export interface PcStorageData {
 }
 
 export interface PcSlice {
+    isInitialized: boolean;
     pcData: PcStorageData;
     activeBoxIndex: number;
     selectedPcSlot: { type: 'party' | 'box'; index: number } | null;

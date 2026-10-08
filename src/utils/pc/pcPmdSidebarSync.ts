@@ -66,11 +66,15 @@ export async function organizePmdSidebarFolders(
         let createdBoxes = 0;
 
         const summaries = useCharacterStore.getState().pcData.pokemonSummaries || {};
+        const { ensureSidebarPokemonSheet } = await import('./pcSidebarGenerator');
 
-        // Move active team members into the "Active Team" folder
+        // Move active team members into the "Active Team" folder (auto-creating missing sheets)
         const partyIds = teamParty.filter(Boolean) as string[];
         for (const pId of partyIds) {
-            const charMatch = await findAndLinkLocalCharacter(pId, localChars, summaries);
+            let charMatch = await findAndLinkLocalCharacter(pId, localChars, summaries);
+            if (!charMatch && summaries[pId]) {
+                charMatch = await ensureSidebarPokemonSheet(pId, summaries[pId], teamFolder.id, localChars);
+            }
             if (charMatch && !isTrainerMetadata(charMatch.metadata) && charMatch.parentId !== teamFolder.id) {
                 await storageAdapter.moveItem(charMatch.id, teamFolder.id);
                 charMatch.parentId = teamFolder.id;
@@ -78,7 +82,7 @@ export async function organizePmdSidebarFolders(
             }
         }
 
-        // Create Box folders at root level and move stored Pokémon
+        // Create Box folders at root level and move stored Pokémon (auto-creating missing sheets)
         for (let i = 0; i < boxes.length; i++) {
             const box = boxes[i];
             const storedSlotIds = (box.slots || []).filter(Boolean) as string[];
@@ -98,7 +102,10 @@ export async function organizePmdSidebarFolders(
             }
 
             for (const sId of storedSlotIds) {
-                const charMatch = await findAndLinkLocalCharacter(sId, localChars, summaries);
+                let charMatch = await findAndLinkLocalCharacter(sId, localChars, summaries);
+                if (!charMatch && summaries[sId]) {
+                    charMatch = await ensureSidebarPokemonSheet(sId, summaries[sId], boxFolder.id, localChars);
+                }
                 if (charMatch && !isTrainerMetadata(charMatch.metadata) && charMatch.parentId !== boxFolder.id) {
                     await storageAdapter.moveItem(charMatch.id, boxFolder.id);
                     charMatch.parentId = boxFolder.id;
