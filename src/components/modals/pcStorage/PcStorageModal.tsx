@@ -18,8 +18,10 @@ import { buildSheetAvailableSummaries, isEntityLockedByGm } from '../../../utils
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
 import { runOrganizeFoldersAction } from '../../../utils/pc/pcSidebarSync';
 import { resolveEffectiveActiveTrainer, filterTrainersForRole } from '../../../utils/pc/pcCampaignTrainerOps';
-import { handlePcDragStart, handlePcDrop, type PcDragItem } from '../../../utils/pc/pcDragDropUtils';
 import { linkAndSpawnTrainerToken } from '../../../utils/pc/pcTrainerTokenOps';
+import { cancelPointPlacement } from '../../../utils/pc/pcPlacementInteraction';
+import { usePcDragHandlers } from './usePcDragHandlers';
+import { PcPlacementBanner } from './PcPlacementBanner';
 import { usePcModalHandlers } from './usePcModalHandlers';
 import { usePcStorageModalSetup } from './usePcStorageModalSetup';
 import './PcStorageModal.css';
@@ -65,7 +67,6 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         deletePokemonFromPc
     } = useCharacterStore.getState();
 
-    const [dragSource, setDragSource] = useState<PcDragItem | null>(null);
     const [contextMenu, setContextMenu] = useState<{
         x: number;
         y: number;
@@ -110,6 +111,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     const trainer = isPmdMode ? undefined : activeRoster;
 
     const handleModalClose = () => {
+        cancelPointPlacement().catch(() => {});
         if (OBR.isAvailable) {
             role !== 'GM' ? broadcastPlayerPc() : broadcastGmPc({ campaignId: campaign?.id, trainer });
         }
@@ -319,33 +321,8 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         [pcData, role, updateTrainerProfile]
     );
 
-    const handlePartyDrop = useCallback(
-        (e: React.DragEvent, targetIndex: number) => {
-            handlePcDrop(e, { type: 'party', index: targetIndex }, activeBoxIndex, dragSource, swapPcSlots);
-            setDragSource(null);
-        },
-        [activeBoxIndex, dragSource, swapPcSlots]
-    );
-
-    const handleBoxDrop = useCallback(
-        (e: React.DragEvent, targetIndex: number) => {
-            handlePcDrop(e, { type: 'box', index: targetIndex }, activeBoxIndex, dragSource, swapPcSlots);
-            setDragSource(null);
-        },
-        [activeBoxIndex, dragSource, swapPcSlots]
-    );
-
-    const handlePartyDragStart = useCallback((e: React.DragEvent, index: number) => {
-        handlePcDragStart(e, { type: 'party', index });
-        setDragSource({ type: 'party', index });
-    }, []);
-
-    const handleBoxDragStart = useCallback((e: React.DragEvent, index: number) => {
-        handlePcDragStart(e, { type: 'box', index });
-        setDragSource({ type: 'box', index });
-    }, []);
-
-    const handleDragEnd = useCallback(() => setDragSource(null), []);
+    const { handlePartyDrop, handleBoxDrop, handlePartyDragStart, handleBoxDragStart, handleDragEnd } =
+        usePcDragHandlers(activeBoxIndex, swapPcSlots);
 
     if (!campaign || !currentBox) {
         return null;
@@ -394,6 +371,8 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         onOpenGuide={() => setIsGuideModalOpen(true)}
                         onClose={handleModalClose}
                     />
+
+                    <PcPlacementBanner />
 
                     {!dismissBackupWarning && <PcBackupWarningBanner onDismiss={handleDismissWarning} />}
 

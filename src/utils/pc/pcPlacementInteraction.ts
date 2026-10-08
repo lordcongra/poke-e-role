@@ -36,10 +36,60 @@ let activePlacementRequest: {
     }) => void;
 } | null = null;
 
+export interface ActivePlacementState {
+    name: string;
+    entityId: string;
+}
+
+type PlacementListener = (state: ActivePlacementState | null) => void;
+const placementListeners = new Set<PlacementListener>();
+
+export function subscribePlacementState(listener: PlacementListener): () => void {
+    placementListeners.add(listener);
+    listener(
+        activePlacementRequest
+            ? {
+                  name: activePlacementRequest.summary.name || activePlacementRequest.summary.species || 'Pokémon',
+                  entityId: activePlacementRequest.summary.entityId
+              }
+            : null
+    );
+    return () => {
+        placementListeners.delete(listener);
+    };
+}
+
+function notifyPlacementState(state: ActivePlacementState | null): void {
+    placementListeners.forEach((l) => {
+        try {
+            l(state);
+        } catch (e) {
+            console.error('[pcPlacementInteraction] Listener error:', e);
+        }
+    });
+}
+
+export async function cancelPointPlacement(): Promise<void> {
+    if (activePlacementRequest) {
+        const req = activePlacementRequest;
+        activePlacementRequest = null;
+        if (placementTimeout) {
+            clearTimeout(placementTimeout);
+            placementTimeout = null;
+        }
+        await dismissPlacementTool(req.previousTool);
+        notifyPlacementState(null);
+        req.resolve({ success: false, cancelled: true });
+    }
+}
+
 export async function dismissPlacementTool(previousTool?: string): Promise<void> {
     if (placementTimeout) {
         clearTimeout(placementTimeout);
         placementTimeout = null;
+    }
+    if (activePlacementRequest) {
+        notifyPlacementState(null);
     }
     if (!OBR.isAvailable) return;
     try {
@@ -100,7 +150,12 @@ async function ensurePlacementToolRegistered(): Promise<void> {
                 if (activePlacementRequest) {
                     const req = activePlacementRequest;
                     activePlacementRequest = null;
+                    if (placementTimeout) {
+                        clearTimeout(placementTimeout);
+                        placementTimeout = null;
+                    }
                     await dismissPlacementTool(req.previousTool);
+                    notifyPlacementState(null);
                     req.resolve({ success: false, cancelled: true });
                 }
             },
@@ -108,6 +163,11 @@ async function ensurePlacementToolRegistered(): Promise<void> {
                 if (!activePlacementRequest) return;
                 const req = activePlacementRequest;
                 activePlacementRequest = null;
+                if (placementTimeout) {
+                    clearTimeout(placementTimeout);
+                    placementTimeout = null;
+                }
+                notifyPlacementState(null);
 
                 try {
                     let landingPos = event.pointerPosition;
@@ -118,10 +178,6 @@ async function ensurePlacementToolRegistered(): Promise<void> {
                     const res = await spawnPokemonToMap(req.summary, undefined, req.role, req.trainer, landingPos);
 
                     await dismissPlacementTool(req.previousTool);
-                    if (OBR.isAvailable) {
-                        const name = req.summary.name || req.summary.species;
-                        OBR.notification.show(`Sent out ${name}!`, 'INFO');
-                    }
                     req.resolve(res);
                 } catch (err) {
                     console.error('[pcPlacementInteraction] Failed to place Pokémon on click:', err);
@@ -133,10 +189,12 @@ async function ensurePlacementToolRegistered(): Promise<void> {
                 if (event.key === 'Escape' && activePlacementRequest) {
                     const req = activePlacementRequest;
                     activePlacementRequest = null;
-                    await dismissPlacementTool(req.previousTool);
-                    if (OBR.isAvailable) {
-                        OBR.notification.show('Placement cancelled.', 'INFO');
+                    if (placementTimeout) {
+                        clearTimeout(placementTimeout);
+                        placementTimeout = null;
                     }
+                    await dismissPlacementTool(req.previousTool);
+                    notifyPlacementState(null);
                     req.resolve({ success: false, cancelled: true });
                 }
             }
@@ -188,8 +246,9 @@ export async function initiatePointPlacement(
                     const req = activePlacementRequest;
                     activePlacementRequest = null;
                     await dismissPlacementTool(req.previousTool);
+                    notifyPlacementState(null);
                     if (OBR.isAvailable) {
-                        OBR.notification.show('Placement timed out.', 'INFO');
+                        OBR.notification.show('Placement timed out.', 'WARNING');
                     }
                     req.resolve({ success: false, cancelled: true });
                 }
@@ -198,8 +257,10 @@ export async function initiatePointPlacement(
             OBR.tool.activateTool(PLACEMENT_TOOL_ID).catch(() => {});
             OBR.tool.activateMode(PLACEMENT_TOOL_ID, PLACEMENT_MODE_ID).catch(() => {});
 
-            const name = summary.name || summary.species || 'Pokémon';
-            OBR.notification.show(`Click on the map to place ${name} (Esc to cancel)`, 'INFO');
+            notifyPlacementState({
+                name: summary.name || summary.species || 'Pokémon',
+                entityId: summary.entityId
+            });
         });
     } catch (e) {
         console.error('[pcPlacementInteraction] Failed to initiate point placement:', e);
