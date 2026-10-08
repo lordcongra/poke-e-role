@@ -274,7 +274,18 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
                 } catch {}
             }
 
-            if (!sum) return null; // Prune ghost slot!
+            if (!sum) {
+                // If sum is missing and localStorage is null, do NOT immediately force the slot
+                // to null if the slot has a valid entity ID string; avoid aggressively clearing
+                // party/box slots when offline, during lag, or before IDB finishes hydrating.
+                if (typeof pid === 'string' && pid.trim().length > 0) {
+                    if (targetTrainerId) {
+                        claimedByTrainer.set(pid, targetTrainerId);
+                    }
+                    return pid;
+                }
+                return null;
+            }
             if (targetTrainerId) {
                 sum.trainerId = targetTrainerId;
                 claimedByTrainer.set(pid, targetTrainerId);
@@ -376,6 +387,9 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
             for (const b of t.boxes || []) {
                 if (Array.isArray(b.slots)) {
                     b.slots = b.slots.map((pid) => resolveValidPokemonId(pid, t.id));
+                    while (b.slots.length < 30) b.slots.push(null);
+                } else {
+                    b.slots = Array(30).fill(null);
                 }
             }
         }
@@ -386,6 +400,9 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
                     b.slots = b.slots.map((pid) =>
                         pid && claimedByTrainer.has(pid) ? null : resolveValidPokemonId(pid)
                     );
+                    while (b.slots.length < 30) b.slots.push(null);
+                } else {
+                    b.slots = Array(30).fill(null);
                 }
             }
             camp.teamParty = camp.teamParty.map((pid) =>
@@ -418,14 +435,6 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
         }
         for (const pid of camp.teamParty) {
             if (pid) referencedIds.add(pid);
-        }
-    }
-
-    // Purge orphaned ghost summaries not in any campaign/trainer/box and not live on map
-    for (const [id, s] of Object.entries(data.pokemonSummaries)) {
-        const isLiveOnMap = Boolean(s && s.isOnMap && (s.mapTokenId || s.savedTokenItem?.id));
-        if (!referencedIds.has(id) && !isLiveOnMap) {
-            delete data.pokemonSummaries[id];
         }
     }
 

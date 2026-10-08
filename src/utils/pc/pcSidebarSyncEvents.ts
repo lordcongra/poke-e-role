@@ -1,5 +1,6 @@
 import { storageAdapter, isStandaloneMode } from '../sync/storageAdapter';
-import type { PcStorageData } from '../../types/pcStorageTypes';
+import { idbGetCharacter } from '../sync/standaloneIdb';
+import type { PcStorageData, PcPokemonSummary } from '../../types/pcStorageTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { savePcStorage } from './pcStorageAdapter';
 import { isTrainerMetadata, isBeltFolderName } from './pcSidebarSync';
@@ -69,29 +70,40 @@ export async function syncSidebarCharacterRenameToPc(
     }
 }
 
-function ensurePokemonSummaryInPc(characterId: string, trainerId?: string): void {
+async function ensurePokemonSummaryInPc(characterId: string, trainerId?: string): Promise<void> {
     const pcData = useCharacterStore.getState().pcData;
     if (pcData.pokemonSummaries[characterId]) return;
 
-    if (typeof window === 'undefined' || !window.localStorage) return;
     try {
-        const raw = window.localStorage.getItem(`pkr_char_${characterId}`);
-        if (!raw) return;
-        const parsed = JSON.parse(raw);
+        let parsed: Record<string, unknown> | null = null;
+        if (typeof window !== 'undefined' && window.localStorage) {
+            const raw = window.localStorage.getItem(`pkr_char_${characterId}`);
+            if (raw) {
+                parsed = JSON.parse(raw);
+            }
+        }
+
+        if (!parsed) {
+            const idbChar = await idbGetCharacter(characterId).catch(() => undefined);
+            if (idbChar?.metadata) {
+                parsed = idbChar.metadata as Record<string, unknown>;
+            }
+        }
+
         if (!parsed) return;
 
         const isTrainerEntity = parsed.mode === 'Trainer' || parsed.mode === 'Trainer (Special)';
         const defaultHp = isTrainerEntity ? 5 : 10;
         const defaultWill = isTrainerEntity ? 4 : 5;
 
-        const newSummary = {
+        const newSummary: PcPokemonSummary = {
             entityId: characterId,
             trainerId,
-            name: parsed.nickname || parsed.species || parsed.name || 'Pokémon',
-            species: parsed.species || parsed.name || 'Unknown',
-            rank: parsed.rank || 'Starter',
-            type1: parsed.type1 || 'Normal',
-            type2: parsed.type2,
+            name: (parsed.nickname as string) || (parsed.species as string) || (parsed.name as string) || 'Pokémon',
+            species: (parsed.species as string) || (parsed.name as string) || 'Unknown',
+            rank: (parsed.rank as string) || 'Starter',
+            type1: (parsed.type1 as string) || 'Normal',
+            type2: parsed.type2 as string | undefined,
             hp:
                 parsed['hp-curr'] !== undefined && parsed['hp-curr'] !== '' && !isNaN(Number(parsed['hp-curr']))
                     ? Number(parsed['hp-curr'])
@@ -102,9 +114,10 @@ function ensurePokemonSummaryInPc(characterId: string, trainerId?: string): void
                     ? Number(parsed['will-curr'])
                     : Number(parsed.will) || defaultWill,
             maxWill: Number(parsed['will-max-display']) || Number(parsed.willMax) || defaultWill,
-            tokenImageUrl: parsed['token-image-url'] || parsed.tokenImageUrl,
+            tokenImageUrl:
+                (parsed['token-image-url'] as string | undefined) || (parsed.tokenImageUrl as string | undefined),
             isOnMap: false,
-            fullMetadata: parsed,
+            fullMetadata: parsed as unknown as PcPokemonSummary['fullMetadata'],
             lastModified: Date.now()
         };
         useCharacterStore.getState().updatePokemonSummary(newSummary);
@@ -136,7 +149,7 @@ export async function syncSidebarMoveToPc(
         if (!targetFolder.parentId) {
             const { isActiveTeamFolderName } = await import('./pcPmdSidebarSync');
             if (isActiveTeamFolderName(targetFolder.name)) {
-                ensurePokemonSummaryInPc(characterId);
+                await ensurePokemonSummaryInPc(characterId);
                 useCharacterStore.getState().movePokemonToParty(characterId);
             } else {
                 const boxes = camp.boxes || [];
@@ -144,7 +157,7 @@ export async function syncSidebarMoveToPc(
                     (b) => b.name.trim().toLowerCase() === targetFolder.name.trim().toLowerCase()
                 );
                 if (boxIndex !== -1) {
-                    ensurePokemonSummaryInPc(characterId);
+                    await ensurePokemonSummaryInPc(characterId);
                     useCharacterStore.getState().depositPokemonToBox(characterId, boxIndex);
                 }
             }
@@ -180,7 +193,7 @@ export async function syncSidebarMoveToPc(
         }
         if (!trainerRoster) return;
 
-        ensurePokemonSummaryInPc(characterId, trainerRoster.id);
+        await ensurePokemonSummaryInPc(characterId, trainerRoster.id);
 
         if (isBeltFolderName(targetFolder.name)) {
             if (!trainerRoster.party.includes(characterId)) {

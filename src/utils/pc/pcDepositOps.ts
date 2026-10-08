@@ -6,6 +6,7 @@ import { calculateRelativeAttachment } from './rehomeEngine';
 import { isEntityLockedByGm } from './pcCandidateMatching';
 import { isItemTrainer } from './pcItemMatching';
 import { separateAttachments, detachTokensFromParent } from './pcAttachmentOps';
+import { storageAdapter } from '../sync/storageAdapter';
 
 /**
  * Resolves ownership status of a Pokémon entityId within the current campaign and across other campaigns.
@@ -439,17 +440,25 @@ export function clonePokemonSummaryOps(summary: PcPokemonSummary): {
             const origRaw =
                 localStorage.getItem(`pkr_char_${summary.entityId}`) ||
                 (summary.savedTokenItem?.id ? localStorage.getItem(`pkr_char_${summary.savedTokenItem.id}`) : null);
+            let storedCloneMeta: Record<string, unknown> | undefined;
             if (origRaw) {
-                const storedCloneMeta = JSON.parse(origRaw);
-                storedCloneMeta.nickname = cloneName;
-                storedCloneMeta.name = cloneName;
-                storedCloneMeta.entityId = clonedId;
-                delete storedCloneMeta.parentId;
-                localStorage.setItem(`pkr_char_${clonedId}`, JSON.stringify(storedCloneMeta));
-                clonedSummary.fullMetadata = storedCloneMeta;
-            } else {
+                const parsed = JSON.parse(origRaw);
+                if (parsed && typeof parsed === 'object') {
+                    storedCloneMeta = parsed as Record<string, unknown>;
+                    storedCloneMeta.nickname = cloneName;
+                    storedCloneMeta.name = cloneName;
+                    storedCloneMeta.entityId = clonedId;
+                    delete storedCloneMeta.parentId;
+                    localStorage.setItem(`pkr_char_${clonedId}`, JSON.stringify(storedCloneMeta));
+                    clonedSummary.fullMetadata = storedCloneMeta as unknown as PcPokemonSummary['fullMetadata'];
+                }
+            }
+            if (!storedCloneMeta) {
                 localStorage.setItem(`pkr_char_${clonedId}`, JSON.stringify(cloneMeta));
             }
+            storageAdapter
+                .saveCharacter(clonedId, storedCloneMeta || cloneMeta, 'pokerole-pmd-extension/stats')
+                .catch(() => {});
             window.dispatchEvent(new Event('pkr-local-data-changed'));
         } catch (e) {
             console.warn('[pcDepositOps] Failed to create local clone sheet:', e);

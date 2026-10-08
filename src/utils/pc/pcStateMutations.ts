@@ -8,12 +8,24 @@ import type {
 import { createDefaultBox } from './pcStorageAdapter';
 
 export function getTrainerBoxes(trainer?: TrainerRoster, camp?: CampaignProfile): PcBox[] {
-    if (trainer) {
-        if (trainer.boxes && trainer.boxes.length > 0) return trainer.boxes;
-        return Array.from({ length: 8 }, (_, i) => createDefaultBox(i));
-    }
-    if (camp?.boxes && camp.boxes.length > 0) return camp.boxes;
-    return Array.from({ length: 8 }, (_, i) => createDefaultBox(i));
+    const rawBoxes =
+        trainer && trainer.boxes && trainer.boxes.length > 0
+            ? trainer.boxes
+            : camp?.boxes && camp.boxes.length > 0
+              ? camp.boxes
+              : Array.from({ length: 8 }, (_, i) => createDefaultBox(i));
+
+    return rawBoxes.map((b) => {
+        if (!Array.isArray(b.slots)) {
+            return { ...b, slots: Array(30).fill(null) };
+        }
+        if (b.slots.length < 30) {
+            const padded = [...b.slots];
+            while (padded.length < 30) padded.push(null);
+            return { ...b, slots: padded };
+        }
+        return b;
+    });
 }
 
 export function stripEntityFromBoxes(boxes: PcBox[] | undefined, entityId: string): PcBox[] | undefined {

@@ -82,7 +82,6 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
                 if (typeof window !== 'undefined') window.dispatchEvent(new Event('pkr-local-data-changed'));
             } catch (e) {
                 console.error('[PcSlice] Failed to initialize PC storage:', e);
-                set({ isInitialized: true });
             }
         },
 

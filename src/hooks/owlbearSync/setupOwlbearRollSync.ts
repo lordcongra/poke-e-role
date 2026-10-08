@@ -3,6 +3,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { isBattleOrganizerOpen } from '../../components/modals/battleOrganizer/battleOrganizerSettingsHelper';
 import { parseRollLogEntry } from '../../components/modals/battleOrganizer/battleOrganizerRollParser';
 import { isStandaloneMode, storageAdapter, LOCAL_STORAGE_PREFIX } from '../../utils/sync/storageAdapter';
+import { idbGetCharacter } from '../../utils/sync/standaloneIdb';
 import { EXTENSION_ID, type RollSyncData, showDicePlusRetirementNotice } from './owlbearSyncConstants';
 
 export interface OwlbearRollSyncResult {
@@ -175,10 +176,22 @@ async function processDamageAbsorption(rollData: RollSyncData, myRole: string): 
                     tempHp = globalStore.health.temporaryHitPoints ?? 0;
                     baseHp = globalStore.health.hpCurr ?? 0;
                 } else {
+                    let charMeta: Record<string, unknown> | undefined;
                     const raw = localStorage.getItem(`${LOCAL_STORAGE_PREFIX}${targetTokenId}`);
-                    const charMeta = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
-                    tempHp = Number(charMeta['temporary-hit-points'] ?? 0);
-                    baseHp = Number(charMeta['hp-curr'] ?? 0);
+                    if (raw) {
+                        try {
+                            charMeta = JSON.parse(raw) as Record<string, unknown>;
+                        } catch {}
+                    }
+                    if (!charMeta) {
+                        const idbChar = await idbGetCharacter(targetTokenId).catch(() => undefined);
+                        if (idbChar?.metadata) {
+                            charMeta = idbChar.metadata as Record<string, unknown>;
+                        }
+                    }
+                    const finalMeta = charMeta || {};
+                    tempHp = Number(finalMeta['temporary-hit-points'] ?? 0);
+                    baseHp = Number(finalMeta['hp-curr'] ?? 0);
                 }
 
                 const absorbed = Math.min(tempHp, incomingDamage);

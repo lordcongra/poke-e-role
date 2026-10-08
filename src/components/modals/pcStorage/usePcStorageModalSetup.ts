@@ -11,6 +11,7 @@ export function usePcStorageModalSetup(
     activeTokenId: string | null | undefined,
     role?: 'PLAYER' | 'GM'
 ) {
+    const isInitialized = useCharacterStore((state) => state.isInitialized);
     const [myPlayerId, setMyPlayerId] = useState<string | undefined>();
     const [isActiveTokenLocked, setIsActiveTokenLocked] = useState(false);
     const [dismissBackupWarning, setDismissBackupWarning] = useState(
@@ -85,8 +86,9 @@ export function usePcStorageModalSetup(
         }
     }, [activeTokenId, role]);
 
-    // Sanitize PC data on mount
+    // Sanitize PC data on mount once initialized
     useEffect(() => {
+        if (!isInitialized) return;
         const sanitized = sanitizePcData(pcData);
         const { updated, hasChanges } = refreshSummariesFromLocalStorage(sanitized.pokemonSummaries || {});
         if (hasChanges || JSON.stringify(sanitized) !== JSON.stringify(pcData)) {
@@ -94,7 +96,7 @@ export function usePcStorageModalSetup(
             useCharacterStore.setState({ pcData: nextData });
             savePcStorage(nextData);
         }
-    }, []);
+    }, [isInitialized]);
 
     return {
         myPlayerId,
