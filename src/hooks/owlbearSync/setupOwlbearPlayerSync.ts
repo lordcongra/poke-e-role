@@ -30,7 +30,7 @@ export async function setupOwlbearPlayerSync(params: { role: 'PLAYER' | 'GM' }):
                 }
 
                 const currentRole = overrideRole || (await OBR.player.getRole()) || role;
-                if (currentRole !== 'GM') {
+                if (currentRole !== 'GM' && tokenItem.locked) {
                     const myId = await OBR.player.getId().catch(() => undefined);
                     const claim = tokenItem.metadata?.['pokerole-pmd-extension/claimed-by'] as
                         | { playerId?: string }
@@ -84,40 +84,38 @@ export async function setupOwlbearPlayerSync(params: { role: 'PLAYER' | 'GM' }):
                     if (!isCreator && !isClaimed && !isLinkedTrainer) {
                         if (OBR.isAvailable) {
                             OBR.notification.show(
-                                tokenItem.locked
-                                    ? 'This character sheet is locked by the GM. Ask your GM to unlock it to view or add it!'
-                                    : 'You do not own this character token.',
+                                'This character sheet is locked by the GM. Ask your GM to unlock it to view or add it!',
                                 'INFO'
                             );
                         }
                         return;
                     }
                 }
-                const store = useCharacterStore.getState();
+
                 const meta = rawMeta as Record<string, unknown> | undefined;
 
-                if (meta) {
-                    try {
-                        await hydrateActiveSheet({
-                            targetId: targetTokenId,
-                            overrideRole: currentRole,
-                            sourceMeta: meta,
-                            tokenItem,
-                            saveIfNewer: true,
-                            applyTheme: true,
-                            fetchSpecies: true
-                        });
-                    } catch (e) {
-                        console.error(
-                            '[SyncEngine] CRITICAL: Corrupted token metadata detected. Resetting sheet to protect engine.',
-                            e
-                        );
-                        if (OBR.isAvailable) {
-                            OBR.notification.show('Corrupted character data on token! Please re-import.', 'ERROR');
-                        }
+                try {
+                    await hydrateActiveSheet({
+                        targetId: targetTokenId,
+                        overrideRole: currentRole,
+                        sourceMeta: meta || {},
+                        tokenItem,
+                        saveIfNewer: true,
+                        applyTheme: true,
+                        fetchSpecies: true
+                    });
+                } catch (e) {
+                    console.error(
+                        '[SyncEngine] CRITICAL: Corrupted token metadata detected. Resetting sheet to protect engine.',
+                        e
+                    );
+                    if (OBR.isAvailable) {
+                        OBR.notification.show('Corrupted character data on token! Please re-import.', 'ERROR');
                     }
+                }
 
-                    // Legacy v2 token move migration (GM only)
+                // Legacy v2 token move migration (GM only)
+                if (meta) {
                     try {
                         const isOldToken = meta['v2-migrated'] !== true;
                         const migrationTokenId = targetTokenId;
@@ -143,9 +141,6 @@ export async function setupOwlbearPlayerSync(params: { role: 'PLAYER' | 'GM' }):
                     } catch (e) {
                         console.error('[SyncEngine] Error during legacy v2 migration:', e);
                     }
-                } else {
-                    store.loadFromOwlbear({});
-                    store.applyLearnset({ Moves: [] });
                 }
             }
         } catch (error) {

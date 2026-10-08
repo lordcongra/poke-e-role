@@ -105,8 +105,8 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
             ? undefined
             : visibleTrainers[campaign?.activeTrainerId] ||
               resolveEffectiveActiveTrainer(campaign, myPlayerId, visibleTrainers);
-    const isStorageProfile = activeRoster?.profileType === 'storage';
-    const isPmdMode = campaign?.activeTrainerId === '__none__' || isStorageProfile;
+    const isStorageProfile = Boolean(activeRoster?.profileType === 'storage' || activeRoster?.id?.startsWith('__pmd_'));
+    const isPmdMode = Boolean(campaign?.activeTrainerId === '__none__' || isStorageProfile);
     const trainer = isPmdMode ? undefined : activeRoster;
 
     const handleModalClose = () => {
@@ -414,6 +414,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         trainerName={trainer?.name}
                         trainerSummary={trainerSummary}
                         isPmdMode={isPmdMode}
+                        isStorageProfile={isStorageProfile}
                         activeStorageName={isStorageProfile ? activeRoster?.name : undefined}
                         trainerAvatarUrl={trainer?.avatarUrl}
                         activeCharacterName={identity.nickname || identity.species}

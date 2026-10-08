@@ -283,9 +283,8 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
     if (resolvedEntityId) {
         finalMeta.entityId = resolvedEntityId;
     }
-    store.loadFromOwlbear(finalMeta);
 
-    // 5. Reconcile token image
+    // Extract token image and name if available (especially on fresh or uninitialized tokens)
     const imgItem = tokenItem as Image | undefined;
     const resolvedImgUrl =
         imgItem?.image?.url ||
@@ -295,6 +294,19 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
         existingSum?.tokenImageUrl ||
         existingTrainer?.avatarUrl ||
         null;
+    if (resolvedImgUrl && !finalMeta['token-image-url'] && !finalMeta['tokenImageUrl']) {
+        finalMeta['token-image-url'] = resolvedImgUrl;
+    }
+
+    const rawTokenName = tokenItem?.name?.trim();
+    const tokenName = rawTokenName ? rawTokenName.replace(/\.(png|jpe?g|webp|gif|svg)$/i, '').trim() : '';
+    if (tokenName && !finalMeta['nickname'] && !finalMeta['species']) {
+        finalMeta['nickname'] = tokenName;
+    }
+
+    store.loadFromOwlbear(finalMeta);
+
+    // 5. Reconcile token image
     if (resolvedImgUrl) {
         store.setIdentity('tokenImageUrl', resolvedImgUrl);
     }

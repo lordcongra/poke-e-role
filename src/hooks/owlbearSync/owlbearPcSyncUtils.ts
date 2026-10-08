@@ -128,6 +128,7 @@ export function sanitizeTrainerForSync(t: TrainerRoster): TrainerRoster {
         party: deduped.party,
         boxes: deduped.boxes,
         isLinked: deduped.isLinked,
+        profileType: deduped.profileType,
         mapTokenId: deduped.mapTokenId,
         playerId: deduped.playerId,
         playerName: deduped.playerName,

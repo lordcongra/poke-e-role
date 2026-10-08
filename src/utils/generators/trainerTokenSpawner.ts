@@ -110,6 +110,9 @@ export function findMatchingSceneImage(
 }
 
 export async function resolveImageDimensions(url: string): Promise<{ width: number; height: number }> {
+    if (url && url.includes('pokeball.svg')) {
+        return { width: 100, height: 100 };
+    }
     return new Promise((resolve) => {
         const img = new window.Image();
         img.onload = () => resolve({ width: img.naturalWidth || 300, height: img.naturalHeight || 300 });

@@ -12,6 +12,7 @@ export interface PcStorageLayoutProps {
     trainerName?: string;
     trainerSummary: PcPokemonSummary | null;
     isPmdMode: boolean;
+    isStorageProfile?: boolean;
     activeStorageName?: string;
     trainerAvatarUrl?: string;
     activeCharacterName: string;
@@ -51,6 +52,7 @@ export const PcStorageLayout: React.FC<PcStorageLayoutProps> = ({
     trainerName,
     trainerSummary,
     isPmdMode,
+    isStorageProfile,
     activeStorageName,
     trainerAvatarUrl,
     activeCharacterName,
@@ -91,6 +93,7 @@ export const PcStorageLayout: React.FC<PcStorageLayoutProps> = ({
                 trainerName={trainerName}
                 trainerSummary={trainerSummary}
                 isPmdMode={isPmdMode}
+                isStorageProfile={isStorageProfile}
                 activeStorageName={activeStorageName}
                 trainerAvatarUrl={trainerAvatarUrl}
                 activeCharacterName={activeCharacterName}

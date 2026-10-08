@@ -62,6 +62,9 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
 
                     if (payload.trainer && payload.trainer.id && !payload.trainer.id.startsWith('__player_')) {
                         const cleanIncoming = sanitizeTrainerForSync(payload.trainer);
+                        if (cleanIncoming.id.startsWith('__pmd_')) {
+                            cleanIncoming.profileType = 'storage';
+                        }
                         if (!cleanIncoming.playerId && payload.playerId) {
                             cleanIncoming.playerId = payload.playerId;
                         }

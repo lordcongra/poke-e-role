@@ -28,6 +28,7 @@ interface PcPartyDockProps {
     trainerName?: string;
     trainerSummary?: PcPokemonSummary | null;
     isPmdMode?: boolean;
+    isStorageProfile?: boolean;
     activeStorageName?: string;
     trainerAvatarUrl?: string;
     isTrainerLinked?: boolean;
@@ -62,6 +63,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
     trainerName,
     trainerSummary,
     isPmdMode = false,
+    isStorageProfile = false,
     activeStorageName,
     trainerAvatarUrl,
     isTrainerLinked = false,
@@ -88,7 +90,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
     onUnlinkTrainer,
     onOrganizeFolders
 }) => {
-    const isPmd = isPmdMode || !trainerName;
+    const isPmd = isPmdMode || isStorageProfile || activeStorageName !== undefined || !trainerName;
     const displayTitle = isPmd ? activeStorageName || 'Active Team' : `${trainerName}'s Belt`;
     const occupiedCount = partySlots.filter(Boolean).length;
     const resolvedTrainerAvatar = useResolvedImageUrl(trainerAvatarUrl);

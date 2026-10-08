@@ -110,7 +110,7 @@ export function buildLinkedTrainer(
 export function buildTrainerSummary(
     trainer: TrainerRoster
 ): import('../../types/pcStorageTypes').PcPokemonSummary | null {
-    if (trainer.profileType === 'storage') return null;
+    if (trainer.profileType === 'storage' || trainer.id.startsWith('__pmd_')) return null;
     let localMeta: Record<string, unknown> | null = null;
     if (typeof window !== 'undefined' && window.localStorage) {
         try {

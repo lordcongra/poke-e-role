@@ -133,7 +133,8 @@ export async function broadcastPlayerPc(params?: {
             }
         }
 
-        if (cleanSummaries.length === 0 && !params?.trainer) return;
+        const isAnonPlaceholder = !trainer || !trainer.id || trainer.id.startsWith('__player_');
+        if (cleanSummaries.length === 0 && isAnonPlaceholder) return;
 
         const CHUNK_SIZE = 1;
         const totalChunks = Math.max(1, Math.ceil(cleanSummaries.length / CHUNK_SIZE));
