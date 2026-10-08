@@ -21,9 +21,11 @@ export function persistTrainerSwitch(campId: string, trainerId: string, pid?: st
 }
 
 /**
- * Filters trainers based on player role:
- * - GM sees all trainers in the room/campaign.
+ * INVARIANT: Role-based trainer filtering protocol (DO NOT REVERT).
+ * - GM (role === 'GM') sees all trainers in the room/campaign.
  * - Non-GM players ONLY see their own trainers (matched strictly by playerId or claim metadata).
+ * - NEVER add fallbacks for unassigned trainers or activeTokenId for non-GM players; clicking
+ *   on another player's token on the map must NEVER reveal that person's trainer or PC storage.
  */
 export function filterTrainersForRole(
     trainers: Record<string, TrainerRoster> = {},

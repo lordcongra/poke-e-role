@@ -97,6 +97,8 @@ export const TrainerOrganizerModal: React.FC<TrainerOrganizerModalProps> = ({
 
     useEffect(() => {
         if (!isOpen) return;
+        // INVARIANT: TrainerOrganizerModal is strictly for real Trainer profiles.
+        // PMD storage profiles (__pmd_* or profileType === 'storage') are per-player storages and MUST NOT appear here.
         const allIds = Object.keys(trainers).filter(
             (id) => trainers[id] && trainers[id].profileType !== 'storage' && !id.startsWith('__pmd_')
         );

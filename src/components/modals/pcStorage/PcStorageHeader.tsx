@@ -221,6 +221,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                                     ))}
                                 </optgroup>
                             )}
+                            {/* INVARIANT: Non-GM players only see their own Personal PMD Storage (__none__). GM sees all connected players' individual storages. */}
                             <optgroup label="PMD / Team Storage">
                                 {isGm &&
                                     storageProfiles.map((t) => {

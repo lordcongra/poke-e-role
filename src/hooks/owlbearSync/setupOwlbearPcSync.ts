@@ -237,8 +237,9 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                                     : existingTrainer?.playerId === myId)
                             );
 
+                            // INVARIANT: When a trainer is assigned to someone else (GM or another player),
+                            // non-GM clients MUST immediately evict it from their local roster to prevent leakage.
                             if (cleanIncoming.playerId && myId && cleanIncoming.playerId !== myId) {
-                                // Assigned to someone else (GM or another player) -> remove from this player's local roster
                                 if (existingTrainer) {
                                     delete updatedTrainers[cleanIncoming.id];
                                     campChanged = true;
