@@ -19,6 +19,7 @@ import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
 import { runOrganizeFoldersAction } from '../../../utils/pc/pcSidebarSync';
 import { resolveEffectiveActiveTrainer, filterTrainersForRole } from '../../../utils/pc/pcCampaignTrainerOps';
 import { handlePcDragStart, handlePcDrop, type PcDragItem } from '../../../utils/pc/pcDragDropUtils';
+import { linkAndSpawnTrainerToken } from '../../../utils/pc/pcTrainerTokenOps';
 import { usePcModalHandlers } from './usePcModalHandlers';
 import { usePcStorageModalSetup } from './usePcStorageModalSetup';
 import './PcStorageModal.css';
@@ -81,6 +82,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     const [sheetViewEntityId, setSheetViewEntityId] = useState<string | null>(null);
     const [releaseConfirmPokemon, setReleaseConfirmPokemon] = useState<PcPokemonSummary | null>(null);
     const [mobileTab, setMobileTab] = useState<'party' | 'box'>('party');
+    const [isTokenSpawnModalOpen, setIsTokenSpawnModalOpen] = useState(false);
 
     const {
         myPlayerId,
@@ -98,10 +100,14 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         () => filterTrainersForRole(campaign?.trainers, myPlayerId, isGm, activeTokenId),
         [campaign?.trainers, myPlayerId, isGm, activeTokenId]
     );
-    const isPmdMode = campaign?.activeTrainerId === '__none__';
-    const trainer = isPmdMode
-        ? undefined
-        : resolveEffectiveActiveTrainer(campaign, myPlayerId, visibleTrainers) || Object.values(visibleTrainers)[0];
+    const activeRoster =
+        campaign?.activeTrainerId === '__none__'
+            ? undefined
+            : visibleTrainers[campaign?.activeTrainerId] ||
+              resolveEffectiveActiveTrainer(campaign, myPlayerId, visibleTrainers);
+    const isStorageProfile = activeRoster?.profileType === 'storage';
+    const isPmdMode = campaign?.activeTrainerId === '__none__' || isStorageProfile;
+    const trainer = isPmdMode ? undefined : activeRoster;
 
     const handleModalClose = () => {
         if (OBR.isAvailable) {
@@ -109,8 +115,9 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         }
         onClose();
     };
-    const partySlots = trainer ? trainer.party : campaign?.teamParty || Array(6).fill(null);
-    const trainerBoxes = trainer?.boxes && trainer.boxes.length > 0 ? trainer.boxes : campaign?.boxes || [];
+    const partySlots = activeRoster ? activeRoster.party : campaign?.teamParty || Array(6).fill(null);
+    const trainerBoxes =
+        activeRoster?.boxes && activeRoster.boxes.length > 0 ? activeRoster.boxes : campaign?.boxes || [];
     const currentBox = trainerBoxes[activeBoxIndex] || trainerBoxes[0];
 
     const currentActiveSummary = buildActiveCharacterSummary(
@@ -122,7 +129,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         pcData.pokemonSummaries,
         partySlots
     );
-    const trainerPokemonSummaries = filterTrainerPokemonSummaries(pcData.pokemonSummaries, trainer, campaign);
+    const trainerPokemonSummaries = filterTrainerPokemonSummaries(pcData.pokemonSummaries, activeRoster, campaign);
 
     const otherLinkedTrainer = findOtherLinkedTrainer(campaign, trainer?.id, activeTokenId, identity);
     const canLinkActiveTrainer =
@@ -200,9 +207,33 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         setSheetViewEntityId(entityId);
     };
 
+    const handleOpenTrainerSheet = () => {
+        if (!trainer) return;
+        if (!isTrainerLinked) {
+            setIsTokenSpawnModalOpen(true);
+        } else {
+            handleOpenCharacterSheet(trainer.id);
+        }
+    };
+
+    const handleSpawnTrainerToken = async (imageUrl: string) => {
+        if (!trainer || !campaign) return;
+        const { newMapTokenId } = await linkAndSpawnTrainerToken({
+            trainer,
+            imageUrl,
+            role: role || 'PLAYER',
+            pcData,
+            campaignId: campaign.id
+        });
+        setIsTokenSpawnModalOpen(false);
+        if (newMapTokenId || !OBR.isAvailable) {
+            handleOpenCharacterSheet(trainer.id);
+        }
+    };
+
     const trainerSummary: PcPokemonSummary | null = useMemo(
-        () => (trainer ? buildTrainerSummary(trainer) : null),
-        [trainer]
+        () => (!isPmdMode && trainer ? buildTrainerSummary(trainer) : null),
+        [trainer, isPmdMode]
     );
     const rawActiveSheetSummary =
         (sheetViewEntityId && pcData.pokemonSummaries[sheetViewEntityId]) ||
@@ -268,6 +299,26 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         runOrganizeFoldersAction(trainer, partySlots, trainerBoxes);
     }, [trainer, partySlots, trainerBoxes]);
 
+    const handleAssignTrainer = useCallback(
+        (trainerId: string, playerId?: string, playerName?: string) => {
+            updateTrainerProfile(trainerId, {
+                playerId: playerId || undefined,
+                playerName: playerName || undefined
+            });
+            if (OBR.isAvailable && role === 'GM') {
+                const camp = pcData.campaigns[pcData.activeCampaignId];
+                const tr = camp?.trainers[trainerId];
+                if (tr) {
+                    broadcastGmPc({
+                        campaignId: pcData.activeCampaignId,
+                        trainer: { ...tr, playerId: playerId || undefined, playerName: playerName || undefined }
+                    }).catch(console.warn);
+                }
+            }
+        },
+        [pcData, role, updateTrainerProfile]
+    );
+
     const handlePartyDrop = useCallback(
         (e: React.DragEvent, targetIndex: number) => {
             handlePcDrop(e, { type: 'party', index: targetIndex }, activeBoxIndex, dragSource, swapPcSlots);
@@ -321,7 +372,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         isGm={role === 'GM'}
                         activeRoomCampaignId={identity.activeRoomCampaignId}
                         activeRoomCampaignName={identity.activeRoomCampaignName}
-                        activeTrainer={trainer}
+                        activeTrainer={activeRoster}
                         trainers={visibleTrainers}
                         trainerOrder={campaign?.trainerOrder}
                         onReorderTrainers={(order) => campaign && reorderTrainers(campaign.id, order)}
@@ -329,6 +380,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         onAddTrainer={addTrainer}
                         onRenameTrainer={renameTrainer}
                         onDeleteTrainer={deleteTrainer}
+                        onAssignTrainer={handleAssignTrainer}
                         boxes={trainerBoxes}
                         activeBoxIndex={activeBoxIndex}
                         onSelectBox={setActiveBoxIndex}
@@ -362,6 +414,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         trainerName={trainer?.name}
                         trainerSummary={trainerSummary}
                         isPmdMode={isPmdMode}
+                        activeStorageName={isStorageProfile ? activeRoster?.name : undefined}
                         trainerAvatarUrl={trainer?.avatarUrl}
                         activeCharacterName={identity.nickname || identity.species}
                         activeCharacterAvatarUrl={identity.tokenImageUrl || undefined}
@@ -381,7 +434,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         isTrainerLinked={isTrainerLinked}
                         isTrainerOnMap={isTrainerOnMap}
                         onUnlinkTrainer={handleUnlinkTrainer}
-                        onOpenTrainerSheet={trainer ? () => handleOpenCharacterSheet(trainer.id) : undefined}
+                        onOpenTrainerSheet={trainer ? handleOpenTrainerSheet : undefined}
                         onDropTrainerToken={handleDropTrainerToken}
                         onOrganizeFolders={!OBR.isAvailable ? handleOrganizeFolders : undefined}
                         currentBox={currentBox}
@@ -439,6 +492,9 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                 gmClaimConflict={gmClaimConflict}
                 onCloseGmClaimConflict={() => setGmClaimConflict(null)}
                 onConfirmGmClaimOverride={handleConfirmGmClaimOverride}
+                isTokenSpawnModalOpen={isTokenSpawnModalOpen}
+                onCloseTokenSpawnModal={() => setIsTokenSpawnModalOpen(false)}
+                onSpawnTrainerToken={handleSpawnTrainerToken}
             />
         </>
     );

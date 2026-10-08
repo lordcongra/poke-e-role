@@ -11,6 +11,8 @@ export interface PlayerPcSyncPayload {
     chunkIndex?: number;
     totalChunks?: number;
     senderId?: string;
+    playerId?: string;
+    playerName?: string;
 }
 
 export interface GmPcSyncPayload {
@@ -128,6 +130,7 @@ export function sanitizeTrainerForSync(t: TrainerRoster): TrainerRoster {
         isLinked: deduped.isLinked,
         mapTokenId: deduped.mapTokenId,
         playerId: deduped.playerId,
+        playerName: deduped.playerName,
         fullMetadata: slimMeta
     };
 }

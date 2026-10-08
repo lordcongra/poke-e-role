@@ -62,8 +62,11 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
 
                     if (payload.trainer && payload.trainer.id && !payload.trainer.id.startsWith('__player_')) {
                         const cleanIncoming = sanitizeTrainerForSync(payload.trainer);
-                        if (!cleanIncoming.playerId && payload.senderId) {
-                            cleanIncoming.playerId = payload.senderId;
+                        if (!cleanIncoming.playerId && payload.playerId) {
+                            cleanIncoming.playerId = payload.playerId;
+                        }
+                        if (payload.playerName && !cleanIncoming.playerName) {
+                            cleanIncoming.playerName = payload.playerName;
                         }
                         const existingTrainer = currentCamp.trainers[cleanIncoming.id];
                         updatedTrainers[cleanIncoming.id] = existingTrainer
@@ -224,9 +227,12 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                             // Ignore GM PMD team broadcast on player clients to protect personal PMD storage
                         } else {
                             const existingTrainer = currentCamp.trainers[cleanIncoming.id];
-                            const isOwnedByMe =
-                                (cleanIncoming.playerId && myId && cleanIncoming.playerId === myId) ||
-                                (existingTrainer && (!existingTrainer.playerId || existingTrainer.playerId === myId));
+                            const isOwnedByMe = Boolean(
+                                myId &&
+                                (cleanIncoming.playerId
+                                    ? cleanIncoming.playerId === myId
+                                    : existingTrainer?.playerId === myId)
+                            );
 
                             if (existingTrainer && isOwnedByMe) {
                                 updatedTrainers[cleanIncoming.id] = {

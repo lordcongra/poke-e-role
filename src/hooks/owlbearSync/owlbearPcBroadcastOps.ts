@@ -49,6 +49,7 @@ export async function broadcastPlayerPc(params?: {
         if (!campaign || campaign.isPrivate) return;
 
         const myPlayerId = await OBR.player.getId().catch(() => undefined);
+        const myName = await OBR.player.getName().catch(() => undefined);
         let rawTrainer: TrainerRoster | undefined = params?.trainer;
         if (!rawTrainer) {
             rawTrainer = resolveEffectiveActiveTrainer(campaign, myPlayerId);
@@ -56,25 +57,36 @@ export async function broadcastPlayerPc(params?: {
         const isPmd = !rawTrainer && campaign.activeTrainerId === '__none__';
 
         if (isPmd && !rawTrainer) {
-            const myName = (await OBR.player.getName().catch(() => 'Player')) || 'Player';
+            const resolvedName = myName || 'Player';
+            const storageName = campaign.teamStorageName || 'None / PMD Storage';
             rawTrainer = {
-                id: `__pmd_${myName.toLowerCase().replace(/\s+/g, '_')}__`,
-                name: `${myName}'s Team`,
+                id: `__pmd_${myPlayerId || resolvedName.toLowerCase().replace(/\s+/g, '_')}__`,
+                name: storageName,
                 party: campaign.teamParty || [],
                 boxes: campaign.boxes || [],
-                isLinked: false
+                isLinked: false,
+                profileType: 'storage',
+                playerId: myPlayerId,
+                playerName: resolvedName
             };
         }
 
         if (!rawTrainer) {
-            const myName = (await OBR.player.getName().catch(() => 'Player')) || 'Player';
+            const resolvedName = myName || 'Player';
             rawTrainer = {
                 id: `__player_${myPlayerId || 'anon'}__`,
-                name: myName,
+                name: resolvedName,
                 party: [],
                 boxes: [],
                 isLinked: false
             };
+        }
+
+        if (rawTrainer && !rawTrainer.playerId && myPlayerId) {
+            rawTrainer.playerId = myPlayerId;
+        }
+        if (rawTrainer && !rawTrainer.playerName && myName) {
+            rawTrainer.playerName = myName;
         }
 
         const trainer = sanitizeTrainerForSync(rawTrainer);
@@ -135,7 +147,9 @@ export async function broadcastPlayerPc(params?: {
                 summaries: chunkSlice,
                 chunkIndex: i,
                 totalChunks,
-                senderId: params?.senderId || LOCAL_CLIENT_ID
+                senderId: params?.senderId || LOCAL_CLIENT_ID,
+                playerId: myPlayerId,
+                playerName: myName
             };
 
             await sendSafeBroadcastPayload(`${EXTENSION_ID}/pc-player-sync`, payload).catch((err) => {
@@ -332,11 +346,12 @@ export function triggerDebouncedPcBroadcast(delayMs = 250): void {
             if (effectiveRole === 'GM') {
                 broadcastGmPc().catch((err) => console.warn('[PcBroadcast] GM debounced broadcast failed:', err));
             } else {
-                broadcastPlayerPc().catch((err) => console.warn('[PcBroadcast] Player debounced broadcast failed:', err));
+                broadcastPlayerPc().catch((err) =>
+                    console.warn('[PcBroadcast] Player debounced broadcast failed:', err)
+                );
             }
         } catch (e) {
             console.warn('[PcBroadcast] Error triggering debounced PC broadcast:', e);
         }
     }, delayMs);
 }
-

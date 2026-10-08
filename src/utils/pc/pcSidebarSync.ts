@@ -437,14 +437,15 @@ export async function runOrganizeFoldersAction(
     trainerBoxes: PcBox[]
 ): Promise<void> {
     const { organizePmdSidebarFolders } = await import('./pcPmdSidebarSync');
-    const res = !trainer
+    const isPmd = !trainer || trainer.profileType === 'storage';
+    const res = isPmd
         ? await organizePmdSidebarFolders(partySlots, trainerBoxes)
         : await organizeTrainerSidebarFolders(trainer, trainerBoxes);
 
     if (res.success) {
-        const label = trainer ? `for ${trainer.name}` : 'for Active Team';
+        const label = !isPmd ? `for ${trainer?.name}` : 'for Active Team';
         const details = [
-            res.createdBelt ? (trainer ? '• Created Belt folder' : '• Created Active Team folder') : '',
+            res.createdBelt ? (!isPmd ? '• Created Belt folder' : '• Created Active Team folder') : '',
             res.createdBoxes > 0 ? `• Created ${res.createdBoxes} Box folder(s)` : '',
             `• Moved ${res.movedPokemonCount} Pokémon sheet(s) into their matching folders.`
         ]
@@ -454,7 +455,7 @@ export async function runOrganizeFoldersAction(
         if (typeof window !== 'undefined') {
             window.dispatchEvent(new Event('pkr-local-data-changed'));
         }
-    } else if (trainer) {
+    } else if (!isPmd && trainer) {
         alert(`Unable to organize folders for ${trainer.name}. Please ensure this Trainer exists in the Directory.`);
     }
 }

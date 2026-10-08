@@ -199,7 +199,8 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             const camp = pcData.campaigns[pcData.activeCampaignId];
             if (!camp) return;
 
-            const nextData = applyAddBox(pcData, name);
+            const safeName = typeof name === 'string' && name.trim() ? name.trim() : undefined;
+            const nextData = applyAddBox(pcData, safeName);
             set({ pcData: nextData, activeBoxIndex: camp.boxes.length });
             savePcStorage(nextData);
         } catch (e) {
@@ -276,10 +277,13 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             persistTrainerSwitch(campId, trainerId, pid);
 
             if (OBR.isAvailable && !pid) {
-                OBR.player.getId().then((id) => {
-                    setCachedObrPlayerId(id);
-                    persistTrainerSwitch(campId, trainerId, id);
-                }).catch(() => {});
+                OBR.player
+                    .getId()
+                    .then((id) => {
+                        setCachedObrPlayerId(id);
+                        persistTrainerSwitch(campId, trainerId, id);
+                    })
+                    .catch(() => {});
             }
 
             const nextData = {
@@ -302,12 +306,26 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
         }
     },
 
-    addTrainer: (name: string, options?: { existingCharacterId?: string; isLinked?: boolean }) => {
+    addTrainer: (
+        name: string,
+        options?: {
+            existingCharacterId?: string;
+            isLinked?: boolean;
+            profileType?: 'trainer' | 'storage';
+            playerId?: string;
+            playerName?: string;
+        }
+    ) => {
         try {
             const { nextData, newId } = applyAddTrainer(get().pcData, name, options);
-            if (!options?.existingCharacterId) initStandaloneTrainerSheet(newId, name);
+            const isLinked =
+                options?.profileType === 'storage'
+                    ? false
+                    : (options?.isLinked ?? Boolean(options?.existingCharacterId));
+            if (!options?.existingCharacterId && isLinked) initStandaloneTrainerSheet(newId, name);
             set({ pcData: nextData });
             savePcStorage(nextData);
+            if (OBR.isAvailable) triggerDebouncedPcBroadcast();
         } catch (e) {
             console.error('[PcSlice] Failed to add trainer:', e);
         }
@@ -347,7 +365,8 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             if (!res.success) return;
             set({ pcData: res.nextData });
             savePcStorage(res.nextData);
-            syncStandaloneTrainerRename(trainerId, newName);
+            if (trainerId !== '__none__') syncStandaloneTrainerRename(trainerId, newName);
+            if (OBR.isAvailable) triggerDebouncedPcBroadcast();
         } catch (e) {
             console.error('[PcSlice] Failed to rename trainer:', e);
         }
@@ -444,7 +463,11 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             set({ pcData: res.nextData, activeBoxIndex: 0 });
             savePcStorage(res.nextData);
 
-            if (OBR.isAvailable && role === 'GM' && (deleted?.isRoomActive || identity.activeRoomCampaignId === campaignId)) {
+            if (
+                OBR.isAvailable &&
+                role === 'GM' &&
+                (deleted?.isRoomActive || identity.activeRoomCampaignId === campaignId)
+            ) {
                 get().updateRoomSetting('activeRoomCampaignId', '');
                 get().updateRoomSetting('activeRoomCampaignName', '');
             }
@@ -473,9 +496,13 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             if (!camp || !camp.trainers[trainerId]) return;
 
             const trainers = { ...camp.trainers, [trainerId]: { ...camp.trainers[trainerId], ...updates } };
-            const nextData = { ...pcData, campaigns: { ...pcData.campaigns, [pcData.activeCampaignId]: { ...camp, trainers } } };
+            const nextData = {
+                ...pcData,
+                campaigns: { ...pcData.campaigns, [pcData.activeCampaignId]: { ...camp, trainers } }
+            };
             set({ pcData: nextData });
             savePcStorage(nextData);
+            if (OBR.isAvailable) triggerDebouncedPcBroadcast();
         } catch (e) {
             console.error('[PcSlice] Failed to update trainer profile:', e);
         }

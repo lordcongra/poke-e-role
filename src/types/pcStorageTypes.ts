@@ -42,6 +42,8 @@ export interface TrainerRoster {
     savedTokenItem?: Item;
     fullMetadata?: Record<string, unknown>;
     playerId?: string; // Owlbear Rodeo player ID who owns this trainer
+    playerName?: string; // Owlbear Rodeo player name who owns this trainer
+    profileType?: 'trainer' | 'storage';
 }
 
 export interface PcBox {
@@ -61,6 +63,7 @@ export interface CampaignProfile {
     trainerOrder?: string[]; // Custom display order of trainer IDs
     boxes: PcBox[];
     teamParty?: (string | null)[]; // Active Team party for PMD / no-trainer campaigns
+    teamStorageName?: string;
     lastSynced?: number;
     isPrivate?: boolean;
     isRoomActive?: boolean;
@@ -97,7 +100,16 @@ export interface PcSlice {
     renameBox: (boxIndex: number, name: string) => void;
     setBoxTheme: (boxIndex: number, color: string, wallpaper?: string) => void;
     switchTrainer: (trainerId: string) => void;
-    addTrainer: (name: string, options?: { existingCharacterId?: string; isLinked?: boolean }) => void;
+    addTrainer: (
+        name: string,
+        options?: {
+            existingCharacterId?: string;
+            isLinked?: boolean;
+            profileType?: 'trainer' | 'storage';
+            playerId?: string;
+            playerName?: string;
+        }
+    ) => void;
     deleteTrainer: (trainerId: string, options?: { deletePc?: boolean; deleteBelt?: boolean }) => boolean;
     renameTrainer: (trainerId: string, newName: string) => void;
     reorderTrainers: (campaignId: string, trainerOrder: string[]) => void;

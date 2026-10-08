@@ -217,4 +217,3 @@ export function syncCampaignRoomSettingsOnEdit(
         updateRoomSetting('activeRoomCampaignName', updatedCampaign.name);
     }
 }
-

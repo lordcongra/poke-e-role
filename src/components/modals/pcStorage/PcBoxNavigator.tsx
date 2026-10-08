@@ -2,7 +2,17 @@ import React, { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import type { PcBox } from '../../../types/pcStorageTypes';
 import { getPlacementModePreference, setPlacementModePreference } from '../../../utils/pc/pcPlacementInteraction';
-import { ChevronLeft, ChevronRight, Edit2, Trash2, Check, Palette, Plus, MousePointerClick, Compass } from 'lucide-react';
+import {
+    ChevronLeft,
+    ChevronRight,
+    Edit2,
+    Trash2,
+    Check,
+    Palette,
+    Plus,
+    MousePointerClick,
+    Compass
+} from 'lucide-react';
 
 interface PcBoxNavigatorProps {
     boxes: PcBox[];
@@ -133,7 +143,9 @@ export const PcBoxNavigator: React.FC<PcBoxNavigatorProps> = ({
                                                 'WARNING'
                                             );
                                         } else if (typeof window !== 'undefined' && window.alert) {
-                                            window.alert('Cannot delete box: please empty or move stored Pokémon first.');
+                                            window.alert(
+                                                'Cannot delete box: please empty or move stored Pokémon first.'
+                                            );
                                         }
                                         return;
                                     }
@@ -211,7 +223,7 @@ export const PcBoxNavigator: React.FC<PcBoxNavigatorProps> = ({
                 <button
                     type="button"
                     className="action-button action-button--dark pc-header__new-box-btn"
-                    onClick={onAddBox}
+                    onClick={() => onAddBox()}
                     title="Add a new empty Box"
                 >
                     <Plus size={13} /> New Box

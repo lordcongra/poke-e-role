@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import type { CampaignProfile, TrainerRoster, PcBox } from '../../../types/pcStorageTypes';
-import { hasUnbackedData, storageAdapter, BACKUP_STATUS_EVENT } from '../../../utils/sync/storageAdapter';
+import { usePcHeaderBackupStatus } from './usePcHeaderBackupStatus';
 import { PcPromptModal } from './PcPromptModal';
 import { PcDeleteConfirmModal } from './PcDeleteConfirmModal';
 import { CampaignEditModal } from './CampaignEditModal';
 import { PcBoxNavigator } from './PcBoxNavigator';
 import { TrainerOrganizerModal } from './TrainerOrganizerModal';
+import { PcNewProfileModal } from './PcNewProfileModal';
 import { isCampaignRoomActive } from '../../../utils/pc/pcCampaignTrainerOps';
 import './PcStorageHeader.css';
 import {
@@ -45,9 +46,19 @@ interface PcStorageHeaderProps {
     trainerOrder?: string[];
     onReorderTrainers?: (newOrder: string[]) => void;
     onSwitchTrainer: (id: string) => void;
-    onAddTrainer: (name: string) => void;
+    onAddTrainer: (
+        name: string,
+        options?: {
+            existingCharacterId?: string;
+            isLinked?: boolean;
+            profileType?: 'trainer' | 'storage';
+            playerId?: string;
+            playerName?: string;
+        }
+    ) => void;
     onRenameTrainer?: (id: string, newName: string) => void;
     onDeleteTrainer?: (id: string, options?: { deletePc?: boolean; deleteBelt?: boolean }) => void;
+    onAssignTrainer?: (trainerId: string, playerId?: string, playerName?: string) => void;
     boxes: PcBox[];
     activeBoxIndex: number;
     onSelectBox: (index: number) => void;
@@ -80,6 +91,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
     onAddTrainer,
     onRenameTrainer,
     onDeleteTrainer,
+    onAssignTrainer,
     boxes,
     activeBoxIndex,
     onSelectBox,
@@ -93,29 +105,10 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
     onOpenGuide,
     onClose
 }) => {
-    const [hasUnbackedChanges, setHasUnbackedChanges] = useState(false);
-
-    useEffect(() => {
-        const checkBackupStatus = async () => {
-            try {
-                const chars = await storageAdapter.getLocalCharacters();
-                const flds = await storageAdapter.getFolders();
-                setHasUnbackedChanges(hasUnbackedData(chars.length, flds.length));
-            } catch {}
-        };
-
-        checkBackupStatus();
-        window.addEventListener(BACKUP_STATUS_EVENT, checkBackupStatus);
-        window.addEventListener('pkr-local-data-changed', checkBackupStatus);
-
-        return () => {
-            window.removeEventListener(BACKUP_STATUS_EVENT, checkBackupStatus);
-            window.removeEventListener('pkr-local-data-changed', checkBackupStatus);
-        };
-    }, []);
+    const hasUnbackedChanges = usePcHeaderBackupStatus();
 
     const [deleteTarget, setDeleteTarget] = useState<{
-        type: 'trainer' | 'campaign';
+        type: 'trainer' | 'campaign' | 'storage';
         id: string;
         name: string;
     } | null>(null);
@@ -128,6 +121,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
     const [campaignModalMode, setCampaignModalMode] = useState<'create' | 'edit' | null>(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isTrainerOrgOpen, setIsTrainerOrgOpen] = useState(false);
+    const [isNewProfileModalOpen, setIsNewProfileModalOpen] = useState(false);
 
     const activeCampaign = campaigns[activeCampaignId];
     const isActiveRoom = isCampaignRoomActive(activeCampaign, activeRoomCampaignId, activeRoomCampaignName);
@@ -146,6 +140,8 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
     const orderedTrainerIds = (trainerOrder || []).filter((id) => trainers[id]);
     const unorderedTrainerIds = Object.keys(trainers).filter((id) => !orderedTrainerIds.includes(id));
     const sortedTrainers = [...orderedTrainerIds, ...unorderedTrainerIds].map((id) => trainers[id]).filter(Boolean);
+    const trainerProfiles = sortedTrainers.filter((t) => t.profileType !== 'storage' && !t.id.startsWith('__pmd_'));
+    const storageProfiles = sortedTrainers.filter((t) => t.profileType === 'storage' || t.id.startsWith('__pmd_'));
 
     return (
         <header className="pc-header">
@@ -216,27 +212,59 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                             value={activeTrainer?.id || '__none__'}
                             onChange={(e) => onSwitchTrainer(e.target.value)}
                         >
-                            {sortedTrainers.map((t) => (
-                                <option key={t.id} value={t.id}>
-                                    {t.name}
+                            {trainerProfiles.length > 0 && (
+                                <optgroup label="Trainers">
+                                    {trainerProfiles.map((t) => (
+                                        <option key={t.id} value={t.id}>
+                                            {t.name}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            )}
+                            <optgroup label="PMD / Team Storage">
+                                {storageProfiles.map((t) => {
+                                    const displayName =
+                                        t.playerName && !t.name.toLowerCase().includes(t.playerName.toLowerCase())
+                                            ? `${t.playerName} - ${t.name}`
+                                            : t.name;
+                                    return (
+                                        <option key={t.id} value={t.id}>
+                                            📦 {displayName}
+                                        </option>
+                                    );
+                                })}
+                                <option value="__none__">
+                                    📦 {activeCampaign?.teamStorageName || 'None (PMD / Team Storage)'}
                                 </option>
-                            ))}
-                            <option value="__none__">None (PMD / Team Storage)</option>
+                            </optgroup>
                         </select>
-                        {activeTrainer && onRenameTrainer && (
+                        {onRenameTrainer && (
                             <button
                                 type="button"
                                 className="pc-header__mini-btn"
-                                onClick={() =>
+                                onClick={() => {
+                                    const isStorage = activeTrainer?.profileType === 'storage';
+                                    const defaultName = activeCampaign?.teamStorageName || 'None / PMD Storage';
+                                    const targetName = activeTrainer ? activeTrainer.name : defaultName;
                                     setPromptConfig({
                                         type: 'rename-trainer',
-                                        title: 'Rename Trainer Profile',
-                                        description: `Enter a new name for "${activeTrainer.name}".`,
-                                        placeholder: activeTrainer.name
-                                    })
+                                        title: isStorage
+                                            ? 'Rename Storage Profile'
+                                            : activeTrainer
+                                              ? 'Rename Trainer Profile'
+                                              : 'Rename Default Storage',
+                                        description: `Enter a new name for "${targetName}".`,
+                                        placeholder: targetName
+                                    });
+                                }}
+                                title={
+                                    activeTrainer?.profileType === 'storage'
+                                        ? 'Rename storage profile'
+                                        : activeTrainer
+                                          ? 'Rename active trainer profile'
+                                          : 'Rename default PMD storage'
                                 }
-                                title="Rename active trainer profile"
-                                aria-label="Rename active trainer profile"
+                                aria-label="Rename active profile"
                             >
                                 <Edit2 size={13} />
                             </button>
@@ -255,15 +283,9 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                         <button
                             type="button"
                             className="pc-header__mini-btn"
-                            onClick={() =>
-                                setPromptConfig({
-                                    type: 'trainer',
-                                    title: 'Create New Trainer Profile',
-                                    description: 'Add a new trainer with their own 6-slot Pokéball Belt Party.',
-                                    placeholder: 'e.g. Red, Blue, Ash, Duo Twin'
-                                })
-                            }
-                            title="Create a new trainer profile"
+                            onClick={() => setIsNewProfileModalOpen(true)}
+                            title="Create a new profile (Trainer or PMD Storage)"
+                            aria-label="Create a new profile"
                         >
                             <Plus size={13} />
                         </button>
@@ -272,9 +294,17 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                                 type="button"
                                 className="pc-header__mini-btn pc-header__mini-btn--danger"
                                 onClick={() =>
-                                    setDeleteTarget({ type: 'trainer', id: activeTrainer.id, name: activeTrainer.name })
+                                    setDeleteTarget({
+                                        type: activeTrainer.profileType === 'storage' ? 'storage' : 'trainer',
+                                        id: activeTrainer.id,
+                                        name: activeTrainer.name
+                                    })
                                 }
-                                title="Delete active trainer profile"
+                                title={
+                                    activeTrainer.profileType === 'storage'
+                                        ? 'Delete active storage profile'
+                                        : 'Delete active trainer profile'
+                                }
                             >
                                 <Trash2 size={13} />
                             </button>
@@ -302,13 +332,11 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                     <div className="pc-header__backup-wrapper">
                         <button
                             type="button"
-                            className={`action-button action-button--dark pc-header__cloud-btn ${
-                                hasUnbackedChanges ? 'pc-header__cloud-btn--unbacked' : ''
-                            }`}
+                            className={`action-button action-button--dark pc-header__cloud-btn ${hasUnbackedChanges ? 'pc-header__cloud-btn--unbacked' : ''}`}
                             onClick={onUploadCloud}
                             title={
                                 hasUnbackedChanges
-                                    ? 'Unbacked changes detected! Backup your PC storage and character sheets now.'
+                                    ? 'Unbacked changes detected! Backup now.'
                                     : OBR.isAvailable
                                       ? 'Backup PC Storage (Cloud Scene Asset, Open Scene Sync, or JSON)'
                                       : 'Download JSON backup of PC storage'
@@ -406,8 +434,8 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                         if (promptConfig.type === 'trainer') {
                             onAddTrainer(val);
                         } else if (promptConfig.type === 'rename-trainer') {
-                            if (onRenameTrainer && activeTrainer) {
-                                onRenameTrainer(activeTrainer.id, val);
+                            if (onRenameTrainer) {
+                                onRenameTrainer(activeTrainer?.id || '__none__', val);
                             }
                         } else {
                             onAddCampaign(val);
@@ -417,15 +445,15 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                 />
             )}
 
-            {/* In-App Double-Confirmation Modal for Deleting Trainer / Campaign */}
+            {/* In-App Double-Confirmation Modal for Deleting Trainer / Storage / Campaign */}
             {deleteTarget && (
                 <PcDeleteConfirmModal
                     type={deleteTarget.type}
                     name={deleteTarget.name}
-                    storedCount={deleteTarget.type === 'trainer' ? activeTrainerStoredCount : undefined}
-                    partyCount={deleteTarget.type === 'trainer' ? activeTrainerPartyCount : undefined}
+                    storedCount={deleteTarget.type !== 'campaign' ? activeTrainerStoredCount : undefined}
+                    partyCount={deleteTarget.type !== 'campaign' ? activeTrainerPartyCount : undefined}
                     onConfirm={(opts) => {
-                        if (deleteTarget.type === 'trainer' && onDeleteTrainer) {
+                        if (deleteTarget.type !== 'campaign' && onDeleteTrainer) {
                             onDeleteTrainer(deleteTarget.id, opts);
                         } else if (deleteTarget.type === 'campaign' && onDeleteCampaign) {
                             onDeleteCampaign(deleteTarget.id);
@@ -470,6 +498,19 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                     activeTrainerId={activeTrainer?.id}
                     onReorder={onReorderTrainers}
                     onSelectTrainer={onSwitchTrainer}
+                    isGm={isGm}
+                    onAssignTrainer={onAssignTrainer}
+                />
+            )}
+
+            {/* Create New Profile Modal (Trainer or PMD Storage) */}
+            {isNewProfileModalOpen && (
+                <PcNewProfileModal
+                    isOpen={isNewProfileModalOpen}
+                    onClose={() => setIsNewProfileModalOpen(false)}
+                    onCreate={(name, profileType) => {
+                        onAddTrainer(name, { profileType });
+                    }}
                 />
             )}
         </header>

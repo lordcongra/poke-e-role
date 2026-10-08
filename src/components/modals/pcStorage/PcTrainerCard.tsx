@@ -8,6 +8,7 @@ import { Shield, FileText, MapPin } from 'lucide-react';
 interface PcTrainerCardProps {
     summary: PcPokemonSummary;
     isTrainerOnMap?: boolean;
+    isTrainerLinked?: boolean;
     onOpenSheet?: () => void;
     onDropTrainerToken?: () => void;
 }
@@ -15,6 +16,7 @@ interface PcTrainerCardProps {
 export const PcTrainerCard: React.FC<PcTrainerCardProps> = ({
     summary,
     isTrainerOnMap = false,
+    isTrainerLinked = true,
     onOpenSheet,
     onDropTrainerToken
 }) => {
@@ -28,14 +30,18 @@ export const PcTrainerCard: React.FC<PcTrainerCardProps> = ({
               : 'var(--hp-red, #ef4444)';
     const willPercent = summary.maxWill > 0 ? Math.max(0, Math.min(100, (summary.will / summary.maxWill) * 100)) : 100;
 
+    const cardTitle = !isTrainerLinked
+        ? `${summary.name} (Trainer - Unlinked) - Double-click or click Sheet to link or spawn a token`
+        : `${summary.name} (Trainer) - Double-click to open character sheet`;
+
     return (
         <div
-            className="pc-trainer-card"
+            className={`pc-trainer-card ${!isTrainerLinked ? 'pc-trainer-card--unlinked' : ''}`}
             onDoubleClick={(e) => {
                 e.stopPropagation();
                 onOpenSheet?.();
             }}
-            title={`${summary.name} (Trainer) - Double-click to open character sheet`}
+            title={cardTitle}
         >
             <div className="pc-trainer-card__avatar-wrapper">
                 <img
@@ -58,6 +64,14 @@ export const PcTrainerCard: React.FC<PcTrainerCardProps> = ({
                         <Shield size={10} style={{ marginRight: 3 }} />
                         Trainer
                     </span>
+                    {!isTrainerLinked && (
+                        <span
+                            className="pc-trainer-card__unlinked-badge text-subtext"
+                            title="No token linked yet. Double-click or click Sheet to spawn or link a token."
+                        >
+                            Unlinked (No Token)
+                        </span>
+                    )}
                 </div>
 
                 <div className="pc-trainer-card__bars">
@@ -103,13 +117,21 @@ export const PcTrainerCard: React.FC<PcTrainerCardProps> = ({
                             e.stopPropagation();
                             onOpenSheet();
                         }}
-                        title={`Open ${summary.name}'s character sheet`}
-                        aria-label={`Open ${summary.name}'s character sheet`}
+                        title={
+                            !isTrainerLinked
+                                ? `Link or spawn token for ${summary.name}`
+                                : `Open ${summary.name}'s character sheet`
+                        }
+                        aria-label={
+                            !isTrainerLinked
+                                ? `Link or spawn token for ${summary.name}`
+                                : `Open ${summary.name}'s character sheet`
+                        }
                     >
                         <FileText size={13} />
                     </button>
                 )}
-                {OBR.isAvailable && onDropTrainerToken && (
+                {isTrainerLinked && OBR.isAvailable && onDropTrainerToken && (
                     <button
                         type="button"
                         className={`action-button action-button--theme pc-trainer-card__btn ${

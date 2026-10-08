@@ -30,15 +30,63 @@ export async function setupOwlbearPlayerSync(params: { role: 'PLAYER' | 'GM' }):
                 }
 
                 const currentRole = overrideRole || (await OBR.player.getRole()) || role;
-                if (currentRole !== 'GM' && tokenItem.locked) {
+                if (currentRole !== 'GM') {
                     const myId = await OBR.player.getId().catch(() => undefined);
                     const claim = tokenItem.metadata?.['pokerole-pmd-extension/claimed-by'] as
                         | { playerId?: string }
                         | undefined;
-                    if (tokenItem.createdUserId !== myId && claim?.playerId !== myId) {
+                    const meta = rawMeta as Record<string, unknown> | undefined;
+                    const fullClaimId =
+                        (meta?.['pokerole-pmd-extension/claimed-by'] as { playerId?: string } | undefined)?.playerId ||
+                        (meta?.['claimed-by'] as string | undefined);
+
+                    const isCreator = Boolean(myId && tokenItem.createdUserId === myId);
+                    const isClaimed = Boolean(myId && (claim?.playerId === myId || fullClaimId === myId));
+
+                    let isLinkedTrainer = false;
+                    if (myId) {
+                        if (meta?.playerId === myId) {
+                            isLinkedTrainer = true;
+                        } else {
+                            const storePc = useCharacterStore.getState().pcData;
+                            const entityId = (meta?.entityId as string | undefined) || targetTokenId;
+                            const trainerId = meta?.trainerId as string | undefined;
+
+                            for (const camp of Object.values(storePc?.campaigns || {})) {
+                                for (const t of Object.values(camp.trainers || {})) {
+                                    if (t.playerId === myId) {
+                                        if (
+                                            t.mapTokenId === targetTokenId ||
+                                            t.id === targetTokenId ||
+                                            t.savedTokenItem?.id === targetTokenId ||
+                                            (trainerId && t.id === trainerId) ||
+                                            t.party?.includes(entityId) ||
+                                            t.party?.includes(targetTokenId)
+                                        ) {
+                                            isLinkedTrainer = true;
+                                            break;
+                                        }
+                                        if (
+                                            t.boxes?.some(
+                                                (b) => b.slots?.includes(entityId) || b.slots?.includes(targetTokenId)
+                                            )
+                                        ) {
+                                            isLinkedTrainer = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (isLinkedTrainer) break;
+                            }
+                        }
+                    }
+
+                    if (!isCreator && !isClaimed && !isLinkedTrainer) {
                         if (OBR.isAvailable) {
                             OBR.notification.show(
-                                'This character sheet is locked by the GM. Ask your GM to unlock it to view or add it!',
+                                tokenItem.locked
+                                    ? 'This character sheet is locked by the GM. Ask your GM to unlock it to view or add it!'
+                                    : 'You do not own this character token.',
                                 'INFO'
                             );
                         }

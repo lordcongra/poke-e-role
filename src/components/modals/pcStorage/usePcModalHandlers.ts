@@ -94,7 +94,8 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         setBoxSlot
     } = params;
 
-    const isTrainerLinked = isTrainerLinkedToActiveSheet(trainer, activeTokenId, identity);
+    const isTrainerLinked = Boolean(trainer?.isLinked ?? (trainer?.mapTokenId || trainer?.savedTokenItem));
+    const isActiveSheetTrainer = isTrainerLinkedToActiveSheet(trainer, activeTokenId, identity);
     const [isTrainerOnMap, setIsTrainerOnMap] = useState(false);
 
     const saveTrainerProfile = (nextTrainer: TrainerRoster) => {
@@ -138,7 +139,7 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
     // Auto-sync trainer avatar and theme override ONLY if actively linked to current sheet
     const lastSyncedTrainerRef = useRef<string>('');
     useEffect(() => {
-        if (!trainer || !campaign || !isTrainerLinked || !canLinkActiveTrainer) return;
+        if (!trainer || !campaign || !isActiveSheetTrainer || !canLinkActiveTrainer) return;
         const currentAvatar = identity.tokenImageUrl || undefined;
         const currentTheme = identity.themePrimaryOverride || '';
         const prevTheme = (trainer.fullMetadata?.['theme-primary-override'] as string) || '';
@@ -331,19 +332,7 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         }
 
         if (res.newMapTokenId && trainer.mapTokenId !== res.newMapTokenId && campaign) {
-            const nextTrainer = { ...trainer, mapTokenId: res.newMapTokenId };
-            const nextData = {
-                ...pcData,
-                campaigns: {
-                    ...pcData.campaigns,
-                    [pcData.activeCampaignId]: {
-                        ...campaign,
-                        trainers: { ...campaign.trainers, [trainer.id]: nextTrainer }
-                    }
-                }
-            };
-            useCharacterStore.setState({ pcData: nextData });
-            savePcStorage(nextData);
+            saveTrainerProfile({ ...trainer, mapTokenId: res.newMapTokenId });
         }
     };
 
@@ -357,8 +346,15 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         if (!currentBox || !campaign) return;
         setIsExportModalOpen(false);
         await executeCloudExport(
-            customSceneName, currentBox, campaign, pcData, trainer,
-            includeParty, includeTrainer, targetMode, backupAllBoxes
+            customSceneName,
+            currentBox,
+            campaign,
+            pcData,
+            trainer,
+            includeParty,
+            includeTrainer,
+            targetMode,
+            backupAllBoxes
         );
     };
 

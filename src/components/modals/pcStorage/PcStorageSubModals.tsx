@@ -8,6 +8,7 @@ import { PcReleaseConfirmModal } from './PcReleaseConfirmModal';
 import { PcGuideModal } from './PcGuideModal';
 import { PcSlotContextMenu } from './PcSlotContextMenu';
 import { GmClaimOverrideModal } from './GmClaimOverrideModal';
+import { PcTrainerTokenSpawnModal } from './PcTrainerTokenSpawnModal';
 import type { GmClaimConflict } from '../../../utils/pc/pcClaimOverrideOps';
 import { isEntityLockedByGm } from '../../../utils/pc/pcCandidateMatching';
 import type {
@@ -81,6 +82,9 @@ interface PcStorageSubModalsProps {
     gmClaimConflict?: GmClaimConflict | null;
     onCloseGmClaimConflict?: () => void;
     onConfirmGmClaimOverride?: () => void;
+    isTokenSpawnModalOpen?: boolean;
+    onCloseTokenSpawnModal?: () => void;
+    onSpawnTrainerToken?: (imageUrl: string) => Promise<void>;
 }
 
 export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
@@ -128,7 +132,10 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
     handleReleasePokemon,
     gmClaimConflict,
     onCloseGmClaimConflict,
-    onConfirmGmClaimOverride
+    onConfirmGmClaimOverride,
+    isTokenSpawnModalOpen,
+    onCloseTokenSpawnModal,
+    onSpawnTrainerToken
 }) => {
     return (
         <>
@@ -266,6 +273,16 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
                     conflict={gmClaimConflict}
                     onClose={onCloseGmClaimConflict || (() => {})}
                     onConfirmForceTransfer={onConfirmGmClaimOverride || (() => {})}
+                />
+            )}
+
+            {/* Link or Spawn Token Modal for Unlinked Trainers */}
+            {isTokenSpawnModalOpen && trainer && onCloseTokenSpawnModal && onSpawnTrainerToken && (
+                <PcTrainerTokenSpawnModal
+                    isOpen={isTokenSpawnModalOpen}
+                    trainerName={trainer.name}
+                    onClose={onCloseTokenSpawnModal}
+                    onSpawnToken={onSpawnTrainerToken}
                 />
             )}
         </>

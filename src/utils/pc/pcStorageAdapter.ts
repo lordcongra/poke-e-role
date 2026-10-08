@@ -215,6 +215,9 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
                             const cleanNick =
                                 rawNick && rawNick.toLowerCase() !== rawSpecies.toLowerCase() ? rawNick : '';
                             const displayName = cleanNick || rawSpecies || 'Recovered Pokémon';
+                            const isTrainerEntity = parsed.mode === 'Trainer' || parsed.mode === 'Trainer (Special)';
+                            const defaultHp = isTrainerEntity ? 5 : 10;
+                            const defaultWill = isTrainerEntity ? 4 : 5;
                             sum = {
                                 entityId: pid,
                                 trainerId: targetTrainerId,
@@ -228,15 +231,15 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
                                     parsed['hp-curr'] !== '' &&
                                     !isNaN(Number(parsed['hp-curr']))
                                         ? Number(parsed['hp-curr'])
-                                        : Number(parsed.hp) || 10,
-                                maxHp: Number(parsed['hp-max-display']) || Number(parsed.hpMax) || 10,
+                                        : Number(parsed.hp) || defaultHp,
+                                maxHp: Number(parsed['hp-max-display']) || Number(parsed.hpMax) || defaultHp,
                                 will:
                                     parsed['will-curr'] !== undefined &&
                                     parsed['will-curr'] !== '' &&
                                     !isNaN(Number(parsed['will-curr']))
                                         ? Number(parsed['will-curr'])
-                                        : Number(parsed.will) || 5,
-                                maxWill: Number(parsed['will-max-display']) || Number(parsed.willMax) || 5,
+                                        : Number(parsed.will) || defaultWill,
+                                maxWill: Number(parsed['will-max-display']) || Number(parsed.willMax) || defaultWill,
                                 tokenImageUrl: parsed['token-image-url'] || parsed.tokenImageUrl,
                                 isOnMap: false,
                                 fullMetadata: {
@@ -267,11 +270,21 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
                 continue;
             }
 
-            // Prune pseudo "None / PMD" trainer from camp.trainers so it never creates a duplicate profile
+            // Convert player PMD profiles and storage rosters into valid storage profiles without pruning
+            if (tid.startsWith('__pmd_') || t.profileType === 'storage') {
+                t.profileType = 'storage';
+                if (!t.name || !t.name.trim() || t.name === 'Trainer') {
+                    t.name = t.playerName ? `${t.playerName}'s Storage` : 'PMD Storage';
+                }
+            }
+
+            // Prune pseudo "None / PMD" placeholder if it slipped into camp.trainers
             const isPmdPseudo =
                 tid === '__none__' ||
-                tid.startsWith('__pmd_') ||
-                (t.name && t.name.trim().toLowerCase().startsWith('none (pmd'));
+                (t.profileType !== 'storage' &&
+                    !tid.startsWith('__pmd_') &&
+                    t.name &&
+                    t.name.trim().toLowerCase().startsWith('none (pmd'));
 
             if (isPmdPseudo) {
                 if (Array.isArray(t.party)) {
@@ -292,6 +305,34 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
                 }
                 delete camp.trainers[tid];
                 continue;
+            }
+
+            let localCharMeta: Record<string, unknown> | null = null;
+            if (typeof window !== 'undefined' && window.localStorage) {
+                try {
+                    const rawChar = window.localStorage.getItem(`pkr_char_${t.id}`);
+                    if (rawChar) {
+                        const parsedChar = JSON.parse(rawChar);
+                        if (parsedChar && typeof parsedChar === 'object') localCharMeta = parsedChar;
+                    }
+                } catch {}
+            }
+
+            if (localCharMeta) {
+                t.fullMetadata = { ...(t.fullMetadata || {}), ...localCharMeta };
+            } else if (t.fullMetadata) {
+                const isStarter = t.fullMetadata['rank'] === 'Starter' || t.fullMetadata.rank === 'Starter';
+                const isVit1 = Number(t.fullMetadata['vit-base'] ?? t.fullMetadata.vitBase) === 1;
+                const isHp10 = Number(t.fullMetadata['hp-max-display'] ?? t.fullMetadata.hpMax) === 10;
+                const isWill5 = Number(t.fullMetadata['will-max-display'] ?? t.fullMetadata.willMax) === 5;
+                if (isStarter && isVit1 && isHp10 && isWill5) {
+                    t.fullMetadata['hp-curr'] = 5;
+                    t.fullMetadata['hp-max-display'] = 5;
+                    t.fullMetadata['hp-base'] = 4;
+                    t.fullMetadata['will-curr'] = 4;
+                    t.fullMetadata['will-max-display'] = 4;
+                    t.fullMetadata['will-base'] = 3;
+                }
             }
 
             if (!t.name || !t.name.trim()) t.name = 'Trainer';

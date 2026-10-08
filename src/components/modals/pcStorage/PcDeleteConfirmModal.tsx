@@ -3,7 +3,7 @@ import { AlertTriangle, Trash2 } from 'lucide-react';
 import './PcDeleteConfirmModal.css';
 
 interface PcDeleteConfirmModalProps {
-    type: 'trainer' | 'campaign';
+    type: 'trainer' | 'campaign' | 'storage';
     name: string;
     storedCount?: number;
     partyCount?: number;
@@ -22,15 +22,22 @@ export const PcDeleteConfirmModal: React.FC<PcDeleteConfirmModalProps> = ({
     const [deletePc, setDeletePc] = React.useState(false);
     const [deleteBelt, setDeleteBelt] = React.useState(false);
 
+    const titleText =
+        type === 'storage'
+            ? 'Delete Storage Profile?'
+            : type === 'trainer'
+              ? 'Delete Trainer Profile?'
+              : 'Delete Campaign?';
+    const buttonText = type === 'storage' ? 'Storage Profile' : type === 'trainer' ? 'Trainer' : 'Campaign';
+    const noticeText = type === 'storage' ? 'storage profile' : type === 'trainer' ? 'trainer' : 'campaign';
+
     return (
         <div className="modal-backdrop pc-delete-modal-backdrop" onClick={onCancel}>
             <div className="modal-container pc-delete-modal" onClick={(e) => e.stopPropagation()}>
                 <header className="modal-header pc-delete-modal__header">
                     <div className="pc-delete-modal__title-group">
                         <AlertTriangle size={20} className="pc-delete-modal__icon" />
-                        <h3 className="modal-title text-title-primary">
-                            Delete {type === 'trainer' ? 'Trainer Profile' : 'Campaign'}?
-                        </h3>
+                        <h3 className="modal-title text-title-primary">{titleText}</h3>
                     </div>
                 </header>
 
@@ -38,7 +45,62 @@ export const PcDeleteConfirmModal: React.FC<PcDeleteConfirmModalProps> = ({
                     <p className="text-subtext">
                         Are you sure you want to delete <strong>{name}</strong>?
                     </p>
-                    {type === 'trainer' ? (
+                    {type === 'storage' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div className="pc-delete-modal__note text-subtext">
+                                By default, Pokémon in {name}&apos;s PC storage and team will be safely transferred to
+                                your remaining active storage/trainer&apos;s PC boxes so no data is lost.
+                            </div>
+                            {storedCount > 0 && (
+                                <label
+                                    className="text-subtext"
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        cursor: 'pointer',
+                                        padding: '4px 6px',
+                                        background: 'rgba(0, 0, 0, 0.2)',
+                                        borderRadius: '4px'
+                                    }}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={deletePc}
+                                        onChange={(e) => setDeletePc(e.target.checked)}
+                                    />
+                                    <span>
+                                        Also delete all stored Pokémon in <strong>{name}&apos;s PC</strong> (
+                                        {storedCount} Pokémon)
+                                    </span>
+                                </label>
+                            )}
+                            {partyCount > 0 && (
+                                <label
+                                    className="text-subtext"
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        cursor: 'pointer',
+                                        padding: '4px 6px',
+                                        background: 'rgba(0, 0, 0, 0.2)',
+                                        borderRadius: '4px'
+                                    }}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={deleteBelt}
+                                        onChange={(e) => setDeleteBelt(e.target.checked)}
+                                    />
+                                    <span>
+                                        Also delete all active Pokémon in <strong>{name}&apos;s Team</strong> (
+                                        {partyCount} Pokémon)
+                                    </span>
+                                </label>
+                            )}
+                        </div>
+                    ) : type === 'trainer' ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <div className="pc-delete-modal__note text-subtext">
                                 By default, Pokémon in {name}&apos;s PC storage and belt will be safely transferred to
@@ -112,9 +174,8 @@ export const PcDeleteConfirmModal: React.FC<PcDeleteConfirmModalProps> = ({
                     >
                         <AlertTriangle size={15} style={{ flexShrink: 0 }} />
                         <span>
-                            <strong>Table Sync Notice:</strong> Deleting this{' '}
-                            {type === 'trainer' ? 'trainer' : 'campaign'} will synchronize across the room and remove it
-                            on both Player and GM ends.
+                            <strong>Table Sync Notice:</strong> Deleting this {noticeText} will synchronize across the
+                            room and remove it on both Player and GM ends.
                         </span>
                     </div>
                 </div>
@@ -135,7 +196,7 @@ export const PcDeleteConfirmModal: React.FC<PcDeleteConfirmModalProps> = ({
                         }}
                         onClick={() => onConfirm({ deletePc, deleteBelt })}
                     >
-                        <Trash2 size={14} /> Delete {type === 'trainer' ? 'Trainer' : 'Campaign'}
+                        <Trash2 size={14} /> Delete {buttonText}
                     </button>
                 </footer>
             </div>

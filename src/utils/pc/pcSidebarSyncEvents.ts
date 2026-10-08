@@ -80,6 +80,10 @@ function ensurePokemonSummaryInPc(characterId: string, trainerId?: string): void
         const parsed = JSON.parse(raw);
         if (!parsed) return;
 
+        const isTrainerEntity = parsed.mode === 'Trainer' || parsed.mode === 'Trainer (Special)';
+        const defaultHp = isTrainerEntity ? 5 : 10;
+        const defaultWill = isTrainerEntity ? 4 : 5;
+
         const newSummary = {
             entityId: characterId,
             trainerId,
@@ -91,13 +95,13 @@ function ensurePokemonSummaryInPc(characterId: string, trainerId?: string): void
             hp:
                 parsed['hp-curr'] !== undefined && parsed['hp-curr'] !== '' && !isNaN(Number(parsed['hp-curr']))
                     ? Number(parsed['hp-curr'])
-                    : Number(parsed.hp) || 10,
-            maxHp: Number(parsed['hp-max-display']) || Number(parsed.hpMax) || 10,
+                    : Number(parsed.hp) || defaultHp,
+            maxHp: Number(parsed['hp-max-display']) || Number(parsed.hpMax) || defaultHp,
             will:
                 parsed['will-curr'] !== undefined && parsed['will-curr'] !== '' && !isNaN(Number(parsed['will-curr']))
                     ? Number(parsed['will-curr'])
-                    : Number(parsed.will) || 5,
-            maxWill: Number(parsed['will-max-display']) || Number(parsed.willMax) || 5,
+                    : Number(parsed.will) || defaultWill,
+            maxWill: Number(parsed['will-max-display']) || Number(parsed.willMax) || defaultWill,
             tokenImageUrl: parsed['token-image-url'] || parsed.tokenImageUrl,
             isOnMap: false,
             fullMetadata: parsed,

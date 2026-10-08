@@ -57,10 +57,16 @@ export function filterTrainersForRole(
             filtered[id] = t;
             continue;
         }
-        // 3. Active token matches
+        // 3. Active token matches (ONLY if not claimed by another player)
         if (activeTokenId && (t.mapTokenId === activeTokenId || t.id === activeTokenId)) {
-            filtered[id] = t;
-            continue;
+            const isClaimedByOther =
+                (t.playerId && t.playerId !== resolvedPlayerId) ||
+                (claim?.playerId && claim.playerId !== resolvedPlayerId) ||
+                (fullClaim && fullClaim !== resolvedPlayerId);
+            if (!isClaimedByOther && (!t.playerId || t.playerId === resolvedPlayerId)) {
+                filtered[id] = t;
+                continue;
+            }
         }
         // 4. If trainer has no playerId and no claim, only include if not claimed by someone else
         if (!t.playerId && !claim?.playerId && !fullClaim) {

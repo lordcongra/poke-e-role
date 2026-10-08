@@ -186,6 +186,40 @@
     border: 1px solid rgba(74, 222, 128, 0.3);
 }
 
+.trainer-org-badge--storage {
+    background: rgba(234, 179, 8, 0.2);
+    color: #facc15;
+    border: 1px solid rgba(250, 204, 21, 0.3);
+}
+
+.trainer-org-assign {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.trainer-org-assign-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted, #94a3b8);
+}
+
+.trainer-org-assign-select {
+    background: var(--panel-alt, #121218);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    color: var(--text-main, #ffffff);
+    outline: none;
+    max-width: 150px;
+}
+
+.trainer-org-assign-select:focus {
+    border-color: var(--primary, #3b82f6);
+}
+
 .trainer-org-actions {
     display: flex;
     align-items: center;

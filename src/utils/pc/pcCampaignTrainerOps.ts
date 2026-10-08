@@ -199,39 +199,58 @@ export function applyDeleteTrainer(
 export function applyAddTrainer(
     pcData: PcStorageData,
     name: string,
-    options?: { existingCharacterId?: string; isLinked?: boolean; playerId?: string }
+    options?: {
+        existingCharacterId?: string;
+        isLinked?: boolean;
+        playerId?: string;
+        playerName?: string;
+        profileType?: 'trainer' | 'storage';
+    }
 ): { nextData: PcStorageData; newId: string } {
     const camp = pcData.campaigns[pcData.activeCampaignId];
-    const newId = options?.existingCharacterId || `trainer-${crypto.randomUUID().slice(0, 8)}`;
+    const profileType = options?.profileType || 'trainer';
+    const newId =
+        options?.existingCharacterId ||
+        (profileType === 'storage'
+            ? `storage-${crypto.randomUUID().slice(0, 8)}`
+            : `trainer-${crypto.randomUUID().slice(0, 8)}`);
     if (!camp) return { nextData: pcData, newId };
 
     const assignedPlayerId = options?.playerId || getCachedObrPlayerId();
+    const isLinked = profileType === 'storage' ? false : (options?.isLinked ?? Boolean(options?.existingCharacterId));
 
     const newTrainer: TrainerRoster = {
         id: newId,
-        name,
-        isLinked: options?.isLinked ?? Boolean(options?.existingCharacterId),
-        mapTokenId: options?.existingCharacterId,
+        name: name.trim() || (profileType === 'storage' ? 'Team Storage' : 'Trainer'),
+        profileType,
+        isLinked,
+        mapTokenId: isLinked ? options?.existingCharacterId : undefined,
+        savedTokenItem: undefined,
         playerId: assignedPlayerId,
+        playerName: options?.playerName,
         party: Array(6).fill(null),
         boxes: Array.from({ length: 8 }, (_, i) => createDefaultBox(i)),
-        fullMetadata: {
-            entityId: options?.existingCharacterId,
-            name,
-            nickname: name,
-            species: name,
-            mode: 'Trainer',
-            rank: 'Starter',
-            'str-base': 1,
-            'dex-base': 1,
-            'vit-base': 1,
-            'ins-base': 1,
-            'spe-base': 1,
-            'hp-curr': 10,
-            'hp-max-display': 10,
-            'will-curr': 5,
-            'will-max-display': 5
-        }
+        fullMetadata: isLinked
+            ? {
+                  entityId: options?.existingCharacterId,
+                  name,
+                  nickname: name,
+                  species: name,
+                  mode: 'Trainer',
+                  rank: 'Starter',
+                  'str-base': 1,
+                  'dex-base': 1,
+                  'vit-base': 1,
+                  'ins-base': 1,
+                  'spe-base': 1,
+                  'hp-curr': 5,
+                  'hp-max-display': 5,
+                  'hp-base': 4,
+                  'will-curr': 4,
+                  'will-max-display': 4,
+                  'will-base': 3
+              }
+            : undefined
     };
 
     const nextTrainerOrder = camp.trainerOrder ? [...camp.trainerOrder, newId] : undefined;
@@ -417,11 +436,30 @@ export function applyRenameTrainer(
 ): { success: boolean; nextData: PcStorageData; error?: string } {
     const trimmed = newName.trim();
     if (!trimmed) {
-        return { success: false, nextData: pcData, error: 'Trainer name cannot be empty.' };
+        return { success: false, nextData: pcData, error: 'Name cannot be empty.' };
     }
     const camp = pcData.campaigns[pcData.activeCampaignId];
-    if (!camp || !camp.trainers?.[trainerId]) {
-        return { success: false, nextData: pcData, error: 'Trainer not found.' };
+    if (!camp) {
+        return { success: false, nextData: pcData, error: 'Campaign not found.' };
+    }
+    if (trainerId === '__none__') {
+        const nextCampaigns = {
+            ...pcData.campaigns,
+            [pcData.activeCampaignId]: {
+                ...camp,
+                teamStorageName: trimmed
+            }
+        };
+        return {
+            success: true,
+            nextData: {
+                ...pcData,
+                campaigns: nextCampaigns
+            }
+        };
+    }
+    if (!camp.trainers?.[trainerId]) {
+        return { success: false, nextData: pcData, error: 'Profile not found.' };
     }
     const nextTrainer = {
         ...camp.trainers[trainerId],

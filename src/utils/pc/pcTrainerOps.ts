@@ -83,10 +83,10 @@ export function buildLinkedTrainer(
     const tokenMeta = (trainer.savedTokenItem?.metadata?.[METADATA_ID] as Record<string, unknown>) || null;
     const sources = [tokenMeta, trainer.fullMetadata];
 
-    const hpCurr = store.health.hpCurr ?? parseNumericMeta(['hp-curr', 'hp', 'currentHp'], sources, 10);
-    const hpMax = store.health.hpMax ?? parseNumericMeta(['hp-max-display', 'hpMax', 'maxHp'], sources, 10);
-    const willCurr = store.will.willCurr ?? parseNumericMeta(['will-curr', 'will', 'currentWill'], sources, 5);
-    const willMax = store.will.willMax ?? parseNumericMeta(['will-max-display', 'willMax', 'maxWill'], sources, 5);
+    const hpCurr = store.health.hpCurr ?? parseNumericMeta(['hp-curr', 'hp', 'currentHp'], sources, 5);
+    const hpMax = store.health.hpMax ?? parseNumericMeta(['hp-max-display', 'hpMax', 'maxHp'], sources, 5);
+    const willCurr = store.will.willCurr ?? parseNumericMeta(['will-curr', 'will', 'currentWill'], sources, 4);
+    const willMax = store.will.willMax ?? parseNumericMeta(['will-max-display', 'willMax', 'maxWill'], sources, 4);
 
     fullMeta['hp-curr'] = hpCurr;
     fullMeta['hp-max-display'] = hpMax;
@@ -107,7 +107,10 @@ export function buildLinkedTrainer(
 /**
  * Builds a PcPokemonSummary representation of a Trainer profile for sheet viewing.
  */
-export function buildTrainerSummary(trainer: TrainerRoster): import('../../types/pcStorageTypes').PcPokemonSummary {
+export function buildTrainerSummary(
+    trainer: TrainerRoster
+): import('../../types/pcStorageTypes').PcPokemonSummary | null {
+    if (trainer.profileType === 'storage') return null;
     let localMeta: Record<string, unknown> | null = null;
     if (typeof window !== 'undefined' && window.localStorage) {
         try {
@@ -125,7 +128,7 @@ export function buildTrainerSummary(trainer: TrainerRoster): import('../../types
         (trainer.savedTokenItem?.metadata?.['pokerole-pmd-extension/stats'] as Record<string, unknown>) ||
         null;
 
-    const sources = [tokenMeta, trainer.fullMetadata, localMeta];
+    const sources = [tokenMeta, localMeta, trainer.fullMetadata];
 
     const store = useCharacterStore.getState();
     const isStoreTrainer = store.identity.mode === 'Trainer' || (store.identity.rank as string) === 'Trainer';
@@ -136,30 +139,27 @@ export function buildTrainerSummary(trainer: TrainerRoster): import('../../types
     const hpCurr =
         storeMatchesTrainer && store.health.hpCurr !== undefined
             ? store.health.hpCurr
-            : parseNumericMeta(['hp-curr', 'hp', 'currentHp'], sources, 10);
+            : parseNumericMeta(['hp-curr', 'hp', 'currentHp'], sources, 5);
 
     const hpMax =
         storeMatchesTrainer && store.health.hpMax !== undefined
             ? store.health.hpMax
-            : parseNumericMeta(['hp-max-display', 'hpMax', 'maxHp'], sources, 10);
+            : parseNumericMeta(['hp-max-display', 'hpMax', 'maxHp'], sources, 5);
 
     const willCurr =
         storeMatchesTrainer && store.will.willCurr !== undefined
             ? store.will.willCurr
-            : parseNumericMeta(['will-curr', 'will', 'currentWill'], sources, 5);
+            : parseNumericMeta(['will-curr', 'will', 'currentWill'], sources, 4);
 
     const willMax =
         storeMatchesTrainer && store.will.willMax !== undefined
             ? store.will.willMax
-            : parseNumericMeta(['will-max-display', 'willMax', 'maxWill'], sources, 5);
+            : parseNumericMeta(['will-max-display', 'willMax', 'maxWill'], sources, 4);
 
     const trainerType1 =
         (tokenMeta?.type1 as string) || (localMeta?.type1 as string) || (trainer.fullMetadata?.type1 as string) || '';
     const trainerType2 =
-        (tokenMeta?.type2 as string) ||
-        (localMeta?.type2 as string) ||
-        (trainer.fullMetadata?.type2 as string) ||
-        undefined;
+        (tokenMeta?.type2 as string) || (localMeta?.type2 as string) || (trainer.fullMetadata?.type2 as string);
     const resolvedAvatar =
         (tokenMeta?.['token-image-url'] as string) ||
         (localMeta?.['token-image-url'] as string) ||
@@ -167,30 +167,31 @@ export function buildTrainerSummary(trainer: TrainerRoster): import('../../types
         (trainer.fullMetadata?.['token-image-url'] as string) ||
         trainer.avatarUrl;
     const primaryOverride =
-        (trainer.fullMetadata?.['theme-primary-override'] as string) ||
-        (trainer.fullMetadata?.themePrimaryOverride as string) ||
-        ((tokenMeta?.['theme-primary-override'] as string) ?? '') ||
+        ((tokenMeta?.['theme-primary-override'] || tokenMeta?.themePrimaryOverride) as string) ||
+        ((localMeta?.['theme-primary-override'] || localMeta?.themePrimaryOverride) as string) ||
+        ((trainer.fullMetadata?.['theme-primary-override'] || trainer.fullMetadata?.themePrimaryOverride) as string) ||
         (storeMatchesTrainer ? store.identity.themePrimaryOverride : '') ||
         '';
     const secondaryOverride =
-        (trainer.fullMetadata?.['theme-secondary-override'] as string) ||
-        (trainer.fullMetadata?.themeSecondaryOverride as string) ||
-        ((tokenMeta?.['theme-secondary-override'] as string) ?? '') ||
+        ((tokenMeta?.['theme-secondary-override'] || tokenMeta?.themeSecondaryOverride) as string) ||
+        ((localMeta?.['theme-secondary-override'] || localMeta?.themeSecondaryOverride) as string) ||
+        ((trainer.fullMetadata?.['theme-secondary-override'] ||
+            trainer.fullMetadata?.themeSecondaryOverride) as string) ||
         (storeMatchesTrainer ? store.identity.themeSecondaryOverride : '') ||
         '';
 
     const rawRank =
-        (trainer.fullMetadata?.['rank'] as string) ||
-        (trainer.fullMetadata?.rank as string) ||
         (tokenMeta?.rank as string) ||
         (localMeta?.rank as string) ||
+        (trainer.fullMetadata?.['rank'] as string) ||
+        (trainer.fullMetadata?.rank as string) ||
         (storeMatchesTrainer ? store.identity.rank : 'Starter');
     const trainerRank: import('../../store/entityTypes').Rank =
         typeof rawRank === 'string' && VALID_RANKS.has(rawRank)
             ? (rawRank as import('../../store/entityTypes').Rank)
             : 'Starter';
-    const trainerSpecies = (trainer.fullMetadata?.species as string) || trainer.name;
-    const trainerMode = (trainer.fullMetadata?.mode as string) || 'Trainer';
+    const trainerSpecies = (localMeta?.species as string) || (trainer.fullMetadata?.species as string) || trainer.name;
+    const trainerMode = (localMeta?.mode as string) || (trainer.fullMetadata?.mode as string) || 'Trainer';
 
     return {
         entityId: trainer.id,
@@ -209,16 +210,17 @@ export function buildTrainerSummary(trainer: TrainerRoster): import('../../types
         savedTokenItem: trainer.savedTokenItem,
         fullMetadata: {
             ...(trainer.fullMetadata || {}),
+            ...(localMeta || {}),
             name: trainer.name,
             nickname: trainer.name,
             species: trainerSpecies,
             mode: trainerMode,
             rank: trainerRank,
-            'str-base': trainer.fullMetadata?.['str-base'] ?? 1,
-            'dex-base': trainer.fullMetadata?.['dex-base'] ?? 1,
-            'vit-base': trainer.fullMetadata?.['vit-base'] ?? 1,
-            'ins-base': trainer.fullMetadata?.['ins-base'] ?? 1,
-            'spe-base': trainer.fullMetadata?.['spe-base'] ?? 1,
+            'str-base': localMeta?.['str-base'] ?? trainer.fullMetadata?.['str-base'] ?? 1,
+            'dex-base': localMeta?.['dex-base'] ?? trainer.fullMetadata?.['dex-base'] ?? 1,
+            'vit-base': localMeta?.['vit-base'] ?? trainer.fullMetadata?.['vit-base'] ?? 1,
+            'ins-base': localMeta?.['ins-base'] ?? trainer.fullMetadata?.['ins-base'] ?? 1,
+            'spe-base': localMeta?.['spe-base'] ?? trainer.fullMetadata?.['spe-base'] ?? 1,
             type1: trainerType1,
             type2: trainerType2 || '',
             'token-image-url': trainer.avatarUrl,
@@ -270,12 +272,12 @@ export async function spawnTrainerToMap(
             y: vpHeight * 0.5
         });
 
-        const hpMax = Number(trainer.fullMetadata?.['hp-max-display'] || trainer.fullMetadata?.['hpMax']) || 10;
+        const hpMax = Number(trainer.fullMetadata?.['hp-max-display'] || trainer.fullMetadata?.['hpMax']) || 5;
         const rawHpCurr = trainer.fullMetadata?.['hp-curr'] ?? trainer.fullMetadata?.['hpCurr'];
         const hpCurr =
             rawHpCurr !== undefined && rawHpCurr !== null && !isNaN(Number(rawHpCurr)) ? Number(rawHpCurr) : hpMax;
 
-        const willMax = Number(trainer.fullMetadata?.['will-max-display'] || trainer.fullMetadata?.['willMax']) || 5;
+        const willMax = Number(trainer.fullMetadata?.['will-max-display'] || trainer.fullMetadata?.['willMax']) || 4;
         const rawWillCurr = trainer.fullMetadata?.['will-curr'] ?? trainer.fullMetadata?.['willCurr'];
         const willCurr =
             rawWillCurr !== undefined && rawWillCurr !== null && !isNaN(Number(rawWillCurr))

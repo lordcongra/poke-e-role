@@ -7,13 +7,14 @@ import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSp
 import { useResolvedImageUrl } from '../../../utils/graphics/useResolvedImageUrl';
 import {
     Shield,
-    UserCheck,
+    Link,
     Plus,
     Unlink,
     FileText,
     MapPin,
     FolderPlus,
     Users,
+    Archive,
     HelpCircle,
     Columns,
     Rows
@@ -27,6 +28,7 @@ interface PcPartyDockProps {
     trainerName?: string;
     trainerSummary?: PcPokemonSummary | null;
     isPmdMode?: boolean;
+    activeStorageName?: string;
     trainerAvatarUrl?: string;
     isTrainerLinked?: boolean;
     isTrainerOnMap?: boolean;
@@ -60,11 +62,12 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
     trainerName,
     trainerSummary,
     isPmdMode = false,
+    activeStorageName,
     trainerAvatarUrl,
     isTrainerLinked = false,
     isTrainerOnMap = false,
     activeCharacterName,
-    activeCharacterAvatarUrl,
+    activeCharacterAvatarUrl: _activeCharacterAvatarUrl,
     canLinkActiveTrainer = true,
     otherLinkedTrainerName,
     partyLayout = 'vertical',
@@ -86,10 +89,9 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
     onOrganizeFolders
 }) => {
     const isPmd = isPmdMode || !trainerName;
-    const displayTitle = isPmd ? 'Active Team' : `${trainerName}'s Belt`;
+    const displayTitle = isPmd ? activeStorageName || 'Active Team' : `${trainerName}'s Belt`;
     const occupiedCount = partySlots.filter(Boolean).length;
     const resolvedTrainerAvatar = useResolvedImageUrl(trainerAvatarUrl);
-    const resolvedActiveAvatar = useResolvedImageUrl(activeCharacterAvatarUrl);
 
     const beltHint = isPmd
         ? OBR.isAvailable
@@ -104,7 +106,11 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
             <div className="pc-party-dock__header">
                 <div className="pc-party-dock__title-group" title={beltHint}>
                     {isPmd ? (
-                        <Users size={16} className="pc-party-dock__icon" />
+                        activeStorageName ? (
+                            <Archive size={16} className="pc-party-dock__icon" />
+                        ) : (
+                            <Users size={16} className="pc-party-dock__icon" />
+                        )
                     ) : resolvedTrainerAvatar ? (
                         <img
                             src={resolvedTrainerAvatar}
@@ -216,44 +222,46 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                                 )}
                             </>
                         ) : (
-                            onLinkActiveTrainer && (
-                                <button
-                                    type="button"
-                                    className={`pc-party-dock__link-trainer-btn action-button action-button--dark ${
-                                        !canLinkActiveTrainer ? 'pc-party-dock__link-trainer-btn--disabled' : ''
-                                    }`}
-                                    onClick={() => {
-                                        if (canLinkActiveTrainer) {
-                                            onLinkActiveTrainer();
+                            <>
+                                {onOpenTrainerSheet && (
+                                    <button
+                                        type="button"
+                                        className="pc-party-dock__link-trainer-btn action-button action-button--dark"
+                                        onClick={onOpenTrainerSheet}
+                                        title={`Open ${trainerName}'s Trainer Sheet (Link or spawn token)`}
+                                        aria-label={`Open ${trainerName}'s Trainer Sheet`}
+                                    >
+                                        <FileText size={12} />
+                                        <span>Sheet</span>
+                                    </button>
+                                )}
+                                {onLinkActiveTrainer && (
+                                    <button
+                                        type="button"
+                                        className={`pc-party-dock__link-trainer-btn pc-party-dock__link-active-trainer-btn action-button action-button--dark ${
+                                            !canLinkActiveTrainer ? 'pc-party-dock__link-trainer-btn--disabled' : ''
+                                        }`}
+                                        onClick={() => {
+                                            if (canLinkActiveTrainer) {
+                                                onLinkActiveTrainer();
+                                            }
+                                        }}
+                                        disabled={!canLinkActiveTrainer}
+                                        title={
+                                            otherLinkedTrainerName
+                                                ? `Cannot link: This token is already linked to Trainer "${otherLinkedTrainerName}".`
+                                                : !canLinkActiveTrainer
+                                                  ? 'Cannot link: No trainer token selected. Select a token on the map set to Trainer or Trainer (Special) mode to link.'
+                                                  : activeCharacterName
+                                                    ? `Link "${activeCharacterName}" as Party Trainer`
+                                                    : "Link active character/token as this Belt's Trainer"
                                         }
-                                    }}
-                                    disabled={!canLinkActiveTrainer}
-                                    title={
-                                        otherLinkedTrainerName
-                                            ? `Cannot link: This token is already linked to Trainer "${otherLinkedTrainerName}".`
-                                            : !canLinkActiveTrainer
-                                              ? 'Cannot link: Current token is in Pokémon mode. Only tokens set to Trainer or Trainer (Special) mode can be linked.'
-                                              : activeCharacterName
-                                                ? `Link "${activeCharacterName}" as Party Trainer`
-                                                : "Link active character/token as this Belt's Trainer"
-                                    }
-                                >
-                                    {resolvedActiveAvatar ? (
-                                        <img
-                                            src={resolvedActiveAvatar}
-                                            alt="Active Trainer"
-                                            className="pc-party-dock__link-avatar"
-                                            draggable={false}
-                                            onError={(e) => {
-                                                e.currentTarget.style.display = 'none';
-                                            }}
-                                        />
-                                    ) : (
-                                        <UserCheck size={12} />
-                                    )}
-                                    <span>Link</span>
-                                </button>
-                            )
+                                    >
+                                        <Link size={12} />
+                                        <span>Link</span>
+                                    </button>
+                                )}
+                            </>
                         ))}
                 </div>
             </div>
@@ -262,6 +270,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                 <PcTrainerCard
                     summary={trainerSummary}
                     isTrainerOnMap={isTrainerOnMap}
+                    isTrainerLinked={isTrainerLinked}
                     onOpenSheet={onOpenTrainerSheet}
                     onDropTrainerToken={onDropTrainerToken}
                 />

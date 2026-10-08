@@ -356,7 +356,7 @@ export function applyAddBox(pcData: PcStorageData, name?: string): PcStorageData
     const currentBoxes = getTrainerBoxes(activeTrainer, camp);
 
     const newBox = createDefaultBox(currentBoxes.length);
-    if (name) newBox.name = name;
+    if (typeof name === 'string' && name.trim()) newBox.name = name.trim();
     return updateCampaignBoxes(pcData, camp, activeTrainer, [...currentBoxes, newBox]);
 }
 

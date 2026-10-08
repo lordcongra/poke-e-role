@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import OBR from '@owlbear-rodeo/sdk';
 import type { TrainerRoster } from '../../../types/pcStorageTypes';
 import { Users, X, ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Link, Check } from 'lucide-react';
 import './TrainerOrganizerModal.css';
@@ -11,6 +12,8 @@ interface TrainerOrganizerModalProps {
     activeTrainerId?: string;
     onReorder: (newOrder: string[]) => void;
     onSelectTrainer: (id: string) => void;
+    isGm?: boolean;
+    onAssignTrainer?: (trainerId: string, playerId?: string, playerName?: string) => void;
 }
 
 export const TrainerOrganizerModal: React.FC<TrainerOrganizerModalProps> = ({
@@ -20,9 +23,36 @@ export const TrainerOrganizerModal: React.FC<TrainerOrganizerModalProps> = ({
     trainerOrder,
     activeTrainerId,
     onReorder,
-    onSelectTrainer
+    onSelectTrainer,
+    isGm,
+    onAssignTrainer
 }) => {
     const [order, setOrder] = useState<string[]>([]);
+    const [roomPlayers, setRoomPlayers] = useState<{ id: string; name: string }[]>([]);
+
+    useEffect(() => {
+        if (!isOpen || !isGm || !OBR.isAvailable) return;
+        let isMounted = true;
+        OBR.party
+            .getPlayers()
+            .then((players) => {
+                if (isMounted) {
+                    setRoomPlayers(players.map((p) => ({ id: p.id, name: p.name || 'Player' })));
+                }
+            })
+            .catch(() => {});
+
+        const unsub = OBR.party.onChange((players) => {
+            if (isMounted) {
+                setRoomPlayers(players.map((p) => ({ id: p.id, name: p.name || 'Player' })));
+            }
+        });
+
+        return () => {
+            isMounted = false;
+            unsub();
+        };
+    }, [isOpen, isGm]);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -108,7 +138,17 @@ export const TrainerOrganizerModal: React.FC<TrainerOrganizerModalProps> = ({
                                         }}
                                     />
                                     <div className="trainer-org-info">
-                                        <div className="trainer-org-name">{t.name}</div>
+                                        <div className="trainer-org-name">
+                                            {t.name}
+                                            {t.profileType === 'storage' && (
+                                                <span
+                                                    className="trainer-org-badge trainer-org-badge--storage"
+                                                    style={{ marginLeft: 6 }}
+                                                >
+                                                    Storage
+                                                </span>
+                                            )}
+                                        </div>
                                         <div className="trainer-org-subinfo">
                                             <span>{partyCount}/6 Pokémon</span>
                                             {isActive && (
@@ -126,6 +166,43 @@ export const TrainerOrganizerModal: React.FC<TrainerOrganizerModalProps> = ({
                                                 </span>
                                             )}
                                         </div>
+                                        {isGm && onAssignTrainer && (
+                                            <div className="trainer-org-assign">
+                                                <label className="trainer-org-assign-label" htmlFor={`assign-${t.id}`}>
+                                                    Player:
+                                                </label>
+                                                <select
+                                                    id={`assign-${t.id}`}
+                                                    className="trainer-org-assign-select"
+                                                    value={t.playerId || ''}
+                                                    onChange={(e) => {
+                                                        const selectedId = e.target.value;
+                                                        if (!selectedId) {
+                                                            onAssignTrainer(t.id, undefined, undefined);
+                                                        } else {
+                                                            const p = roomPlayers.find((x) => x.id === selectedId);
+                                                            onAssignTrainer(
+                                                                t.id,
+                                                                selectedId,
+                                                                p?.name || t.playerName || 'Player'
+                                                            );
+                                                        }
+                                                    }}
+                                                >
+                                                    <option value="">Unassigned / Anyone</option>
+                                                    {roomPlayers.map((p) => (
+                                                        <option key={p.id} value={p.id}>
+                                                            {p.name}
+                                                        </option>
+                                                    ))}
+                                                    {t.playerId && !roomPlayers.some((p) => p.id === t.playerId) && (
+                                                        <option value={t.playerId}>
+                                                            {t.playerName || 'Offline Player'} (Offline)
+                                                        </option>
+                                                    )}
+                                                </select>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
