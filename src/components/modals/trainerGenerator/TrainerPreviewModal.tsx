@@ -256,7 +256,7 @@ export function TrainerPreviewModal({
             const updatedTeamMembers = teamMembers.map((member) => {
                 const freshMeta = buildTokenMetadataFromBuild(
                     member.build,
-                    member.species,
+                    '',
                     String(member.metadata['token-image-url'] || `${import.meta.env.BASE_URL || '/'}pokeball.svg`)
                 );
                 freshMeta['age'] = '';

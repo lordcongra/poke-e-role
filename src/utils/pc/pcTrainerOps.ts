@@ -329,16 +329,18 @@ export async function spawnTrainerToMap(
         } else {
             const trainerUrl = trainer.avatarUrl || getAbsolutePokeballUrl();
             const dims = await resolveImageDimensions(trainerUrl);
-            const maxDim = Math.max(dims.width, dims.height);
+            const tokenWidth = dims.width || 300;
+            const tokenHeight = dims.height || 300;
+            const maxDim = Math.max(tokenWidth, tokenHeight) || 300;
             const imageContent = {
                 url: trainerUrl,
                 mime: trainerUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/png',
-                width: dims.width,
-                height: dims.height
+                width: tokenWidth,
+                height: tokenHeight
             };
             const imageGrid = {
-                dpi: maxDim, // Fits within 1 standard grid unit by default
-                offset: { x: dims.width / 2, y: dims.height / 2 }
+                dpi: maxDim, // Fits within 1 standard grid unit by default (300dpi for standard 300x300 tokens)
+                offset: { x: tokenWidth / 2, y: tokenHeight / 2 }
             };
 
             trainerItem = buildImage(imageContent, imageGrid)

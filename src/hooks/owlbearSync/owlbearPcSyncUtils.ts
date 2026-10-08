@@ -47,8 +47,14 @@ export function sanitizeSummaryForSync(s: PcPokemonSummary): PcPokemonSummary {
         if (s.hp !== undefined) slimMeta['hp-curr'] = s.hp;
         if (s.maxHp !== undefined) slimMeta['hp-max-display'] = s.maxHp;
         if (s.will !== undefined) slimMeta['will-curr'] = s.will;
-        if (s.maxWill !== undefined) slimMeta['will-max-display'] = s.maxWill;
-        if (s.name) slimMeta['nickname'] = s.name;
+        const explicitNick = s.fullMetadata?.['nickname'];
+        if (explicitNick !== undefined) {
+            slimMeta['nickname'] = explicitNick;
+        } else if (s.name && s.species && s.name !== s.species) {
+            slimMeta['nickname'] = s.name;
+        } else {
+            slimMeta['nickname'] = '';
+        }
         if (s.species) slimMeta['species'] = s.species;
         if (s.lastModified) slimMeta['lastModified'] = s.lastModified;
     }

@@ -123,10 +123,13 @@ export function GeneratorPreviewModal({
                                 localBuilds.length > 1
                                     ? sheetName
                                         ? `${sheetName} ${idx + 1}`
-                                        : b.species
-                                    : sheetName?.trim() || b.species;
+                                        : ''
+                                    : sheetName?.trim() || '';
 
-                            const newId = await storageAdapter.createLocalCharacter(providedNickname, null);
+                            const newId = await storageAdapter.createLocalCharacter(
+                                providedNickname || b.species,
+                                null
+                            );
 
                             const metadata = buildTokenMetadataFromBuild(
                                 b,
@@ -236,7 +239,10 @@ export function GeneratorPreviewModal({
                                     : b.species
                                 : sheetName?.trim() || b.species || 'Pokémon';
 
-                        const metadata = buildTokenMetadataFromBuild(b, tokenItemName, selectedUrl, config);
+                        const sheetNickname =
+                            count > 1 ? (sheetName ? `${sheetName} ${idx + 1}` : '') : sheetName?.trim() || '';
+
+                        const metadata = buildTokenMetadataFromBuild(b, sheetNickname, selectedUrl, config);
                         builtMetas.push(metadata);
 
                         const tokenItem = buildImage(imageContent, grid)

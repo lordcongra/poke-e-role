@@ -182,8 +182,8 @@ export async function spawnPokemonToMap(
                 currUrl.startsWith('file:') ||
                 currUrl.startsWith('file:///') ||
                 (resolvedImg.url &&
-                    !resolvedImg.url.includes('pokeball.svg') &&
-                    (currUrl.includes('pokeball.svg') || currUrl !== resolvedImg.url));
+                    !resolvedImg.url.includes('pokeball.') &&
+                    (currUrl.includes('pokeball.') || currUrl !== resolvedImg.url));
 
             if (needsImageUpdate && isImage(parentItem)) {
                 parentItem.image = {

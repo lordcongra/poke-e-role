@@ -45,7 +45,7 @@ export function findMatchingScenePokemonImage(
     for (const item of sceneItems) {
         if (!isImage(item)) continue;
         const image = item.image;
-        if (!image?.url || image.url.includes('pokeball.svg') || image.url.startsWith('local-img:')) continue;
+        if (!image?.url || image.url.includes('pokeball') || image.url.startsWith('local-img:')) continue;
 
         const itemName = (item.name || '').trim().toLowerCase();
         const meta = (item.metadata[METADATA_ID] as Record<string, unknown> | undefined) || {};
@@ -132,12 +132,12 @@ export async function resolveTokenImageForMap(
         };
     }
 
-    // 4. Default Pokeball SVG Fallback
+    // 4. Default Pokeball Fallback
     const fallbackUrl = getAbsolutePokeballUrl();
     const dims = await resolveImageDimensions(fallbackUrl);
     return {
         url: fallbackUrl,
-        mime: 'image/svg+xml',
+        mime: fallbackUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/png',
         width: dims.width,
         height: dims.height
     };

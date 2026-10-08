@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <clipPath id="ball-clip">
+      <circle cx="150" cy="150" r="136" />
+    </clipPath>
+  </defs>
+  <!-- Background hemisphere fills clipped to outer circle -->
+  <g clip-path="url(#ball-clip)">
+    <!-- Top red hemisphere -->
+    <rect x="0" y="0" width="300" height="150" fill="#EE1515" />
+    <!-- Bottom white hemisphere -->
+    <rect x="0" y="150" width="300" height="150" fill="#F6F6F6" />
+    <!-- Horizontal dividing band -->
+    <rect x="0" y="142" width="300" height="16" fill="#222224" />
+  </g>
+  <!-- Outer border -->
+  <circle cx="150" cy="150" r="136" fill="none" stroke="#222224" stroke-width="14" />
+  <!-- Center button -->
+  <circle cx="150" cy="150" r="40" fill="#222224" />
+  <circle cx="150" cy="150" r="26" fill="#FFFFFF" />
+  <circle cx="150" cy="150" r="16" fill="none" stroke="#222224" stroke-width="4" />
+</svg>

@@ -54,7 +54,7 @@ export function calculateFormationOffsets(count: number, spacing: number): Array
 export function getAbsolutePokeballUrl(): string {
     const base = import.meta.env.BASE_URL || '/';
     const cleanBase = base.endsWith('/') ? base : `${base}/`;
-    const relative = `${cleanBase}pokeball.svg`;
+    const relative = `${cleanBase}pokeball-token.svg`;
     try {
         return new URL(relative, window.location.href).href;
     } catch {
@@ -81,7 +81,7 @@ export function findMatchingSceneImage(
     for (const item of sceneItems) {
         if (!isImage(item)) continue;
         const image = item.image;
-        if (!image?.url || image.url.includes('pokeball.svg')) continue;
+        if (!image?.url || image.url.includes('pokeball')) continue;
 
         const itemName = (item.name || '').trim().toLowerCase();
         const meta = (item.metadata[METADATA_ID] as Record<string, unknown> | undefined) || {};
@@ -110,8 +110,8 @@ export function findMatchingSceneImage(
 }
 
 export async function resolveImageDimensions(url: string): Promise<{ width: number; height: number }> {
-    if (url && url.includes('pokeball.svg')) {
-        return { width: 100, height: 100 };
+    if (url && url.includes('pokeball')) {
+        return { width: 300, height: 300 };
     }
     return new Promise((resolve) => {
         const img = new window.Image();

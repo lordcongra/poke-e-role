@@ -92,9 +92,10 @@ export function executeSpeciesChange(
         const newSpeciesName = String(data.Name || 'Unknown');
         const newType1 = String(data.Type1 || 'Normal');
         const newType2 = sanitizeType(data.Type2);
+        const finalNickname = state.identity.nickname || '';
         const newIdentity: CharacterState['identity'] = {
             ...state.identity,
-            nickname: newSpeciesName,
+            nickname: finalNickname,
             species: newSpeciesName,
             rank: 'Starter',
             type1: newType1,
@@ -113,8 +114,8 @@ export function executeSpeciesChange(
             dexDescription: String(data.DexDescription || '')
         };
 
-        updatesToSave['name'] = newSpeciesName;
-        updatesToSave['nickname'] = newSpeciesName;
+        updatesToSave['name'] = finalNickname || newSpeciesName;
+        updatesToSave['nickname'] = finalNickname;
         updatesToSave['species'] = newSpeciesName;
         updatesToSave['rank'] = 'Starter';
         updatesToSave['type1'] = newType1;

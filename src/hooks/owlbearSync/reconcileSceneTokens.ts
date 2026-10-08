@@ -101,7 +101,10 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                         // Authoritative fields from summary must NEVER be wiped out by live token:
                         const mergedMeta = { ...(sum.fullMetadata || {}), ...tMeta };
                         if (sum.species) mergedMeta['species'] = sum.species;
-                        if (sum.name) mergedMeta['nickname'] = sum.name;
+                        const explicitNick = sum.fullMetadata?.nickname ?? sum.fullMetadata?.['nickname'];
+                        if (explicitNick !== undefined) mergedMeta['nickname'] = explicitNick;
+                        else if (sum.name && sum.species && sum.name !== sum.species) mergedMeta['nickname'] = sum.name;
+                        else mergedMeta['nickname'] = '';
                         if (sum.rank) mergedMeta['rank'] = sum.rank;
                         if (sum.fullMetadata?.['moves-data'] && sum.fullMetadata['moves-data'] !== '[]') {
                             mergedMeta['moves-data'] = sum.fullMetadata['moves-data'];
@@ -279,12 +282,20 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                     const sumTempHp = Number(sum.fullMetadata?.['temporary-hit-points']) || 0;
                     const sumTempWill = Number(sum.fullMetadata?.['temporary-will']) || 0;
 
+                    const explicitNick = sum.fullMetadata?.nickname ?? sum.fullMetadata?.['nickname'];
+                    const resolvedNick =
+                        explicitNick !== undefined
+                            ? explicitNick
+                            : sum.name && sum.species && sum.name !== sum.species
+                              ? sum.name
+                              : '';
+
                     const nextMeta: Record<string, unknown> = {
                         ...tMeta,
                         ...(sum.fullMetadata || {}),
                         entityId,
                         name: sum.name,
-                        nickname: sum.name,
+                        nickname: resolvedNick,
                         species: sum.species,
                         'hp-curr': sum.hp,
                         'hp-max-display': sum.maxHp,
@@ -336,7 +347,10 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
 
                     const mergedMeta = { ...(sum.fullMetadata || {}), ...tMeta };
                     if (sum.species) mergedMeta['species'] = sum.species;
-                    if (sum.name) mergedMeta['nickname'] = sum.name;
+                    const explicitNick = sum.fullMetadata?.nickname ?? sum.fullMetadata?.['nickname'];
+                    if (explicitNick !== undefined) mergedMeta['nickname'] = explicitNick;
+                    else if (sum.name && sum.species && sum.name !== sum.species) mergedMeta['nickname'] = sum.name;
+                    else mergedMeta['nickname'] = '';
                     if (sum.rank) mergedMeta['rank'] = sum.rank;
                     if (sum.fullMetadata?.['moves-data'] && sum.fullMetadata['moves-data'] !== '[]') {
                         mergedMeta['moves-data'] = sum.fullMetadata['moves-data'];

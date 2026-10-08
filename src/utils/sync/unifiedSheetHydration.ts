@@ -298,12 +298,6 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
         finalMeta['token-image-url'] = resolvedImgUrl;
     }
 
-    const rawTokenName = tokenItem?.name?.trim();
-    const tokenName = rawTokenName ? rawTokenName.replace(/\.(png|jpe?g|webp|gif|svg)$/i, '').trim() : '';
-    if (tokenName && !finalMeta['nickname'] && !finalMeta['species']) {
-        finalMeta['nickname'] = tokenName;
-    }
-
     store.loadFromOwlbear(finalMeta);
 
     // 5. Reconcile token image
