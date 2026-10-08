@@ -179,11 +179,9 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                                 lineHeight: 1.45
                             }}
                         >
-                            <strong style={{ color: '#fbbf24' }}>Important Safety Reminder:</strong> PC Storage is a
-                            major new system overhaul. While it has undergone aggressive testing, edge-case bugs may still
-                            exist. Before delving deep into testing or reorganizing your storage, please use the{' '}
-                            <strong>Backup</strong> button to export your important Pokémon to portable JSON backup
-                            files!
+                            <strong style={{ color: '#fbbf24' }}>Storage Safety & Best Practices:</strong> Protect your
+                            campaigns and team rosters anytime by using the built-in <strong>Backup</strong> tool to
+                            export portable JSON files of your Pokémon storage!
                         </div>
                     </div>
                 )
@@ -204,9 +202,9 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                             Storage, Generators, the Battle Organizer, and Homebrew Workshop.
                         </p>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>1-Click Return to Menu / Deselect:</strong> Added a dedicated deselect button to both
-                            the character header and top toolbar, allowing you to easily close a character sheet and
-                            return to the main overview without losing your place during combat.
+                            <strong>1-Click Return to Menu / Deselect:</strong> Dedicated deselect buttons in both the
+                            character header and top toolbar allow you to easily close any open sheet and return to the
+                            main overview without losing your place during combat.
                         </p>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
                             <strong>Custom Base Overview Theme:</strong> Personalize your own preferred theme colors for
@@ -252,7 +250,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     automatically connect to the right adventure.
                 </li>
                 <li>
-                    <strong>Send Out with Auto-Place & Click to Place:</strong> Summon Pokémon directly from your party or
+                    <strong>Map Deployment (Auto-Place & Click to Place):</strong> Summon Pokémon directly from your party or
                     boxes to the battle map. Choose <em>Auto-Place</em> to drop in front of your trainer token or <em>Click to
                     Place</em> to target exact map coordinates.
                 </li>
@@ -274,24 +272,10 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     auto-merging with matching trainers, or transferring ownership between characters.
                 </li>
                 <li>
-                    <strong>Pre-Testing Backup Recommended:</strong> Because PC Storage is a major new system overhaul,
-                    please back up your important Pokémon to a JSON file using the <strong>Backup</strong> tool before
-                    diving in to test the new storage features.
+                    <strong>Trainer Organization & Reordering:</strong> Dedicated roster organization controls (with Top, Up, Down, and Bottom sorting) allow Game Masters to easily arrange and order trainers within campaign rosters.
                 </li>
                 <li>
-                    <strong>Trainer Organization & Reordering:</strong> Game Masters can now reorder trainers in their campaign list via a dedicated organization modal (with top, up, down, and bottom controls) to keep player rosters tidy and easily accessible.
-                </li>
-                <li>
-                    <strong>Player Privacy & Storage Isolation:</strong> Non-GM players now only see their own trainers and their personal team storage in the PC, keeping the GM's encounter prep and other players' private rosters secluded.
-                </li>
-                <li>
-                    <strong>Trainer Map Deployment Rank Fix:</strong> Deploying a trainer to the battle map now properly preserves their allocated rank, rank limit, and available skill points.
-                </li>
-                <li>
-                    <strong>Nickname Synchronization & Fallback:</strong> Editing or clearing a Pokémon's nickname in the PC sheet now updates the storage display and party slots immediately. Deleting a nickname keeps the input field blank on the sheet while cleanly falling back to the species name across all displays.
-                </li>
-                <li>
-                    <strong>Attachment Detachment & Backup Sync:</strong> Detaching an accessory or held item from a token on the map now unlinks it from the token's persistent memory, preventing duplicate attachments upon recall or re-deployment. Backup scenes now include all attached accessories, and entering a scene with older tokens updates their stats and attachments to match the latest sheet data.
+                    <strong>Player Privacy & Storage Isolation:</strong> Non-GM players view only their own assigned trainers and personal team storage in the PC, keeping the GM's encounter prep and other players' private rosters secluded.
                 </li>
             </ul>,
             <strong
@@ -314,13 +298,12 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 }}
             >
                 <li>
-                    <strong>Add New from Initiative (Mid-Round Swaps):</strong> Added a dedicated &quot;Add New from Initiative&quot;
-                    button to pull newly swapped Pokémon or late arrivals directly into the current combat round without wiping
-                    out or resetting existing combatants.
+                    <strong>Mid-Round Swaps (Add from Initiative):</strong> Pull newly swapped Pokémon or late arrivals directly
+                    into the active combat round from initiative without resetting existing turn orders or combatants.
                 </li>
                 <li>
-                    <strong>Flexible Tracker Reset Confirmation:</strong> Choose whether to reset action and clash/evade
-                    counters for newly pulled combatants or preserve their existing tracker state.
+                    <strong>Flexible Tracker Resets:</strong> Choose whether to reset action and clash/evade
+                    counters for newly pulled combatants or preserve their ongoing tracker state.
                 </li>
             </ul>,
             <strong
@@ -343,19 +326,18 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 }}
             >
                 <li>
-                    <strong>New Welcome Overview:</strong> When opening the extension without a token selected, a clean
-                    landing screen now greets you with quick-launch cards for Pokémon PC Storage, Generators, the Battle
-                    Organizer, and Homebrew Workshop.
+                    <strong>Welcome Overview Hub:</strong> A clean landing screen greets you when opening the extension
+                    without a token selected, featuring quick-launch shortcuts for Pokémon PC Storage, Generators, the
+                    Battle Organizer, and Homebrew Workshop.
                 </li>
                 <li>
-                    <strong>1-Click Deselect Button:</strong> Added a dedicated &quot;Deselect&quot; button to the character
-                    header and top toolbar, allowing you to easily close a character sheet and return to the overview without
-                    losing your place during combat.
+                    <strong>1-Click Deselect Controls:</strong> Dedicated deselect buttons in the character header and top
+                    toolbar let you easily close an open character sheet and return to the main overview without losing your
+                    place during combat.
                 </li>
                 <li>
-                    <strong>Custom Base Overview Theme:</strong> Set your own preferred theme colors for the extension
-                    overview when no token is selected. Active Pokémon will still display their own typing colors (e.g. Fire
-                    orange, Water blue) unless you choose to override them globally.
+                    <strong>Customizable Overview Theme:</strong> Personalize theme colors for the extension overview
+                    when no token is selected, while active Pokémon continue to reflect their own vibrant type themes.
                 </li>
             </ul>,
             <strong
@@ -378,9 +360,9 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 }}
             >
                 <li>
-                    <strong>Private Token Defaults (GM Only):</strong> Added a 1-click privacy toggle to both the Pokémon
-                    and Trainer Generators. When enabled, generated characters and teams can automatically roll as NPC-locked
-                    tokens with GM-private dice rolls and GM-only health and will trackers.
+                    <strong>Private Token Generation Defaults (GM Only):</strong> A 1-click privacy toggle in both the Pokémon
+                    and Trainer Generators allows generating characters and teams configured as NPC-locked tokens with
+                    GM-private dice rolls and GM-only health and will trackers.
                 </li>
             </ul>,
             <strong
@@ -403,9 +385,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 }}
             >
                 <li>
-                    <strong>Dice+ Deprecation Complete:</strong> Support for the legacy Dice+ extension has been
-                    fully retired and removed from the dice engine. All sheet and combat rolls now route exclusively
-                    through <strong>Custom Action Rolls (CAR)</strong>.
+                    <strong>Unified Custom Action Rolls (CAR):</strong> All sheet and combat rolls route exclusively
+                    through <strong>Custom Action Rolls (CAR)</strong> for faster, reliable 3D dice rolling.
                 </li>
                 <li>
                     <strong>Install Custom Action Rolls:</strong> If your Owlbear room does not have Custom Action Rolls
@@ -415,14 +396,13 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     </code>
                 </li>
                 <li>
-                    <strong>New Pure Roll Log (Performance Mode):</strong> Added a lightweight fallback roll mode in the
-                    Room Rules menu. When selected, calculations resolve instantly and output directly to the in-app roll
-                    log without rendering 3D dice—ideal for low-spec devices, tablets, or rooms without external dice
-                    plugins installed.
+                    <strong>Pure Roll Log (Performance Mode):</strong> A lightweight fallback roll mode in the
+                    Room Rules menu resolves calculations instantly in the in-app roll log without rendering 3D dice—ideal
+                    for low-spec devices, tablets, or rooms without external dice plugins installed.
                 </li>
                 <li>
-                    <strong>Automatic Room Migration:</strong> Rooms and character profiles previously set to Dice+ are
-                    automatically transitioned to Custom Action Rolls with in-app notice and zero gameplay disruption.
+                    <strong>Seamless Room Migration:</strong> Rooms and character profiles previously set to legacy dice engines
+                    are automatically transitioned to Custom Action Rolls with in-app notice and zero gameplay disruption.
                 </li>
             </ul>
         ]
