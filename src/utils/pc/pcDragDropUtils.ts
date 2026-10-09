@@ -9,9 +9,11 @@ export function initMobileDragDrop(): void {
     if (polyfillInitialized || typeof window === 'undefined') return;
     try {
         polyfill({
+            forceApply: true,
             holdToDrag: 250,
             dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride
         });
+        window.addEventListener('touchmove', () => {}, { passive: false });
         polyfillInitialized = true;
     } catch (e) {
         console.warn('[pcDragDropUtils] Failed to initialize mobile-drag-drop polyfill:', e);

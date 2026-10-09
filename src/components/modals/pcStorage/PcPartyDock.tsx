@@ -288,6 +288,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                             <div
                                 key={`party-${index}-${entityId}`}
                                 className="pc-party-dock__slot-wrapper"
+                                onDragEnter={(e) => e.preventDefault()}
                                 onDragOver={(e) => e.preventDefault()}
                                 onDrop={(e) => onDropOnSlot(e, index)}
                             >
@@ -318,6 +319,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                                     onSelectSlot(index);
                                 }
                             }}
+                            onDragEnter={(e) => e.preventDefault()}
                             onDragOver={(e) => e.preventDefault()}
                             onDrop={(e) => onDropOnSlot(e, index)}
                             title={

@@ -135,6 +135,7 @@ export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
                             <div
                                 key={`box-slot-${index}-${entityId}`}
                                 className="pc-box-grid__slot-wrapper"
+                                onDragEnter={(e) => e.preventDefault()}
                                 onDragOver={(e) => e.preventDefault()}
                                 onDrop={(e) => onDropOnSlot(e, index)}
                             >
@@ -170,6 +171,7 @@ export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
                                     onSelectSlot(index);
                                 }
                             }}
+                            onDragEnter={(e) => e.preventDefault()}
                             onDragOver={(e) => e.preventDefault()}
                             onDrop={(e) => onDropOnSlot(e, index)}
                             title={`Empty Slot ${index + 1} - Click to deposit a Pokémon here`}

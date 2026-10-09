@@ -151,6 +151,7 @@
 
 .pc-party-dock__slot-wrapper {
     min-height: 56px;
+    -webkit-touch-callout: none;
 }
 
 .pc-party-dock__empty-slot {
@@ -163,6 +164,9 @@
     gap: 8px;
     cursor: pointer;
     touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
     background: color-mix(in srgb, var(--panel-alt, #242424) 40%, transparent);
     transition: all 0.15s ease;
 }
