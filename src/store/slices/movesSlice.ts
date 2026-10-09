@@ -19,7 +19,8 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                         ...(acc1 ? { acc1 } : {}),
                         ...(acc2 ? { acc2 } : {}),
                         ...(dmg1 ? { dmg1 } : {}),
-                        ...(category ? { category } : {})
+                        ...(category ? { category } : {}),
+                        dualScaleSelected: true
                     };
                 }
                 return m;
@@ -210,7 +211,18 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                         .join('/');
                     const dmg1Opts = mapAttrOptions(rawDamageCandidate);
 
-                    if (acc1Opts.length > 1 || acc2Opts.length > 1 || dmg1Opts.length > 1 || catOpts) {
+                    const isNameUnchanged =
+                        !m.name ||
+                        m.name.trim().toLowerCase() ===
+                            String(data.Name || m.name)
+                                .trim()
+                                .toLowerCase();
+                    const isResolvedDualScale = Boolean(m.dualScaleSelected && isNameUnchanged);
+
+                    if (
+                        !isResolvedDualScale &&
+                        (acc1Opts.length > 1 || acc2Opts.length > 1 || dmg1Opts.length > 1 || catOpts)
+                    ) {
                         newPendingDualScale = {
                             moveId: m.id,
                             moveName: String(data.Name || m.name),
@@ -276,13 +288,14 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                         ...m,
                         name: String(data.Name || m.name),
                         type: String(data.Type || 'Normal'),
-                        category: cat,
-                        acc1: acc1Opts[0] || 'str',
-                        acc2: acc2Opts[0] || 'none',
-                        dmg1: dmg1Opts[0] || '',
+                        category: isResolvedDualScale ? m.category : cat,
+                        acc1: isResolvedDualScale ? m.acc1 : acc1Opts[0] || 'str',
+                        acc2: isResolvedDualScale ? m.acc2 : acc2Opts[0] || 'none',
+                        dmg1: isResolvedDualScale ? m.dmg1 : dmg1Opts[0] || '',
                         power: data.Power !== undefined && data.Power !== '' ? Number(data.Power) : m.power,
                         desc: finalDesc,
-                        marker: m.marker || ''
+                        marker: m.marker || '',
+                        dualScaleSelected: isResolvedDualScale
                     };
                 }
                 return m;
@@ -296,7 +309,8 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
 
             return {
                 moves: newMoves,
-                pendingDualScale: newPendingDualScale || state.pendingDualScale
+                pendingDualScale:
+                    newPendingDualScale || (state.pendingDualScale?.moveId === id ? null : state.pendingDualScale)
             };
         }),
 

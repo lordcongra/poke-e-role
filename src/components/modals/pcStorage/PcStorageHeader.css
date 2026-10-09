@@ -32,13 +32,19 @@
 .pc-header__dropdown-item {
     display: flex;
     align-items: center;
-    background: rgba(0, 0, 0, 0.35);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: var(--input-bg, rgba(0, 0, 0, 0.05));
+    border: 1px solid var(--border);
     border-radius: 6px;
     padding: 2px 5px;
     gap: 4px;
     min-width: 0;
     flex-shrink: 1;
+}
+
+html[data-theme='dark'] .pc-header__dropdown-item,
+[data-theme='dark'] .pc-header__dropdown-item {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .pc-header__campaign-badge {
@@ -205,9 +211,16 @@
     align-items: center;
     justify-content: space-between;
     padding: 8px 14px;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.04);
+    border-bottom: 1px solid var(--border);
     flex-wrap: wrap;
     gap: 8px;
+}
+
+html[data-theme='dark'] .pc-header__box-nav-row,
+[data-theme='dark'] .pc-header__box-nav-row {
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: none;
 }
 
 .pc-header__box-nav {
@@ -217,9 +230,9 @@
 }
 
 .pc-header__nav-arrow {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: var(--text-main, #f8fafc);
+    background: var(--input-bg, rgba(0, 0, 0, 0.05));
+    border: 1px solid var(--border);
+    color: var(--text-main);
     border-radius: 6px;
     width: 28px;
     height: 28px;
@@ -231,6 +244,19 @@
 }
 
 .pc-header__nav-arrow:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--primary, #3b82f6) 15%, transparent);
+    border-color: var(--primary, #3b82f6);
+}
+
+html[data-theme='dark'] .pc-header__nav-arrow,
+[data-theme='dark'] .pc-header__nav-arrow {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: var(--text-main, #f8fafc);
+}
+
+html[data-theme='dark'] .pc-header__nav-arrow:hover:not(:disabled),
+[data-theme='dark'] .pc-header__nav-arrow:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.18);
     border-color: var(--primary, #3b82f6);
 }
@@ -323,9 +349,9 @@
 }
 
 .pc-header__theme-picker-label {
-    background: rgba(0, 0, 0, 0.35);
-    border: 1.5px solid rgba(255, 255, 255, 0.18);
-    color: var(--text-main, #f8fafc);
+    background: var(--input-bg, rgba(0, 0, 0, 0.05));
+    border: 1.5px solid var(--border);
+    color: var(--text-main);
     border-radius: 6px;
     padding: 4px 10px;
     font-size: 0.8rem;
@@ -336,6 +362,13 @@
     transition:
         border-color 0.15s,
         background 0.15s;
+}
+
+html[data-theme='dark'] .pc-header__theme-picker-label,
+[data-theme='dark'] .pc-header__theme-picker-label {
+    background: rgba(0, 0, 0, 0.35);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: var(--text-main, #f8fafc);
 }
 
 .pc-header__theme-picker-label:hover {

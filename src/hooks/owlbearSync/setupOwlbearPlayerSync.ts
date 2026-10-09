@@ -1,7 +1,7 @@
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { fetchMoveData } from '../../utils/api/api';
-import { saveToOwlbear, getIsPcSheetActive } from '../../utils/sync/obr';
+import { getIsPcSheetActive } from '../../utils/sync/obr';
 import { harvestTokensItemArt } from '../../utils/graphics/itemArtCatalog';
 import { METADATA_ID } from './owlbearSyncConstants';
 import { hydrateActiveSheet } from '../../utils/sync/unifiedSheetHydration';
@@ -117,7 +117,7 @@ export async function setupOwlbearPlayerSync(params: { role: 'PLAYER' | 'GM' }):
                 // Legacy v2 token move migration (GM only)
                 if (meta) {
                     try {
-                        const isOldToken = meta['v2-migrated'] !== true;
+                        const isOldToken = meta['v2-migrated'] !== true && !meta['moves-data'];
                         const migrationTokenId = targetTokenId;
                         if (isOldToken && role === 'GM') {
                             const currentStore = useCharacterStore.getState();
@@ -134,8 +134,26 @@ export async function setupOwlbearPlayerSync(params: { role: 'PLAYER' | 'GM' }):
                                         .catch(() => {});
                                 }
                             }
-                            if (useCharacterStore.getState().tokenId === migrationTokenId) {
-                                saveToOwlbear({ 'v2-migrated': true });
+                            if (useCharacterStore.getState().tokenId === migrationTokenId && OBR.isAvailable) {
+                                OBR.scene.items
+                                    .updateItems([migrationTokenId], (items) => {
+                                        for (const item of items) {
+                                            if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
+                                            (item.metadata[METADATA_ID] as Record<string, unknown>)['v2-migrated'] =
+                                                true;
+                                            if (item.metadata['pokerole-pmd-extension/stats']) {
+                                                (
+                                                    item.metadata['pokerole-pmd-extension/stats'] as Record<
+                                                        string,
+                                                        unknown
+                                                    >
+                                                )['v2-migrated'] = true;
+                                            }
+                                        }
+                                    })
+                                    .catch((e) => {
+                                        console.error('[SyncEngine] Failed to mark v2-migrated on token:', e);
+                                    });
                             }
                         }
                     } catch (e) {

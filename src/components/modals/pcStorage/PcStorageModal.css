@@ -38,26 +38,39 @@ body.pc-modal-open .pc-sheet-modal__overlay {
 
 .pc-modal {
     --primary: var(--box-theme, var(--dynamic-type-color, #3b82f6));
-    --secondary-fallback: color-mix(in srgb, var(--primary) 65%, #ffffff);
+    --secondary-fallback: color-mix(in srgb, var(--primary) 80%, #000000);
     --secondary: var(--dynamic-secondary-color, var(--secondary-fallback));
-    --panel-bg: color-mix(in srgb, var(--primary) 10%, var(--base-panel-dark, #1e1e1e));
-    --panel-alt: color-mix(in srgb, var(--primary) 16%, var(--base-panel-alt-dark, #2a2a2a));
-    --bg: color-mix(in srgb, var(--primary) 14%, var(--base-bg-dark, #121212));
-    --border: color-mix(in srgb, var(--primary) 30%, var(--base-border-dark, #383838));
+    --panel-bg: color-mix(in srgb, var(--primary) 3%, var(--base-panel, #ffffff));
+    --panel-alt: color-mix(in srgb, var(--primary) 8%, var(--base-panel-alt, #fafafa));
+    --bg: color-mix(in srgb, var(--primary) 5%, var(--base-bg, #f0f2f5));
+    --border: color-mix(in srgb, var(--primary) 25%, var(--base-border, #ccc));
     width: 100%;
     max-width: min(1380px, 96vw);
     height: min(890px, 94vh);
     background: var(--panel-bg);
     border: 1.5px solid var(--border);
     box-shadow:
-        0 16px 36px rgba(0, 0, 0, 0.6),
+        0 16px 36px rgba(0, 0, 0, 0.25),
         0 0 24px color-mix(in srgb, var(--primary) 25%, transparent);
     border-radius: 12px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    color: var(--text-main, #f8fafc);
+    color: var(--text-main, #222222);
     font-family: inherit;
+}
+
+html[data-theme='dark'] .pc-modal,
+[data-theme='dark'] .pc-modal {
+    --secondary-fallback: color-mix(in srgb, var(--primary) 65%, #ffffff);
+    --panel-bg: color-mix(in srgb, var(--primary) 10%, var(--base-panel-dark, #1e1e1e));
+    --panel-alt: color-mix(in srgb, var(--primary) 16%, var(--base-panel-alt-dark, #2a2a2a));
+    --bg: color-mix(in srgb, var(--primary) 14%, var(--base-bg-dark, #121212));
+    --border: color-mix(in srgb, var(--primary) 30%, var(--base-border-dark, #383838));
+    color: var(--text-main, #f8fafc);
+    box-shadow:
+        0 16px 36px rgba(0, 0, 0, 0.6),
+        0 0 24px color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
 /* --------------------------------------------------------------------------
@@ -465,12 +478,18 @@ body.pc-modal-open .pc-sheet-modal__overlay {
     .pc-modal__mobile-tabs {
         display: flex;
         align-items: center;
-        background: rgba(0, 0, 0, 0.45);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background: var(--panel-alt);
+        border-bottom: 1px solid var(--border);
         padding: 4px 8px;
         gap: 6px;
         flex-shrink: 0;
         box-sizing: border-box;
+    }
+
+    html[data-theme='dark'] .pc-modal__mobile-tabs,
+    [data-theme='dark'] .pc-modal__mobile-tabs {
+        background: rgba(0, 0, 0, 0.45);
+        border-bottom-color: rgba(255, 255, 255, 0.1);
     }
 
     .pc-modal__mobile-tab {

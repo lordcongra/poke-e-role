@@ -33,6 +33,7 @@ export interface MoveData {
     power: number;
     desc?: string;
     marker?: string;
+    dualScaleSelected?: boolean;
 }
 
 export interface StatusItem {

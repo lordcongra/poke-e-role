@@ -147,7 +147,10 @@ function parseMoves(meta: Record<string, unknown>, parsedExtraCats: ExtraCategor
                 dmg1: mapAttr(rawDmgCandidate),
                 power: Number(m.power !== undefined ? m.power : m.Power || 0),
                 desc: String(m.desc || m.Description || m.Effect || ''),
-                marker: String(m.marker || m.Marker || '')
+                marker: String(m.marker || m.Marker || ''),
+                ...(m.dualScaleSelected !== undefined
+                    ? { dualScaleSelected: m.dualScaleSelected === true || m.dualScaleSelected === 'true' }
+                    : {})
             };
         });
     } catch (e) {

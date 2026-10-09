@@ -338,7 +338,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     }
 
     const contextSummary = contextMenu ? pcData.pokemonSummaries[contextMenu.entityId] : null;
-    const boxTheme = currentBox?.themeColor || 'var(--dynamic-type-color, var(--base-primary-dark, #8b1c1c))';
+    const boxTheme = currentBox?.themeColor || 'var(--primary)';
 
     return (
         <>
