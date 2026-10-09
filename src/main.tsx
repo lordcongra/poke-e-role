@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client';
 import './style.css';
 import App from './App.tsx';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { initMobileDragDrop } from './utils/pc/pcDragDropUtils';
+
+initMobileDragDrop();
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>

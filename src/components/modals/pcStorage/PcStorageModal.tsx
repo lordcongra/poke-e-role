@@ -6,12 +6,14 @@ import { PcStorageLayout } from './PcStorageLayout';
 import { PcBackupWarningBanner } from './PcBackupWarningBanner';
 import { PcStorageMobileTabs } from './PcStorageMobileTabs';
 import { PcStorageSubModals } from './PcStorageSubModals';
+import { PcStorageFallback } from './PcStorageFallback';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import {
     buildActiveCharacterSummary,
     filterTrainerPokemonSummaries,
     findOtherLinkedTrainer
 } from '../../../utils/pc/pcModalOps';
+import { createDefaultBox } from '../../../utils/pc/pcStorageAdapter';
 import { buildTrainerSummary } from '../../../utils/pc/pcTrainerOps';
 import { broadcastPlayerPc, broadcastGmPc, requestPlayerPcSync } from '../../../hooks/owlbearSync/setupOwlbearPcSync';
 import { buildSheetAvailableSummaries, isEntityLockedByGm } from '../../../utils/pc/pcCandidateMatching';
@@ -22,6 +24,8 @@ import { linkAndSpawnTrainerToken } from '../../../utils/pc/pcTrainerTokenOps';
 import { cancelPointPlacement } from '../../../utils/pc/pcPlacementInteraction';
 import { usePcDragHandlers } from './usePcDragHandlers';
 import { PcPlacementBanner } from './PcPlacementBanner';
+import { PcMoveModeBanner } from './PcMoveModeBanner';
+import { usePcMoveMode } from './usePcMoveMode';
 import { usePcModalHandlers } from './usePcModalHandlers';
 import { usePcStorageModalSetup } from './usePcStorageModalSetup';
 import './PcStorageModal.css';
@@ -121,7 +125,13 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     const partySlots = activeRoster ? activeRoster.party : campaign?.teamParty || Array(6).fill(null);
     const trainerBoxes =
         activeRoster?.boxes && activeRoster.boxes.length > 0 ? activeRoster.boxes : campaign?.boxes || [];
-    const currentBox = trainerBoxes[activeBoxIndex] || trainerBoxes[0];
+    const currentBox = trainerBoxes[activeBoxIndex] || trainerBoxes[0] || createDefaultBox(0);
+
+    React.useEffect(() => {
+        if (campaign && trainerBoxes.length === 0) {
+            addBox();
+        }
+    }, [campaign, trainerBoxes.length, addBox]);
 
     const currentActiveSummary = buildActiveCharacterSummary(
         identity,
@@ -256,21 +266,12 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         [trainer, trainerSummary, pcData.pokemonSummaries, partySlots, trainerBoxes, isGm]
     );
 
-    const handleSlotClick = useCallback(
-        (target: { type: 'party' | 'box'; index: number }) => {
-            setSelectedPcSlot(
-                selectedPcSlot?.type === target.type && selectedPcSlot?.index === target.index ? null : target
-            );
-        },
-        [selectedPcSlot, setSelectedPcSlot]
-    );
-
-    const handleEmptySlotClick = useCallback(
-        (target: { type: 'party' | 'box'; index: number }) => {
-            setSelectedPcSlot(null);
-            setDepositTarget({ targetSlot: target });
-        },
-        [setSelectedPcSlot, setDepositTarget]
+    const { movingSlot, startMoveMode, handleSlotClick, handleEmptySlotClick, cancelMoveMode } = usePcMoveMode(
+        activeBoxIndex,
+        swapPcSlots,
+        selectedPcSlot,
+        setSelectedPcSlot,
+        setDepositTarget
     );
 
     const trainerRef = useRef(trainer);
@@ -321,11 +322,19 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         [pcData, role, updateTrainerProfile]
     );
 
-    const { handlePartyDrop, handleBoxDrop, handlePartyDragStart, handleBoxDragStart, handleDragEnd } =
-        usePcDragHandlers(activeBoxIndex, swapPcSlots);
+    const { handlePartyDrop, handleBoxDrop, handleTabDrop, handlePartyDragStart, handleBoxDragStart, handleDragEnd } =
+        usePcDragHandlers(activeBoxIndex, swapPcSlots, partySlots, currentBox?.slots);
 
     if (!campaign || !currentBox) {
-        return null;
+        return (
+            <PcStorageFallback
+                onClose={handleModalClose}
+                onCreateCampaign={() => {
+                    if (!campaign) addCampaign('Main Adventure');
+                    else addBox();
+                }}
+            />
+        );
     }
 
     const contextSummary = contextMenu ? pcData.pokemonSummaries[contextMenu.entityId] : null;
@@ -374,6 +383,8 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
 
                     <PcPlacementBanner />
 
+                    {movingSlot && <PcMoveModeBanner pokemonName={movingSlot.name} onCancel={cancelMoveMode} />}
+
                     {!dismissBackupWarning && <PcBackupWarningBanner onDismiss={handleDismissWarning} />}
 
                     <PcStorageMobileTabs
@@ -382,6 +393,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         boxName={currentBox.name}
                         partyCount={partySlots.filter(Boolean).length}
                         isPmdMode={isPmdMode}
+                        onTabDrop={handleTabDrop}
                     />
 
                     <PcStorageLayout
@@ -475,6 +487,17 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                 isTokenSpawnModalOpen={isTokenSpawnModalOpen}
                 onCloseTokenSpawnModal={() => setIsTokenSpawnModalOpen(false)}
                 onSpawnTrainerToken={handleSpawnTrainerToken}
+                onStartMoveMode={() => {
+                    if (contextMenu && contextSummary) {
+                        startMoveMode(
+                            {
+                                type: contextMenu.isPartySlot ? 'party' : 'box',
+                                index: contextMenu.index
+                            },
+                            contextSummary.name || contextSummary.species
+                        );
+                    }
+                }}
             />
         </>
     );

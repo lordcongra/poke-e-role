@@ -1,6 +1,6 @@
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { savePcStorage } from '../../utils/pc/pcStorageAdapter';
+import { savePcStorage, createDefaultBox } from '../../utils/pc/pcStorageAdapter';
 import { resolveGmTargetCampaignId } from '../../utils/pc/pcCampaignTrainerOps';
 import { EXTENSION_ID, METADATA_ID } from './owlbearSyncConstants';
 import { registerSafeBroadcastListener } from './owlbearBroadcastUtils';
@@ -438,8 +438,21 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
             delete nextTrainers[trainerId];
 
             const remainingKeys = Object.keys(nextTrainers);
-            const nextActiveTrainerId =
+            let nextActiveTrainerId =
                 camp.activeTrainerId === trainerId ? remainingKeys[0] || '__none__' : camp.activeTrainerId;
+
+            if (remainingKeys.length === 0) {
+                const defaultTrainerId = `trainer-${crypto.randomUUID().slice(0, 8)}`;
+                nextTrainers[defaultTrainerId] = {
+                    id: defaultTrainerId,
+                    name: 'Trainer',
+                    party: Array(6).fill(null),
+                    boxes: Array.from({ length: 8 }, (_, i) => createDefaultBox(i))
+                };
+                nextActiveTrainerId = defaultTrainerId;
+            }
+
+            const nextTrainerOrder = camp.trainerOrder ? camp.trainerOrder.filter((id) => id !== trainerId) : undefined;
 
             const nextData = {
                 ...pcData,
@@ -448,6 +461,7 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                     [targetCampId]: {
                         ...camp,
                         activeTrainerId: nextActiveTrainerId,
+                        trainerOrder: nextTrainerOrder,
                         trainers: nextTrainers
                     }
                 }

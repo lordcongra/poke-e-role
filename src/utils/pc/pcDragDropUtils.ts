@@ -1,4 +1,22 @@
 import type React from 'react';
+import { polyfill } from 'mobile-drag-drop';
+import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
+import 'mobile-drag-drop/default.css';
+
+let polyfillInitialized = false;
+
+export function initMobileDragDrop(): void {
+    if (polyfillInitialized || typeof window === 'undefined') return;
+    try {
+        polyfill({
+            holdToDrag: 250,
+            dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride
+        });
+        polyfillInitialized = true;
+    } catch (e) {
+        console.warn('[pcDragDropUtils] Failed to initialize mobile-drag-drop polyfill:', e);
+    }
+}
 
 export interface PcDragItem {
     type: 'party' | 'box';

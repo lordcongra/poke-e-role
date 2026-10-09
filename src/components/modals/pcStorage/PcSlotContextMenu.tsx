@@ -10,7 +10,8 @@ import {
     Trash2,
     X,
     Unlink,
-    Lock
+    Lock,
+    Move
 } from 'lucide-react';
 
 interface PcSlotContextMenuProps {
@@ -23,6 +24,7 @@ interface PcSlotContextMenuProps {
     onClose: () => void;
     onOpenSheet: () => void;
     onTogglePartyBox: () => void;
+    onStartMoveMode?: () => void;
     onToggleMap?: () => void;
     onRelinkArtwork?: () => void;
     onClone: () => void;
@@ -40,6 +42,7 @@ export const PcSlotContextMenu: React.FC<PcSlotContextMenuProps> = ({
     onClose,
     onOpenSheet,
     onTogglePartyBox,
+    onStartMoveMode,
     onToggleMap,
     onRelinkArtwork,
     onClone,
@@ -121,6 +124,26 @@ export const PcSlotContextMenu: React.FC<PcSlotContextMenuProps> = ({
                     <ArrowRightLeft size={15} />
                     {isPartySlot ? 'Deposit to Box' : 'Move to Party'}
                 </button>
+
+                {onStartMoveMode && (
+                    <button
+                        type="button"
+                        className={`pc-context-menu__item ${isLocked ? 'pc-context-menu__item--disabled' : ''}`}
+                        disabled={isLocked}
+                        title={
+                            isLocked
+                                ? 'This character is locked by the GM.'
+                                : 'Select destination slot to move or swap this Pokémon'
+                        }
+                        onClick={() => {
+                            if (isLocked) return;
+                            onStartMoveMode();
+                            onClose();
+                        }}
+                    >
+                        <Move size={15} /> Move / Swap Slot
+                    </button>
+                )}
 
                 {onToggleMap && OBR.isAvailable && (
                     <button

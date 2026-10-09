@@ -3,9 +3,12 @@ import OBR from '@owlbear-rodeo/sdk';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
 import { useResolvedImageUrl } from '../../../utils/graphics/useResolvedImageUrl';
-import { CornerDownLeft, Sparkles, FileText, ArrowRightLeft, Lock } from 'lucide-react';
+import { Sparkles, Lock } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { isEntityLockedByGm } from '../../../utils/pc/pcCandidateMatching';
+import { usePcSlotTouch } from './usePcSlotTouch';
+import { PcSlotPartyActions } from './PcSlotPartyActions';
+import { PcSlotBoxActions } from './PcSlotBoxActions';
 import './PcSlotCard.css';
 
 interface PcSlotCardProps {
@@ -50,53 +53,27 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
     const hasType2 = Boolean(summary.type2 && summary.type2.toLowerCase() !== 'none' && summary.type2.trim() !== '');
     const type1Display = summary.type1 && summary.type1.toLowerCase() !== 'none' ? summary.type1 : 'Normal';
 
-    // Touch tap detection: on mobile, clean tap opens options menu, swiping to scroll does not
-    const touchStartRef = React.useRef<{ x: number; y: number; time: number } | null>(null);
-    const isSwipingRef = React.useRef(false);
-
-    const handleTouchStart = (e: React.TouchEvent) => {
-        if (e.touches.length === 1) {
-            const t = e.touches[0];
-            touchStartRef.current = { x: t.clientX, y: t.clientY, time: Date.now() };
-            isSwipingRef.current = false;
-        }
-    };
-
-    const handleTouchMove = (e: React.TouchEvent) => {
-        if (touchStartRef.current && e.touches.length === 1) {
-            const t = e.touches[0];
-            const dx = Math.abs(t.clientX - touchStartRef.current.x);
-            const dy = Math.abs(t.clientY - touchStartRef.current.y);
-            if (dx > 10 || dy > 10) {
-                isSwipingRef.current = true;
-            }
-        }
-    };
-
-    const handleTouchEnd = (_e: React.TouchEvent) => {
-        if (touchStartRef.current && !isSwipingRef.current) {
-            const elapsed = Date.now() - touchStartRef.current.time;
-            if (elapsed < 350) {
-                const synthEvent = {
-                    preventDefault: () => {},
-                    stopPropagation: () => {},
-                    clientX: touchStartRef.current.x,
-                    clientY: touchStartRef.current.y
-                } as unknown as React.MouseEvent;
-                onContextMenu(synthEvent);
-            }
-        }
-        touchStartRef.current = null;
-        isSwipingRef.current = false;
-    };
+    const {
+        handleTouchStart,
+        handleTouchMove,
+        handleTouchEnd,
+        handleTouchCancel,
+        handleClick,
+        handleDragStartWrapped
+    } = usePcSlotTouch({
+        onContextMenu,
+        onClick,
+        onDragStart
+    });
 
     return (
         <div
             className={`pc-slot-card ${isSelected ? 'pc-slot-card--selected' : ''} ${isPartySlot ? 'pc-slot-card--party' : 'pc-slot-card--box'}`}
-            onClick={onClick}
+            onClick={handleClick}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchCancel}
             onDoubleClick={(e) => {
                 e.stopPropagation();
                 if (isLocked) {
@@ -115,7 +92,7 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
                 onContextMenu(e);
             }}
             draggable={!isLocked && !!onDragStart}
-            onDragStart={onDragStart}
+            onDragStart={handleDragStartWrapped}
             onDragEnd={onDragEnd}
             title={`${summary.name || summary.species}${summary.species && summary.species !== summary.name ? ` (${summary.species})` : ''} - Double-click to open sheet, right-click for options`}
         >
@@ -227,161 +204,24 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
             </div>
 
             {isPartySlot ? (
-                <div className="pc-slot-card__party-actions">
-                    {onOpenSheet && (
-                        <button
-                            type="button"
-                            className={`action-button action-button--dark pc-slot-card__btn-sheet ${isLocked ? 'pc-slot-card__btn-sheet--disabled' : ''}`}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (isLocked) {
-                                    if (OBR.isAvailable) {
-                                        OBR.notification.show(
-                                            'This character token is locked by the GM. Ask your GM to unlock it.',
-                                            'WARNING'
-                                        );
-                                    }
-                                    return;
-                                }
-                                onOpenSheet();
-                            }}
-                            title={isLocked ? 'Locked by GM' : 'Open Character Sheet'}
-                            aria-label={isLocked ? 'Locked by GM' : 'Open Character Sheet'}
-                            disabled={isLocked}
-                        >
-                            {isLocked ? <Lock size={13} /> : <FileText size={13} />}
-                        </button>
-                    )}
-                    {OBR.isAvailable &&
-                        (summary.isOnMap ? (
-                            <button
-                                type="button"
-                                className={`action-button action-button--dark pc-slot-card__btn-action pc-slot-card__btn-recall ${isLocked ? 'pc-slot-card__btn-sheet--disabled' : ''}`}
-                                disabled={isLocked}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (isLocked) return;
-                                    onRecall?.();
-                                }}
-                                title={isLocked ? 'Locked by GM' : 'Recall Pokémon back into Pokéball'}
-                                aria-label={isLocked ? 'Locked by GM' : 'Recall Pokémon back into Pokéball'}
-                            >
-                                <CornerDownLeft size={13} />
-                            </button>
-                        ) : (
-                            <button
-                                type="button"
-                                className={`action-button action-button--theme pc-slot-card__btn-action pc-slot-card__btn-send ${isLocked ? 'pc-slot-card__btn-sheet--disabled' : ''}`}
-                                disabled={isLocked}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (isLocked) return;
-                                    onSendOut?.();
-                                }}
-                                title={isLocked ? 'Locked by GM' : 'Send Out Pokémon onto battle map'}
-                                aria-label={isLocked ? 'Locked by GM' : 'Send Out Pokémon onto battle map'}
-                            >
-                                <svg
-                                    width={13}
-                                    height={13}
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    style={{ display: 'block' }}
-                                >
-                                    <circle cx="12" cy="12" r="10" />
-                                    <line x1="2" y1="12" x2="22" y2="12" />
-                                    <circle cx="12" cy="12" r="3" />
-                                    <circle cx="12" cy="12" r="1" fill="currentColor" />
-                                </svg>
-                            </button>
-                        ))}
-                </div>
+                <PcSlotPartyActions
+                    summary={summary}
+                    isLocked={isLocked}
+                    onOpenSheet={onOpenSheet}
+                    onSendOut={onSendOut}
+                    onRecall={onRecall}
+                    onContextMenu={onContextMenu}
+                />
             ) : (
-                <div className="pc-slot-card__box-actions">
-                    {OBR.isAvailable &&
-                        (summary.isOnMap
-                            ? onRecall && (
-                                  <button
-                                      type="button"
-                                      className={`action-button action-button--dark pc-slot-card__btn-box-action pc-slot-card__btn-recall ${isLocked ? 'pc-slot-card__btn-sheet--disabled' : ''}`}
-                                      disabled={isLocked}
-                                      onClick={(e) => {
-                                          e.stopPropagation();
-                                          if (isLocked) return;
-                                          onRecall();
-                                      }}
-                                      title={isLocked ? 'Locked by GM' : 'Recall Pokémon from map into PC Box'}
-                                      aria-label={isLocked ? 'Locked by GM' : 'Recall Pokémon from map into PC Box'}
-                                  >
-                                      <CornerDownLeft size={12} />
-                                  </button>
-                              )
-                            : onSendOut && (
-                                  <button
-                                      type="button"
-                                      className={`action-button action-button--theme pc-slot-card__btn-box-action pc-slot-card__btn-send ${isLocked ? 'pc-slot-card__btn-sheet--disabled' : ''}`}
-                                      disabled={isLocked}
-                                      onClick={(e) => {
-                                          e.stopPropagation();
-                                          if (isLocked) return;
-                                          onSendOut();
-                                      }}
-                                      title={isLocked ? 'Locked by GM' : 'Send Out Pokémon onto battle map'}
-                                      aria-label={isLocked ? 'Locked by GM' : 'Send Out Pokémon onto battle map'}
-                                  >
-                                      <svg
-                                          width={11}
-                                          height={11}
-                                          viewBox="0 0 24 24"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          strokeWidth="2.2"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          style={{ display: 'block' }}
-                                      >
-                                          <circle cx="12" cy="12" r="10" />
-                                          <line x1="2" y1="12" x2="22" y2="12" />
-                                          <circle cx="12" cy="12" r="3" />
-                                          <circle cx="12" cy="12" r="1" fill="currentColor" />
-                                      </svg>
-                                  </button>
-                              ))}
-                    {onMoveToParty && (
-                        <button
-                            type="button"
-                            className={`action-button action-button--dark pc-slot-card__btn-box-action ${isLocked ? 'pc-slot-card__btn-sheet--disabled' : ''}`}
-                            disabled={isLocked}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (isLocked) return;
-                                onMoveToParty();
-                            }}
-                            title={isLocked ? 'Locked by GM' : 'Move Pokémon to Trainer Belt (Party)'}
-                            aria-label={isLocked ? 'Locked by GM' : 'Move Pokémon to Trainer Belt'}
-                        >
-                            <ArrowRightLeft size={11} />
-                        </button>
-                    )}
-                    {onOpenSheet && (
-                        <button
-                            type="button"
-                            className="action-button action-button--dark pc-slot-card__btn-box-sheet"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onOpenSheet();
-                            }}
-                            title="Open Pokémon Sheet"
-                            aria-label="Open Pokémon Sheet"
-                        >
-                            <FileText size={12} />
-                        </button>
-                    )}
-                </div>
+                <PcSlotBoxActions
+                    summary={summary}
+                    isLocked={isLocked}
+                    onOpenSheet={onOpenSheet}
+                    onMoveToParty={onMoveToParty}
+                    onSendOut={onSendOut}
+                    onRecall={onRecall}
+                    onContextMenu={onContextMenu}
+                />
             )}
         </div>
     );

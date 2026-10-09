@@ -87,6 +87,7 @@ interface PcStorageSubModalsProps {
     isTokenSpawnModalOpen?: boolean;
     onCloseTokenSpawnModal?: () => void;
     onSpawnTrainerToken?: (imageUrl: string) => Promise<void>;
+    onStartMoveMode?: () => void;
 }
 
 export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
@@ -137,7 +138,8 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
     onConfirmGmClaimOverride,
     isTokenSpawnModalOpen,
     onCloseTokenSpawnModal,
-    onSpawnTrainerToken
+    onSpawnTrainerToken,
+    onStartMoveMode
 }) => {
     return (
         <>
@@ -278,6 +280,7 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
                     onClone={() => handleClonePokemon?.(contextMenu.entityId)}
                     onUnlink={() => handleUnlinkPokemon(contextMenu.entityId)}
                     onRelease={() => handleReleasePokemon?.(contextMenu.entityId)}
+                    onStartMoveMode={onStartMoveMode}
                 />
             )}
 

@@ -377,6 +377,71 @@ body.pc-modal-open .pc-sheet-modal__overlay {
     display: none;
 }
 
+/* ==========================================================================
+   Explicit Move / Swap Mode Mobile Banner
+   ========================================================================== */
+
+.pc-move-mode-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: color-mix(in srgb, var(--primary, #3b82f6) 22%, var(--panel-bg, #1a1a1a));
+    border: 1px solid var(--primary, #3b82f6);
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin: 8px 12px 4px 12px;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--primary, #3b82f6) 35%, transparent);
+    animation: pcMoveBannerPulse 2.5s infinite alternate ease-in-out;
+    z-index: 20;
+    flex-shrink: 0;
+}
+
+@keyframes pcMoveBannerPulse {
+    0% {
+        border-color: var(--primary, #3b82f6);
+        box-shadow: 0 0 8px color-mix(in srgb, var(--primary, #3b82f6) 30%, transparent);
+    }
+    100% {
+        border-color: color-mix(in srgb, var(--primary, #3b82f6) 80%, white);
+        box-shadow: 0 0 16px color-mix(in srgb, var(--primary, #3b82f6) 55%, transparent);
+    }
+}
+
+.pc-move-mode-banner__content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.pc-move-mode-banner__icon {
+    color: var(--primary, #3b82f6);
+    flex-shrink: 0;
+}
+
+.pc-move-mode-banner__text {
+    font-size: 0.85rem;
+    color: var(--text-main, #f8fafc);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pc-move-mode-banner__text strong {
+    color: var(--primary, #60a5fa);
+}
+
+.pc-move-mode-banner__cancel-btn {
+    font-size: 0.78rem;
+    padding: 4px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    border-radius: 6px;
+}
+
 /* --------------------------------------------------------------------------
    Mobile & Responsive Layouts
    -------------------------------------------------------------------------- */
@@ -430,6 +495,14 @@ body.pc-modal-open .pc-sheet-modal__overlay {
         border-color: var(--primary);
         color: var(--text-main, #f8fafc);
         font-weight: 700;
+    }
+
+    .pc-modal__mobile-tab--drag-over {
+        background: color-mix(in srgb, var(--primary) 35%, rgba(59, 130, 246, 0.4)) !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 60%, transparent);
+        transform: scale(1.03);
+        color: #fff !important;
     }
 
     /* Segmented view switching on mobile */

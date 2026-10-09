@@ -196,6 +196,14 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
         data.campaigns = {};
     }
 
+    if (Object.keys(data.campaigns).length === 0) {
+        const defaultCamp = createDefaultCampaign();
+        data.campaigns[defaultCamp.id] = defaultCamp;
+        data.activeCampaignId = defaultCamp.id;
+    } else if (!data.activeCampaignId || !data.campaigns[data.activeCampaignId]) {
+        data.activeCampaignId = Object.keys(data.campaigns)[0];
+    }
+
     const referencedIds = new Set<string>();
 
     for (const camp of Object.values(data.campaigns)) {

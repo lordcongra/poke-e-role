@@ -312,8 +312,11 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                             key={`party-empty-${index}`}
                             className={`pc-party-dock__empty-slot ${isSelected ? 'pc-party-dock__empty-slot--selected' : ''}`}
                             onClick={() => {
-                                onSelectSlot(index);
-                                onEmptySlotClick?.(index);
+                                if (onEmptySlotClick) {
+                                    onEmptySlotClick(index);
+                                } else {
+                                    onSelectSlot(index);
+                                }
                             }}
                             onDragOver={(e) => e.preventDefault()}
                             onDrop={(e) => onDropOnSlot(e, index)}

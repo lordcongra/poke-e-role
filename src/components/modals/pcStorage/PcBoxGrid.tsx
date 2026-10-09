@@ -164,8 +164,11 @@ export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
                                 background: isSelected ? `${theme}26` : undefined
                             }}
                             onClick={() => {
-                                onSelectSlot(index);
-                                onEmptySlotClick?.(index);
+                                if (onEmptySlotClick) {
+                                    onEmptySlotClick(index);
+                                } else {
+                                    onSelectSlot(index);
+                                }
                             }}
                             onDragOver={(e) => e.preventDefault()}
                             onDrop={(e) => onDropOnSlot(e, index)}

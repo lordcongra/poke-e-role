@@ -107,15 +107,30 @@ export function applyDeleteTrainer(
         return { success: false, nextData: pcData, error: 'Trainer not found.' };
     }
 
+    const fallbackTrainerId = trainerKeys.find((id) => id !== trainerId) || trainerKeys[0];
+    const targetTrainerId =
+        campaign.activeTrainerId &&
+        campaign.activeTrainerId !== trainerId &&
+        campaign.activeTrainerId !== '__none__' &&
+        campaign.trainers[campaign.activeTrainerId]
+            ? campaign.activeTrainerId
+            : fallbackTrainerId;
+
+    const remainingTrainer = targetTrainerId ? campaign.trainers[targetTrainerId] : undefined;
+    const sourceBoxes =
+        remainingTrainer?.boxes && remainingTrainer.boxes.length > 0
+            ? remainingTrainer.boxes
+            : campaign.boxes && campaign.boxes.length > 0
+              ? campaign.boxes
+              : [createDefaultBox(0)];
+    const targetBoxes = sourceBoxes.map((b) => ({ ...b, slots: [...b.slots] }));
+
     const nextActiveTrainerId =
         campaign.activeTrainerId === trainerId
-            ? trainerKeys.find((id) => id !== trainerId) || trainerKeys[0]
-            : campaign.activeTrainerId;
-
-    const remainingTrainer = campaign.trainers[nextActiveTrainerId];
-    const targetBoxes = (
-        remainingTrainer.boxes && remainingTrainer.boxes.length > 0 ? remainingTrainer.boxes : campaign.boxes
-    ).map((b) => ({ ...b, slots: [...b.slots] }));
+            ? fallbackTrainerId
+            : campaign.activeTrainerId === '__none__' || campaign.trainers[campaign.activeTrainerId]
+              ? campaign.activeTrainerId
+              : fallbackTrainerId;
 
     const partyIds = (trainer.party || []).filter((id): id is string => Boolean(id));
     const pcIds: string[] = [];
@@ -164,7 +179,8 @@ export function applyDeleteTrainer(
         if (nextSummaries[entityId]) {
             nextSummaries[entityId] = {
                 ...nextSummaries[entityId],
-                trainerId: nextActiveTrainerId,
+                trainerId:
+                    remainingTrainer?.id || (nextActiveTrainerId !== '__none__' ? nextActiveTrainerId : undefined),
                 lastModified: Date.now()
             };
         }
@@ -173,10 +189,15 @@ export function applyDeleteTrainer(
     const nextTrainers = { ...campaign.trainers };
     delete nextTrainers[trainerId];
 
-    nextTrainers[nextActiveTrainerId] = {
-        ...remainingTrainer,
-        boxes: targetBoxes
-    };
+    if (remainingTrainer) {
+        nextTrainers[remainingTrainer.id] = {
+            ...remainingTrainer,
+            boxes: targetBoxes
+        };
+    }
+
+    const nextCampaignBoxes = remainingTrainer ? campaign.boxes : targetBoxes;
+    const nextTrainerOrder = campaign.trainerOrder ? campaign.trainerOrder.filter((id) => id !== trainerId) : undefined;
 
     return {
         success: true,
@@ -188,8 +209,9 @@ export function applyDeleteTrainer(
                 [campaignId]: {
                     ...campaign,
                     activeTrainerId: nextActiveTrainerId,
+                    trainerOrder: nextTrainerOrder,
                     trainers: nextTrainers,
-                    boxes: campaign.boxes
+                    boxes: nextCampaignBoxes
                 }
             }
         }

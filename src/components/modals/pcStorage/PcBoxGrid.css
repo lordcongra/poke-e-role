@@ -118,6 +118,7 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    touch-action: pan-y;
     transition: all 0.15s ease;
     gap: 3px;
 }
