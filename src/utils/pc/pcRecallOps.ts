@@ -291,7 +291,9 @@ export async function executeRecallWorkflow(
                 delete metaId['is-backup-token'];
                 delete metaId['pokerole-pmd-extension/is-backup-token'];
             }
-            const statsMeta = cleanedSavedItem.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown> | undefined;
+            const statsMeta = cleanedSavedItem.metadata['pokerole-pmd-extension/stats'] as
+                | Record<string, unknown>
+                | undefined;
             if (statsMeta && typeof statsMeta === 'object') {
                 delete statsMeta['is-backup-token'];
                 delete statsMeta['pokerole-pmd-extension/is-backup-token'];

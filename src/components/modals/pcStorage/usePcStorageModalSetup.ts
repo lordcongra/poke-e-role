@@ -5,6 +5,7 @@ import type { PcStorageData } from '../../../types/pcStorageTypes';
 import { sanitizePcData, savePcStorage } from '../../../utils/pc/pcStorageAdapter';
 import { refreshSummariesFromLocalStorage, isEntityLockedByGm } from '../../../utils/pc/pcCandidateMatching';
 import { setCachedObrPlayerId } from '../../../utils/pc/pcCampaignTrainerOps';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 
 export function usePcStorageModalSetup(
     pcData: PcStorageData,
@@ -13,6 +14,7 @@ export function usePcStorageModalSetup(
 ) {
     const isInitialized = useCharacterStore((state) => state.isInitialized);
     const [myPlayerId, setMyPlayerId] = useState<string | undefined>();
+    const [currentRole, setCurrentRole] = useState<'PLAYER' | 'GM' | undefined>(role);
     const [isActiveTokenLocked, setIsActiveTokenLocked] = useState(false);
     const [dismissBackupWarning, setDismissBackupWarning] = useState(
         () => typeof localStorage !== 'undefined' && localStorage.getItem('pkr_pc_backup_warn_dismissed_v2') === 'true'
@@ -42,7 +44,13 @@ export function usePcStorageModalSetup(
         } catch {}
     }, []);
 
-    // Lock page scrolling & cache player ID
+    useEffect(() => {
+        if (role && role !== currentRole) {
+            setCurrentRole(role);
+        }
+    }, [role]);
+
+    // Lock page scrolling & cache player ID / role
     useEffect(() => {
         document.body.classList.add('pc-modal-open');
         document.documentElement.classList.add('pc-modal-open');
@@ -52,11 +60,16 @@ export function usePcStorageModalSetup(
         ];
         document.body.style.overflow = document.documentElement.style.overflow = 'hidden';
         if (OBR.isAvailable) {
-            OBR.player
-                .getId()
-                .then((id) => {
+            Promise.all([OBR.player.getId(), OBR.player.getRole()])
+                .then(([id, playerRole]) => {
                     setMyPlayerId(id);
                     setCachedObrPlayerId(id);
+                    setCurrentRole(playerRole);
+                    if (role !== playerRole) {
+                        useCharacterStore
+                            .getState()
+                            .setTokenData(useCharacterStore.getState().tokenId || '', playerRole);
+                    }
                 })
                 .catch(() => {});
         }
@@ -68,9 +81,11 @@ export function usePcStorageModalSetup(
         };
     }, []);
 
+    const effectiveIsGm = role === 'GM' || currentRole === 'GM' || isStandaloneMode;
+
     // Token lock check
     useEffect(() => {
-        if (!OBR.isAvailable || role === 'GM') {
+        if (!OBR.isAvailable || effectiveIsGm) {
             setIsActiveTokenLocked(false);
             return;
         }
@@ -84,7 +99,7 @@ export function usePcStorageModalSetup(
         } else {
             setIsActiveTokenLocked(false);
         }
-    }, [activeTokenId, role]);
+    }, [activeTokenId, effectiveIsGm]);
 
     // Sanitize PC data on mount once initialized
     useEffect(() => {
@@ -104,6 +119,7 @@ export function usePcStorageModalSetup(
         dismissBackupWarning,
         handleDismissWarning,
         desktopPartyLayout,
-        handleTogglePartyLayout
+        handleTogglePartyLayout,
+        effectiveIsGm
     };
 }

@@ -10,6 +10,7 @@ import {
     Download,
     RefreshCw,
     HelpCircle,
+    SlidersHorizontal,
     X
 } from 'lucide-react';
 import './PcMobileHeaderMenu.css';
@@ -25,6 +26,7 @@ interface PcMobileHeaderMenuProps {
     onSyncPlayers?: () => void;
     onOpenGuide?: () => void;
     hasUnbackedChanges?: boolean;
+    onOpenTrainerOrg?: () => void;
 }
 
 export const PcMobileHeaderMenu: React.FC<PcMobileHeaderMenuProps> = ({
@@ -37,7 +39,8 @@ export const PcMobileHeaderMenu: React.FC<PcMobileHeaderMenuProps> = ({
     onOpenImport,
     onSyncPlayers,
     onOpenGuide,
-    hasUnbackedChanges = false
+    hasUnbackedChanges = false,
+    onOpenTrainerOrg
 }) => {
     const [placementMode, setPlacementMode] = useState<'manual' | 'auto'>(getPlacementModePreference);
 
@@ -151,6 +154,21 @@ export const PcMobileHeaderMenu: React.FC<PcMobileHeaderMenuProps> = ({
                     <CloudDownload size={14} />
                     <span>Import</span>
                 </button>
+
+                {onOpenTrainerOrg && (
+                    <button
+                        type="button"
+                        className="action-button action-button--dark pc-mobile-menu__grid-btn"
+                        onClick={() => {
+                            onClose();
+                            onOpenTrainerOrg();
+                        }}
+                        title="Organize Trainers"
+                    >
+                        <SlidersHorizontal size={14} />
+                        <span>Organize</span>
+                    </button>
+                )}
 
                 {onSyncPlayers && (
                     <button

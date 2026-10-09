@@ -275,7 +275,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                                 <Edit2 size={13} />
                             </button>
                         )}
-                        {isGm && onReorderTrainers && trainerProfiles.length > 1 && (
+                        {isGm && onReorderTrainers && trainerProfiles.length > 0 && (
                             <button
                                 type="button"
                                 className="pc-header__mini-btn"
@@ -414,6 +414,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                     onSyncPlayers={onSyncPlayers}
                     onOpenGuide={onOpenGuide}
                     hasUnbackedChanges={hasUnbackedChanges}
+                    onOpenTrainerOrg={isGm && trainerProfiles.length > 0 ? () => setIsTrainerOrgOpen(true) : undefined}
                 />
             )}
 

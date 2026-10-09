@@ -91,12 +91,13 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         dismissBackupWarning,
         handleDismissWarning,
         desktopPartyLayout,
-        handleTogglePartyLayout
+        handleTogglePartyLayout,
+        effectiveIsGm
     } = usePcStorageModalSetup(pcData, activeTokenId, role);
 
     // Active Campaign & Trainer resolution
     const campaign = pcData.campaigns[pcData.activeCampaignId] || Object.values(pcData.campaigns)[0];
-    const isGm = role === 'GM';
+    const isGm = effectiveIsGm;
     const visibleTrainers = useMemo(
         () => filterTrainersForRole(campaign?.trainers, myPlayerId, isGm, activeTokenId),
         [campaign?.trainers, myPlayerId, isGm, activeTokenId]
@@ -113,7 +114,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     const handleModalClose = () => {
         cancelPointPlacement().catch(() => {});
         if (OBR.isAvailable) {
-            role !== 'GM' ? broadcastPlayerPc() : broadcastGmPc({ campaignId: campaign?.id, trainer });
+            !isGm ? broadcastPlayerPc() : broadcastGmPc({ campaignId: campaign?.id, trainer });
         }
         onClose();
     };
@@ -137,7 +138,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     const canLinkActiveTrainer =
         (identity.mode === 'Trainer' || identity.mode === 'Trainer (Special)') &&
         !otherLinkedTrainer &&
-        (role === 'GM' || !isActiveTokenLocked);
+        (isGm || !isActiveTokenLocked);
 
     const {
         isTrainerLinked,
@@ -165,7 +166,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         trainer,
         currentBox,
         activeBoxIndex,
-        role: role || 'PLAYER',
+        role: isGm ? 'GM' : 'PLAYER',
         activeTokenId,
         identity: {
             nickname: identity.nickname,
@@ -240,8 +241,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     const rawActiveSheetSummary =
         (sheetViewEntityId && pcData.pokemonSummaries[sheetViewEntityId]) ||
         (sheetViewEntityId === trainer?.id ? trainerSummary : null);
-    const activeSheetSummary =
-        role !== 'GM' && isEntityLockedByGm(rawActiveSheetSummary) ? null : rawActiveSheetSummary;
+    const activeSheetSummary = !isGm && isEntityLockedByGm(rawActiveSheetSummary) ? null : rawActiveSheetSummary;
 
     const sheetAvailableSummaries = useMemo(
         () =>
@@ -251,9 +251,9 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                 pcData.pokemonSummaries,
                 partySlots,
                 trainerBoxes,
-                role || 'PLAYER'
+                isGm ? 'GM' : 'PLAYER'
             ),
-        [trainer, trainerSummary, pcData.pokemonSummaries, partySlots, trainerBoxes, role]
+        [trainer, trainerSummary, pcData.pokemonSummaries, partySlots, trainerBoxes, isGm]
     );
 
     const handleSlotClick = useCallback(
@@ -346,7 +346,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         onAddCampaign={addCampaign}
                         onEditCampaign={editCampaign}
                         onDeleteCampaign={deleteCampaign}
-                        isGm={role === 'GM'}
+                        isGm={isGm}
                         activeRoomCampaignId={identity.activeRoomCampaignId}
                         activeRoomCampaignName={identity.activeRoomCampaignName}
                         activeTrainer={activeRoster}
@@ -367,7 +367,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         onSetBoxTheme={setBoxTheme}
                         onUploadCloud={() => setIsExportModalOpen(true)}
                         onOpenImport={() => setIsImportModalOpen(true)}
-                        onSyncPlayers={role === 'GM' && OBR.isAvailable ? () => requestPlayerPcSync() : undefined}
+                        onSyncPlayers={isGm && OBR.isAvailable ? () => requestPlayerPcSync() : undefined}
                         onOpenGuide={() => setIsGuideModalOpen(true)}
                         onClose={handleModalClose}
                     />

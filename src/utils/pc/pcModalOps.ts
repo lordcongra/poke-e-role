@@ -236,7 +236,12 @@ export async function spawnPokemonToMap(
             };
         } else {
             const maxDim = Math.max(resolvedImg.width, resolvedImg.height);
-            const pokeImageContent = { url: resolvedImg.url, mime: resolvedImg.mime, width: resolvedImg.width, height: resolvedImg.height };
+            const pokeImageContent = {
+                url: resolvedImg.url,
+                mime: resolvedImg.mime,
+                width: resolvedImg.width,
+                height: resolvedImg.height
+            };
             const pokeGrid = { dpi: maxDim, offset: { x: resolvedImg.width / 2, y: resolvedImg.height / 2 } };
 
             const savedInit =
