@@ -215,6 +215,10 @@ export interface GeneratorConfig {
     usedSpecies?: Set<string>;
     slotIndex?: number;
 
+    // TYPE DRAFTING
+    typeSpecialtyMode?: 'any' | 'monotype' | 'dual' | 'manual';
+    manualTypes?: string[];
+
     // RECOMMENDED RANK FILTER
     filterRecommendedRank?: boolean;
     recommendedRankMode?: 'match' | 'exact' | 'custom';

@@ -58,7 +58,9 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
         privacyDefaults: false,
         privateNpcLock: true,
         privateRolls: true,
-        privateGmTrackers: true
+        privateGmTrackers: true,
+        typeSpecialtyMode: 'any',
+        manualTypes: []
     },
 
     setGeneratorConfig: (config) => set((state) => ({ generatorConfig: { ...state.generatorConfig, ...config } })),

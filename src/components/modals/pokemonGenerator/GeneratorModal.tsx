@@ -1,24 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
-import {
-    Dices,
-    AlertTriangle,
-    XCircle,
-    Hourglass,
-    FilePlus,
-    ImagePlus,
-    Link2,
-    Sliders,
-    Copy,
-    Sparkles,
-    Filter
-} from 'lucide-react';
+import { Dices, AlertTriangle, XCircle, Hourglass, FilePlus } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { generateBuild } from '../../../utils/generators/generatorUtils';
 import type { TempBuild, Rank } from '../../../store/storeTypes';
-import { CombatStat, SocialStat } from '../../../types/enums';
 import { GeneratorPreviewModal } from './GeneratorPreviewModal';
-import { TooltipIcon } from '../../ui/TooltipIcon';
-import { NumberSpinner } from '../../ui/NumberSpinner';
+import { GeneratorBatchSection } from './GeneratorBatchSection';
+import { GeneratorSpeciesSection } from './GeneratorSpeciesSection';
+import { GeneratorTypeSection } from './GeneratorTypeSection';
+import { GeneratorBuildSettingsSection } from './GeneratorBuildSettingsSection';
+import { GeneratorThresholdsSection } from './GeneratorThresholdsSection';
+import { GeneratorSpeciesFilterSection } from './GeneratorSpeciesFilterSection';
+import { GeneratorPrivacySection } from './GeneratorPrivacySection';
 import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import {
     loadLocalDataset,
@@ -26,8 +18,6 @@ import {
     fetchPokemonLookupIndex,
     type PokemonLookupEntry
 } from '../../../utils/api/api';
-import { RANKS } from '../../../data/constants';
-import { BIOMES, BIOME_TOOLTIP_NOTE } from '../../../data/biomeData';
 import './GeneratorModal.css';
 
 export function GeneratorModal({ onClose }: { onClose: () => void }) {
@@ -38,9 +28,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
     const role = useCharacterStore((s) => s.role);
     const roomCustomPokemon = useCharacterStore((s) => s.roomCustomPokemon || []);
 
-    const [destination, setDestination] = useState<'new' | 'overwrite'>(() => {
-        return activeTokenId ? 'overwrite' : 'new';
-    });
+    const [destination, setDestination] = useState<'new' | 'overwrite'>(() => (activeTokenId ? 'overwrite' : 'new'));
     const [targetSpecies, setTargetSpecies] = useState<string>(identity.species || '');
     const [targetRank, setTargetRank] = useState<Rank>(identity.rank || 'Starter');
     const [sheetName, setSheetName] = useState<string>('');
@@ -56,85 +44,40 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
     const [syncPresets, setSyncPresets] = useState<boolean>(true);
     const [activeSlotIndex, setActiveSlotIndex] = useState<number>(0);
 
-    const [slotConfigs, setSlotConfigs] = useState<
-        Array<{
-            config: typeof globalStoreConfig;
-            targetSpecies: string;
-            targetRank: Rank;
-        }>
-    >(() =>
+    const [slotConfigs, setSlotConfigs] = useState(() =>
         Array.from({ length: 6 }, () => ({
-            config: { ...globalStoreConfig },
+            config: { ...globalStoreConfig, manualTypes: globalStoreConfig.manualTypes ?? [] },
             targetSpecies: identity.species || '',
             targetRank: identity.rank || 'Starter'
         }))
     );
 
-    const activeConfig =
-        batchCount > 1 && !syncPresets ? slotConfigs[activeSlotIndex]?.config || globalStoreConfig : globalStoreConfig;
-    const currentSpecies =
-        batchCount > 1 && !syncPresets ? (slotConfigs[activeSlotIndex]?.targetSpecies ?? targetSpecies) : targetSpecies;
-    const currentRank =
-        batchCount > 1 && !syncPresets ? (slotConfigs[activeSlotIndex]?.targetRank ?? targetRank) : targetRank;
+    const isPerSlot = batchCount > 1 && !syncPresets;
+    const activeConfig = isPerSlot ? slotConfigs[activeSlotIndex]?.config || globalStoreConfig : globalStoreConfig;
+    const currentSpecies = isPerSlot ? (slotConfigs[activeSlotIndex]?.targetSpecies ?? targetSpecies) : targetSpecies;
+    const currentRank = isPerSlot ? (slotConfigs[activeSlotIndex]?.targetRank ?? targetRank) : targetRank;
 
     const setConfigProxy = (partial: Partial<typeof globalStoreConfig>) => {
-        if (batchCount > 1 && !syncPresets) {
-            setSlotConfigs((prev) => {
-                const next = [...prev];
-                next[activeSlotIndex] = {
-                    ...next[activeSlotIndex],
-                    config: { ...next[activeSlotIndex].config, ...partial }
-                };
-                return next;
-            });
-        } else {
-            setGlobalStoreConfig(partial);
-        }
+        if (!isPerSlot) return setGlobalStoreConfig(partial);
+        setSlotConfigs((prev) =>
+            prev.map((slot, i) => (i === activeSlotIndex ? { ...slot, config: { ...slot.config, ...partial } } : slot))
+        );
     };
 
-    const config = activeConfig;
-    const setConfig = setConfigProxy;
-
     const updateCurrentSpecies = (val: string) => {
-        if (batchCount > 1 && !syncPresets) {
-            setSlotConfigs((prev) => {
-                const next = [...prev];
-                next[activeSlotIndex] = {
-                    ...next[activeSlotIndex],
-                    targetSpecies: val
-                };
-                return next;
-            });
-        } else {
-            setTargetSpecies(val);
-        }
+        if (!isPerSlot) return setTargetSpecies(val);
+        setSlotConfigs((prev) => prev.map((s, i) => (i === activeSlotIndex ? { ...s, targetSpecies: val } : s)));
     };
 
     const updateCurrentRank = (val: Rank) => {
-        if (batchCount > 1 && !syncPresets) {
-            setSlotConfigs((prev) => {
-                const next = [...prev];
-                next[activeSlotIndex] = {
-                    ...next[activeSlotIndex],
-                    targetRank: val
-                };
-                return next;
-            });
-        } else {
-            setTargetRank(val);
-        }
+        if (!isPerSlot) return setTargetRank(val);
+        setSlotConfigs((prev) => prev.map((s, i) => (i === activeSlotIndex ? { ...s, targetRank: val } : s)));
     };
 
     const handleCopyPresetToAll = () => {
         const active = slotConfigs[activeSlotIndex];
         if (!active) return;
-        setSlotConfigs(
-            Array.from({ length: 6 }, () => ({
-                config: { ...active.config },
-                targetSpecies: active.targetSpecies,
-                targetRank: active.targetRank
-            }))
-        );
+        setSlotConfigs(Array.from({ length: 6 }, () => ({ ...active, config: { ...active.config } })));
     };
 
     useEffect(() => {
@@ -148,11 +91,11 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                 );
                 setSpeciesList(formattedSpecies.sort());
             })
-            .catch((error) => console.error('[GeneratorModal] Failed to load local dataset:', error));
+            .catch((err) => console.error('[GeneratorModal] Failed to load dataset:', err));
 
         fetchPokemonLookupIndex()
             .then((lookup) => setPokedexLookup(lookup))
-            .catch((error) => console.error('[GeneratorModal] Failed to load lookup index:', error));
+            .catch((err) => console.error('[GeneratorModal] Failed to load lookup:', err));
     }, []);
 
     const filteredCustomPokemon = roomCustomPokemon
@@ -166,62 +109,66 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
             : currentRank;
 
     const displayedSpecies = useMemo(() => {
-        if (!activeConfig.filterRecommendedRank || pokedexLookup.length === 0) {
-            return uniqueSpecies;
-        }
-        const targetLower = activeTargetRecRank.toLowerCase();
-        const allowedLookupNames = new Set(
+        if (pokedexLookup.length === 0) return uniqueSpecies;
+
+        const manualFilter =
+            activeConfig.typeSpecialtyMode === 'manual' &&
+            activeConfig.manualTypes &&
+            activeConfig.manualTypes.length > 0
+                ? activeConfig.manualTypes
+                : null;
+
+        const filterByRecRank = Boolean(activeConfig.filterRecommendedRank);
+
+        if (!filterByRecRank && !manualFilter) return uniqueSpecies;
+
+        const targetRankLower = activeTargetRecRank.toLowerCase();
+
+        const allowed = new Set(
             pokedexLookup
-                .filter((p) => (p.recommendedRank || 'Standard').toLowerCase() === targetLower)
+                .filter((p) => {
+                    if (filterByRecRank) {
+                        const recRank = (p.recommendedRank || 'Standard').toLowerCase();
+                        if (recRank !== targetRankLower) return false;
+                    }
+                    if (manualFilter) {
+                        const matchesType1 = manualFilter.includes(p.type1);
+                        const matchesType2 = Boolean(p.type2 && p.type2 !== 'None' && manualFilter.includes(p.type2));
+                        if (!matchesType1 && !matchesType2) return false;
+                    }
+                    return true;
+                })
                 .map((p) => p.name.toLowerCase())
         );
-        return uniqueSpecies.filter((name) => allowedLookupNames.has(name.toLowerCase()));
-    }, [activeConfig.filterRecommendedRank, activeTargetRecRank, pokedexLookup, uniqueSpecies]);
 
-    const hasType2 = identity.type2 && identity.type2 !== 'None';
+        return uniqueSpecies.filter((name) => allowed.has(name.toLowerCase()));
+    }, [
+        activeConfig.filterRecommendedRank,
+        activeConfig.typeSpecialtyMode,
+        activeConfig.manualTypes,
+        activeTargetRecRank,
+        pokedexLookup,
+        uniqueSpecies
+    ]);
+
+    const hasType2 = Boolean(identity.type2 && identity.type2 !== 'None');
     const type1Label = identity.type1 || 'Primary';
     const type2Label = hasType2 ? identity.type2 : 'Secondary';
-
-    const setMinStat = (stat: string, val: number) => {
-        setConfigProxy({ minStats: { ...(activeConfig.minStats || {}), [stat]: val } });
-    };
-
-    const setMinSocial = (stat: string, val: number) => {
-        setConfigProxy({ minSocials: { ...(activeConfig.minSocials || {}), [stat]: val } });
-    };
-
-    const handleToggleLineLength = (len: number) => {
-        const current = activeConfig.allowedLineLengths ?? [1, 2, 3];
-        const next = current.includes(len)
-            ? current.length > 1
-                ? current.filter((x) => x !== len)
-                : current
-            : [...current, len].sort();
-        setConfigProxy({ allowedLineLengths: next });
-    };
-
-    const handleToggleStageIndex = (stage: number) => {
-        const current = activeConfig.allowedStageIndices ?? [1, 2, 3];
-        const next = current.includes(stage)
-            ? current.length > 1
-                ? current.filter((x) => x !== stage)
-                : current
-            : [...current, stage].sort();
-        setConfigProxy({ allowedStageIndices: next });
-    };
 
     const getEffectiveConfigForSlot = (slotIdx: number) => {
         if (batchCount === 1 || syncPresets) {
             return {
-                ...config,
-                targetSpecies: config.randomizeSpecies ? undefined : targetSpecies.trim() || undefined,
+                ...activeConfig,
+                manualTypes: activeConfig.manualTypes ?? [],
+                targetSpecies: activeConfig.randomizeSpecies ? undefined : targetSpecies.trim() || undefined,
                 targetRank: targetRank,
                 slotIndex: slotIdx
             };
         }
-        const slot = slotConfigs[slotIdx] || { config, targetSpecies, targetRank };
+        const slot = slotConfigs[slotIdx] || { config: activeConfig, targetSpecies, targetRank };
         return {
             ...slot.config,
+            manualTypes: slot.config.manualTypes ?? [],
             targetSpecies: slot.config.randomizeSpecies ? undefined : slot.targetSpecies.trim() || undefined,
             targetRank: slot.targetRank,
             slotIndex: slotIdx
@@ -246,18 +193,12 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                     usedSpecies.add(build.species.toLowerCase());
                 }
             }
-            if (builds.length > 0) {
-                setPreviewBuilds(builds);
-            }
+            if (builds.length > 0) setPreviewBuilds(builds);
         } catch (error) {
             console.error('[GeneratorModal] Generation failed:', error);
         } finally {
             setIsGenerating(false);
         }
-    };
-
-    const handleRerollAll = async () => {
-        await handleGenerate();
     };
 
     const handleRerollIndex = async (index: number) => {
@@ -297,7 +238,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                     setPreviewBuilds(null);
                     onClose();
                 }}
-                onReroll={handleRerollAll}
+                onReroll={handleGenerate}
                 onRerollIndex={handleRerollIndex}
             />
         );
@@ -314,1191 +255,62 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                 </p>
 
                 <div className="generator-modal__form-group">
-                    {/* Batch Count Selector */}
-                    <div className="generator-modal__batch-box">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span className="generator-modal__destination-title text-title-primary">
-                                Number of Pokémon to Generate:
-                            </span>
-                            <span className="text-subtext" style={{ fontSize: '0.8rem' }}>
-                                {batchCount === 1 ? 'Single Pokémon' : `Batch of ${batchCount} Pokémon`}
-                            </span>
-                        </div>
-
-                        <div className="generator-modal__count-selector">
-                            {[1, 2, 3, 4, 5, 6].map((count) => (
-                                <button
-                                    key={count}
-                                    type="button"
-                                    className={`generator-modal__count-btn ${batchCount === count ? 'active' : ''}`}
-                                    onClick={() => {
-                                        setBatchCount(count);
-                                        if (count > 1 && destination === 'overwrite') {
-                                            setDestination('new');
-                                        }
-                                    }}
-                                >
-                                    {count}
-                                </button>
-                            ))}
-                        </div>
-
-                        {batchCount > 1 && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-                                <div className="generator-modal__mode-toggle">
-                                    <button
-                                        type="button"
-                                        className={`action-button ${syncPresets ? 'action-button--theme' : 'action-button--dark'}`}
-                                        style={{
-                                            flex: 1,
-                                            padding: '6px 8px',
-                                            fontSize: '0.8rem',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '6px'
-                                        }}
-                                        onClick={() => setSyncPresets(true)}
-                                    >
-                                        <Link2 size={14} /> Synced Presets (Shared by All)
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className={`action-button ${!syncPresets ? 'action-button--theme' : 'action-button--dark'}`}
-                                        style={{
-                                            flex: 1,
-                                            padding: '6px 8px',
-                                            fontSize: '0.8rem',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '6px'
-                                        }}
-                                        onClick={() => setSyncPresets(false)}
-                                    >
-                                        <Sliders size={14} /> Individual Tinkering (Per-Pokémon)
-                                    </button>
-                                </div>
-
-                                {!syncPresets && (
-                                    <>
-                                        <div className="generator-modal__slot-tabs">
-                                            {Array.from({ length: batchCount }, (_, i) => (
-                                                <button
-                                                    key={i}
-                                                    type="button"
-                                                    className={`generator-modal__slot-tab-btn ${activeSlotIndex === i ? 'active' : ''}`}
-                                                    onClick={() => setActiveSlotIndex(i)}
-                                                >
-                                                    Pokémon #{i + 1}
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center',
-                                                padding: '2px 4px'
-                                            }}
-                                        >
-                                            <span className="text-subtext" style={{ fontSize: '0.75rem' }}>
-                                                Configuring Pokémon #{activeSlotIndex + 1}
-                                            </span>
-                                            <button
-                                                type="button"
-                                                className="action-button action-button--dark"
-                                                style={{
-                                                    padding: '3px 8px',
-                                                    fontSize: '0.74rem',
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    gap: '5px'
-                                                }}
-                                                onClick={handleCopyPresetToAll}
-                                                title="Copy this Pokémon's settings to all other slots"
-                                            >
-                                                <Copy size={12} /> Copy Preset to All
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Destination Toggle */}
-                    <div className="generator-modal__destination-box">
-                        <span className="generator-modal__destination-title text-title-primary">
-                            {isStandaloneMode ? 'Destination Sheet' : 'Destination Target'}
-                        </span>
-                        <div className="generator-modal__destination-buttons">
-                            <button
-                                type="button"
-                                className={`action-button generator-modal__dest-btn ${destination === 'new' ? 'action-button--theme' : 'action-button--dark'}`}
-                                onClick={() => setDestination('new')}
-                            >
-                                {isStandaloneMode ? (
-                                    <>
-                                        <FilePlus size={15} />{' '}
-                                        {batchCount > 1 ? `Generate ${batchCount} New Sheets` : 'Generate New Sheet'}
-                                    </>
-                                ) : (
-                                    <>
-                                        <ImagePlus size={15} />{' '}
-                                        {batchCount > 1 ? `Generate ${batchCount} New Tokens` : 'Generate New Token'}
-                                    </>
-                                )}
-                            </button>
-                            {activeTokenId && batchCount === 1 && (
-                                <button
-                                    type="button"
-                                    className={`action-button generator-modal__dest-btn ${destination === 'overwrite' ? 'action-button--red' : 'action-button--dark'}`}
-                                    onClick={() => setDestination('overwrite')}
-                                    title={
-                                        isStandaloneMode
-                                            ? 'Overwrite currently open sheet'
-                                            : 'Overwrite currently selected token'
-                                    }
-                                >
-                                    <AlertTriangle size={15} />{' '}
-                                    {isStandaloneMode ? 'Overwrite Current Sheet' : 'Overwrite Selected Token'}
-                                </button>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Species, Rank & Location Row */}
-                    <div className="generator-modal__row">
-                        <div className="generator-modal__col">
-                            <label className="text-label">Species:</label>
-                            <input
-                                type="text"
-                                list="generator-species-datalist"
-                                className="generator-modal__input text-label"
-                                placeholder={
-                                    activeConfig.randomizeSpecies
-                                        ? 'Random Species (Enabled Below)'
-                                        : activeConfig.filterRecommendedRank
-                                          ? `e.g. Lucario (${activeTargetRecRank})`
-                                          : 'e.g. Lucario'
-                                }
-                                value={activeConfig.randomizeSpecies ? '' : currentSpecies}
-                                onChange={(e) => updateCurrentSpecies(e.target.value)}
-                                disabled={activeConfig.randomizeSpecies}
-                            />
-                            <datalist id="generator-species-datalist">
-                                {displayedSpecies.map((s) => (
-                                    <option key={s} value={s} />
-                                ))}
-                            </datalist>
-                        </div>
-                        <div className="generator-modal__col">
-                            <label className="text-label">Rank:</label>
-                            <select
-                                value={currentRank}
-                                onChange={(e) => updateCurrentRank(e.target.value as Rank)}
-                                className="generator-modal__select text-label"
-                            >
-                                {RANKS.map((r) => (
-                                    <option key={r} value={r}>
-                                        {r}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="generator-modal__col">
-                            <label className="text-label" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                Location / Biome:
-                                <TooltipIcon
-                                    onClick={() =>
-                                        setTooltipInfo({
-                                            title: 'Location / Biome Filter',
-                                            desc: BIOME_TOOLTIP_NOTE
-                                        })
-                                    }
-                                />
-                            </label>
-                            <select
-                                value={activeConfig.selectedBiome || ''}
-                                onChange={(e) => setConfigProxy({ selectedBiome: e.target.value })}
-                                className="generator-modal__select text-label"
-                            >
-                                <option value="">Any Biome / Location</option>
-                                {BIOMES.map((b) => (
-                                    <option key={b.id} value={b.id}>
-                                        [{b.tag}] {b.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Recommended Rank Filter Row */}
-                    <div className="generator-modal__destination-box" style={{ padding: '8px 12px' }}>
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                flexWrap: 'wrap',
-                                gap: '8px'
-                            }}
-                        >
-                            <label
-                                className="generator-modal__checkbox-label text-label"
-                                style={{ margin: 0, fontWeight: 600 }}
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={Boolean(activeConfig.filterRecommendedRank)}
-                                    onChange={(e) => setConfigProxy({ filterRecommendedRank: e.target.checked })}
-                                    className="generator-modal__checkbox"
-                                />
-                                Filter by Recommended Rank
-                                <TooltipIcon
-                                    onClick={() =>
-                                        setTooltipInfo({
-                                            title: 'Recommended Rank Filter',
-                                            desc: "These are purely suggested ranks from the core rules and Pokédex, and are not necessarily 100% reflective of the rank these Pokémon absolutely should be used at — they're just suggestions. When enabled, only species matching the selected recommended rank criteria will be generated or suggested."
-                                        })
-                                    }
-                                />
-                            </label>
-
-                            {activeConfig.filterRecommendedRank && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                    <span className="text-subtext" style={{ fontSize: '0.78rem' }}>
-                                        Allowed Rank:
-                                    </span>
-                                    <select
-                                        value={
-                                            activeConfig.recommendedRankMode === 'exact'
-                                                ? activeConfig.exactRecommendedRank || 'Standard'
-                                                : 'match'
-                                        }
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            if (val === 'match') {
-                                                setConfigProxy({ recommendedRankMode: 'match' });
-                                            } else {
-                                                setConfigProxy({
-                                                    recommendedRankMode: 'exact',
-                                                    exactRecommendedRank: val as Rank
-                                                });
-                                            }
-                                        }}
-                                        className="generator-modal__select text-label"
-                                        style={{
-                                            width: 'auto',
-                                            minWidth: '170px',
-                                            padding: '3px 8px',
-                                            fontSize: '0.8rem'
-                                        }}
-                                    >
-                                        <option value="match">Match Pokémon Rank ({currentRank})</option>
-                                        {RANKS.map((r) => (
-                                            <option key={r} value={r}>
-                                                {r}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* If batchCount > 1 and syncPresets is ON, allow per-pokemon slot customization option */}
-                        {activeConfig.filterRecommendedRank && batchCount > 1 && syncPresets && (
-                            <div style={{ marginTop: '8px', borderTop: '1px solid var(--border)', paddingTop: '6px' }}>
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        marginBottom: '4px'
-                                    }}
-                                >
-                                    <span className="text-subtext" style={{ fontSize: '0.74rem' }}>
-                                        Per-Pokémon Batch Filter:
-                                    </span>
-                                    <div style={{ display: 'flex', gap: '6px' }}>
-                                        <button
-                                            type="button"
-                                            className={`action-button ${activeConfig.recommendedRankMode !== 'custom' ? 'action-button--theme' : 'action-button--dark'}`}
-                                            style={{ fontSize: '0.72rem', padding: '2px 6px' }}
-                                            onClick={() => setConfigProxy({ recommendedRankMode: 'match' })}
-                                        >
-                                            Synced for Batch
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className={`action-button ${activeConfig.recommendedRankMode === 'custom' ? 'action-button--theme' : 'action-button--dark'}`}
-                                            style={{ fontSize: '0.72rem', padding: '2px 6px' }}
-                                            onClick={() => setConfigProxy({ recommendedRankMode: 'custom' })}
-                                        >
-                                            Custom Per Slot
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {activeConfig.recommendedRankMode === 'custom' && (
-                                    <div
-                                        style={{
-                                            display: 'grid',
-                                            gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
-                                            gap: '6px',
-                                            marginTop: '4px'
-                                        }}
-                                    >
-                                        {Array.from({ length: batchCount }).map((_, i) => {
-                                            const customVal = activeConfig.customSlotRecommendedRanks?.[i] || 'match';
-                                            return (
-                                                <div
-                                                    key={i}
-                                                    style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}
-                                                >
-                                                    <span className="text-subtext" style={{ fontSize: '0.7rem' }}>
-                                                        Pokémon #{i + 1}:
-                                                    </span>
-                                                    <select
-                                                        value={customVal}
-                                                        onChange={(e) => {
-                                                            const nextArr = [
-                                                                ...(activeConfig.customSlotRecommendedRanks || [
-                                                                    'Starter',
-                                                                    'Starter',
-                                                                    'Starter',
-                                                                    'Starter',
-                                                                    'Starter',
-                                                                    'Starter'
-                                                                ])
-                                                            ];
-                                                            nextArr[i] = e.target.value;
-                                                            setConfigProxy({ customSlotRecommendedRanks: nextArr });
-                                                        }}
-                                                        className="generator-modal__select text-label"
-                                                        style={{ fontSize: '0.74rem', padding: '2px 4px' }}
-                                                    >
-                                                        <option value="match">Match Rank</option>
-                                                        {RANKS.map((r) => (
-                                                            <option key={r} value={r}>
-                                                                {r}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Optional Sheet / Token Nickname when generating New */}
-                    {destination === 'new' && (
-                        <div className="generator-modal__row">
-                            <div className="generator-modal__col">
-                                <label className="text-label">
-                                    {isStandaloneMode
-                                        ? 'Sheet Name / Nickname (Optional):'
-                                        : 'Token Name / Nickname (Optional):'}
-                                </label>
-                                <input
-                                    type="text"
-                                    className="generator-modal__input text-label"
-                                    placeholder="e.g. Sparky (Leave blank for Unnamed)"
-                                    value={sheetName}
-                                    onChange={(e) => setSheetName(e.target.value)}
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* GM Token Privacy Defaults */}
-                    <div className="generator-modal__destination-box" style={{ padding: '8px 12px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    flexWrap: 'wrap',
-                                    gap: '8px'
-                                }}
-                            >
-                                <label
-                                    className="generator-modal__checkbox-label text-label"
-                                    style={{ margin: 0, fontWeight: 600 }}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={Boolean(config.privacyDefaults)}
-                                        onChange={(e) => {
-                                            const val = e.target.checked;
-                                            setConfig({
-                                                privacyDefaults: val,
-                                                privateNpcLock: val ? (config.privateNpcLock ?? true) : false,
-                                                privateRolls: val ? (config.privateRolls ?? true) : false,
-                                                privateGmTrackers: val ? (config.privateGmTrackers ?? true) : false
-                                            });
-                                        }}
-                                        className="generator-modal__checkbox"
-                                    />
-                                    Private Token Defaults (GM Only)
-                                    <TooltipIcon
-                                        onClick={() =>
-                                            setTooltipInfo({
-                                                title: 'Private Token Defaults',
-                                                desc: 'Automatically configures generated Pokémon with GM-exclusive privacy settings so players cannot view rolls, stat modifications, or map token HUD trackers.'
-                                            })
-                                        }
-                                    />
-                                </label>
-                            </div>
-                            {config.privacyDefaults && (
-                                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', paddingLeft: '22px' }}>
-                                    <label
-                                        className="generator-modal__checkbox-label text-label"
-                                        style={{ margin: 0, fontSize: '0.82rem' }}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={Boolean(config.privateNpcLock)}
-                                            onChange={(e) => setConfig({ privateNpcLock: e.target.checked })}
-                                            className="generator-modal__checkbox"
-                                        />
-                                        NPC-locked
-                                    </label>
-                                    <label
-                                        className="generator-modal__checkbox-label text-label"
-                                        style={{ margin: 0, fontSize: '0.82rem' }}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={Boolean(config.privateRolls)}
-                                            onChange={(e) => setConfig({ privateRolls: e.target.checked })}
-                                            className="generator-modal__checkbox"
-                                        />
-                                        Private Rolls
-                                    </label>
-                                    <label
-                                        className="generator-modal__checkbox-label text-label"
-                                        style={{ margin: 0, fontSize: '0.82rem' }}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={Boolean(config.privateGmTrackers)}
-                                            onChange={(e) => setConfig({ privateGmTrackers: e.target.checked })}
-                                            className="generator-modal__checkbox"
-                                        />
-                                        GM-Only UI Trackers
-                                    </label>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Build Tier, Combat Bias & Defensive Preference */}
-                    <div className="generator-modal__row">
-                        <div className="generator-modal__col">
-                            <label className="text-label">Build Tier:</label>
-                            <select
-                                value={config.buildType}
-                                onChange={(e) => setConfig({ buildType: e.target.value })}
-                                className="generator-modal__select text-label"
-                            >
-                                <option value="wild">Wild (Random)</option>
-                                <option value="average">Average</option>
-                                <option value="minmax">Min-Max</option>
-                            </select>
-                        </div>
-                        <div className="generator-modal__col">
-                            <label className="text-label">
-                                Combat Bias:
-                                {config.autoSelectBias && (
-                                    <span
-                                        className="text-subtext"
-                                        style={{ color: 'var(--primary)', marginLeft: '6px', fontWeight: 'bold' }}
-                                    >
-                                        (Auto-Detected)
-                                    </span>
-                                )}
-                            </label>
-                            <select
-                                value={config.autoSelectBias ? 'auto' : config.combatBias}
-                                onChange={(e) => setConfig({ combatBias: e.target.value })}
-                                className="generator-modal__select text-label"
-                                disabled={config.autoSelectBias}
-                            >
-                                {config.autoSelectBias && <option value="auto">Auto-Detect (Phys vs Spec)</option>}
-                                <option value="balanced">Balanced</option>
-                                <option value="physical">Physical Attacker</option>
-                                <option value="special">Special Attacker</option>
-                                <option value="tank">Tank / Defender</option>
-                                <option value="support">Status / Support</option>
-                            </select>
-                        </div>
-                        <div className="generator-modal__col">
-                            <label className="text-label" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                Defense Style:
-                                <TooltipIcon
-                                    onClick={() =>
-                                        setTooltipInfo({
-                                            title: 'Defensive Style',
-                                            desc: 'Determines how defensive skill points (Evasion vs Clash) are prioritized. "Auto" evaluates potential dice pools with an inherent preference for Evasion (dodging).'
-                                        })
-                                    }
-                                />
-                            </label>
-                            <select
-                                value={config.defensePreference || 'auto'}
-                                onChange={(e) => setConfig({ defensePreference: e.target.value })}
-                                className="generator-modal__select text-label"
-                                disabled={config.buildType === 'wild'}
-                            >
-                                <option value="auto">Auto (Smart Choice)</option>
-                                <option value="evasion">Evasion Focus (Dodge)</option>
-                                <option value="clash">Clash Focus (Counter/Block)</option>
-                                <option value="balanced">Balanced (Split 50/50)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className="generator-modal__side-by-side">
-                        {/* COLUMN 1: Min Stats */}
-                        <div className="generator-modal__composition">
-                            <label className="generator-modal__comp-title text-title-primary">
-                                Guaranteed Minimum Ranks
-                            </label>
-                            <p className="generator-modal__comp-desc text-subtext">
-                                Force the generator to allocate points here before processing its primary logic.
-                            </p>
-
-                            <div className="generator-modal__min-wrapper">
-                                <div className="generator-modal__min-grid">
-                                    {Object.values(CombatStat).map((stat) => (
-                                        <div key={stat} className="generator-modal__min-item">
-                                            <span className="text-label text-subtext">{stat.toUpperCase()}</span>
-                                            <input
-                                                type="number"
-                                                value={config.minStats?.[stat] || 0}
-                                                onChange={(e) => setMinStat(stat, Number(e.target.value))}
-                                                min="0"
-                                                max="5"
-                                                className="generator-modal__comp-input"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="generator-modal__min-grid generator-modal__min-grid--spaced">
-                                    {Object.values(SocialStat).map((stat) => (
-                                        <div key={stat} className="generator-modal__min-item">
-                                            <span className="text-label text-subtext">{stat.toUpperCase()}</span>
-                                            <input
-                                                type="number"
-                                                value={config.minSocials?.[stat] || 0}
-                                                onChange={(e) => setMinSocial(stat, Number(e.target.value))}
-                                                min="0"
-                                                max="5"
-                                                className="generator-modal__comp-input"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* COLUMN 2: Move Composition */}
-                        <div className="generator-modal__composition">
-                            <label className="generator-modal__comp-title text-title-primary">Move Composition</label>
-                            <p className="generator-modal__comp-desc text-subtext">
-                                Insight will automatically scale to fit this total.
-                            </p>
-                            <div className="generator-modal__comp-row">
-                                <div className="generator-modal__comp-item">
-                                    <span className="text-label">Attacks</span>
-                                    <input
-                                        type="number"
-                                        value={config.targetAtkCount}
-                                        onChange={(e) => setConfig({ targetAtkCount: Number(e.target.value) })}
-                                        min="0"
-                                        max="6"
-                                        className="generator-modal__comp-input"
-                                    />
-                                </div>
-                                <div className="generator-modal__comp-item">
-                                    <span className="text-label">Support</span>
-                                    <input
-                                        type="number"
-                                        value={config.targetSupCount}
-                                        onChange={(e) => setConfig({ targetSupCount: Number(e.target.value) })}
-                                        min="0"
-                                        max="6"
-                                        className="generator-modal__comp-input"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="generator-modal__spillover-section">
-                                <label className="generator-modal__checkbox-label text-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={config.useSpilloverRatio}
-                                        onChange={(e) => setConfig({ useSpilloverRatio: e.target.checked })}
-                                        className="generator-modal__checkbox"
-                                    />
-                                    Use Custom Spillover Ratio?
-                                    <TooltipIcon
-                                        onClick={() =>
-                                            setTooltipInfo({
-                                                title: 'Spillover Ratio',
-                                                desc: 'If high Insight grants you more Max Moves than your initial targets, this ratio determines how the extra slots are filled. (e.g. 2 Attacks for every 1 Support).'
-                                            })
-                                        }
-                                    />
-                                </label>
-
-                                {config.useSpilloverRatio && (
-                                    <>
-                                        <div className="generator-modal__spillover-inputs">
-                                            <div className="generator-modal__comp-item generator-modal__comp-item--row">
-                                                <NumberSpinner
-                                                    value={config.spilloverAtkRatio}
-                                                    onChange={(val) => setConfig({ spilloverAtkRatio: val })}
-                                                    min={0}
-                                                    max={9}
-                                                />
-                                                <span className="text-label">Atk</span>
-                                            </div>
-                                            <span className="text-subtext">:</span>
-                                            <div className="generator-modal__comp-item generator-modal__comp-item--row">
-                                                <NumberSpinner
-                                                    value={config.spilloverSupRatio}
-                                                    onChange={(val) => setConfig({ spilloverSupRatio: val })}
-                                                    min={0}
-                                                    max={9}
-                                                />
-                                                <span className="text-label">Sup</span>
-                                            </div>
-                                        </div>
-                                        <label className="generator-modal__checkbox-label generator-modal__checkbox-label--center text-subtext">
-                                            <input
-                                                type="checkbox"
-                                                checked={config.spilloverJitter}
-                                                onChange={(e) => setConfig({ spilloverJitter: e.target.checked })}
-                                                className="generator-modal__checkbox"
-                                            />
-                                            Add +/- 25% Jitter
-                                        </label>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* COLUMN 3: Attack Type Ratios */}
-                        {config.buildType !== 'wild' ? (
-                            <div className="generator-modal__composition">
-                                <label className="generator-modal__comp-title text-title-primary">
-                                    Attack Type Ratios
-                                </label>
-                                <p className="generator-modal__comp-desc text-subtext">
-                                    Override STAB counts & Coverage.
-                                </p>
-                                <div className="generator-modal__coverage-section">
-                                    <div className="generator-modal__coverage-row">
-                                        <label
-                                            className="generator-modal__checkbox-label text-label"
-                                            title={type1Label}
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={config.overridePrimaryStab}
-                                                onChange={(e) => setConfig({ overridePrimaryStab: e.target.checked })}
-                                                className="generator-modal__checkbox"
-                                            />
-                                            STAB 1
-                                        </label>
-                                        <input
-                                            type="number"
-                                            value={config.primaryStabCount}
-                                            onChange={(e) => setConfig({ primaryStabCount: Number(e.target.value) })}
-                                            min="0"
-                                            max="6"
-                                            className="generator-modal__comp-input"
-                                            disabled={!config.overridePrimaryStab}
-                                        />
-                                    </div>
-                                    {hasType2 && (
-                                        <div className="generator-modal__coverage-row">
-                                            <label
-                                                className="generator-modal__checkbox-label text-label"
-                                                title={type2Label}
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={config.overrideSecondaryStab}
-                                                    onChange={(e) =>
-                                                        setConfig({ overrideSecondaryStab: e.target.checked })
-                                                    }
-                                                    className="generator-modal__checkbox"
-                                                />
-                                                STAB 2
-                                            </label>
-                                            <input
-                                                type="number"
-                                                value={config.secondaryStabCount}
-                                                onChange={(e) =>
-                                                    setConfig({ secondaryStabCount: Number(e.target.value) })
-                                                }
-                                                min="0"
-                                                max="6"
-                                                className="generator-modal__comp-input"
-                                                disabled={!config.overrideSecondaryStab}
-                                            />
-                                        </div>
-                                    )}
-
-                                    <div className="generator-modal__coverage-select-wrapper">
-                                        <label className="text-label">Coverage Preference</label>
-                                        <select
-                                            value={config.coveragePreference}
-                                            onChange={(e) => setConfig({ coveragePreference: e.target.value })}
-                                            className="generator-modal__select generator-modal__coverage-select text-subtext"
-                                        >
-                                            <option value="balanced">Balanced (Auto)</option>
-                                            <option value="heavy">Prioritize Coverage</option>
-                                            <option value="none">STAB Only (No Coverage)</option>
-                                            <option value="fixed">Fixed Amount</option>
-                                        </select>
-                                        {config.coveragePreference === 'fixed' && (
-                                            <div className="generator-modal__coverage-fixed-row">
-                                                <span className="text-subtext">Coverage Count</span>
-                                                <input
-                                                    type="number"
-                                                    value={config.coverageCount}
-                                                    onChange={(e) =>
-                                                        setConfig({ coverageCount: Number(e.target.value) })
-                                                    }
-                                                    min="0"
-                                                    max="6"
-                                                    className="generator-modal__comp-input"
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="generator-modal__composition generator-modal__composition--disabled">
-                                <label className="generator-modal__comp-title generator-modal__comp-title--disabled text-title-primary">
-                                    Attack Type Ratios
-                                </label>
-                                <p className="generator-modal__comp-desc text-subtext">
-                                    Disabled during Wild (Random) Generation.
-                                </p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Species, Evolution & Special Filters Panel */}
-                    <div className="generator-modal__filter-panel">
-                        <h4 className="generator-modal__filter-panel-title text-title-primary">
-                            <Filter size={15} /> Species, Evolution & Special Filters
-                        </h4>
-
-                        {/* Evolutionary Filters */}
-                        <div className="generator-modal__filter-grid">
-                            <div className="generator-modal__filter-item">
-                                <label className="generator-modal__filter-label text-label">
-                                    Evolution Line Length:
-                                    <TooltipIcon
-                                        onClick={() =>
-                                            setTooltipInfo({
-                                                title: 'Evolution Line Length',
-                                                desc: 'Filter Pokémon based on how many stages exist in their evolutionary family (e.g. Kangaskhan is Single-Stage; Lucario is 2-Stage; Charizard is 3-Stage).'
-                                            })
-                                        }
-                                    />
-                                </label>
-                                <div className="generator-modal__checkbox-subgroup">
-                                    <label className="generator-modal__checkbox-label text-label">
-                                        <input
-                                            type="checkbox"
-                                            checked={(config.allowedLineLengths ?? [1, 2, 3]).includes(1)}
-                                            onChange={() => handleToggleLineLength(1)}
-                                            className="generator-modal__checkbox"
-                                        />
-                                        <span>Single-Stage</span>
-                                    </label>
-                                    <label className="generator-modal__checkbox-label text-label">
-                                        <input
-                                            type="checkbox"
-                                            checked={(config.allowedLineLengths ?? [1, 2, 3]).includes(2)}
-                                            onChange={() => handleToggleLineLength(2)}
-                                            className="generator-modal__checkbox"
-                                        />
-                                        <span>2-Stage Line</span>
-                                    </label>
-                                    <label className="generator-modal__checkbox-label text-label">
-                                        <input
-                                            type="checkbox"
-                                            checked={(config.allowedLineLengths ?? [1, 2, 3]).includes(3)}
-                                            onChange={() => handleToggleLineLength(3)}
-                                            className="generator-modal__checkbox"
-                                        />
-                                        <span>3-Stage Line</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="generator-modal__filter-item">
-                                <label className="generator-modal__filter-label text-label">
-                                    Evolution Stage Level:
-                                    <TooltipIcon
-                                        onClick={() =>
-                                            setTooltipInfo({
-                                                title: 'Stage Level',
-                                                desc: 'Filter species based on their current stage position. 1st Evo = Basic/Baby Pokémon; 2nd Evo = Middle Stage; 3rd Evo = Final Evolution.'
-                                            })
-                                        }
-                                    />
-                                </label>
-                                <div className="generator-modal__checkbox-subgroup">
-                                    <label className="generator-modal__checkbox-label text-label">
-                                        <input
-                                            type="checkbox"
-                                            checked={(config.allowedStageIndices ?? [1, 2, 3]).includes(1)}
-                                            onChange={() => handleToggleStageIndex(1)}
-                                            className="generator-modal__checkbox"
-                                        />
-                                        <span>1st Evo / Basic</span>
-                                    </label>
-                                    <label className="generator-modal__checkbox-label text-label">
-                                        <input
-                                            type="checkbox"
-                                            checked={(config.allowedStageIndices ?? [1, 2, 3]).includes(2)}
-                                            onChange={() => handleToggleStageIndex(2)}
-                                            className="generator-modal__checkbox"
-                                        />
-                                        <span>2nd Evo / Middle</span>
-                                    </label>
-                                    <label className="generator-modal__checkbox-label text-label">
-                                        <input
-                                            type="checkbox"
-                                            checked={(config.allowedStageIndices ?? [1, 2, 3]).includes(3)}
-                                            onChange={() => handleToggleStageIndex(3)}
-                                            className="generator-modal__checkbox"
-                                        />
-                                        <span>3rd Evo / Final</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Special Forms & Scalar Loyalty */}
-                        <div className="generator-modal__filter-grid">
-                            <div className="generator-modal__filter-item">
-                                <label className="generator-modal__filter-label text-label">
-                                    Special Forms & Species:
-                                </label>
-                                <div className="generator-modal__checkbox-subgroup">
-                                    <label className="generator-modal__checkbox-label text-label">
-                                        <input
-                                            type="checkbox"
-                                            checked={Boolean(config.includeLegendaries)}
-                                            onChange={(e) => setConfig({ includeLegendaries: e.target.checked })}
-                                            className="generator-modal__checkbox"
-                                        />
-                                        <span>Legendaries</span>
-                                    </label>
-                                    <label className="generator-modal__checkbox-label text-label">
-                                        <input
-                                            type="checkbox"
-                                            checked={Boolean(config.includeMythicals)}
-                                            onChange={(e) => setConfig({ includeMythicals: e.target.checked })}
-                                            className="generator-modal__checkbox"
-                                        />
-                                        <span>Mythicals</span>
-                                    </label>
-                                    <label className="generator-modal__checkbox-label text-label">
-                                        <input
-                                            type="checkbox"
-                                            checked={Boolean(config.includeUltraBeasts)}
-                                            onChange={(e) => setConfig({ includeUltraBeasts: e.target.checked })}
-                                            className="generator-modal__checkbox"
-                                        />
-                                        <span>Ultra Beasts</span>
-                                    </label>
-                                    <label className="generator-modal__checkbox-label text-label">
-                                        <input
-                                            type="checkbox"
-                                            checked={Boolean(config.includeParadox)}
-                                            onChange={(e) => setConfig({ includeParadox: e.target.checked })}
-                                            className="generator-modal__checkbox"
-                                        />
-                                        <span>Paradox</span>
-                                    </label>
-                                    <label className="generator-modal__checkbox-label text-label">
-                                        <input
-                                            type="checkbox"
-                                            checked={Boolean(config.includeMegas)}
-                                            onChange={(e) => setConfig({ includeMegas: e.target.checked })}
-                                            className="generator-modal__checkbox"
-                                        />
-                                        <span>Megas / Special Forms</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="generator-modal__filter-item">
-                                <label className="generator-modal__checkbox-label text-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={config.scaleLoyaltyHappiness !== false}
-                                        onChange={(e) => setConfig({ scaleLoyaltyHappiness: e.target.checked })}
-                                        className="generator-modal__checkbox"
-                                    />
-                                    <span>
-                                        <Sparkles size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                                        Scale Pokémon Loyalty & Happiness with Rank
-                                    </span>
-                                    <TooltipIcon
-                                        onClick={() =>
-                                            setTooltipInfo({
-                                                title: 'Scalar Loyalty & Happiness',
-                                                desc: 'Scales bond according to corebook rank achievements: Starter/Rookie Pokémon start at 1–2; Standard rank has 1 maxed partner (5) with others at 2–3; Expert and Ace+ rosters feature loyal 5/5 partners.'
-                                            })
-                                        }
-                                    />
-                                </label>
-
-                                {batchCount > 1 && (
-                                    <label
-                                        className="generator-modal__checkbox-label text-label"
-                                        style={{ marginTop: '4px' }}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={Boolean(config.allowDuplicates)}
-                                            onChange={(e) => setConfig({ allowDuplicates: e.target.checked })}
-                                            className="generator-modal__checkbox"
-                                        />
-                                        <span>Allow Duplicate Pokémon</span>
-                                        <TooltipIcon
-                                            onClick={() =>
-                                                setTooltipInfo({
-                                                    title: 'Allow Duplicate Pokémon',
-                                                    desc: 'When unchecked (default), each Pokémon generated in the batch will be a unique species. Check this box if you want to allow multiple Pokémon of the exact same species.'
-                                                })
-                                            }
-                                        />
-                                    </label>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 2-Column Checkbox Grid */}
-                    <div className="generator-modal__checkbox-group">
-                        {/* LEFT COLUMN: Basic Settings */}
-                        <div className="generator-modal__checkbox-col">
-                            <label className="generator-modal__checkbox-label text-label">
-                                <input
-                                    type="checkbox"
-                                    checked={config.ensureDefenses}
-                                    onChange={(e) => setConfig({ ensureDefenses: e.target.checked })}
-                                    className="generator-modal__checkbox"
-                                />
-                                Ensure Minimum Defenses (Scales with Rank)
-                                <TooltipIcon
-                                    onClick={() =>
-                                        setTooltipInfo({
-                                            title: 'Ensure Minimum Defenses',
-                                            desc: 'Calculates a defense quota by dividing total attribute points by 4. It guarantees Vitality and Insight reach this minimum quota before allocating points to offensive stats. Turn off for glass-cannon builds.'
-                                        })
-                                    }
-                                />
-                            </label>
-
-                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
-                                <input
-                                    type="checkbox"
-                                    checked={config.includePmd}
-                                    onChange={(e) => setConfig({ includePmd: e.target.checked })}
-                                    className="generator-modal__checkbox"
-                                />
-                                Include Knowledge Skills (Lore, Medicine, etc.)
-                            </label>
-                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
-                                <input
-                                    type="checkbox"
-                                    checked={config.includeCustom}
-                                    onChange={(e) => setConfig({ includeCustom: e.target.checked })}
-                                    className="generator-modal__checkbox"
-                                />
-                                Include Custom Homebrew Skills
-                            </label>
-
-                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
-                                <input
-                                    type="checkbox"
-                                    checked={config.randomizeSpecies}
-                                    onChange={(e) => setConfig({ randomizeSpecies: e.target.checked })}
-                                    className="generator-modal__checkbox"
-                                />
-                                Randomize Species
-                            </label>
-                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--indented text-label">
-                                <input
-                                    type="checkbox"
-                                    checked={config.autoSelectBias}
-                                    onChange={(e) => setConfig({ autoSelectBias: e.target.checked })}
-                                    className="generator-modal__checkbox"
-                                />
-                                <span style={{ fontWeight: 'normal' }}>Auto-Detect Attack Bias (Phys vs Spec)</span>
-                            </label>
-                        </div>
-
-                        {/* RIGHT COLUMN: Identity & Move Settings */}
-                        <div className="generator-modal__checkbox-col">
-                            <label className="generator-modal__checkbox-label text-label">
-                                <input
-                                    type="checkbox"
-                                    checked={config.randomizeGender}
-                                    onChange={(e) => setConfig({ randomizeGender: e.target.checked })}
-                                    className="generator-modal__checkbox"
-                                />
-                                Randomize Gender (50/50 M/F)
-                                <TooltipIcon
-                                    onClick={() =>
-                                        setTooltipInfo({
-                                            title: 'Randomize Gender',
-                                            desc: 'Randomly assigns the Pokémon a 50/50 chance of being Male or Female upon generation.'
-                                        })
-                                    }
-                                />
-                            </label>
-
-                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
-                                <input
-                                    type="checkbox"
-                                    checked={config.randomizeNature}
-                                    onChange={(e) => setConfig({ randomizeNature: e.target.checked })}
-                                    className="generator-modal__checkbox"
-                                />
-                                Randomize Nature
-                                <TooltipIcon
-                                    onClick={() =>
-                                        setTooltipInfo({
-                                            title: 'Randomize Nature',
-                                            desc: 'Randomly assigns a nature from the standard list of 25 Pokémon natures upon generation.'
-                                        })
-                                    }
-                                />
-                            </label>
-
-                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
-                                <input
-                                    type="checkbox"
-                                    checked={config.includePreEvolutions}
-                                    onChange={(e) => setConfig({ includePreEvolutions: e.target.checked })}
-                                    className="generator-modal__checkbox"
-                                />
-                                Include Pre-Evolution Moves
-                                <TooltipIcon
-                                    onClick={() =>
-                                        setTooltipInfo({
-                                            title: 'Pre-Evolution Fetching',
-                                            desc: "Automatically traces your Pokémon's evolution line backwards to generate a broader move pool! Use the rank offset spinners below to simulate how many ranks ago this Pokémon evolved. Mega evolutions are automatically recognized and will share the base form's rank."
-                                        })
-                                    }
-                                />
-                            </label>
-                            {config.includePreEvolutions && (
-                                <div className="generator-modal__evo-group">
-                                    <div className="generator-modal__evo-box">
-                                        <strong className="generator-modal__evo-title text-title-primary">
-                                            2-Stage Lines (e.g. Vulpix → Ninetales)
-                                        </strong>
-                                        <div className="generator-modal__evo-row">
-                                            <span className="text-subtext">Base Form (Offset Down)</span>
-                                            <NumberSpinner
-                                                value={config.evo2Stage1Offset}
-                                                onChange={(val) => setConfig({ evo2Stage1Offset: val })}
-                                                min={0}
-                                                max={7}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="generator-modal__evo-box">
-                                        <strong className="generator-modal__evo-title text-title-primary">
-                                            3-Stage Lines (e.g. Charmander → Charizard)
-                                        </strong>
-                                        <div className="generator-modal__evo-row generator-modal__evo-row--spaced">
-                                            <span className="text-subtext">Middle Form (Offset Down)</span>
-                                            <NumberSpinner
-                                                value={config.evo3Stage2Offset}
-                                                onChange={(val) => setConfig({ evo3Stage2Offset: val })}
-                                                min={0}
-                                                max={7}
-                                            />
-                                        </div>
-                                        <div className="generator-modal__evo-row">
-                                            <span className="text-subtext">Base Form (Offset Down)</span>
-                                            <NumberSpinner
-                                                value={config.evo3Stage1Offset}
-                                                onChange={(val) => setConfig({ evo3Stage1Offset: val })}
-                                                min={0}
-                                                max={7}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
-                                <input
-                                    type="checkbox"
-                                    checked={config.allowOverrank}
-                                    onChange={(e) => setConfig({ allowOverrank: e.target.checked })}
-                                    className="generator-modal__checkbox"
-                                />
-                                Allow Overrank (Draft 1 Higher Rank Move)
-                                <TooltipIcon
-                                    onClick={() =>
-                                        setTooltipInfo({
-                                            title: 'Overrank Generation',
-                                            desc: 'Forces the generator to select exactly one move that normally belongs to a higher rank tier, expanding your tactical options.'
-                                        })
-                                    }
-                                />
-                            </label>
-                            {config.allowOverrank && (
-                                <div className="generator-modal__evo-group">
-                                    <div className="generator-modal__evo-box generator-modal__evo-row">
-                                        <span className="text-label">Max Ranks Above</span>
-                                        <NumberSpinner
-                                            value={config.overrankAmount}
-                                            onChange={(val) => setConfig({ overrankAmount: val })}
-                                            min={1}
-                                            max={7}
-                                        />
-                                    </div>
-                                    <label className="generator-modal__checkbox-label text-subtext">
-                                        <input
-                                            type="checkbox"
-                                            checked={config.allowPreEvoOverrank}
-                                            onChange={(e) => setConfig({ allowPreEvoOverrank: e.target.checked })}
-                                            className="generator-modal__checkbox"
-                                            disabled={!config.includePreEvolutions}
-                                        />
-                                        <span style={{ fontWeight: 'normal' }}>Include Pre-Evolutions in Pool</span>
-                                    </label>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    <GeneratorBatchSection
+                        batchCount={batchCount}
+                        setBatchCount={setBatchCount}
+                        syncPresets={syncPresets}
+                        setSyncPresets={setSyncPresets}
+                        activeSlotIndex={activeSlotIndex}
+                        setActiveSlotIndex={setActiveSlotIndex}
+                        onCopyPresetToAll={handleCopyPresetToAll}
+                        destination={destination}
+                        setDestination={setDestination}
+                        activeTokenId={activeTokenId}
+                        sheetName={sheetName}
+                        setSheetName={setSheetName}
+                    />
+                    <GeneratorSpeciesSection
+                        currentSpecies={currentSpecies}
+                        onUpdateSpecies={updateCurrentSpecies}
+                        currentRank={currentRank}
+                        onUpdateRank={updateCurrentRank}
+                        displayedSpecies={displayedSpecies}
+                        activeConfig={activeConfig}
+                        onUpdateConfig={setConfigProxy}
+                        activeTargetRecRank={activeTargetRecRank}
+                        batchCount={batchCount}
+                        syncPresets={syncPresets}
+                        onOpenTooltip={setTooltipInfo}
+                    />
+                    <GeneratorTypeSection
+                        config={activeConfig}
+                        onUpdateConfig={setConfigProxy}
+                        onOpenTooltip={setTooltipInfo}
+                    />
+                    <GeneratorBuildSettingsSection
+                        config={activeConfig}
+                        onUpdateConfig={setConfigProxy}
+                        onOpenTooltip={setTooltipInfo}
+                    />
+                    <GeneratorThresholdsSection
+                        config={activeConfig}
+                        onUpdateConfig={setConfigProxy}
+                        type1Label={type1Label}
+                        type2Label={type2Label}
+                        hasType2={hasType2}
+                        onOpenTooltip={setTooltipInfo}
+                    />
+                    <GeneratorSpeciesFilterSection
+                        config={activeConfig}
+                        onUpdateConfig={setConfigProxy}
+                        batchCount={batchCount}
+                        onOpenTooltip={setTooltipInfo}
+                    />
+                    <GeneratorPrivacySection
+                        config={activeConfig}
+                        onUpdateConfig={setConfigProxy}
+                        onOpenTooltip={setTooltipInfo}
+                    />
                 </div>
 
                 {isStandaloneMode && destination === 'new' ? (
@@ -1526,7 +338,15 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                         onClick={handleGenerate}
                         disabled={
                             isGenerating ||
-                            (!activeConfig.randomizeSpecies && !currentSpecies.trim() && !activeConfig.selectedBiome)
+                            (!activeConfig.randomizeSpecies &&
+                                !currentSpecies.trim() &&
+                                !activeConfig.selectedBiome &&
+                                !(
+                                    activeConfig.typeSpecialtyMode &&
+                                    activeConfig.typeSpecialtyMode !== 'any' &&
+                                    (activeConfig.typeSpecialtyMode !== 'manual' ||
+                                        (activeConfig.manualTypes && activeConfig.manualTypes.length > 0))
+                                ))
                         }
                         className={`action-button ${isStandaloneMode && destination === 'new' ? 'action-button--theme' : 'action-button--red'} generator-modal__btn`}
                     >

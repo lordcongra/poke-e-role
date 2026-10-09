@@ -19,6 +19,7 @@ import {
     filterPokemonLookupPool,
     type PokemonLookupFilterOptions
 } from './pokemonFilterUtils';
+import { ALL_POKEMON_TYPES } from './trainerTeamPoolLogic';
 
 const RANK_HIERARCHY = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion'];
 const ALL_SKILLS = Object.values(Skill) as string[];
@@ -108,6 +109,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         (!config.targetSpecies &&
             Boolean(
                 (config.selectedBiome && config.selectedBiome !== 'none' && config.selectedBiome !== 'any') ||
+                (config.typeSpecialtyMode && config.typeSpecialtyMode !== 'any') ||
                 !state.identity.species
             ));
 
@@ -142,19 +144,44 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                 allowedRecommendedRanks
             };
 
-            let eligible = filterPokemonLookupPool(lookupIndex, [], filterOpts);
+            // Resolve target typing from typeSpecialtyMode and manualTypes
+            let resolvedTypes: string[] = [];
+            if (config.typeSpecialtyMode === 'monotype') {
+                resolvedTypes = [ALL_POKEMON_TYPES[Math.floor(Math.random() * ALL_POKEMON_TYPES.length)]];
+            } else if (config.typeSpecialtyMode === 'dual') {
+                const t1 = ALL_POKEMON_TYPES[Math.floor(Math.random() * ALL_POKEMON_TYPES.length)];
+                const rest = ALL_POKEMON_TYPES.filter((t) => t !== t1);
+                const t2 = rest[Math.floor(Math.random() * rest.length)];
+                resolvedTypes = [t1, t2];
+            } else if (config.typeSpecialtyMode === 'manual') {
+                resolvedTypes = config.manualTypes || [];
+            }
+
+            let eligible = filterPokemonLookupPool(lookupIndex, resolvedTypes, filterOpts);
 
             if (eligible.length === 0 && config.usedSpecies && config.usedSpecies.size > 0) {
                 // If duplicates filter exhausted the pool, fallback to pool allowing duplicates
-                eligible = filterPokemonLookupPool(lookupIndex, [], {
+                eligible = filterPokemonLookupPool(lookupIndex, resolvedTypes, {
                     ...filterOpts,
                     usedSpecies: undefined
                 });
             }
 
+            if (eligible.length === 0 && resolvedTypes.length > 0) {
+                // Graceful pool relaxation if typing filter yields an empty species pool
+                resolvedTypes = [];
+                eligible = filterPokemonLookupPool(lookupIndex, [], filterOpts);
+                if (eligible.length === 0 && config.usedSpecies && config.usedSpecies.size > 0) {
+                    eligible = filterPokemonLookupPool(lookupIndex, [], {
+                        ...filterOpts,
+                        usedSpecies: undefined
+                    });
+                }
+            }
+
             if (eligible.length === 0 && filterOpts.filterRecommendedRank) {
                 // If recommended rank combined with other filters produced 0 matches, relax recommended rank
-                eligible = filterPokemonLookupPool(lookupIndex, [], {
+                eligible = filterPokemonLookupPool(lookupIndex, resolvedTypes, {
                     ...filterOpts,
                     filterRecommendedRank: false
                 });

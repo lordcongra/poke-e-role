@@ -40,6 +40,11 @@ export interface PokemonApiResponse {
     Vitality?: number | string;
     Special?: number | string;
     Insight?: number | string;
+    MaxStrength?: number | string;
+    MaxDexterity?: number | string;
+    MaxVitality?: number | string;
+    MaxSpecial?: number | string;
+    MaxInsight?: number | string;
     MaxAttributes?: Record<string, number | string>;
     MaxStats?: Record<string, number | string>;
     Ability1?: string;

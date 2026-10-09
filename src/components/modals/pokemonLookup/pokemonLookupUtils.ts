@@ -5,9 +5,43 @@ import type {
     TypeMatchMode
 } from '../../../utils/api/apiTypes';
 import type { CustomPokemon } from '../../../store/storeTypes';
+import { getLimit } from '../../../utils/common/macroHelpers';
 
 export const LEARN_RANKS = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master'];
 export const RANK_ORDER = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion', 'Other'];
+
+export function getPokemonStatLimits(fullData?: PokemonApiResponse | CustomPokemon): {
+    maxHp: number;
+    maxStrength: number;
+    maxDexterity: number;
+    maxVitality: number;
+    maxSpecial: number;
+    maxInsight: number;
+} {
+    if (!fullData) {
+        return {
+            maxHp: 0,
+            maxStrength: 5,
+            maxDexterity: 5,
+            maxVitality: 5,
+            maxSpecial: 5,
+            maxInsight: 5
+        };
+    }
+
+    const dataRec = fullData as unknown as Record<string, unknown>;
+    const baseStats = 'BaseStats' in fullData ? fullData.BaseStats : undefined;
+    const rawHp = dataRec.MaxHP || dataRec.MaxHp || fullData.BaseHP || (baseStats && baseStats.HP);
+
+    return {
+        maxHp: rawHp ? parseInt(String(rawHp), 10) || 0 : 0,
+        maxStrength: getLimit(dataRec, 'Strength'),
+        maxDexterity: getLimit(dataRec, 'Dexterity'),
+        maxVitality: getLimit(dataRec, 'Vitality'),
+        maxSpecial: getLimit(dataRec, 'Special'),
+        maxInsight: getLimit(dataRec, 'Insight')
+    };
+}
 
 export function groupMovesByRank(moves: [string, string][]): { rank: string; moves: string[] }[] {
     const grouped: Record<string, string[]> = {};
@@ -141,9 +175,11 @@ export function buildPokemonDiscordMarkdown(
     const standardAbilities = [pokemon.ability1, pokemon.ability2].filter(Boolean).join(', ') || 'None';
     const haText = pokemon.hiddenAbility ? `\n> **Hidden Ability (Homebrew):** ${pokemon.hiddenAbility}` : '';
 
-    const statsStr = fullData
-        ? `\n> **Base Stats:** HP: ${fullData.BaseHP ?? 0} | Str: ${fullData.Strength ?? 0} | Dex: ${fullData.Dexterity ?? 0} | Vit: ${fullData.Vitality ?? 0} | Spe: ${fullData.Special ?? 0} | Ins: ${fullData.Insight ?? 0}`
-        : '';
+    let statsStr = '';
+    if (fullData) {
+        const limits = getPokemonStatLimits(fullData);
+        statsStr = `\n> **Base Stats:** HP: ${fullData.BaseHP ?? 0} | Str: ${fullData.Strength ?? 0}/${limits.maxStrength} | Dex: ${fullData.Dexterity ?? 0}/${limits.maxDexterity} | Vit: ${fullData.Vitality ?? 0}/${limits.maxVitality} | Spe: ${fullData.Special ?? 0}/${limits.maxSpecial} | Ins: ${fullData.Insight ?? 0}/${limits.maxInsight}`;
+    }
 
     const grouped = groupMovesByRank(pokemon.moves);
     const movesText = grouped.map(({ rank, moves }) => `• **${rank}:** ${moves.join(', ')}`).join('\n');
@@ -177,9 +213,11 @@ export function buildPokemonBroadcast(
     const typesStr = pokemon.type2 ? `${pokemon.type1} / ${pokemon.type2}` : pokemon.type1;
     const standardAbilities = [pokemon.ability1, pokemon.ability2].filter(Boolean).join(', ') || 'None';
     const haText = pokemon.hiddenAbility ? ` | HA (Homebrew): ${pokemon.hiddenAbility}` : '';
-    const statsText = fullData
-        ? ` • HP: ${fullData.BaseHP ?? 0} | Str: ${fullData.Strength ?? 0} | Dex: ${fullData.Dexterity ?? 0} | Vit: ${fullData.Vitality ?? 0} | Spe: ${fullData.Special ?? 0} | Ins: ${fullData.Insight ?? 0}`
-        : '';
+    let statsText = '';
+    if (fullData) {
+        const limits = getPokemonStatLimits(fullData);
+        statsText = ` • HP: ${fullData.BaseHP ?? 0} | Str: ${fullData.Strength ?? 0}/${limits.maxStrength} | Dex: ${fullData.Dexterity ?? 0}/${limits.maxDexterity} | Vit: ${fullData.Vitality ?? 0}/${limits.maxVitality} | Spe: ${fullData.Special ?? 0}/${limits.maxSpecial} | Ins: ${fullData.Insight ?? 0}/${limits.maxInsight}`;
+    }
 
     let extraMove = '';
     if (appliedMove || moveRank) {

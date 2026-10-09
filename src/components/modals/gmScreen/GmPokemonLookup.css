@@ -481,6 +481,13 @@
     color: var(--text-main);
 }
 
+.gm-pokemon-lookup__stat-limit {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-left: 2px;
+}
+
 .gm-pokemon-lookup__drawer-moves {
     display: flex;
     flex-direction: column;

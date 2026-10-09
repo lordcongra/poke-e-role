@@ -1,7 +1,7 @@
 import { Check, Copy, Link2, Megaphone, ChevronDown, ChevronUp, Sparkles, Zap, Loader2 } from 'lucide-react';
 import type { PokemonLookupEntry, PokemonApiResponse } from '../../../utils/api/apiTypes';
 import type { CustomPokemon } from '../../../store/storeTypes';
-import { groupMovesByRank } from './pokemonLookupUtils';
+import { groupMovesByRank, getPokemonStatLimits } from './pokemonLookupUtils';
 
 export interface PokemonLookupCardProps {
     pokemon: PokemonLookupEntry;
@@ -40,6 +40,8 @@ export function PokemonLookupCard({
     onOpenTooltip,
     onSelectMove
 }: PokemonLookupCardProps) {
+    const limits = fullData ? getPokemonStatLimits(fullData) : null;
+
     // Check if move matches filter
     const matchedMoves =
         appliedMove || moveRank
@@ -205,7 +207,7 @@ export function PokemonLookupCard({
                     ) : (
                         <>
                             {/* Stats Box if fullData available */}
-                            {fullData && (
+                            {fullData && limits && (
                                 <div className="gm-pokemon-lookup__drawer-stats-grid">
                                     <div className="gm-pokemon-lookup__stat-box">
                                         <span className="gm-pokemon-lookup__stat-name">Base HP</span>
@@ -213,23 +215,53 @@ export function PokemonLookupCard({
                                     </div>
                                     <div className="gm-pokemon-lookup__stat-box">
                                         <span className="gm-pokemon-lookup__stat-name">Strength</span>
-                                        <span className="gm-pokemon-lookup__stat-val">{fullData.Strength || 0}</span>
+                                        <span className="gm-pokemon-lookup__stat-val">
+                                            {fullData.Strength || 0}
+                                            <span className="gm-pokemon-lookup__stat-limit">
+                                                {' '}
+                                                / {limits.maxStrength}
+                                            </span>
+                                        </span>
                                     </div>
                                     <div className="gm-pokemon-lookup__stat-box">
                                         <span className="gm-pokemon-lookup__stat-name">Dexterity</span>
-                                        <span className="gm-pokemon-lookup__stat-val">{fullData.Dexterity || 0}</span>
+                                        <span className="gm-pokemon-lookup__stat-val">
+                                            {fullData.Dexterity || 0}
+                                            <span className="gm-pokemon-lookup__stat-limit">
+                                                {' '}
+                                                / {limits.maxDexterity}
+                                            </span>
+                                        </span>
                                     </div>
                                     <div className="gm-pokemon-lookup__stat-box">
                                         <span className="gm-pokemon-lookup__stat-name">Vitality</span>
-                                        <span className="gm-pokemon-lookup__stat-val">{fullData.Vitality || 0}</span>
+                                        <span className="gm-pokemon-lookup__stat-val">
+                                            {fullData.Vitality || 0}
+                                            <span className="gm-pokemon-lookup__stat-limit">
+                                                {' '}
+                                                / {limits.maxVitality}
+                                            </span>
+                                        </span>
                                     </div>
                                     <div className="gm-pokemon-lookup__stat-box">
                                         <span className="gm-pokemon-lookup__stat-name">Special</span>
-                                        <span className="gm-pokemon-lookup__stat-val">{fullData.Special || 0}</span>
+                                        <span className="gm-pokemon-lookup__stat-val">
+                                            {fullData.Special || 0}
+                                            <span className="gm-pokemon-lookup__stat-limit">
+                                                {' '}
+                                                / {limits.maxSpecial}
+                                            </span>
+                                        </span>
                                     </div>
                                     <div className="gm-pokemon-lookup__stat-box">
                                         <span className="gm-pokemon-lookup__stat-name">Insight</span>
-                                        <span className="gm-pokemon-lookup__stat-val">{fullData.Insight || 0}</span>
+                                        <span className="gm-pokemon-lookup__stat-val">
+                                            {fullData.Insight || 0}
+                                            <span className="gm-pokemon-lookup__stat-limit">
+                                                {' '}
+                                                / {limits.maxInsight}
+                                            </span>
+                                        </span>
                                     </div>
                                 </div>
                             )}
