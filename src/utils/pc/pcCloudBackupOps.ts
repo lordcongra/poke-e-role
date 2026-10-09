@@ -79,7 +79,7 @@ export async function buildBackupSceneItems(
             .position(pos)
             .layer('CHARACTER')
             .metadata({
-                ...((rawSaved?.metadata?.[METADATA_ID] as Record<string, unknown>) || {}),
+                ...(rawSaved?.metadata || {}),
                 [METADATA_ID]: metaObj,
                 'pokerole-pmd-extension/stats': metaObj,
                 'pokerole-pmd-extension/is-backup-token': true
@@ -132,7 +132,7 @@ export async function buildBackupSceneItems(
             .position({ x: 0, y: 0 })
             .layer('CHARACTER')
             .metadata({
-                ...((rawSaved?.metadata?.[METADATA_ID] as Record<string, unknown>) || {}),
+                ...(rawSaved?.metadata || {}),
                 [METADATA_ID]: trainerMeta,
                 'pokerole-pmd-extension/stats': trainerMeta,
                 'pokerole-pmd-extension/is-backup-token': true
@@ -149,8 +149,19 @@ export async function buildBackupSceneItems(
     const pushItemWithAttachments = (parentItem: Item, attachedBundles?: PcPokemonSummary['attachedItems']) => {
         items.push(parentItem);
         if (attachedBundles && attachedBundles.length > 0) {
+            const idMap = new Map<string, string>();
+            idMap.set(parentItem.id, parentItem.id);
             for (const bundle of attachedBundles) {
-                const child = applyRelativeAttachment(parentItem, bundle, parentItem.id);
+                if (bundle?.item?.id && bundle.item.id !== parentItem.id) {
+                    idMap.set(bundle.item.id, crypto.randomUUID());
+                }
+            }
+
+            for (const bundle of attachedBundles) {
+                if (!bundle || !bundle.item || bundle.item.id === parentItem.id) continue;
+                const assignedId = idMap.get(bundle.item.id);
+                const targetParentId = (bundle.item.attachedTo && idMap.get(bundle.item.attachedTo)) || parentItem.id;
+                const child = applyRelativeAttachment(parentItem, bundle, targetParentId, assignedId);
                 child.metadata = {
                     ...(child.metadata || {}),
                     'pokerole-pmd-extension/is-backup-token': true

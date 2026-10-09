@@ -174,7 +174,8 @@ export function mergeIncomingPlayerSummaries(
                 campaignId: targetCampId,
                 isOnMap: false,
                 mapTokenId: undefined,
-                savedTokenItem: existing?.savedTokenItem ?? s.savedTokenItem
+                savedTokenItem: existing?.savedTokenItem ?? s.savedTokenItem,
+                attachedItems: existing?.attachedItems ?? s.attachedItems
             };
         } else if (s.isOnMap === true) {
             updatedSummaries[s.entityId] = {
@@ -182,7 +183,8 @@ export function mergeIncomingPlayerSummaries(
                 campaignId: targetCampId,
                 isOnMap: true,
                 mapTokenId: s.mapTokenId || existing?.mapTokenId,
-                savedTokenItem: existing?.savedTokenItem ?? s.savedTokenItem
+                savedTokenItem: existing?.savedTokenItem ?? s.savedTokenItem,
+                attachedItems: existing?.attachedItems ?? s.attachedItems
             };
         } else if (existing?.isOnMap && existing.savedTokenItem && incomingMod === existingMod) {
             updatedSummaries[s.entityId] = {
@@ -195,6 +197,7 @@ export function mergeIncomingPlayerSummaries(
                 isOnMap: true,
                 mapTokenId: existing.mapTokenId,
                 savedTokenItem: existing.savedTokenItem,
+                attachedItems: existing.attachedItems ?? s.attachedItems,
                 lastModified: Math.max(existingMod, incomingMod)
             };
         } else if (existing?.isOnMap) {
@@ -203,13 +206,15 @@ export function mergeIncomingPlayerSummaries(
                 campaignId: targetCampId,
                 isOnMap: true,
                 mapTokenId: existing.mapTokenId,
-                savedTokenItem: existing.savedTokenItem
+                savedTokenItem: existing.savedTokenItem,
+                attachedItems: existing.attachedItems ?? s.attachedItems
             };
         } else {
             updatedSummaries[s.entityId] = {
                 ...s,
                 campaignId: targetCampId,
-                savedTokenItem: existing?.savedTokenItem ?? s.savedTokenItem
+                savedTokenItem: existing?.savedTokenItem ?? s.savedTokenItem,
+                attachedItems: existing?.attachedItems ?? s.attachedItems
             };
         }
         hasChanges = true;

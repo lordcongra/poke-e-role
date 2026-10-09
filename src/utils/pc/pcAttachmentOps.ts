@@ -68,22 +68,50 @@ export function separateAttachments(
     accessoryTokens: Item[];
     allAttachedChildren: Item[];
 } {
-    const allAttachedChildren = sceneItems.filter((i) => i.attachedTo === parentId);
-    const nonHudChildren = allAttachedChildren.filter(
-        (it) =>
-            !it.metadata[GRAPHICS_META_ID] &&
-            !it.metadata['pokerole-extension/graphic-v6'] &&
-            !it.id.startsWith(`${parentId}-`)
-    );
+    const childrenByParent = new Map<string, Item[]>();
+    for (const item of sceneItems) {
+        if (item.attachedTo) {
+            const list = childrenByParent.get(item.attachedTo);
+            if (list) {
+                list.push(item);
+            } else {
+                childrenByParent.set(item.attachedTo, [item]);
+            }
+        }
+    }
 
+    const queue: string[] = [parentId];
+    const visited = new Set<string>([parentId]);
     const characterTokens: Item[] = [];
     const accessoryTokens: Item[] = [];
+    const allAttachedChildren: Item[] = [];
 
-    for (const child of nonHudChildren) {
-        if (isCharacterOrRegisteredToken(child, pcSummaries)) {
-            characterTokens.push(child);
-        } else {
-            accessoryTokens.push(child);
+    while (queue.length > 0) {
+        const currId = queue.shift()!;
+        const children = childrenByParent.get(currId) || [];
+
+        for (const child of children) {
+            if (visited.has(child.id)) {
+                continue;
+            }
+            visited.add(child.id);
+            allAttachedChildren.push(child);
+
+            const isHudGraphic =
+                Boolean(child.metadata?.[GRAPHICS_META_ID]) ||
+                Boolean(child.metadata?.['pokerole-extension/graphic-v6']) ||
+                child.id.startsWith(parentId);
+
+            if (isHudGraphic) {
+                continue;
+            }
+
+            if (isCharacterOrRegisteredToken(child, pcSummaries)) {
+                characterTokens.push(child);
+            } else {
+                accessoryTokens.push(child);
+                queue.push(child.id);
+            }
         }
     }
 
@@ -180,8 +208,20 @@ export function reconcileTokenAttachmentsOnScene(
 
     // Case 2: Desired attachments exist but scene token is missing them
     if (accessoryTokens.length === 0) {
+        const idMap = new Map<string, string>();
+        idMap.set(parent.id, parent.id);
+
         for (const bundle of desired) {
-            const child = applyRelativeAttachment(parent, bundle, parent.id);
+            if (bundle?.item?.id && bundle.item.id !== parent.id) {
+                idMap.set(bundle.item.id, crypto.randomUUID());
+            }
+        }
+
+        for (const bundle of desired) {
+            if (!bundle || !bundle.item || bundle.item.id === parent.id) continue;
+            const assignedId = idMap.get(bundle.item.id);
+            const targetParentId = (bundle.item.attachedTo && idMap.get(bundle.item.attachedTo)) || parent.id;
+            const child = applyRelativeAttachment(parent, bundle, targetParentId, assignedId);
             if (tagAsBackupToken) {
                 child.metadata = {
                     ...(child.metadata || {}),

@@ -49,7 +49,12 @@ export function calculateRelativeAttachment(parent: Item, child: Item): Attachme
  * Applies the stored relative transform to place an attached child onto a newly spawned parent token.
  * Perfectly mirrors accessories when the parent is horizontally flipped (Flip! extension).
  */
-export function applyRelativeAttachment(newParent: Item, bundle: AttachmentBundle, newParentId: string): Item {
+export function applyRelativeAttachment(
+    newParent: Item,
+    bundle: AttachmentBundle,
+    newParentId: string,
+    customId?: string
+): Item {
     const childClone = JSON.parse(JSON.stringify(bundle.item)) as Item;
     const parentPos = newParent.position || { x: 0, y: 0 };
     const parentScale = newParent.scale || { x: 1, y: 1 };
@@ -82,7 +87,7 @@ export function applyRelativeAttachment(newParent: Item, bundle: AttachmentBundl
     };
 
     // 6. Rewire attachment link to new parent
-    (childClone as { id: string }).id = crypto.randomUUID();
+    (childClone as { id: string }).id = customId || crypto.randomUUID();
     childClone.attachedTo = newParentId;
 
     return childClone;
@@ -110,6 +115,20 @@ export function rehomeTokenSubtree(parentToken: Item, attachments: AttachmentBun
 
     const rehomedChildren: Item[] = [];
 
+    // Build ID map: map parent to fresh parent ID, and assign fresh UUIDs for all valid bundles
+    const idMap = new Map<string, string>();
+    idMap.set(parentToken.id, freshParentId);
+
+    for (const bundle of attachments) {
+        if (!bundle || !bundle.item || bundle.item.id === parentToken.id) {
+            continue;
+        }
+        if (isCharacterOrRegisteredToken(bundle.item)) {
+            continue;
+        }
+        idMap.set(bundle.item.id, crypto.randomUUID());
+    }
+
     // Cycle detector & safeguard: ensure child is never parent and never a character token
     for (const bundle of attachments) {
         if (!bundle || !bundle.item || bundle.item.id === parentToken.id) {
@@ -118,7 +137,9 @@ export function rehomeTokenSubtree(parentToken: Item, attachments: AttachmentBun
         if (isCharacterOrRegisteredToken(bundle.item)) {
             continue;
         }
-        const rehomedChild = applyRelativeAttachment(clonedParent, bundle, freshParentId);
+        const assignedId = idMap.get(bundle.item.id);
+        const targetParentId = (bundle.item.attachedTo && idMap.get(bundle.item.attachedTo)) || freshParentId;
+        const rehomedChild = applyRelativeAttachment(clonedParent, bundle, targetParentId, assignedId);
         if (options.ownerId) {
             rehomedChild.createdUserId = options.ownerId;
         }

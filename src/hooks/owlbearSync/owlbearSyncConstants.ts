@@ -1,7 +1,5 @@
 import OBR from '@owlbear-rodeo/sdk';
-import { STATS_META_ID } from '../../utils/graphics/graphicsManager';
-
-export const METADATA_ID = STATS_META_ID;
+export const METADATA_ID = 'pokerole-extension/stats';
 export const ROOM_META_ID = 'pokerole-pmd-extension/room-settings';
 export const EXTENSION_ID = 'pokerole-pmd-extension';
 
