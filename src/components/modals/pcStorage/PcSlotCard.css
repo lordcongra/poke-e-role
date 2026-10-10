@@ -323,18 +323,37 @@ html[data-theme='dark'] .pc-slot-card__avatar-wrapper,
     transform: scale(1.02);
 }
 
-.pc-touch-drag-ghost {
+.pc-touch-drag-ghost,
+.dnd-poly-drag-image,
+.pc-slot-card.pc-touch-drag-ghost,
+.pc-slot-card.dnd-poly-drag-image,
+.dnd-poly-drag-image.pc-slot-card,
+[class*='dnd-poly'][class*='pc-slot-card'] {
     position: fixed !important;
     pointer-events: none !important;
     z-index: 99999 !important;
-    opacity: 0.92 !important;
-    transform: translate(-50%, -50%) scale(1.04) !important;
+    opacity: 0.95 !important;
+    transform: translate(-50%, -50%) scale(1.03) !important;
+    height: 60px !important;
+    min-height: unset !important;
+    max-height: 68px !important;
+    box-sizing: border-box !important;
+    background: var(--panel-alt, #1e1e1e) !important;
+    border: 1.5px solid var(--primary, #3b82f6) !important;
+    border-radius: 8px !important;
     box-shadow:
-        0 14px 28px rgba(0, 0, 0, 0.55),
-        0 0 20px color-mix(in srgb, var(--primary, #3b82f6) 50%, transparent) !important;
+        0 10px 24px rgba(0, 0, 0, 0.55),
+        0 0 16px color-mix(in srgb, var(--primary, #3b82f6) 45%, transparent) !important;
     transition: transform 0.05s ease-out !important;
     margin: 0 !important;
-    border-color: var(--primary, #3b82f6) !important;
+    overflow: hidden !important;
+}
+
+.pc-touch-drag-ghost .pc-slot-card__party-actions,
+.pc-touch-drag-ghost .pc-slot-card__box-actions,
+.dnd-poly-drag-image .pc-slot-card__party-actions,
+.dnd-poly-drag-image .pc-slot-card__box-actions {
+    display: none !important;
 }
 
 /* Canonical Pokémon Type Pill Colors */

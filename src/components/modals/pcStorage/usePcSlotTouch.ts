@@ -75,19 +75,34 @@ export function usePcSlotTouch({
     const createGhost = useCallback((sourceEl: HTMLElement, x: number, y: number) => {
         sourceEl.classList.add('pc-slot-card--touch-dragging');
 
+        const exactHeight = Math.max(50, Math.min(sourceEl.offsetHeight || 60, 68));
+        const exactWidth = Math.max(140, Math.min(sourceEl.offsetWidth || 220, 280));
+
         const ghost = sourceEl.cloneNode(true) as HTMLElement;
         ghost.classList.add('pc-touch-drag-ghost');
         ghost.style.position = 'fixed';
         ghost.style.left = `${x}px`;
         ghost.style.top = `${y}px`;
-        ghost.style.transform = 'translate(-50%, -50%) scale(1.04)';
+        ghost.style.transform = 'translate(-50%, -50%) scale(1.03)';
         ghost.style.pointerEvents = 'none';
         ghost.style.zIndex = '99999';
-        ghost.style.opacity = '0.92';
-        ghost.style.width = `${Math.min(sourceEl.offsetWidth || 220, 260)}px`;
-        ghost.style.boxShadow = '0 14px 28px rgba(0, 0, 0, 0.55), 0 0 18px var(--primary, #3b82f6)';
+        ghost.style.opacity = '0.95';
+        ghost.style.width = `${exactWidth}px`;
+        ghost.style.maxWidth = `${exactWidth}px`;
+        ghost.style.minWidth = `${exactWidth}px`;
+        ghost.style.height = `${exactHeight}px`;
+        ghost.style.maxHeight = `${exactHeight}px`;
+        ghost.style.minHeight = `${exactHeight}px`;
+        ghost.style.boxSizing = 'border-box';
+        ghost.style.boxShadow = '0 10px 24px rgba(0, 0, 0, 0.55), 0 0 16px var(--primary, #3b82f6)';
         ghost.style.transition = 'transform 0.05s ease-out';
         ghost.style.margin = '0';
+        ghost.style.overflow = 'hidden';
+
+        // Hide action buttons in the ghost preview to keep it clean and compact
+        ghost.querySelectorAll('button, .pc-slot-card__party-actions, .pc-slot-card__box-actions').forEach((el) => {
+            (el as HTMLElement).style.display = 'none';
+        });
 
         document.body.appendChild(ghost);
         ghostElRef.current = ghost;

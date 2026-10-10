@@ -11,7 +11,25 @@ export function initMobileDragDrop(): void {
         polyfill({
             forceApply: true,
             holdToDrag: 250,
-            dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride
+            dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
+            dragImageSetup: (src) => {
+                const clone = src.cloneNode(true) as HTMLElement;
+                const h = Math.max(50, Math.min(src.offsetHeight || 60, 68));
+                const w = Math.max(140, Math.min(src.offsetWidth || 220, 280));
+                clone.style.height = `${h}px`;
+                clone.style.maxHeight = `${h}px`;
+                clone.style.minHeight = `${h}px`;
+                clone.style.width = `${w}px`;
+                clone.style.maxWidth = `${w}px`;
+                clone.style.boxSizing = 'border-box';
+                clone.style.overflow = 'hidden';
+                clone
+                    .querySelectorAll('button, .pc-slot-card__party-actions, .pc-slot-card__box-actions')
+                    .forEach((el) => {
+                        (el as HTMLElement).style.display = 'none';
+                    });
+                return clone;
+            }
         });
         window.addEventListener('touchmove', () => {}, { passive: false });
         polyfillInitialized = true;
