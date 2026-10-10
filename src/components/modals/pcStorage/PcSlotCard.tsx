@@ -15,6 +15,7 @@ interface PcSlotCardProps {
     summary: PcPokemonSummary;
     isSelected: boolean;
     isPartySlot?: boolean;
+    slotIndex?: number;
     onClick: () => void;
     onContextMenu: (e: React.MouseEvent) => void;
     onOpenSheet?: () => void;
@@ -30,6 +31,7 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
     summary,
     isSelected,
     isPartySlot = false,
+    slotIndex,
     onClick,
     onContextMenu,
     onOpenSheet,
@@ -53,6 +55,11 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
     const hasType2 = Boolean(summary.type2 && summary.type2.toLowerCase() !== 'none' && summary.type2.trim() !== '');
     const type1Display = summary.type1 && summary.type1.toLowerCase() !== 'none' ? summary.type1 : 'Normal';
 
+    const hasCustomNickname = Boolean(
+        summary.name && summary.species && summary.name.trim().toLowerCase() !== summary.species.trim().toLowerCase()
+    );
+    const displayName = summary.name || summary.species || 'Pokémon';
+
     const {
         handleTouchStart,
         handleTouchMove,
@@ -63,12 +70,17 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
     } = usePcSlotTouch({
         onContextMenu,
         onClick,
-        onDragStart
+        onDragStart,
+        slotType: isPartySlot ? 'party' : 'box',
+        slotIndex,
+        disabled: isLocked
     });
 
     return (
         <div
             className={`pc-slot-card ${isSelected ? 'pc-slot-card--selected' : ''} ${isPartySlot ? 'pc-slot-card--party' : 'pc-slot-card--box'}`}
+            data-slot-type={isPartySlot ? 'party' : 'box'}
+            data-slot-index={slotIndex}
             onClick={handleClick}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
@@ -124,31 +136,58 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
                         <div className="pc-slot-card__title-row">
                             <div className="pc-slot-card__name-wrapper">
                                 <span
-                                    className={`pc-slot-card__name pc-slot-card__name--party ${(summary.name || summary.species || '').length > 12 ? 'pc-slot-card__name--marquee' : ''} text-label`}
-                                    title={summary.name || summary.species}
+                                    className={`pc-slot-card__name pc-slot-card__name--party ${displayName.length > 12 ? 'pc-slot-card__name--marquee' : ''} text-label`}
+                                    title={displayName}
                                 >
-                                    {summary.name || summary.species}
+                                    {displayName}
                                 </span>
                             </div>
-                            <span className="pc-slot-card__rank text-subtext">{summary.rank || 'Starter'}</span>
                         </div>
 
                         <div className="pc-slot-card__meta-row">
-                            <span className="pc-slot-card__species text-subtext">{summary.species}</span>
-                            <div className="pc-slot-card__types">
-                                <span
-                                    className={`pc-slot-card__type-pill pc-slot-card__type--${type1Display.toLowerCase()}`}
-                                >
-                                    {type1Display}
-                                </span>
-                                {hasType2 && (
-                                    <span
-                                        className={`pc-slot-card__type-pill pc-slot-card__type--${summary.type2?.toLowerCase()}`}
-                                    >
-                                        {summary.type2}
+                            {hasCustomNickname ? (
+                                <>
+                                    <span className="pc-slot-card__species text-subtext" title={summary.species}>
+                                        {summary.species}
                                     </span>
-                                )}
-                            </div>
+                                    <div
+                                        className={`pc-slot-card__types ${hasType2 ? 'pc-slot-card__types--dual' : ''}`}
+                                    >
+                                        <span
+                                            className={`pc-slot-card__type-pill pc-slot-card__type--${type1Display.toLowerCase()}`}
+                                        >
+                                            {type1Display}
+                                        </span>
+                                        {hasType2 && (
+                                            <span
+                                                className={`pc-slot-card__type-pill pc-slot-card__type--${summary.type2?.toLowerCase()}`}
+                                            >
+                                                {summary.type2}
+                                            </span>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div
+                                        className={`pc-slot-card__types ${hasType2 ? 'pc-slot-card__types--dual' : ''}`}
+                                    >
+                                        <span
+                                            className={`pc-slot-card__type-pill pc-slot-card__type--${type1Display.toLowerCase()}`}
+                                        >
+                                            {type1Display}
+                                        </span>
+                                        {hasType2 && (
+                                            <span
+                                                className={`pc-slot-card__type-pill pc-slot-card__type--${summary.type2?.toLowerCase()}`}
+                                            >
+                                                {summary.type2}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className="pc-slot-card__rank text-subtext">{summary.rank || 'Starter'}</span>
+                                </>
+                            )}
                         </div>
                     </>
                 ) : (

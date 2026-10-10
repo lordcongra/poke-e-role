@@ -264,6 +264,7 @@ html[data-theme='dark'] .pc-slot-card__avatar-wrapper,
     align-items: center;
     gap: 3px;
     flex-shrink: 0;
+    min-width: 0;
 }
 
 .pc-slot-card__types--box {
@@ -271,12 +272,20 @@ html[data-theme='dark'] .pc-slot-card__avatar-wrapper,
     align-items: center;
     gap: 3px;
     flex-shrink: 0;
+    min-width: 0;
+}
+
+.pc-slot-card__types--dual {
+    gap: 2px;
 }
 
 .pc-slot-card__types--dual .pc-slot-card__type-pill {
     font-size: 0.54rem;
     padding: 1px 3px;
     letter-spacing: -0.02em;
+    max-width: 50px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .pc-slot-card__type-pill {
@@ -293,6 +302,39 @@ html[data-theme='dark'] .pc-slot-card__avatar-wrapper,
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+/* Touch Drag-and-Drop States */
+.pc-slot-card--touch-dragging {
+    opacity: 0.45;
+    border-style: dashed !important;
+}
+
+.pc-slot--touch-drag-over,
+.pc-slot-card--touch-drag-over,
+.pc-party-dock__slot-wrapper--drag-over,
+.pc-box-grid__slot-wrapper--drag-over,
+.pc-party-dock__empty-slot--drag-over,
+.pc-box-grid__empty-slot--drag-over {
+    border-color: var(--primary, #3b82f6) !important;
+    background: color-mix(in srgb, var(--primary, #3b82f6) 24%, var(--panel-alt)) !important;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--primary, #3b82f6) 55%, transparent) !important;
+    transform: scale(1.02);
+}
+
+.pc-touch-drag-ghost {
+    position: fixed !important;
+    pointer-events: none !important;
+    z-index: 99999 !important;
+    opacity: 0.92 !important;
+    transform: translate(-50%, -50%) scale(1.04) !important;
+    box-shadow:
+        0 14px 28px rgba(0, 0, 0, 0.55),
+        0 0 20px color-mix(in srgb, var(--primary, #3b82f6) 50%, transparent) !important;
+    transition: transform 0.05s ease-out !important;
+    margin: 0 !important;
+    border-color: var(--primary, #3b82f6) !important;
 }
 
 /* Canonical Pokémon Type Pill Colors */

@@ -288,6 +288,8 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                             <div
                                 key={`party-${index}-${entityId}`}
                                 className="pc-party-dock__slot-wrapper"
+                                data-slot-type="party"
+                                data-slot-index={index}
                                 onDragEnter={(e) => e.preventDefault()}
                                 onDragOver={(e) => e.preventDefault()}
                                 onDrop={(e) => onDropOnSlot(e, index)}
@@ -296,6 +298,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                                     summary={summary}
                                     isSelected={isSelected}
                                     isPartySlot={true}
+                                    slotIndex={index}
                                     onClick={() => onSelectSlot(index)}
                                     onContextMenu={(e) => onContextMenu(e, index, entityId)}
                                     onOpenSheet={() => onOpenSheet?.(entityId)}
@@ -312,6 +315,8 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                         <div
                             key={`party-empty-${index}`}
                             className={`pc-party-dock__empty-slot ${isSelected ? 'pc-party-dock__empty-slot--selected' : ''}`}
+                            data-slot-type="party"
+                            data-slot-index={index}
                             onClick={() => {
                                 if (onEmptySlotClick) {
                                     onEmptySlotClick(index);

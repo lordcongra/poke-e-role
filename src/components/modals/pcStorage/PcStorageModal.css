@@ -559,9 +559,10 @@ html[data-theme='dark'] .pc-modal,
         padding: 6px 8px;
     }
 
+    .pc-modal__layout--horizontal .pc-party-dock__slots,
     .pc-party-dock__slots {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         gap: 6px;
         width: 100%;
         max-width: 100%;
@@ -574,11 +575,5 @@ html[data-theme='dark'] .pc-modal,
         width: 100%;
         max-width: 100%;
         box-sizing: border-box;
-    }
-}
-
-@media (max-width: 500px) {
-    .pc-party-dock__slots {
-        grid-template-columns: 1fr;
     }
 }

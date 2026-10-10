@@ -135,6 +135,8 @@ export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
                             <div
                                 key={`box-slot-${index}-${entityId}`}
                                 className="pc-box-grid__slot-wrapper"
+                                data-slot-type="box"
+                                data-slot-index={index}
                                 onDragEnter={(e) => e.preventDefault()}
                                 onDragOver={(e) => e.preventDefault()}
                                 onDrop={(e) => onDropOnSlot(e, index)}
@@ -143,6 +145,7 @@ export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
                                     summary={summary}
                                     isSelected={isSelected}
                                     isPartySlot={false}
+                                    slotIndex={index}
                                     onClick={() => onSelectSlot(index)}
                                     onContextMenu={(e) => onContextMenu(e, index, entityId)}
                                     onOpenSheet={() => onOpenSheet?.(entityId)}
@@ -160,6 +163,8 @@ export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
                         <div
                             key={`box-slot-empty-${index}`}
                             className={`pc-box-grid__empty-slot ${isSelected ? 'pc-box-grid__empty-slot--selected' : ''}`}
+                            data-slot-type="box"
+                            data-slot-index={index}
                             style={{
                                 borderColor: isSelected ? theme : `${theme}22`,
                                 background: isSelected ? `${theme}26` : undefined

@@ -45,6 +45,7 @@ export const PcStorageMobileTabs: React.FC<PcStorageMobileTabsProps> = ({
             <button
                 type="button"
                 role="tab"
+                data-tab-type="party"
                 aria-selected={activeTab === 'party'}
                 className={`pc-modal__mobile-tab ${activeTab === 'party' ? 'pc-modal__mobile-tab--active' : ''} ${dragOverTab === 'party' ? 'pc-modal__mobile-tab--drag-over' : ''}`}
                 onClick={() => onSelectTab('party')}
@@ -60,6 +61,7 @@ export const PcStorageMobileTabs: React.FC<PcStorageMobileTabsProps> = ({
             <button
                 type="button"
                 role="tab"
+                data-tab-type="box"
                 aria-selected={activeTab === 'box'}
                 className={`pc-modal__mobile-tab ${activeTab === 'box' ? 'pc-modal__mobile-tab--active' : ''} ${dragOverTab === 'box' ? 'pc-modal__mobile-tab--drag-over' : ''}`}
                 onClick={() => onSelectTab('box')}
