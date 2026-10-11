@@ -346,6 +346,12 @@
     border: 1px solid rgba(148, 163, 184, 0.35);
 }
 
+.factor-badge--weather {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
 .roll-factors-modal__detail-tag {
     background: color-mix(in srgb, var(--primary, #eab308) 16%, transparent);
     color: var(--primary, #eab308);

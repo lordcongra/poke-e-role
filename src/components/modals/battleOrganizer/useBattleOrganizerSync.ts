@@ -66,6 +66,18 @@ export function useBattleOrganizerSync({
                     console.error('[BattleOrganizer] Failed to save state to localStorage:', e);
                 }
 
+                // Update active battlefield in character store
+                useCharacterStore.getState().setActiveBattlefield(newState.battlefield);
+
+                if (isStandaloneMode) {
+                    try {
+                        localStorage.setItem(
+                            'pokerole-pmd-extension/battlefield',
+                            JSON.stringify(newState.battlefield)
+                        );
+                    } catch {}
+                }
+
                 // 2. Broadcast to peers in room (remote clients, guest players, etc.)
                 if (!_skipBroadcast && OBR.isAvailable && !isStandaloneMode) {
                     try {
@@ -75,6 +87,29 @@ export function useBattleOrganizerSync({
                     } catch (broadcastErr) {
                         console.warn('[BattleOrganizer] Failed to broadcast battle organizer state:', broadcastErr);
                     }
+
+                    // 3. Persist battlefield to OBR Scene Metadata if GM
+                    OBR.player
+                        .getRole()
+                        .then((role) => {
+                            if (role === 'GM') {
+                                OBR.scene.isReady().then((ready) => {
+                                    if (ready) {
+                                        OBR.scene
+                                            .setMetadata({
+                                                'pokerole-pmd-extension/battlefield': newState.battlefield
+                                            })
+                                            .catch((err) => {
+                                                console.warn(
+                                                    '[BattleOrganizer] Failed to save battlefield to scene metadata:',
+                                                    err
+                                                );
+                                            });
+                                    }
+                                });
+                            }
+                        })
+                        .catch(() => {});
                 }
             };
 
@@ -168,6 +203,9 @@ export function useBattleOrganizerSync({
                             saveTimerRef.current = null;
                         }
                         lastSavedJsonRef.current = e.newValue;
+                        if (parsed.battlefield) {
+                            useCharacterStore.getState().setActiveBattlefield(parsed.battlefield);
+                        }
                         setState(parsed);
                     }
                 } catch (err) {
@@ -210,6 +248,9 @@ export function useBattleOrganizerSync({
                         console.warn('[BattleOrganizer] Failed to cache synced state in localStorage:', e);
                     }
 
+                    if (incoming.battlefield) {
+                        useCharacterStore.getState().setActiveBattlefield(incoming.battlefield);
+                    }
                     setState(incoming);
                 } catch (err) {
                     console.error('[BattleOrganizer] Failed to apply broadcast sync:', err);

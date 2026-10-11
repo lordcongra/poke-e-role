@@ -9,8 +9,15 @@ import type {
     CustomForm,
     CustomStatus
 } from '../../store/storeTypes';
+import type { BattlefieldData } from '../../types/battleOrganizerTypes';
 import { SCENE_SETTINGS_META_ID } from '../../utils/sync/obr';
-import { ROOM_META_ID, mapRoomSettings, showDicePlusRetirementNotice } from './owlbearSyncConstants';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
+import {
+    ROOM_META_ID,
+    BATTLEFIELD_META_ID,
+    mapRoomSettings,
+    showDicePlusRetirementNotice
+} from './owlbearSyncConstants';
 import { handlePlayerRoomCampaignSync } from '../../utils/pc/pcRoomSyncOps';
 
 export interface OwlbearRoomSyncResult {
@@ -187,6 +194,28 @@ export async function setupOwlbearRoomSync(
             lastSyncedSceneOffsetX = incomingOffsetX;
             lastSyncedSceneOffsetY = incomingOffsetY;
         }
+
+        if (sceneMetaResult && BATTLEFIELD_META_ID in sceneMetaResult) {
+            const rawBattlefield = sceneMetaResult[BATTLEFIELD_META_ID];
+            if (rawBattlefield && typeof rawBattlefield === 'object') {
+                store.setActiveBattlefield(rawBattlefield as BattlefieldData);
+            }
+        } else if (isStandaloneMode || !OBR.isAvailable) {
+            try {
+                const localBattlefield = localStorage.getItem(BATTLEFIELD_META_ID);
+                if (localBattlefield) {
+                    store.setActiveBattlefield(JSON.parse(localBattlefield) as BattlefieldData);
+                } else {
+                    const rawBo = localStorage.getItem('pkr_battle_organizer_data');
+                    if (rawBo) {
+                        const parsedBo = JSON.parse(rawBo);
+                        if (parsedBo?.battlefield) {
+                            store.setActiveBattlefield(parsedBo.battlefield as BattlefieldData);
+                        }
+                    }
+                }
+            } catch {}
+        }
     } catch (e) {
         console.error('[SyncEngine] Engine recovered from room/scene metadata crash:', e);
     }
@@ -299,6 +328,15 @@ export async function setupOwlbearRoomSync(
             store.setSceneOffsets(incomingOffsetX, incomingOffsetY);
             lastSyncedSceneOffsetX = incomingOffsetX;
             lastSyncedSceneOffsetY = incomingOffsetY;
+
+            if (BATTLEFIELD_META_ID in sceneMeta) {
+                const rawBattlefield = sceneMeta[BATTLEFIELD_META_ID];
+                if (rawBattlefield && typeof rawBattlefield === 'object') {
+                    store.setActiveBattlefield(rawBattlefield as BattlefieldData);
+                } else {
+                    store.setActiveBattlefield(null);
+                }
+            }
         } catch (e) {
             console.error('[SyncEngine] Error syncing scene metadata on ready:', e);
         }
@@ -337,15 +375,44 @@ export async function setupOwlbearRoomSync(
                     console.warn('[SyncEngine] Error re-rendering tokens on scene scale/offset change:', err)
                 );
             }
+
+            if (BATTLEFIELD_META_ID in meta) {
+                const rawBattlefield = meta[BATTLEFIELD_META_ID];
+                if (rawBattlefield && typeof rawBattlefield === 'object') {
+                    useCharacterStore.getState().setActiveBattlefield(rawBattlefield as BattlefieldData);
+                } else {
+                    useCharacterStore.getState().setActiveBattlefield(null);
+                }
+            }
         } catch (e) {
             console.error('[SyncEngine] Error in scene metadata change listener:', e);
         }
     });
     unsubs.push(unsubSceneMeta);
 
+    if (isStandaloneMode && typeof window !== 'undefined') {
+        const handleStorage = (e: StorageEvent) => {
+            if (e.key === BATTLEFIELD_META_ID && e.newValue) {
+                try {
+                    useCharacterStore.getState().setActiveBattlefield(JSON.parse(e.newValue));
+                } catch {}
+            } else if (e.key === 'pkr_battle_organizer_data' && e.newValue) {
+                try {
+                    const parsed = JSON.parse(e.newValue);
+                    if (parsed?.battlefield) {
+                        useCharacterStore.getState().setActiveBattlefield(parsed.battlefield);
+                    }
+                } catch {}
+            }
+        };
+        window.addEventListener('storage', handleStorage);
+        unsubs.push(() => window.removeEventListener('storage', handleStorage));
+    }
+
     const resetSceneSyncState = () => {
         useCharacterStore.getState().setSceneScale(null);
         useCharacterStore.getState().setSceneOffsets(null, null);
+        useCharacterStore.getState().setActiveBattlefield(null);
         lastSyncedSceneScale = null;
         lastSyncedSceneOffsetX = null;
         lastSyncedSceneOffsetY = null;

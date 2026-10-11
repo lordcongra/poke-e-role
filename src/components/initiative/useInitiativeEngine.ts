@@ -690,10 +690,7 @@ export function useInitiativeEngine() {
             const store = useCharacterStore.getState();
             const baseInit = calculateBaseInitFromCharacterData(char.rawMetadata, store);
             const resolvedName = extractCharacterName(char.rawMetadata, char.name);
-            const isNpc = extractIsNpc(
-                char.rawMetadata,
-                store.tokenId === char.id && Boolean(store.identity.isNPC)
-            );
+            const isNpc = extractIsNpc(char.rawMetadata, store.tokenId === char.id && Boolean(store.identity.isNPC));
             const shouldHide = isNpc && store.identity.defaultNpcInitiativeHidden !== false;
             const newList = sortCombatants([
                 ...prevCombatants,

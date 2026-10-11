@@ -146,6 +146,53 @@ export function calculateSkillTotal(skillKey: string, state: CharacterState, ite
     return 0;
 }
 
+export function getWeatherDamageBonus(
+    moveType: string | undefined,
+    battlefield: CharacterState['activeBattlefield']
+): { bonus: number; tag: string } {
+    if (!moveType || !battlefield?.weather) return { bonus: 0, tag: '' };
+    const { name, remainingRounds } = battlefield.weather;
+    if (!name || remainingRounds <= 0) return { bonus: 0, tag: '' };
+
+    const cleanName = name.trim().toLowerCase();
+    const cleanType = moveType.trim().toLowerCase();
+
+    // Extreme weather (+2 dice)
+    if (cleanName.includes('desolate') || cleanName.includes('harsh sun')) {
+        if (cleanType === 'fire') {
+            return { bonus: 2, tag: 'Desolate Weather (+2 Dice to Fire Damage Pool)' };
+        }
+    } else if (
+        cleanName.includes('typhoon') ||
+        cleanName.includes('heavy rain') ||
+        cleanName.includes('primordial sea')
+    ) {
+        if (cleanType === 'water') {
+            return { bonus: 2, tag: 'Typhoon (+2 Dice to Water Damage Pool)' };
+        }
+    } else if (cleanName.includes('strong winds') || cleanName.includes('delta stream')) {
+        if (cleanType === 'flying') {
+            return { bonus: 2, tag: 'Strong Winds (+2 Dice to Flying Damage Pool)' };
+        }
+    }
+    // Standard weather (+1 dice)
+    else if (cleanName.includes('sun')) {
+        if (cleanType === 'fire') {
+            return { bonus: 1, tag: 'Sunny (+1 Dice to Fire Damage Pool)' };
+        }
+    } else if (cleanName.includes('rain')) {
+        if (cleanType === 'water') {
+            return { bonus: 1, tag: 'Rain (+1 Dice to Water Damage Pool)' };
+        }
+    } else if (cleanName.includes('snow') || cleanName.includes('hail')) {
+        if (cleanType === 'ice') {
+            return { bonus: 1, tag: 'Snow (+1 Dice to Ice Damage Pool)' };
+        }
+    }
+
+    return { bonus: 0, tag: '' };
+}
+
 export function calculateBaseDamage(move: MoveData, state: CharacterState, itemBuffs?: CombatBonuses): number {
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
     const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
@@ -186,10 +233,18 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState, itemB
     }
 
     const paralysisPenalty = normalizedDamageStatistic === 'dex' ? statuses.paralysisDexterityPenalty : 0;
+    const weatherBonus = getWeatherDamageBonus(move.type, state.activeBattlefield).bonus;
 
     return Math.max(
         1,
-        move.power + scalingValue + extraDice + sameTypeAttackBonus + teraBonus + customFirstHitTag + paralysisPenalty
+        move.power +
+            scalingValue +
+            extraDice +
+            sameTypeAttackBonus +
+            teraBonus +
+            customFirstHitTag +
+            paralysisPenalty +
+            weatherBonus
     );
 }
 

@@ -11,7 +11,8 @@ import {
     calculateSkillTotal,
     getRankBonusStats,
     calculateBaseAccuracy,
-    calculateCriticalRequirement
+    calculateCriticalRequirement,
+    getWeatherDamageBonus
 } from './combatMath';
 import { parseCombatTags } from '../tagParser/index';
 import { rollDicePlus } from './diceRoller';
@@ -481,6 +482,11 @@ export async function executeDamageRoll(
 
         if (teraBonusTags) tags.push(teraBonusTags);
         else if (stabBonus > 0) tags.push(stabTag);
+
+        const weatherInfo = getWeatherDamageBonus(move.type, state.activeBattlefield);
+        if (weatherInfo.bonus > 0 && weatherInfo.tag) {
+            tags.push(weatherInfo.tag);
+        }
     }
 
     const allDmgSourceTexts = [

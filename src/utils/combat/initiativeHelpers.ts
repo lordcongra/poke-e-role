@@ -86,10 +86,7 @@ export function extractTokenImage(meta: Record<string, unknown> | null | undefin
     return '';
 }
 
-export function extractIsNpc(
-    meta: Record<string, unknown> | null | undefined,
-    fallbackIsNpc?: boolean
-): boolean {
+export function extractIsNpc(meta: Record<string, unknown> | null | undefined, fallbackIsNpc?: boolean): boolean {
     if (fallbackIsNpc) return true;
     if (!meta) return false;
 

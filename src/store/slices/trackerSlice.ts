@@ -284,5 +284,8 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                 moves: newMoves,
                 statuses: newStatuses
             };
-        })
+        }),
+
+    activeBattlefield: null,
+    setActiveBattlefield: (battlefield) => set({ activeBattlefield: battlefield })
 });

@@ -46,6 +46,7 @@ export function DerivedBoard() {
     const inventory = useCharacterStore((state) => state.inventory);
     const passives = useCharacterStore((state) => state.passives);
     const extraCategories = useCharacterStore((state) => state.extraCategories);
+    const activeBattlefield = useCharacterStore((state) => state.activeBattlefield);
 
     const isHpLocked = useCharacterStore((state) => state.identity.hpLocked ?? true);
     const isWillLocked = useCharacterStore((state) => state.identity.willLocked ?? true);
@@ -100,7 +101,7 @@ export function DerivedBoard() {
     const abilityText = getAbilityText(ability, customAbilities);
     const inventoryModifiers = useMemo(
         () => parseCombatTags(inventory, extraCategories, undefined, abilityText, passives),
-        [inventory, extraCategories, abilityText, passives]
+        [inventory, extraCategories, abilityText, passives, activeBattlefield]
     );
     const fullState = useCharacterStore.getState();
 

@@ -31,6 +31,7 @@ export function CoreTable() {
     useCharacterStore((state) => state.identity.abilityTags);
     useCharacterStore((state) => state.health.hpCurr);
     useCharacterStore((state) => state.health.hpMax);
+    const activeBattlefield = useCharacterStore((state) => state.activeBattlefield);
 
     const isLocked = useCharacterStore((state) => state.identity.coreLocked ?? true);
     const setIdentity = useCharacterStore((state) => state.setIdentity);
@@ -47,7 +48,7 @@ export function CoreTable() {
     const abilityText = getAbilityText(ability, customAbilities);
     const inventoryModifiers = useMemo(
         () => parseCombatTags(inventory, extraCategories, undefined, abilityText, passives),
-        [inventory, extraCategories, abilityText, passives]
+        [inventory, extraCategories, abilityText, passives, activeBattlefield]
     );
     const fullState = useCharacterStore.getState();
 

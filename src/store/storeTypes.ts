@@ -1,5 +1,6 @@
 import type { CombatStat, SocialStat, Skill } from '../types/enums';
 import type { PcSlice } from '../types/pcStorageTypes';
+import type { BattlefieldData } from '../types/battleOrganizerTypes';
 import type {
     Rank,
     StatData,
@@ -248,6 +249,8 @@ export interface TrackerSlice {
     incrementAction: () => void;
     resetRound: () => void;
     longRest: () => void;
+    activeBattlefield: BattlefieldData | null;
+    setActiveBattlefield: (battlefield: BattlefieldData | null) => void;
 }
 
 export interface HomebrewPayload {

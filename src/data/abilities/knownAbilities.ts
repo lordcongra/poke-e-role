@@ -300,60 +300,60 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
         benefitDisplay: 'Resist: Fire & Ice'
     },
 
-    // --- Situational: Weather & Terrain (Toggleable) ---
+    // --- Situational: Weather & Terrain (Toggleable / Auto-Evaluated) ---
     'Swift Swim': {
         name: 'Swift Swim',
-        tags: '[Dex +2]',
-        autoActive: false,
+        tags: '[Dex +2 @ Rain]',
+        autoActive: true,
         summary: 'Doubles agility in Rain weather.',
         benefitDisplay: '+2 DEX (Rain)'
     },
     Chlorophyll: {
         name: 'Chlorophyll',
-        tags: '[Dex +2]',
-        autoActive: false,
+        tags: '[Dex +2 @ Sun]',
+        autoActive: true,
         summary: 'Doubles agility in Sunny weather.',
         benefitDisplay: '+2 DEX (Sun)'
     },
     'Sand Rush': {
         name: 'Sand Rush',
-        tags: '[Dex +1]',
-        autoActive: false,
+        tags: '[Dex +1 @ Sandstorm]',
+        autoActive: true,
         summary: 'Increases agility in Sandstorm weather by 1.',
         benefitDisplay: '+1 DEX (Sand)'
     },
     'Slush Rush': {
         name: 'Slush Rush',
-        tags: '[Dex +1]',
-        autoActive: false,
+        tags: '[Dex +1 @ Snow]',
+        autoActive: true,
         summary: 'Increases agility in Snow or Hail weather by 1.',
         benefitDisplay: '+1 DEX (Snow)'
     },
     'Surge Surfer': {
         name: 'Surge Surfer',
-        tags: '[Dex +2]',
-        autoActive: false,
+        tags: '[Dex +2 @ Electric Terrain]',
+        autoActive: true,
         summary: 'Doubles agility on Electric Terrain.',
         benefitDisplay: '+2 DEX (Terrain)'
     },
     'Solar Power': {
         name: 'Solar Power',
-        tags: '[Spe +2] [Deal 1 Damage at End of Round]',
-        autoActive: false,
+        tags: '[Spe +2 @ Sun] [Deal 1 Damage at End of Round @ Sun]',
+        autoActive: true,
         summary: 'Increases Special by 2 in Sun but suffers damage each round.',
         benefitDisplay: '+2 SPE / 1 Dmg Round End'
     },
     'Sand Force': {
         name: 'Sand Force',
-        tags: '[Dmg +1: Rock] [Dmg +1: Ground] [Dmg +1: Steel]',
-        autoActive: false,
+        tags: '[Dmg +1: Rock @ Sandstorm] [Dmg +1: Ground @ Sandstorm] [Dmg +1: Steel @ Sandstorm]',
+        autoActive: true,
         summary: 'Increases Rock, Ground, and Steel damage in Sandstorm.',
         benefitDisplay: '+1 Rock/Ground/Steel Dmg (Sand)'
     },
     'Grass Pelt': {
         name: 'Grass Pelt',
-        tags: '[Def +2]',
-        autoActive: false,
+        tags: '[Def +2 @ Grassy Terrain]',
+        autoActive: true,
         summary: 'Boosts Defense on Grassy Terrain.',
         benefitDisplay: '+2 DEF (Grassy Terrain)'
     },

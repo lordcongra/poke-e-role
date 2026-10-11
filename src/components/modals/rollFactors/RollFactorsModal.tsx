@@ -11,7 +11,12 @@ import {
     Crosshair,
     Sliders,
     Target,
-    Flame
+    Flame,
+    Sun,
+    CloudRain,
+    Wind,
+    Snowflake,
+    Mountain
 } from 'lucide-react';
 import { categorizeFactor, consolidateFactors, type ParsedFactor } from '../../../utils/combat/rollLogParser';
 import './RollFactorsModal.css';
@@ -45,8 +50,8 @@ export const RollFactorsModal: React.FC<RollFactorsModalProps> = ({
 
     const parsedFactors: ParsedFactor[] = consolidateFactors(factors.map(categorizeFactor));
 
-    const getCategoryBadge = (category: ParsedFactor['category']) => {
-        switch (category) {
+    const getCategoryBadge = (factor: ParsedFactor) => {
+        switch (factor.category) {
             case 'ability':
                 return { label: 'Ability', icon: <Zap size={13} />, className: 'factor-badge--ability' };
             case 'item':
@@ -61,6 +66,25 @@ export const RollFactorsModal: React.FC<RollFactorsModalProps> = ({
                 return { label: 'Status', icon: <Activity size={13} />, className: 'factor-badge--status' };
             case 'tactical':
                 return { label: 'Tactical', icon: <Crosshair size={13} />, className: 'factor-badge--tactical' };
+            case 'weather': {
+                const text = (factor.raw + ' ' + factor.title).toLowerCase();
+                let icon = <Sun size={13} />;
+                if (text.includes('rain') || text.includes('typhoon')) {
+                    icon = <CloudRain size={13} />;
+                } else if (text.includes('wind')) {
+                    icon = <Wind size={13} />;
+                } else if (text.includes('snow') || text.includes('hail')) {
+                    icon = <Snowflake size={13} />;
+                } else if (
+                    text.includes('sand') ||
+                    text.includes('terrain') ||
+                    text.includes('field') ||
+                    text.includes('mountain')
+                ) {
+                    icon = <Mountain size={13} />;
+                }
+                return { label: 'Weather & Field', icon, className: 'factor-badge--weather' };
+            }
             case 'modifier':
             default:
                 return { label: 'Modifier', icon: <Sliders size={13} />, className: 'factor-badge--modifier' };
@@ -158,7 +182,7 @@ export const RollFactorsModal: React.FC<RollFactorsModalProps> = ({
                         ) : (
                             <div className="roll-factors-modal__list">
                                 {parsedFactors.map((factor, idx) => {
-                                    const badge = getCategoryBadge(factor.category);
+                                    const badge = getCategoryBadge(factor);
                                     return (
                                         <div key={idx} className="roll-factors-modal__card">
                                             <div className="roll-factors-modal__card-header">

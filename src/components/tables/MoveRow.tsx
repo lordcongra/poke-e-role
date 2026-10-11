@@ -88,6 +88,7 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
 
     useCharacterStore((state) => state.trackers.firstHitDmg);
     useCharacterStore((state) => state.trackers.firstHitAcc);
+    useCharacterStore((state) => state.activeBattlefield);
 
     const abilityText = getAbilityText(ability, customAbilities);
     const itemBuffs = parseCombatTags(inventory, extraCategories, move, abilityText, passives);

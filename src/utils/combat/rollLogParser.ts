@@ -1,6 +1,6 @@
 export interface ParsedFactor {
     raw: string;
-    category: 'ability' | 'item' | 'passive' | 'move' | 'status' | 'condition' | 'tactical' | 'modifier';
+    category: 'ability' | 'item' | 'passive' | 'move' | 'status' | 'condition' | 'tactical' | 'modifier' | 'weather';
     title: string;
     detail?: string;
 }
@@ -40,6 +40,25 @@ export function splitTopLevelCommas(str: string): string[] {
 
 export function categorizeFactor(raw: string): ParsedFactor {
     const trimmed = raw.trim();
+
+    // Weather & Field Effects
+    if (
+        /\b(?:sunny|rain|sandstorm|snowy|snow|hail|desolate\s+weather|typhoon|strong\s+winds|harsh\s+sunlight|heavy\s+rain|delta\s+stream)\b/i.test(
+            trimmed
+        ) ||
+        /\b(?:electric|grassy|misty|psychic)\s+terrain\b/i.test(trimmed) ||
+        /\bterrain\b/i.test(trimmed) ||
+        /\bweather\b/i.test(trimmed) ||
+        /force\s*field/i.test(trimmed)
+    ) {
+        const parenMatch = trimmed.match(/^(.*?)(?:\s*\((.*?)\))?$/);
+        return {
+            raw: trimmed,
+            category: 'weather',
+            title: parenMatch?.[1]?.trim() || trimmed,
+            detail: parenMatch?.[2]?.trim() || undefined
+        };
+    }
 
     // 1. Ability
     if (/^ability:\s*/i.test(trimmed)) {

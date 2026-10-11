@@ -22,6 +22,8 @@ export interface BattlefieldData {
     playerTargets: number | string;
     foeTargets: number | string;
     highlightedSide: BattlefieldSideHighlight;
+    sceneId?: string;
+    broadcastToPlayers?: boolean;
 }
 
 export type ActionStatus = 'none' | 'success' | 'failed';

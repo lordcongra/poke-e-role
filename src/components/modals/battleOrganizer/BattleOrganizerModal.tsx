@@ -8,6 +8,8 @@ import { BattleRoundNav } from './BattleRoundNav';
 import { CombatantsTable } from './CombatantsTable';
 import { BattleOrganizerPullModal } from './BattleOrganizerPullModal';
 import { BattleOrganizerTooltipModal } from './BattleOrganizerTooltipModal';
+import { SceneSwapPromptModal } from './SceneSwapPromptModal';
+import { useSceneSwapDetection } from './useSceneSwapDetection';
 import { Lightbulb, X } from 'lucide-react';
 import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import { BattleOrganizerFooter } from './BattleOrganizerFooter';
@@ -62,6 +64,13 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         updateRoundNumber,
         clearAll
     } = useBattleOrganizer();
+
+    const { showSceneSwapModal, handleClearForNewScene, handleKeepCurrentBattle } = useSceneSwapDetection({
+        battlefield,
+        rounds,
+        updateBattlefield,
+        clearAll
+    });
 
     const [boSettings, setBoSettings] = useState<BattleOrganizerSettings>(() => getBattleOrganizerSettings());
     const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -430,6 +439,12 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                     onToggleResetTrackers={setResetPullTrackers}
                     onConfirm={handleConfirmPullFromInitiative}
                     onClose={() => setShowPullConfirmModal(false)}
+                />
+
+                <SceneSwapPromptModal
+                    isOpen={showSceneSwapModal}
+                    onClearForNewScene={handleClearForNewScene}
+                    onKeepCurrentBattle={handleKeepCurrentBattle}
                 />
 
                 <BattleOrganizerTooltipModal tooltipInfo={tooltipInfo} onClose={() => setTooltipInfo(null)} />

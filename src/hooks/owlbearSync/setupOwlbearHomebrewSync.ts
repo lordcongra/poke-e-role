@@ -1,6 +1,7 @@
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { HomebrewPayload } from '../../store/storeTypes';
+import type { BattleOrganizerState } from '../../types/battleOrganizerTypes';
 import { EXTENSION_ID } from './owlbearSyncConstants';
 import { sendSafeBroadcastPayload, registerSafeBroadcastListener } from './owlbearBroadcastUtils';
 
@@ -83,9 +84,25 @@ export function setupOwlbearHomebrewSync(role: 'PLAYER' | 'GM'): OwlbearHomebrew
     );
     unsubs.push(unsubBattleOrganizerRequest);
 
-    // Fire the homebrew request if we are a player
+    // Global listener for battle organizer sync to hydrate active battlefield (even when modal is closed)
+    const unsubBattleOrganizerSync = OBR.broadcast.onMessage(`${EXTENSION_ID}/battle-organizer-sync`, (event) => {
+        try {
+            const incoming = event.data as BattleOrganizerState;
+            if (incoming && incoming.battlefield) {
+                useCharacterStore.getState().setActiveBattlefield(incoming.battlefield);
+            }
+        } catch (e) {
+            console.warn('[SyncEngine] Failed to process incoming battlefield from battle-organizer-sync:', e);
+        }
+    });
+    unsubs.push(unsubBattleOrganizerSync);
+
+    // Fire the homebrew and battle organizer requests if we are a player
     if (role !== 'GM') {
         OBR.broadcast.sendMessage(`${EXTENSION_ID}/homebrew-request`, {}, { destination: 'REMOTE' }).catch(() => {});
+        OBR.broadcast
+            .sendMessage(`${EXTENSION_ID}/battle-organizer-request`, {}, { destination: 'REMOTE' })
+            .catch(() => {});
     }
 
     return { unsubs };

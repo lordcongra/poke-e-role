@@ -141,5 +141,92 @@ export function checkCondition(
         return true;
     }
 
+    // 4. Weather & Terrain evaluations (strictly checking remainingRounds > 0)
+    const activeBattlefield = state.activeBattlefield;
+    if (activeBattlefield) {
+        const weather = activeBattlefield.weather;
+        const weatherRounds = weather?.remainingRounds ?? 0;
+        const weatherName = (weather?.name || '').trim().toLowerCase();
+
+        if (weatherRounds > 0 && weatherName) {
+            // Rain / Typhoon / Heavy Rain
+            if (
+                cond === 'rain' ||
+                cond === 'raining' ||
+                cond === 'rainy' ||
+                cond === 'heavy rain' ||
+                cond === 'typhoon'
+            ) {
+                if (
+                    weatherName.includes('rain') ||
+                    weatherName.includes('typhoon') ||
+                    weatherName.includes('primordial sea')
+                ) {
+                    return true;
+                }
+            }
+            // Sun / Sunny / Harsh Sunlight / Desolate Weather
+            if (
+                cond === 'sun' ||
+                cond === 'sunny' ||
+                cond === 'sunlight' ||
+                cond === 'harsh sun' ||
+                cond === 'harsh sunlight' ||
+                cond === 'desolate' ||
+                cond === 'desolate weather' ||
+                cond === 'desolate land'
+            ) {
+                if (weatherName.includes('sun') || weatherName.includes('desolate')) {
+                    return true;
+                }
+            }
+            // Sandstorm
+            if (cond === 'sandstorm' || cond === 'sand') {
+                if (weatherName.includes('sandstorm') || weatherName.includes('sand')) {
+                    return true;
+                }
+            }
+            // Snow / Hail
+            if (cond === 'snow' || cond === 'snowy' || cond === 'hail' || cond === 'hailing') {
+                if (weatherName.includes('snow') || weatherName.includes('hail')) {
+                    return true;
+                }
+            }
+            // Strong Winds
+            if (cond === 'strong winds' || cond === 'wind' || cond === 'delta stream') {
+                if (weatherName.includes('strong winds') || weatherName.includes('delta stream')) {
+                    return true;
+                }
+            }
+        }
+
+        const terrain = activeBattlefield.terrain;
+        const terrainRounds = terrain?.remainingRounds ?? 0;
+        const terrainName = (terrain?.name || '').trim().toLowerCase();
+
+        if (terrainRounds > 0 && terrainName) {
+            // Electric Terrain
+            if (cond === 'electric terrain' || cond === 'electric') {
+                if (terrainName.includes('electric')) return true;
+            }
+            // Grassy Terrain
+            if (cond === 'grassy terrain' || cond === 'grassy') {
+                if (terrainName.includes('grassy')) return true;
+            }
+            // Misty Terrain
+            if (cond === 'misty terrain' || cond === 'misty') {
+                if (terrainName.includes('misty')) return true;
+            }
+            // Psychic Terrain
+            if (cond === 'psychic terrain' || cond === 'psychic') {
+                if (terrainName.includes('psychic')) return true;
+            }
+            // Generic Terrain
+            if (cond === 'terrain' || cond === 'any terrain') {
+                return true;
+            }
+        }
+    }
+
     return false;
 }

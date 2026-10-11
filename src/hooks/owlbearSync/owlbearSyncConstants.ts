@@ -2,6 +2,7 @@ import OBR from '@owlbear-rodeo/sdk';
 export const METADATA_ID = 'pokerole-extension/stats';
 export const ROOM_META_ID = 'pokerole-pmd-extension/room-settings';
 export const EXTENSION_ID = 'pokerole-pmd-extension';
+export const BATTLEFIELD_META_ID = 'pokerole-pmd-extension/battlefield';
 
 /**
  * Displays the Dice+ retirement notification at most once per user session
