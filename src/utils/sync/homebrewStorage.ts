@@ -6,7 +6,8 @@ import type {
     CustomPokemon,
     CustomItem,
     CustomForm,
-    CustomStatus
+    CustomStatus,
+    CustomFieldEffect
 } from '../../store/storeTypes';
 import { isStandaloneMode } from './storageAdapter';
 
@@ -18,6 +19,7 @@ export interface HomebrewStorageData {
     customItems: CustomItem[];
     customForms: CustomForm[];
     customStatuses: CustomStatus[];
+    customFieldEffects?: CustomFieldEffect[];
     needsBackup?: boolean;
     updatedAt?: number;
 }
@@ -86,6 +88,7 @@ export function sanitizeHomebrewData(raw: unknown): HomebrewStorageData {
             customItems: [],
             customForms: [],
             customStatuses: [],
+            customFieldEffects: [],
             needsBackup: false,
             updatedAt: Date.now()
         };
@@ -99,6 +102,9 @@ export function sanitizeHomebrewData(raw: unknown): HomebrewStorageData {
         customItems: Array.isArray(obj.customItems) ? (obj.customItems as CustomItem[]) : [],
         customForms: Array.isArray(obj.customForms) ? (obj.customForms as CustomForm[]) : [],
         customStatuses: Array.isArray(obj.customStatuses) ? (obj.customStatuses as CustomStatus[]) : [],
+        customFieldEffects: Array.isArray(obj.customFieldEffects)
+            ? (obj.customFieldEffects as CustomFieldEffect[])
+            : [],
         needsBackup: Boolean(obj.needsBackup),
         updatedAt: typeof obj.updatedAt === 'number' ? obj.updatedAt : Date.now()
     };
@@ -112,7 +118,8 @@ function isEmptyHomebrew(data: HomebrewStorageData): boolean {
         data.customPokemon.length === 0 &&
         data.customItems.length === 0 &&
         data.customForms.length === 0 &&
-        data.customStatuses.length === 0
+        data.customStatuses.length === 0 &&
+        (!data.customFieldEffects || data.customFieldEffects.length === 0)
     );
 }
 
@@ -419,7 +426,8 @@ export const homebrewStorage = {
                 customPokemon: [],
                 customItems: [],
                 customForms: [],
-                customStatuses: []
+                customStatuses: [],
+                customFieldEffects: []
             };
 
         const jsonString = JSON.stringify(data);

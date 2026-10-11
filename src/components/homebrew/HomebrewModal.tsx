@@ -8,6 +8,7 @@ import { HomebrewPokemon } from './HomebrewPokemon';
 import { HomebrewItems } from './HomebrewItems';
 import { HomebrewForms } from './HomebrewForms';
 import { HomebrewStatuses } from './HomebrewStatuses';
+import { HomebrewFieldEffects } from './HomebrewFieldEffects';
 import type {
     CustomType,
     CustomAbility,
@@ -15,7 +16,8 @@ import type {
     CustomPokemon,
     CustomItem,
     CustomForm,
-    CustomStatus
+    CustomStatus,
+    CustomFieldEffect
 } from '../../store/storeTypes';
 import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { downloadJson } from '../../utils/common/fileSystemHelpers';
@@ -29,7 +31,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
     const canEdit = isStandaloneMode || role === 'GM' || access === 'Full';
 
     const [activeTab, setActiveTab] = useState<
-        'types' | 'abilities' | 'moves' | 'pokemon' | 'items' | 'forms' | 'statuses'
+        'types' | 'abilities' | 'moves' | 'pokemon' | 'items' | 'forms' | 'statuses' | 'fieldEffects'
     >('types');
     const overwriteAllHomebrewData = useCharacterStore((state) => state.overwriteAllHomebrewData);
     const mergeAllHomebrewData = useCharacterStore((state) => state.mergeAllHomebrewData);
@@ -46,6 +48,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
         items: CustomItem[];
         forms: CustomForm[];
         statuses: CustomStatus[];
+        fieldEffects: CustomFieldEffect[];
     } | null>(null);
 
     const handleBroadcastSync = () => {
@@ -72,7 +75,8 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
             customPokemon: state.roomCustomPokemon,
             customItems: state.roomCustomItems,
             customForms: state.roomCustomForms,
-            customStatuses: state.roomCustomStatuses
+            customStatuses: state.roomCustomStatuses,
+            customFieldEffects: state.roomCustomFieldEffects
         };
         downloadJson(exportData, 'pokerole_homebrew_backup.json');
 
@@ -95,7 +99,8 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                         imported.customPokemon ||
                         imported.customItems ||
                         imported.customForms ||
-                        imported.customStatuses)
+                        imported.customStatuses ||
+                        imported.customFieldEffects)
                 ) {
                     setImportAllData({
                         types: imported.customTypes || [],
@@ -104,7 +109,8 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                         mons: imported.customPokemon || [],
                         items: imported.customItems || [],
                         forms: imported.customForms || [],
-                        statuses: imported.customStatuses || []
+                        statuses: imported.customStatuses || [],
+                        fieldEffects: imported.customFieldEffects || []
                     });
                 } else {
                     if (OBR.isAvailable) OBR.notification.show('Invalid Homebrew Backup file.', 'ERROR');
@@ -176,6 +182,12 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                         >
                             Statuses
                         </button>
+                        <button
+                            onClick={() => setActiveTab('fieldEffects')}
+                            className={`homebrew-modal__tab ${activeTab === 'fieldEffects' ? 'homebrew-modal__tab--active' : ''}`}
+                        >
+                            Weather & Field
+                        </button>
                     </div>
                 </div>
 
@@ -187,6 +199,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                     {activeTab === 'items' && <HomebrewItems />}
                     {activeTab === 'forms' && <HomebrewForms />}
                     {activeTab === 'statuses' && <HomebrewStatuses />}
+                    {activeTab === 'fieldEffects' && <HomebrewFieldEffects />}
                 </div>
 
                 <div
@@ -296,7 +309,9 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                                         importAllData.mons,
                                         importAllData.items,
                                         importAllData.forms,
-                                        importAllData.statuses
+                                        importAllData.statuses,
+                                        false,
+                                        importAllData.fieldEffects
                                     );
                                     setImportAllData(null);
                                 }}
@@ -313,7 +328,8 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                                         importAllData.mons,
                                         importAllData.items,
                                         importAllData.forms,
-                                        importAllData.statuses
+                                        importAllData.statuses,
+                                        importAllData.fieldEffects
                                     );
                                     setImportAllData(null);
                                 }}

@@ -252,3 +252,49 @@
 .bo-pitch-target-input--foe {
     border-color: #c62828;
 }
+
+/* --- Preset chips & select for Battlefield effects --- */
+.bo-preset-chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    margin-top: 6px;
+}
+
+.bo-preset-chip {
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    background: var(--panel-alt, #242424);
+    border: 1px solid var(--border, #444);
+    color: var(--text-muted, #ccc);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.bo-preset-chip:hover {
+    color: var(--text-main, #fff);
+    border-color: var(--primary, #3b82f6);
+    background: color-mix(in srgb, var(--primary, #3b82f6) 15%, var(--panel-alt, #242424));
+}
+
+.bo-preset-chip--active {
+    background: var(--primary, #3b82f6);
+    border-color: var(--primary, #3b82f6);
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.bo-preset-select {
+    padding: 2px 4px;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    background: var(--panel-alt, #242424);
+    border: 1px solid var(--border, #444);
+    color: var(--text-main, #fff);
+    max-width: 140px;
+    cursor: pointer;
+}

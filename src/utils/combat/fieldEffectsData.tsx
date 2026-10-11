@@ -7,9 +7,15 @@ import {
     Sprout,
     Sparkles,
     Eye,
-    Shield
+    Shield,
+    Flame,
+    Droplets,
+    Mountain,
+    Moon,
+    CloudLightning
 } from 'lucide-react';
 import { WEATHER_CONDITIONS_DATA } from '../../data/gm/gmStatusData';
+import { useCharacterStore } from '../../store/useCharacterStore';
 
 export type FieldEffectIconKey =
     | 'Sun'
@@ -20,7 +26,13 @@ export type FieldEffectIconKey =
     | 'Sprout'
     | 'Sparkles'
     | 'Eye'
-    | 'Shield';
+    | 'Shield'
+    | 'Flame'
+    | 'Droplets'
+    | 'Mountain'
+    | 'Moon'
+    | 'CloudLightning'
+    | string;
 
 export interface FieldEffectInfo {
     id: string;
@@ -246,6 +258,26 @@ export function getFieldEffectInfo(
         fallbackBadge = 'Barrier';
     }
 
+    try {
+        const customEffects = useCharacterStore.getState().roomCustomFieldEffects;
+        if (customEffects && Array.isArray(customEffects)) {
+            const found = customEffects.find((c) => c.name.toLowerCase().trim() === clean);
+            if (found) {
+                return {
+                    id: found.id,
+                    name: found.name,
+                    category: found.category === 'field' ? 'other' : found.category,
+                    badge: found.category.toUpperCase(),
+                    color: found.color || fallbackColor,
+                    icon: (found.icon as FieldEffectIconKey) || fallbackIcon,
+                    effects: [found.description || found.tags || 'Active custom battlefield effect.']
+                };
+            }
+        }
+    } catch {
+        // Safe fallback if store is not yet initialized
+    }
+
     return {
         id: `custom-${clean.replace(/\s+/g, '-')}`,
         name: rawName,
@@ -283,6 +315,16 @@ export function FieldEffectIcon({
             return <Eye size={size} className={className} />;
         case 'Shield':
             return <Shield size={size} className={className} />;
+        case 'Flame':
+            return <Flame size={size} className={className} />;
+        case 'Droplets':
+            return <Droplets size={size} className={className} />;
+        case 'Mountain':
+            return <Mountain size={size} className={className} />;
+        case 'Moon':
+            return <Moon size={size} className={className} />;
+        case 'CloudLightning':
+            return <CloudLightning size={size} className={className} />;
         case 'Sparkles':
         default:
             return <Sparkles size={size} className={className} />;

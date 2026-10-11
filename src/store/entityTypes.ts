@@ -329,6 +329,20 @@ export interface CustomStatus {
     gmOnly?: boolean;
 }
 
+export type FieldEffectCategory = 'weather' | 'terrain' | 'field';
+
+export interface CustomFieldEffect {
+    id: string;
+    name: string;
+    category: FieldEffectCategory;
+    defaultRounds: number;
+    color: string;
+    icon: string;
+    tags: string;
+    description: string;
+    gmOnly?: boolean;
+}
+
 export interface PendingDemoRoll {
     notation: string;
     numDice: number;

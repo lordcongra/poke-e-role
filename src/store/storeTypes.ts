@@ -23,6 +23,7 @@ import type {
     CustomMove,
     CustomPokemon,
     CustomStatus,
+    CustomFieldEffect,
     PendingDemoRoll,
     CustomType as BaseCustomType
 } from './entityTypes';
@@ -261,6 +262,7 @@ export interface HomebrewPayload {
     customItems: CustomItem[];
     customForms: CustomForm[];
     customStatuses: CustomStatus[];
+    customFieldEffects?: CustomFieldEffect[];
 }
 
 export interface HomebrewSlice {
@@ -272,6 +274,7 @@ export interface HomebrewSlice {
     roomCustomItems: CustomItem[];
     roomCustomForms: CustomForm[];
     roomCustomStatuses: CustomStatus[];
+    roomCustomFieldEffects: CustomFieldEffect[];
     needsBackup: boolean;
 
     loadHomebrewLocal: () => Promise<void>;
@@ -287,6 +290,7 @@ export interface HomebrewSlice {
     setRoomCustomItems: (items: CustomItem[]) => void;
     setRoomCustomForms: (forms: CustomForm[]) => void;
     setRoomCustomStatuses: (statuses: CustomStatus[]) => void;
+    setRoomCustomFieldEffects: (effects: CustomFieldEffect[]) => void;
 
     addCustomType: (type: CustomType) => void;
     updateCustomType: (oldName: string, newType: CustomType) => void;
@@ -323,6 +327,15 @@ export interface HomebrewSlice {
     removeCustomStatus: (id: string) => void;
     duplicateCustomStatus: (id: string) => void;
 
+    addCustomFieldEffect: (initialData?: Partial<CustomFieldEffect>) => void;
+    updateCustomFieldEffect: <K extends keyof CustomFieldEffect>(
+        id: string,
+        field: K,
+        value: CustomFieldEffect[K]
+    ) => void;
+    removeCustomFieldEffect: (id: string) => void;
+    duplicateCustomFieldEffect: (id: string) => void;
+
     overwriteCustomTypeData: (types: CustomType[]) => void;
     overwriteCustomAbilityData: (abilities: CustomAbility[]) => void;
     overwriteCustomMoveData: (moves: CustomMove[]) => void;
@@ -330,6 +343,7 @@ export interface HomebrewSlice {
     overwriteCustomItemData: (items: CustomItem[]) => void;
     overwriteCustomFormData: (forms: CustomForm[]) => void;
     overwriteCustomStatusData: (statuses: CustomStatus[]) => void;
+    overwriteCustomFieldEffectData: (effects: CustomFieldEffect[]) => void;
 
     overwriteAllHomebrewData: (
         types: CustomType[],
@@ -338,7 +352,8 @@ export interface HomebrewSlice {
         pokemon: CustomPokemon[],
         items: CustomItem[],
         forms: CustomForm[],
-        statuses: CustomStatus[]
+        statuses: CustomStatus[],
+        fieldEffects?: CustomFieldEffect[]
     ) => void;
 
     mergeCustomTypeData: (types: CustomType[]) => void;
@@ -348,6 +363,7 @@ export interface HomebrewSlice {
     mergeCustomItemData: (items: CustomItem[]) => void;
     mergeCustomFormData: (forms: CustomForm[]) => void;
     mergeCustomStatusData: (statuses: CustomStatus[]) => void;
+    mergeCustomFieldEffectData: (effects: CustomFieldEffect[]) => void;
 
     mergeAllHomebrewData: (
         types: CustomType[],
@@ -357,7 +373,8 @@ export interface HomebrewSlice {
         items: CustomItem[],
         forms: CustomForm[],
         statuses: CustomStatus[],
-        silent?: boolean
+        silent?: boolean,
+        fieldEffects?: CustomFieldEffect[]
     ) => void;
 }
 

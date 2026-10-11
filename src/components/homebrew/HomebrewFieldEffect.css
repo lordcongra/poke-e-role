@@ -1,0 +1,314 @@
+/* ==========================================================================
+   Homebrew Field Effects Stylesheet
+   ========================================================================== */
+
+/* --- Category Pills --- */
+.hb-category-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid currentColor;
+}
+
+.hb-category-pill--weather {
+    background: color-mix(in srgb, #3b82f6 15%, transparent);
+    color: #60a5fa;
+    border-color: #3b82f6;
+}
+
+.hb-category-pill--terrain {
+    background: color-mix(in srgb, #10b981 15%, transparent);
+    color: #34d399;
+    border-color: #10b981;
+}
+
+.hb-category-pill--field {
+    background: color-mix(in srgb, #a855f7 15%, transparent);
+    color: #c084fc;
+    border-color: #a855f7;
+}
+
+/* --- Field Effect Card --- */
+.hb-fe-card {
+    background: var(--panel-bg);
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hb-fe-card:hover {
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--dark) 40%, transparent);
+}
+
+.hb-fe-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.hb-fe-card__badge-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.hb-fe-card__icon-box {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.hb-fe-card__title-box {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.hb-fe-card__name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hb-fe-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.hb-fe-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.hb-fe-card__btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.hb-fe-card__tags-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.hb-fe-tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--panel-alt);
+    border: 1px solid var(--secondary);
+    color: var(--text-main);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.hb-fe-tag-pill__remove {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hb-fe-tag-pill__remove:hover {
+    color: var(--semantic-danger);
+}
+
+.hb-fe-card__desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+    white-space: pre-wrap;
+}
+
+/* --- Field Effect Modal / Smart Builder --- */
+.hb-fe-modal__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: color-mix(in srgb, var(--dark) 70%, transparent);
+    z-index: 1300;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hb-fe-modal__content {
+    background: var(--panel-bg);
+    border-radius: 8px;
+    width: 640px;
+    max-width: 95vw;
+    max-height: 90vh;
+    border: 2px solid var(--primary);
+    box-shadow: 0 6px 24px color-mix(in srgb, var(--dark) 60%, transparent);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.hb-fe-modal__header {
+    background: var(--primary);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.hb-fe-modal__body {
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.hb-fe-modal__section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.hb-fe-modal__grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+@media (max-width: 600px) {
+    .hb-fe-modal__grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.hb-fe-icon-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.hb-fe-icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: var(--panel-alt);
+    border: 1px solid var(--secondary);
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.hb-fe-icon-btn:hover {
+    border-color: var(--primary);
+    transform: scale(1.05);
+}
+
+.hb-fe-icon-btn--active {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+}
+
+.hb-fe-color-picker {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.hb-fe-color-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.hb-fe-color-swatch:hover {
+    transform: scale(1.15);
+}
+
+.hb-fe-color-swatch--active {
+    border-color: #ffffff;
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+.hb-fe-preset-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.hb-fe-preset-chip {
+    padding: 4px 8px;
+    border-radius: 14px;
+    background: var(--panel-alt);
+    border: 1px solid var(--secondary);
+    color: var(--text-main);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.hb-fe-preset-chip:hover {
+    background: color-mix(in srgb, var(--primary) 20%, var(--panel-alt));
+    border-color: var(--primary);
+}
+
+.hb-fe-modal__footer {
+    padding: 10px 14px;
+    border-top: 1px solid var(--secondary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--panel-alt);
+}

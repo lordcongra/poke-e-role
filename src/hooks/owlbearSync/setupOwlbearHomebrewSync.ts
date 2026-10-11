@@ -34,7 +34,8 @@ export function setupOwlbearHomebrewSync(role: 'PLAYER' | 'GM'): OwlbearHomebrew
                     payload.customItems || [],
                     payload.customForms || [],
                     payload.customStatuses || [],
-                    true // silent flag
+                    true, // silent flag
+                    payload.customFieldEffects || []
                 );
                 OBR.notification.show('[ ↓ ] Homebrew data synced from GM!', 'SUCCESS');
             }
@@ -55,7 +56,8 @@ export function setupOwlbearHomebrewSync(role: 'PLAYER' | 'GM'): OwlbearHomebrew
                     payload.customItems || [],
                     payload.customForms || [],
                     payload.customStatuses || [],
-                    true // silent flag
+                    true, // silent flag
+                    payload.customFieldEffects || []
                 );
                 OBR.notification.show('[ ↓ ] New Homebrew shared to table!', 'SUCCESS');
             }

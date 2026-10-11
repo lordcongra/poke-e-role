@@ -14,6 +14,7 @@ export function useTagBuilderTarget(targetId: string, targetType: TagTargetType)
     const updateCustomItem = useCharacterStore((state) => state.updateCustomItem);
     const updateCustomForm = useCharacterStore((state) => state.updateCustomForm);
     const updateCustomStatus = useCharacterStore((state) => state.updateCustomStatus);
+    const updateCustomFieldEffect = useCharacterStore((state) => state.updateCustomFieldEffect);
     const updatePassive = useCharacterStore((state) => state.updatePassive);
 
     const inventory = useCharacterStore((state) => state.inventory);
@@ -24,6 +25,7 @@ export function useTagBuilderTarget(targetId: string, targetType: TagTargetType)
     const customItems = useCharacterStore((state) => state.roomCustomItems);
     const customForms = useCharacterStore((state) => state.roomCustomForms);
     const customStatuses = useCharacterStore((state) => state.roomCustomStatuses);
+    const customFieldEffects = useCharacterStore((state) => state.roomCustomFieldEffects);
 
     let targetName = 'Target';
     let currentRawText = '';
@@ -61,6 +63,10 @@ export function useTagBuilderTarget(targetId: string, targetType: TagTargetType)
         const hbStatus = customStatuses.find((s) => s.id === targetId);
         targetName = hbStatus?.name || 'Custom Status';
         currentRawText = hbStatus?.effects || '';
+    } else if (targetType === 'homebrew_field_effect') {
+        const hbField = customFieldEffects.find((f) => f.id === targetId);
+        targetName = hbField?.name || 'Custom Field Effect';
+        currentRawText = hbField?.tags || '';
     } else if (targetType === 'passive') {
         const passive = passives.find((p) => p.id === targetId);
         targetName = passive?.name || 'Passive';
@@ -94,6 +100,8 @@ export function useTagBuilderTarget(targetId: string, targetType: TagTargetType)
             updateCustomForm(targetId, 'tags', newRawText);
         } else if (targetType === 'homebrew_status') {
             updateCustomStatus(targetId, 'effects', newRawText);
+        } else if (targetType === 'homebrew_field_effect') {
+            updateCustomFieldEffect(targetId, 'tags', newRawText);
         }
     };
 

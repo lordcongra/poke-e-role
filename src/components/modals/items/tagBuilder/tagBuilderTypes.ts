@@ -7,6 +7,7 @@ export type TagTargetType =
     | 'homebrew_item'
     | 'homebrew_form'
     | 'homebrew_status'
+    | 'homebrew_field_effect'
     | 'passive';
 
 export interface TagBuilderModalProps {

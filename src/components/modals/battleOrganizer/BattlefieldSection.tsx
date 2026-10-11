@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronDown, MapPin, CloudSun, Mountain, Sparkles, Shield, Eye, EyeOff } from 'lucide-react';
 import { BattlefieldPitch } from './BattlefieldPitch';
 import { RemainingRoundsBoxes } from './RemainingRoundsBoxes';
+import { BattlefieldEffectCard } from './BattlefieldEffectCard';
 import type {
     BattlefieldData,
     BattleOrganizerTimerEffect,
@@ -48,33 +49,6 @@ export function BattlefieldSection({
     rollLogMode,
     renderRollLog
 }: BattlefieldSectionProps) {
-    const handleWeatherChange = (text: string) => {
-        updateBattlefieldWeather('name', text);
-        if (text.trim() && battlefield.weather.remainingRounds === 0) {
-            updateBattlefieldWeather('remainingRounds', 4);
-        } else if (!text.trim() && battlefield.weather.remainingRounds > 0) {
-            updateBattlefieldWeather('remainingRounds', 0);
-        }
-    };
-
-    const handleTerrainChange = (text: string) => {
-        updateBattlefieldTerrain('name', text);
-        if (text.trim() && battlefield.terrain.remainingRounds === 0) {
-            updateBattlefieldTerrain('remainingRounds', 4);
-        } else if (!text.trim() && battlefield.terrain.remainingRounds > 0) {
-            updateBattlefieldTerrain('remainingRounds', 0);
-        }
-    };
-
-    const handleOtherChange = (text: string) => {
-        updateBattlefieldOther('name', text);
-        if (text.trim() && battlefield.other.remainingRounds === 0) {
-            updateBattlefieldOther('remainingRounds', 4);
-        } else if (!text.trim() && battlefield.other.remainingRounds > 0) {
-            updateBattlefieldOther('remainingRounds', 0);
-        }
-    };
-
     const handlePlayerForceFieldChange = (idx: 0 | 1, text: string) => {
         const fields = [...battlefield.playerSide.forceFields] as [
             (typeof battlefield.playerSide.forceFields)[0],
@@ -172,77 +146,38 @@ export function BattlefieldSection({
 
                             {/* Global Battlefield Row: Weather, Terrain, Other */}
                             <div className="bo-global-effects-grid">
-                                {/* Active Weather */}
-                                <div className="bo-effect-card">
-                                    <div className="bo-effect-card__header">
-                                        <span className="bo-field-label text-label">
-                                            <CloudSun size={14} /> Active Weather
-                                        </span>
-                                        <span className="bo-rounds-label text-subtext">Remaining Rounds</span>
-                                    </div>
-                                    <div className="bo-effect-card__body">
-                                        <input
-                                            type="text"
-                                            className="bo-input bo-input--underline text-label"
-                                            value={battlefield.weather.name}
-                                            onChange={(e) => handleWeatherChange(e.target.value)}
-                                            placeholder="e.g. Rain, Harsh Sun, Sandstorm"
-                                        />
-                                        <RemainingRoundsBoxes
-                                            value={battlefield.weather.remainingRounds}
-                                            onChange={(val) => updateBattlefieldWeather('remainingRounds', val)}
-                                            title="Weather Remaining Rounds"
-                                        />
-                                    </div>
-                                </div>
+                                <BattlefieldEffectCard
+                                    title="Active Weather"
+                                    icon={<CloudSun size={14} />}
+                                    value={battlefield.weather.name}
+                                    remainingRounds={battlefield.weather.remainingRounds}
+                                    onChangeName={(name) => updateBattlefieldWeather('name', name)}
+                                    onChangeRounds={(rounds) => updateBattlefieldWeather('remainingRounds', rounds)}
+                                    category="weather"
+                                    placeholder="e.g. Rain, Harsh Sun, Sandstorm"
+                                />
 
-                                {/* Active Terrain */}
-                                <div className="bo-effect-card">
-                                    <div className="bo-effect-card__header">
-                                        <span className="bo-field-label text-label">
-                                            <Mountain size={14} /> Active Terrain
-                                        </span>
-                                        <span className="bo-rounds-label text-subtext">Remaining Rounds</span>
-                                    </div>
-                                    <div className="bo-effect-card__body">
-                                        <input
-                                            type="text"
-                                            className="bo-input bo-input--underline text-label"
-                                            value={battlefield.terrain.name}
-                                            onChange={(e) => handleTerrainChange(e.target.value)}
-                                            placeholder="e.g. Electric Terrain, Grassy Terrain"
-                                        />
-                                        <RemainingRoundsBoxes
-                                            value={battlefield.terrain.remainingRounds}
-                                            onChange={(val) => updateBattlefieldTerrain('remainingRounds', val)}
-                                            title="Terrain Remaining Rounds"
-                                        />
-                                    </div>
-                                </div>
+                                <BattlefieldEffectCard
+                                    title="Active Terrain"
+                                    icon={<Mountain size={14} />}
+                                    value={battlefield.terrain.name}
+                                    remainingRounds={battlefield.terrain.remainingRounds}
+                                    onChangeName={(name) => updateBattlefieldTerrain('name', name)}
+                                    onChangeRounds={(rounds) => updateBattlefieldTerrain('remainingRounds', rounds)}
+                                    category="terrain"
+                                    placeholder="e.g. Electric Terrain, Grassy Terrain"
+                                />
 
-                                {/* Other Global Battlefield Effect */}
-                                <div className="bo-effect-card">
-                                    <div className="bo-effect-card__header">
-                                        <span className="bo-field-label text-label">
-                                            <Sparkles size={14} /> Other
-                                        </span>
-                                        <span className="bo-rounds-label text-subtext">Remaining Rounds</span>
-                                    </div>
-                                    <div className="bo-effect-card__body">
-                                        <input
-                                            type="text"
-                                            className="bo-input bo-input--underline text-label"
-                                            value={battlefield.other.name}
-                                            onChange={(e) => handleOtherChange(e.target.value)}
-                                            placeholder="e.g. Gravity, Trick Room, Ion Deluge"
-                                        />
-                                        <RemainingRoundsBoxes
-                                            value={battlefield.other.remainingRounds}
-                                            onChange={(val) => updateBattlefieldOther('remainingRounds', val)}
-                                            title="Other Global Remaining Rounds"
-                                        />
-                                    </div>
-                                </div>
+                                <BattlefieldEffectCard
+                                    title="Other"
+                                    icon={<Sparkles size={14} />}
+                                    value={battlefield.other.name}
+                                    remainingRounds={battlefield.other.remainingRounds}
+                                    onChangeName={(name) => updateBattlefieldOther('name', name)}
+                                    onChangeRounds={(rounds) => updateBattlefieldOther('remainingRounds', rounds)}
+                                    category="other"
+                                    placeholder="e.g. Gravity, Trick Room, Ion Deluge"
+                                />
                             </div>
 
                             {/* Split Stadium Pitch Grid: Player's Side | Pitch | Foe's Side */}
