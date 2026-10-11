@@ -208,7 +208,7 @@ export const WEATHER_CONDITIONS_DATA = [
         badge: 'Fire / Water',
         color: '#F08030',
         effects: [
-            '+1 to Fire Move Power',
+            '+1 Dice to Fire Damage Pools',
             '-1 Damage from Water Moves',
             'Pokémon cannot be Frozen'
         ]
@@ -219,7 +219,7 @@ export const WEATHER_CONDITIONS_DATA = [
         badge: 'Water / Fire',
         color: '#6890F0',
         effects: [
-            '+1 to Water Move Power',
+            '+1 Dice to Water Damage Pools',
             '-1 Damage from Fire Moves',
             'No one can gain 2nd Degree or 3rd Degree Burn conditions'
         ]
@@ -241,7 +241,7 @@ export const WEATHER_CONDITIONS_DATA = [
         badge: 'Ice',
         color: '#98D8D8',
         effects: [
-            '+1 to Ice Move Power',
+            '+1 Dice to Ice Damage Pools',
             '+1 Defense to Ice types',
             '+1 Chance die to inflict Frozen condition',
             'Frozen Pokémon’s ice blocks have 7 Hit Points and 3 Defense'
@@ -264,7 +264,7 @@ export const WEATHER_CONDITIONS_DATA = [
         badge: 'Extreme Sun',
         color: '#D32F2F',
         effects: [
-            '+2 to Fire Move Power',
+            '+2 Dice to Fire Damage Pools',
             'Water Type Moves CANNOT be used',
             'Non-Fire types with 4 or less Vitality must roll Vitality (2 successes) at start of each round or suffer 2 Fire Damage',
             'Pokémon cannot be Frozen',
@@ -277,7 +277,7 @@ export const WEATHER_CONDITIONS_DATA = [
         badge: 'Extreme Rain',
         color: '#1976D2',
         effects: [
-            '+2 to Water Move Power',
+            '+2 Dice to Water Damage Pools',
             'Fire Type Moves CANNOT be used',
             'Pokémon cannot be Burned',
             'Non-Water types with 4 or less Vitality must roll Vitality (2 successes) at start of each round or suffer 2 Water Damage',
@@ -290,8 +290,8 @@ export const WEATHER_CONDITIONS_DATA = [
         badge: 'Extreme Wind',
         color: '#00897B',
         effects: [
-            '+2 to Flying Type Move Damage (Flying types do not get super effective bonuses)',
-            'Electric, Ice, and Rock type moves are Neutral against Flying types',
+            '+2 Dice to Flying Type Damage Pools',
+            'Flying types do not receive Extra Damage fromt a Super-Effective Move',
             'Non-Flying types without the Levitate ability with 4 or less Dexterity must roll Dexterity (2 successes) at start of each round or suffer 2 Typeless Damage',
             'Non-Desolate / Non-Strong Winds weather effects fail'
         ]
