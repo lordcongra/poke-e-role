@@ -26,7 +26,7 @@ export const STATUS_CATEGORIES_DATA: StatusCategoryInfo[] = [
         color: '#E65100',
         badgeColor: 'color-mix(in srgb, #E65100 15%, transparent)',
         desc: 'The condition remains as is; it does not worsen over time, but it does not heal on its own.',
-        examples: '1st & 2nd Degree Burn, Poison, Paralysis'
+        examples: '1st & 2nd Degree Burn, Poison, Paralysis, Frozen, Sleep'
     },
     {
         category: 'Volatile',
@@ -34,7 +34,7 @@ export const STATUS_CATEGORIES_DATA: StatusCategoryInfo[] = [
         color: '#00897B',
         badgeColor: 'color-mix(in srgb, #00897B 15%, transparent)',
         desc: 'The condition is temporary and can heal on its own after a few minutes or by switching out the affected subject.',
-        examples: 'Confused, Disabled, Paralysis (Partial), Flinched, Frozen, In Love, Sleep'
+        examples: 'Confused, Disabled, Flinched, In Love'
     }
 ];
 
@@ -158,7 +158,7 @@ export const STATUS_EFFECTS_DATA: StatusEffectData[] = [
         id: 'status-frozen',
         name: 'Frozen',
         badge: 'Immobilized & Full Cover',
-        categoryType: 'Volatile',
+        categoryType: 'Fixed',
         color: '#81D4FA',
         textColor: '#000000',
         effect: 'No Actions. Ice types immune. Trapped in an Ice Block (HP 5, Def 2) which acts as Full Cover. Must be broken out before the Pokémon can be damaged again (GM fiat on whether excess damage transfers over).',
@@ -191,7 +191,7 @@ export const STATUS_EFFECTS_DATA: StatusEffectData[] = [
         id: 'status-sleep',
         name: 'Sleep',
         badge: 'Immobilized',
-        categoryType: 'Volatile',
+        categoryType: 'Fixed',
         color: '#9FA8DA',
         textColor: '#000000',
         effect: 'Cannot take actions while asleep.',
