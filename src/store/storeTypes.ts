@@ -454,6 +454,8 @@ export interface IdentitySlice {
         gmOnlyDamageOverride: boolean;
         gmOnlyTrackers?: boolean;
         gmOnlyAttributeLock?: boolean;
+        gmOnlyPullEnemies?: boolean;
+        defaultNpcInitiativeHidden?: boolean;
         coreLocked?: boolean;
         socialLocked?: boolean;
         hpLocked?: boolean;
@@ -541,6 +543,8 @@ export interface RoomSettings {
     gmOnlyDamageOverride: boolean;
     gmOnlyTrackers?: boolean;
     gmOnlyAttributeLock?: boolean;
+    gmOnlyPullEnemies?: boolean;
+    defaultNpcInitiativeHidden?: boolean;
     pmdSkills?: boolean;
     gmDemoMode: boolean;
     roomDefaultScale: number;

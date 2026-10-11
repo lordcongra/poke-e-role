@@ -173,6 +173,41 @@ export function parseHealthAndWillFromMetadata(meta: Record<string, unknown>): {
     };
 }
 
+export function parseTokenPrivacyFlags(
+    meta: Record<string, unknown>,
+    fallbackMeta?: Record<string, unknown>
+): {
+    gmHpBar: boolean;
+    gmHpText: boolean;
+    gmWillBar: boolean;
+    gmWillText: boolean;
+} {
+    const m = meta || {};
+    const fb = fallbackMeta || {};
+    return {
+        gmHpBar:
+            m['gm-hp-bar'] === true ||
+            m['gm-hp-bar'] === 'true' ||
+            fb['gm-hp-bar'] === true ||
+            fb['gm-hp-bar'] === 'true',
+        gmHpText:
+            m['gm-hp-text'] === true ||
+            m['gm-hp-text'] === 'true' ||
+            fb['gm-hp-text'] === true ||
+            fb['gm-hp-text'] === 'true',
+        gmWillBar:
+            m['gm-will-bar'] === true ||
+            m['gm-will-bar'] === 'true' ||
+            fb['gm-will-bar'] === true ||
+            fb['gm-will-bar'] === 'true',
+        gmWillText:
+            m['gm-will-text'] === true ||
+            m['gm-will-text'] === 'true' ||
+            fb['gm-will-text'] === true ||
+            fb['gm-will-text'] === 'true'
+    };
+}
+
 export function parseHeldItemsFromMetadata(meta: Record<string, unknown>): string {
     const heldItems: string[] = [];
     const combatSlot = typeof meta['combat'] === 'string' ? meta['combat'].trim() : '';
@@ -441,4 +476,85 @@ export function openBattleOrganizerPopout(boSettings: BattleOrganizerSettings): 
         'pkr-battle-organizer-window',
         `width=${width},height=${height},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes`
     );
+}
+
+export function adjustCombatantHp(combatant: CombatantRowData, delta: number): Partial<CombatantRowData> {
+    const curr = combatant.hpCurr ?? 0;
+    const max = combatant.hpMax && combatant.hpMax > 0 ? combatant.hpMax : 999;
+    let nextHp = curr;
+    let nextTempHp = combatant.tempHp ?? 0;
+
+    if (delta < 0) {
+        const damage = Math.abs(delta);
+        if (nextTempHp > 0) {
+            const absorbed = Math.min(nextTempHp, damage);
+            const remainingDamage = damage - absorbed;
+            nextTempHp = nextTempHp - absorbed;
+            nextHp = Math.max(0, curr - remainingDamage);
+        } else {
+            nextHp = Math.max(0, curr - damage);
+        }
+    } else if (delta > 0) {
+        nextHp = Math.max(0, Math.min(max, curr + delta));
+    }
+
+    const nextFainted = nextHp <= 0 ? true : combatant.isFainted;
+    let nextStatus = combatant.status || 'Healthy';
+    if (nextHp <= 0 && !nextStatus.toLowerCase().includes('faint')) {
+        nextStatus = nextStatus === 'Healthy' ? 'Fainted' : `${nextStatus}, Fainted`;
+    }
+    return {
+        hpCurr: nextHp,
+        tempHp: nextTempHp,
+        isFainted: nextFainted,
+        status: nextStatus
+    };
+}
+
+export function adjustCombatantWill(combatant: CombatantRowData, delta: number): Partial<CombatantRowData> {
+    const curr = combatant.willCurr ?? 0;
+    const max = combatant.willMax && combatant.willMax > 0 ? combatant.willMax : 999;
+    let nextWill = curr;
+    let nextTempWill = combatant.tempWill ?? 0;
+
+    if (delta < 0) {
+        const drain = Math.abs(delta);
+        if (nextTempWill > 0) {
+            const absorbed = Math.min(nextTempWill, drain);
+            const remainingDrain = drain - absorbed;
+            nextTempWill = nextTempWill - absorbed;
+            nextWill = Math.max(0, curr - remainingDrain);
+        } else {
+            nextWill = Math.max(0, curr - drain);
+        }
+    } else if (delta > 0) {
+        nextWill = Math.max(0, Math.min(max, curr + delta));
+    }
+
+    return {
+        willCurr: nextWill,
+        tempWill: nextTempWill
+    };
+}
+
+export function toggleCombatantFainted(combatant: CombatantRowData): Partial<CombatantRowData> {
+    const nextFainted = !combatant.isFainted;
+    let newStatus = combatant.status || '';
+    if (nextFainted) {
+        if (!newStatus.trim() || newStatus === 'Healthy') {
+            newStatus = 'Fainted';
+        } else if (!newStatus.includes('Fainted')) {
+            newStatus = `${newStatus}, Fainted`;
+        }
+    } else {
+        newStatus = newStatus
+            .replace(/,?\s*Fainted\s*,?/gi, '')
+            .replace(/^,\s*|,\s*$/g, '')
+            .trim();
+        if (!newStatus) newStatus = 'Healthy';
+    }
+    return {
+        isFainted: nextFainted,
+        status: newStatus
+    };
 }

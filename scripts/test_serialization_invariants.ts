@@ -697,14 +697,16 @@ runTest('Canvas HUD graphics calculate effectiveTempMax and tempHpPercentage wit
 runTest('applyRoomUpdatesToMeta and mapRoomSettings serialize explicit false and 0 symmetrically', () => {
     const initialRoomMeta: Record<string, unknown> = {
         gmOnlyGenerators: true,
+        defaultNpcInitiativeHidden: true,
         roomDefaultScale: 100,
         roomDefaultOffsetX: 10,
         roomDefaultOffsetY: 20
     };
 
-    // User updates Generators to Everyone (false) and offsets to 0
+    // User updates Generators to Everyone (false), NPC init to Visible to Everyone (false), and offsets to 0
     const updates = {
         gmOnlyGenerators: false,
+        defaultNpcInitiativeHidden: false,
         roomDefaultOffsetX: 0,
         roomDefaultOffsetY: 0
     };
@@ -712,12 +714,22 @@ runTest('applyRoomUpdatesToMeta and mapRoomSettings serialize explicit false and
     applyRoomUpdatesToMeta(initialRoomMeta, updates);
 
     assert.equal(initialRoomMeta.gmOnlyGenerators, false, 'Explicitly sets gmOnlyGenerators to false');
+    assert.equal(
+        initialRoomMeta.defaultNpcInitiativeHidden,
+        false,
+        'Explicitly sets defaultNpcInitiativeHidden to false'
+    );
     assert.equal(initialRoomMeta.roomDefaultOffsetX, 0, 'Explicitly sets roomDefaultOffsetX to 0');
     assert.equal(initialRoomMeta.roomDefaultOffsetY, 0, 'Explicitly sets roomDefaultOffsetY to 0');
 
     // Deserialization / mapping
     const mapped = mapRoomSettings(initialRoomMeta);
     assert.equal(mapped.gmOnlyGenerators, false, 'mapRoomSettings preserves false boolean');
+    assert.equal(
+        mapped.defaultNpcInitiativeHidden,
+        false,
+        'mapRoomSettings preserves false defaultNpcInitiativeHidden'
+    );
     assert.equal(mapped.roomDefaultOffsetX, 0, 'mapRoomSettings preserves 0 offset');
     assert.equal(mapped.roomDefaultOffsetY, 0, 'mapRoomSettings preserves 0 offset');
 

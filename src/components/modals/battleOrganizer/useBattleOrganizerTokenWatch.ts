@@ -2,12 +2,13 @@ import { useCallback, useEffect } from 'react';
 import OBR, { type Image, type Item } from '@owlbear-rodeo/sdk';
 import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { extractTokenImage, extractCharacterName } from '../../../utils/combat/initiativeHelpers';
+import { extractTokenImage, extractCharacterName, extractIsNpc } from '../../../utils/combat/initiativeHelpers';
 import { getBattleOrganizerSettings } from './battleOrganizerSettingsHelper';
 import type { BattleOrganizerState, BattleRoundData } from '../../../types/battleOrganizerTypes';
 import {
     parseStatusesFromMetadata,
     parseHealthAndWillFromMetadata,
+    parseTokenPrivacyFlags,
     resolveCombatantLiveTokenSync
 } from './battleOrganizerUtils';
 
@@ -104,13 +105,14 @@ export function useBattleOrganizerTokenWatch({
                             const { statusText, isFainted: statusFainted } = parseStatusesFromMetadata(meta);
                             const { hpCurr, hpMax, willCurr, willMax, tempHp, tempWill, activeTransformation } =
                                 parseHealthAndWillFromMetadata(meta);
-                            const isNPC =
-                                meta['is-npc'] === true ||
-                                meta['is-npc'] === 'true' ||
-                                matchingItem.metadata['is-npc'] === true ||
-                                matchingItem.metadata['is-npc'] === 'true';
+                            const isNPC = extractIsNpc(matchingItem.metadata);
 
-                            const fingerprint = `${matchingItem.id}|${hpCurr}|${hpMax}|${willCurr}|${willMax}|${tempHp}|${tempWill}|${statusText}|${statusFainted}|${activeTransformation}|${resolvedName}|${resolvedImg}|${isNPC}`;
+                            const { gmHpBar, gmHpText, gmWillBar, gmWillText } = parseTokenPrivacyFlags(
+                                meta,
+                                matchingItem.metadata
+                            );
+
+                            const fingerprint = `${matchingItem.id}|${hpCurr}|${hpMax}|${willCurr}|${willMax}|${tempHp}|${tempWill}|${statusText}|${statusFainted}|${activeTransformation}|${resolvedName}|${resolvedImg}|${isNPC}|${gmHpBar}|${gmHpText}|${gmWillBar}|${gmWillText}`;
                             const lastFingerprint = lastTokenFingerprintsRef.current.get(matchingItem.id);
                             if (
                                 !isReboundToken &&
@@ -123,7 +125,11 @@ export function useBattleOrganizerTokenWatch({
                                 combatant.name === (resolvedName || combatant.name) &&
                                 combatant.activeTransformation === activeTransformation &&
                                 combatant.image === (resolvedImg || combatant.image) &&
-                                combatant.isNPC === isNPC
+                                combatant.isNPC === isNPC &&
+                                combatant.gmHpBar === gmHpBar &&
+                                combatant.gmHpText === gmHpText &&
+                                combatant.gmWillBar === gmWillBar &&
+                                combatant.gmWillText === gmWillText
                             ) {
                                 return combatant;
                             }
@@ -203,6 +209,23 @@ export function useBattleOrganizerTokenWatch({
                                 updated = true;
                             }
 
+                            let nextGmHpBar = combatant.gmHpBar;
+                            let nextGmHpText = combatant.gmHpText;
+                            let nextGmWillBar = combatant.gmWillBar;
+                            let nextGmWillText = combatant.gmWillText;
+                            if (
+                                gmHpBar !== combatant.gmHpBar ||
+                                gmHpText !== combatant.gmHpText ||
+                                gmWillBar !== combatant.gmWillBar ||
+                                gmWillText !== combatant.gmWillText
+                            ) {
+                                nextGmHpBar = gmHpBar;
+                                nextGmHpText = gmHpText;
+                                nextGmWillBar = gmWillBar;
+                                nextGmWillText = gmWillText;
+                                updated = true;
+                            }
+
                             if (updated || (!combatant.tokenId && matchingItem.id)) {
                                 hasChanges = true;
                                 changesFound = true;
@@ -223,7 +246,11 @@ export function useBattleOrganizerTokenWatch({
                                     entityId: resolved.entityId || combatant.entityId,
                                     evadeUsed: nextEvade,
                                     clashUsed: nextClash,
-                                    isNPC: nextIsNPC
+                                    isNPC: nextIsNPC,
+                                    gmHpBar: nextGmHpBar,
+                                    gmHpText: nextGmHpText,
+                                    gmWillBar: nextGmWillBar,
+                                    gmWillText: nextGmWillText
                                 };
                             }
 
@@ -313,7 +340,12 @@ export function useBattleOrganizerTokenWatch({
                 currState.will.willMax !== prevState.will.willMax;
             const evadeChanged = currState.trackers.evade !== prevState.trackers.evade;
             const clashChanged = currState.trackers.clash !== prevState.trackers.clash;
-            if (statusChanged || hpChanged || willChanged || evadeChanged || clashChanged) {
+            const gmPrivacyChanged =
+                currState.identity.gmHpBar !== prevState.identity.gmHpBar ||
+                currState.identity.gmHpText !== prevState.identity.gmHpText ||
+                currState.identity.gmWillBar !== prevState.identity.gmWillBar ||
+                currState.identity.gmWillText !== prevState.identity.gmWillText;
+            if (statusChanged || hpChanged || willChanged || evadeChanged || clashChanged || gmPrivacyChanged) {
                 const targetTokenId = currState.tokenId;
                 const charName = (currState.identity.nickname || currState.identity.species || '').toLowerCase().trim();
                 if (targetTokenId || charName) {
@@ -395,6 +427,23 @@ export function useBattleOrganizerTokenWatch({
                                 updated = true;
                             }
 
+                            let nextGmHpBar = targetCombatant.gmHpBar;
+                            let nextGmHpText = targetCombatant.gmHpText;
+                            let nextGmWillBar = targetCombatant.gmWillBar;
+                            let nextGmWillText = targetCombatant.gmWillText;
+                            if (
+                                currState.identity.gmHpBar !== targetCombatant.gmHpBar ||
+                                currState.identity.gmHpText !== targetCombatant.gmHpText ||
+                                currState.identity.gmWillBar !== targetCombatant.gmWillBar ||
+                                currState.identity.gmWillText !== targetCombatant.gmWillText
+                            ) {
+                                nextGmHpBar = currState.identity.gmHpBar;
+                                nextGmHpText = currState.identity.gmHpText;
+                                nextGmWillBar = currState.identity.gmWillBar;
+                                nextGmWillText = currState.identity.gmWillText;
+                                updated = true;
+                            }
+
                             if (!updated) return prev;
 
                             const newCombatants = currentRound.combatants.map((c) =>
@@ -408,7 +457,11 @@ export function useBattleOrganizerTokenWatch({
                                           willCurr: nextWillCurr,
                                           willMax: nextWillMax,
                                           evadeUsed: nextEvade,
-                                          clashUsed: nextClash
+                                          clashUsed: nextClash,
+                                          gmHpBar: nextGmHpBar,
+                                          gmHpText: nextGmHpText,
+                                          gmWillBar: nextGmWillBar,
+                                          gmWillText: nextGmWillText
                                       }
                                     : c
                             );

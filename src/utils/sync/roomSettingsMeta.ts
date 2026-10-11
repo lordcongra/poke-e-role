@@ -18,6 +18,8 @@ export function applyRoomUpdatesToMeta(
         else if (k === 'gmOnlyDamageOverride') roomMeta.gmOnlyDamageOverride = Boolean(v);
         else if (k === 'gmOnlyTrackers') roomMeta.gmOnlyTrackers = Boolean(v);
         else if (k === 'gmOnlyAttributeLock') roomMeta.gmOnlyAttributeLock = Boolean(v);
+        else if (k === 'gmOnlyPullEnemies') roomMeta.gmOnlyPullEnemies = Boolean(v);
+        else if (k === 'defaultNpcInitiativeHidden') roomMeta.defaultNpcInitiativeHidden = Boolean(v);
         else if (k === 'pmdSkills') roomMeta.pmdSkills = Boolean(v);
         else if (k === 'gmDemoMode') roomMeta.gmDemoMode = Boolean(v);
         else if (k === 'roomDefaultScale') roomMeta.roomDefaultScale = Number(v);
@@ -48,6 +50,9 @@ export function mapRoomSettings(sData: Record<string, unknown>) {
             sData.gmOnlyDamageOverride !== undefined ? Boolean(sData.gmOnlyDamageOverride) : undefined,
         gmOnlyTrackers: sData.gmOnlyTrackers !== undefined ? Boolean(sData.gmOnlyTrackers) : undefined,
         gmOnlyAttributeLock: sData.gmOnlyAttributeLock !== undefined ? Boolean(sData.gmOnlyAttributeLock) : undefined,
+        gmOnlyPullEnemies: sData.gmOnlyPullEnemies !== undefined ? Boolean(sData.gmOnlyPullEnemies) : undefined,
+        defaultNpcInitiativeHidden:
+            sData.defaultNpcInitiativeHidden !== undefined ? Boolean(sData.defaultNpcInitiativeHidden) : undefined,
         pmdSkills: sData.pmdSkills !== undefined ? Boolean(sData.pmdSkills) : undefined,
         gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined,
         roomDefaultScale: sData.roomDefaultScale !== undefined ? Number(sData.roomDefaultScale) : undefined,

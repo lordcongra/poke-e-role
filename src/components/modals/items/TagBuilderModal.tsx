@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { POKEMON_TYPES } from '../../../data/constants';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import type { TagBuilderModalProps, TagBuilderConfig } from './tagBuilder/tagBuilderTypes';
 import { useTagBuilderTarget } from './tagBuilder/useTagBuilderTarget';
 import {
@@ -92,7 +93,11 @@ export function TagBuilderModal({ targetId, targetType, initialTag, onClose }: T
         return () => clearTimeout(timer);
     }, [confirmDeleteInitial]);
 
-    const types = [...POKEMON_TYPES.filter((t) => t !== ''), ...roomCustomTypes.map((t) => t.name)];
+    const role = useCharacterStore((state) => state.role);
+    const types = [
+        ...POKEMON_TYPES.filter((t) => t !== ''),
+        ...roomCustomTypes.filter((t) => isStandaloneMode || role === 'GM' || !t.gmOnly).map((t) => t.name)
+    ];
 
     const categories = [
         { id: 'stat', label: 'Attributes', icon: <Zap size={14} /> },

@@ -22,6 +22,7 @@ export interface InitiativeTrackerContentProps {
     setShowAddMenu: (show: boolean) => void;
     updateInit: (id: string, d6Value: number, baseInitiative: number, forceTiebreaker?: number) => void | Promise<void>;
     removeInit: (id: string) => void;
+    toggleVisibility?: (id: string) => void | Promise<void>;
     handleAddStandaloneCombatant: (char: StandaloneCharOption) => void;
     handleAddObrCombatant: (item: Item) => void;
 }
@@ -43,6 +44,7 @@ export function InitiativeTrackerContent({
     setShowAddMenu,
     updateInit,
     removeInit,
+    toggleVisibility,
     handleAddStandaloneCombatant,
     handleAddObrCombatant
 }: InitiativeTrackerContentProps) {
@@ -108,8 +110,10 @@ export function InitiativeTrackerContent({
                                 c={c}
                                 shape={shape}
                                 isActive={c.id === activeTurnId}
+                                isGM={isGM}
                                 updateInit={updateInit}
                                 removeInit={removeInit}
+                                toggleVisibility={toggleVisibility}
                             />
                             {index < combatants.length - 1 && layout === 'horizontal' && (
                                 <span className="init-tracker__flow-arrow">

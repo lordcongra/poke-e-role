@@ -1,7 +1,12 @@
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { isStandaloneMode } from '../sync/storageAdapter';
-import { calculateEncodedInitiative, calculateBaseInitFromCharacterData, sortCombatants } from './initiativeHelpers';
+import {
+    calculateEncodedInitiative,
+    calculateBaseInitFromCharacterData,
+    sortCombatants,
+    extractIsNpc
+} from './initiativeHelpers';
 import { broadcastRollLog } from './rollLogSync';
 import { showDicePlusRetirementNotice } from '../../hooks/owlbearSync/owlbearSyncConstants';
 
@@ -14,6 +19,8 @@ export interface StandaloneCombatant {
     baseInit: number;
     total: number;
     tiebreaker: number;
+    hidden?: boolean;
+    isNPC?: boolean;
 }
 
 // Universal helper to push and broadcast roll entries across the room
@@ -72,6 +79,9 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
                     combatant.id !== tokenId && combatant.total === rollTotal && combatant.baseInit === baseInit
             );
 
+            const isStandaloneNpc = Boolean(state.identity.isNPC);
+            const shouldHideStandalone = isStandaloneNpc && state.identity.defaultNpcInitiativeHidden !== false;
+
             if (stalemateOpponents.length > 0) {
                 assignedTiebreaker = Math.floor(Math.random() * 6) + 1;
                 const updatedList = parsedList.map((combatant) => {
@@ -81,7 +91,9 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
                             d6: rawD6,
                             baseInit: baseInit,
                             total: rollTotal,
-                            tiebreaker: assignedTiebreaker
+                            tiebreaker: assignedTiebreaker,
+                            hidden: shouldHideStandalone ? true : combatant.hidden === true ? true : false,
+                            isNPC: combatant.isNPC !== undefined ? combatant.isNPC : isStandaloneNpc
                         };
                     }
                     if (stalemateOpponents.some((opponent) => opponent.id === combatant.id)) {
@@ -121,7 +133,9 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
                           d6: rawD6,
                           baseInit: baseInit,
                           total: rollTotal,
-                          tiebreaker: 0
+                          tiebreaker: 0,
+                          hidden: shouldHideStandalone ? true : combatant.hidden === true ? true : false,
+                          isNPC: combatant.isNPC !== undefined ? combatant.isNPC : isStandaloneNpc
                       }
                     : combatant
             );
@@ -192,7 +206,12 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
                     for (const item of itemsToUpdate) {
                         const match = opponentUpdates.find((u) => u.id === item.id);
                         if (match) {
+                            const existingOpponent =
+                                (item.metadata['pokerole-pmd-extension/initiative'] as
+                                    | Record<string, unknown>
+                                    | undefined) || {};
                             item.metadata['pokerole-pmd-extension/initiative'] = {
+                                ...existingOpponent,
                                 value: match.value,
                                 base: match.base,
                                 tiebreaker: match.tiebreaker
@@ -213,12 +232,25 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
 
         const encodedValue = calculateEncodedInitiative(rollTotal, baseInit, assignedTiebreaker);
 
+        const targetItem = characterItems.find((item) => item.id === tokenId);
+        const isTargetNPC = extractIsNpc(
+            targetItem?.metadata,
+            state.tokenId === tokenId && Boolean(state.identity.isNPC)
+        );
+
+        const shouldHide =
+            (isTargetNPC && state.identity.defaultNpcInitiativeHidden !== false) || targetItem?.visible === false;
+
         await OBR.scene.items.updateItems([tokenId], (itemsToUpdate) => {
             for (const item of itemsToUpdate) {
+                const existing =
+                    (item.metadata['pokerole-pmd-extension/initiative'] as Record<string, unknown> | undefined) || {};
                 item.metadata['pokerole-pmd-extension/initiative'] = {
+                    ...existing,
                     value: encodedValue,
                     base: baseInit,
-                    tiebreaker: assignedTiebreaker
+                    tiebreaker: assignedTiebreaker,
+                    hidden: shouldHide ? true : existing.hidden === true ? true : false
                 };
             }
         });

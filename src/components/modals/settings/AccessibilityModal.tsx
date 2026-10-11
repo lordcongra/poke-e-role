@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { Eye, Type, Save, Trash2, XCircle, X, Database } from 'lucide-react';
 import { removeSettingFromIndexedDB, scheduleSettingsBackup } from '../../../utils/sync/userPreferences';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import './AccessibilityModal.css';
 
 interface AccessibilityModalProps {
@@ -31,8 +32,12 @@ const STANDARD_TYPES = [
 ];
 
 export function AccessibilityModal({ onClose }: AccessibilityModalProps) {
+    const role = useCharacterStore((state) => state.role);
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes) || [];
-    const allAvailableTypes = [...STANDARD_TYPES, ...roomCustomTypes.map((t) => t.name)].sort();
+    const allAvailableTypes = [
+        ...STANDARD_TYPES,
+        ...roomCustomTypes.filter((t) => isStandaloneMode || role === 'GM' || !t.gmOnly).map((t) => t.name)
+    ].sort();
 
     // Master Toggle
     const [isHighContrast, setIsHighContrast] = useState<boolean>(() => {

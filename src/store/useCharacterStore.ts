@@ -68,4 +68,5 @@ export const useCharacterStore = create<CharacterState>()((set, get, api) => ({
 
 if (typeof window !== 'undefined') {
     (window as unknown as { __POKEROLE_STORE__: typeof useCharacterStore }).__POKEROLE_STORE__ = useCharacterStore;
+    (window as unknown as { useCharacterStore: typeof useCharacterStore }).useCharacterStore = useCharacterStore;
 }

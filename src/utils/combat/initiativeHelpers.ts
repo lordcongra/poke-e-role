@@ -11,6 +11,8 @@ export interface Combatant {
     baseInit: number;
     total: number;
     tiebreaker: number;
+    hidden?: boolean;
+    isNPC?: boolean;
 }
 
 export interface StoredCharacterData extends Partial<CharacterState> {
@@ -82,6 +84,53 @@ export function extractTokenImage(meta: Record<string, unknown> | null | undefin
     }
 
     return '';
+}
+
+export function extractIsNpc(
+    meta: Record<string, unknown> | null | undefined,
+    fallbackIsNpc?: boolean
+): boolean {
+    if (fallbackIsNpc) return true;
+    if (!meta) return false;
+
+    // Direct metadata checks
+    if (meta['is-npc'] === true || meta['is-npc'] === 'true') return true;
+    if (meta['isNPC'] === true || meta['isNPC'] === 'true') return true;
+
+    // Nested stats (v2 / v3 extensions)
+    const nestedStats = (meta['pokerole-extension/stats'] || meta['pokerole-pmd-extension/stats']) as
+        | Record<string, unknown>
+        | undefined;
+    if (nestedStats) {
+        if (nestedStats['is-npc'] === true || nestedStats['is-npc'] === 'true') return true;
+        if (nestedStats['isNPC'] === true || nestedStats['isNPC'] === 'true') return true;
+    }
+
+    // Nested state.identity (Zustand state shape)
+    const stateObj = (meta.state || meta) as Record<string, unknown>;
+    if (stateObj) {
+        const identity = stateObj.identity as Record<string, unknown> | undefined;
+        if (identity && (identity.isNPC === true || identity.isNPC === 'true')) {
+            return true;
+        }
+        if (stateObj['is-npc'] === true || stateObj['is-npc'] === 'true') return true;
+        if (stateObj['isNPC'] === true || stateObj['isNPC'] === 'true') return true;
+    }
+
+    // Deep JSON string fallback
+    try {
+        const str = JSON.stringify(meta);
+        if (
+            str.includes('"is-npc":true') ||
+            str.includes('"is-npc":"true"') ||
+            str.includes('"isNPC":true') ||
+            str.includes('"isNPC":"true"')
+        ) {
+            return true;
+        }
+    } catch {}
+
+    return false;
 }
 
 export function extractCharacterName(

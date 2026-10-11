@@ -109,6 +109,8 @@ export async function setupOwlbearRoomSync(
                     gmOnlyAttributeLock: true,
                     gmOnlyMatchups: false,
                     gmOnlyTrackers: false,
+                    gmOnlyPullEnemies: true,
+                    defaultNpcInitiativeHidden: true,
                     pmdSkills: false,
                     gmDemoMode: false
                 };
@@ -150,6 +152,8 @@ export async function setupOwlbearRoomSync(
                 gmOnlyAttributeLock: true,
                 gmOnlyMatchups: false,
                 gmOnlyTrackers: false,
+                gmOnlyPullEnemies: true,
+                defaultNpcInitiativeHidden: true,
                 pmdSkills: false,
                 gmDemoMode: false
             };

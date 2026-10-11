@@ -5,6 +5,7 @@ import type { ActionSlotData } from '../../../types/battleOrganizerTypes';
 export interface CombatantActionSlotsProps {
     actions: ActionSlotData[];
     combatantName?: string;
+    disabled?: boolean;
     onActionTextChange: (actIdx: number, text: string) => void;
     onActionStatusToggle: (actIdx: number, status: 'success' | 'failed') => void;
     onActionClear: (actIdx: number) => void;
@@ -13,6 +14,7 @@ export interface CombatantActionSlotsProps {
 export const CombatantActionSlots: React.FC<CombatantActionSlotsProps> = ({
     actions,
     combatantName = 'Combatant',
+    disabled = false,
     onActionTextChange,
     onActionStatusToggle,
     onActionClear
@@ -37,6 +39,7 @@ export const CombatantActionSlots: React.FC<CombatantActionSlotsProps> = ({
                                 placeholder="Move / Act"
                                 title={`Action ${actIdx + 1} Description / Move`}
                                 aria-label={`Action ${actIdx + 1} for ${combatantName}`}
+                                disabled={disabled}
                             />
                             <div className="bo-action-status-row">
                                 <button
@@ -45,6 +48,7 @@ export const CombatantActionSlots: React.FC<CombatantActionSlotsProps> = ({
                                     onClick={() => onActionStatusToggle(actIdx, 'success')}
                                     title={`Mark Action ${actIdx + 1} Used / Success (✓)`}
                                     aria-label={`Action ${actIdx + 1} success`}
+                                    disabled={disabled}
                                 >
                                     ✓
                                 </button>
@@ -54,6 +58,7 @@ export const CombatantActionSlots: React.FC<CombatantActionSlotsProps> = ({
                                     onClick={() => onActionStatusToggle(actIdx, 'failed')}
                                     title={`Mark Action ${actIdx + 1} Failed / Clash / Evade / Cancelled (✗)`}
                                     aria-label={`Action ${actIdx + 1} failed`}
+                                    disabled={disabled}
                                 >
                                     ✗
                                 </button>
@@ -63,6 +68,7 @@ export const CombatantActionSlots: React.FC<CombatantActionSlotsProps> = ({
                                     onClick={() => onActionClear(actIdx)}
                                     title={`Quick Clear: Reset Action ${actIdx + 1} and restore to action counter`}
                                     aria-label={`Action ${actIdx + 1} clear`}
+                                    disabled={disabled}
                                 >
                                     <RotateCcw size={10} />
                                 </button>

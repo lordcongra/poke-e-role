@@ -1,20 +1,31 @@
 import { useEffect, useState } from 'react';
+import OBR from '@owlbear-rodeo/sdk';
 import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { imageManager } from '../../utils/graphics/imageManager';
 import { addRollLogEntry } from '../../utils/combat/diceRoller';
 import { formatInitiativeDisplay, type Combatant } from '../../utils/combat/initiativeHelpers';
-import { X, Dices } from 'lucide-react';
+import { X, Dices, Eye, EyeOff } from 'lucide-react';
 import './CombatantCard.css';
 
 interface CombatantCardProps {
     c: Combatant;
     shape: string;
     isActive: boolean;
+    isGM?: boolean;
     updateInit: (id: string, d6Value: number, baseInitiative: number, forceTiebreaker: number) => void;
     removeInit: (id: string) => void;
+    toggleVisibility?: (id: string) => void | Promise<void>;
 }
 
-export function CombatantCard({ c, shape, isActive, updateInit, removeInit }: CombatantCardProps) {
+export function CombatantCard({
+    c,
+    shape,
+    isActive,
+    isGM,
+    updateInit,
+    removeInit,
+    toggleVisibility
+}: CombatantCardProps) {
     const totalScore = typeof c.total === 'number' ? c.total : 0;
     const baseInitiativeScore = typeof c.baseInit === 'number' ? c.baseInit : 0;
     const tiebreakerScore = typeof c.tiebreaker === 'number' ? c.tiebreaker : 0;
@@ -87,8 +98,35 @@ export function CombatantCard({ c, shape, isActive, updateInit, removeInit }: Co
         );
     };
 
+    const handleToggleVisibility = async () => {
+        if (toggleVisibility) {
+            toggleVisibility(c.id);
+            return;
+        }
+        if (isStandaloneMode) return;
+        if (OBR.isAvailable) {
+            await OBR.scene.items
+                .updateItems([c.id], (items) => {
+                    for (const item of items) {
+                        const existing =
+                            (item.metadata['pokerole-pmd-extension/initiative'] as
+                                | Record<string, unknown>
+                                | undefined) || {};
+                        const currentHidden = existing.hidden === true || item.visible === false;
+                        item.metadata['pokerole-pmd-extension/initiative'] = {
+                            ...existing,
+                            hidden: !currentHidden
+                        };
+                    }
+                })
+                .catch((error) => console.error('[CombatantCard] Failed to toggle visibility:', error));
+        }
+    };
+
     return (
-        <div className={`init-tracker__card ${isActive ? 'init-tracker__card--active' : ''}`}>
+        <div
+            className={`init-tracker__card ${isActive ? 'init-tracker__card--active' : ''} ${c.hidden ? 'init-tracker__card--hidden' : ''}`}
+        >
             <button
                 type="button"
                 className="init-tracker__card-close"
@@ -109,9 +147,26 @@ export function CombatantCard({ c, shape, isActive, updateInit, removeInit }: Co
             </div>
 
             <div className="init-tracker__info">
-                <span className="init-tracker__name text-label" title={c.name}>
-                    {c.name}
-                </span>
+                <div className="init-tracker__name-row">
+                    <span className="init-tracker__name text-label" title={c.name}>
+                        {c.name}
+                    </span>
+                    {isGM && (
+                        <button
+                            type="button"
+                            className={`init-tracker__visibility-btn ${c.hidden ? 'is-hidden' : ''}`}
+                            onClick={handleToggleVisibility}
+                            title={
+                                c.hidden
+                                    ? 'Hidden from Players (Click to reveal)'
+                                    : 'Visible to Players (Click to hide)'
+                            }
+                            aria-label={c.hidden ? 'Hidden from Players' : 'Visible to Players'}
+                        >
+                            {c.hidden ? <EyeOff size={13} /> : <Eye size={13} />}
+                        </button>
+                    )}
+                </div>
 
                 <div className="init-tracker__controls">
                     <input

@@ -4,9 +4,13 @@ import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import { imageManager } from '../../../utils/graphics/imageManager';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { STATUS_OPTIONS } from '../../../data/constants';
-import { Trash2, Dices, Shield, Swords, User, Skull, X, FileText, Minus, Plus, Lock } from 'lucide-react';
+import { Dices } from 'lucide-react';
 import { addRollLogEntry } from '../../../utils/combat/diceRoller';
+import { adjustCombatantHp, adjustCombatantWill, toggleCombatantFainted } from './battleOrganizerUtils';
 import { CombatantActionSlots } from './CombatantActionSlots';
+import { CombatantStatusCell } from './CombatantStatusCell';
+import { CombatantRowTools } from './CombatantRowTools';
+import { CombatantAvatarStack } from './CombatantAvatarStack';
 import './CombatantRow.css';
 
 interface CombatantRowProps {
@@ -32,7 +36,11 @@ export function CombatantRow({
 }: CombatantRowProps) {
     const [resolvedImage, setResolvedImage] = useState<string>('');
     const role = useCharacterStore((state) => state.role);
-    const isLocked = !isStandaloneMode && role === 'PLAYER' && !!combatant.isNPC;
+    const isPlayer = role === 'PLAYER';
+    const isLocked = !isStandaloneMode && isPlayer && !!combatant.isNPC;
+    const concealHp = !isStandaloneMode && isPlayer && !!(combatant.gmHpText || combatant.gmHpBar);
+    const concealWill = !isStandaloneMode && isPlayer && !!(combatant.gmWillText || combatant.gmWillBar);
+
     const customStatuses = useCharacterStore((state) => state.roomCustomStatuses || []);
 
     const combinedStatusOptions = Array.from(
@@ -52,7 +60,7 @@ export function CombatantRow({
     const statusList = rawStatusList.length > 0 ? rawStatusList : ['Healthy'];
 
     const handleAddStatus = (chosen: string) => {
-        if (!chosen) return;
+        if (isLocked || !chosen) return;
         let nextList: string[];
         if (chosen === 'Healthy') {
             nextList = ['Healthy'];
@@ -74,6 +82,7 @@ export function CombatantRow({
     };
 
     const handleRemoveStatus = (indexToRemove: number) => {
+        if (isLocked) return;
         const nextList = statusList.filter((_, idx) => idx !== indexToRemove);
         const finalStatuses = nextList.length > 0 ? nextList : ['Healthy'];
         const newStatusStr = finalStatuses.join(', ');
@@ -86,6 +95,7 @@ export function CombatantRow({
     };
 
     const handleUpdateStatusItem = (indexToUpdate: number, newVal: string) => {
+        if (isLocked) return;
         const nextList = [...statusList];
         nextList[indexToUpdate] = newVal;
         const finalStatuses = nextList.filter((s) => s.trim().length > 0);
@@ -123,6 +133,7 @@ export function CombatantRow({
     }, [combatant.image]);
 
     const handleFieldChange = <K extends keyof CombatantRowData>(field: K, value: CombatantRowData[K]) => {
+        if (isLocked) return;
         onUpdate({
             ...combatant,
             [field]: value
@@ -130,6 +141,7 @@ export function CombatantRow({
     };
 
     const handleActionTextChange = (actionIndex: number, text: string) => {
+        if (isLocked) return;
         const prevAction = combatant.actions[actionIndex];
         const newActions = [...combatant.actions] as CombatantRowData['actions'];
         newActions[actionIndex] = {
@@ -168,6 +180,7 @@ export function CombatantRow({
     };
 
     const handleActionStatusToggle = (actionIndex: number, targetStatus: ActionStatus) => {
+        if (isLocked) return;
         const newActions = [...combatant.actions] as CombatantRowData['actions'];
         const currentStatus = newActions[actionIndex].status;
         const nextStatus: ActionStatus = currentStatus === targetStatus ? 'none' : targetStatus;
@@ -180,6 +193,7 @@ export function CombatantRow({
     };
 
     const handleActionClear = (actionIndex: number) => {
+        if (isLocked) return;
         const clearedAction = combatant.actions[actionIndex];
         if (!clearedAction.text && clearedAction.status === 'none') return;
 
@@ -233,98 +247,41 @@ export function CombatantRow({
     };
 
     const handleToggleEvade = () => {
+        if (isLocked) return;
         handleFieldChange('evadeUsed', !combatant.evadeUsed);
     };
 
     const handleToggleClash = () => {
+        if (isLocked) return;
         handleFieldChange('clashUsed', !combatant.clashUsed);
     };
 
     const handleToggleSide = () => {
+        if (isLocked) return;
         handleFieldChange('isPlayerSide', !combatant.isPlayerSide);
     };
 
     const handleToggleFainted = () => {
-        const nextFainted = !combatant.isFainted;
-        let newStatus = combatant.status || '';
-        if (nextFainted) {
-            if (!newStatus.trim() || newStatus === 'Healthy') {
-                newStatus = 'Fainted';
-            } else if (!newStatus.includes('Fainted')) {
-                newStatus = `${newStatus}, Fainted`;
-            }
-        } else {
-            newStatus = newStatus
-                .replace(/,?\s*Fainted\s*,?/gi, '')
-                .replace(/^,\s*|,\s*$/g, '')
-                .trim();
-            if (!newStatus) newStatus = 'Healthy';
-        }
+        if (isLocked) return;
         onUpdate({
             ...combatant,
-            isFainted: nextFainted,
-            status: newStatus
+            ...toggleCombatantFainted(combatant)
         });
     };
 
     const handleAdjustHp = (delta: number) => {
-        const curr = combatant.hpCurr ?? 0;
-        const max = combatant.hpMax && combatant.hpMax > 0 ? combatant.hpMax : 999;
-        let nextHp = curr;
-        let nextTempHp = combatant.tempHp ?? 0;
-
-        if (delta < 0) {
-            const damage = Math.abs(delta);
-            if (nextTempHp > 0) {
-                const absorbed = Math.min(nextTempHp, damage);
-                const remainingDamage = damage - absorbed;
-                nextTempHp = nextTempHp - absorbed;
-                nextHp = Math.max(0, curr - remainingDamage);
-            } else {
-                nextHp = Math.max(0, curr - damage);
-            }
-        } else if (delta > 0) {
-            nextHp = Math.max(0, Math.min(max, curr + delta));
-        }
-
-        const nextFainted = nextHp <= 0 ? true : combatant.isFainted;
-        let nextStatus = combatant.status || 'Healthy';
-        if (nextHp <= 0 && !nextStatus.toLowerCase().includes('faint')) {
-            nextStatus = nextStatus === 'Healthy' ? 'Fainted' : `${nextStatus}, Fainted`;
-        }
+        if (isLocked || concealHp) return;
         onUpdate({
             ...combatant,
-            hpCurr: nextHp,
-            tempHp: nextTempHp,
-            isFainted: nextFainted,
-            status: nextStatus
+            ...adjustCombatantHp(combatant, delta)
         });
     };
 
     const handleAdjustWill = (delta: number) => {
-        const curr = combatant.willCurr ?? 0;
-        const max = combatant.willMax && combatant.willMax > 0 ? combatant.willMax : 999;
-        let nextWill = curr;
-        let nextTempWill = combatant.tempWill ?? 0;
-
-        if (delta < 0) {
-            const drain = Math.abs(delta);
-            if (nextTempWill > 0) {
-                const absorbed = Math.min(nextTempWill, drain);
-                const remainingDrain = drain - absorbed;
-                nextTempWill = nextTempWill - absorbed;
-                nextWill = Math.max(0, curr - remainingDrain);
-            } else {
-                nextWill = Math.max(0, curr - drain);
-            }
-        } else if (delta > 0) {
-            nextWill = Math.max(0, Math.min(max, curr + delta));
-        }
-
+        if (isLocked || concealWill) return;
         onUpdate({
             ...combatant,
-            willCurr: nextWill,
-            tempWill: nextTempWill
+            ...adjustCombatantWill(combatant, delta)
         });
     };
 
@@ -363,14 +320,16 @@ export function CombatantRow({
                         placeholder="Init"
                         title="Initiative Score"
                         aria-label={`Initiative score for row ${index + 1}`}
+                        disabled={isLocked}
                     />
                     {onRollInitiative && (
                         <button
                             type="button"
                             className="bo-mini-btn"
                             onClick={() => onRollInitiative(combatant.id)}
-                            title="Roll 1d6 + Base Initiative"
+                            title={isLocked ? 'Initiative locked by GM' : 'Roll 1d6 + Base Initiative'}
                             aria-label="Roll initiative"
+                            disabled={isLocked}
                         >
                             <Dices size={12} />
                         </button>
@@ -385,110 +344,33 @@ export function CombatantRow({
                         type="button"
                         className={`bo-side-toggle-btn ${combatant.isPlayerSide ? 'bo-side-toggle-btn--player' : 'bo-side-toggle-btn--foe'}`}
                         onClick={handleToggleSide}
-                        title={`Click to switch side (Current: ${combatant.isPlayerSide ? 'Player' : 'Foe'})`}
+                        title={
+                            isLocked
+                                ? 'Side locked by GM'
+                                : `Click to switch side (Current: ${combatant.isPlayerSide ? 'Player' : 'Foe'})`
+                        }
                         aria-label="Switch combatant side"
+                        disabled={isLocked}
                     >
                         {combatant.isPlayerSide ? 'P' : 'F'}
                     </button>
 
                     {/* Compact Vertical Stack: HP Mini-Bar -> Avatar -> Will Mini-Bar */}
-                    <div className="bo-avatar-stat-stack">
-                        {/* Top: HP Stepper */}
-                        <div className={`bo-stat-stepper bo-stat-stepper--hp ${hpThemeClass}`} title={hpTitle}>
-                            <button
-                                type="button"
-                                className="bo-stat-step-btn"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (onAdjustHp) onAdjustHp(combatant.id, -1);
-                                    else handleAdjustHp(-1);
-                                }}
-                                title="Decrease HP"
-                                aria-label="Decrease HP"
-                            >
-                                <Minus size={8} />
-                            </button>
-                            <span className="bo-stat-stepper-val">{combatant.hpCurr ?? 0}</span>
-                            <button
-                                type="button"
-                                className="bo-stat-step-btn"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (onAdjustHp) onAdjustHp(combatant.id, 1);
-                                    else handleAdjustHp(1);
-                                }}
-                                title="Increase HP"
-                                aria-label="Increase HP"
-                            >
-                                <Plus size={8} />
-                            </button>
-                        </div>
-
-                        {/* Center: Avatar Thumbnail */}
-                        <div
-                            className={`bo-avatar-thumb ${onOpenSheet && !isLocked ? 'bo-avatar-thumb--clickable' : ''}`}
-                            onClick={() => {
-                                if (isLocked) return;
-                                onOpenSheet?.(combatant);
-                            }}
-                            title={
-                                isLocked
-                                    ? 'This sheet is hidden by the GM'
-                                    : onOpenSheet
-                                      ? hasToken
-                                          ? `Open sheet for ${combatant.name || 'combatant'}`
-                                          : `No token linked for ${combatant.name || 'combatant'} - click to view instructions`
-                                      : undefined
-                            }
-                            role={onOpenSheet && !isLocked ? 'button' : undefined}
-                            tabIndex={onOpenSheet && !isLocked ? 0 : undefined}
-                            onKeyDown={(e) => {
-                                if (onOpenSheet && !isLocked && (e.key === 'Enter' || e.key === ' ')) {
-                                    onOpenSheet(combatant);
-                                }
-                            }}
-                        >
-                            {resolvedImage ? (
-                                <img src={resolvedImage} alt={combatant.name} className="bo-avatar-img" />
-                            ) : (
-                                <User size={14} color="var(--text-muted)" />
-                            )}
-                        </div>
-
-                        {/* Bottom: Will Stepper */}
-                        <div
-                            className="bo-stat-stepper bo-stat-stepper--will"
-                            title={`Will: ${combatant.willCurr ?? 0}${combatant.willMax ? ` / ${combatant.willMax}` : ''}`}
-                        >
-                            <button
-                                type="button"
-                                className="bo-stat-step-btn"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (onAdjustWill) onAdjustWill(combatant.id, -1);
-                                    else handleAdjustWill(-1);
-                                }}
-                                title="Decrease Will"
-                                aria-label="Decrease Will"
-                            >
-                                <Minus size={8} />
-                            </button>
-                            <span className="bo-stat-stepper-val">{combatant.willCurr ?? 0}</span>
-                            <button
-                                type="button"
-                                className="bo-stat-step-btn"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (onAdjustWill) onAdjustWill(combatant.id, 1);
-                                    else handleAdjustWill(1);
-                                }}
-                                title="Increase Will"
-                                aria-label="Increase Will"
-                            >
-                                <Plus size={8} />
-                            </button>
-                        </div>
-                    </div>
+                    <CombatantAvatarStack
+                        combatant={combatant}
+                        resolvedImage={resolvedImage}
+                        isLocked={isLocked}
+                        concealHp={concealHp}
+                        concealWill={concealWill}
+                        hpThemeClass={hpThemeClass}
+                        hpTitle={hpTitle}
+                        hasToken={hasToken}
+                        onAdjustHp={onAdjustHp}
+                        onAdjustWill={onAdjustWill}
+                        handleAdjustHp={handleAdjustHp}
+                        handleAdjustWill={handleAdjustWill}
+                        onOpenSheet={onOpenSheet}
+                    />
 
                     <div className="bo-name-field-wrap">
                         {combatant.activeTransformation && combatant.activeTransformation !== 'None' && (
@@ -513,6 +395,7 @@ export function CombatantRow({
                             placeholder="Combatant Name"
                             title="Combatant Name"
                             aria-label="Combatant Name"
+                            disabled={isLocked}
                         />
                     </div>
                 </div>
@@ -528,144 +411,42 @@ export function CombatantRow({
                     placeholder="Held Item..."
                     title="Equipped / Held Items from Combat, Social, or Hand slots"
                     aria-label="Held Item"
+                    disabled={isLocked}
                 />
             </td>
 
             {/* Status with Multi-row & Autocomplete */}
-            <td className="bo-cell bo-cell--status">
-                <div className="bo-status-cell-column">
-                    {statusList.map((st, sIdx) => (
-                        <div key={sIdx} className="bo-status-item-row">
-                            <input
-                                type="text"
-                                list={`bo-status-list-${combatant.id}`}
-                                className="bo-input bo-input--status text-label"
-                                value={st}
-                                onChange={(e) => handleUpdateStatusItem(sIdx, e.target.value)}
-                                placeholder="Status..."
-                                title={`Status condition ${sIdx + 1}`}
-                                aria-label={`Status ${sIdx + 1}`}
-                            />
-                            {statusList.length > 1 || (st !== 'Healthy' && st.trim() !== '') ? (
-                                <button
-                                    type="button"
-                                    className="bo-status-item-delete-btn"
-                                    onClick={() => handleRemoveStatus(sIdx)}
-                                    title={`Clear ${st}`}
-                                    aria-label={`Delete ${st}`}
-                                >
-                                    <X size={10} />
-                                </button>
-                            ) : null}
-                        </div>
-                    ))}
-                    <div className="bo-status-add-row">
-                        <select
-                            className="bo-status-quick-dropdown"
-                            value=""
-                            onChange={(e) => {
-                                handleAddStatus(e.target.value);
-                            }}
-                            title="Add an additional status condition"
-                            aria-label="Add status"
-                        >
-                            <option value="">+ Status...</option>
-                            {combinedStatusOptions.map((opt) => (
-                                <option key={opt} value={opt}>
-                                    {opt}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <datalist id={`bo-status-list-${combatant.id}`}>
-                        {combinedStatusOptions.map((opt) => (
-                            <option key={opt} value={opt} />
-                        ))}
-                    </datalist>
-                </div>
-            </td>
+            <CombatantStatusCell
+                combatantId={combatant.id}
+                statusList={statusList}
+                combinedStatusOptions={combinedStatusOptions}
+                isLocked={isLocked}
+                onUpdateStatusItem={handleUpdateStatusItem}
+                onRemoveStatus={handleRemoveStatus}
+                onAddStatus={handleAddStatus}
+            />
 
             {/* 5 Action Counters */}
             <CombatantActionSlots
                 actions={combatant.actions}
                 combatantName={combatant.name}
+                disabled={isLocked}
                 onActionTextChange={handleActionTextChange}
                 onActionStatusToggle={handleActionStatusToggle}
                 onActionClear={handleActionClear}
             />
 
             {/* Quick Reactions, Fainted & Row Actions */}
-            <td className="bo-cell bo-cell--tools">
-                <div className="bo-tools-group">
-                    <button
-                        type="button"
-                        className={`bo-reaction-toggle bo-reaction-toggle--faint ${combatant.isFainted ? 'bo-reaction-toggle--active-faint' : ''}`}
-                        onClick={handleToggleFainted}
-                        title={`Fainted Status: ${combatant.isFainted ? 'Fainted (Click to clear)' : 'Active (Click to mark Fainted)'}`}
-                        aria-label="Toggle Fainted"
-                    >
-                        <Skull size={12} />
-                    </button>
-                    <button
-                        type="button"
-                        className={`bo-reaction-toggle ${combatant.evadeUsed ? 'bo-reaction-toggle--active' : ''}`}
-                        onClick={handleToggleEvade}
-                        title={`Evade Reaction: ${combatant.evadeUsed ? 'Used' : 'Available'}`}
-                        aria-label="Toggle Evade Used"
-                    >
-                        <Shield size={12} />
-                    </button>
-                    <button
-                        type="button"
-                        className={`bo-reaction-toggle ${combatant.clashUsed ? 'bo-reaction-toggle--active' : ''}`}
-                        onClick={handleToggleClash}
-                        title={`Clash Reaction: ${combatant.clashUsed ? 'Used' : 'Available'}`}
-                        aria-label="Toggle Clash Used"
-                    >
-                        <Swords size={12} />
-                    </button>
-                    {isLocked ? (
-                        <button
-                            type="button"
-                            className="bo-reaction-toggle bo-sheet-toggle bo-sheet-toggle--locked"
-                            disabled
-                            title="This sheet is hidden by the GM"
-                            aria-label="Sheet locked by GM"
-                        >
-                            <Lock size={12} />
-                        </button>
-                    ) : (
-                        onOpenSheet && (
-                            <button
-                                type="button"
-                                className={`bo-reaction-toggle bo-sheet-toggle ${!hasToken ? 'bo-sheet-toggle--unlinked' : ''}`}
-                                onClick={() => onOpenSheet(combatant)}
-                                title={
-                                    hasToken
-                                        ? `Open Character Sheet for ${combatant.name || 'combatant'}`
-                                        : `No token linked for ${combatant.name || 'combatant'} - click to view instructions`
-                                }
-                                aria-label={
-                                    hasToken
-                                        ? `Open Character Sheet for ${combatant.name || 'combatant'}`
-                                        : `No token linked for ${combatant.name || 'combatant'}`
-                                }
-                            >
-                                <FileText size={12} />
-                            </button>
-                        )
-                    )}
-                    <button
-                        type="button"
-                        className="bo-delete-row-btn"
-                        onClick={() => onDelete(combatant.id)}
-                        title="Remove combatant from round"
-                        aria-label="Remove combatant"
-                    >
-                        <Trash2 size={12} />
-                    </button>
-                </div>
-            </td>
+            <CombatantRowTools
+                combatant={combatant}
+                isLocked={isLocked}
+                hasToken={hasToken}
+                onToggleFainted={handleToggleFainted}
+                onToggleEvade={handleToggleEvade}
+                onToggleClash={handleToggleClash}
+                onOpenSheet={onOpenSheet}
+                onDelete={onDelete}
+            />
         </tr>
     );
 }

@@ -10,7 +10,8 @@ import {
     extractTokenImage,
     extractCharacterName,
     calculateEncodedInitiative,
-    resolveInitiativeRolls
+    resolveInitiativeRolls,
+    extractIsNpc
 } from '../../utils/combat/initiativeHelpers';
 import { extractEntityId } from '../../hooks/owlbearSync/setupOwlbearTokenSync';
 import type { Combatant } from '../../utils/combat/initiativeHelpers';
@@ -90,46 +91,51 @@ export function useInitiativeEngine() {
         }
     }
 
-    // Adjust active character initiative during render if stats change in standalone
-    const activeCharSyncKey =
-        isStandaloneMode && activeTokenId && combatants.length > 0
-            ? `${activeTokenId}|${dexStat}|${alertSkill}|${tokenImageUrl}|${storeIdentity?.nickname}|${storeIdentity?.species}|${inventory?.length}|${extraCategories?.length}`
-            : '';
-    const [prevSyncKey, setPrevSyncKey] = useState(activeCharSyncKey);
-    if (activeCharSyncKey && prevSyncKey !== activeCharSyncKey) {
-        setPrevSyncKey(activeCharSyncKey);
+    // Adjust active character initiative if stats change in standalone
+    useEffect(() => {
+        if (!isStandaloneMode || !activeTokenId || combatants.length === 0) return;
         const activeCombatant = combatants.find((c) => c.id === activeTokenId);
-        if (activeCombatant) {
-            const store = useCharacterStore.getState();
-            const newBase = calculateBaseInitFromCharacterData(store, store);
-            const newImage = tokenImageUrl || '';
-            const newName = storeIdentity?.nickname?.trim() || storeIdentity?.species?.trim() || activeCombatant.name;
+        if (!activeCombatant) return;
 
-            if (
-                newBase !== activeCombatant.baseInit ||
-                newImage !== activeCombatant.image ||
-                newName !== activeCombatant.name
-            ) {
-                const newTotal = activeCombatant.d6 > 0 ? activeCombatant.d6 + newBase : newBase;
-                const next = combatants.map((c) =>
-                    c.id === activeTokenId
-                        ? { ...c, name: newName, baseInit: newBase, total: newTotal, image: newImage }
-                        : c
+        const store = useCharacterStore.getState();
+        const newBase = calculateBaseInitFromCharacterData(store, store);
+        const newImage = tokenImageUrl || '';
+        const newName = storeIdentity?.nickname?.trim() || storeIdentity?.species?.trim() || activeCombatant.name;
+
+        if (
+            newBase !== activeCombatant.baseInit ||
+            newImage !== activeCombatant.image ||
+            newName !== activeCombatant.name
+        ) {
+            const newTotal = activeCombatant.d6 > 0 ? activeCombatant.d6 + newBase : newBase;
+            const next = combatants.map((c) =>
+                c.id === activeTokenId
+                    ? { ...c, name: newName, baseInit: newBase, total: newTotal, image: newImage }
+                    : c
+            );
+            const sorted = sortCombatants(next);
+            setCombatants(sorted);
+            try {
+                localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
+                window.dispatchEvent(new Event('pkr-standalone-init-update'));
+            } catch (error) {
+                console.error(
+                    '[InitiativeEngine] Failed to update active character initiative in localStorage:',
+                    error
                 );
-                const sorted = sortCombatants(next);
-                setCombatants(sorted);
-                try {
-                    localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
-                    window.dispatchEvent(new Event('pkr-standalone-init-update'));
-                } catch (error) {
-                    console.error(
-                        '[InitiativeEngine] Failed to update active character initiative in localStorage:',
-                        error
-                    );
-                }
             }
         }
-    }
+    }, [
+        activeTokenId,
+        dexStat,
+        alertSkill,
+        tokenImageUrl,
+        storeIdentity?.nickname,
+        storeIdentity?.species,
+        inventory?.length,
+        extraCategories?.length,
+        combatants
+    ]);
 
     const fetchAvailableCharacters = useCallback(async () => {
         if (isStandaloneMode) {
@@ -204,7 +210,9 @@ export function useInitiativeEngine() {
                                     d6: d6Value,
                                     baseInit: baseInitiative,
                                     total: totalScore,
-                                    tiebreaker: tiebreakerValue
+                                    tiebreaker: tiebreakerValue,
+                                    hidden: item.hidden !== undefined ? Boolean(item.hidden) : undefined,
+                                    isNPC: item.isNPC !== undefined ? Boolean(item.isNPC) : undefined
                                 };
                             });
                             setCombatants(sortCombatants(normalizedList));
@@ -263,9 +271,27 @@ export function useInitiativeEngine() {
             if (!isMounted) return;
             setIsReady(true);
 
-            OBR.player.getRole().then((role) => {
-                if (isMounted) setIsGM(role === 'GM');
+            let currentIsGM = isStandaloneMode;
+            try {
+                const role = await OBR.player.getRole();
+                currentIsGM = role === 'GM';
+                if (isMounted) setIsGM(currentIsGM);
+            } catch (error) {
+                console.warn('[InitiativeEngine] Could not fetch player role:', error);
+            }
+
+            const unsubPlayer = OBR.player.onChange((player) => {
+                const nextIsGm = player.role === 'GM';
+                if (currentIsGM !== nextIsGm) {
+                    currentIsGM = nextIsGm;
+                    if (isMounted) setIsGM(nextIsGm);
+                    OBR.scene.items
+                        .getItems()
+                        .then(mapItemsToCombatants)
+                        .catch(() => {});
+                }
             });
+            unsubs.push(unsubPlayer);
 
             try {
                 const currentWidth = (await OBR.viewport.getWidth()) ?? 800;
@@ -295,10 +321,25 @@ export function useInitiativeEngine() {
                         item.layer === 'CHARACTER' && item.metadata['pokerole-pmd-extension/initiative'] !== undefined
                 );
 
-                const nonInitItems = items.filter(
-                    (item) =>
-                        item.layer === 'CHARACTER' && item.metadata['pokerole-pmd-extension/initiative'] === undefined
-                );
+                const nonInitItems = items.filter((item) => {
+                    if (
+                        item.layer !== 'CHARACTER' ||
+                        item.metadata['pokerole-pmd-extension/initiative'] !== undefined
+                    ) {
+                        return false;
+                    }
+                    if (!currentIsGM) {
+                        const store = useCharacterStore.getState();
+                        const isNpc = extractIsNpc(
+                            item.metadata,
+                            store.tokenId === item.id && Boolean(store.identity.isNPC)
+                        );
+                        if (item.visible === false || isNpc) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
                 setAvailableObrChars(
                     nonInitItems.map((i) => ({
                         id: i.id,
@@ -309,7 +350,7 @@ export function useInitiativeEngine() {
 
                 const parsed: Combatant[] = initItems.map((item) => {
                     const meta = item.metadata['pokerole-pmd-extension/initiative'] as
-                        | { value?: number; base?: number; tiebreaker?: number }
+                        | { value?: number; base?: number; tiebreaker?: number; hidden?: boolean }
                         | undefined;
                     const imgItem = item as Image;
                     const val = typeof meta?.value === 'number' ? meta.value : 0;
@@ -328,6 +369,12 @@ export function useInitiativeEngine() {
                     const tie = typeof meta?.tiebreaker === 'number' ? meta.tiebreaker : 0;
                     const rawD6 = integerTotal > dynamicBaseInit ? integerTotal - dynamicBaseInit : 0;
                     const resolvedName = extractCharacterName(item.metadata as Record<string, unknown>, item.name);
+                    const isHidden = meta?.hidden === true || item.visible === false;
+                    const store = useCharacterStore.getState();
+                    const isNPC = extractIsNpc(
+                        item.metadata,
+                        store.tokenId === item.id && Boolean(store.identity.isNPC)
+                    );
 
                     return {
                         id: item.id,
@@ -337,10 +384,14 @@ export function useInitiativeEngine() {
                         d6: rawD6,
                         baseInit: dynamicBaseInit,
                         total: integerTotal,
-                        tiebreaker: tie
+                        tiebreaker: tie,
+                        hidden: isHidden,
+                        isNPC: isNPC
                     };
                 });
-                setCombatants(sortCombatants(parsed));
+
+                const visibleCombatants = currentIsGM ? parsed : parsed.filter((c) => !c.hidden);
+                setCombatants(sortCombatants(visibleCombatants));
             };
 
             const initializeCombatants = async () => {
@@ -417,7 +468,11 @@ export function useInitiativeEngine() {
         await OBR.scene.items
             .updateItems([id], (items) => {
                 for (const item of items) {
+                    const existing =
+                        (item.metadata['pokerole-pmd-extension/initiative'] as Record<string, unknown> | undefined) ||
+                        {};
                     item.metadata['pokerole-pmd-extension/initiative'] = {
+                        ...existing,
                         value: encodedValue,
                         base: baseInitiative,
                         tiebreaker: forceTiebreaker
@@ -632,8 +687,14 @@ export function useInitiativeEngine() {
         setCombatants((prevCombatants) => {
             if (prevCombatants.find((c) => c.id === char.id)) return prevCombatants;
 
-            const baseInit = calculateBaseInitFromCharacterData(char.rawMetadata, useCharacterStore.getState());
+            const store = useCharacterStore.getState();
+            const baseInit = calculateBaseInitFromCharacterData(char.rawMetadata, store);
             const resolvedName = extractCharacterName(char.rawMetadata, char.name);
+            const isNpc = extractIsNpc(
+                char.rawMetadata,
+                store.tokenId === char.id && Boolean(store.identity.isNPC)
+            );
+            const shouldHide = isNpc && store.identity.defaultNpcInitiativeHidden !== false;
             const newList = sortCombatants([
                 ...prevCombatants,
                 {
@@ -643,7 +704,9 @@ export function useInitiativeEngine() {
                     d6: 0,
                     baseInit: baseInit,
                     total: baseInit,
-                    tiebreaker: 0
+                    tiebreaker: 0,
+                    hidden: shouldHide,
+                    isNPC: isNpc
                 }
             ]);
 
@@ -660,14 +723,26 @@ export function useInitiativeEngine() {
     const handleAddObrCombatant = async (item: Item) => {
         if (!OBR.isAvailable) return;
         try {
-            const dynamicBaseInit = calculateBaseInitFromCharacterData(item.metadata, useCharacterStore.getState());
+            const store = useCharacterStore.getState();
+            const dynamicBaseInit = calculateBaseInitFromCharacterData(item.metadata, store);
             const encodedValue = calculateEncodedInitiative(dynamicBaseInit, dynamicBaseInit, 0);
+
             await OBR.scene.items.updateItems([item.id], (items) => {
                 for (const i of items) {
+                    const isTargetNpc = extractIsNpc(
+                        i.metadata,
+                        store.tokenId === i.id && Boolean(store.identity.isNPC)
+                    );
+                    const shouldHide =
+                        (isTargetNpc && store.identity.defaultNpcInitiativeHidden !== false) || i.visible === false;
+                    const existing =
+                        (i.metadata['pokerole-pmd-extension/initiative'] as Record<string, unknown> | undefined) || {};
                     i.metadata['pokerole-pmd-extension/initiative'] = {
+                        ...existing,
                         value: encodedValue,
                         base: dynamicBaseInit,
-                        tiebreaker: 0
+                        tiebreaker: 0,
+                        hidden: shouldHide ? true : existing.hidden === true ? true : false
                     };
                 }
             });
@@ -756,6 +831,36 @@ export function useInitiativeEngine() {
         return availableChars.filter((char) => !combatants.some((c) => c.id === char.id));
     }, [availableChars, combatants]);
 
+    const toggleVisibility = async (id: string) => {
+        if (isStandaloneMode) {
+            const updated = combatants.map((c) => (c.id === id ? { ...c, hidden: !c.hidden } : c));
+            setCombatants(updated);
+            try {
+                localStorage.setItem('pkr_standalone_init_list', JSON.stringify(updated));
+                window.dispatchEvent(new Event('pkr-standalone-init-update'));
+            } catch (error) {
+                console.error('[InitiativeEngine] Failed to save visibility to localStorage:', error);
+            }
+            return;
+        }
+
+        if (!OBR.isAvailable) return;
+        await OBR.scene.items
+            .updateItems([id], (items) => {
+                for (const item of items) {
+                    const existing =
+                        (item.metadata['pokerole-pmd-extension/initiative'] as Record<string, unknown> | undefined) ||
+                        {};
+                    const currentHidden = existing.hidden === true || item.visible === false;
+                    item.metadata['pokerole-pmd-extension/initiative'] = {
+                        ...existing,
+                        hidden: !currentHidden
+                    };
+                }
+            })
+            .catch((error) => console.error('[InitiativeEngine] Failed to toggle combatant visibility:', error));
+    };
+
     return {
         combatants: displayCombatants,
         activeTurnId,
@@ -771,6 +876,7 @@ export function useInitiativeEngine() {
         fetchAvailableCharacters,
         updateInit,
         removeInit,
+        toggleVisibility,
         nextTurn,
         prevTurn,
         handleRollAll,

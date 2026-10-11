@@ -14,6 +14,8 @@ export function RulesSectionPermissions({ onOpenInfo }: RulesSectionPermissionsP
     const gmOnlyDamageOverride = useCharacterStore((state) => state.identity.gmOnlyDamageOverride);
     const gmOnlyMatchups = useCharacterStore((state) => state.identity.gmOnlyMatchups);
     const gmOnlyAttributeLock = useCharacterStore((state) => state.identity.gmOnlyAttributeLock);
+    const gmOnlyPullEnemies = useCharacterStore((state) => state.identity.gmOnlyPullEnemies);
+    const defaultNpcInitiativeHidden = useCharacterStore((state) => state.identity.defaultNpcInitiativeHidden);
     const updateRoomSetting = useCharacterStore((state) => state.updateRoomSetting);
 
     if (isStandaloneMode) {
@@ -193,6 +195,65 @@ export function RulesSectionPermissions({ onOpenInfo }: RulesSectionPermissionsP
                             e,
                             updateRoomSetting
                         )
+                    }
+                >
+                    <option value="GM Only">GM Only</option>
+                    <option value="Everyone">Everyone</option>
+                </select>
+            </div>
+
+            <div>
+                <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
+                    Default NPC Initiative{' '}
+                    <TooltipIcon
+                        onClick={() =>
+                            onOpenInfo({
+                                title: 'Default NPC Initiative Visibility',
+                                content:
+                                    'Controls whether newly rolled NPC combatants are hidden from non-GM players by default on the Initiative Tracker. The GM can always toggle visibility per combatant using the eyeball icon on their card. (Global Room Setting)'
+                            })
+                        }
+                    />
+                </label>
+                <select
+                    className="identity-grid__select rules-modal__select text-subtext"
+                    style={{ color: 'var(--text-main)' }}
+                    value={defaultNpcInitiativeHidden !== false ? 'Hidden (GM Only)' : 'Visible to Everyone'}
+                    onWheel={(e) => e.currentTarget.blur()}
+                    onChange={(e) =>
+                        handleRoomSelectChange(
+                            'defaultNpcInitiativeHidden',
+                            e.target.value === 'Hidden (GM Only)',
+                            e,
+                            updateRoomSetting
+                        )
+                    }
+                >
+                    <option value="Hidden (GM Only)">Hidden (GM Only)</option>
+                    <option value="Visible to Everyone">Visible to Everyone</option>
+                </select>
+            </div>
+
+            <div>
+                <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
+                    Pull Enemies into Battle Organizer{' '}
+                    <TooltipIcon
+                        onClick={() =>
+                            onOpenInfo({
+                                title: 'Pull Enemies into Battle Organizer',
+                                content:
+                                    'Controls whether non-GM players can pull NPC tokens and hidden combatants into their Battle Organizer. Defaults to GM Only. (Global Room Setting)'
+                            })
+                        }
+                    />
+                </label>
+                <select
+                    className="identity-grid__select rules-modal__select text-subtext"
+                    style={{ color: 'var(--text-main)' }}
+                    value={gmOnlyPullEnemies !== false ? 'GM Only' : 'Everyone'}
+                    onWheel={(e) => e.currentTarget.blur()}
+                    onChange={(e) =>
+                        handleRoomSelectChange('gmOnlyPullEnemies', e.target.value === 'GM Only', e, updateRoomSetting)
                     }
                 >
                     <option value="GM Only">GM Only</option>

@@ -54,6 +54,10 @@ export interface CombatantRowData {
     tempWill?: number;
     activeTransformation?: string;
     isNPC?: boolean;
+    gmHpBar?: boolean;
+    gmHpText?: boolean;
+    gmWillBar?: boolean;
+    gmWillText?: boolean;
 }
 
 export interface BattleRoundData {

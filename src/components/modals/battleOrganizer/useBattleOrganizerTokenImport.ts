@@ -5,7 +5,8 @@ import { useCharacterStore } from '../../../store/useCharacterStore';
 import {
     extractTokenImage,
     extractCharacterName,
-    calculateBaseInitFromCharacterData
+    calculateBaseInitFromCharacterData,
+    extractIsNpc
 } from '../../../utils/combat/initiativeHelpers';
 import { extractEntityId } from '../../../hooks/owlbearSync/setupOwlbearTokenSync';
 import type { BattleOrganizerState, BattleRoundData, CombatantRowData } from '../../../types/battleOrganizerTypes';
@@ -13,6 +14,7 @@ import {
     parseStatusesFromMetadata,
     parseHealthAndWillFromMetadata,
     parseHeldItemsFromMetadata,
+    parseTokenPrivacyFlags,
     createDefaultActions
 } from './battleOrganizerUtils';
 
@@ -32,6 +34,9 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
 
             try {
                 const combatantRows: CombatantRowData[] = [];
+                const role = useCharacterStore.getState().role;
+                const gmOnlyPullEnemies = useCharacterStore.getState().identity.gmOnlyPullEnemies ?? true;
+                const shouldFilterEnemies = role !== 'GM' && gmOnlyPullEnemies;
 
                 if (isStandaloneMode) {
                     const localChars = await storageAdapter.getLocalCharacters();
@@ -85,7 +90,13 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                                 String(matchingChar?.name || initItem.name || `Combatant ${idx + 1}`)
                             );
 
-                            const isNPC = meta['is-npc'] === true || meta['is-npc'] === 'true';
+                            const isNPC = extractIsNpc(matchingChar?.metadata || initItem);
+                            const isHidden = initItem.hidden === true || initItem.visible === false;
+                            if (shouldFilterEnemies && (isNPC || isHidden)) {
+                                return;
+                            }
+
+                            const { gmHpBar, gmHpText, gmWillBar, gmWillText } = parseTokenPrivacyFlags(meta);
 
                             combatantRows.push({
                                 id: crypto.randomUUID(),
@@ -111,7 +122,11 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                                 tempHp,
                                 tempWill,
                                 activeTransformation,
-                                isNPC
+                                isNPC,
+                                gmHpBar,
+                                gmHpText,
+                                gmWillBar,
+                                gmWillText
                             });
                         });
                     }
@@ -120,7 +135,19 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                     if (!isReady) return;
 
                     const allItems = await OBR.scene.items.getItems((item) => item.layer === 'CHARACTER');
-                    const initItems = allItems.filter((item) => item.metadata['pokerole-pmd-extension/initiative']);
+                    let initItems = allItems.filter((item) => item.metadata['pokerole-pmd-extension/initiative']);
+
+                    if (shouldFilterEnemies) {
+                        initItems = initItems.filter((item) => {
+                            const meta = item.metadata;
+                            const isNPC = extractIsNpc(item.metadata);
+                            const initMeta = meta['pokerole-pmd-extension/initiative'] as
+                                | { hidden?: boolean }
+                                | undefined;
+                            const isHidden = initMeta?.hidden === true || item.visible === false;
+                            return !isNPC && !isHidden;
+                        });
+                    }
 
                     const sortedItems = [...initItems].sort((a, b) => {
                         const metaA = a.metadata['pokerole-pmd-extension/initiative'] as { value?: number } | undefined;
@@ -165,11 +192,9 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                         const charName = extractCharacterName(statsMeta, item.name);
                         const tokenImage = imgItem.image?.url || extractTokenImage(statsMeta) || '';
 
-                        const isNPC =
-                            statsMeta['is-npc'] === true ||
-                            statsMeta['is-npc'] === 'true' ||
-                            meta['is-npc'] === true ||
-                            meta['is-npc'] === 'true';
+                        const isNPC = extractIsNpc(item.metadata);
+
+                        const { gmHpBar, gmHpText, gmWillBar, gmWillText } = parseTokenPrivacyFlags(statsMeta, meta);
 
                         combatantRows.push({
                             id: crypto.randomUUID(),
@@ -193,7 +218,11 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                             tempHp,
                             tempWill,
                             activeTransformation,
-                            isNPC
+                            isNPC,
+                            gmHpBar,
+                            gmHpText,
+                            gmWillBar,
+                            gmWillText
                         });
                     });
                 }

@@ -26,6 +26,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
         fetchAvailableCharacters,
         updateInit,
         removeInit,
+        toggleVisibility,
         nextTurn,
         prevTurn,
         handleRollAll,
@@ -115,6 +116,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
         setShowAddMenu,
         updateInit,
         removeInit,
+        toggleVisibility,
         handleAddStandaloneCombatant,
         handleAddObrCombatant
     };
