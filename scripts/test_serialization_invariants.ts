@@ -1,7 +1,33 @@
 import assert from 'node:assert/strict';
-import { flattenStateToMetadata } from '../src/utils/sync/flattenStateToMetadata';
 import type { CharacterState } from '../src/store/storeTypes';
-import { applyRoomUpdatesToMeta, mapRoomSettings } from '../src/utils/sync/roomSettingsMeta';
+
+// Mock browser globals before any module imports that evaluate @owlbear-rodeo/sdk
+const localStorageStore: Record<string, string> = {};
+const mockWindow: Record<string, unknown> = {
+    location: { search: '', href: 'http://localhost/' },
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    parent: { postMessage: () => {} }
+};
+mockWindow.self = mockWindow;
+mockWindow.top = mockWindow;
+(globalThis as any).window = mockWindow;
+(globalThis as any).localStorage = {
+    getItem: (key: string) => localStorageStore[key] || null,
+    setItem: (key: string, val: string) => {
+        localStorageStore[key] = String(val);
+    },
+    removeItem: (key: string) => {
+        delete localStorageStore[key];
+    },
+    clear: () => {
+        Object.keys(localStorageStore).forEach((k) => delete localStorageStore[k]);
+    }
+};
+
+const { flattenStateToMetadata } = await import('../src/utils/sync/flattenStateToMetadata');
+const { hydrateStateFromMetadata } = await import('../src/utils/sync/stateMapper');
+const { applyRoomUpdatesToMeta, mapRoomSettings } = await import('../src/utils/sync/roomSettingsMeta');
 
 /**
  * Automated Verification Suite for Token Metadata & Serialization Invariants.
@@ -29,10 +55,20 @@ function runTest(name: string, fn: () => void) {
     }
 }
 
+type DeepPartial<T> = {
+    [P in keyof T]?: T[P] extends (infer U)[]
+        ? DeepPartial<U>[]
+        : T[P] extends readonly (infer U)[]
+          ? readonly DeepPartial<U>[]
+          : T[P] extends object
+            ? DeepPartial<T[P]>
+            : T[P];
+};
+
 /**
  * Helper to generate a minimal valid CharacterState for testing serialization.
  */
-function createTestCharacterState(overrides: Partial<CharacterState> = {}): CharacterState {
+function createTestCharacterState(overrides: DeepPartial<CharacterState> = {}): CharacterState {
     const defaultState = {
         notes: '',
         tp: 0,
@@ -203,7 +239,8 @@ function createTestCharacterState(overrides: Partial<CharacterState> = {}): Char
         will: { ...defaultState.will, ...(overrides.will || {}) },
         derived: { ...defaultState.derived, ...(overrides.derived || {}) },
         extras: { ...defaultState.extras, ...(overrides.extras || {}) },
-        trackers: { ...defaultState.trackers, ...(overrides.trackers || {}) }
+        trackers: { ...defaultState.trackers, ...(overrides.trackers || {}) },
+        skills: { ...defaultState.skills, ...(overrides.skills || {}) }
     } as unknown as CharacterState;
 }
 
@@ -301,7 +338,7 @@ runTest('Explicitly serializes numeric 0 for offsets, buffs, and debuffs', () =>
             evaOffsetY: 0,
             claOffsetX: 0,
             claOffsetY: 0
-        } as any
+        }
     });
 
     const meta = flattenStateToMetadata(state);
@@ -351,7 +388,7 @@ runTest('Explicitly serializes boolean false for trackers and toggles', () => {
             gmDefBadge: false,
             settingEcoBadge: false,
             gmEcoBadge: false
-        } as any
+        }
     });
 
     const meta = flattenStateToMetadata(state);
@@ -391,7 +428,7 @@ runTest('Explicitly serializes empty collections as "[]"', () => {
         customInfo: [],
         identity: {
             badges: []
-        } as any
+        }
     });
 
     const meta = flattenStateToMetadata(state);
@@ -492,7 +529,7 @@ runTest('Delta merging resets stale token metadata without leaving phantom state
             activeTransformation: 'None',
             activeFormId: '',
             colorAct: '#4890fc'
-        } as any,
+        },
         skills: {
             brawl: { base: 0, buff: 0, customName: '' }
         }
@@ -696,6 +733,47 @@ runTest('applyRoomUpdatesToMeta and mapRoomSettings serialize explicit false and
     assert.equal(checkCanUse(false, false), true, 'Player can access when Everyone');
     assert.equal(checkCanUse(false, true), false, 'Player blocked when GM Only');
     assert.equal(checkCanUse(false, undefined), false, 'Player blocked when undefined');
+});
+
+runTest('hydrateStateFromMetadata hydrates gmEcoBadge and round-trips through flattenStateToMetadata', () => {
+    const baseState = createTestCharacterState();
+
+    // 1. Hydrate from meta with boolean true
+    const metaWithTrue = { 'gm-eco-badge': true };
+    const hydratedTrue = hydrateStateFromMetadata(metaWithTrue, baseState);
+    assert.equal(hydratedTrue.identity?.gmEcoBadge, true, 'gmEcoBadge should hydrate as true from boolean true');
+
+    // 2. Hydrate from meta with string "true"
+    const metaWithStringTrue = { 'gm-eco-badge': 'true' };
+    const hydratedStringTrue = hydrateStateFromMetadata(metaWithStringTrue, baseState);
+    assert.equal(hydratedStringTrue.identity?.gmEcoBadge, true, 'gmEcoBadge should hydrate as true from string "true"');
+
+    // 3. Hydrate from meta with false / 'false'
+    const metaWithFalse = { 'gm-eco-badge': false };
+    const hydratedFalse = hydrateStateFromMetadata(metaWithFalse, baseState);
+    assert.equal(hydratedFalse.identity?.gmEcoBadge, false, 'gmEcoBadge should hydrate as false from boolean false');
+
+    const metaWithStringFalse = { 'gm-eco-badge': 'false' };
+    const hydratedStringFalse = hydrateStateFromMetadata(metaWithStringFalse, baseState);
+    assert.equal(
+        hydratedStringFalse.identity?.gmEcoBadge,
+        false,
+        'gmEcoBadge should hydrate as false from string "false"'
+    );
+
+    // 4. Round-trip through flattenStateToMetadata preserves 'gm-eco-badge': true
+    const stateWithGmEco = createTestCharacterState({
+        identity: {
+            ...baseState.identity,
+            gmEcoBadge: true
+        }
+    });
+    const flattened = flattenStateToMetadata(stateWithGmEco);
+    assert.equal(flattened['gm-eco-badge'], true, 'flattenStateToMetadata should output "gm-eco-badge": true');
+
+    // 5. Hydrate back from flattened metadata
+    const rehydrated = hydrateStateFromMetadata(flattened, baseState);
+    assert.equal(rehydrated.identity?.gmEcoBadge, true, 're-hydrating flattened metadata preserves gmEcoBadge: true');
 });
 
 console.log('\n=============================================');

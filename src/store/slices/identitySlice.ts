@@ -710,7 +710,8 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                     field === 'nickname' ||
                     field === 'species' ||
                     field === 'rank' ||
-                    field === 'tokenImageUrl')
+                    field === 'tokenImageUrl' ||
+                    Object.keys(updatesToSave).length > 0)
             ) {
                 const summaries = state.pcData.pokemonSummaries;
                 const matchEntry = Object.entries(summaries).find(
@@ -740,6 +741,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                         tokenImageUrl: field === 'tokenImageUrl' ? (value as string) : sum.tokenImageUrl,
                         fullMetadata: {
                             ...(sum.fullMetadata || {}),
+                            ...updatesToSave,
                             nickname: cleanNick,
                             species: nextSpecies,
                             name: nextDisplayName,

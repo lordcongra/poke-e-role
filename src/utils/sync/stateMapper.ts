@@ -553,7 +553,7 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
                 : meta['tokenImageUrl']
                   ? String(meta['tokenImageUrl'])
                   : '';
-            const defaultTokenUrl = `${(import.meta.env.BASE_URL || '/').replace(/\/$/, '')}/pokeball-token.svg`;
+            const defaultTokenUrl = `${((typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL) || '/').replace(/\/$/, '')}/pokeball-token.svg`;
             if (!raw || raw.endsWith('pokeball.svg')) {
                 return defaultTokenUrl;
             }
@@ -596,6 +596,7 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
         settingDefBadge: meta['setting-def-badge'] !== false && meta['setting-def-badge'] !== 'false',
         gmDefBadge: meta['gm-def-badge'] === true || meta['gm-def-badge'] === 'true',
         settingEcoBadge: meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
+        gmEcoBadge: meta['gm-eco-badge'] === true || meta['gm-eco-badge'] === 'true',
         colorAct: String(meta['color-act'] || '#4890fc'),
         colorEva: String(meta['color-eva'] || '#c387fc'),
         colorCla: String(meta['color-cla'] || '#dfad43'),

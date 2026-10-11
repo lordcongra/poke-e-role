@@ -47,11 +47,29 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
 
     // Store Actions
     const {
-        setActiveBoxIndex, setSelectedPcSlot, swapPcSlots, movePokemonToParty, depositPokemonToBox,
-        setPartySlot, setBoxSlot, addBox, deleteBox, renameBox, setBoxTheme,
-        switchTrainer, addTrainer, deleteTrainer, switchCampaign, addCampaign,
-        editCampaign, deleteCampaign, updatePokemonSummary, updateTrainerProfile,
-        renameTrainer, reorderTrainers, deletePokemonFromPc
+        setActiveBoxIndex,
+        setSelectedPcSlot,
+        swapPcSlots,
+        movePokemonToParty,
+        depositPokemonToBox,
+        setPartySlot,
+        setBoxSlot,
+        addBox,
+        deleteBox,
+        renameBox,
+        setBoxTheme,
+        switchTrainer,
+        addTrainer,
+        deleteTrainer,
+        switchCampaign,
+        addCampaign,
+        editCampaign,
+        deleteCampaign,
+        updatePokemonSummary,
+        updateTrainerProfile,
+        renameTrainer,
+        reorderTrainers,
+        deletePokemonFromPc
     } = useCharacterStore.getState();
 
     const [contextMenu, setContextMenu] = useState<{

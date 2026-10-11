@@ -74,7 +74,8 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
     const sdefTotal = calculateSDefTotal(state, invMods);
 
     return {
-        showTrackers: state.identity.showTrackers,
+        showTrackers:
+            state.identity.showTrackers ?? (meta['show-trackers'] !== false && meta['show-trackers'] !== 'false'),
         hasSpeciesOrTrainer:
             state.identity.species.trim() !== '' ||
             state.identity.nickname.trim() !== '' ||
@@ -92,21 +93,31 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
         actions: state.trackers.actions,
         evadeUsed: state.trackers.evade,
         clashUsed: state.trackers.clash,
-        showHpBar: meta['setting-hp-bar'] !== false && meta['setting-hp-bar'] !== 'false',
-        gmHpBar: meta['gm-hp-bar'] === true || meta['gm-hp-bar'] === 'true',
-        showHpText: meta['setting-hp-text'] !== false && meta['setting-hp-text'] !== 'false',
-        gmHpText: meta['gm-hp-text'] === true || meta['gm-hp-text'] === 'true',
-        showWillBar: meta['setting-will-bar'] !== false && meta['setting-will-bar'] !== 'false',
-        gmWillBar: meta['gm-will-bar'] === true || meta['gm-will-bar'] === 'true',
-        showWillText: meta['setting-will-text'] !== false && meta['setting-will-text'] !== 'false',
-        gmWillText: meta['gm-will-text'] === true || meta['gm-will-text'] === 'true',
-        showDef: meta['setting-def-badge'] !== false && meta['setting-def-badge'] !== 'false',
-        gmDef: meta['gm-def-badge'] === true || meta['gm-def-badge'] === 'true',
-        showEco: meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
-        gmEco: meta['gm-eco-badge'] === true || meta['gm-eco-badge'] === 'true',
-        colorAct: String(meta['color-act'] || DEFAULT_COLOR_ACT),
-        colorEva: String(meta['color-eva'] || DEFAULT_COLOR_EVA),
-        colorCla: String(meta['color-cla'] || DEFAULT_COLOR_CLA),
+        showHpBar:
+            state.identity.settingHpBar ?? (meta['setting-hp-bar'] !== false && meta['setting-hp-bar'] !== 'false'),
+        gmHpBar: state.identity.gmHpBar ?? (meta['gm-hp-bar'] === true || meta['gm-hp-bar'] === 'true'),
+        showHpText:
+            state.identity.settingHpText ?? (meta['setting-hp-text'] !== false && meta['setting-hp-text'] !== 'false'),
+        gmHpText: state.identity.gmHpText ?? (meta['gm-hp-text'] === true || meta['gm-hp-text'] === 'true'),
+        showWillBar:
+            state.identity.settingWillBar ??
+            (meta['setting-will-bar'] !== false && meta['setting-will-bar'] !== 'false'),
+        gmWillBar: state.identity.gmWillBar ?? (meta['gm-will-bar'] === true || meta['gm-will-bar'] === 'true'),
+        showWillText:
+            state.identity.settingWillText ??
+            (meta['setting-will-text'] !== false && meta['setting-will-text'] !== 'false'),
+        gmWillText: state.identity.gmWillText ?? (meta['gm-will-text'] === true || meta['gm-will-text'] === 'true'),
+        showDef:
+            state.identity.settingDefBadge ??
+            (meta['setting-def-badge'] !== false && meta['setting-def-badge'] !== 'false'),
+        gmDef: state.identity.gmDefBadge ?? (meta['gm-def-badge'] === true || meta['gm-def-badge'] === 'true'),
+        showEco:
+            state.identity.settingEcoBadge ??
+            (meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false'),
+        gmEco: state.identity.gmEcoBadge ?? (meta['gm-eco-badge'] === true || meta['gm-eco-badge'] === 'true'),
+        colorAct: String(state.identity.colorAct || meta['color-act'] || DEFAULT_COLOR_ACT),
+        colorEva: String(state.identity.colorEva || meta['color-eva'] || DEFAULT_COLOR_EVA),
+        colorCla: String(state.identity.colorCla || meta['color-cla'] || DEFAULT_COLOR_CLA),
 
         trackerScale: state.identity.trackerScale ?? 100,
         trackerLayer: state.identity.trackerLayer ?? 'ATTACHMENT',
