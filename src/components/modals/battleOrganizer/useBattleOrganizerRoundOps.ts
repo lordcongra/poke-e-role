@@ -11,6 +11,7 @@ import type {
     BattleOrganizerTimerEffect
 } from '../../../types/battleOrganizerTypes';
 import { createDefaultActions, createDefaultCombatant } from './battleOrganizerUtils';
+import { detectMoveFieldEffect } from '../../../utils/combat/fieldEffectsData';
 
 export interface UseBattleOrganizerRoundOpsProps {
     updateState: (
@@ -417,6 +418,38 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
         [updateState]
     );
 
+    const activateFieldEffectFromMove = useCallback(
+        (moveName: string, isPlayerSide: boolean = true) => {
+            const def = detectMoveFieldEffect(moveName);
+            if (!def) return;
+
+            updateState((prev) => {
+                const bf = { ...prev.battlefield };
+                if (def.category === 'weather') {
+                    bf.weather = { name: def.effectName, remainingRounds: def.rounds };
+                } else if (def.category === 'terrain') {
+                    bf.terrain = { name: def.effectName, remainingRounds: def.rounds };
+                } else if (def.category === 'other') {
+                    bf.other = { name: def.effectName, remainingRounds: def.rounds };
+                } else if (def.category === 'forceField') {
+                    const sideKey = isPlayerSide ? 'playerSide' : 'foeSide';
+                    const side = { ...bf[sideKey] };
+                    const forceFields = [...side.forceFields] as [
+                        BattleOrganizerTimerEffect,
+                        BattleOrganizerTimerEffect
+                    ];
+                    const emptyIdx = forceFields.findIndex((f) => !f.name.trim() || f.remainingRounds <= 0);
+                    const targetIdx = emptyIdx !== -1 ? emptyIdx : 0;
+                    forceFields[targetIdx] = { name: def.effectName, remainingRounds: def.rounds };
+                    side.forceFields = forceFields;
+                    bf[sideKey] = side;
+                }
+                return { ...prev, battlefield: bf };
+            }, true);
+        },
+        [updateState]
+    );
+
     return {
         addRound,
         duplicateRound,
@@ -430,6 +463,7 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
         updateBattlefieldOther,
         updatePlayerSide,
         updateFoeSide,
-        updateEndOfRoundEffects
+        updateEndOfRoundEffects,
+        activateFieldEffectFromMove
     };
 }

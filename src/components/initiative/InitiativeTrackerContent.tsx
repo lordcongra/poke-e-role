@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, Dices, Plus } from 'lucide-react';
 import { CombatantCard } from './CombatantCard';
 import { AddCombatantModal } from './AddCombatantModal';
+import { InitiativeFieldEffectsBar } from './InitiativeFieldEffectsBar';
 import type { Item } from '@owlbear-rodeo/sdk';
 import type { Combatant } from '../../utils/combat/initiativeHelpers';
 import type { StandaloneCharOption, ObrCharOption } from './AddCombatantModal';
@@ -91,6 +92,8 @@ export function InitiativeTrackerContent({
                             </button>
                         </div>
                     )}
+
+                    <InitiativeFieldEffectsBar />
                 </div>
             </div>
 

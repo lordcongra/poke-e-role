@@ -1,0 +1,143 @@
+import { useState } from 'react';
+import { useCharacterStore } from '../../store/useCharacterStore';
+import {
+    getFieldEffectInfo,
+    FieldEffectIcon,
+    type FieldEffectInfo
+} from '../../utils/combat/fieldEffectsData';
+import './ActiveFieldEffectsRow.css';
+
+interface FieldRowItem {
+    id: string;
+    info: FieldEffectInfo;
+    remainingRounds: number;
+    prefix?: string;
+}
+
+export function ActiveFieldEffectsRow() {
+    const activeBattlefield = useCharacterStore((state) => state.activeBattlefield);
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+
+    if (!activeBattlefield) return null;
+
+    const items: FieldRowItem[] = [];
+
+    // Weather
+    if (activeBattlefield.weather?.name?.trim() && (activeBattlefield.weather.remainingRounds ?? 0) > 0) {
+        items.push({
+            id: 'weather',
+            info: getFieldEffectInfo(activeBattlefield.weather.name, 'weather'),
+            remainingRounds: activeBattlefield.weather.remainingRounds,
+            prefix: 'Weather'
+        });
+    }
+
+    // Terrain
+    if (activeBattlefield.terrain?.name?.trim() && (activeBattlefield.terrain.remainingRounds ?? 0) > 0) {
+        items.push({
+            id: 'terrain',
+            info: getFieldEffectInfo(activeBattlefield.terrain.name, 'terrain'),
+            remainingRounds: activeBattlefield.terrain.remainingRounds,
+            prefix: 'Terrain'
+        });
+    }
+
+    // Other / Room Effect
+    if (activeBattlefield.other?.name?.trim() && (activeBattlefield.other.remainingRounds ?? 0) > 0) {
+        items.push({
+            id: 'other',
+            info: getFieldEffectInfo(activeBattlefield.other.name, 'other'),
+            remainingRounds: activeBattlefield.other.remainingRounds,
+            prefix: 'Global'
+        });
+    }
+
+    // Player Force Fields
+    activeBattlefield.playerSide?.forceFields?.forEach((ff, idx) => {
+        if (ff.name?.trim() && (ff.remainingRounds ?? 0) > 0) {
+            items.push({
+                id: `player-ff-${idx}`,
+                info: getFieldEffectInfo(ff.name, 'forceField'),
+                remainingRounds: ff.remainingRounds,
+                prefix: 'Ally Field'
+            });
+        }
+    });
+
+    // Foe Force Fields
+    activeBattlefield.foeSide?.forceFields?.forEach((ff, idx) => {
+        if (ff.name?.trim() && (ff.remainingRounds ?? 0) > 0) {
+            items.push({
+                id: `foe-ff-${idx}`,
+                info: getFieldEffectInfo(ff.name, 'forceField'),
+                remainingRounds: ff.remainingRounds,
+                prefix: 'Foe Field'
+            });
+        }
+    });
+
+    if (items.length === 0) return null;
+
+    return (
+        <div className="sheet-field-effects-row">
+            <div className="sheet-field-effects-list">
+                {items.map((item) => {
+                    const isSelected = selectedId === item.id;
+                    const color = item.info.color;
+
+                    return (
+                        <div key={item.id} className="sheet-field-pill-wrap">
+                            <button
+                                type="button"
+                                className={`sheet-field-pill ${isSelected ? 'is-selected' : ''}`}
+                                style={{
+                                    borderColor: color,
+                                    background: `color-mix(in srgb, ${color} 15%, var(--panel-bg))`
+                                }}
+                                onClick={() => setSelectedId((curr) => (curr === item.id ? null : item.id))}
+                                title={`${item.prefix ? item.prefix + ': ' : ''}${item.info.name} (${item.remainingRounds} Rnds) - Click for rules`}
+                            >
+                                <span className="sheet-field-pill__icon" style={{ color }}>
+                                    <FieldEffectIcon icon={item.info.icon} size={13} />
+                                </span>
+                                <span className="sheet-field-pill__label">
+                                    {item.info.name}
+                                </span>
+                                <span className="sheet-field-pill__rounds">
+                                    {item.remainingRounds} {item.remainingRounds === 1 ? 'Rnd' : 'Rnds'}
+                                </span>
+                            </button>
+
+                            {isSelected && (
+                                <div className="sheet-field-card" style={{ borderColor: color }}>
+                                    <div className="sheet-field-card__header">
+                                        <div className="sheet-field-card__title">
+                                            <FieldEffectIcon icon={item.info.icon} size={14} />
+                                            <span>{item.info.name}</span>
+                                        </div>
+                                        <span
+                                            className="sheet-field-card__badge"
+                                            style={{ backgroundColor: color, color: '#ffffff' }}
+                                        >
+                                            {item.info.badge}
+                                        </span>
+                                    </div>
+                                    <div className="sheet-field-card__rounds-info text-subtext">
+                                        Duration: {item.remainingRounds} {item.remainingRounds === 1 ? 'Round' : 'Rounds'} remaining
+                                    </div>
+                                    <ul className="sheet-field-card__effects">
+                                        {item.info.effects.map((eff, idx) => (
+                                            <li key={idx} className="sheet-field-card__effect-item">
+                                                {eff}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}

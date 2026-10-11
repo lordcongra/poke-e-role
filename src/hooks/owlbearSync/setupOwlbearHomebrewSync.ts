@@ -89,7 +89,11 @@ export function setupOwlbearHomebrewSync(role: 'PLAYER' | 'GM'): OwlbearHomebrew
         try {
             const incoming = event.data as BattleOrganizerState;
             if (incoming && incoming.battlefield) {
-                useCharacterStore.getState().setActiveBattlefield(incoming.battlefield);
+                if (role !== 'GM' && incoming.battlefield.broadcastToPlayers === false) {
+                    useCharacterStore.getState().setActiveBattlefield(null);
+                } else {
+                    useCharacterStore.getState().setActiveBattlefield(incoming.battlefield);
+                }
             }
         } catch (e) {
             console.warn('[SyncEngine] Failed to process incoming battlefield from battle-organizer-sync:', e);

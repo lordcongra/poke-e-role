@@ -249,7 +249,12 @@ export function useBattleOrganizerSync({
                     }
 
                     if (incoming.battlefield) {
-                        useCharacterStore.getState().setActiveBattlefield(incoming.battlefield);
+                        const currentRole = useCharacterStore.getState().role;
+                        if (currentRole !== 'GM' && incoming.battlefield.broadcastToPlayers === false) {
+                            useCharacterStore.getState().setActiveBattlefield(null);
+                        } else {
+                            useCharacterStore.getState().setActiveBattlefield(incoming.battlefield);
+                        }
                     }
                     setState(incoming);
                 } catch (err) {

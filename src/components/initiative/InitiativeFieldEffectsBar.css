@@ -1,0 +1,127 @@
+.init-field-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+
+.init-field-badge-wrap {
+    position: relative;
+    display: inline-flex;
+}
+
+.init-field-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1.2;
+    border-radius: 4px;
+    border: 1px solid var(--primary);
+    background: color-mix(in srgb, var(--panel-bg) 85%, var(--primary));
+    color: var(--text-main);
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+    white-space: nowrap;
+}
+
+.init-field-badge:hover,
+.init-field-badge.is-active {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.init-field-badge__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.init-field-badge__name {
+    letter-spacing: 0.02em;
+}
+
+.init-field-badge__rounds {
+    opacity: 0.85;
+    font-size: 0.65rem;
+    padding: 0 3px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.25);
+}
+
+/* Floating Popover */
+.init-field-popover {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 1000;
+    min-width: 200px;
+    max-width: 260px;
+    background: var(--panel-bg);
+    border: 1px solid var(--primary);
+    border-radius: 6px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+    padding: 8px 10px;
+    pointer-events: auto;
+    font-size: 0.72rem;
+    color: var(--text-main);
+    animation: init-popover-in 0.15s ease-out;
+}
+
+@keyframes init-popover-in {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.init-field-popover__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    border-bottom: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+}
+
+.init-field-popover__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: var(--text-main);
+}
+
+.init-field-popover__tag {
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.init-field-popover__list {
+    margin: 0;
+    padding-left: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.init-field-popover__item {
+    line-height: 1.35;
+    color: var(--text-main);
+    opacity: 0.95;
+}

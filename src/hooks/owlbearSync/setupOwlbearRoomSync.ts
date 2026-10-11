@@ -196,9 +196,13 @@ export async function setupOwlbearRoomSync(
         }
 
         if (sceneMetaResult && BATTLEFIELD_META_ID in sceneMetaResult) {
-            const rawBattlefield = sceneMetaResult[BATTLEFIELD_META_ID];
+            const rawBattlefield = sceneMetaResult[BATTLEFIELD_META_ID] as BattlefieldData | undefined;
             if (rawBattlefield && typeof rawBattlefield === 'object') {
-                store.setActiveBattlefield(rawBattlefield as BattlefieldData);
+                if (role !== 'GM' && rawBattlefield.broadcastToPlayers === false) {
+                    store.setActiveBattlefield(null);
+                } else {
+                    store.setActiveBattlefield(rawBattlefield);
+                }
             }
         } else if (isStandaloneMode || !OBR.isAvailable) {
             try {
@@ -330,9 +334,13 @@ export async function setupOwlbearRoomSync(
             lastSyncedSceneOffsetY = incomingOffsetY;
 
             if (BATTLEFIELD_META_ID in sceneMeta) {
-                const rawBattlefield = sceneMeta[BATTLEFIELD_META_ID];
+                const rawBattlefield = sceneMeta[BATTLEFIELD_META_ID] as BattlefieldData | undefined;
                 if (rawBattlefield && typeof rawBattlefield === 'object') {
-                    store.setActiveBattlefield(rawBattlefield as BattlefieldData);
+                    if (role !== 'GM' && rawBattlefield.broadcastToPlayers === false) {
+                        store.setActiveBattlefield(null);
+                    } else {
+                        store.setActiveBattlefield(rawBattlefield);
+                    }
                 } else {
                     store.setActiveBattlefield(null);
                 }
@@ -377,9 +385,13 @@ export async function setupOwlbearRoomSync(
             }
 
             if (BATTLEFIELD_META_ID in meta) {
-                const rawBattlefield = meta[BATTLEFIELD_META_ID];
+                const rawBattlefield = meta[BATTLEFIELD_META_ID] as BattlefieldData | undefined;
                 if (rawBattlefield && typeof rawBattlefield === 'object') {
-                    useCharacterStore.getState().setActiveBattlefield(rawBattlefield as BattlefieldData);
+                    if (role !== 'GM' && rawBattlefield.broadcastToPlayers === false) {
+                        useCharacterStore.getState().setActiveBattlefield(null);
+                    } else {
+                        useCharacterStore.getState().setActiveBattlefield(rawBattlefield);
+                    }
                 } else {
                     useCharacterStore.getState().setActiveBattlefield(null);
                 }

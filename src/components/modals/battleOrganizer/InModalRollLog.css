@@ -373,6 +373,36 @@
     border-color: #ef4444;
 }
 
+.in-modal-roll-log__field-effect-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 5px;
+    padding-top: 5px;
+    border-top: 1px dashed color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
+.in-modal-roll-log__field-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: calc(0.72rem * var(--roll-log-font-scale, 1));
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    background: color-mix(in srgb, var(--primary) 20%, var(--panel-bg));
+    border: 1px solid var(--primary);
+    color: var(--text-main);
+    transition: all 0.15s ease;
+}
+
+.in-modal-roll-log__field-btn:hover {
+    background: var(--primary);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
 @media (max-width: 768px) {
     .in-modal-roll-log--floating {
         right: 8px;

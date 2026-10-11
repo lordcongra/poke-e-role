@@ -15,10 +15,12 @@ import {
     Columns2,
     LayoutGrid,
     Type,
-    Info
+    Info,
+    Sparkles
 } from 'lucide-react';
 import { parseRollLogEntry } from './battleOrganizerUtils';
 import { parseRollLabel } from '../../../utils/combat/rollLogParser';
+import { detectMoveFieldEffect } from '../../../utils/combat/fieldEffectsData';
 import { RollFactorsModal } from '../rollFactors';
 import './InModalRollLog.css';
 
@@ -35,18 +37,20 @@ export interface RollLogEntry {
 
 export type RollLogFontSize = 'sm' | 'md' | 'lg' | 'xl';
 
-interface InModalRollLogProps {
+export interface InModalRollLogProps {
     combatants?: CombatantRowData[];
     onMarkAction?: (combatantId: string, moveName: string, status: 'success' | 'failed') => void;
     layoutMode?: RollLogLayoutMode;
     onCycleLayoutMode?: () => void;
+    onActivateFieldEffect?: (moveName: string, isPlayerSide?: boolean) => void;
 }
 
 export function InModalRollLog({
     combatants = [],
     onMarkAction,
     layoutMode = 'floating',
-    onCycleLayoutMode
+    onCycleLayoutMode,
+    onActivateFieldEffect
 }: InModalRollLogProps) {
     const [rolls, setRolls] = useState<RollLogEntry[]>(() => {
         try {
@@ -552,6 +556,29 @@ export function InModalRollLog({
                                                 </button>
                                             </div>
                                         )}
+
+                                    {/* 1-Click GM Action Button for Weather & Field Effects */}
+                                    {onActivateFieldEffect && (() => {
+                                        const fieldDef = detectMoveFieldEffect(moveName || cleanLabel);
+                                        if (!fieldDef) return null;
+                                        return (
+                                            <div className="in-modal-roll-log__field-effect-bar">
+                                                <button
+                                                    type="button"
+                                                    className="in-modal-roll-log__field-btn"
+                                                    onClick={() =>
+                                                        onActivateFieldEffect(
+                                                            fieldDef.moveName,
+                                                            matchedCombatant?.isPlayerSide ?? true
+                                                        )
+                                                    }
+                                                    title={`Activate ${fieldDef.moveName} (${fieldDef.rounds} Rounds) on the Battlefield`}
+                                                >
+                                                    <Sparkles size={14} /> Activate {fieldDef.moveName} ({fieldDef.rounds} Rounds)
+                                                </button>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                             );
                         })

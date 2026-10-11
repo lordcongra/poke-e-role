@@ -19,9 +19,14 @@ import { NumberSpinner } from '../ui/NumberSpinner';
 import { TakeChancesModal } from '../modals/combat/TakeChancesModal';
 import { ClashModal } from '../modals/combat/ClashModal';
 import { RestModal } from '../modals/combat/RestModal';
-import { Dices, RotateCcw, Tent, XCircle, TrendingUp } from 'lucide-react';
+import { Dices, RotateCcw, Tent, XCircle } from 'lucide-react';
 import { AbilityTrackerControl } from '../abilities/AbilityTrackerControl';
 import { getAbilityBenefitSummary } from '../../data/abilities/knownAbilities';
+import { ActiveFieldEffectsRow } from './ActiveFieldEffectsRow';
+import { TrackerBoostsList } from './TrackerBoostsList';
+import { TrackerConditionsList } from './TrackerConditionsList';
+import { RoundEndTriggerModal } from '../modals/character/RoundEndTriggerModal';
+import { findRoundEndTriggers, type RoundEndTrigger } from '../modals/character/roundEndTriggerUtils';
 import './TrackerSection.css';
 
 export function TrackerSection() {
@@ -89,6 +94,79 @@ export function TrackerSection() {
     const [showRestModal, setShowRestModal] = useState(false);
     const [chancesModalOpen, setChancesModalOpen] = useState(false);
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
+    const [pendingTriggers, setPendingTriggers] = useState<RoundEndTrigger[] | null>(null);
+
+    const handleResetRoundClick = () => {
+        const triggers = findRoundEndTriggers(useCharacterStore.getState());
+        if (triggers.length > 0) {
+            setPendingTriggers(triggers);
+        } else {
+            resetRound(true);
+        }
+    };
+
+    const handleConfirmTriggers = (confirmed: RoundEndTrigger[]) => {
+        const store = useCharacterStore.getState();
+        let hpDelta = 0;
+        let willDelta = 0;
+
+        confirmed.forEach((t) => {
+            if (t.type === 'healHp') hpDelta += t.amount;
+            else if (t.type === 'damageHp') hpDelta -= t.amount;
+            else if (t.type === 'restoreWill') willDelta += t.amount;
+            else if (t.type === 'reduceWill') willDelta -= t.amount;
+        });
+
+        if (hpDelta !== 0) {
+            const curHealth = store.health;
+            if (hpDelta > 0) {
+                const nextHp = Math.min(curHealth.hpMax, curHealth.hpCurr + hpDelta);
+                store.updateHealth('hpCurr', nextHp);
+            } else {
+                let dmgRemaining = Math.abs(hpDelta);
+                let tempHp = curHealth.temporaryHitPoints || 0;
+                if (tempHp > 0) {
+                    const deduct = Math.min(tempHp, dmgRemaining);
+                    tempHp -= deduct;
+                    dmgRemaining -= deduct;
+                    store.updateHealth('temporaryHitPoints', tempHp);
+                }
+                if (dmgRemaining > 0) {
+                    const nextHp = Math.max(0, curHealth.hpCurr - dmgRemaining);
+                    store.updateHealth('hpCurr', nextHp);
+                }
+            }
+        }
+
+        if (willDelta !== 0) {
+            const curWill = store.will;
+            if (willDelta > 0) {
+                const nextWill = Math.min(curWill.willMax, curWill.willCurr + willDelta);
+                store.updateWill('willCurr', nextWill);
+            } else {
+                let willLoss = Math.abs(willDelta);
+                let tempWill = curWill.temporaryWill || 0;
+                if (tempWill > 0) {
+                    const deduct = Math.min(tempWill, willLoss);
+                    tempWill -= deduct;
+                    willLoss -= deduct;
+                    store.updateWill('temporaryWill', tempWill);
+                }
+                if (willLoss > 0) {
+                    const nextWill = Math.max(0, curWill.willCurr - willLoss);
+                    store.updateWill('willCurr', nextWill);
+                }
+            }
+        }
+
+        setPendingTriggers(null);
+        resetRound(true);
+    };
+
+    const handleSkipTriggers = () => {
+        setPendingTriggers(null);
+        resetRound(true);
+    };
 
     const handleWillSpend = (cost: number, action: () => void) => {
         const totalWill = will.willCurr + (will.temporaryWill || 0);
@@ -367,6 +445,7 @@ export function TrackerSection() {
         <CollapsingSection title="ROUND TRACKER" className="sheet-panel tracker-section">
             <div className="tracker-section__horizontal-wrapper">
                 <div className="tracker-section__horizontal-col">
+                    <ActiveFieldEffectsRow />
                     <div className="tracker-section__row-space-between">
                         <div className="tracker-section__buttons-group">
                             <div className="tracker-section__toggle-group">
@@ -512,7 +591,7 @@ export function TrackerSection() {
                     <div className="tracker-section__reset-rest-row">
                         <button
                             type="button"
-                            onClick={resetRound}
+                            onClick={handleResetRoundClick}
                             className="action-button action-button--theme tracker-section__reset-btn"
                         >
                             <RotateCcw size={14} /> Reset
@@ -585,104 +664,30 @@ export function TrackerSection() {
                         </button>
                     </div>
 
-                    {boostSources.length > 0 && (
-                        <div className="tracker-section__boosts-container">
-                            {boostSources.map((source) => (
-                                <div key={source.id} className="tracker-section__boost-row">
-                                    <div className="tracker-section__boost-label-wrap">
-                                        <TrendingUp size={14} className="tracker-section__boost-icon" />
-                                        <span className="tracker-section__action-label text-label" title={source.label}>
-                                            {source.label}
-                                        </span>
-                                        <TooltipIcon
-                                            onClick={() =>
-                                                setTooltipInfo({
-                                                    title: source.label,
-                                                    desc: `Adjust boost level (max ${source.maxBoost} stacks) for ${source.entityName} (${source.effect}). Current level: ${source.currentLevel}.`
-                                                })
-                                            }
-                                        />
-                                        <span className="text-label">:</span>
-                                    </div>
+                    <TrackerBoostsList
+                        boostSources={boostSources}
+                        onStepSourceBoost={handleStepSourceBoost}
+                        onCycleSourceBoost={handleCycleSourceBoost}
+                        onShowTooltip={setTooltipInfo}
+                    />
 
-                                    {source.maxBoost > 1 ? (
-                                        <div className="ability-tracker__stepper tracker-section__boost-stepper">
-                                            <button
-                                                type="button"
-                                                disabled={source.currentLevel <= 0}
-                                                onClick={() => handleStepSourceBoost(source, -1)}
-                                                className="action-button action-button--dark ability-tracker__step-btn"
-                                                title="Decrease boost stack (-1)"
-                                                aria-label="Decrease boost stack"
-                                            >
-                                                -
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleCycleSourceBoost(source)}
-                                                className={`action-button ${
-                                                    source.currentLevel > 0
-                                                        ? 'action-button--theme'
-                                                        : 'action-button--dark'
-                                                } ability-tracker__step-badge`}
-                                                title={`Boost Level: ${source.currentLevel}/${source.maxBoost} (Click to cycle, or use +/-)`}
-                                            >
-                                                {source.currentLevel > 0
-                                                    ? `Boost +${source.currentLevel}`
-                                                    : 'Boost OFF'}
-                                            </button>
-                                            <button
-                                                type="button"
-                                                disabled={source.currentLevel >= source.maxBoost}
-                                                onClick={() => handleStepSourceBoost(source, 1)}
-                                                className="action-button action-button--dark ability-tracker__step-btn"
-                                                title="Increase boost stack (+1)"
-                                                aria-label="Increase boost stack"
-                                            >
-                                                +
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={() => handleCycleSourceBoost(source)}
-                                            className={`action-button ${
-                                                source.currentLevel > 0 ? 'action-button--theme' : 'action-button--dark'
-                                            } tracker-section__boost-toggle-btn`}
-                                            title={`Click to toggle Boost ${source.currentLevel > 0 ? 'OFF' : 'ON'}`}
-                                        >
-                                            Boost {source.currentLevel > 0 ? 'ON' : 'OFF'}
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    <div className="tracker-section__conditions-container">
-                        <span className="tracker-section__conditions-label text-label">Conditions:</span>
-                        <div className="tracker-section__conditions-list">
-                            {conditions.length === 0 ? (
-                                <span className="tracker-section__conditions-empty text-subtext">None</span>
-                            ) : (
-                                conditions.map((c) => (
-                                    <span
-                                        key={c.id}
-                                        className="tracker-section__condition-pill"
-                                        style={{ background: c.bg, color: c.text }}
-                                    >
-                                        {c.label}
-                                    </span>
-                                ))
-                            )}
-                        </div>
-                    </div>
+                    <TrackerConditionsList conditions={conditions} />
                 </div>
             </div>
 
             {chancesModalOpen && <TakeChancesModal onClose={() => setChancesModalOpen(false)} />}
             {showClashModal && <ClashModal onClose={() => setShowClashModal(false)} />}
             {showRestModal && <RestModal onClose={() => setShowRestModal(false)} />}
+
+            {pendingTriggers && (
+                <RoundEndTriggerModal
+                    isOpen={true}
+                    triggers={pendingTriggers}
+                    onConfirm={handleConfirmTriggers}
+                    onSkip={handleSkipTriggers}
+                    onClose={() => setPendingTriggers(null)}
+                />
+            )}
 
             {tooltipInfo && (
                 <div className="tracker-modal__overlay">

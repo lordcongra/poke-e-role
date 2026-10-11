@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, MapPin, CloudSun, Mountain, Sparkles, Shield } from 'lucide-react';
+import { ChevronDown, MapPin, CloudSun, Mountain, Sparkles, Shield, Eye, EyeOff } from 'lucide-react';
 import { BattlefieldPitch } from './BattlefieldPitch';
 import { RemainingRoundsBoxes } from './RemainingRoundsBoxes';
 import type {
@@ -125,6 +125,26 @@ export function BattlefieldSection({
                         }}
                     >
                         <span className="bo-pill-header__text text-theme-header">Battlefield</span>
+                        <button
+                            type="button"
+                            className={`bo-pill-visibility-btn ${(battlefield.broadcastToPlayers ?? true) ? 'is-broadcast' : 'is-hidden'}`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                updateBattlefield('broadcastToPlayers', !(battlefield.broadcastToPlayers ?? true));
+                            }}
+                            title={
+                                (battlefield.broadcastToPlayers ?? true)
+                                    ? 'Visible to Players (Click to Hide)'
+                                    : 'Hidden from Players (Pre-staging, Click to Reveal)'
+                            }
+                        >
+                            {(battlefield.broadcastToPlayers ?? true) ? (
+                                <Eye size={13} />
+                            ) : (
+                                <EyeOff size={13} />
+                            )}
+                            <span>{(battlefield.broadcastToPlayers ?? true) ? 'Visible' : 'Hidden'}</span>
+                        </button>
                         <ChevronDown
                             size={14}
                             style={{

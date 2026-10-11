@@ -134,7 +134,7 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             return { trackers: { ...state.trackers, actions: newActions } };
         }),
 
-    resetRound: () =>
+    resetRound: (skipAutoMods = false) =>
         set((state) => {
             const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
             const invMods = parseCombatTags(
@@ -148,34 +148,36 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             const newHealth = { ...state.health };
             const newWill = { ...state.will };
 
-            if (invMods.roundDamage > 0) {
-                let remaining = invMods.roundDamage;
-                if (newHealth.temporaryHitPoints > 0) {
-                    const deduct = Math.min(newHealth.temporaryHitPoints, remaining);
-                    newHealth.temporaryHitPoints -= deduct;
-                    remaining -= deduct;
+            if (!skipAutoMods) {
+                if (invMods.roundDamage > 0) {
+                    let remaining = invMods.roundDamage;
+                    if (newHealth.temporaryHitPoints > 0) {
+                        const deduct = Math.min(newHealth.temporaryHitPoints, remaining);
+                        newHealth.temporaryHitPoints -= deduct;
+                        remaining -= deduct;
+                    }
+                    if (remaining > 0) {
+                        newHealth.hpCurr = Math.max(0, newHealth.hpCurr - remaining);
+                    }
                 }
-                if (remaining > 0) {
-                    newHealth.hpCurr = Math.max(0, newHealth.hpCurr - remaining);
+                if (invMods.roundHeal > 0 && newHealth.hpCurr > 0) {
+                    newHealth.hpCurr = Math.min(newHealth.hpMax, newHealth.hpCurr + invMods.roundHeal);
                 }
-            }
-            if (invMods.roundHeal > 0 && newHealth.hpCurr > 0) {
-                newHealth.hpCurr = Math.min(newHealth.hpMax, newHealth.hpCurr + invMods.roundHeal);
-            }
 
-            if (invMods.roundWillDamage > 0) {
-                let remaining = invMods.roundWillDamage;
-                if (newWill.temporaryWill > 0) {
-                    const deduct = Math.min(newWill.temporaryWill, remaining);
-                    newWill.temporaryWill -= deduct;
-                    remaining -= deduct;
+                if (invMods.roundWillDamage > 0) {
+                    let remaining = invMods.roundWillDamage;
+                    if (newWill.temporaryWill > 0) {
+                        const deduct = Math.min(newWill.temporaryWill, remaining);
+                        newWill.temporaryWill -= deduct;
+                        remaining -= deduct;
+                    }
+                    if (remaining > 0) {
+                        newWill.willCurr = Math.max(0, newWill.willCurr - remaining);
+                    }
                 }
-                if (remaining > 0) {
-                    newWill.willCurr = Math.max(0, newWill.willCurr - remaining);
+                if (invMods.roundWillRestore > 0) {
+                    newWill.willCurr = Math.min(newWill.willMax, newWill.willCurr + invMods.roundWillRestore);
                 }
-            }
-            if (invMods.roundWillRestore > 0) {
-                newWill.willCurr = Math.min(newWill.willMax, newWill.willCurr + invMods.roundWillRestore);
             }
 
             const startingActions = Math.min(5, invMods.loseAction);

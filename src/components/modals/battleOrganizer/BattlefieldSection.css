@@ -2,6 +2,38 @@
 /* BATTLEFIELD SECTION & PITCH STYLES        */
 /* ========================================= */
 
+.bo-pill-visibility-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    border-radius: 12px;
+    border: 1px solid var(--primary);
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.15s ease;
+    user-select: none;
+    margin: 0 4px;
+}
+
+.bo-pill-visibility-btn.is-broadcast {
+    background: color-mix(in srgb, #2e7d32 25%, var(--panel-bg));
+    color: #81c784;
+    border-color: #4caf50;
+}
+
+.bo-pill-visibility-btn.is-hidden {
+    background: color-mix(in srgb, #c62828 25%, var(--panel-bg));
+    color: #e57373;
+    border-color: #ef5350;
+}
+
+.bo-pill-visibility-btn:hover {
+    transform: scale(1.04);
+}
+
 /* --- Split Stadium Area (Player | Pitch | Foe) --- */
 .bo-stadium-split-grid {
     display: grid;

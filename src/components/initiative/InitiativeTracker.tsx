@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { useOwlbearPopoverResize } from '../../hooks/useOwlbearPopoverResize';
 import { useInitiativeEngine } from './useInitiativeEngine';
+import { useCharacterStore } from '../../store/useCharacterStore';
 import { Swords } from 'lucide-react';
 import { InitiativeTrackerContent } from './InitiativeTrackerContent';
 import './InitiativeTracker.css';
@@ -79,6 +80,8 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
         }
     }, [activeTurnId, isReady, layout]);
 
+    const activeBattlefield = useCharacterStore((state) => state.activeBattlefield);
+
     // Bind our custom Resize hook to the DOM
     const ghostRef = useOwlbearPopoverResize({
         isReady,
@@ -87,7 +90,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
         maxTrackerWidth,
         maxTrackerHeight,
         viewportMaxWidth,
-        dependencies: [combatants, showAddMenu, shape] // Re-measure if any of these change
+        dependencies: [combatants, showAddMenu, shape, activeBattlefield] // Re-measure if any of these change
     });
 
     if (!isReady) {

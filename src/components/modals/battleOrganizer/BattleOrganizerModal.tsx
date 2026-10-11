@@ -10,12 +10,13 @@ import { BattleOrganizerPullModal } from './BattleOrganizerPullModal';
 import { BattleOrganizerTooltipModal } from './BattleOrganizerTooltipModal';
 import { SceneSwapPromptModal } from './SceneSwapPromptModal';
 import { useSceneSwapDetection } from './useSceneSwapDetection';
-import { Lightbulb, X } from 'lucide-react';
+import { BattleOrganizerAdvisoryBanner } from './BattleOrganizerAdvisoryBanner';
 import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import { BattleOrganizerFooter } from './BattleOrganizerFooter';
 import { BattleOrganizerSettingsModal } from './BattleOrganizerSettingsModal';
 import { CombatantSheetModal } from './CombatantSheetModal';
 import { InModalRollLog } from './InModalRollLog';
+import { RoundWeatherDamageModal } from './RoundWeatherDamageModal';
 import {
     getBattleOrganizerSettings,
     saveBattleOrganizerSettings,
@@ -62,6 +63,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         updateFoeSide,
         updateEndOfRoundEffects,
         updateRoundNumber,
+        activateFieldEffectFromMove,
         clearAll
     } = useBattleOrganizer();
 
@@ -79,7 +81,52 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
     const [activeSheetCombatant, setActiveSheetCombatant] = useState<CombatantRowData | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
+    const [showWeatherDamageModal, setShowWeatherDamageModal] = useState(false);
     const bodyRef = useRef<HTMLDivElement>(null);
+
+    const handleAdvanceRoundRequest = () => {
+        const weatherName = battlefield?.weather?.name?.toLowerCase().trim() || '';
+        const weatherRounds = battlefield?.weather?.remainingRounds || 0;
+        const hasWeatherHazard =
+            weatherRounds > 0 &&
+            (weatherName.includes('sand') || weatherName.includes('hail'));
+
+        if (hasWeatherHazard && currentRound?.combatants && currentRound.combatants.length > 0) {
+            setShowWeatherDamageModal(true);
+        } else {
+            advanceRound();
+        }
+    };
+
+    const handleApplyWeatherDamageAndAdvance = (selectedIds: string[]) => {
+        if (selectedIds.length > 0 && currentRound?.combatants) {
+            selectedIds.forEach((id) => {
+                const c = currentRound.combatants.find((item) => item.id === id);
+                if (c && c.hpCurr !== undefined && c.hpCurr > 0) {
+                    let newHp = c.hpCurr;
+                    let newTemp = c.tempHp || 0;
+                    if (newTemp > 0) {
+                        newTemp = Math.max(0, newTemp - 1);
+                    } else {
+                        newHp = Math.max(0, newHp - 1);
+                    }
+                    updateCombatant({
+                        ...c,
+                        hpCurr: newHp,
+                        tempHp: newTemp,
+                        isFainted: newHp <= 0
+                    });
+                }
+            });
+        }
+        setShowWeatherDamageModal(false);
+        advanceRound();
+    };
+
+    const handleSkipWeatherDamageAndAdvance = () => {
+        setShowWeatherDamageModal(false);
+        advanceRound();
+    };
 
     const [isPushingActions, setIsPushingActions] = useState(false);
 
@@ -138,15 +185,6 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         }
     };
 
-    const [showObrAdvisory, setShowObrAdvisory] = useState(() => {
-        if (isStandaloneMode) return false;
-        try {
-            return localStorage.getItem('pkr_bo_advisory_dismissed') !== 'true';
-        } catch {
-            return true;
-        }
-    });
-
     const handlePopOut = () => {
         openBattleOrganizerPopout(boSettings);
         onClose();
@@ -170,15 +208,6 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         const isMerge = options?.mergeOnly !== undefined ? options.mergeOnly : pullModalMode === 'merge';
         pullFromInitiative({ resetTrackers: resetPullTrackers, mergeOnly: isMerge });
         setShowPullConfirmModal(false);
-    };
-
-    const handleDismissAdvisory = () => {
-        setShowObrAdvisory(false);
-        try {
-            localStorage.setItem('pkr_bo_advisory_dismissed', 'true');
-        } catch (e) {
-            console.warn('[BattleOrganizerModal] Failed to persist advisory dismissal:', e);
-        }
     };
 
     const handleOpenCombatantSheet = (combatant: CombatantRowData) => {
@@ -278,6 +307,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
             onMarkAction={handleMarkActionFromRoll}
             layoutMode={mode}
             onCycleLayoutMode={handleCycleRollLogMode}
+            onActivateFieldEffect={activateFieldEffectFromMove}
         />
     );
 
@@ -311,34 +341,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                 />
 
                 {/* Owlbear Rodeo Dual-Screen / Dual-Window Advisory Banner */}
-                {!isStandaloneMode && showObrAdvisory && (
-                    <div className="bo-advisory-banner" onWheel={handleStaticWheel}>
-                        <div className="bo-advisory-banner__content text-subtext">
-                            <span className="bo-advisory-banner__icon">
-                                <Lightbulb size={16} color="#f59e0b" />
-                            </span>
-                            <span>
-                                <strong>Optimal Dual-Screen GM Setup:</strong> For the best experience without modal
-                                occlusion on your battle map or 3D dice, open your Owlbear Rodeo room link in a{' '}
-                                <strong>Private / Incognito window</strong> as a guest, grant that guest{' '}
-                                <strong>GM permissions</strong>, and manage the Battle Organizer there.{' '}
-                                <em>
-                                    (Do not duplicate your tab on the same logged-in account, as Owlbear Rodeo
-                                    rate-limits duplicate sessions and will crash).
-                                </em>
-                            </span>
-                        </div>
-                        <button
-                            type="button"
-                            className="bo-advisory-banner__close"
-                            onClick={handleDismissAdvisory}
-                            title="Dismiss tip"
-                            aria-label="Dismiss tip"
-                        >
-                            <X size={14} />
-                        </button>
-                    </div>
-                )}
+                <BattleOrganizerAdvisoryBanner onWheel={handleStaticWheel} />
 
                 {/* Comprehensive Help & Setup Guide */}
                 {showHelp && (
@@ -385,7 +388,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                                             activeRoundIndex={activeRoundIndex}
                                             currentRoundNumber={currentRound?.roundNumber}
                                             onSelectRound={setActiveRoundIndex}
-                                            onAdvanceRound={advanceRound}
+                                            onAdvanceRound={handleAdvanceRoundRequest}
                                             onAddRound={addRound}
                                             onDuplicateRound={duplicateRound}
                                             onDeleteRound={deleteRound}
@@ -448,6 +451,17 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                 />
 
                 <BattleOrganizerTooltipModal tooltipInfo={tooltipInfo} onClose={() => setTooltipInfo(null)} />
+
+                {showWeatherDamageModal && (
+                    <RoundWeatherDamageModal
+                        isOpen={true}
+                        weatherName={battlefield?.weather?.name || 'Weather'}
+                        combatants={currentRound?.combatants || []}
+                        onApplyDamage={handleApplyWeatherDamageAndAdvance}
+                        onSkip={handleSkipWeatherDamageAndAdvance}
+                        onClose={() => setShowWeatherDamageModal(false)}
+                    />
+                )}
 
                 {activeSheetCombatant && (
                     <CombatantSheetModal

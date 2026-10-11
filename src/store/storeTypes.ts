@@ -247,7 +247,7 @@ export interface TrackerSlice {
     removeEffect: (id: string) => void;
     updateTracker: <K extends keyof Trackers>(field: K, value: Trackers[K]) => void;
     incrementAction: () => void;
-    resetRound: () => void;
+    resetRound: (skipAutoMods?: boolean) => void;
     longRest: () => void;
     activeBattlefield: BattlefieldData | null;
     setActiveBattlefield: (battlefield: BattlefieldData | null) => void;
