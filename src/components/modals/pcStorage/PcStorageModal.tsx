@@ -28,6 +28,7 @@ import { PcMoveModeBanner } from './PcMoveModeBanner';
 import { usePcMoveMode } from './usePcMoveMode';
 import { usePcModalHandlers } from './usePcModalHandlers';
 import { usePcStorageModalSetup } from './usePcStorageModalSetup';
+import { usePcStorageThemeSync } from './usePcStorageThemeSync';
 import './PcStorageModal.css';
 
 interface PcStorageModalProps {
@@ -46,29 +47,11 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
 
     // Store Actions
     const {
-        setActiveBoxIndex,
-        setSelectedPcSlot,
-        swapPcSlots,
-        movePokemonToParty,
-        depositPokemonToBox,
-        setPartySlot,
-        setBoxSlot,
-        addBox,
-        deleteBox,
-        renameBox,
-        setBoxTheme,
-        switchTrainer,
-        addTrainer,
-        deleteTrainer,
-        switchCampaign,
-        addCampaign,
-        editCampaign,
-        deleteCampaign,
-        updatePokemonSummary,
-        updateTrainerProfile,
-        renameTrainer,
-        reorderTrainers,
-        deletePokemonFromPc
+        setActiveBoxIndex, setSelectedPcSlot, swapPcSlots, movePokemonToParty, depositPokemonToBox,
+        setPartySlot, setBoxSlot, addBox, deleteBox, renameBox, setBoxTheme,
+        switchTrainer, addTrainer, deleteTrainer, switchCampaign, addCampaign,
+        editCampaign, deleteCampaign, updatePokemonSummary, updateTrainerProfile,
+        renameTrainer, reorderTrainers, deletePokemonFromPc
     } = useCharacterStore.getState();
 
     const [contextMenu, setContextMenu] = useState<{
@@ -252,6 +235,8 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         (sheetViewEntityId && pcData.pokemonSummaries[sheetViewEntityId]) ||
         (sheetViewEntityId === trainer?.id ? trainerSummary : null);
     const activeSheetSummary = !isGm && isEntityLockedByGm(rawActiveSheetSummary) ? null : rawActiveSheetSummary;
+
+    usePcStorageThemeSync(currentBox?.themeColor, activeSheetSummary);
 
     const sheetAvailableSummaries = useMemo(
         () =>

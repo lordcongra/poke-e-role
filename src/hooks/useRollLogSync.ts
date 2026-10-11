@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { imageManager } from '../utils/graphics/imageManager';
 import { cropImageTransparencyUrl } from '../utils/graphics/imageCropUtils';
+import { updateThemeColorMeta } from '../utils/common/colorUtils';
 import type { RollSyncData } from './owlbearSync/owlbearSyncConstants';
 
 export function useRollLogSync() {
@@ -28,11 +29,13 @@ export function useRollLogSync() {
                 document.body.style.removeProperty('--dynamic-secondary-color');
                 document.documentElement.style.removeProperty('--dynamic-secondary-color');
             }
+            updateThemeColorMeta(data.primary);
         } else {
             document.body.style.removeProperty('--dynamic-type-color');
             document.documentElement.style.removeProperty('--dynamic-type-color');
             document.body.style.removeProperty('--dynamic-secondary-color');
             document.documentElement.style.removeProperty('--dynamic-secondary-color');
+            updateThemeColorMeta();
         }
     };
 

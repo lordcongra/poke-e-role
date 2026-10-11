@@ -90,6 +90,66 @@ export interface ThemeIdentity {
     themeSecondaryOverride?: string;
 }
 
+/**
+ * Synchronizes the Android PWA status bar / top bar color (<meta name="theme-color">)
+ * with the active theme color, resolving CSS variables and falling back to the current
+ * dynamic type color or default mode colors.
+ *
+ * @param color - The hex/CSS color string or CSS variable (e.g. "var(--dynamic-type-color)")
+ */
+export const updateThemeColorMeta = (color?: string | null): void => {
+    if (typeof document === 'undefined') return;
+
+    let targetColor = color ? color.trim() : '';
+
+    // Strip / resolve var(...) if passed a CSS variable
+    if (targetColor.startsWith('var(') && targetColor.endsWith(')')) {
+        const inner = targetColor.slice(4, -1).trim();
+        const [varName, ...fallbackParts] = inner.split(',');
+        const cleanVar = varName.trim();
+        const fallback = fallbackParts.join(',').trim();
+
+        const resolved =
+            (typeof window !== 'undefined'
+                ? window.getComputedStyle(document.documentElement).getPropertyValue(cleanVar).trim() ||
+                  window.getComputedStyle(document.body).getPropertyValue(cleanVar).trim()
+                : '') ||
+            document.documentElement.style.getPropertyValue(cleanVar).trim() ||
+            document.body.style.getPropertyValue(cleanVar).trim();
+
+        targetColor = resolved || fallback || '';
+    }
+
+    // Fall back to --dynamic-type-color or dark/light mode defaults
+    if (!targetColor) {
+        targetColor =
+            document.documentElement.style.getPropertyValue('--dynamic-type-color').trim() ||
+            document.body.style.getPropertyValue('--dynamic-type-color').trim();
+    }
+
+    if (!targetColor) {
+        const isDarkMode =
+            document.body.classList.contains('dark-mode') ||
+            document.documentElement.getAttribute('data-theme') === 'dark' ||
+            document.body.getAttribute('data-theme') === 'dark' ||
+            (typeof localStorage !== 'undefined' && localStorage.getItem('pokerole-theme') !== 'light');
+
+        targetColor = isDarkMode ? '#8b1c1c' : '#b92518';
+    }
+
+    try {
+        let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+        if (!meta) {
+            meta = document.createElement('meta');
+            meta.setAttribute('name', 'theme-color');
+            document.head.appendChild(meta);
+        }
+        meta.setAttribute('content', targetColor);
+    } catch (e) {
+        console.warn('[colorUtils] Failed to update theme-color meta tag:', e);
+    }
+};
+
 export const applyDynamicThemeColors = (primary?: string | null, secondary?: string | null) => {
     if (primary && primary.trim()) {
         const p = primary.trim();
@@ -108,6 +168,8 @@ export const applyDynamicThemeColors = (primary?: string | null, secondary?: str
         document.body.style.removeProperty('--dynamic-secondary-color');
         document.documentElement.style.removeProperty('--dynamic-secondary-color');
     }
+
+    updateThemeColorMeta(primary);
 };
 
 export const resolveCharacterThemeColors = (

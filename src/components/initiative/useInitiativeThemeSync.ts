@@ -1,4 +1,5 @@
 import { useEffect, useCallback } from 'react';
+import { updateThemeColorMeta } from '../../utils/common/colorUtils';
 
 export interface UseInitiativeThemeSyncOptions {
     theme: string;
@@ -19,11 +20,13 @@ export function useInitiativeThemeSync({ theme, isStandalone }: UseInitiativeThe
                     document.body.style.removeProperty('--dynamic-secondary-color');
                     document.documentElement.style.removeProperty('--dynamic-secondary-color');
                 }
+                updateThemeColorMeta(data.primary);
             } else {
                 document.body.style.removeProperty('--dynamic-type-color');
                 document.documentElement.style.removeProperty('--dynamic-type-color');
                 document.body.style.removeProperty('--dynamic-secondary-color');
                 document.documentElement.style.removeProperty('--dynamic-secondary-color');
+                updateThemeColorMeta();
             }
         },
         [isStandalone]
