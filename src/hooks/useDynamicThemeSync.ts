@@ -37,8 +37,24 @@ export function useDynamicThemeSync(): void {
     const themeSecondaryOverride = useCharacterStore((state) => state.identity.themeSecondaryOverride);
     const isPcModalOpen = useCharacterStore((state) => state.isPcModalOpen);
 
-    const [globalOverride, setGlobalOverride] = useState<{ p: string; s: string } | null>(null);
-    const [unselectedOverride, setUnselectedOverride] = useState<{ p: string; s: string } | null>(null);
+    const [globalOverride, setGlobalOverride] = useState<{ p: string; s: string } | null>(() => {
+        try {
+            const p = localStorage.getItem('pkr_global_theme_primary');
+            const s = localStorage.getItem('pkr_global_theme_secondary');
+            return p ? { p, s: s || '' } : null;
+        } catch {
+            return null;
+        }
+    });
+    const [unselectedOverride, setUnselectedOverride] = useState<{ p: string; s: string } | null>(() => {
+        try {
+            const up = localStorage.getItem('pkr_unselected_theme_primary');
+            const us = localStorage.getItem('pkr_unselected_theme_secondary');
+            return up ? { p: up, s: us || '' } : null;
+        } catch {
+            return null;
+        }
+    });
     const [themeUpdateCount, setThemeUpdateCount] = useState(0);
 
     // Accessibility States

@@ -127,6 +127,20 @@ export const updateThemeColorMeta = (color?: string | null): void => {
             document.body.style.getPropertyValue('--dynamic-type-color').trim();
     }
 
+    // Fall back to unselected or global theme in localStorage if available
+    if (!targetColor) {
+        try {
+            const unselectedP =
+                localStorage.getItem('pkr_unselected_theme_primary') ||
+                localStorage.getItem('pkr_global_theme_primary');
+            if (unselectedP && unselectedP.trim()) {
+                targetColor = unselectedP.trim();
+            }
+        } catch {
+            // ignore
+        }
+    }
+
     if (!targetColor) {
         const isDarkMode =
             document.body.classList.contains('dark-mode') ||
@@ -134,7 +148,8 @@ export const updateThemeColorMeta = (color?: string | null): void => {
             document.body.getAttribute('data-theme') === 'dark' ||
             (typeof localStorage !== 'undefined' && localStorage.getItem('pokerole-theme') !== 'light');
 
-        targetColor = isDarkMode ? '#8b1c1c' : '#b92518';
+        // Neutral dark background (#121212) or clean light background (#ffffff) instead of jarring red
+        targetColor = isDarkMode ? '#121212' : '#ffffff';
     }
 
     try {
@@ -144,7 +159,16 @@ export const updateThemeColorMeta = (color?: string | null): void => {
             meta.setAttribute('name', 'theme-color');
             document.head.appendChild(meta);
         }
-        meta.setAttribute('content', targetColor);
+        if (meta.getAttribute('content') !== targetColor) {
+            meta.setAttribute('content', targetColor);
+            // Chromium WebAPK / Android PWA workaround: re-insert tag to force system UI update
+            const parent = meta.parentNode;
+            if (parent) {
+                const next = meta.nextSibling;
+                parent.removeChild(meta);
+                parent.insertBefore(meta, next);
+            }
+        }
     } catch (e) {
         console.warn('[colorUtils] Failed to update theme-color meta tag:', e);
     }
