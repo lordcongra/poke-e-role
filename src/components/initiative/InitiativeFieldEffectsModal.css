@@ -1,0 +1,289 @@
+.init-field-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 12px;
+    box-sizing: border-box;
+    animation: init-modal-fade 0.15s ease-out;
+}
+
+@keyframes init-modal-fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.init-field-modal {
+    background: var(--panel-bg);
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    width: 100%;
+    max-width: 440px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    animation: init-modal-scale 0.15s ease-out;
+}
+
+@keyframes init-modal-scale {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.init-field-modal__header {
+    background: var(--panel-alt);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid var(--primary);
+    flex-shrink: 0;
+}
+
+.init-field-modal__title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.init-field-modal__header-icon {
+    color: var(--primary);
+}
+
+.init-field-modal__title {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.init-field-modal__close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 0.15s, background-color 0.15s;
+}
+
+.init-field-modal__close-btn:hover {
+    color: var(--text-main);
+    background: color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.init-field-modal__body {
+    padding: 10px 12px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    scrollbar-width: thin;
+}
+
+.init-field-modal__empty {
+    text-align: center;
+    padding: 24px 12px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.init-field-modal__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.init-field-card {
+    border-radius: 6px;
+    border: 1px solid var(--primary);
+    padding: 8px 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.init-field-card.is-highlighted {
+    box-shadow: 0 0 0 2px var(--primary), 0 4px 12px rgba(0, 0, 0, 0.4);
+    transform: translateY(-1px);
+}
+
+.init-field-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.init-field-card__identity {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.init-field-card__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.init-field-card__name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.init-field-card__badge {
+    font-size: 0.58rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+
+.init-field-card__controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.init-field-stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: color-mix(in srgb, var(--panel-bg) 60%, black);
+    border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent);
+    border-radius: 4px;
+    padding: 1px 3px;
+}
+
+.init-field-stepper__btn {
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    transition: background-color 0.12s, transform 0.1s;
+    padding: 0;
+}
+
+.init-field-stepper__btn:hover {
+    background: color-mix(in srgb, var(--primary) 30%, transparent);
+    transform: scale(1.08);
+}
+
+.init-field-stepper__value {
+    font-size: 0.76rem;
+    font-weight: 700;
+    min-width: 44px;
+    text-align: center;
+    user-select: none;
+}
+
+.init-field-stepper__unit {
+    font-size: 0.62rem;
+    opacity: 0.8;
+}
+
+.init-field-card__delete-btn {
+    background: color-mix(in srgb, var(--semantic-danger) 14%, transparent);
+    border: 1px solid var(--semantic-danger);
+    color: var(--semantic-danger);
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.15s, transform 0.12s;
+    padding: 0;
+}
+
+.init-field-card__delete-btn:hover {
+    background: var(--semantic-danger);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.init-field-card__readonly-rounds {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.init-field-card__effects {
+    margin: 0;
+    padding-left: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.init-field-card__effect-item {
+    font-size: 0.72rem;
+    line-height: 1.35;
+    color: var(--text-main);
+    opacity: 0.9;
+}
+
+.init-field-modal__footer {
+    background: var(--panel-alt);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+    flex-shrink: 0;
+    gap: 8px;
+}
+
+.init-field-modal__hint {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+}
+
+.init-field-modal__done-btn {
+    min-width: 60px;
+    height: 26px;
+    font-size: 0.75rem;
+    margin-left: auto;
+}

@@ -8,6 +8,7 @@ export const TERRAIN_CONDITIONS_DATA: FieldEffectInfo[] = [
         badge: 'Electric',
         color: '#F8D030',
         icon: 'Zap',
+        initials: 'ET',
         effects: [
             '+1 Damage to Electric-type Moves',
             'Grounded Pokémon cannot fall Asleep or Rest',
@@ -21,6 +22,7 @@ export const TERRAIN_CONDITIONS_DATA: FieldEffectInfo[] = [
         badge: 'Grass',
         color: '#78C850',
         icon: 'Sprout',
+        initials: 'GT',
         effects: [
             '+1 Damage to Grass-type Moves',
             'Grounded Pokémon recover 1 HP at end of round',
@@ -34,6 +36,7 @@ export const TERRAIN_CONDITIONS_DATA: FieldEffectInfo[] = [
         badge: 'Fairy',
         color: '#EE99AC',
         icon: 'Sparkles',
+        initials: 'MT',
         effects: [
             '-1 Damage from Dragon-type Moves',
             'Grounded Pokémon cannot be inflicted with Major/Minor Status Ailments or Confusion'
@@ -46,6 +49,7 @@ export const TERRAIN_CONDITIONS_DATA: FieldEffectInfo[] = [
         badge: 'Psychic',
         color: '#F85888',
         icon: 'Eye',
+        initials: 'PT',
         effects: [
             '+1 Damage to Psychic-type Moves',
             'Grounded Pokémon are protected from Priority & Reaction Moves (Evade/Clash priority)'
@@ -61,6 +65,7 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         badge: 'Dimension',
         color: '#9C27B0',
         icon: 'Sparkles',
+        initials: 'TR',
         effects: [
             'Turn order is reversed: slower combatants act first in Initiative order',
             'Lasts for 4 rounds or until cancelled'
@@ -73,6 +78,7 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         badge: 'Field',
         color: '#5C6BC0',
         icon: 'Sparkles',
+        initials: 'GR',
         effects: [
             'Grounds Flying and Levitating Pokémon (removes Ground immunity)',
             'All Pokémon have -2 dice penalty to Evasion rolls',
@@ -86,6 +92,7 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         badge: 'Electric Field',
         color: '#FFD54F',
         icon: 'Zap',
+        initials: 'ID',
         effects: ['All Normal-type moves become Electric-type for the rest of the round']
     },
     {
@@ -95,6 +102,7 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         badge: 'Barrier',
         color: '#E91E63',
         icon: 'Shield',
+        initials: 'RF',
         effects: ['Reduces Physical Damage taken by the protected side by 1 for 4 rounds']
     },
     {
@@ -104,6 +112,7 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         badge: 'Screen',
         color: '#AB47BC',
         icon: 'Shield',
+        initials: 'LS',
         effects: ['Reduces Special Damage taken by the protected side by 1 for 4 rounds']
     },
     {
@@ -113,6 +122,7 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         badge: 'Ward',
         color: '#26A69A',
         icon: 'Shield',
+        initials: 'SG',
         effects: ['Protects the side from receiving Status Ailments and Confusion for 4 rounds']
     },
     {
@@ -122,6 +132,7 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         badge: 'Haze',
         color: '#80DEEA',
         icon: 'Shield',
+        initials: 'MS',
         effects: ['Protects the side from having their stats or dice pools lowered by opponents']
     }
 ];
@@ -144,3 +155,34 @@ export const MOVE_FIELD_EFFECT_MAP: MoveFieldEffectDefinition[] = [
     { moveName: 'Safeguard', effectName: 'Safeguard', category: 'forceField', rounds: 4 },
     { moveName: 'Mist', effectName: 'Mist', category: 'forceField', rounds: 4 }
 ];
+
+export const FIELD_EFFECT_INITIALS_MAP: Record<string, string> = {
+    sunny: 'SN',
+    rain: 'RN',
+    sandstorm: 'SS',
+    snowy: 'SW',
+    hail: 'HL',
+    'desolate weather': 'DW',
+    desolate: 'DW',
+    typhoon: 'TP',
+    'strong winds': 'WI',
+    fog: 'FG',
+    tailwind: 'TW',
+    'electric terrain': 'ET',
+    'grassy terrain': 'GT',
+    'misty terrain': 'MT',
+    'psychic terrain': 'PT',
+    'trick room': 'TR',
+    gravity: 'GR',
+    'ion deluge': 'ID',
+    reflect: 'RF',
+    'light screen': 'LS',
+    safeguard: 'SG',
+    mist: 'MS',
+    'aurora veil': 'AV',
+    spikes: 'SP',
+    'stealth rock': 'SR',
+    'toxic spikes': 'TS',
+    'sticky web': 'SW'
+};
+

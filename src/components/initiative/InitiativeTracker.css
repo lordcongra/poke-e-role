@@ -69,18 +69,24 @@
 }
 
 .init-tracker__header--vertical {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     border-bottom: 2px solid var(--primary);
-    padding: 6px 12px;
+    padding: 6px 10px;
+    gap: 4px;
     min-height: 40px;
     box-sizing: border-box;
 }
 
 .init-tracker__header--horizontal {
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
+    align-items: center;
     border-right: 2px solid var(--primary);
     border-bottom: none;
-    padding: 6px 8px;
+    padding: 6px 6px;
+    gap: 6px;
     height: 100%;
     box-sizing: border-box;
 }
@@ -103,6 +109,17 @@
     display: flex;
     gap: 6px;
     align-items: center;
+}
+
+.init-tracker__field-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.init-tracker__field-strip:empty {
+    display: none;
 }
 
 .init-tracker__turn-btn {

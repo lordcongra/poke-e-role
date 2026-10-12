@@ -42,12 +42,35 @@ export interface FieldEffectInfo {
     color: string;
     icon: FieldEffectIconKey;
     effects: string[];
+    initials: string;
 }
 
-import { TERRAIN_CONDITIONS_DATA, OTHER_FIELD_CONDITIONS_DATA, MOVE_FIELD_EFFECT_MAP } from './fieldEffectsConstants';
+import {
+    TERRAIN_CONDITIONS_DATA,
+    OTHER_FIELD_CONDITIONS_DATA,
+    MOVE_FIELD_EFFECT_MAP,
+    FIELD_EFFECT_INITIALS_MAP
+} from './fieldEffectsConstants';
 import type { BattlefieldData, BattleOrganizerTimerEffect } from '../../types/battleOrganizerTypes';
 
-export { TERRAIN_CONDITIONS_DATA, OTHER_FIELD_CONDITIONS_DATA, MOVE_FIELD_EFFECT_MAP };
+export { TERRAIN_CONDITIONS_DATA, OTHER_FIELD_CONDITIONS_DATA, MOVE_FIELD_EFFECT_MAP, FIELD_EFFECT_INITIALS_MAP };
+
+export function getFieldEffectInitials(rawName: string): string {
+    if (!rawName) return '??';
+    const clean = rawName.trim();
+    const lower = clean.toLowerCase();
+    if (FIELD_EFFECT_INITIALS_MAP[lower]) {
+        return FIELD_EFFECT_INITIALS_MAP[lower];
+    }
+    const words = clean.split(/\s+/).filter(Boolean);
+    if (words.length >= 2) {
+        return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    if (clean.length >= 2) {
+        return clean.slice(0, 2).toUpperCase();
+    }
+    return clean.toUpperCase().padEnd(2, '?');
+}
 
 export function getFieldEffectInfo(
     rawName: string,
@@ -61,13 +84,19 @@ export function getFieldEffectInfo(
         (t) => clean.includes(t.name.toLowerCase()) || clean.includes(t.badge.toLowerCase())
     );
     if (terrainMatch && (categoryHint === 'terrain' || !categoryHint)) {
-        return terrainMatch;
+        return {
+            ...terrainMatch,
+            initials: terrainMatch.initials || getFieldEffectInitials(terrainMatch.name)
+        };
     }
 
     // 2. Check Other / Force fields
     const otherMatch = OTHER_FIELD_CONDITIONS_DATA.find((o) => clean.includes(o.name.toLowerCase()));
     if (otherMatch && (categoryHint === otherMatch.category || !categoryHint)) {
-        return otherMatch;
+        return {
+            ...otherMatch,
+            initials: otherMatch.initials || getFieldEffectInitials(otherMatch.name)
+        };
     }
 
     // 3. Check Weather conditions data
@@ -96,6 +125,7 @@ export function getFieldEffectInfo(
             badge: weatherData.badge,
             color: weatherData.color,
             icon,
+            initials: getFieldEffectInitials(weatherData.name),
             effects: weatherData.effects
         };
     }
@@ -156,6 +186,7 @@ export function getFieldEffectInfo(
                     badge: found.category.toUpperCase(),
                     color: found.color || fallbackColor,
                     icon: (found.icon as FieldEffectIconKey) || fallbackIcon,
+                    initials: getFieldEffectInitials(found.name),
                     effects: [found.description || found.tags || 'Active custom battlefield effect.']
                 };
             }
@@ -171,6 +202,7 @@ export function getFieldEffectInfo(
         badge: fallbackBadge,
         color: fallbackColor,
         icon: fallbackIcon,
+        initials: getFieldEffectInitials(rawName),
         effects: ['Active custom battlefield effect.']
     };
 }
@@ -241,6 +273,10 @@ export interface ActiveFieldEffectItem extends BattleOrganizerTimerEffect {
     id: string;
     subLabel?: string;
     prefix?: string;
+    isExtra?: boolean;
+    extraIndex?: number;
+    side?: 'player' | 'foe';
+    forceFieldIndex?: 0 | 1;
 }
 
 export function getEffectsByCategory(
@@ -255,10 +291,12 @@ export function getEffectsByCategory(
         results.push(primary);
     }
 
-    let extras: BattleOrganizerTimerEffect[] | undefined;
-    if (category === 'weather') extras = battlefield.extraWeathers;
-    else if (category === 'terrain') extras = battlefield.extraTerrains;
-    else if (category === 'other') extras = battlefield.extraOther;
+    const extras =
+        category === 'weather'
+            ? battlefield.extraWeathers
+            : category === 'terrain'
+              ? battlefield.extraTerrains
+              : battlefield.extraOther;
 
     if (extras && Array.isArray(extras)) {
         for (const item of extras) {
@@ -275,37 +313,73 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
     if (!battlefield) return [];
     const results: ActiveFieldEffectItem[] = [];
 
-    // Weather
-    const weathers = getEffectsByCategory(battlefield, 'weather');
-    weathers.forEach((w, idx) => {
+    // Weather Primary & Extras
+    if (battlefield.weather?.name?.trim() && (battlefield.weather.remainingRounds ?? 0) > 0) {
         results.push({
-            ...w,
+            ...battlefield.weather,
             category: 'weather',
-            id: `weather-${idx}`,
-            prefix: 'Weather'
+            id: 'weather-primary',
+            prefix: 'Weather',
+            isExtra: false
         });
+    }
+    battlefield.extraWeathers?.forEach((w, idx) => {
+        if (w?.name?.trim() && (w.remainingRounds ?? 0) > 0) {
+            results.push({
+                ...w,
+                category: 'weather',
+                id: `weather-extra-${idx}`,
+                prefix: 'Weather',
+                isExtra: true,
+                extraIndex: idx
+            });
+        }
     });
 
-    // Terrain
-    const terrains = getEffectsByCategory(battlefield, 'terrain');
-    terrains.forEach((t, idx) => {
+    // Terrain Primary & Extras
+    if (battlefield.terrain?.name?.trim() && (battlefield.terrain.remainingRounds ?? 0) > 0) {
         results.push({
-            ...t,
+            ...battlefield.terrain,
             category: 'terrain',
-            id: `terrain-${idx}`,
-            prefix: 'Terrain'
+            id: 'terrain-primary',
+            prefix: 'Terrain',
+            isExtra: false
         });
+    }
+    battlefield.extraTerrains?.forEach((t, idx) => {
+        if (t?.name?.trim() && (t.remainingRounds ?? 0) > 0) {
+            results.push({
+                ...t,
+                category: 'terrain',
+                id: `terrain-extra-${idx}`,
+                prefix: 'Terrain',
+                isExtra: true,
+                extraIndex: idx
+            });
+        }
     });
 
-    // Other
-    const others = getEffectsByCategory(battlefield, 'other');
-    others.forEach((o, idx) => {
+    // Other Primary & Extras
+    if (battlefield.other?.name?.trim() && (battlefield.other.remainingRounds ?? 0) > 0) {
         results.push({
-            ...o,
+            ...battlefield.other,
             category: 'other',
-            id: `other-${idx}`,
-            prefix: 'Global'
+            id: 'other-primary',
+            prefix: 'Global',
+            isExtra: false
         });
+    }
+    battlefield.extraOther?.forEach((o, idx) => {
+        if (o?.name?.trim() && (o.remainingRounds ?? 0) > 0) {
+            results.push({
+                ...o,
+                category: 'other',
+                id: `other-extra-${idx}`,
+                prefix: 'Global',
+                isExtra: true,
+                extraIndex: idx
+            });
+        }
     });
 
     // Force Fields (Player & Foe)
@@ -316,7 +390,9 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
                 category: 'forceField',
                 id: `player-ff-${idx}`,
                 subLabel: 'Ally',
-                prefix: 'Ally Field'
+                prefix: 'Ally Field',
+                side: 'player',
+                forceFieldIndex: idx as 0 | 1
             });
         }
     });
@@ -328,7 +404,9 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
                 category: 'forceField',
                 id: `foe-ff-${idx}`,
                 subLabel: 'Foe',
-                prefix: 'Foe Field'
+                prefix: 'Foe Field',
+                side: 'foe',
+                forceFieldIndex: idx as 0 | 1
             });
         }
     });

@@ -1,85 +1,93 @@
 .init-field-bar {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 4px;
     flex-wrap: wrap;
     max-width: 100%;
 }
 
-.init-field-badge-wrap {
+.init-field-chip-wrap {
     position: relative;
     display: inline-flex;
 }
 
-.init-field-badge {
+/* --- MICRO-CHIP (~40px) --- */
+.init-field-chip {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 2px 6px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    line-height: 1.2;
+    justify-content: center;
+    gap: 3px;
+    min-width: 38px;
+    height: 22px;
+    padding: 1px 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1;
     border-radius: 4px;
     border: 1px solid var(--primary);
     background: color-mix(in srgb, var(--panel-bg) 85%, var(--primary));
     color: var(--text-main);
     cursor: pointer;
     user-select: none;
+    box-sizing: border-box;
     transition:
-        transform 0.15s ease,
-        border-color 0.15s ease,
-        background-color 0.15s ease;
+        transform 0.12s ease,
+        box-shadow 0.12s ease,
+        background-color 0.12s ease;
     white-space: nowrap;
 }
 
-.init-field-badge:hover,
-.init-field-badge.is-active {
+.init-field-chip:hover,
+.init-field-chip.is-hovered {
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
-.init-field-badge__icon {
-    display: flex;
+.init-field-chip__icon {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
 }
 
-.init-field-badge__name {
-    letter-spacing: 0.02em;
-}
-
-.init-field-badge__rounds {
-    opacity: 0.85;
+.init-field-chip__initials {
+    letter-spacing: 0.04em;
+    font-weight: 800;
     font-size: 0.65rem;
-    padding: 0 3px;
-    border-radius: 3px;
-    background: rgba(0, 0, 0, 0.25);
 }
 
-/* Floating Popover */
-.init-field-popover {
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 0;
-    z-index: 1000;
-    min-width: 200px;
-    max-width: 260px;
+.init-field-chip__rounds {
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 0 2px;
+    border-radius: 2px;
+    background: rgba(0, 0, 0, 0.35);
+    min-width: 10px;
+    text-align: center;
+    line-height: 1.2;
+}
+
+/* --- ON-HOVER FLOATING TOOLTIP --- */
+.init-field-tooltip {
+    position: fixed;
+    z-index: 99999;
     background: var(--panel-bg);
     border: 1px solid var(--primary);
     border-radius: 6px;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
-    padding: 8px 10px;
-    pointer-events: auto;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.65);
+    padding: 7px 9px;
+    pointer-events: none;
     font-size: 0.72rem;
     color: var(--text-main);
-    animation: init-popover-in 0.15s ease-out;
+    box-sizing: border-box;
+    animation: init-chip-tooltip-in 0.12s ease-out;
 }
 
-@keyframes init-popover-in {
+@keyframes init-chip-tooltip-in {
     from {
         opacity: 0;
-        transform: translateY(-4px);
+        transform: translateY(-3px);
     }
     to {
         opacity: 1;
@@ -87,44 +95,57 @@
     }
 }
 
-.init-field-popover__header {
+.init-field-tooltip__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 6px;
-    border-bottom: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
     padding-bottom: 4px;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
 }
 
-.init-field-popover__title {
+.init-field-tooltip__title {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     font-weight: 700;
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.init-field-popover__tag {
-    font-size: 0.62rem;
+.init-field-tooltip__badge {
+    font-size: 0.6rem;
     font-weight: 700;
     padding: 1px 4px;
     border-radius: 3px;
     text-transform: uppercase;
     letter-spacing: 0.03em;
+    flex-shrink: 0;
 }
 
-.init-field-popover__list {
+.init-field-tooltip__list {
     margin: 0;
     padding-left: 14px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
 }
 
-.init-field-popover__item {
+.init-field-tooltip__item {
+    font-size: 0.7rem;
     line-height: 1.35;
     color: var(--text-main);
     opacity: 0.95;
+}
+
+.init-field-tooltip__hint {
+    margin-top: 5px;
+    font-size: 0.6rem;
+    text-align: right;
+    color: var(--text-muted);
+    font-style: italic;
 }
