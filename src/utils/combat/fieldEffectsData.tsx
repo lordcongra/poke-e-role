@@ -79,10 +79,37 @@ export function getFieldEffectInfo(
     const name = rawName.trim();
     const clean = name.toLowerCase();
 
-    // 1. Check Terrains
-    const terrainMatch = TERRAIN_CONDITIONS_DATA.find(
-        (t) => clean.includes(t.name.toLowerCase()) || clean.includes(t.badge.toLowerCase())
-    );
+    // 1. Check custom homebrew effects first for exact name matches
+    try {
+        const customEffects = useCharacterStore.getState().roomCustomFieldEffects;
+        if (customEffects && Array.isArray(customEffects)) {
+            const found = customEffects.find((c) => c.name.toLowerCase().trim() === clean);
+            if (found) {
+                return {
+                    id: found.id,
+                    name: found.name,
+                    category: found.category === 'field' ? 'other' : found.category,
+                    badge: found.category.toUpperCase(),
+                    color: found.color || '#607D8B',
+                    icon: (found.icon as FieldEffectIconKey) || 'Sparkles',
+                    initials: getFieldEffectInitials(found.name),
+                    effects: [found.description || found.tags || 'Active custom battlefield effect.']
+                };
+            }
+        }
+    } catch {
+        // Safe fallback if store is not yet initialized
+    }
+
+    // 2. Check Terrains (exact or whole-word matching for badge keywords so names like "Fairy Ward" do not match "Misty Terrain")
+    const terrainMatch = TERRAIN_CONDITIONS_DATA.find((t) => {
+        const tName = t.name.toLowerCase();
+        const tBadge = t.badge.toLowerCase();
+        if (clean.includes(tName) || (t.id === 'terrain-misty' && clean.includes('misty'))) return true;
+        if (clean === tBadge) return true;
+        const badgeWordRegex = new RegExp(`\\b${tBadge}\\s+terrain\\b`, 'i');
+        return badgeWordRegex.test(clean);
+    });
     if (terrainMatch && (categoryHint === 'terrain' || !categoryHint)) {
         return {
             ...terrainMatch,
@@ -90,7 +117,7 @@ export function getFieldEffectInfo(
         };
     }
 
-    // 2. Check Other / Force fields
+    // 3. Check Other / Force fields
     const otherMatch = OTHER_FIELD_CONDITIONS_DATA.find((o) => clean.includes(o.name.toLowerCase()));
     if (otherMatch && (categoryHint === otherMatch.category || !categoryHint)) {
         return {
@@ -99,7 +126,7 @@ export function getFieldEffectInfo(
         };
     }
 
-    // 3. Check Weather conditions data
+    // 4. Check Weather conditions data
     const weatherData = WEATHER_CONDITIONS_DATA.find(
         (w) =>
             clean.includes(w.name.toLowerCase()) ||
@@ -112,7 +139,7 @@ export function getFieldEffectInfo(
             (w.id === 'weather-hail' && clean.includes('hail'))
     );
 
-    if (weatherData) {
+    if (weatherData && (categoryHint === 'weather' || !categoryHint)) {
         let icon: FieldEffectIconKey = 'Sun';
         if (weatherData.id.includes('rain') || weatherData.id.includes('typhoon')) icon = 'CloudRain';
         else if (weatherData.id.includes('sandstorm') || weatherData.id.includes('strong-winds')) icon = 'Wind';
@@ -130,7 +157,7 @@ export function getFieldEffectInfo(
         };
     }
 
-    // 4. Fallback based on keywords or category hint
+    // 5. Fallback based on keywords or category hint
     let fallbackIcon: FieldEffectIconKey = 'Sparkles';
     let fallbackColor = '#607D8B';
     let fallbackBadge = 'Field';
@@ -172,27 +199,6 @@ export function getFieldEffectInfo(
         fallbackIcon = 'Shield';
         fallbackColor = '#E91E63';
         fallbackBadge = 'Barrier';
-    }
-
-    try {
-        const customEffects = useCharacterStore.getState().roomCustomFieldEffects;
-        if (customEffects && Array.isArray(customEffects)) {
-            const found = customEffects.find((c) => c.name.toLowerCase().trim() === clean);
-            if (found) {
-                return {
-                    id: found.id,
-                    name: found.name,
-                    category: found.category === 'field' ? 'other' : found.category,
-                    badge: found.category.toUpperCase(),
-                    color: found.color || fallbackColor,
-                    icon: (found.icon as FieldEffectIconKey) || fallbackIcon,
-                    initials: getFieldEffectInitials(found.name),
-                    effects: [found.description || found.tags || 'Active custom battlefield effect.']
-                };
-            }
-        }
-    } catch {
-        // Safe fallback if store is not yet initialized
     }
 
     return {
@@ -265,6 +271,38 @@ export function detectMoveFieldEffect(text: string): MoveFieldEffectDefinition |
             return def;
         }
     }
+
+    // Inspect custom homebrew field effects
+    try {
+        const customEffects = useCharacterStore.getState().roomCustomFieldEffects;
+        if (customEffects && Array.isArray(customEffects)) {
+            for (const effect of customEffects) {
+                const effNameLower = effect.name.trim().toLowerCase();
+                if (!effNameLower) continue;
+
+                const matchesName = clean === effNameLower || clean.includes(effNameLower);
+                const matchesTriggerMove = effect.triggerMoves?.some((tm) => {
+                    const cleanTm = tm.trim().toLowerCase();
+                    return cleanTm && (clean === cleanTm || clean.includes(cleanTm));
+                });
+
+                if (matchesName || matchesTriggerMove) {
+                    return {
+                        moveName: effect.name,
+                        effectName: effect.name,
+                        category: (effect.category === 'field' ? 'other' : effect.category) as
+                            | 'weather'
+                            | 'terrain'
+                            | 'other',
+                        rounds: effect.defaultRounds ?? 4
+                    };
+                }
+            }
+        }
+    } catch {
+        // Safe fallback if store is not yet initialized
+    }
+
     return null;
 }
 

@@ -483,7 +483,8 @@ export async function executeDamageRoll(
         if (teraBonusTags) tags.push(teraBonusTags);
         else if (stabBonus > 0) tags.push(stabTag);
 
-        const weatherInfo = getWeatherDamageBonus(move.type, state.activeBattlefield);
+        const isHalfHp = state.health.hpCurr <= Math.floor(state.health.hpMax / 2);
+        const weatherInfo = getWeatherDamageBonus(move.type, state.activeBattlefield, isHalfHp);
         if (weatherInfo.bonus > 0 && weatherInfo.tag) {
             tags.push(weatherInfo.tag);
         }

@@ -1,6 +1,21 @@
+import { useMemo } from 'react';
 import { NumberSpinner } from '../../../ui/NumberSpinner';
 import type { TagBuilderConfig, RequirementGroup } from './tagBuilderTypes';
 import { CATEGORIES, MISC, MODIFIERS } from './tagBuilderConstants';
+import { useCharacterStore } from '../../../../store/useCharacterStore';
+
+const CANONICAL_BATTLEFIELD_CONDITIONS = [
+    { value: 'rain', label: 'While in Rain' },
+    { value: 'sun', label: 'While in Harsh Sunlight' },
+    { value: 'sandstorm', label: 'While in Sandstorm' },
+    { value: 'snow', label: 'While in Snow / Hail' },
+    { value: 'electric terrain', label: 'While on Electric Terrain' },
+    { value: 'grassy terrain', label: 'While on Grassy Terrain' },
+    { value: 'misty terrain', label: 'While on Misty Terrain' },
+    { value: 'psychic terrain', label: 'While on Psychic Terrain' },
+    { value: 'trick room', label: 'While in Trick Room' },
+    { value: 'gravity', label: 'While in Gravity' }
+];
 
 interface TagBuilderConfigSectionProps {
     config: TagBuilderConfig;
@@ -18,6 +33,27 @@ export function TagBuilderConfigSection({
     showValueInput
 }: TagBuilderConfigSectionProps) {
     const { category, target, value, value2, reqGroup, typeOption, condition, customMaxStacks } = config;
+    const roomCustomFieldEffects = useCharacterStore((state) => state.roomCustomFieldEffects);
+
+    const customBattlefieldOptions = useMemo(() => {
+        const canonicalValues = new Set(CANONICAL_BATTLEFIELD_CONDITIONS.map((c) => c.value.toLowerCase()));
+        const seen = new Set<string>();
+        const options: { value: string; label: string }[] = [];
+
+        (roomCustomFieldEffects || []).forEach((eff) => {
+            const rawTag = eff.conditionTag?.trim() || eff.name.trim();
+            const tagKey = rawTag.toLowerCase();
+            if (!tagKey || canonicalValues.has(tagKey) || seen.has(tagKey)) return;
+            seen.add(tagKey);
+
+            options.push({
+                value: tagKey,
+                label: `While in ${eff.name} (@ ${rawTag})`
+            });
+        });
+
+        return options;
+    }, [roomCustomFieldEffects]);
 
     return (
         <div className="tag-builder__config-section">
@@ -121,6 +157,23 @@ export function TagBuilderConfigSection({
                         <option value="boost">Static Boost (Toggle ON/OFF)</option>
                         <option value="stacking_boost">Stacking Boost (Stepper 1-3)</option>
                         <option value="custom_stacking_boost">Stacking Boost (Custom Max Stacks)</option>
+                    </optgroup>
+                    <optgroup label="Battlefield & Weather Conditions">
+                        <option value="rain">While in Rain</option>
+                        <option value="sun">While in Harsh Sunlight</option>
+                        <option value="sandstorm">While in Sandstorm</option>
+                        <option value="snow">While in Snow / Hail</option>
+                        <option value="electric terrain">While on Electric Terrain</option>
+                        <option value="grassy terrain">While on Grassy Terrain</option>
+                        <option value="misty terrain">While on Misty Terrain</option>
+                        <option value="psychic terrain">While on Psychic Terrain</option>
+                        <option value="trick room">While in Trick Room</option>
+                        <option value="gravity">While in Gravity</option>
+                        {customBattlefieldOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </option>
+                        ))}
                     </optgroup>
                     <optgroup label="Status Conditions">
                         <option value="status">While Afflicted by Any Status</option>

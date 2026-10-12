@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { X, Sparkles, Tag, Check, Plus, FlameKindling } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 import type { CustomFieldEffect, FieldEffectCategory } from '../../store/storeTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { POKEMON_TYPES } from '../../data/constants';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
-import { AVAILABLE_FIELD_ICONS, PRESET_FIELD_COLORS, parseTagPills } from './homebrewFieldEffectUtils';
+import { AVAILABLE_FIELD_ICONS, PRESET_FIELD_COLORS } from './homebrewFieldEffectUtils';
+import { HomebrewFieldEffectTriggerSection } from './HomebrewFieldEffectTriggerSection';
+import { HomebrewFieldEffectArchetypes } from './HomebrewFieldEffectArchetypes';
+import { HomebrewFieldEffectTagsSection } from './HomebrewFieldEffectTagsSection';
 import './HomebrewFieldEffect.css';
 
 interface HomebrewFieldEffectModalProps {
@@ -15,20 +18,17 @@ interface HomebrewFieldEffectModalProps {
 
 export function renderCustomFieldIcon(iconKey: string, size = 16, className?: string) {
     const found = AVAILABLE_FIELD_ICONS.find((item) => item.key === iconKey);
-    const Component = found ? found.Icon : Sparkles;
+    const Component = found ? found.Icon : AVAILABLE_FIELD_ICONS[0].Icon;
     return <Component size={size} className={className} />;
 }
 
 export function HomebrewFieldEffectModal({ effect, isOpen, onClose }: HomebrewFieldEffectModalProps) {
     const updateCustomFieldEffect = useCharacterStore((state) => state.updateCustomFieldEffect);
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
+    const roomCustomFieldEffects = useCharacterStore((state) => state.roomCustomFieldEffects);
     const role = useCharacterStore((state) => state.role);
 
     const [showTagBuilder, setShowTagBuilder] = useState(false);
-    const [selectedTypeForBoost, setSelectedTypeForBoost] = useState<string>('Fire');
-    const [selectedStatForBuff, setSelectedStatForBuff] = useState<string>('Spe');
-    const [selectedStatusForImmunity, setSelectedStatusForImmunity] = useState<string>('Burn');
-    const [newTagInput, setNewTagInput] = useState<string>('');
 
     if (!isOpen) return null;
 
@@ -36,8 +36,6 @@ export function HomebrewFieldEffectModal({ effect, isOpen, onClose }: HomebrewFi
         ...POKEMON_TYPES.filter((t) => t !== ''),
         ...roomCustomTypes.filter((t) => role === 'GM' || !t.gmOnly).map((t) => t.name)
     ];
-
-    const tagList = parseTagPills(effect.tags || '');
 
     const handleAddTag = (rawTag: string) => {
         const trimmed = rawTag.trim();
@@ -197,176 +195,23 @@ export function HomebrewFieldEffectModal({ effect, isOpen, onClose }: HomebrewFi
                         </div>
                     </div>
 
+                    {/* Move Linking & Condition Tag Identifier Section */}
+                    <HomebrewFieldEffectTriggerSection
+                        effect={effect}
+                        otherEffects={roomCustomFieldEffects}
+                        onUpdate={(field, value) => updateCustomFieldEffect(effect.id, field, value)}
+                    />
+
                     {/* Smart Archetype Preset Chips */}
-                    <div className="hb-fe-modal__section">
-                        <label className="text-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <FlameKindling size={14} /> Quick Archetype Templates
-                        </label>
-                        <div className="hb-fe-preset-chips">
-                            {/* Type Damage Boost */}
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                <button
-                                    type="button"
-                                    className="hb-fe-preset-chip"
-                                    onClick={() => handleAddTag(`[Dmg Pool +1: ${selectedTypeForBoost}]`)}
-                                    title="Add Type Damage Boost Tag"
-                                >
-                                    <Plus size={12} /> Dmg Pool +1:
-                                </button>
-                                <select
-                                    className="bo-input text-subtext"
-                                    value={selectedTypeForBoost}
-                                    onChange={(e) => setSelectedTypeForBoost(e.target.value)}
-                                    style={{ padding: '2px 4px', fontSize: '0.75rem' }}
-                                >
-                                    {allTypes.map((t) => (
-                                        <option key={t} value={t}>
-                                            {t}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* End of Round Damage */}
-                            <button
-                                type="button"
-                                className="hb-fe-preset-chip"
-                                onClick={() => handleAddTag('[End of Round Damage: 1]')}
-                                title="Add 1 Damage at End of Round"
-                            >
-                                <Plus size={12} /> [End of Round Damage: 1]
-                            </button>
-
-                            {/* End of Round Healing */}
-                            <button
-                                type="button"
-                                className="hb-fe-preset-chip"
-                                onClick={() => handleAddTag('[Heal 1 Round End]')}
-                                title="Add 1 HP Healing at End of Round"
-                            >
-                                <Plus size={12} /> [Heal 1 Round End]
-                            </button>
-
-                            {/* Stat Stage Buff */}
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                <button
-                                    type="button"
-                                    className="hb-fe-preset-chip"
-                                    onClick={() => handleAddTag(`[${selectedStatForBuff} +1]`)}
-                                    title="Add Stat Stage Buff"
-                                >
-                                    <Plus size={12} /> Stat Buff:
-                                </button>
-                                <select
-                                    className="bo-input text-subtext"
-                                    value={selectedStatForBuff}
-                                    onChange={(e) => setSelectedStatForBuff(e.target.value)}
-                                    style={{ padding: '2px 4px', fontSize: '0.75rem' }}
-                                >
-                                    <option value="Spe">Spe +1</option>
-                                    <option value="Def">Def +1</option>
-                                    <option value="Sp.Def">Sp.Def +1</option>
-                                    <option value="Atk">Atk +1</option>
-                                    <option value="Sp.Atk">Sp.Atk +1</option>
-                                    <option value="Acc">Acc +1</option>
-                                    <option value="Eva">Eva +1</option>
-                                </select>
-                            </div>
-
-                            {/* Status Immunity */}
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                <button
-                                    type="button"
-                                    className="hb-fe-preset-chip"
-                                    onClick={() => handleAddTag(`[Immune: ${selectedStatusForImmunity}]`)}
-                                    title="Add Status Immunity"
-                                >
-                                    <Plus size={12} /> Status Immunity:
-                                </button>
-                                <select
-                                    className="bo-input text-subtext"
-                                    value={selectedStatusForImmunity}
-                                    onChange={(e) => setSelectedStatusForImmunity(e.target.value)}
-                                    style={{ padding: '2px 4px', fontSize: '0.75rem' }}
-                                >
-                                    <option value="Burn">Burn</option>
-                                    <option value="Freeze">Freeze</option>
-                                    <option value="Paralysis">Paralysis</option>
-                                    <option value="Sleep">Sleep</option>
-                                    <option value="Poison">Poison</option>
-                                    <option value="Confusion">Confusion</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+                    <HomebrewFieldEffectArchetypes allTypes={allTypes} onAddTag={handleAddTag} />
 
                     {/* Tags List & Advanced Tag Builder */}
-                    <div className="hb-fe-modal__section">
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <label className="text-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <Tag size={14} /> Active Combat Tags
-                            </label>
-                            <button
-                                type="button"
-                                className="action-button action-button--secondary"
-                                style={{ padding: '3px 8px', fontSize: '0.75rem' }}
-                                onClick={() => setShowTagBuilder(true)}
-                            >
-                                <Sparkles size={12} /> Advanced Tag Builder
-                            </button>
-                        </div>
-
-                        <div className="hb-fe-card__tags-row" style={{ minHeight: '32px' }}>
-                            {tagList.length === 0 ? (
-                                <span className="text-subtext" style={{ fontStyle: 'italic' }}>
-                                    No combat tags added yet. Pick templates above or use the Advanced Tag Builder.
-                                </span>
-                            ) : (
-                                tagList.map((tagStr) => (
-                                    <span key={tagStr} className="hb-fe-tag-pill">
-                                        {tagStr}
-                                        <button
-                                            type="button"
-                                            className="hb-fe-tag-pill__remove"
-                                            onClick={() => handleRemoveTag(tagStr)}
-                                            title="Remove tag"
-                                        >
-                                            <X size={12} />
-                                        </button>
-                                    </span>
-                                ))
-                            )}
-                        </div>
-
-                        {/* Direct tag input */}
-                        <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
-                            <input
-                                type="text"
-                                className="bo-input bo-input--underline text-label"
-                                placeholder="Type custom tag e.g. [No Reactions]"
-                                value={newTagInput}
-                                onChange={(e) => setNewTagInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        handleAddTag(newTagInput);
-                                        setNewTagInput('');
-                                    }
-                                }}
-                            />
-                            <button
-                                type="button"
-                                className="action-button action-button--dark"
-                                style={{ padding: '4px 10px', fontSize: '0.75rem' }}
-                                onClick={() => {
-                                    handleAddTag(newTagInput);
-                                    setNewTagInput('');
-                                }}
-                            >
-                                Add
-                            </button>
-                        </div>
-                    </div>
+                    <HomebrewFieldEffectTagsSection
+                        tags={effect.tags}
+                        onAddTag={handleAddTag}
+                        onRemoveTag={handleRemoveTag}
+                        onOpenTagBuilder={() => setShowTagBuilder(true)}
+                    />
 
                     {/* Description Text */}
                     <div className="hb-fe-modal__section">

@@ -185,4 +185,3 @@ export const FIELD_EFFECT_INITIALS_MAP: Record<string, string> = {
     'toxic spikes': 'TS',
     'sticky web': 'SW'
 };
-

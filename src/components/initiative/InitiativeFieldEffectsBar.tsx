@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import OBR from '@owlbear-rodeo/sdk';
 import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import {
@@ -9,7 +8,6 @@ import {
     getAllActiveFieldEffects,
     type FieldEffectInfo
 } from '../../utils/combat/fieldEffectsData';
-import type { BattlefieldData } from '../../types/battleOrganizerTypes';
 import { InitiativeFieldEffectsModal } from './InitiativeFieldEffectsModal';
 import './InitiativeFieldEffectsBar.css';
 
@@ -57,84 +55,6 @@ export function InitiativeFieldEffectsBar({
         document.addEventListener('mousedown', handleOutside);
         return () => {
             document.removeEventListener('mousedown', handleOutside);
-        };
-    }, []);
-
-    // Hydrate & listen for battlefield updates across windows, tabs, and OBR peers
-    useEffect(() => {
-        let isMounted = true;
-
-        const hydrate = async () => {
-            try {
-                if (OBR.isAvailable && !isStandaloneMode) {
-                    const sceneMeta = await OBR.scene.getMetadata();
-                    const bf = sceneMeta['pokerole-pmd-extension/battlefield'] as BattlefieldData | undefined;
-                    if (bf && isMounted) {
-                        useCharacterStore.getState().setActiveBattlefield(bf);
-                        return;
-                    }
-                }
-                const raw = localStorage.getItem('pokerole-pmd-extension/battlefield');
-                if (raw && isMounted) {
-                    useCharacterStore.getState().setActiveBattlefield(JSON.parse(raw));
-                } else {
-                    const rawBo = localStorage.getItem('pkr_battle_organizer_data');
-                    if (rawBo && isMounted) {
-                        const parsed = JSON.parse(rawBo);
-                        if (parsed.battlefield) {
-                            useCharacterStore.getState().setActiveBattlefield(parsed.battlefield);
-                        }
-                    }
-                }
-            } catch (err) {
-                console.warn('[InitiativeFieldEffectsBar] Hydration error:', err);
-            }
-        };
-
-        hydrate();
-
-        const unsubs: (() => void)[] = [];
-
-        // Standalone storage listener
-        const handleStorage = (e: StorageEvent) => {
-            if (e.key === 'pokerole-pmd-extension/battlefield' && e.newValue) {
-                try {
-                    useCharacterStore.getState().setActiveBattlefield(JSON.parse(e.newValue));
-                } catch {}
-            } else if (e.key === 'pkr_battle_organizer_data' && e.newValue) {
-                try {
-                    const parsed = JSON.parse(e.newValue);
-                    if (parsed?.battlefield) {
-                        useCharacterStore.getState().setActiveBattlefield(parsed.battlefield);
-                    }
-                } catch {}
-            }
-        };
-        window.addEventListener('storage', handleStorage);
-        unsubs.push(() => window.removeEventListener('storage', handleStorage));
-
-        // OBR listeners if in Owlbear Rodeo
-        if (OBR.isAvailable && !isStandaloneMode) {
-            const unsubMeta = OBR.scene.onMetadataChange((meta) => {
-                const bf = meta['pokerole-pmd-extension/battlefield'] as BattlefieldData | undefined;
-                if (bf && isMounted) {
-                    useCharacterStore.getState().setActiveBattlefield(bf);
-                }
-            });
-            unsubs.push(unsubMeta);
-
-            const unsubBroadcast = OBR.broadcast.onMessage('pokerole-pmd-extension/battle-organizer-sync', (event) => {
-                const incoming = event.data as { battlefield?: BattlefieldData };
-                if (incoming && incoming.battlefield && isMounted) {
-                    useCharacterStore.getState().setActiveBattlefield(incoming.battlefield);
-                }
-            });
-            unsubs.push(unsubBroadcast);
-        }
-
-        return () => {
-            isMounted = false;
-            unsubs.forEach((u) => u());
         };
     }, []);
 
@@ -253,44 +173,47 @@ export function InitiativeFieldEffectsBar({
             </div>
 
             {/* On-hover Floating Tooltip via Portal */}
-            {hoveredItem && tooltipPos && !isModalOpen && createPortal(
-                <div
-                    className="init-field-tooltip"
-                    style={{
-                        borderColor: hoveredItem.info.color,
-                        left: `${tooltipPos.x}px`,
-                        top: `${tooltipPos.y}px`,
-                        width: `${tooltipPos.width}px`
-                    }}
-                    role="tooltip"
-                >
-                    <div className="init-field-tooltip__header">
-                        <span className="init-field-tooltip__title">
-                            <FieldEffectIcon icon={hoveredItem.info.icon} size={13} />
-                            {hoveredItem.subLabel ? `${hoveredItem.subLabel} ` : ''}
-                            {hoveredItem.info.name}
-                        </span>
-                        <span
-                            className="init-field-tooltip__badge"
-                            style={{
-                                backgroundColor: hoveredItem.info.color,
-                                color: '#ffffff'
-                            }}
-                        >
-                            {hoveredItem.remainingRounds} {hoveredItem.remainingRounds === 1 ? 'Rnd' : 'Rnds'}
-                        </span>
-                    </div>
-                    <ul className="init-field-tooltip__list">
-                        {hoveredItem.info.effects.map((eff, effIdx) => (
-                            <li key={effIdx} className="init-field-tooltip__item">
-                                {eff}
-                            </li>
-                        ))}
-                    </ul>
-                    <div className="init-field-tooltip__hint text-subtext">Click to adjust rounds</div>
-                </div>,
-                document.body
-            )}
+            {hoveredItem &&
+                tooltipPos &&
+                !isModalOpen &&
+                createPortal(
+                    <div
+                        className="init-field-tooltip"
+                        style={{
+                            borderColor: hoveredItem.info.color,
+                            left: `${tooltipPos.x}px`,
+                            top: `${tooltipPos.y}px`,
+                            width: `${tooltipPos.width}px`
+                        }}
+                        role="tooltip"
+                    >
+                        <div className="init-field-tooltip__header">
+                            <span className="init-field-tooltip__title">
+                                <FieldEffectIcon icon={hoveredItem.info.icon} size={13} />
+                                {hoveredItem.subLabel ? `${hoveredItem.subLabel} ` : ''}
+                                {hoveredItem.info.name}
+                            </span>
+                            <span
+                                className="init-field-tooltip__badge"
+                                style={{
+                                    backgroundColor: hoveredItem.info.color,
+                                    color: '#ffffff'
+                                }}
+                            >
+                                {hoveredItem.remainingRounds} {hoveredItem.remainingRounds === 1 ? 'Rnd' : 'Rnds'}
+                            </span>
+                        </div>
+                        <ul className="init-field-tooltip__list">
+                            {hoveredItem.info.effects.map((eff, effIdx) => (
+                                <li key={effIdx} className="init-field-tooltip__item">
+                                    {eff}
+                                </li>
+                            ))}
+                        </ul>
+                        <div className="init-field-tooltip__hint text-subtext">Click to adjust rounds</div>
+                    </div>,
+                    document.body
+                )}
 
             {/* Inspector Modal */}
             <InitiativeFieldEffectsModal

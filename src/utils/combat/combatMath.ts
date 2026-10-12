@@ -1,6 +1,7 @@
 import type { MoveData, CharacterState, CustomAbility, InventoryItem, PassiveItem, Rank } from '../../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { parseCombatTags, type CombatBonuses } from '../tagParser/index';
+import { checkCondition } from '../tagParser/conditionChecker';
 import { getEffectsByCategory, getAllActiveFieldEffects } from './fieldEffectsData';
 import { useCharacterStore } from '../../store/useCharacterStore';
 
@@ -150,9 +151,20 @@ export function calculateSkillTotal(skillKey: string, state: CharacterState, ite
 
 export function getWeatherDamageBonus(
     moveType: string | undefined,
-    battlefield: CharacterState['activeBattlefield']
+    battlefield: CharacterState['activeBattlefield'],
+    isHalfHp?: boolean
 ): { bonus: number; tag: string } {
     if (!moveType || !battlefield) return { bonus: 0, tag: '' };
+
+    let effectiveHalfHp = isHalfHp;
+    if (effectiveHalfHp === undefined) {
+        try {
+            const st = useCharacterStore.getState();
+            effectiveHalfHp = st.health.hpCurr <= Math.floor(st.health.hpMax / 2);
+        } catch {
+            effectiveHalfHp = false;
+        }
+    }
 
     const cleanType = moveType.trim().toLowerCase();
     let totalBonus = 0;
@@ -234,9 +246,13 @@ export function getWeatherDamageBonus(
                 const customDef = customEffects.find((c) => c.name.trim().toLowerCase() === cleanActiveName);
                 if (customDef && customDef.tags) {
                     const damageMatches = customDef.tags.matchAll(
-                        /\[\s*(?:dmg\s*([+-]?\s*\d+)|([+-]?\s*\d+)\s*dmg)(?:\s*:\s*([^\]@]+))?(?:\s*@\s*([^\]]+))?\s*\]/gi
+                        /\[\s*(?:(?:dmg\s*pool|dmg|damage)\s*([+-]?\s*\d+)|([+-]?\s*\d+)\s*(?:dmg\s*pool|dmg|damage))(?:\s*:\s*([^\]@]+))?(?:\s*@\s*([^\]]+))?\s*\]/gi
                     );
                     for (const match of damageMatches) {
+                        const condition = match[4]?.trim();
+                        if (condition && !checkCondition(condition, effectiveHalfHp)) {
+                            continue;
+                        }
                         const amountStr = match[1] || match[2] || '0';
                         const amount = parseInt(amountStr.replace(/\s+/g, ''), 10);
                         const targetType = match[3]?.trim().toLowerCase();
@@ -299,7 +315,8 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState, itemB
     }
 
     const paralysisPenalty = normalizedDamageStatistic === 'dex' ? statuses.paralysisDexterityPenalty : 0;
-    const weatherBonus = getWeatherDamageBonus(move.type, state.activeBattlefield).bonus;
+    const isHalfHp = state.health.hpCurr <= Math.floor(state.health.hpMax / 2);
+    const weatherBonus = getWeatherDamageBonus(move.type, state.activeBattlefield, isHalfHp).bonus;
 
     return Math.max(
         1,

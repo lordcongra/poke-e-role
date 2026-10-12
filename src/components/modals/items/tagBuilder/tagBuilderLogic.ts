@@ -167,6 +167,22 @@ export function generateExplanation(config: TagBuilderConfig, builtTag: string):
     } else if (condition === 'status') {
         return `${base} while afflicted by any status condition.`;
     } else if (condition && condition !== 'none') {
+        const lower = condition.toLowerCase();
+        const battlefieldConditions = [
+            'rain',
+            'sun',
+            'sandstorm',
+            'snow',
+            'electric terrain',
+            'grassy terrain',
+            'misty terrain',
+            'psychic terrain',
+            'trick room',
+            'gravity'
+        ];
+        if (battlefieldConditions.includes(lower) || lower.includes('terrain') || lower.includes('weather')) {
+            return `${base} while ${condition} is active on the battlefield.`;
+        }
         return `${base} while afflicted by ${condition}.`;
     }
 

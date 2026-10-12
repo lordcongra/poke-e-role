@@ -1,5 +1,5 @@
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { getEffectsByCategory } from '../combat/fieldEffectsData';
+import { getEffectsByCategory, getAllActiveFieldEffects } from '../combat/fieldEffectsData';
 
 export const safeParseInt = (value: string | undefined): number => parseInt((value || '0').replace(/\s/g, ''), 10) || 0;
 
@@ -221,6 +221,33 @@ export function checkCondition(
             // Generic Terrain
             if (cond === 'terrain' || cond === 'any terrain') {
                 return true;
+            }
+        }
+
+        // 5. General & Custom Field Effects (Trick Room, Gravity, Ion Deluge, custom field effects, etc.)
+        const allActiveEffects = getAllActiveFieldEffects(activeBattlefield);
+        const customEffects = state.roomCustomFieldEffects || [];
+        for (const effect of allActiveEffects) {
+            const effName = (effect?.name || '').trim().toLowerCase();
+            if (!effName) continue;
+            if (effName === cond) return true;
+            if (cond === 'trick room' && effName.includes('trick room')) return true;
+            if (cond === 'gravity' && effName.includes('gravity')) return true;
+            if (cond === 'ion deluge' && effName.includes('ion deluge')) return true;
+            if (effName.includes(cond) || cond.includes(effName)) return true;
+
+            // Check if this active effect matches a custom effect whose name or conditionTag matches cond
+            const matchingCustom = customEffects.find(
+                (c) =>
+                    c.name.trim().toLowerCase() === effName ||
+                    (c.conditionTag && c.conditionTag.trim().toLowerCase() === effName)
+            );
+            if (matchingCustom) {
+                const cTag = (matchingCustom.conditionTag || '').trim().toLowerCase();
+                const cName = matchingCustom.name.trim().toLowerCase();
+                if (cTag === cond || cName === cond || (cTag && (cTag.includes(cond) || cond.includes(cTag)))) {
+                    return true;
+                }
             }
         }
     }

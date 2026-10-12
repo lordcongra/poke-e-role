@@ -89,19 +89,37 @@ export function BattlefieldEffectCard({
     const handleSelectPreset = (preset: PresetItem) => {
         const cleanPreset = preset.name.toLowerCase().trim();
 
-        // 1. If currently active in primary slot, toggle off
+        // 1. If currently in primary slot: only toggle off if remainingRounds > 0, reactivate if remainingRounds === 0
         if (value.toLowerCase().trim() === cleanPreset) {
-            onChangeName('');
-            onChangeRounds(0);
-            setPendingPreset(null);
-            return;
+            if (remainingRounds > 0) {
+                onChangeName('');
+                onChangeRounds(0);
+                setPendingPreset(null);
+                return;
+            } else {
+                onChangeName(preset.name);
+                onChangeRounds(preset.rounds);
+                setPendingPreset(null);
+                return;
+            }
         }
 
-        // 2. If currently active in secondary slot, toggle off
-        if (extraEffects?.some((e) => e.name.toLowerCase().trim() === cleanPreset)) {
-            onChangeExtras?.(extraEffects.filter((e) => e.name.toLowerCase().trim() !== cleanPreset));
-            setPendingPreset(null);
-            return;
+        // 2. If currently in secondary slot: only toggle off if remainingRounds > 0, reactivate if 0
+        const matchingExtra = extraEffects?.find((e) => e.name.toLowerCase().trim() === cleanPreset);
+        if (matchingExtra) {
+            if ((matchingExtra.remainingRounds ?? 0) > 0) {
+                onChangeExtras?.(extraEffects!.filter((e) => e.name.toLowerCase().trim() !== cleanPreset));
+                setPendingPreset(null);
+                return;
+            } else {
+                onChangeExtras?.(
+                    extraEffects!.map((e) =>
+                        e.name.toLowerCase().trim() === cleanPreset ? { ...e, remainingRounds: preset.rounds } : e
+                    )
+                );
+                setPendingPreset(null);
+                return;
+            }
         }
 
         // 3. If primary slot is empty or has 0 rounds, assign to primary directly
@@ -333,7 +351,7 @@ export function BattlefieldEffectCard({
                 {customPresets.length > 0 && (
                     <select
                         className="bo-preset-select text-subtext"
-                        value={customPresets.some((c) => isPresetActive(c.name)) ? value : ''}
+                        value=""
                         onChange={(e) => {
                             const found = customPresets.find((c) => c.name === e.target.value);
                             if (found) handleSelectPreset(found);

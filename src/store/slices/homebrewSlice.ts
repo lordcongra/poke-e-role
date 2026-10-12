@@ -585,6 +585,8 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             tags: '',
             description: '',
             gmOnly: false,
+            triggerMoves: [],
+            conditionTag: '',
             ...initialData
         };
         const newEffects = [...get().roomCustomFieldEffects, newEffect];
@@ -613,7 +615,15 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             copyName = `${target.name} (Copy ${counter})`;
         }
 
-        const newEffects = [...currentEffects, { ...target, id: crypto.randomUUID(), name: copyName }];
+        const newEffects = [
+            ...currentEffects,
+            {
+                ...target,
+                id: crypto.randomUUID(),
+                name: copyName,
+                triggerMoves: target.triggerMoves ? [...target.triggerMoves] : []
+            }
+        ];
         set({ roomCustomFieldEffects: newEffects, needsBackup: true });
         saveHomebrewLocal(get());
     },

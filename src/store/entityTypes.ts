@@ -341,6 +341,8 @@ export interface CustomFieldEffect {
     tags: string;
     description: string;
     gmOnly?: boolean;
+    triggerMoves?: string[];
+    conditionTag?: string;
 }
 
 export interface PendingDemoRoll {

@@ -47,13 +47,13 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
             });
         }
 
-        // 2. Deal Damage: [Deal X Damage at End of Round @ Condition]
+        // 2. Deal Damage: [Deal X Damage at End of Round @ Condition] or [End of Round Damage: X @ Condition]
         const dmgMatches = text.matchAll(
-            /\[\s*(?:deal\s*)?(\d+)\s*(?:damage|dmg)\s*(?:at end of round|at round end|round end)(?:\s*@\s*([^\]]+))?\s*\]/gi
+            /\[\s*(?:(?:deal\s*)?(\d+)\s*(?:damage|dmg)\s*(?:at end of round|at round end|round end)|(?:end of round damage|end of round dmg)\s*:\s*(\d+))(?:\s*@\s*([^\]]+))?\s*\]/gi
         );
         for (const m of dmgMatches) {
-            const amount = parseInt(m[1], 10);
-            const condition = m[2] ? m[2].trim() : undefined;
+            const amount = parseInt(m[1] || m[2], 10);
+            const condition = m[3] ? m[3].trim() : undefined;
             if (condition && !checkCondition(condition, isHalfHp, abilityBoostActive)) {
                 continue;
             }

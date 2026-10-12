@@ -107,55 +107,76 @@ export function TrackerSection() {
 
     const handleConfirmTriggers = (confirmed: RoundEndTrigger[]) => {
         const store = useCharacterStore.getState();
-        let hpDelta = 0;
-        let willDelta = 0;
+
+        let totalHpDamage = 0;
+        let totalHpHeal = 0;
+        let totalWillLoss = 0;
+        let totalWillRestore = 0;
 
         confirmed.forEach((t) => {
-            if (t.type === 'healHp') hpDelta += t.amount;
-            else if (t.type === 'damageHp') hpDelta -= t.amount;
-            else if (t.type === 'restoreWill') willDelta += t.amount;
-            else if (t.type === 'reduceWill') willDelta -= t.amount;
+            if (t.type === 'damageHp') totalHpDamage += t.amount;
+            else if (t.type === 'healHp') totalHpHeal += t.amount;
+            else if (t.type === 'reduceWill') totalWillLoss += t.amount;
+            else if (t.type === 'restoreWill') totalWillRestore += t.amount;
         });
 
-        if (hpDelta !== 0) {
-            const curHealth = store.health;
-            if (hpDelta > 0) {
-                const nextHp = Math.min(curHealth.hpMax, curHealth.hpCurr + hpDelta);
-                store.updateHealth('hpCurr', nextHp);
-            } else {
-                let dmgRemaining = Math.abs(hpDelta);
-                let tempHp = curHealth.temporaryHitPoints || 0;
+        // 1. Process all damage triggers first (draining temporaryHitPoints completely before hpCurr), then healing up to hpMax
+        if (totalHpDamage > 0 || totalHpHeal > 0) {
+            let curHp = store.health.hpCurr;
+            let tempHp = store.health.temporaryHitPoints || 0;
+            const maxHp = store.health.hpMax;
+
+            if (totalHpDamage > 0) {
+                let dmgRemaining = totalHpDamage;
                 if (tempHp > 0) {
                     const deduct = Math.min(tempHp, dmgRemaining);
                     tempHp -= deduct;
                     dmgRemaining -= deduct;
-                    store.updateHealth('temporaryHitPoints', tempHp);
                 }
                 if (dmgRemaining > 0) {
-                    const nextHp = Math.max(0, curHealth.hpCurr - dmgRemaining);
-                    store.updateHealth('hpCurr', nextHp);
+                    curHp = Math.max(0, curHp - dmgRemaining);
                 }
+            }
+
+            if (totalHpHeal > 0) {
+                curHp = Math.min(maxHp, curHp + totalHpHeal);
+            }
+
+            if (tempHp !== (store.health.temporaryHitPoints || 0)) {
+                store.updateHealth('temporaryHitPoints', tempHp);
+            }
+            if (curHp !== store.health.hpCurr) {
+                store.updateHealth('hpCurr', curHp);
             }
         }
 
-        if (willDelta !== 0) {
-            const curWill = store.will;
-            if (willDelta > 0) {
-                const nextWill = Math.min(curWill.willMax, curWill.willCurr + willDelta);
-                store.updateWill('willCurr', nextWill);
-            } else {
-                let willLoss = Math.abs(willDelta);
-                let tempWill = curWill.temporaryWill || 0;
+        // 2. Process all reduceWill triggers first (draining temporaryWill completely before willCurr), then restoreWill up to willMax
+        if (totalWillLoss > 0 || totalWillRestore > 0) {
+            let curWill = store.will.willCurr;
+            let tempWill = store.will.temporaryWill || 0;
+            const maxWill = store.will.willMax;
+
+            if (totalWillLoss > 0) {
+                let willLossRemaining = totalWillLoss;
                 if (tempWill > 0) {
-                    const deduct = Math.min(tempWill, willLoss);
+                    const deduct = Math.min(tempWill, willLossRemaining);
                     tempWill -= deduct;
-                    willLoss -= deduct;
-                    store.updateWill('temporaryWill', tempWill);
+                    willLossRemaining -= deduct;
                 }
-                if (willLoss > 0) {
-                    const nextWill = Math.max(0, curWill.willCurr - willLoss);
-                    store.updateWill('willCurr', nextWill);
+                if (willLossRemaining > 0) {
+                    curWill = Math.max(0, curWill - willLossRemaining);
                 }
+            }
+
+            if (totalWillRestore > 0) {
+                curWill = Math.min(maxWill, curWill + totalWillRestore);
+            }
+
+            if (tempWill !== (store.will.temporaryWill || 0)) {
+                store.updateWill('temporaryWill', tempWill);
+            }
+            if (curWill !== store.will.willCurr) {
+                store.updateWill('willCurr', curWill);
             }
         }
 

@@ -318,3 +318,42 @@
     justify-content: space-between;
     background: var(--panel-alt);
 }
+
+/* --- Trigger Moves & Condition Identifier --- */
+.hb-fe-trigger-section {
+    background: color-mix(in srgb, var(--panel-alt) 60%, transparent);
+    border: 1px solid var(--secondary);
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.hb-fe-trigger-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.hb-fe-move-pill {
+    background: color-mix(in srgb, var(--primary) 15%, var(--panel-alt));
+    border-color: var(--primary);
+    color: var(--text-main);
+}
+
+.hb-fe-advisory-warning {
+    margin-top: 6px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--semantic-danger) 15%, var(--panel-alt));
+    border: 1px solid var(--semantic-danger);
+    color: var(--text-main);
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.35;
+}
+
+.hb-fe-advisory-warning__icon {
+    color: var(--semantic-danger);
+    flex-shrink: 0;
+}
