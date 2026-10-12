@@ -4,7 +4,7 @@
     "Power": 2,
     "Damage1": "Strength",
     "Damage2": "",
-    "Accuracy1": "Strength",
+    "Accuracy1": "Dexterity",
     "Accuracy2": "Brawl",
     "Target": "Foe",
     "Effect": "Single Target. *If the Target is holding an Item, Add 2 Dice to the Damage pool of this Move. The Target loses its Held Item afterwards.",
