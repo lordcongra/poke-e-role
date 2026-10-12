@@ -4,11 +4,7 @@ import type { CustomFieldEffect, FieldEffectCategory } from '../../store/storeTy
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { POKEMON_TYPES } from '../../data/constants';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
-import {
-    AVAILABLE_FIELD_ICONS,
-    PRESET_FIELD_COLORS,
-    parseTagPills
-} from './homebrewFieldEffectUtils';
+import { AVAILABLE_FIELD_ICONS, PRESET_FIELD_COLORS, parseTagPills } from './homebrewFieldEffectUtils';
 import './HomebrewFieldEffect.css';
 
 interface HomebrewFieldEffectModalProps {
@@ -138,7 +134,10 @@ export function HomebrewFieldEffectModal({ effect, isOpen, onClose }: HomebrewFi
 
                         {role === 'GM' && (
                             <div className="hb-fe-modal__section" style={{ justifyContent: 'center' }}>
-                                <label className="text-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <label
+                                    className="text-label"
+                                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                                >
                                     <input
                                         type="checkbox"
                                         checked={Boolean(effect.gmOnly)}
@@ -187,7 +186,13 @@ export function HomebrewFieldEffectModal({ effect, isOpen, onClose }: HomebrewFi
                                 value={effect.color || '#3B82F6'}
                                 onChange={(e) => updateCustomFieldEffect(effect.id, 'color', e.target.value)}
                                 title="Custom Hex Color"
-                                style={{ width: 28, height: 28, border: 'none', background: 'transparent', cursor: 'pointer' }}
+                                style={{
+                                    width: 28,
+                                    height: 28,
+                                    border: 'none',
+                                    background: 'transparent',
+                                    cursor: 'pointer'
+                                }}
                             />
                         </div>
                     </div>
@@ -388,7 +393,11 @@ export function HomebrewFieldEffectModal({ effect, isOpen, onClose }: HomebrewFi
             {/* Embedded Tag Builder Modal */}
             {showTagBuilder && (
                 <div onClick={(e) => e.stopPropagation()}>
-                    <TagBuilderModal targetId={effect.id} targetType="homebrew_field_effect" onClose={() => setShowTagBuilder(false)} />
+                    <TagBuilderModal
+                        targetId={effect.id}
+                        targetType="homebrew_field_effect"
+                        onClose={() => setShowTagBuilder(false)}
+                    />
                 </div>
             )}
         </div>

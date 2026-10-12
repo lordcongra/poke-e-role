@@ -34,13 +34,13 @@ export function BattleOrganizerAdvisoryBanner({ onWheel }: BattleOrganizerAdviso
                     <Lightbulb size={16} color="#f59e0b" />
                 </span>
                 <span>
-                    <strong>Optimal Dual-Screen GM Setup:</strong> For the best experience without modal
-                    occlusion on your battle map or 3D dice, open your Owlbear Rodeo room link in a{' '}
+                    <strong>Optimal Dual-Screen GM Setup:</strong> For the best experience without modal occlusion on
+                    your battle map or 3D dice, open your Owlbear Rodeo room link in a{' '}
                     <strong>Private / Incognito window</strong> as a guest, grant that guest{' '}
                     <strong>GM permissions</strong>, and manage the Battle Organizer there.{' '}
                     <em>
-                        (Do not duplicate your tab on the same logged-in account, as Owlbear Rodeo rate-limits
-                        duplicate sessions and will crash).
+                        (Do not duplicate your tab on the same logged-in account, as Owlbear Rodeo rate-limits duplicate
+                        sessions and will crash).
                     </em>
                 </span>
             </div>

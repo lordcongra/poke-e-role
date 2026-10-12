@@ -17,6 +17,9 @@ export interface BattlefieldData {
     weather: BattleOrganizerTimerEffect;
     terrain: BattleOrganizerTimerEffect;
     other: BattleOrganizerTimerEffect;
+    extraWeathers?: BattleOrganizerTimerEffect[];
+    extraTerrains?: BattleOrganizerTimerEffect[];
+    extraOther?: BattleOrganizerTimerEffect[];
     playerSide: BattlefieldSideData;
     foeSide: BattlefieldSideData;
     playerTargets: number | string;

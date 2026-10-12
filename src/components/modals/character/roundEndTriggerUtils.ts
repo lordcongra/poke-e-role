@@ -1,6 +1,7 @@
 import type { CharacterState } from '../../../store/storeTypes';
 import { checkCondition } from '../../../utils/tagParser/conditionChecker';
 import { getAbilityText } from '../../../utils/combat/combatUtils';
+import { getEffectsByCategory, getAllActiveFieldEffects } from '../../../utils/combat/fieldEffectsData';
 
 export interface RoundEndTrigger {
     id: string;
@@ -21,11 +22,7 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
     const abilityBoostActive = state.identity.abilityBoostActive ?? false;
 
     // Helper to test and extract tags from a text source
-    const inspectText = (
-        sourceName: string,
-        text: string,
-        sourceActive: boolean = true
-    ) => {
+    const inspectText = (sourceName: string, text: string, sourceActive: boolean = true) => {
         if (!text || !sourceActive) return;
 
         // 1. Heal HP: [Heal X Round End @ Condition] or [Heal X HP Round End @ Condition]
@@ -138,20 +135,32 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
         }
     });
 
-    // 4. Inspect Active Grassy Terrain
-    const terrain = state.activeBattlefield?.terrain;
-    if (terrain && terrain.name && (terrain.remainingRounds ?? 0) > 0) {
-        if (terrain.name.toLowerCase().includes('grassy')) {
+    // 4. Inspect Active Grassy Terrains across all terrain slots
+    const activeTerrains = getEffectsByCategory(state.activeBattlefield, 'terrain');
+    activeTerrains.forEach((t, idx) => {
+        if (t.name?.toLowerCase().includes('grassy')) {
             triggers.push({
-                id: `grassy-terrain-heal`,
-                source: 'Grassy Terrain',
+                id: `grassy-terrain-heal-${idx}`,
+                source: t.name || 'Grassy Terrain',
                 type: 'healHp',
                 amount: 1,
-                promptText: 'Grassy Terrain (Active): Restore 1 HP?',
+                promptText: `${t.name || 'Grassy Terrain'} (Active): Restore 1 HP?`,
                 conditionText: 'Grassy Terrain',
                 checked: true
             });
         }
+    });
+
+    // 5. Inspect tags on all active custom field effects
+    if (state.activeBattlefield && state.roomCustomFieldEffects) {
+        const allActive = getAllActiveFieldEffects(state.activeBattlefield);
+        allActive.forEach((activeItem) => {
+            const cleanName = activeItem.name.trim().toLowerCase();
+            const customDef = state.roomCustomFieldEffects.find((c) => c.name.trim().toLowerCase() === cleanName);
+            if (customDef && customDef.tags) {
+                inspectText(customDef.name, customDef.tags, true);
+            }
+        });
     }
 
     return triggers;

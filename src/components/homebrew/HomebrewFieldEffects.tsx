@@ -193,7 +193,8 @@ export function HomebrewFieldEffects() {
                         </h3>
                         <p className="homebrew-import__text text-subtext">
                             How would you like to import this data? <b>Overwrite</b> will delete your existing custom
-                            field effects. <b>Add / Merge</b> will safely combine them, updating any items with matching names.
+                            field effects. <b>Add / Merge</b> will safely combine them, updating any items with matching
+                            names.
                         </p>
                         <div className="homebrew-import__actions">
                             <button

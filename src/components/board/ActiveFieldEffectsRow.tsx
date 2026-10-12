@@ -3,6 +3,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import {
     getFieldEffectInfo,
     FieldEffectIcon,
+    getAllActiveFieldEffects,
     type FieldEffectInfo
 } from '../../utils/combat/fieldEffectsData';
 import './ActiveFieldEffectsRow.css';
@@ -20,61 +21,13 @@ export function ActiveFieldEffectsRow() {
 
     if (!activeBattlefield) return null;
 
-    const items: FieldRowItem[] = [];
-
-    // Weather
-    if (activeBattlefield.weather?.name?.trim() && (activeBattlefield.weather.remainingRounds ?? 0) > 0) {
-        items.push({
-            id: 'weather',
-            info: getFieldEffectInfo(activeBattlefield.weather.name, 'weather'),
-            remainingRounds: activeBattlefield.weather.remainingRounds,
-            prefix: 'Weather'
-        });
-    }
-
-    // Terrain
-    if (activeBattlefield.terrain?.name?.trim() && (activeBattlefield.terrain.remainingRounds ?? 0) > 0) {
-        items.push({
-            id: 'terrain',
-            info: getFieldEffectInfo(activeBattlefield.terrain.name, 'terrain'),
-            remainingRounds: activeBattlefield.terrain.remainingRounds,
-            prefix: 'Terrain'
-        });
-    }
-
-    // Other / Room Effect
-    if (activeBattlefield.other?.name?.trim() && (activeBattlefield.other.remainingRounds ?? 0) > 0) {
-        items.push({
-            id: 'other',
-            info: getFieldEffectInfo(activeBattlefield.other.name, 'other'),
-            remainingRounds: activeBattlefield.other.remainingRounds,
-            prefix: 'Global'
-        });
-    }
-
-    // Player Force Fields
-    activeBattlefield.playerSide?.forceFields?.forEach((ff, idx) => {
-        if (ff.name?.trim() && (ff.remainingRounds ?? 0) > 0) {
-            items.push({
-                id: `player-ff-${idx}`,
-                info: getFieldEffectInfo(ff.name, 'forceField'),
-                remainingRounds: ff.remainingRounds,
-                prefix: 'Ally Field'
-            });
-        }
-    });
-
-    // Foe Force Fields
-    activeBattlefield.foeSide?.forceFields?.forEach((ff, idx) => {
-        if (ff.name?.trim() && (ff.remainingRounds ?? 0) > 0) {
-            items.push({
-                id: `foe-ff-${idx}`,
-                info: getFieldEffectInfo(ff.name, 'forceField'),
-                remainingRounds: ff.remainingRounds,
-                prefix: 'Foe Field'
-            });
-        }
-    });
+    const allActive = getAllActiveFieldEffects(activeBattlefield);
+    const items: FieldRowItem[] = allActive.map((item) => ({
+        id: item.id,
+        info: getFieldEffectInfo(item.name, item.category),
+        remainingRounds: item.remainingRounds,
+        prefix: item.prefix
+    }));
 
     if (items.length === 0) return null;
 
@@ -100,9 +53,7 @@ export function ActiveFieldEffectsRow() {
                                 <span className="sheet-field-pill__icon" style={{ color }}>
                                     <FieldEffectIcon icon={item.info.icon} size={13} />
                                 </span>
-                                <span className="sheet-field-pill__label">
-                                    {item.info.name}
-                                </span>
+                                <span className="sheet-field-pill__label">{item.info.name}</span>
                                 <span className="sheet-field-pill__rounds">
                                     {item.remainingRounds} {item.remainingRounds === 1 ? 'Rnd' : 'Rnds'}
                                 </span>
@@ -123,7 +74,8 @@ export function ActiveFieldEffectsRow() {
                                         </span>
                                     </div>
                                     <div className="sheet-field-card__rounds-info text-subtext">
-                                        Duration: {item.remainingRounds} {item.remainingRounds === 1 ? 'Round' : 'Rounds'} remaining
+                                        Duration: {item.remainingRounds}{' '}
+                                        {item.remainingRounds === 1 ? 'Round' : 'Rounds'} remaining
                                     </div>
                                     <ul className="sheet-field-card__effects">
                                         {item.info.effects.map((eff, idx) => (

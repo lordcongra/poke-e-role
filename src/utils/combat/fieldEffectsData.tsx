@@ -44,131 +44,10 @@ export interface FieldEffectInfo {
     effects: string[];
 }
 
-export const TERRAIN_CONDITIONS_DATA: FieldEffectInfo[] = [
-    {
-        id: 'terrain-electric',
-        name: 'Electric Terrain',
-        category: 'terrain',
-        badge: 'Electric',
-        color: '#F8D030',
-        icon: 'Zap',
-        effects: [
-            '+1 Damage to Electric-type Moves',
-            'Grounded Pokémon cannot fall Asleep or Rest',
-            'Activates Surge abilities and boosts'
-        ]
-    },
-    {
-        id: 'terrain-grassy',
-        name: 'Grassy Terrain',
-        category: 'terrain',
-        badge: 'Grass',
-        color: '#78C850',
-        icon: 'Sprout',
-        effects: [
-            '+1 Damage to Grass-type Moves',
-            'Grounded Pokémon recover 1 HP at end of round',
-            '-1 Damage from Earthquake, Bulldoze, and Magnitude'
-        ]
-    },
-    {
-        id: 'terrain-misty',
-        name: 'Misty Terrain',
-        category: 'terrain',
-        badge: 'Fairy',
-        color: '#EE99AC',
-        icon: 'Sparkles',
-        effects: [
-            '-1 Damage from Dragon-type Moves',
-            'Grounded Pokémon cannot be inflicted with Major/Minor Status Ailments or Confusion'
-        ]
-    },
-    {
-        id: 'terrain-psychic',
-        name: 'Psychic Terrain',
-        category: 'terrain',
-        badge: 'Psychic',
-        color: '#F85888',
-        icon: 'Eye',
-        effects: [
-            '+1 Damage to Psychic-type Moves',
-            'Grounded Pokémon are protected from Priority & Reaction Moves (Evade/Clash priority)'
-        ]
-    }
-];
+import { TERRAIN_CONDITIONS_DATA, OTHER_FIELD_CONDITIONS_DATA, MOVE_FIELD_EFFECT_MAP } from './fieldEffectsConstants';
+import type { BattlefieldData, BattleOrganizerTimerEffect } from '../../types/battleOrganizerTypes';
 
-export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
-    {
-        id: 'other-trick-room',
-        name: 'Trick Room',
-        category: 'other',
-        badge: 'Dimension',
-        color: '#9C27B0',
-        icon: 'Sparkles',
-        effects: [
-            'Turn order is reversed: slower combatants act first in Initiative order',
-            'Lasts for 4 rounds or until cancelled'
-        ]
-    },
-    {
-        id: 'other-gravity',
-        name: 'Gravity',
-        category: 'other',
-        badge: 'Field',
-        color: '#5C6BC0',
-        icon: 'Sparkles',
-        effects: [
-            'Grounds Flying and Levitating Pokémon (removes Ground immunity)',
-            'All Pokémon have -2 dice penalty to Evasion rolls',
-            'High-flying/bouncing moves cannot be used'
-        ]
-    },
-    {
-        id: 'other-ion-deluge',
-        name: 'Ion Deluge',
-        category: 'other',
-        badge: 'Electric Field',
-        color: '#FFD54F',
-        icon: 'Zap',
-        effects: ['All Normal-type moves become Electric-type for the rest of the round']
-    },
-    {
-        id: 'field-reflect',
-        name: 'Reflect',
-        category: 'forceField',
-        badge: 'Barrier',
-        color: '#E91E63',
-        icon: 'Shield',
-        effects: ['Reduces Physical Damage taken by the protected side by 1 for 4 rounds']
-    },
-    {
-        id: 'field-light-screen',
-        name: 'Light Screen',
-        category: 'forceField',
-        badge: 'Screen',
-        color: '#AB47BC',
-        icon: 'Shield',
-        effects: ['Reduces Special Damage taken by the protected side by 1 for 4 rounds']
-    },
-    {
-        id: 'field-safeguard',
-        name: 'Safeguard',
-        category: 'forceField',
-        badge: 'Ward',
-        color: '#26A69A',
-        icon: 'Shield',
-        effects: ['Protects the side from receiving Status Ailments and Confusion for 4 rounds']
-    },
-    {
-        id: 'field-mist',
-        name: 'Mist',
-        category: 'forceField',
-        badge: 'Haze',
-        color: '#80DEEA',
-        icon: 'Shield',
-        effects: ['Protects the side from having their stats or dice pools lowered by opponents']
-    }
-];
+export { TERRAIN_CONDITIONS_DATA, OTHER_FIELD_CONDITIONS_DATA, MOVE_FIELD_EFFECT_MAP };
 
 export function getFieldEffectInfo(
     rawName: string,
@@ -195,8 +74,10 @@ export function getFieldEffectInfo(
     const weatherData = WEATHER_CONDITIONS_DATA.find(
         (w) =>
             clean.includes(w.name.toLowerCase()) ||
-            (w.id === 'weather-sunny' && (clean.includes('sun') || clean.includes('harsh sun') || clean.includes('desolate'))) ||
-            (w.id === 'weather-rain' && (clean.includes('rain') || clean.includes('drizzle') || clean.includes('typhoon'))) ||
+            (w.id === 'weather-sunny' &&
+                (clean.includes('sun') || clean.includes('harsh sun') || clean.includes('desolate'))) ||
+            (w.id === 'weather-rain' &&
+                (clean.includes('rain') || clean.includes('drizzle') || clean.includes('typhoon'))) ||
             (w.id === 'weather-sandstorm' && clean.includes('sand')) ||
             (w.id === 'weather-snowy' && (clean.includes('snow') || clean.includes('blizzard'))) ||
             (w.id === 'weather-hail' && clean.includes('hail'))
@@ -252,7 +133,12 @@ export function getFieldEffectInfo(
         fallbackIcon = 'Eye';
         fallbackColor = '#F85888';
         fallbackBadge = 'Psychic';
-    } else if (clean.includes('shield') || clean.includes('screen') || clean.includes('reflect') || clean.includes('veil')) {
+    } else if (
+        clean.includes('shield') ||
+        clean.includes('screen') ||
+        clean.includes('reflect') ||
+        clean.includes('veil')
+    ) {
         fallbackIcon = 'Shield';
         fallbackColor = '#E91E63';
         fallbackBadge = 'Barrier';
@@ -338,25 +224,6 @@ export interface MoveFieldEffectDefinition {
     rounds: number;
 }
 
-export const MOVE_FIELD_EFFECT_MAP: MoveFieldEffectDefinition[] = [
-    { moveName: 'Sunny Day', effectName: 'Sunny', category: 'weather', rounds: 4 },
-    { moveName: 'Rain Dance', effectName: 'Rain', category: 'weather', rounds: 4 },
-    { moveName: 'Sandstorm', effectName: 'Sandstorm', category: 'weather', rounds: 4 },
-    { moveName: 'Hail', effectName: 'Hail', category: 'weather', rounds: 4 },
-    { moveName: 'Snowscape', effectName: 'Snowy', category: 'weather', rounds: 4 },
-    { moveName: 'Electric Terrain', effectName: 'Electric Terrain', category: 'terrain', rounds: 4 },
-    { moveName: 'Grassy Terrain', effectName: 'Grassy Terrain', category: 'terrain', rounds: 4 },
-    { moveName: 'Misty Terrain', effectName: 'Misty Terrain', category: 'terrain', rounds: 4 },
-    { moveName: 'Psychic Terrain', effectName: 'Psychic Terrain', category: 'terrain', rounds: 4 },
-    { moveName: 'Trick Room', effectName: 'Trick Room', category: 'other', rounds: 4 },
-    { moveName: 'Gravity', effectName: 'Gravity', category: 'other', rounds: 4 },
-    { moveName: 'Ion Deluge', effectName: 'Ion Deluge', category: 'other', rounds: 4 },
-    { moveName: 'Reflect', effectName: 'Reflect', category: 'forceField', rounds: 4 },
-    { moveName: 'Light Screen', effectName: 'Light Screen', category: 'forceField', rounds: 4 },
-    { moveName: 'Safeguard', effectName: 'Safeguard', category: 'forceField', rounds: 4 },
-    { moveName: 'Mist', effectName: 'Mist', category: 'forceField', rounds: 4 }
-];
-
 export function detectMoveFieldEffect(text: string): MoveFieldEffectDefinition | null {
     if (!text) return null;
     const clean = text.toLowerCase().trim();
@@ -367,4 +234,104 @@ export function detectMoveFieldEffect(text: string): MoveFieldEffectDefinition |
         }
     }
     return null;
+}
+
+export interface ActiveFieldEffectItem extends BattleOrganizerTimerEffect {
+    category: 'weather' | 'terrain' | 'other' | 'forceField';
+    id: string;
+    subLabel?: string;
+    prefix?: string;
+}
+
+export function getEffectsByCategory(
+    battlefield: BattlefieldData | null | undefined,
+    category: 'weather' | 'terrain' | 'other'
+): BattleOrganizerTimerEffect[] {
+    if (!battlefield) return [];
+    const results: BattleOrganizerTimerEffect[] = [];
+
+    const primary = battlefield[category];
+    if (primary?.name?.trim() && (primary.remainingRounds ?? 0) > 0) {
+        results.push(primary);
+    }
+
+    let extras: BattleOrganizerTimerEffect[] | undefined;
+    if (category === 'weather') extras = battlefield.extraWeathers;
+    else if (category === 'terrain') extras = battlefield.extraTerrains;
+    else if (category === 'other') extras = battlefield.extraOther;
+
+    if (extras && Array.isArray(extras)) {
+        for (const item of extras) {
+            if (item?.name?.trim() && (item.remainingRounds ?? 0) > 0) {
+                results.push(item);
+            }
+        }
+    }
+
+    return results;
+}
+
+export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | undefined): ActiveFieldEffectItem[] {
+    if (!battlefield) return [];
+    const results: ActiveFieldEffectItem[] = [];
+
+    // Weather
+    const weathers = getEffectsByCategory(battlefield, 'weather');
+    weathers.forEach((w, idx) => {
+        results.push({
+            ...w,
+            category: 'weather',
+            id: `weather-${idx}`,
+            prefix: 'Weather'
+        });
+    });
+
+    // Terrain
+    const terrains = getEffectsByCategory(battlefield, 'terrain');
+    terrains.forEach((t, idx) => {
+        results.push({
+            ...t,
+            category: 'terrain',
+            id: `terrain-${idx}`,
+            prefix: 'Terrain'
+        });
+    });
+
+    // Other
+    const others = getEffectsByCategory(battlefield, 'other');
+    others.forEach((o, idx) => {
+        results.push({
+            ...o,
+            category: 'other',
+            id: `other-${idx}`,
+            prefix: 'Global'
+        });
+    });
+
+    // Force Fields (Player & Foe)
+    battlefield.playerSide?.forceFields?.forEach((ff, idx) => {
+        if (ff?.name?.trim() && (ff.remainingRounds ?? 0) > 0) {
+            results.push({
+                ...ff,
+                category: 'forceField',
+                id: `player-ff-${idx}`,
+                subLabel: 'Ally',
+                prefix: 'Ally Field'
+            });
+        }
+    });
+
+    battlefield.foeSide?.forceFields?.forEach((ff, idx) => {
+        if (ff?.name?.trim() && (ff.remainingRounds ?? 0) > 0) {
+            results.push({
+                ...ff,
+                category: 'forceField',
+                id: `foe-ff-${idx}`,
+                subLabel: 'Foe',
+                prefix: 'Foe Field'
+            });
+        }
+    });
+
+    return results;
 }

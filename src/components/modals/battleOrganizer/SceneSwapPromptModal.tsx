@@ -34,7 +34,7 @@ export function SceneSwapPromptModal({ isOpen, onClearForNewScene, onKeepCurrent
                 <div className="bo-settings__btn-row" style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                     <button
                         type="button"
-                        className="action-button --secondary"
+                        className="action-button action-button--secondary"
                         onClick={onKeepCurrentBattle}
                         style={{ flex: 1, padding: '8px 12px', fontSize: '0.85rem' }}
                     >
@@ -43,7 +43,7 @@ export function SceneSwapPromptModal({ isOpen, onClearForNewScene, onKeepCurrent
                     </button>
                     <button
                         type="button"
-                        className="action-button --red"
+                        className="action-button action-button--red"
                         onClick={onClearForNewScene}
                         style={{ flex: 1, padding: '8px 12px', fontSize: '0.85rem' }}
                     >

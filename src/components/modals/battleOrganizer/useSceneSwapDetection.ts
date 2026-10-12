@@ -42,8 +42,7 @@ export function useSceneSwapDetection({
 
     useEffect(() => {
         const handleSimulatedSwap = (e: Event) => {
-            const newSid =
-                (e as CustomEvent<{ sceneId?: string }>).detail?.sceneId || `simulated-scene-${Date.now()}`;
+            const newSid = (e as CustomEvent<{ sceneId?: string }>).detail?.sceneId || `simulated-scene-${Date.now()}`;
             const hasCombatants = rounds.some((r) => r.combatants.length > 0);
             if (hasCombatants) {
                 pendingSceneIdRef.current = newSid;

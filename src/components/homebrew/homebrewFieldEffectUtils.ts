@@ -52,7 +52,7 @@ export const PRESET_FIELD_COLORS: string[] = [
     '#8B5CF6', // Violet / Arcane
     '#E91E63', // Red / Barrier
     '#705848', // Brown / Dark
-    '#64748B'  // Slate / Neutral
+    '#64748B' // Slate / Neutral
 ];
 
 export function parseTagPills(rawTags: string): string[] {

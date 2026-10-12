@@ -1,6 +1,8 @@
 import type { MoveData, CharacterState, CustomAbility, InventoryItem, PassiveItem, Rank } from '../../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { parseCombatTags, type CombatBonuses } from '../tagParser/index';
+import { getEffectsByCategory, getAllActiveFieldEffects } from './fieldEffectsData';
+import { useCharacterStore } from '../../store/useCharacterStore';
 
 // PROXY EXPORT: Prevents app crashes if a file is still directly importing from combatMath!
 export { parseCombatTags };
@@ -150,47 +152,111 @@ export function getWeatherDamageBonus(
     moveType: string | undefined,
     battlefield: CharacterState['activeBattlefield']
 ): { bonus: number; tag: string } {
-    if (!moveType || !battlefield?.weather) return { bonus: 0, tag: '' };
-    const { name, remainingRounds } = battlefield.weather;
-    if (!name || remainingRounds <= 0) return { bonus: 0, tag: '' };
+    if (!moveType || !battlefield) return { bonus: 0, tag: '' };
 
-    const cleanName = name.trim().toLowerCase();
     const cleanType = moveType.trim().toLowerCase();
+    let totalBonus = 0;
+    const tagDescriptions: string[] = [];
 
-    // Extreme weather (+2 dice)
-    if (cleanName.includes('desolate') || cleanName.includes('harsh sun')) {
-        if (cleanType === 'fire') {
-            return { bonus: 2, tag: 'Desolate Weather (+2 Dice to Fire Damage Pool)' };
+    // 1. Weather bonuses across all active weathers
+    const activeWeathers = getEffectsByCategory(battlefield, 'weather');
+    for (const w of activeWeathers) {
+        const cleanName = (w.name || '').trim().toLowerCase();
+        // Extreme weather (+2 dice)
+        if (cleanName.includes('desolate') || cleanName.includes('harsh sun')) {
+            if (cleanType === 'fire') {
+                totalBonus += 2;
+                tagDescriptions.push('Desolate Weather (+2 Dice to Fire Damage Pool)');
+            }
+        } else if (
+            cleanName.includes('typhoon') ||
+            cleanName.includes('heavy rain') ||
+            cleanName.includes('primordial sea')
+        ) {
+            if (cleanType === 'water') {
+                totalBonus += 2;
+                tagDescriptions.push('Typhoon (+2 Dice to Water Damage Pool)');
+            }
+        } else if (cleanName.includes('strong winds') || cleanName.includes('delta stream')) {
+            if (cleanType === 'flying') {
+                totalBonus += 2;
+                tagDescriptions.push('Strong Winds (+2 Dice to Flying Damage Pool)');
+            }
         }
-    } else if (
-        cleanName.includes('typhoon') ||
-        cleanName.includes('heavy rain') ||
-        cleanName.includes('primordial sea')
-    ) {
-        if (cleanType === 'water') {
-            return { bonus: 2, tag: 'Typhoon (+2 Dice to Water Damage Pool)' };
-        }
-    } else if (cleanName.includes('strong winds') || cleanName.includes('delta stream')) {
-        if (cleanType === 'flying') {
-            return { bonus: 2, tag: 'Strong Winds (+2 Dice to Flying Damage Pool)' };
+        // Standard weather (+1 dice)
+        else if (cleanName.includes('sun')) {
+            if (cleanType === 'fire') {
+                totalBonus += 1;
+                tagDescriptions.push('Sunny (+1 Dice to Fire Damage Pool)');
+            }
+        } else if (cleanName.includes('rain')) {
+            if (cleanType === 'water') {
+                totalBonus += 1;
+                tagDescriptions.push('Rain (+1 Dice to Water Damage Pool)');
+            }
+        } else if (cleanName.includes('snow') || cleanName.includes('hail')) {
+            if (cleanType === 'ice') {
+                totalBonus += 1;
+                tagDescriptions.push('Snow (+1 Dice to Ice Damage Pool)');
+            }
         }
     }
-    // Standard weather (+1 dice)
-    else if (cleanName.includes('sun')) {
-        if (cleanType === 'fire') {
-            return { bonus: 1, tag: 'Sunny (+1 Dice to Fire Damage Pool)' };
-        }
-    } else if (cleanName.includes('rain')) {
-        if (cleanType === 'water') {
-            return { bonus: 1, tag: 'Rain (+1 Dice to Water Damage Pool)' };
-        }
-    } else if (cleanName.includes('snow') || cleanName.includes('hail')) {
-        if (cleanType === 'ice') {
-            return { bonus: 1, tag: 'Snow (+1 Dice to Ice Damage Pool)' };
+
+    // 2. Terrain damage bonuses (+1 die to matching moves for Electric, Grassy, and Psychic Terrain)
+    const activeTerrains = getEffectsByCategory(battlefield, 'terrain');
+    for (const t of activeTerrains) {
+        const cleanTerrain = (t.name || '').trim().toLowerCase();
+        if (cleanTerrain.includes('electric')) {
+            if (cleanType === 'electric') {
+                totalBonus += 1;
+                tagDescriptions.push('Electric Terrain (+1 Dice to Electric Damage Pool)');
+            }
+        } else if (cleanTerrain.includes('grassy')) {
+            if (cleanType === 'grass') {
+                totalBonus += 1;
+                tagDescriptions.push('Grassy Terrain (+1 Dice to Grass Damage Pool)');
+            }
+        } else if (cleanTerrain.includes('psychic')) {
+            if (cleanType === 'psychic') {
+                totalBonus += 1;
+                tagDescriptions.push('Psychic Terrain (+1 Dice to Psychic Damage Pool)');
+            }
         }
     }
 
-    return { bonus: 0, tag: '' };
+    // 3. Parse damage tags from active custom homebrew field effects
+    try {
+        const customEffects = useCharacterStore.getState().roomCustomFieldEffects;
+        if (customEffects && Array.isArray(customEffects)) {
+            const allActive = getAllActiveFieldEffects(battlefield);
+            for (const activeItem of allActive) {
+                const cleanActiveName = activeItem.name.trim().toLowerCase();
+                const customDef = customEffects.find((c) => c.name.trim().toLowerCase() === cleanActiveName);
+                if (customDef && customDef.tags) {
+                    const damageMatches = customDef.tags.matchAll(
+                        /\[\s*(?:dmg\s*([+-]?\s*\d+)|([+-]?\s*\d+)\s*dmg)(?:\s*:\s*([^\]@]+))?(?:\s*@\s*([^\]]+))?\s*\]/gi
+                    );
+                    for (const match of damageMatches) {
+                        const amountStr = match[1] || match[2] || '0';
+                        const amount = parseInt(amountStr.replace(/\s+/g, ''), 10);
+                        const targetType = match[3]?.trim().toLowerCase();
+                        if (!targetType || targetType === cleanType) {
+                            if (amount !== 0) {
+                                totalBonus += amount;
+                                tagDescriptions.push(
+                                    `${customDef.name} (${amount > 0 ? '+' : ''}${amount} Dice to ${targetType ? match[3].trim() + ' ' : ''}Damage Pool)`
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } catch {
+        // Safe fallback
+    }
+
+    return { bonus: totalBonus, tag: tagDescriptions.join(', ') };
 }
 
 export function calculateBaseDamage(move: MoveData, state: CharacterState, itemBuffs?: CombatBonuses): number {

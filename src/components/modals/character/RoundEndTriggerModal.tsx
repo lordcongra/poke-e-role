@@ -11,13 +11,7 @@ interface RoundEndTriggerModalProps {
     onClose: () => void;
 }
 
-export function RoundEndTriggerModal({
-    isOpen,
-    triggers,
-    onConfirm,
-    onSkip,
-    onClose
-}: RoundEndTriggerModalProps) {
+export function RoundEndTriggerModal({ isOpen, triggers, onConfirm, onSkip, onClose }: RoundEndTriggerModalProps) {
     const [selectedMap, setSelectedMap] = useState<Record<string, boolean>>(() => {
         const initial: Record<string, boolean> = {};
         triggers.forEach((t) => {
@@ -85,12 +79,8 @@ export function RoundEndTriggerModal({
                                         className="round-trigger-modal__checkbox"
                                     />
                                     <div className="round-trigger-modal__item-info">
-                                        <span className="round-trigger-modal__prompt">
-                                            {trigger.promptText}
-                                        </span>
-                                        <span className="round-trigger-modal__source">
-                                            Source: {trigger.source}
-                                        </span>
+                                        <span className="round-trigger-modal__prompt">{trigger.promptText}</span>
+                                        <span className="round-trigger-modal__source">Source: {trigger.source}</span>
                                     </div>
                                 </label>
                             );

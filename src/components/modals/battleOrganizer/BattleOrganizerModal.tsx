@@ -26,6 +26,7 @@ import {
 import { openBattleOrganizerPopout, markCombatantActionStatus } from './battleOrganizerUtils';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import type { BattleOrganizerSettings, CombatantRowData, RollLogLayoutMode } from '../../../types/battleOrganizerTypes';
+import { getEffectsByCategory } from '../../../utils/combat/fieldEffectsData';
 import './BattleOrganizerModal.css';
 
 interface BattleOrganizerModalProps {
@@ -82,16 +83,18 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
     const [showWeatherDamageModal, setShowWeatherDamageModal] = useState(false);
+    const [hazardWeatherName, setHazardWeatherName] = useState('Weather');
     const bodyRef = useRef<HTMLDivElement>(null);
 
     const handleAdvanceRoundRequest = () => {
-        const weatherName = battlefield?.weather?.name?.toLowerCase().trim() || '';
-        const weatherRounds = battlefield?.weather?.remainingRounds || 0;
-        const hasWeatherHazard =
-            weatherRounds > 0 &&
-            (weatherName.includes('sand') || weatherName.includes('hail'));
+        const activeWeathers = getEffectsByCategory(battlefield, 'weather');
+        const hazardWeathers = activeWeathers.filter((w) => {
+            const name = (w.name || '').toLowerCase().trim();
+            return name.includes('sand') || name.includes('hail');
+        });
 
-        if (hasWeatherHazard && currentRound?.combatants && currentRound.combatants.length > 0) {
+        if (hazardWeathers.length > 0 && currentRound?.combatants && currentRound.combatants.length > 0) {
+            setHazardWeatherName(hazardWeathers.map((w) => w.name).join(' & '));
             setShowWeatherDamageModal(true);
         } else {
             advanceRound();
@@ -455,7 +458,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                 {showWeatherDamageModal && (
                     <RoundWeatherDamageModal
                         isOpen={true}
-                        weatherName={battlefield?.weather?.name || 'Weather'}
+                        weatherName={hazardWeatherName}
                         combatants={currentRound?.combatants || []}
                         onApplyDamage={handleApplyWeatherDamageAndAdvance}
                         onSkip={handleSkipWeatherDamageAndAdvance}

@@ -1,4 +1,5 @@
 import { useCharacterStore } from '../../store/useCharacterStore';
+import { getEffectsByCategory } from '../combat/fieldEffectsData';
 
 export const safeParseInt = (value: string | undefined): number => parseInt((value || '0').replace(/\s/g, ''), 10) || 0;
 
@@ -141,14 +142,12 @@ export function checkCondition(
         return true;
     }
 
-    // 4. Weather & Terrain evaluations (strictly checking remainingRounds > 0)
+    // 4. Weather & Terrain evaluations (strictly checking remainingRounds > 0 across primary and extra slots)
     const activeBattlefield = state.activeBattlefield;
     if (activeBattlefield) {
-        const weather = activeBattlefield.weather;
-        const weatherRounds = weather?.remainingRounds ?? 0;
-        const weatherName = (weather?.name || '').trim().toLowerCase();
-
-        if (weatherRounds > 0 && weatherName) {
+        const activeWeathers = getEffectsByCategory(activeBattlefield, 'weather');
+        for (const weather of activeWeathers) {
+            const weatherName = (weather?.name || '').trim().toLowerCase();
             // Rain / Typhoon / Heavy Rain
             if (
                 cond === 'rain' ||
@@ -200,11 +199,9 @@ export function checkCondition(
             }
         }
 
-        const terrain = activeBattlefield.terrain;
-        const terrainRounds = terrain?.remainingRounds ?? 0;
-        const terrainName = (terrain?.name || '').trim().toLowerCase();
-
-        if (terrainRounds > 0 && terrainName) {
+        const activeTerrains = getEffectsByCategory(activeBattlefield, 'terrain');
+        for (const terrain of activeTerrains) {
+            const terrainName = (terrain?.name || '').trim().toLowerCase();
             // Electric Terrain
             if (cond === 'electric terrain' || cond === 'electric') {
                 if (terrainName.includes('electric')) return true;

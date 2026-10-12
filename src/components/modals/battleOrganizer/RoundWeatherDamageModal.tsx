@@ -84,9 +84,7 @@ export function RoundWeatherDamageModal({
 
             const resolved: CombatantImmunityStatus[] = sorted.map((c) => {
                 const types =
-                    (c.tokenId && tokenTypeMap.get(c.tokenId)) ||
-                    tokenTypeMap.get(c.name.toLowerCase().trim()) ||
-                    [];
+                    (c.tokenId && tokenTypeMap.get(c.tokenId)) || tokenTypeMap.get(c.name.toLowerCase().trim()) || [];
 
                 const cleanTypes = types.map((t) => t.toLowerCase());
 
@@ -97,15 +95,9 @@ export function RoundWeatherDamageModal({
                     isImmune = true;
                     reason = 'Fainted';
                 } else if (isSandstorm) {
-                    if (
-                        cleanTypes.includes('rock') ||
-                        cleanTypes.includes('ground') ||
-                        cleanTypes.includes('steel')
-                    ) {
+                    if (cleanTypes.includes('rock') || cleanTypes.includes('ground') || cleanTypes.includes('steel')) {
                         isImmune = true;
-                        const match = types.find((t) =>
-                            ['rock', 'ground', 'steel'].includes(t.toLowerCase())
-                        );
+                        const match = types.find((t) => ['rock', 'ground', 'steel'].includes(t.toLowerCase()));
                         reason = `Immune (${match || 'Type'})`;
                     }
                 } else if (isHail) {
@@ -217,11 +209,7 @@ export function RoundWeatherDamageModal({
                                             className="bo-weather-dmg-modal__checkbox"
                                         />
                                         {c.image && (
-                                            <img
-                                                src={c.image}
-                                                alt={c.name}
-                                                className="bo-weather-dmg-modal__avatar"
-                                            />
+                                            <img src={c.image} alt={c.name} className="bo-weather-dmg-modal__avatar" />
                                         )}
                                         <span className="bo-weather-dmg-modal__name">{c.name}</span>
                                         <span className="bo-weather-dmg-modal__init-badge">
@@ -270,9 +258,7 @@ export function RoundWeatherDamageModal({
                         title="Apply 1 damage to checked combatants and advance round"
                     >
                         <Check size={14} />
-                        {selectedCount > 0
-                            ? `Apply 1 Damage to Selected (${selectedCount})`
-                            : 'Advance Round'}
+                        {selectedCount > 0 ? `Apply 1 Damage to Selected (${selectedCount})` : 'Advance Round'}
                     </button>
                 </div>
             </div>

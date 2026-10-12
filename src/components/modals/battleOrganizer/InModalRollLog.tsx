@@ -558,27 +558,29 @@ export function InModalRollLog({
                                         )}
 
                                     {/* 1-Click GM Action Button for Weather & Field Effects */}
-                                    {onActivateFieldEffect && (() => {
-                                        const fieldDef = detectMoveFieldEffect(moveName || cleanLabel);
-                                        if (!fieldDef) return null;
-                                        return (
-                                            <div className="in-modal-roll-log__field-effect-bar">
-                                                <button
-                                                    type="button"
-                                                    className="in-modal-roll-log__field-btn"
-                                                    onClick={() =>
-                                                        onActivateFieldEffect(
-                                                            fieldDef.moveName,
-                                                            matchedCombatant?.isPlayerSide ?? true
-                                                        )
-                                                    }
-                                                    title={`Activate ${fieldDef.moveName} (${fieldDef.rounds} Rounds) on the Battlefield`}
-                                                >
-                                                    <Sparkles size={14} /> Activate {fieldDef.moveName} ({fieldDef.rounds} Rounds)
-                                                </button>
-                                            </div>
-                                        );
-                                    })()}
+                                    {onActivateFieldEffect &&
+                                        (() => {
+                                            const fieldDef = detectMoveFieldEffect(moveName || cleanLabel);
+                                            if (!fieldDef) return null;
+                                            return (
+                                                <div className="in-modal-roll-log__field-effect-bar">
+                                                    <button
+                                                        type="button"
+                                                        className="in-modal-roll-log__field-btn"
+                                                        onClick={() =>
+                                                            onActivateFieldEffect(
+                                                                fieldDef.moveName,
+                                                                matchedCombatant?.isPlayerSide ?? true
+                                                            )
+                                                        }
+                                                        title={`Activate ${fieldDef.moveName} (${fieldDef.rounds} Rounds) on the Battlefield`}
+                                                    >
+                                                        <Sparkles size={14} /> Activate {fieldDef.moveName} (
+                                                        {fieldDef.rounds} Rounds)
+                                                    </button>
+                                                </div>
+                                            );
+                                        })()}
                                 </div>
                             );
                         })

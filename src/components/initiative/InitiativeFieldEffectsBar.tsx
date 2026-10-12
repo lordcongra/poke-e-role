@@ -3,6 +3,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import {
     getFieldEffectInfo,
     FieldEffectIcon,
+    getAllActiveFieldEffects,
     type FieldEffectInfo
 } from '../../utils/combat/fieldEffectsData';
 import './InitiativeFieldEffectsBar.css';
@@ -32,57 +33,13 @@ export function InitiativeFieldEffectsBar() {
 
     if (!activeBattlefield) return null;
 
-    const items: ActiveConditionItem[] = [];
-
-    // 1. Weather
-    if (activeBattlefield.weather?.name?.trim() && (activeBattlefield.weather.remainingRounds ?? 0) > 0) {
-        items.push({
-            id: 'weather',
-            info: getFieldEffectInfo(activeBattlefield.weather.name, 'weather'),
-            remainingRounds: activeBattlefield.weather.remainingRounds
-        });
-    }
-
-    // 2. Terrain
-    if (activeBattlefield.terrain?.name?.trim() && (activeBattlefield.terrain.remainingRounds ?? 0) > 0) {
-        items.push({
-            id: 'terrain',
-            info: getFieldEffectInfo(activeBattlefield.terrain.name, 'terrain'),
-            remainingRounds: activeBattlefield.terrain.remainingRounds
-        });
-    }
-
-    // 3. Other / Dimension
-    if (activeBattlefield.other?.name?.trim() && (activeBattlefield.other.remainingRounds ?? 0) > 0) {
-        items.push({
-            id: 'other',
-            info: getFieldEffectInfo(activeBattlefield.other.name, 'other'),
-            remainingRounds: activeBattlefield.other.remainingRounds
-        });
-    }
-
-    // 4. Force Fields (Player & Foe)
-    activeBattlefield.playerSide?.forceFields?.forEach((ff, idx) => {
-        if (ff.name?.trim() && (ff.remainingRounds ?? 0) > 0) {
-            items.push({
-                id: `player-ff-${idx}`,
-                info: getFieldEffectInfo(ff.name, 'forceField'),
-                remainingRounds: ff.remainingRounds,
-                subLabel: 'Ally'
-            });
-        }
-    });
-
-    activeBattlefield.foeSide?.forceFields?.forEach((ff, idx) => {
-        if (ff.name?.trim() && (ff.remainingRounds ?? 0) > 0) {
-            items.push({
-                id: `foe-ff-${idx}`,
-                info: getFieldEffectInfo(ff.name, 'forceField'),
-                remainingRounds: ff.remainingRounds,
-                subLabel: 'Foe'
-            });
-        }
-    });
+    const allActive = getAllActiveFieldEffects(activeBattlefield);
+    const items: ActiveConditionItem[] = allActive.map((item) => ({
+        id: item.id,
+        info: getFieldEffectInfo(item.name, item.category),
+        remainingRounds: item.remainingRounds,
+        subLabel: item.subLabel
+    }));
 
     if (items.length === 0) return null;
 

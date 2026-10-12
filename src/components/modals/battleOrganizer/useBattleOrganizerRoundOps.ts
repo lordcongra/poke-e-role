@@ -126,6 +126,9 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
                 weather: dec(prev.battlefield.weather),
                 terrain: dec(prev.battlefield.terrain),
                 other: dec(prev.battlefield.other),
+                extraWeathers: prev.battlefield.extraWeathers ? prev.battlefield.extraWeathers.map(dec) : undefined,
+                extraTerrains: prev.battlefield.extraTerrains ? prev.battlefield.extraTerrains.map(dec) : undefined,
+                extraOther: prev.battlefield.extraOther ? prev.battlefield.extraOther.map(dec) : undefined,
                 playerSide: {
                     ...prev.battlefield.playerSide,
                     forceFields: [

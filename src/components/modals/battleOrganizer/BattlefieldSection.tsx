@@ -51,8 +51,8 @@ export function BattlefieldSection({
 }: BattlefieldSectionProps) {
     const handlePlayerForceFieldChange = (idx: 0 | 1, text: string) => {
         const fields = [...battlefield.playerSide.forceFields] as [
-            (typeof battlefield.playerSide.forceFields)[0],
-            (typeof battlefield.playerSide.forceFields)[1]
+            BattleOrganizerTimerEffect,
+            BattleOrganizerTimerEffect
         ];
         const prevRounds = fields[idx].remainingRounds;
         let newRounds = prevRounds;
@@ -63,10 +63,7 @@ export function BattlefieldSection({
     };
 
     const handleFoeForceFieldChange = (idx: 0 | 1, text: string) => {
-        const fields = [...battlefield.foeSide.forceFields] as [
-            (typeof battlefield.foeSide.forceFields)[0],
-            (typeof battlefield.foeSide.forceFields)[1]
-        ];
+        const fields = [...battlefield.foeSide.forceFields] as [BattleOrganizerTimerEffect, BattleOrganizerTimerEffect];
         const prevRounds = fields[idx].remainingRounds;
         let newRounds = prevRounds;
         if (text.trim() && prevRounds === 0) newRounds = 4;
@@ -112,11 +109,7 @@ export function BattlefieldSection({
                                     : 'Hidden from Players (Pre-staging, Click to Reveal)'
                             }
                         >
-                            {(battlefield.broadcastToPlayers ?? true) ? (
-                                <Eye size={13} />
-                            ) : (
-                                <EyeOff size={13} />
-                            )}
+                            {(battlefield.broadcastToPlayers ?? true) ? <Eye size={13} /> : <EyeOff size={13} />}
                             <span>{(battlefield.broadcastToPlayers ?? true) ? 'Visible' : 'Hidden'}</span>
                         </button>
                         <ChevronDown
@@ -153,6 +146,8 @@ export function BattlefieldSection({
                                     remainingRounds={battlefield.weather.remainingRounds}
                                     onChangeName={(name) => updateBattlefieldWeather('name', name)}
                                     onChangeRounds={(rounds) => updateBattlefieldWeather('remainingRounds', rounds)}
+                                    extraEffects={battlefield.extraWeathers}
+                                    onChangeExtras={(extras) => updateBattlefield('extraWeathers', extras)}
                                     category="weather"
                                     placeholder="e.g. Rain, Harsh Sun, Sandstorm"
                                 />
@@ -164,6 +159,8 @@ export function BattlefieldSection({
                                     remainingRounds={battlefield.terrain.remainingRounds}
                                     onChangeName={(name) => updateBattlefieldTerrain('name', name)}
                                     onChangeRounds={(rounds) => updateBattlefieldTerrain('remainingRounds', rounds)}
+                                    extraEffects={battlefield.extraTerrains}
+                                    onChangeExtras={(extras) => updateBattlefield('extraTerrains', extras)}
                                     category="terrain"
                                     placeholder="e.g. Electric Terrain, Grassy Terrain"
                                 />
@@ -175,6 +172,8 @@ export function BattlefieldSection({
                                     remainingRounds={battlefield.other.remainingRounds}
                                     onChangeName={(name) => updateBattlefieldOther('name', name)}
                                     onChangeRounds={(rounds) => updateBattlefieldOther('remainingRounds', rounds)}
+                                    extraEffects={battlefield.extraOther}
+                                    onChangeExtras={(extras) => updateBattlefield('extraOther', extras)}
                                     category="other"
                                     placeholder="e.g. Gravity, Trick Room, Ion Deluge"
                                 />

@@ -53,15 +53,11 @@ export function TrackerBoostsList({
                                 type="button"
                                 onClick={() => onCycleSourceBoost(source)}
                                 className={`action-button ${
-                                    source.currentLevel > 0
-                                        ? 'action-button--theme'
-                                        : 'action-button--dark'
+                                    source.currentLevel > 0 ? 'action-button--theme' : 'action-button--dark'
                                 } ability-tracker__step-badge`}
                                 title={`Boost Level: ${source.currentLevel}/${source.maxBoost} (Click to cycle, or use +/-)`}
                             >
-                                {source.currentLevel > 0
-                                    ? `Boost +${source.currentLevel}`
-                                    : 'Boost OFF'}
+                                {source.currentLevel > 0 ? `Boost +${source.currentLevel}` : 'Boost OFF'}
                             </button>
                             <button
                                 type="button"

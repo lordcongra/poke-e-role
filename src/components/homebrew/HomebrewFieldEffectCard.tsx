@@ -13,23 +13,14 @@ interface HomebrewFieldEffectCardProps {
     onDuplicate: () => void;
 }
 
-export function HomebrewFieldEffectCard({
-    effect,
-    canEdit,
-    onRemove,
-    onDuplicate
-}: HomebrewFieldEffectCardProps) {
+export function HomebrewFieldEffectCard({ effect, canEdit, onRemove, onDuplicate }: HomebrewFieldEffectCardProps) {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
     const tagList = parseTagPills(effect.tags || '');
 
     const categoryLabel =
-        effect.category === 'weather'
-            ? 'Weather'
-            : effect.category === 'terrain'
-              ? 'Terrain'
-              : 'Field Effect';
+        effect.category === 'weather' ? 'Weather' : effect.category === 'terrain' ? 'Terrain' : 'Field Effect';
 
     const categoryClass =
         effect.category === 'weather'
@@ -43,10 +34,7 @@ export function HomebrewFieldEffectCard({
             {/* Header: Icon, Name, Category, Default Rounds, Actions */}
             <div className="hb-fe-card__header">
                 <div className="hb-fe-card__badge-row">
-                    <div
-                        className="hb-fe-card__icon-box"
-                        style={{ backgroundColor: effect.color || '#3B82F6' }}
-                    >
+                    <div className="hb-fe-card__icon-box" style={{ backgroundColor: effect.color || '#3B82F6' }}>
                         {renderCustomFieldIcon(effect.icon, 16)}
                     </div>
 
@@ -55,9 +43,7 @@ export function HomebrewFieldEffectCard({
                             {effect.name || 'Unnamed Field Effect'}
                         </span>
                         <div className="hb-fe-card__meta">
-                            <span className={`hb-category-pill ${categoryClass}`}>
-                                {categoryLabel}
-                            </span>
+                            <span className={`hb-category-pill ${categoryClass}`}>{categoryLabel}</span>
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                                 <Clock size={11} /> {effect.defaultRounds ?? 4} rds
                             </span>
@@ -145,9 +131,7 @@ export function HomebrewFieldEffectCard({
             )}
 
             {/* Description Text */}
-            {effect.description && (
-                <div className="hb-fe-card__desc text-subtext">{effect.description}</div>
-            )}
+            {effect.description && <div className="hb-fe-card__desc text-subtext">{effect.description}</div>}
 
             {/* Smart Builder Modal */}
             {isEditModalOpen && (
