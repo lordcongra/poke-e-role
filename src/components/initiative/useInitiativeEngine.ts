@@ -14,6 +14,8 @@ import {
     extractIsNpc
 } from '../../utils/combat/initiativeHelpers';
 import { extractEntityId } from '../../hooks/owlbearSync/setupOwlbearTokenSync';
+import { BATTLEFIELD_META_ID } from '../../hooks/owlbearSync/owlbearSyncConstants';
+import type { BattlefieldData } from '../../types/battleOrganizerTypes';
 import type { Combatant } from '../../utils/combat/initiativeHelpers';
 import { useInitiativeThemeSync } from './useInitiativeThemeSync';
 import type { StandaloneCharOption, ObrCharOption } from './AddCombatantModal';
@@ -280,6 +282,21 @@ export function useInitiativeEngine() {
                 console.warn('[InitiativeEngine] Could not fetch player role:', error);
             }
 
+            const syncBattlefieldMeta = (meta: Record<string, unknown>, gmFlag: boolean) => {
+                if (BATTLEFIELD_META_ID in meta) {
+                    const rawBattlefield = meta[BATTLEFIELD_META_ID] as BattlefieldData | undefined;
+                    if (rawBattlefield && typeof rawBattlefield === 'object') {
+                        if (!gmFlag && rawBattlefield.broadcastToPlayers === false) {
+                            useCharacterStore.getState().setActiveBattlefield(null);
+                        } else {
+                            useCharacterStore.getState().setActiveBattlefield(rawBattlefield);
+                        }
+                    } else {
+                        useCharacterStore.getState().setActiveBattlefield(null);
+                    }
+                }
+            };
+
             const unsubPlayer = OBR.player.onChange((player) => {
                 const nextIsGm = player.role === 'GM';
                 if (currentIsGM !== nextIsGm) {
@@ -288,6 +305,10 @@ export function useInitiativeEngine() {
                     OBR.scene.items
                         .getItems()
                         .then(mapItemsToCombatants)
+                        .catch(() => {});
+                    OBR.scene
+                        .getMetadata()
+                        .then((m) => syncBattlefieldMeta(m, nextIsGm))
                         .catch(() => {});
                 }
             });
@@ -305,12 +326,14 @@ export function useInitiativeEngine() {
                 .then((meta) => {
                     const turnMeta = meta['pokerole-pmd-extension/initiative-turn'] as string;
                     if (turnMeta) setActiveTurnId(turnMeta);
+                    syncBattlefieldMeta(meta, currentIsGM);
                 })
                 .catch((error) => console.error('[InitiativeEngine] Failed to read scene metadata:', error));
 
             const handleMetadataChange = (meta: Record<string, unknown>) => {
                 const turnMeta = meta['pokerole-pmd-extension/initiative-turn'] as string;
                 if (turnMeta !== undefined) setActiveTurnId(turnMeta);
+                syncBattlefieldMeta(meta, currentIsGM);
             };
             const unsubMeta = OBR.scene.onMetadataChange(handleMetadataChange);
             unsubs.push(unsubMeta);

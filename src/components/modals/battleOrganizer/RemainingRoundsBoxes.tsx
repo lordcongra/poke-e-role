@@ -31,10 +31,12 @@ export function RemainingRoundsBoxes({
         onChange(Math.max(0, value - 1));
     };
 
+    const totalBoxes = Math.max(maxBoxes, value);
+
     return (
         <div className="bo-rounds-boxes" title={`${title}: ${value} rounds remaining`}>
             <div className="bo-rounds-boxes__row">
-                {Array.from({ length: maxBoxes }, (_, index) => {
+                {Array.from({ length: totalBoxes }, (_, index) => {
                     const isFilled = index < value;
                     return (
                         <button

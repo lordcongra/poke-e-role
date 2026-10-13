@@ -466,7 +466,6 @@ export function TrackerSection() {
         <CollapsingSection title="ROUND TRACKER" className="sheet-panel tracker-section">
             <div className="tracker-section__horizontal-wrapper">
                 <div className="tracker-section__horizontal-col">
-                    <ActiveFieldEffectsRow />
                     <div className="tracker-section__row-space-between">
                         <div className="tracker-section__buttons-group">
                             <div className="tracker-section__toggle-group">
@@ -692,6 +691,7 @@ export function TrackerSection() {
                         onShowTooltip={setTooltipInfo}
                     />
 
+                    <ActiveFieldEffectsRow />
                     <TrackerConditionsList conditions={conditions} />
                 </div>
             </div>

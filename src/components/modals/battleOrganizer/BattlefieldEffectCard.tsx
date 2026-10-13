@@ -347,25 +347,33 @@ export function BattlefieldEffectCard({
                     );
                 })}
 
-                {/* Custom Homebrew Dropdown / Chips */}
-                {customPresets.length > 0 && (
-                    <select
-                        className="bo-preset-select text-subtext"
-                        value=""
-                        onChange={(e) => {
-                            const found = customPresets.find((c) => c.name === e.target.value);
-                            if (found) handleSelectPreset(found);
-                        }}
-                        title="Pick from Custom Homebrew Effects"
-                    >
-                        <option value="">+ Homebrew ({customPresets.length})</option>
-                        {customPresets.map((c) => (
-                            <option key={c.name} value={c.name}>
-                                ★ {c.name} ({c.rounds}r)
-                            </option>
-                        ))}
-                    </select>
-                )}
+                {/* Custom Homebrew Chips */}
+                {customPresets.map((preset) => {
+                    const isActive = isPresetActive(preset.name);
+                    const customStyle: React.CSSProperties = {};
+                    if (preset.color) {
+                        if (isActive) {
+                            customStyle.background = preset.color;
+                            customStyle.borderColor = preset.color;
+                            customStyle.color = '#ffffff';
+                        } else {
+                            customStyle.borderColor = preset.color;
+                            customStyle.color = preset.color;
+                        }
+                    }
+                    return (
+                        <button
+                            key={preset.name}
+                            type="button"
+                            className={`bo-preset-chip bo-preset-chip--custom ${isActive ? 'bo-preset-chip--active' : ''}`}
+                            onClick={() => handleSelectPreset(preset)}
+                            title={`Set Custom: ${preset.name} (${preset.rounds} rounds)`}
+                            style={Object.keys(customStyle).length > 0 ? customStyle : undefined}
+                        >
+                            ★ {preset.name}
+                        </button>
+                    );
+                })}
             </div>
         </div>
     );
