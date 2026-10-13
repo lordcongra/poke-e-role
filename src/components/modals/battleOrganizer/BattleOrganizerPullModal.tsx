@@ -6,6 +6,8 @@ export interface BattleOrganizerPullModalProps {
     hasExistingCombatants: boolean;
     resetPullTrackers: boolean;
     onToggleResetTrackers: (checked: boolean) => void;
+    resetFieldEffects?: boolean;
+    onToggleResetFieldEffects?: (checked: boolean) => void;
     onConfirm: (options?: { mergeOnly?: boolean }) => void;
     onClose: () => void;
 }
@@ -16,6 +18,8 @@ export function BattleOrganizerPullModal({
     hasExistingCombatants,
     resetPullTrackers,
     onToggleResetTrackers,
+    resetFieldEffects = false,
+    onToggleResetFieldEffects,
     onConfirm,
     onClose
 }: BattleOrganizerPullModalProps) {
@@ -102,6 +106,52 @@ export function BattleOrganizerPullModal({
                         {isMergeMode || hasExistingCombatants
                             ? 'Clears action counts and unchecks Evade / Clash for newly imported tokens only.'
                             : 'Clears action counts and unchecks Evade / Clash on both the organizer and token sheets.'}
+                    </div>
+                </div>
+
+                <div
+                    style={{
+                        margin: '0 0 14px',
+                        padding: '10px 12px',
+                        backgroundColor: 'var(--panel-alt, #282828)',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border, #333)'
+                    }}
+                >
+                    <label
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            cursor: 'pointer',
+                            userSelect: 'none'
+                        }}
+                    >
+                        <input
+                            type="checkbox"
+                            checked={resetFieldEffects}
+                            onChange={(e) => onToggleResetFieldEffects?.(e.target.checked)}
+                            style={{
+                                width: '16px',
+                                height: '16px',
+                                cursor: 'pointer',
+                                accentColor: 'var(--primary)'
+                            }}
+                        />
+                        <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                            Clear active weather, terrains &amp; battlefield effects?
+                        </span>
+                    </label>
+                    <div
+                        style={{
+                            fontSize: '0.78rem',
+                            color: 'var(--text-muted, #aaa)',
+                            marginLeft: '26px',
+                            marginTop: '4px',
+                            lineHeight: '1.3'
+                        }}
+                    >
+                        Resets active weather, terrains, force fields, hazards, and all battlefield effect timers.
                     </div>
                 </div>
 

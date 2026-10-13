@@ -123,6 +123,7 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                                 tempWill,
                                 activeTransformation,
                                 isNPC,
+                                hidden: isHidden,
                                 gmHpBar,
                                 gmHpText,
                                 gmWillBar,
@@ -181,7 +182,7 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                         }
 
                         const initMeta = meta['pokerole-pmd-extension/initiative'] as
-                            | { value?: number; base?: number; tiebreaker?: number }
+                            | { value?: number; base?: number; tiebreaker?: number; hidden?: boolean }
                             | undefined;
                         const initVal = initMeta?.value ?? 0;
                         const baseInit =
@@ -193,6 +194,7 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                         const tokenImage = imgItem.image?.url || extractTokenImage(statsMeta) || '';
 
                         const isNPC = extractIsNpc(item.metadata);
+                        const isHidden = initMeta?.hidden === true || item.visible === false;
 
                         const { gmHpBar, gmHpText, gmWillBar, gmWillText } = parseTokenPrivacyFlags(statsMeta, meta);
 
@@ -219,6 +221,7 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                             tempWill,
                             activeTransformation,
                             isNPC,
+                            hidden: isHidden,
                             gmHpBar,
                             gmHpText,
                             gmWillBar,

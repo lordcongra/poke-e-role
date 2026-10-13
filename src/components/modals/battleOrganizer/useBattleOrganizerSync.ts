@@ -248,15 +248,29 @@ export function useBattleOrganizerSync({
                         console.warn('[BattleOrganizer] Failed to cache synced state in localStorage:', e);
                     }
 
-                    if (incoming.battlefield) {
-                        const currentRole = useCharacterStore.getState().role;
-                        if (currentRole !== 'GM' && incoming.battlefield.broadcastToPlayers === false) {
+                    let processedIncoming = incoming;
+                    const currentRole = useCharacterStore.getState().role;
+                    const gmOnlyPullEnemies = useCharacterStore.getState().identity.gmOnlyPullEnemies;
+                    const shouldFilterEnemies = currentRole !== 'GM' && gmOnlyPullEnemies !== false;
+
+                    if (shouldFilterEnemies && processedIncoming.rounds) {
+                        processedIncoming = {
+                            ...processedIncoming,
+                            rounds: processedIncoming.rounds.map((r) => ({
+                                ...r,
+                                combatants: r.combatants.filter((c) => !c.isNPC && !c.hidden)
+                            }))
+                        };
+                    }
+
+                    if (processedIncoming.battlefield) {
+                        if (currentRole !== 'GM' && processedIncoming.battlefield.broadcastToPlayers === false) {
                             useCharacterStore.getState().setActiveBattlefield(null);
                         } else {
-                            useCharacterStore.getState().setActiveBattlefield(incoming.battlefield);
+                            useCharacterStore.getState().setActiveBattlefield(processedIncoming.battlefield);
                         }
                     }
-                    setState(incoming);
+                    setState(processedIncoming);
                 } catch (err) {
                     console.error('[BattleOrganizer] Failed to apply broadcast sync:', err);
                 }

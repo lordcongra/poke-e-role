@@ -1,143 +1,100 @@
 import { useState, useEffect } from 'react';
-import OBR from '@owlbear-rodeo/sdk';
-import { CloudRain, Wind, Snowflake, X, Check, FastForward } from 'lucide-react';
-import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
-import type { CombatantRowData } from '../../../types/battleOrganizerTypes';
+import { CloudRain, Wind, Snowflake, Sun, Sprout, Flame, Heart, X, Check, FastForward, Sparkles } from 'lucide-react';
+import type { CombatantRowData, BattlefieldData } from '../../../types/battleOrganizerTypes';
+import {
+    getCombatantCharacterDataMap,
+    resolveCombatantRoundTriggers,
+    type CombatantRoundTriggerInfo
+} from './roundAdvanceTriggerUtils';
 import './RoundWeatherDamageModal.css';
 
-interface RoundWeatherDamageModalProps {
+export interface RoundWeatherDamageModalProps {
     isOpen: boolean;
-    weatherName: string;
+    battlefield: BattlefieldData;
     combatants: CombatantRowData[];
-    onApplyDamage: (selectedCombatantIds: string[]) => void;
+    weatherName?: string;
+    onApplyDamageAndHeal?: (selectedDamageIds: string[], selectedHealIds: string[]) => void;
+    onApplyDamage?: (selectedCombatantIds: string[]) => void;
     onSkip: () => void;
     onClose: () => void;
 }
 
-interface CombatantImmunityStatus {
-    combatant: CombatantRowData;
-    types: string[];
-    isImmune: boolean;
-    reason: string;
-}
-
 export function RoundWeatherDamageModal({
     isOpen,
-    weatherName,
+    battlefield,
     combatants,
+    weatherName = 'Weather',
+    onApplyDamageAndHeal,
     onApplyDamage,
     onSkip,
     onClose
 }: RoundWeatherDamageModalProps) {
-    const [statuses, setStatuses] = useState<CombatantImmunityStatus[]>([]);
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [statuses, setStatuses] = useState<CombatantRoundTriggerInfo[]>([]);
+    const [selectedDamageIds, setSelectedDamageIds] = useState<Set<string>>(new Set());
+    const [selectedHealIds, setSelectedHealIds] = useState<Set<string>>(new Set());
 
-    const isSandstorm = weatherName.toLowerCase().includes('sand');
-    const isHail = weatherName.toLowerCase().includes('hail');
+    const isSandstorm = (weatherName || '').toLowerCase().includes('sand');
+    const isHail = (weatherName || '').toLowerCase().includes('hail');
+    const isSun = (weatherName || '').toLowerCase().includes('sun');
+    const isRain = (weatherName || '').toLowerCase().includes('rain');
+    const isGrassy = (battlefield?.terrain?.name || '').toLowerCase().includes('grassy');
 
     useEffect(() => {
         if (!isOpen) return;
 
         let isCancelled = false;
 
-        async function resolveImmunities() {
-            // Sort combatants in initiative order (descending)
-            const sorted = [...combatants].sort((a, b) => {
-                const initA = parseFloat(a.initiative) || 0;
-                const initB = parseFloat(b.initiative) || 0;
-                return initB - initA;
-            });
-
-            // Gather token metadata to extract types
-            const tokenTypeMap = new Map<string, string[]>();
-
-            try {
-                if (OBR.isAvailable && !isStandaloneMode) {
-                    const items = await OBR.scene.items.getItems((i) => i.layer === 'CHARACTER');
-                    items.forEach((item) => {
-                        const meta = item.metadata as Record<string, unknown>;
-                        const pmdMeta = (meta['pokerole-pmd-extension/stats'] || {}) as Record<string, unknown>;
-                        const statsMeta = (meta['pokerole-extension/stats'] || {}) as Record<string, unknown>;
-
-                        const type1 = String(meta['type1'] || pmdMeta['type1'] || statsMeta['type1'] || '');
-                        const type2 = String(meta['type2'] || pmdMeta['type2'] || statsMeta['type2'] || '');
-                        const types = [type1, type2].filter(Boolean);
-                        tokenTypeMap.set(item.id, types);
-                        if (item.name) tokenTypeMap.set(item.name.toLowerCase().trim(), types);
-                    });
-                } else {
-                    const localChars = await storageAdapter.getLocalCharacters();
-                    localChars.forEach((c) => {
-                        const meta = c.metadata || {};
-                        const type1 = String(meta['type1'] || '');
-                        const type2 = String(meta['type2'] || '');
-                        const types = [type1, type2].filter(Boolean);
-                        tokenTypeMap.set(c.id, types);
-                        if (c.name) tokenTypeMap.set(c.name.toLowerCase().trim(), types);
-                    });
-                }
-            } catch (err) {
-                console.warn('[RoundWeatherDamageModal] Failed to inspect token types:', err);
-            }
-
+        async function resolveAllTriggers() {
+            const dataMap = await getCombatantCharacterDataMap();
             if (isCancelled) return;
 
-            const resolved: CombatantImmunityStatus[] = sorted.map((c) => {
-                const types =
-                    (c.tokenId && tokenTypeMap.get(c.tokenId)) || tokenTypeMap.get(c.name.toLowerCase().trim()) || [];
-
-                const cleanTypes = types.map((t) => t.toLowerCase());
-
-                let isImmune = false;
-                let reason = 'Vulnerable (1 Dmg)';
-
-                if (c.isFainted || (c.hpCurr !== undefined && c.hpCurr <= 0)) {
-                    isImmune = true;
-                    reason = 'Fainted';
-                } else if (isSandstorm) {
-                    if (cleanTypes.includes('rock') || cleanTypes.includes('ground') || cleanTypes.includes('steel')) {
-                        isImmune = true;
-                        const match = types.find((t) => ['rock', 'ground', 'steel'].includes(t.toLowerCase()));
-                        reason = `Immune (${match || 'Type'})`;
-                    }
-                } else if (isHail) {
-                    if (cleanTypes.includes('ice')) {
-                        isImmune = true;
-                        reason = 'Immune (Ice)';
-                    }
-                }
-
-                return {
-                    combatant: c,
-                    types,
-                    isImmune,
-                    reason
-                };
-            });
-
+            const resolved = resolveCombatantRoundTriggers(combatants, battlefield, dataMap);
             setStatuses(resolved);
 
-            // Pre-select all non-immune combatants
-            const preselected = new Set<string>();
+            // Pre-select non-immune damage targets
+            const preselectedDamage = new Set<string>();
             resolved.forEach((item) => {
-                if (!item.isImmune) {
-                    preselected.add(item.combatant.id);
+                if (item.hasDamageTrigger && !item.isDamageImmune) {
+                    preselectedDamage.add(item.combatant.id);
                 }
             });
-            setSelectedIds(preselected);
+            setSelectedDamageIds(preselectedDamage);
+
+            // Pre-select eligible healing targets (not at full HP)
+            const preselectedHeal = new Set<string>();
+            resolved.forEach((item) => {
+                if (
+                    item.hasHealingTrigger &&
+                    !item.isHealingIneligible &&
+                    (item.combatant.hpCurr === undefined ||
+                        item.combatant.hpCurr < (item.combatant.hpMax ?? item.combatant.hpCurr))
+                ) {
+                    preselectedHeal.add(item.combatant.id);
+                }
+            });
+            setSelectedHealIds(preselectedHeal);
         }
 
-        resolveImmunities();
+        resolveAllTriggers();
 
         return () => {
             isCancelled = true;
         };
-    }, [isOpen, combatants, isSandstorm, isHail]);
+    }, [isOpen, combatants, battlefield]);
 
     if (!isOpen) return null;
 
-    const handleToggle = (id: string) => {
-        setSelectedIds((prev) => {
+    const handleToggleDamage = (id: string) => {
+        setSelectedDamageIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
+    const handleToggleHeal = (id: string) => {
+        setSelectedHealIds((prev) => {
             const next = new Set(prev);
             if (next.has(id)) next.delete(id);
             else next.add(id);
@@ -146,10 +103,18 @@ export function RoundWeatherDamageModal({
     };
 
     const handleApply = () => {
-        onApplyDamage(Array.from(selectedIds));
+        if (onApplyDamageAndHeal) {
+            onApplyDamageAndHeal(Array.from(selectedDamageIds), Array.from(selectedHealIds));
+        } else if (onApplyDamage) {
+            onApplyDamage(Array.from(selectedDamageIds));
+        }
     };
 
-    const selectedCount = selectedIds.size;
+    const damageStatuses = statuses.filter((s) => s.hasDamageTrigger);
+    const healStatuses = statuses.filter((s) => s.hasHealingTrigger);
+
+    const damageCount = selectedDamageIds.size;
+    const healCount = selectedHealIds.size;
 
     return (
         <div className="bo-weather-dmg-modal__overlay" onClick={onClose}>
@@ -166,10 +131,16 @@ export function RoundWeatherDamageModal({
                             <Wind size={18} color="#E0C068" />
                         ) : isHail ? (
                             <Snowflake size={18} color="#70A0C0" />
-                        ) : (
+                        ) : isSun ? (
+                            <Sun size={18} color="#F08030" />
+                        ) : isRain ? (
                             <CloudRain size={18} color="var(--primary)" />
+                        ) : isGrassy ? (
+                            <Sprout size={18} color="#78C850" />
+                        ) : (
+                            <Sparkles size={18} color="var(--primary)" />
                         )}
-                        End of Round: {weatherName} Damage
+                        End of Round: Battlefield &amp; Weather Effects
                     </h3>
                     <button
                         type="button"
@@ -184,60 +155,135 @@ export function RoundWeatherDamageModal({
 
                 <div className="bo-weather-dmg-modal__body">
                     <p className="bo-weather-dmg-modal__desc">
-                        {isSandstorm
-                            ? 'Sandstorm deals 1 Typeless Damage to all non-Rock, non-Ground, and non-Steel combatants at end of round. Full Body Cover or special abilities prevent this damage.'
-                            : isHail
-                              ? 'Hail deals 1 Typeless Damage to all non-Ice combatants at end of round. Full Body Cover or special abilities prevent this damage.'
-                              : 'Active weather hazard deals 1 damage to affected combatants at end of round.'}
+                        Review active end-of-round damage and healing triggers before advancing to the next round.
+                        Checked combatants will receive the corresponding effect.
                     </p>
 
                     <div className="bo-weather-dmg-modal__list">
-                        {statuses.map(({ combatant: c, isImmune, reason }) => {
-                            const isChecked = selectedIds.has(c.id);
-                            return (
-                                <div
-                                    key={c.id}
-                                    className={`bo-weather-dmg-modal__row ${isImmune ? 'is-immune' : ''}`}
-                                    onClick={() => handleToggle(c.id)}
-                                >
-                                    <div className="bo-weather-dmg-modal__left">
-                                        <input
-                                            type="checkbox"
-                                            checked={isChecked}
-                                            onChange={() => handleToggle(c.id)}
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="bo-weather-dmg-modal__checkbox"
-                                        />
-                                        {c.image && (
-                                            <img src={c.image} alt={c.name} className="bo-weather-dmg-modal__avatar" />
-                                        )}
-                                        <span className="bo-weather-dmg-modal__name">{c.name}</span>
-                                        <span className="bo-weather-dmg-modal__init-badge">
-                                            Init {c.initiative || '0'}
-                                        </span>
-                                    </div>
-
-                                    <div className="bo-weather-dmg-modal__right">
-                                        {c.hpCurr !== undefined && (
-                                            <span className="bo-weather-dmg-modal__hp-info">
-                                                HP: {c.hpCurr}/{c.hpMax ?? c.hpCurr}
-                                            </span>
-                                        )}
-                                        <span
-                                            className={`bo-weather-dmg-modal__status-tag ${
-                                                reason === 'Fainted'
-                                                    ? 'bo-weather-dmg-modal__status-tag--fainted'
-                                                    : isImmune
-                                                      ? 'bo-weather-dmg-modal__status-tag--immune'
-                                                      : 'bo-weather-dmg-modal__status-tag--vulnerable'
-                                            }`}
-                                        >
-                                            {reason}
-                                        </span>
-                                    </div>
+                        {/* 1. DAMAGE EFFECTS */}
+                        {damageStatuses.length > 0 && (
+                            <div className="bo-weather-dmg-modal__section">
+                                <div className="bo-weather-dmg-modal__section-header">
+                                    <Flame size={14} color="#ef5350" />
+                                    <span>Damage Effects (Sandstorm, Hail, Solar Power, Dry Skin)</span>
                                 </div>
-                            );
-                        })}
+                                {damageStatuses.map(({ combatant: c, isDamageImmune, damageReason }) => {
+                                    const isChecked = selectedDamageIds.has(c.id);
+                                    return (
+                                        <div
+                                            key={`dmg-${c.id}`}
+                                            className={`bo-weather-dmg-modal__row ${isDamageImmune ? 'is-immune' : ''}`}
+                                            onClick={() => handleToggleDamage(c.id)}
+                                        >
+                                            <div className="bo-weather-dmg-modal__left">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isChecked}
+                                                    onChange={() => handleToggleDamage(c.id)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="bo-weather-dmg-modal__checkbox"
+                                                />
+                                                {c.image && (
+                                                    <img
+                                                        src={c.image}
+                                                        alt={c.name}
+                                                        className="bo-weather-dmg-modal__avatar"
+                                                    />
+                                                )}
+                                                <span className="bo-weather-dmg-modal__name">{c.name}</span>
+                                                <span className="bo-weather-dmg-modal__init-badge">
+                                                    Init {c.initiative || '0'}
+                                                </span>
+                                            </div>
+
+                                            <div className="bo-weather-dmg-modal__right">
+                                                {c.hpCurr !== undefined && (
+                                                    <span className="bo-weather-dmg-modal__hp-info">
+                                                        HP: {c.hpCurr}/{c.hpMax ?? c.hpCurr}
+                                                    </span>
+                                                )}
+                                                <span
+                                                    className={`bo-weather-dmg-modal__status-tag ${
+                                                        damageReason === 'Fainted'
+                                                            ? 'bo-weather-dmg-modal__status-tag--fainted'
+                                                            : isDamageImmune
+                                                              ? 'bo-weather-dmg-modal__status-tag--immune'
+                                                              : 'bo-weather-dmg-modal__status-tag--vulnerable'
+                                                    }`}
+                                                >
+                                                    {damageReason}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* 2. HEALING EFFECTS */}
+                        {healStatuses.length > 0 && (
+                            <div className="bo-weather-dmg-modal__section" style={{ marginTop: '8px' }}>
+                                <div className="bo-weather-dmg-modal__section-header">
+                                    <Heart size={14} color="#81c784" />
+                                    <span>Healing Effects (Grassy Terrain, Rain Dish, Ice Body, Dry Skin)</span>
+                                </div>
+                                {healStatuses.map(
+                                    ({ combatant: c, isHealingIneligible, healingReason, healingIneligibleReason }) => {
+                                        const isChecked = selectedHealIds.has(c.id);
+                                        const isFullHp = healingIneligibleReason === 'Full HP';
+                                        return (
+                                            <div
+                                                key={`heal-${c.id}`}
+                                                className={`bo-weather-dmg-modal__row ${
+                                                    isHealingIneligible ? 'is-immune' : ''
+                                                }`}
+                                                onClick={() => handleToggleHeal(c.id)}
+                                            >
+                                                <div className="bo-weather-dmg-modal__left">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isChecked}
+                                                        onChange={() => handleToggleHeal(c.id)}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="bo-weather-dmg-modal__checkbox"
+                                                    />
+                                                    {c.image && (
+                                                        <img
+                                                            src={c.image}
+                                                            alt={c.name}
+                                                            className="bo-weather-dmg-modal__avatar"
+                                                        />
+                                                    )}
+                                                    <span className="bo-weather-dmg-modal__name">{c.name}</span>
+                                                    <span className="bo-weather-dmg-modal__init-badge">
+                                                        Init {c.initiative || '0'}
+                                                    </span>
+                                                </div>
+
+                                                <div className="bo-weather-dmg-modal__right">
+                                                    {c.hpCurr !== undefined && (
+                                                        <span className="bo-weather-dmg-modal__hp-info">
+                                                            HP: {c.hpCurr}/{c.hpMax ?? c.hpCurr}
+                                                        </span>
+                                                    )}
+                                                    <span
+                                                        className={`bo-weather-dmg-modal__status-tag ${
+                                                            isFullHp
+                                                                ? 'bo-weather-dmg-modal__status-tag--fullhp'
+                                                                : isHealingIneligible
+                                                                  ? 'bo-weather-dmg-modal__status-tag--fainted'
+                                                                  : 'bo-weather-dmg-modal__status-tag--heal'
+                                                        }`}
+                                                    >
+                                                        {isFullHp ? 'Full HP' : healingReason}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -246,19 +292,25 @@ export function RoundWeatherDamageModal({
                         type="button"
                         className="action-button action-button--dark"
                         onClick={onSkip}
-                        title="Skip applying weather damage and advance to next round"
+                        title="Skip applying effects and advance to next round"
                     >
-                        <FastForward size={14} /> Skip Damage & Advance
+                        <FastForward size={14} /> Skip Effects &amp; Advance
                     </button>
 
                     <button
                         type="button"
                         className="action-button action-button--theme"
                         onClick={handleApply}
-                        title="Apply 1 damage to checked combatants and advance round"
+                        title="Apply checked effects to combatants and advance round"
                     >
                         <Check size={14} />
-                        {selectedCount > 0 ? `Apply 1 Damage to Selected (${selectedCount})` : 'Advance Round'}
+                        {damageCount > 0 && healCount > 0
+                            ? `Apply (${damageCount} Dmg, ${healCount} Heal) & Advance`
+                            : damageCount > 0
+                              ? `Apply 1 Damage to Selected (${damageCount}) & Advance`
+                              : healCount > 0
+                                ? `Apply 1 Heal to Selected (${healCount}) & Advance`
+                                : 'Advance Round'}
                     </button>
                 </div>
             </div>

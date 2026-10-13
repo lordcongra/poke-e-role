@@ -196,6 +196,36 @@
     border: 1px solid #757575;
 }
 
+.bo-weather-dmg-modal__status-tag--heal {
+    background: color-mix(in srgb, #2e7d32 30%, transparent);
+    color: #81c784;
+    border: 1px solid #4caf50;
+}
+
+.bo-weather-dmg-modal__status-tag--fullhp {
+    background: color-mix(in srgb, var(--panel-alt) 80%, transparent);
+    color: var(--text-muted);
+    border: 1px solid color-mix(in srgb, var(--text-muted) 30%, transparent);
+}
+
+.bo-weather-dmg-modal__section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.bo-weather-dmg-modal__section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-main);
+    border-bottom: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+    padding-bottom: 4px;
+    margin-top: 4px;
+}
+
 .bo-weather-dmg-modal__footer {
     display: flex;
     align-items: center;

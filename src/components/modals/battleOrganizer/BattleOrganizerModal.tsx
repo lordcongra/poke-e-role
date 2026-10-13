@@ -26,7 +26,7 @@ import {
 import { openBattleOrganizerPopout, markCombatantActionStatus } from './battleOrganizerUtils';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import type { BattleOrganizerSettings, CombatantRowData, RollLogLayoutMode } from '../../../types/battleOrganizerTypes';
-import { getEffectsByCategory } from '../../../utils/combat/fieldEffectsData';
+import { useRoundAdvanceModal } from './useRoundAdvanceModal';
 import './BattleOrganizerModal.css';
 
 interface BattleOrganizerModalProps {
@@ -65,6 +65,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         updateEndOfRoundEffects,
         updateRoundNumber,
         activateFieldEffectFromMove,
+        clearBattlefield,
         clearAll
     } = useBattleOrganizer();
 
@@ -79,57 +80,25 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
     const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [showPullConfirmModal, setShowPullConfirmModal] = useState(false);
     const [resetPullTrackers, setResetPullTrackers] = useState(true);
+    const [resetFieldEffects, setResetFieldEffects] = useState(false);
     const [activeSheetCombatant, setActiveSheetCombatant] = useState<CombatantRowData | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
-    const [showWeatherDamageModal, setShowWeatherDamageModal] = useState(false);
-    const [hazardWeatherName, setHazardWeatherName] = useState('Weather');
     const bodyRef = useRef<HTMLDivElement>(null);
 
-    const handleAdvanceRoundRequest = () => {
-        const activeWeathers = getEffectsByCategory(battlefield, 'weather');
-        const hazardWeathers = activeWeathers.filter((w) => {
-            const name = (w.name || '').toLowerCase().trim();
-            return name.includes('sand') || name.includes('hail');
-        });
-
-        if (hazardWeathers.length > 0 && currentRound?.combatants && currentRound.combatants.length > 0) {
-            setHazardWeatherName(hazardWeathers.map((w) => w.name).join(' & '));
-            setShowWeatherDamageModal(true);
-        } else {
-            advanceRound();
-        }
-    };
-
-    const handleApplyWeatherDamageAndAdvance = (selectedIds: string[]) => {
-        if (selectedIds.length > 0 && currentRound?.combatants) {
-            selectedIds.forEach((id) => {
-                const c = currentRound.combatants.find((item) => item.id === id);
-                if (c && c.hpCurr !== undefined && c.hpCurr > 0) {
-                    let newHp = c.hpCurr;
-                    let newTemp = c.tempHp || 0;
-                    if (newTemp > 0) {
-                        newTemp = Math.max(0, newTemp - 1);
-                    } else {
-                        newHp = Math.max(0, newHp - 1);
-                    }
-                    updateCombatant({
-                        ...c,
-                        hpCurr: newHp,
-                        tempHp: newTemp,
-                        isFainted: newHp <= 0
-                    });
-                }
-            });
-        }
-        setShowWeatherDamageModal(false);
-        advanceRound();
-    };
-
-    const handleSkipWeatherDamageAndAdvance = () => {
-        setShowWeatherDamageModal(false);
-        advanceRound();
-    };
+    const {
+        showWeatherDamageModal,
+        setShowWeatherDamageModal,
+        hazardWeatherName,
+        handleAdvanceRoundRequest,
+        handleApplyRoundTriggersAndAdvance,
+        handleSkipWeatherDamageAndAdvance
+    } = useRoundAdvanceModal({
+        battlefield,
+        currentRound,
+        advanceRound,
+        updateCombatant
+    });
 
     const [isPushingActions, setIsPushingActions] = useState(false);
 
@@ -210,6 +179,9 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
     const handleConfirmPullFromInitiative = (options?: { mergeOnly?: boolean }) => {
         const isMerge = options?.mergeOnly !== undefined ? options.mergeOnly : pullModalMode === 'merge';
         pullFromInitiative({ resetTrackers: resetPullTrackers, mergeOnly: isMerge });
+        if (resetFieldEffects) {
+            clearBattlefield();
+        }
         setShowPullConfirmModal(false);
     };
 
@@ -443,6 +415,8 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                     hasExistingCombatants={Boolean(currentRound?.combatants && currentRound.combatants.length > 0)}
                     resetPullTrackers={resetPullTrackers}
                     onToggleResetTrackers={setResetPullTrackers}
+                    resetFieldEffects={resetFieldEffects}
+                    onToggleResetFieldEffects={setResetFieldEffects}
                     onConfirm={handleConfirmPullFromInitiative}
                     onClose={() => setShowPullConfirmModal(false)}
                 />
@@ -459,8 +433,9 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                     <RoundWeatherDamageModal
                         isOpen={true}
                         weatherName={hazardWeatherName}
+                        battlefield={battlefield}
                         combatants={currentRound?.combatants || []}
-                        onApplyDamage={handleApplyWeatherDamageAndAdvance}
+                        onApplyDamageAndHeal={handleApplyRoundTriggersAndAdvance}
                         onSkip={handleSkipWeatherDamageAndAdvance}
                         onClose={() => setShowWeatherDamageModal(false)}
                     />

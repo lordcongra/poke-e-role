@@ -329,6 +329,27 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
         summary: 'Increases agility in Snow or Hail weather by 1.',
         benefitDisplay: '+1 DEX (Snow)'
     },
+    'Rain Dish': {
+        name: 'Rain Dish',
+        tags: '[Heal 1 Round End @ Rain]',
+        autoActive: true,
+        summary: 'Gradually heals HP at the end of each round while it is raining.',
+        benefitDisplay: 'Heal 1 Round End (Rain)'
+    },
+    'Ice Body': {
+        name: 'Ice Body',
+        tags: '[Heal 1 Round End @ Snow]',
+        autoActive: true,
+        summary: 'Gradually heals HP at the end of each round in snow or hail.',
+        benefitDisplay: 'Heal 1 Round End (Snow/Hail)'
+    },
+    'Dry Skin': {
+        name: 'Dry Skin',
+        tags: '[Heal 1 Round End @ Rain] [Deal 1 Damage at End of Round @ Sun] [Weakness: Fire]',
+        autoActive: true,
+        summary: 'Restores HP in rain, but suffers damage in sun and takes increased Fire damage.',
+        benefitDisplay: 'Heal Rain / 1 Dmg Sun / Fire Weak'
+    },
     'Surge Surfer': {
         name: 'Surge Surfer',
         tags: '[Dex +2 @ Electric Terrain]',

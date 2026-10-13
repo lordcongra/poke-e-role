@@ -1,4 +1,5 @@
 import { Plus } from 'lucide-react';
+import { useCharacterStore } from '../../../store/useCharacterStore';
 import { CombatantRow } from './CombatantRow';
 import type { CombatantRowData } from '../../../types/battleOrganizerTypes';
 
@@ -27,6 +28,14 @@ export function CombatantsTable({
     onAddCombatant,
     onUpdateEndOfRoundEffects
 }: CombatantsTableProps) {
+    const role = useCharacterStore((state) => state.role);
+    const gmOnlyPullEnemies = useCharacterStore((state) => state.identity.gmOnlyPullEnemies);
+    const shouldFilterEnemies = role !== 'GM' && gmOnlyPullEnemies !== false;
+
+    const visibleCombatants = shouldFilterEnemies
+        ? combatants.filter((c) => !c.isNPC && !c.hidden)
+        : combatants;
+
     return (
         <>
             {/* Combatants Table */}
@@ -43,7 +52,7 @@ export function CombatantsTable({
                         </tr>
                     </thead>
                     <tbody>
-                        {combatants.map((combatant, cIdx) => (
+                        {visibleCombatants.map((combatant, cIdx) => (
                             <CombatantRow
                                 key={combatant.id}
                                 combatant={combatant}

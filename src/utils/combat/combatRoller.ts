@@ -485,7 +485,13 @@ export async function executeDamageRoll(
 
         const isHalfHp = state.health.hpCurr <= Math.floor(state.health.hpMax / 2);
         const weatherInfo = getWeatherDamageBonus(move.type, state.activeBattlefield, isHalfHp);
-        if (weatherInfo.bonus > 0 && weatherInfo.tag) {
+        if (weatherInfo.diceBonus > 0) {
+            actualDicePool += weatherInfo.diceBonus;
+        }
+        if (weatherInfo.flatPenalty > 0) {
+            finalFlatMod -= weatherInfo.flatPenalty;
+        }
+        if (weatherInfo.tag) {
             tags.push(weatherInfo.tag);
         }
     }

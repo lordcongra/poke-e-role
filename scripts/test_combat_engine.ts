@@ -331,6 +331,7 @@ async function runCombatEngineTests() {
 
     // Test reverse hydration from Battle Organizer / Token metadata
     const incomingOrganizerMeta: Record<string, unknown> = {
+        'vit-base': 4,
         'actions-used': 1,
         'evasions-used': false,
         'clashes-used': true,
@@ -358,6 +359,149 @@ async function runCombatEngineTests() {
         parsedHw.hpCurr === 7 && parsedHw.willCurr === 3,
         'parseHealthAndWillFromMetadata parses hpCurr: 7, willCurr: 3'
     );
+
+    // ----------------------------------------------------
+    // TEST SUITE 7: Weather Modifiers & Condition Checking
+    // ----------------------------------------------------
+    console.log('\n--- Test Suite 7: Weather Modifiers & Condition Checker ---');
+    const { getWeatherDamageBonus, calculateTotalDamage } = await import('../src/utils/combat/combatMath');
+    const { checkCondition } = await import('../src/utils/tagParser/conditionChecker');
+
+    // 1. Sun: Fire (+1 Die), Water (-1 Flat Damage)
+    const sunBattlefield = {
+        weather: { name: 'Sun', remainingRounds: 3 },
+        terrain: null,
+        other: null
+    };
+    const sunFire = getWeatherDamageBonus('Fire', sunBattlefield as any);
+    assert(sunFire.diceBonus === 1, 'Sun grants Fire +1 diceBonus');
+    assert(sunFire.flatPenalty === 0, 'Sun applies 0 flatPenalty to Fire');
+    assert(sunFire.tag.includes('Sunny (+1 Dice to Fire Damage Pool)'), 'Sun has correct Fire tag');
+
+    const sunWater = getWeatherDamageBonus('Water', sunBattlefield as any);
+    assert(sunWater.diceBonus === 0, 'Sun grants Water 0 diceBonus');
+    assert(sunWater.flatPenalty === 1, 'Sun applies 1 flatPenalty to Water');
+    assert(sunWater.tag.includes('Sunny (-1 Flat Damage from Water Moves)'), 'Sun has correct Water tag');
+
+    // 2. Rain: Water (+1 Die), Fire (-1 Flat Damage)
+    const rainBattlefield = {
+        weather: { name: 'Rain', remainingRounds: 3 },
+        terrain: null,
+        other: null
+    };
+    const rainWater = getWeatherDamageBonus('Water', rainBattlefield as any);
+    assert(rainWater.diceBonus === 1, 'Rain grants Water +1 diceBonus');
+    assert(rainWater.flatPenalty === 0, 'Rain applies 0 flatPenalty to Water');
+    assert(rainWater.tag.includes('Rain (+1 Dice to Water Damage Pool)'), 'Rain has correct Water tag');
+
+    const rainFire = getWeatherDamageBonus('Fire', rainBattlefield as any);
+    assert(rainFire.diceBonus === 0, 'Rain grants Fire 0 diceBonus');
+    assert(rainFire.flatPenalty === 1, 'Rain applies 1 flatPenalty to Fire');
+    assert(rainFire.tag.includes('Rain (-1 Flat Damage from Fire Moves)'), 'Rain has correct Fire tag');
+
+    // 3. Snow: Ice (+1 Die)
+    const snowBattlefield = {
+        weather: { name: 'Snow', remainingRounds: 2 },
+        terrain: null,
+        other: null
+    };
+    const snowIce = getWeatherDamageBonus('Ice', snowBattlefield as any);
+    assert(snowIce.diceBonus === 1, 'Snow grants Ice +1 diceBonus');
+    assert(snowIce.flatPenalty === 0, 'Snow applies 0 flatPenalty to Ice');
+    assert(snowIce.tag.includes('Snow (+1 Dice to Ice Damage Pool)'), 'Snow has correct Ice tag');
+
+    // 4. Desolate Weather: Fire (+2 Dice), Water (-2 Flat Damage)
+    const desolateBattlefield = {
+        weather: { name: 'Desolate Land', remainingRounds: 5 },
+        terrain: null,
+        other: null
+    };
+    const desFire = getWeatherDamageBonus('Fire', desolateBattlefield as any);
+    assert(desFire.diceBonus === 2, 'Desolate Land grants Fire +2 diceBonus');
+    assert(desFire.flatPenalty === 0, 'Desolate Land applies 0 flatPenalty to Fire');
+
+    const desWater = getWeatherDamageBonus('Water', desolateBattlefield as any);
+    assert(desWater.diceBonus === 0, 'Desolate Land grants Water 0 diceBonus');
+    assert(desWater.flatPenalty === 2, 'Desolate Land applies 2 flatPenalty to Water');
+
+    // 5. calculateTotalDamage computes totalModifier = diceBonus - flatPenalty
+    store.setActiveBattlefield({
+        weather: { name: 'Sun', remainingRounds: 3 },
+        terrain: null,
+        other: null
+    } as any);
+    const fireMove: MoveData = {
+        id: 'fire-fang',
+        active: true,
+        name: 'Fire Fang',
+        type: 'Fire',
+        category: 'Physical',
+        power: 2,
+        acc1: 'str',
+        acc2: 'brawl',
+        dmg1: 'str',
+        desc: ''
+    };
+    const waterMove: MoveData = {
+        id: 'water-gun',
+        active: true,
+        name: 'Water Gun',
+        type: 'Water',
+        category: 'Special',
+        power: 2,
+        acc1: 'spe',
+        acc2: 'channel',
+        dmg1: 'spe',
+        desc: ''
+    };
+    const totalFireDamage = calculateTotalDamage(fireMove, useCharacterStore.getState());
+    const baseFireDamage = calculateBaseDamage(fireMove, useCharacterStore.getState());
+    assert(
+        totalFireDamage === baseFireDamage + 1,
+        'calculateTotalDamage adds diceBonus (+1) for Fire move in Sun',
+        `Base: ${baseFireDamage}, Total: ${totalFireDamage}`
+    );
+
+    const totalWaterDamage = calculateTotalDamage(waterMove, useCharacterStore.getState());
+    const baseWaterDamage = calculateBaseDamage(waterMove, useCharacterStore.getState());
+    assert(
+        totalWaterDamage === Math.max(1, baseWaterDamage - 1),
+        'calculateTotalDamage subtracts flatPenalty (-1) for Water move in Sun',
+        `Base: ${baseWaterDamage}, Total: ${totalWaterDamage}`
+    );
+
+    // 6. Condition checker: Swift Swim false positives
+    store.setActiveBattlefield({
+        weather: { name: '', remainingRounds: 0 },
+        terrain: null,
+        other: null
+    } as any);
+    assert(!checkCondition('rain', false), 'Condition "rain" evaluates to false when weather is inactive');
+
+    // Add a non-weather effect with "rain" in the name or arbitrary other effect
+    store.setActiveBattlefield({
+        weather: null,
+        terrain: null,
+        other: { name: 'Rainbow Field', remainingRounds: 3 }
+    } as any);
+    assert(!checkCondition('rain', false), 'Condition "rain" evaluates to false even if "Rainbow Field" is in other');
+
+    // When rain is active
+    store.setActiveBattlefield({
+        weather: { name: 'Rain', remainingRounds: 3 },
+        terrain: null,
+        other: null
+    } as any);
+    assert(checkCondition('rain', false), 'Condition "rain" evaluates to true when Rain weather is active with rounds > 0');
+
+    // When rain has 0 rounds remaining
+    store.setActiveBattlefield({
+        weather: { name: 'Rain', remainingRounds: 0 },
+        terrain: null,
+        other: null
+    } as any);
+    assert(!checkCondition('rain', false), 'Condition "rain" evaluates to false when Rain weather has 0 rounds');
+    assert(!checkCondition('rain', false), 'Condition "rain" evaluates to false when Rain weather has 0 rounds');
 
     console.log('\n============================================================');
     console.log(`TOTAL TESTS: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);

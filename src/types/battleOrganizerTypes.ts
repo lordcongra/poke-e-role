@@ -59,6 +59,7 @@ export interface CombatantRowData {
     tempWill?: number;
     activeTransformation?: string;
     isNPC?: boolean;
+    hidden?: boolean;
     gmHpBar?: boolean;
     gmHpText?: boolean;
     gmWillBar?: boolean;

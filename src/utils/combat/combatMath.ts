@@ -153,8 +153,8 @@ export function getWeatherDamageBonus(
     moveType: string | undefined,
     battlefield: CharacterState['activeBattlefield'],
     isHalfHp?: boolean
-): { bonus: number; tag: string } {
-    if (!moveType || !battlefield) return { bonus: 0, tag: '' };
+): { diceBonus: number; flatPenalty: number; tag: string } {
+    if (!moveType || !battlefield) return { diceBonus: 0, flatPenalty: 0, tag: '' };
 
     let effectiveHalfHp = isHalfHp;
     if (effectiveHalfHp === undefined) {
@@ -167,7 +167,8 @@ export function getWeatherDamageBonus(
     }
 
     const cleanType = moveType.trim().toLowerCase();
-    let totalBonus = 0;
+    let diceBonus = 0;
+    let flatPenalty = 0;
     const tagDescriptions: string[] = [];
 
     // 1. Weather bonuses across all active weathers
@@ -177,8 +178,11 @@ export function getWeatherDamageBonus(
         // Extreme weather (+2 dice)
         if (cleanName.includes('desolate') || cleanName.includes('harsh sun')) {
             if (cleanType === 'fire') {
-                totalBonus += 2;
+                diceBonus += 2;
                 tagDescriptions.push('Desolate Weather (+2 Dice to Fire Damage Pool)');
+            } else if (cleanType === 'water') {
+                flatPenalty += 2;
+                tagDescriptions.push('Desolate Weather (-2 Flat Damage from Water Moves)');
             }
         } else if (
             cleanName.includes('typhoon') ||
@@ -186,29 +190,38 @@ export function getWeatherDamageBonus(
             cleanName.includes('primordial sea')
         ) {
             if (cleanType === 'water') {
-                totalBonus += 2;
+                diceBonus += 2;
                 tagDescriptions.push('Typhoon (+2 Dice to Water Damage Pool)');
+            } else if (cleanType === 'fire') {
+                flatPenalty += 2;
+                tagDescriptions.push('Typhoon (-2 Flat Damage from Fire Moves)');
             }
         } else if (cleanName.includes('strong winds') || cleanName.includes('delta stream')) {
             if (cleanType === 'flying') {
-                totalBonus += 2;
+                diceBonus += 2;
                 tagDescriptions.push('Strong Winds (+2 Dice to Flying Damage Pool)');
             }
         }
-        // Standard weather (+1 dice)
+        // Standard weather (+1 dice / -1 flat penalty)
         else if (cleanName.includes('sun')) {
             if (cleanType === 'fire') {
-                totalBonus += 1;
+                diceBonus += 1;
                 tagDescriptions.push('Sunny (+1 Dice to Fire Damage Pool)');
+            } else if (cleanType === 'water') {
+                flatPenalty += 1;
+                tagDescriptions.push('Sunny (-1 Flat Damage from Water Moves)');
             }
         } else if (cleanName.includes('rain')) {
             if (cleanType === 'water') {
-                totalBonus += 1;
+                diceBonus += 1;
                 tagDescriptions.push('Rain (+1 Dice to Water Damage Pool)');
+            } else if (cleanType === 'fire') {
+                flatPenalty += 1;
+                tagDescriptions.push('Rain (-1 Flat Damage from Fire Moves)');
             }
         } else if (cleanName.includes('snow') || cleanName.includes('hail')) {
             if (cleanType === 'ice') {
-                totalBonus += 1;
+                diceBonus += 1;
                 tagDescriptions.push('Snow (+1 Dice to Ice Damage Pool)');
             }
         }
@@ -220,17 +233,17 @@ export function getWeatherDamageBonus(
         const cleanTerrain = (t.name || '').trim().toLowerCase();
         if (cleanTerrain.includes('electric')) {
             if (cleanType === 'electric') {
-                totalBonus += 1;
+                diceBonus += 1;
                 tagDescriptions.push('Electric Terrain (+1 Dice to Electric Damage Pool)');
             }
         } else if (cleanTerrain.includes('grassy')) {
             if (cleanType === 'grass') {
-                totalBonus += 1;
+                diceBonus += 1;
                 tagDescriptions.push('Grassy Terrain (+1 Dice to Grass Damage Pool)');
             }
         } else if (cleanTerrain.includes('psychic')) {
             if (cleanType === 'psychic') {
-                totalBonus += 1;
+                diceBonus += 1;
                 tagDescriptions.push('Psychic Terrain (+1 Dice to Psychic Damage Pool)');
             }
         }
@@ -257,10 +270,15 @@ export function getWeatherDamageBonus(
                         const amount = parseInt(amountStr.replace(/\s+/g, ''), 10);
                         const targetType = match[3]?.trim().toLowerCase();
                         if (!targetType || targetType === cleanType) {
-                            if (amount !== 0) {
-                                totalBonus += amount;
+                            if (amount > 0) {
+                                diceBonus += amount;
                                 tagDescriptions.push(
-                                    `${customDef.name} (${amount > 0 ? '+' : ''}${amount} Dice to ${targetType ? match[3].trim() + ' ' : ''}Damage Pool)`
+                                    `${customDef.name} (+${amount} Dice to ${targetType ? match[3].trim() + ' ' : ''}Damage Pool)`
+                                );
+                            } else if (amount < 0) {
+                                flatPenalty += Math.abs(amount);
+                                tagDescriptions.push(
+                                    `${customDef.name} (-${Math.abs(amount)} Flat Damage from ${targetType ? match[3].trim() + ' ' : ''}Moves)`
                                 );
                             }
                         }
@@ -272,7 +290,7 @@ export function getWeatherDamageBonus(
         // Safe fallback
     }
 
-    return { bonus: totalBonus, tag: tagDescriptions.join(', ') };
+    return { diceBonus, flatPenalty, tag: tagDescriptions.join(', ') };
 }
 
 export function calculateBaseDamage(move: MoveData, state: CharacterState, itemBuffs?: CombatBonuses): number {
@@ -315,8 +333,6 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState, itemB
     }
 
     const paralysisPenalty = normalizedDamageStatistic === 'dex' ? statuses.paralysisDexterityPenalty : 0;
-    const isHalfHp = state.health.hpCurr <= Math.floor(state.health.hpMax / 2);
-    const weatherBonus = getWeatherDamageBonus(move.type, state.activeBattlefield, isHalfHp).bonus;
 
     return Math.max(
         1,
@@ -326,9 +342,15 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState, itemB
             sameTypeAttackBonus +
             teraBonus +
             customFirstHitTag +
-            paralysisPenalty +
-            weatherBonus
+            paralysisPenalty
     );
+}
+
+export function calculateTotalDamage(move: MoveData, state: CharacterState, itemBuffs?: CombatBonuses): number {
+    const isHalfHp = state.health.hpCurr <= Math.floor(state.health.hpMax / 2);
+    const weather = getWeatherDamageBonus(move.type, state.activeBattlefield, isHalfHp);
+    const totalModifier = weather.diceBonus - weather.flatPenalty;
+    return Math.max(1, calculateBaseDamage(move, state, itemBuffs) + totalModifier);
 }
 
 export const isMasterOrChampionRank = (rank: string): boolean => ['Master', 'Champion'].includes(rank);

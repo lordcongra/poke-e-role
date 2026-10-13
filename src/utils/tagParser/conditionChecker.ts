@@ -225,18 +225,46 @@ export function checkCondition(
         }
 
         // 5. General & Custom Field Effects (Trick Room, Gravity, Ion Deluge, custom field effects, etc.)
+        const isCanonicalWeather =
+            cond === 'rain' ||
+            cond === 'raining' ||
+            cond === 'rainy' ||
+            cond === 'heavy rain' ||
+            cond === 'typhoon' ||
+            cond === 'primordial sea' ||
+            cond === 'sun' ||
+            cond === 'sunny' ||
+            cond === 'sunlight' ||
+            cond === 'harsh sun' ||
+            cond === 'harsh sunlight' ||
+            cond === 'desolate' ||
+            cond === 'desolate weather' ||
+            cond === 'desolate land' ||
+            cond === 'sandstorm' ||
+            cond === 'sand' ||
+            cond === 'snow' ||
+            cond === 'snowy' ||
+            cond === 'hail' ||
+            cond === 'hailing' ||
+            cond === 'strong winds' ||
+            cond === 'wind' ||
+            cond === 'delta stream';
+
         const allActiveEffects = getAllActiveFieldEffects(activeBattlefield);
         const customEffects = state.roomCustomFieldEffects || [];
         for (const effect of allActiveEffects) {
             const effName = (effect?.name || '').trim().toLowerCase();
             if (!effName) continue;
-            if (effName === cond) return true;
-            if (cond === 'trick room' && effName.includes('trick room')) return true;
-            if (cond === 'gravity' && effName.includes('gravity')) return true;
-            if (cond === 'ion deluge' && effName.includes('ion deluge')) return true;
-            if (effName.includes(cond) || cond.includes(effName)) return true;
 
-            // Check if this active effect matches a custom effect whose name or conditionTag matches cond
+            // Restrict canonical weather checks from false-matching general field effects
+            if (!isCanonicalWeather) {
+                if (effName === cond) return true;
+                if (cond === 'trick room' && effName.includes('trick room')) return true;
+                if (cond === 'gravity' && effName.includes('gravity')) return true;
+                if (cond === 'ion deluge' && effName.includes('ion deluge')) return true;
+            }
+
+            // Check if this active effect matches a custom effect whose exact name or conditionTag matches cond
             const matchingCustom = customEffects.find(
                 (c) =>
                     c.name.trim().toLowerCase() === effName ||
@@ -245,7 +273,7 @@ export function checkCondition(
             if (matchingCustom) {
                 const cTag = (matchingCustom.conditionTag || '').trim().toLowerCase();
                 const cName = matchingCustom.name.trim().toLowerCase();
-                if (cTag === cond || cName === cond || (cTag && (cTag.includes(cond) || cond.includes(cTag)))) {
+                if (cTag === cond || cName === cond) {
                     return true;
                 }
             }

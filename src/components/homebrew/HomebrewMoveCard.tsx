@@ -123,14 +123,16 @@ export function HomebrewMoveCard({
                         </select>
                         <select
                             value={move.category}
-                            onChange={(event) =>
-                                canEdit &&
-                                updateCustomMove(
-                                    move.id,
-                                    'category',
-                                    event.target.value as 'Physical' | 'Special' | 'Status'
-                                )
-                            }
+                            onChange={(event) => {
+                                if (!canEdit) return;
+                                const newCategory = event.target.value as 'Physical' | 'Special' | 'Status';
+                                updateCustomMove(move.id, 'category', newCategory);
+                                if (newCategory === 'Status') {
+                                    updateCustomMove(move.id, 'power', 0);
+                                    updateCustomMove(move.id, 'dmg1', '');
+                                    updateCustomMove(move.id, 'dmg1Alt', '');
+                                }
+                            }}
                             disabled={!canEdit}
                             className="homebrew-move__select text-label"
                         >

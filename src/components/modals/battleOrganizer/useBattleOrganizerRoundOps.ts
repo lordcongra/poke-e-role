@@ -10,7 +10,7 @@ import type {
     CombatantRowData,
     BattleOrganizerTimerEffect
 } from '../../../types/battleOrganizerTypes';
-import { createDefaultActions, createDefaultCombatant } from './battleOrganizerUtils';
+import { createDefaultActions, createDefaultCombatant, createDefaultBattlefield } from './battleOrganizerUtils';
 import { detectMoveFieldEffect } from '../../../utils/combat/fieldEffectsData';
 
 export interface UseBattleOrganizerRoundOpsProps {
@@ -453,6 +453,16 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
         [updateState]
     );
 
+    const clearBattlefield = useCallback(() => {
+        updateState((prev) => ({
+            ...prev,
+            battlefield: {
+                ...createDefaultBattlefield(),
+                sceneId: prev.battlefield.sceneId
+            }
+        }));
+    }, [updateState]);
+
     return {
         addRound,
         duplicateRound,
@@ -467,6 +477,7 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
         updatePlayerSide,
         updateFoeSide,
         updateEndOfRoundEffects,
-        activateFieldEffectFromMove
+        activateFieldEffectFromMove,
+        clearBattlefield
     };
 }

@@ -108,7 +108,8 @@ export function useBattleOrganizer() {
         updatePlayerSide,
         updateFoeSide,
         updateEndOfRoundEffects,
-        activateFieldEffectFromMove
+        activateFieldEffectFromMove,
+        clearBattlefield
     } = useBattleOrganizerRoundOps({ updateState });
 
     // 3. Token & Initiative syncing operations
@@ -558,6 +559,7 @@ export function useBattleOrganizer() {
         updateEndOfRoundEffects,
         updateRoundNumber,
         activateFieldEffectFromMove,
+        clearBattlefield,
         clearAll
     };
 }
