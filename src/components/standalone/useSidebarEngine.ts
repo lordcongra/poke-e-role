@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { storageAdapter, markDataChanged, hasUnbackedData, BACKUP_STATUS_EVENT } from '../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { setActiveTokenId } from '../../utils/sync/obr';
+import { setActiveTokenId, METADATA_ID } from '../../utils/sync/obr';
 import { hydrateActiveSheet } from '../../utils/sync/unifiedSheetHydration';
 import { fetchPokemonData } from '../../utils/api/api';
 import { imageManager } from '../../utils/graphics/imageManager';
@@ -374,32 +374,21 @@ export function useSidebarEngine() {
         const newSafeName = promptName.trim();
 
         if (item.type === 'folder') {
-            const flds = await storageAdapter.getFolders();
-            const updated = flds.map((f) => (f.id === item.id ? { ...f, name: newSafeName } : f));
-            localStorage.setItem('pkr_folders', JSON.stringify(updated));
-            markDataChanged();
-            window.dispatchEvent(new Event('pkr-local-data-changed'));
+            await storageAdapter.renameFolder(item.id, newSafeName);
 
             syncSidebarFolderRenameToPc(item.id, item.name, newSafeName, useCharacterStore.getState().pcData).catch(
                 console.warn
             );
         } else {
-            const charData = localStorage.getItem(`pkr_char_${item.id}`);
-            if (charData) {
-                const meta = JSON.parse(charData);
-                meta.nickname = newSafeName;
-                localStorage.setItem(`pkr_char_${item.id}`, JSON.stringify(meta));
-                markDataChanged();
-                window.dispatchEvent(new Event('pkr-local-data-changed'));
+            await storageAdapter.saveCharacter(item.id, { nickname: newSafeName }, METADATA_ID);
 
-                if (activeTokenId === item.id) {
-                    useCharacterStore.getState().setIdentity('nickname', newSafeName);
-                }
-
-                syncSidebarCharacterRenameToPc(item.id, newSafeName, useCharacterStore.getState().pcData).catch(
-                    console.warn
-                );
+            if (activeTokenId === item.id) {
+                useCharacterStore.getState().setIdentity('nickname', newSafeName);
             }
+
+            syncSidebarCharacterRenameToPc(item.id, newSafeName, useCharacterStore.getState().pcData).catch(
+                console.warn
+            );
         }
     };
 
