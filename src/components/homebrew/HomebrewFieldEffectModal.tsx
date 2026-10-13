@@ -149,7 +149,7 @@ export function HomebrewFieldEffectModal({ effect, isOpen, onClose }: HomebrewFi
 
                     {/* Visual Icon Selection */}
                     <div className="hb-fe-modal__section">
-                        <label className="text-label">Lucide Icon</label>
+                        <label className="text-label">Icon</label>
                         <div className="hb-fe-icon-picker">
                             {AVAILABLE_FIELD_ICONS.map((item) => (
                                 <button

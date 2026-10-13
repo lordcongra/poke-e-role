@@ -13,6 +13,16 @@ import {
     Mountain,
     Moon,
     CloudLightning,
+    CloudFog,
+    Skull,
+    Feather,
+    Waves,
+    Heart,
+    Swords,
+    TreePine,
+    Compass,
+    Star,
+    ShieldAlert,
     type LucideIcon
 } from 'lucide-react';
 
@@ -36,7 +46,17 @@ export const AVAILABLE_FIELD_ICONS: FieldIconOption[] = [
     { key: 'Droplets', label: 'Water', Icon: Droplets },
     { key: 'Mountain', label: 'Rock', Icon: Mountain },
     { key: 'Moon', label: 'Dark', Icon: Moon },
-    { key: 'CloudLightning', label: 'Storm', Icon: CloudLightning }
+    { key: 'CloudLightning', label: 'Storm', Icon: CloudLightning },
+    { key: 'CloudFog', label: 'Fog', Icon: CloudFog },
+    { key: 'Skull', label: 'Poison', Icon: Skull },
+    { key: 'Feather', label: 'Flying', Icon: Feather },
+    { key: 'Waves', label: 'Waves', Icon: Waves },
+    { key: 'Heart', label: 'Heart', Icon: Heart },
+    { key: 'Swords', label: 'Combat', Icon: Swords },
+    { key: 'TreePine', label: 'Forest', Icon: TreePine },
+    { key: 'Compass', label: 'Zone', Icon: Compass },
+    { key: 'Star', label: 'Star', Icon: Star },
+    { key: 'ShieldAlert', label: 'Hazard', Icon: ShieldAlert }
 ];
 
 export const PRESET_FIELD_COLORS: string[] = [

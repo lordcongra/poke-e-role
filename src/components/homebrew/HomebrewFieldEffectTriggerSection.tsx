@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Plus, X, Copy, Check, AlertTriangle, Radio, Swords } from 'lucide-react';
 import type { CustomFieldEffect } from '../../store/storeTypes';
 import { checkConditionTagCollision } from './homebrewFieldEffectUtils';
+import { ALL_MOVES, loadLocalDataset } from '../../utils/api/api';
+import { useCharacterStore } from '../../store/useCharacterStore';
 
 interface HomebrewFieldEffectTriggerSectionProps {
     effect: CustomFieldEffect;
@@ -16,6 +18,29 @@ export function HomebrewFieldEffectTriggerSection({
 }: HomebrewFieldEffectTriggerSectionProps) {
     const [moveInput, setMoveInput] = useState('');
     const [copied, setCopied] = useState(false);
+    const [canonicalMoves, setCanonicalMoves] = useState<string[]>(ALL_MOVES);
+
+    const roomCustomMoves = useCharacterStore((state) => state.roomCustomMoves);
+    const role = useCharacterStore((state) => state.role);
+
+    useEffect(() => {
+        let isMounted = true;
+        loadLocalDataset().then(() => {
+            if (isMounted) {
+                setCanonicalMoves([...ALL_MOVES]);
+            }
+        });
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const moveSuggestions = useMemo(() => {
+        const customNames = roomCustomMoves
+            .filter((m) => role === 'GM' || !m.gmOnly)
+            .map((m) => m.name);
+        return Array.from(new Set([...canonicalMoves, ...customNames])).sort();
+    }, [canonicalMoves, roomCustomMoves, role]);
 
     const triggerMoves = effect.triggerMoves || [];
 
@@ -37,7 +62,9 @@ export function HomebrewFieldEffectTriggerSection({
             }
         }
 
-        onUpdate('triggerMoves', nextMoves);
+        if (nextMoves.length !== triggerMoves.length) {
+            onUpdate('triggerMoves', nextMoves);
+        }
         setMoveInput('');
     };
 
@@ -95,10 +122,16 @@ export function HomebrewFieldEffectTriggerSection({
                 <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
                     <input
                         type="text"
+                        list={`hb-trigger-moves-${effect.id}`}
                         className="bo-input bo-input--underline text-label"
                         placeholder="e.g. Acid Rain, Corrosive Rain (comma-separated)"
                         value={moveInput}
                         onChange={(e) => setMoveInput(e.target.value)}
+                        onBlur={() => {
+                            if (moveInput.trim()) {
+                                handleAddMoves(moveInput);
+                            }
+                        }}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                                 e.preventDefault();
@@ -106,6 +139,11 @@ export function HomebrewFieldEffectTriggerSection({
                             }
                         }}
                     />
+                    <datalist id={`hb-trigger-moves-${effect.id}`}>
+                        {moveSuggestions.map((name) => (
+                            <option key={name} value={name} />
+                        ))}
+                    </datalist>
                     <button
                         type="button"
                         className="action-button action-button--dark"
@@ -116,6 +154,7 @@ export function HomebrewFieldEffectTriggerSection({
                             alignItems: 'center',
                             gap: '4px'
                         }}
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => handleAddMoves(moveInput)}
                     >
                         <Plus size={12} /> Add Move

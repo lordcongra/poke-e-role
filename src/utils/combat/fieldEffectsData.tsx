@@ -12,7 +12,17 @@ import {
     Droplets,
     Mountain,
     Moon,
-    CloudLightning
+    CloudLightning,
+    CloudFog,
+    Skull,
+    Feather,
+    Waves,
+    Heart,
+    Swords,
+    TreePine,
+    Compass,
+    Star,
+    ShieldAlert
 } from 'lucide-react';
 import { WEATHER_CONDITIONS_DATA } from '../../data/gm/gmStatusData';
 import { useCharacterStore } from '../../store/useCharacterStore';
@@ -32,6 +42,16 @@ export type FieldEffectIconKey =
     | 'Mountain'
     | 'Moon'
     | 'CloudLightning'
+    | 'CloudFog'
+    | 'Skull'
+    | 'Feather'
+    | 'Waves'
+    | 'Heart'
+    | 'Swords'
+    | 'TreePine'
+    | 'Compass'
+    | 'Star'
+    | 'ShieldAlert'
     | string;
 
 export interface FieldEffectInfo {
@@ -213,6 +233,33 @@ export function getFieldEffectInfo(
     };
 }
 
+const FIELD_ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+    Sun,
+    CloudRain,
+    Wind,
+    Snowflake,
+    Zap,
+    Sprout,
+    Sparkles,
+    Eye,
+    Shield,
+    Flame,
+    Droplets,
+    Mountain,
+    Moon,
+    CloudLightning,
+    CloudFog,
+    Skull,
+    Feather,
+    Waves,
+    Heart,
+    Swords,
+    TreePine,
+    Compass,
+    Star,
+    ShieldAlert
+};
+
 export function FieldEffectIcon({
     icon,
     size = 14,
@@ -222,37 +269,8 @@ export function FieldEffectIcon({
     size?: number;
     className?: string;
 }) {
-    switch (icon) {
-        case 'Sun':
-            return <Sun size={size} className={className} />;
-        case 'CloudRain':
-            return <CloudRain size={size} className={className} />;
-        case 'Wind':
-            return <Wind size={size} className={className} />;
-        case 'Snowflake':
-            return <Snowflake size={size} className={className} />;
-        case 'Zap':
-            return <Zap size={size} className={className} />;
-        case 'Sprout':
-            return <Sprout size={size} className={className} />;
-        case 'Eye':
-            return <Eye size={size} className={className} />;
-        case 'Shield':
-            return <Shield size={size} className={className} />;
-        case 'Flame':
-            return <Flame size={size} className={className} />;
-        case 'Droplets':
-            return <Droplets size={size} className={className} />;
-        case 'Mountain':
-            return <Mountain size={size} className={className} />;
-        case 'Moon':
-            return <Moon size={size} className={className} />;
-        case 'CloudLightning':
-            return <CloudLightning size={size} className={className} />;
-        case 'Sparkles':
-        default:
-            return <Sparkles size={size} className={className} />;
-    }
+    const Component = FIELD_ICON_MAP[icon] || Sparkles;
+    return <Component size={size} className={className} />;
 }
 
 export interface MoveFieldEffectDefinition {
