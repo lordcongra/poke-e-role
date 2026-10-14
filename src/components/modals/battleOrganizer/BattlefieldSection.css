@@ -288,6 +288,22 @@
     font-weight: 700;
 }
 
+.bo-preset-chip--supported {
+    border: 1px solid rgba(255, 202, 40, 0.65);
+}
+
+.bo-preset-chip--supported:hover {
+    border-color: rgba(255, 202, 40, 0.95);
+    background: color-mix(in srgb, #ffca28 15%, var(--panel-alt, #242424));
+}
+
+.bo-preset-chip--supported.bo-preset-chip--active {
+    background: var(--primary, #3b82f6);
+    border-color: rgba(255, 202, 40, 0.9);
+    box-shadow: 0 0 5px rgba(255, 202, 40, 0.4);
+    color: #ffffff;
+}
+
 .bo-preset-select {
     padding: 2px 4px;
     font-size: 0.7rem;

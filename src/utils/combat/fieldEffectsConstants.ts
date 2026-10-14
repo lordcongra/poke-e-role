@@ -155,6 +155,167 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
     }
 ];
 
+export const FORCE_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
+    {
+        id: 'forcefield-reflect',
+        name: 'Reflect',
+        category: 'forceField',
+        badge: 'Barrier',
+        color: '#E91E63',
+        icon: 'Shield',
+        initials: 'RF',
+        effects: [
+            '-1 Damage from Physical Moves (Defense +1 for all allies)',
+            'Protects user and allies for 4 rounds'
+        ],
+        defaultRounds: 4
+    },
+    {
+        id: 'forcefield-light-screen',
+        name: 'Light Screen',
+        category: 'forceField',
+        badge: 'Barrier',
+        color: '#9C27B0',
+        icon: 'Shield',
+        initials: 'LS',
+        effects: [
+            '-1 Damage from Special Moves (Sp. Defense +1 for all allies)',
+            'Protects user and allies for 4 rounds'
+        ],
+        defaultRounds: 4
+    },
+    {
+        id: 'forcefield-aurora-veil',
+        name: 'Aurora Veil',
+        category: 'forceField',
+        badge: 'Barrier',
+        color: '#00BCD4',
+        icon: 'Shield',
+        initials: 'AV',
+        effects: [
+            '-1 Damage from both Physical and Special Moves for all allies',
+            'Can only be set during Snowy or Hail weather (4 rounds)'
+        ],
+        defaultRounds: 4
+    },
+    {
+        id: 'forcefield-tailwind',
+        name: 'Tailwind',
+        category: 'forceField',
+        badge: 'Wind Buff',
+        color: '#4CAF50',
+        icon: 'Wind',
+        initials: 'TW',
+        effects: [
+            '+2 Dexterity bonus to user and all allies',
+            'Boosts Initiative and movement speed for 4 rounds'
+        ],
+        defaultRounds: 4
+    },
+    {
+        id: 'forcefield-safeguard',
+        name: 'Safeguard',
+        category: 'forceField',
+        badge: 'Ward',
+        color: '#8BC34A',
+        icon: 'ShieldCheck',
+        initials: 'SG',
+        effects: [
+            'Protects user and allies from Major and Minor Status Ailments',
+            'Lasts for 4 rounds'
+        ],
+        defaultRounds: 4
+    },
+    {
+        id: 'forcefield-mist',
+        name: 'Mist',
+        category: 'forceField',
+        badge: 'Ward',
+        color: '#80DEEA',
+        icon: 'CloudFog',
+        initials: 'MS',
+        effects: [
+            'Protects user and allies from stat and skill reductions inflicted by foes',
+            'Lasts for 4 rounds'
+        ],
+        defaultRounds: 4
+    },
+    {
+        id: 'forcefield-lucky-chant',
+        name: 'Lucky Chant',
+        category: 'forceField',
+        badge: 'Chant',
+        color: '#FFD54F',
+        icon: 'Sparkles',
+        initials: 'LC',
+        effects: [
+            'Allies are immune to Critical Hit bonus dice',
+            'Allies can re-roll one un-successful die per roll',
+            'Whole Scene Duration'
+        ],
+        defaultRounds: -1
+    }
+];
+
+export const ENTRY_HAZARD_CONDITIONS_DATA: FieldEffectInfo[] = [
+    {
+        id: 'hazard-stealth-rock',
+        name: 'Stealth Rock',
+        category: 'entryHazard',
+        badge: 'Rock Hazard',
+        color: '#A1887F',
+        icon: 'Mountain',
+        initials: 'SR',
+        effects: [
+            'Deals Rock-type damage to foes upon entering battle, modified by type effectiveness',
+            'Remains on field until cleared (Whole Scene)'
+        ],
+        defaultRounds: -1
+    },
+    {
+        id: 'hazard-spikes',
+        name: 'Spikes',
+        category: 'entryHazard',
+        badge: 'Ground Hazard',
+        color: '#8D6E63',
+        icon: 'ShieldAlert',
+        initials: 'SP',
+        effects: [
+            'Deals 1 Typeless damage to grounded foes upon entering battle (stacks up to 3 layers for up to 3 damage)',
+            'Remains on field until cleared (Whole Scene)'
+        ],
+        defaultRounds: -1
+    },
+    {
+        id: 'hazard-toxic-spikes',
+        name: 'Toxic Spikes',
+        category: 'entryHazard',
+        badge: 'Poison Hazard',
+        color: '#AB47BC',
+        icon: 'Skull',
+        initials: 'TS',
+        effects: [
+            'Poisons grounded foes upon entering battle (1 layer: Poison; 2 layers: Badly Poisoned)',
+            'Poison-type Pokémon absorb and remove this hazard upon entry'
+        ],
+        defaultRounds: -1
+    },
+    {
+        id: 'hazard-sticky-web',
+        name: 'Sticky Web',
+        category: 'entryHazard',
+        badge: 'Bug Hazard',
+        color: '#C0CA33',
+        icon: 'Target',
+        initials: 'SW',
+        effects: [
+            'Reduces Dexterity by 1 for grounded foes upon entering battle',
+            'Remains on field until cleared (Whole Scene)'
+        ],
+        defaultRounds: -1
+    }
+];
+
 export const MOVE_FIELD_EFFECT_MAP: MoveFieldEffectDefinition[] = [
     { moveName: 'Sunny Day', effectName: 'Sunny', category: 'weather', rounds: 4 },
     { moveName: 'Rain Dance', effectName: 'Rain', category: 'weather', rounds: 4 },
@@ -182,6 +343,7 @@ export const MOVE_FIELD_EFFECT_MAP: MoveFieldEffectDefinition[] = [
     { moveName: 'Glitzy Glow', effectName: 'Light Screen', category: 'forceField', rounds: 4 },
     { moveName: 'Safeguard', effectName: 'Safeguard', category: 'forceField', rounds: 4 },
     { moveName: 'Mist', effectName: 'Mist', category: 'forceField', rounds: 4 },
+    { moveName: 'Lucky Chant', effectName: 'Lucky Chant', category: 'forceField', rounds: -1 },
     { moveName: 'Stealth Rock', effectName: 'Stealth Rock', category: 'entryHazard', rounds: -1 },
     { moveName: 'Spikes', effectName: 'Spikes', category: 'entryHazard', rounds: -1 },
     { moveName: 'Toxic Spikes', effectName: 'Toxic Spikes', category: 'entryHazard', rounds: -1 },
@@ -199,16 +361,8 @@ export const CANONICAL_HAZARDS = [
     'Stone Axe'
 ];
 
-export const CANONICAL_SIDE_OTHER = [
-    'Lucky Chant',
-    'Quick Guard',
-    'Wide Guard',
-    'Crafty Shield',
-    'Mat Block',
-    'Rainbow',
-    'Swamp',
-    'Sea of Fire'
-];
+/** @deprecated Deprecated in favor of freeform text input in side panels */
+export const CANONICAL_SIDE_OTHER: string[] = [];
 
 export const FIELD_EFFECT_INITIALS_MAP: Record<string, string> = {
     sunny: 'SN',
@@ -239,6 +393,7 @@ export const FIELD_EFFECT_INITIALS_MAP: Record<string, string> = {
     'light screen': 'LS',
     safeguard: 'SG',
     mist: 'MS',
+    'lucky chant': 'LC',
     'aurora veil': 'AV',
     spikes: 'SP',
     'stealth rock': 'SR',

@@ -6,6 +6,7 @@ import { BattlefieldAutocompleteInput, type AutocompleteSuggestion } from './Bat
 import { TERRAIN_CONDITIONS_DATA, OTHER_FIELD_CONDITIONS_DATA } from '../../../utils/combat/fieldEffectsData';
 import { WEATHER_CONDITIONS_DATA } from '../../../data/gm/gmStatusData';
 import type { BattleOrganizerTimerEffect } from '../../../types/battleOrganizerTypes';
+import { isBattlefieldPresetSupported, getBattlefieldPresetTooltip } from './battlefieldPresetUtils';
 
 export interface BattlefieldEffectCardProps {
     title: string;
@@ -85,7 +86,8 @@ export function BattlefieldEffectCard({
         const canonical = canonicalPresets.map((p) => ({
             name: p.name,
             rounds: p.rounds,
-            category
+            category,
+            supported: isBattlefieldPresetSupported(p.name, category)
         }));
         const custom = customPresets.map((p) => ({
             name: p.name,
@@ -360,14 +362,19 @@ export function BattlefieldEffectCard({
             <div className="bo-preset-chips-row">
                 {canonicalPresets.map((preset) => {
                     const isActive = isPresetActive(preset.name);
+                    const isSupported = isBattlefieldPresetSupported(preset.name, category);
                     const roundText = preset.rounds === -1 ? 'Whole Scene' : `${preset.rounds} rounds`;
+                    const tooltip = isSupported
+                        ? getBattlefieldPresetTooltip(preset.name, category, preset.rounds)
+                        : `Set ${preset.name} (${roundText})`;
+
                     return (
                         <button
                             key={preset.name}
                             type="button"
-                            className={`bo-preset-chip ${isActive ? 'bo-preset-chip--active' : ''}`}
+                            className={`bo-preset-chip ${isSupported ? 'bo-preset-chip--supported' : ''} ${isActive ? 'bo-preset-chip--active' : ''}`}
                             onClick={() => handleSelectPreset(preset)}
-                            title={`Set ${preset.name} (${roundText})`}
+                            title={tooltip}
                         >
                             {preset.name}
                         </button>

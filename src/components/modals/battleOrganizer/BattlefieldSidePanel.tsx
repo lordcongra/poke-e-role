@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Shield, Plus, Trash2, Zap } from 'lucide-react';
+import { Shield, Plus, Trash2 } from 'lucide-react';
 import { RemainingRoundsBoxes } from './RemainingRoundsBoxes';
 import { BattlefieldAutocompleteInput, type AutocompleteSuggestion } from './BattlefieldAutocompleteInput';
 import { fetchMoveLookupIndex } from '../../../utils/api/api';
 import type { MoveLookupEntry } from '../../../utils/api/apiTypes';
 import type { BattlefieldSideData, BattleOrganizerTimerEffect } from '../../../types/battleOrganizerTypes';
-import { CANONICAL_HAZARDS, CANONICAL_SIDE_OTHER } from '../../../utils/combat/fieldEffectsConstants';
+import { CANONICAL_HAZARDS } from '../../../utils/combat/fieldEffectsConstants';
 
 export interface BattlefieldSidePanelProps {
     side: 'player' | 'foe';
@@ -15,15 +15,6 @@ export interface BattlefieldSidePanelProps {
 }
 
 const SUPPORTED_SIDE_MOVES = new Set(['reflect', 'light screen', 'aurora veil', 'tailwind']);
-
-const QUICK_CHIPS = [
-    { name: 'Reflect', supported: true },
-    { name: 'Light Screen', supported: true },
-    { name: 'Aurora Veil', supported: true },
-    { name: 'Tailwind', supported: true },
-    { name: 'Safeguard', supported: false },
-    { name: 'Mist', supported: false }
-];
 
 export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: BattlefieldSidePanelProps) {
     const [allMoves, setAllMoves] = useState<MoveLookupEntry[]>([]);
@@ -52,6 +43,14 @@ export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: Ba
         onUpdateSide('forceFields', fields);
     };
 
+    const handleForceFieldSelect = (idx: 0 | 1, item: AutocompleteSuggestion) => {
+        const fields = [...sideData.forceFields] as [BattleOrganizerTimerEffect, BattleOrganizerTimerEffect];
+        const prevRounds = fields[idx].remainingRounds;
+        const newRounds = item.rounds !== undefined ? item.rounds : prevRounds === 0 ? 4 : prevRounds;
+        fields[idx] = { name: item.name, remainingRounds: newRounds };
+        onUpdateSide('forceFields', fields);
+    };
+
     const handleForceFieldRoundsChange = (idx: 0 | 1, val: number) => {
         const fields = [...sideData.forceFields] as [BattleOrganizerTimerEffect, BattleOrganizerTimerEffect];
         fields[idx] = { ...fields[idx], remainingRounds: val };
@@ -74,6 +73,14 @@ export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: Ba
         onUpdateSide('extraForceFields', current);
     };
 
+    const handleExtraForceFieldSelect = (idx: number, item: AutocompleteSuggestion) => {
+        const current = [...(sideData.extraForceFields || [])];
+        const prevRounds = current[idx]?.remainingRounds ?? 0;
+        const newRounds = item.rounds !== undefined ? item.rounds : prevRounds === 0 ? 4 : prevRounds;
+        current[idx] = { ...current[idx], name: item.name, remainingRounds: newRounds };
+        onUpdateSide('extraForceFields', current);
+    };
+
     const handleExtraForceFieldRoundsChange = (idx: number, val: number) => {
         const current = [...(sideData.extraForceFields || [])];
         current[idx] = { ...current[idx], remainingRounds: val };
@@ -83,53 +90,6 @@ export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: Ba
     const handleRemoveExtraForceField = (idx: number) => {
         const current = (sideData.extraForceFields || []).filter((_, i) => i !== idx);
         onUpdateSide('extraForceFields', current);
-    };
-
-    const isChipActive = (name: string) => {
-        const clean = name.toLowerCase().trim();
-        const inBase = sideData.forceFields.some(
-            (ff) => ff.name.toLowerCase().trim() === clean && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
-        );
-        if (inBase) return true;
-        return Boolean(
-            sideData.extraForceFields?.some(
-                (ff) => ff.name.toLowerCase().trim() === clean && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
-            )
-        );
-    };
-
-    const handleToggleChip = (name: string) => {
-        const clean = name.toLowerCase().trim();
-        // 1. If in base slot -> toggle off
-        const baseIdx = sideData.forceFields.findIndex(
-            (ff) => ff.name.toLowerCase().trim() === clean && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
-        );
-        if (baseIdx !== -1) {
-            handleForceFieldChange(baseIdx as 0 | 1, '');
-            return;
-        }
-
-        // 2. If in extra slot -> remove it
-        const extraIdx = (sideData.extraForceFields || []).findIndex(
-            (ff) => ff.name.toLowerCase().trim() === clean && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
-        );
-        if (extraIdx !== -1) {
-            handleRemoveExtraForceField(extraIdx);
-            return;
-        }
-
-        // 3. Not active -> activate
-        const emptyBaseIdx = sideData.forceFields.findIndex((ff) => !ff.name.trim() || ff.remainingRounds === 0);
-        if (emptyBaseIdx !== -1) {
-            const fields = [...sideData.forceFields] as [BattleOrganizerTimerEffect, BattleOrganizerTimerEffect];
-            fields[emptyBaseIdx] = { name, remainingRounds: 4 };
-            onUpdateSide('forceFields', fields);
-            return;
-        }
-
-        // Base slots 0 & 1 both occupied -> append to extraForceFields
-        const currentExtras = sideData.extraForceFields || [];
-        onUpdateSide('extraForceFields', [...currentExtras, { name, remainingRounds: 4 }]);
     };
 
     // Extra Hazards
@@ -170,21 +130,28 @@ export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: Ba
     const getForceFieldSuggestions = (query: string): AutocompleteSuggestion[] => {
         const clean = query.trim().toLowerCase();
         if (!clean) {
-            const defaults = ['Reflect', 'Light Screen', 'Aurora Veil', 'Tailwind', 'Safeguard', 'Mist'];
-            return defaults.map((name) => ({
-                name,
-                rounds: 4,
-                supported: SUPPORTED_SIDE_MOVES.has(name.toLowerCase())
-            }));
+            const defaults: AutocompleteSuggestion[] = [
+                { name: 'Reflect', rounds: 4, supported: true },
+                { name: 'Light Screen', rounds: 4, supported: true },
+                { name: 'Aurora Veil', rounds: 4, supported: true },
+                { name: 'Tailwind', rounds: 4, supported: true },
+                { name: 'Safeguard', rounds: 4, supported: false },
+                { name: 'Mist', rounds: 4, supported: false },
+                { name: 'Lucky Chant', rounds: -1, supported: false }
+            ];
+            return defaults;
         }
         return allMoves
             .filter((m) => m.name.toLowerCase().includes(clean))
             .slice(0, 15)
-            .map((m) => ({
-                name: m.name,
-                rounds: 4,
-                supported: SUPPORTED_SIDE_MOVES.has(m.name.toLowerCase())
-            }));
+            .map((m) => {
+                const isLuckyChant = m.name.toLowerCase() === 'lucky chant';
+                return {
+                    name: m.name,
+                    rounds: isLuckyChant ? -1 : 4,
+                    supported: SUPPORTED_SIDE_MOVES.has(m.name.toLowerCase())
+                };
+            });
     };
 
     const getHazardSuggestions = (query: string): AutocompleteSuggestion[] => {
@@ -193,25 +160,6 @@ export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: Ba
             return CANONICAL_HAZARDS.map((name) => ({ name }));
         }
         const matchedCanonicals = CANONICAL_HAZARDS.filter((h) => h.toLowerCase().includes(clean)).map((name) => ({
-            name
-        }));
-        const matchedMoves = allMoves
-            .filter(
-                (m) =>
-                    m.name.toLowerCase().includes(clean) &&
-                    !matchedCanonicals.some((c) => c.name.toLowerCase() === m.name.toLowerCase())
-            )
-            .slice(0, 10)
-            .map((m) => ({ name: m.name }));
-        return [...matchedCanonicals, ...matchedMoves];
-    };
-
-    const getOtherSuggestions = (query: string): AutocompleteSuggestion[] => {
-        const clean = query.trim().toLowerCase();
-        if (!clean) {
-            return CANONICAL_SIDE_OTHER.map((name) => ({ name }));
-        }
-        const matchedCanonicals = CANONICAL_SIDE_OTHER.filter((o) => o.toLowerCase().includes(clean)).map((name) => ({
             name
         }));
         const matchedMoves = allMoves
@@ -249,24 +197,6 @@ export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: Ba
                     <span className="bo-rounds-label text-subtext">Remaining Rounds</span>
                 </div>
 
-                {/* Quick Chips */}
-                <div className="bo-preset-chips-row bo-preset-chips-row--side">
-                    {QUICK_CHIPS.map((chip) => {
-                        const active = isChipActive(chip.name);
-                        return (
-                            <button
-                                key={chip.name}
-                                type="button"
-                                className={`bo-preset-chip ${active ? 'bo-preset-chip--active' : ''}`}
-                                onClick={() => handleToggleChip(chip.name)}
-                                title={`${chip.name} — ${chip.supported ? 'Supported: Automated in roll calculations (damage reduction or +2 Dexterity bonus)' : 'Informational: Battlefield condition tracked for GM and players'}`}
-                            >
-                                {chip.name} {chip.supported && <Zap size={11} className="bo-chip-zap" />}
-                            </button>
-                        );
-                    })}
-                </div>
-
                 {/* Input Slot 1 & 2 */}
                 {([0, 1] as const).map((idx) => {
                     const fieldVal = sideData.forceFields[idx].name;
@@ -275,7 +205,7 @@ export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: Ba
                             <BattlefieldAutocompleteInput
                                 value={fieldVal}
                                 onChange={(val) => handleForceFieldChange(idx, val)}
-                                onSelect={(item) => handleForceFieldChange(idx, item.name)}
+                                onSelect={(item) => handleForceFieldSelect(idx, item)}
                                 suggestions={getForceFieldSuggestions(fieldVal)}
                                 placeholder={
                                     idx === 0
@@ -303,7 +233,7 @@ export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: Ba
                             <BattlefieldAutocompleteInput
                                 value={extra.name}
                                 onChange={(val) => handleExtraForceFieldChange(efIdx, val)}
-                                onSelect={(item) => handleExtraForceFieldChange(efIdx, item.name)}
+                                onSelect={(item) => handleExtraForceFieldSelect(efIdx, item)}
                                 suggestions={getForceFieldSuggestions(extra.name)}
                                 placeholder="Additional Force Field / Buff..."
                             />
@@ -398,21 +328,21 @@ export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: Ba
                     </button>
                     <label className="bo-field-label text-label">Other</label>
                 </div>
-                <BattlefieldAutocompleteInput
+                <input
+                    type="text"
+                    className="bo-input bo-input--underline text-label"
                     value={sideData.other}
-                    onChange={(val) => onUpdateSide('other', val)}
-                    onSelect={(item) => onUpdateSide('other', item.name)}
-                    suggestions={getOtherSuggestions(sideData.other)}
-                    placeholder="e.g. Lucky Chant, Safeguard"
+                    onChange={(e) => onUpdateSide('other', e.target.value)}
+                    placeholder={side === 'player' ? 'e.g. Rainbow, Swamp, Custom Buff' : 'e.g. Sea of Fire, Custom Buff'}
                 />
                 {sideData.extraOther &&
                     sideData.extraOther.map((extra, oIdx) => (
                         <div key={oIdx} className="bo-extra-input-row">
-                            <BattlefieldAutocompleteInput
+                            <input
+                                type="text"
+                                className="bo-input bo-input--underline text-label"
                                 value={extra}
-                                onChange={(val) => handleExtraOtherChange(oIdx, val)}
-                                onSelect={(item) => handleExtraOtherChange(oIdx, item.name)}
-                                suggestions={getOtherSuggestions(extra)}
+                                onChange={(e) => handleExtraOtherChange(oIdx, e.target.value)}
                                 placeholder="Additional effect..."
                             />
                             <button

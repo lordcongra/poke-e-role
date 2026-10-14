@@ -75,7 +75,7 @@ export function BattlefieldAutocompleteInput({
                             {item.supported && (
                                 <span
                                     className="bo-supported-badge"
-                                    title="Supported: Automated in roll calculations (damage reduction or +2 Dexterity bonus)"
+                                    title="Supported: Automated in roll calculations (damage modifiers, stat bonuses, or field rules)"
                                 >
                                     <Zap size={10} className="bo-chip-zap" />
                                     <span>Supported</span>
