@@ -20,6 +20,7 @@ export interface BattlefieldEffectCardProps {
 }
 
 interface PresetItem {
+    id?: string;
     name: string;
     rounds: number;
     isCustom?: boolean;
@@ -71,6 +72,7 @@ export function BattlefieldEffectCard({
             return e.category === 'field';
         });
         return filtered.map((e) => ({
+            id: e.id,
             name: e.name,
             rounds: e.defaultRounds ?? 4,
             isCustom: true,
@@ -348,7 +350,7 @@ export function BattlefieldEffectCard({
                 })}
 
                 {/* Custom Homebrew Chips */}
-                {customPresets.map((preset) => {
+                {customPresets.map((preset, pIdx) => {
                     const isActive = isPresetActive(preset.name);
                     const customStyle: React.CSSProperties = {};
                     if (preset.color) {
@@ -363,7 +365,7 @@ export function BattlefieldEffectCard({
                     }
                     return (
                         <button
-                            key={preset.name}
+                            key={preset.id || `${preset.name}-${pIdx}`}
                             type="button"
                             className={`bo-preset-chip bo-preset-chip--custom ${isActive ? 'bo-preset-chip--active' : ''}`}
                             onClick={() => handleSelectPreset(preset)}

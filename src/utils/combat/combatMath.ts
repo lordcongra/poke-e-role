@@ -336,13 +336,7 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState, itemB
 
     return Math.max(
         1,
-        move.power +
-            scalingValue +
-            extraDice +
-            sameTypeAttackBonus +
-            teraBonus +
-            customFirstHitTag +
-            paralysisPenalty
+        move.power + scalingValue + extraDice + sameTypeAttackBonus + teraBonus + customFirstHitTag + paralysisPenalty
     );
 }
 

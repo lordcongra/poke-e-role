@@ -135,8 +135,7 @@ export function resolveCombatantRoundTriggers(
     });
 
     return sorted.map((c) => {
-        const charInfo =
-            (c.tokenId && charDataMap.get(c.tokenId)) ||
+        const charInfo = (c.tokenId && charDataMap.get(c.tokenId)) ||
             charDataMap.get(c.name.toLowerCase().trim()) || {
                 types: [],
                 ability: '',
@@ -159,19 +158,16 @@ export function resolveCombatantRoundTriggers(
         const abilityActive = charInfo.abilityActive !== false;
 
         const hasSolarPower =
-            abilityActive &&
-            (abilityLower === 'solar power' || /deal\s*1\s*damage.*@\s*sun/i.test(abilityTags));
+            abilityActive && (abilityLower === 'solar power' || /deal\s*1\s*damage.*@\s*sun/i.test(abilityTags));
         const hasDrySkin =
             abilityActive &&
             (abilityLower === 'dry skin' ||
                 (/heal\s*1.*@\s*rain/i.test(abilityTags) && /deal\s*1.*@\s*sun/i.test(abilityTags)));
         const hasRainDish =
             abilityActive &&
-            (abilityLower === 'rain dish' ||
-                (abilityLower !== 'dry skin' && /heal\s*1.*@\s*rain/i.test(abilityTags)));
+            (abilityLower === 'rain dish' || (abilityLower !== 'dry skin' && /heal\s*1.*@\s*rain/i.test(abilityTags)));
         const hasIceBody =
-            abilityActive &&
-            (abilityLower === 'ice body' || /heal\s*1.*@\s*(?:snow|hail)/i.test(abilityTags));
+            abilityActive && (abilityLower === 'ice body' || /heal\s*1.*@\s*(?:snow|hail)/i.test(abilityTags));
 
         // --- 1. DAMAGE EVALUATION ---
         let hasDamageTrigger = false;

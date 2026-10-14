@@ -32,9 +32,7 @@ export function CombatantsTable({
     const gmOnlyPullEnemies = useCharacterStore((state) => state.identity.gmOnlyPullEnemies);
     const shouldFilterEnemies = role !== 'GM' && gmOnlyPullEnemies !== false;
 
-    const visibleCombatants = shouldFilterEnemies
-        ? combatants.filter((c) => !c.isNPC && !c.hidden)
-        : combatants;
+    const visibleCombatants = shouldFilterEnemies ? combatants.filter((c) => !c.isNPC && !c.hidden) : combatants;
 
     return (
         <>

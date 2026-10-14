@@ -39,7 +39,10 @@ export function useRoundAdvanceModal({
             if (hasActiveTriggers) {
                 const activeWeathers = getEffectsByCategory(battlefield, 'weather');
                 setHazardWeatherName(
-                    activeWeathers.map((w) => w.name).filter(Boolean).join(' & ') || 'Battlefield'
+                    activeWeathers
+                        .map((w) => w.name)
+                        .filter(Boolean)
+                        .join(' & ') || 'Battlefield'
                 );
                 setShowWeatherDamageModal(true);
                 return;

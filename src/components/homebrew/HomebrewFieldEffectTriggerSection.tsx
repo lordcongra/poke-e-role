@@ -36,9 +36,7 @@ export function HomebrewFieldEffectTriggerSection({
     }, []);
 
     const moveSuggestions = useMemo(() => {
-        const customNames = roomCustomMoves
-            .filter((m) => role === 'GM' || !m.gmOnly)
-            .map((m) => m.name);
+        const customNames = roomCustomMoves.filter((m) => role === 'GM' || !m.gmOnly).map((m) => m.name);
         return Array.from(new Set([...canonicalMoves, ...customNames])).sort();
     }, [canonicalMoves, roomCustomMoves, role]);
 

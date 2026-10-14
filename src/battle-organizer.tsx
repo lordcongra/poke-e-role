@@ -9,6 +9,8 @@ import {
 } from './components/modals/battleOrganizer/battleOrganizerSettingsHelper';
 import { isStandaloneMode } from './utils/sync/storageAdapter';
 import { useCharacterStore } from './store/useCharacterStore';
+import { homebrewStorage, initHomebrewBroadcastSync } from './utils/sync/homebrewStorage';
+import { setupOwlbearHomebrewSync } from './hooks/owlbearSync/setupOwlbearHomebrewSync';
 import './style.css';
 
 // Strictly type the custom Window property for HMR to avoid 'any'
@@ -144,6 +146,20 @@ export function BattleOrganizerApp() {
         };
     }, []);
 
+    // Load local homebrew & multi-tab BroadcastChannel sync on mount
+    useEffect(() => {
+        useCharacterStore.getState().loadHomebrewLocal();
+        homebrewStorage.runLocalStorageMigration().catch(() => {});
+
+        const unsubBroadcast = initHomebrewBroadcastSync((data) => {
+            useCharacterStore.getState().applyHomebrewSync(data);
+        });
+
+        return () => {
+            unsubBroadcast();
+        };
+    }, []);
+
     // Live storage sync for standalone PWA & cross-tab theme changes
     useEffect(() => {
         const handleStorage = (e: StorageEvent) => {
@@ -228,9 +244,17 @@ export function BattleOrganizerApp() {
             OBR.player
                 .getRole()
                 .then((role) => {
-                    if (role) useCharacterStore.setState({ role });
+                    const resolvedRole = role || useCharacterStore.getState().role || 'GM';
+                    useCharacterStore.setState({ role: resolvedRole });
+                    useCharacterStore.getState().loadHomebrewLocal();
+                    const homebrewSync = setupOwlbearHomebrewSync(resolvedRole);
+                    unsubs.push(...homebrewSync.unsubs);
                 })
-                .catch(() => {});
+                .catch(() => {
+                    const fallbackRole = useCharacterStore.getState().role || 'GM';
+                    const homebrewSync = setupOwlbearHomebrewSync(fallbackRole);
+                    unsubs.push(...homebrewSync.unsubs);
+                });
 
             const unsubTheme = OBR.broadcast.onMessage('pkr-theme-update', (event) => {
                 setTheme(event.data as string);

@@ -22,7 +22,15 @@ import {
     TreePine,
     Compass,
     Star,
-    ShieldAlert
+    ShieldAlert,
+    Target,
+    Hourglass,
+    Crosshair,
+    Sparkle,
+    Flower2,
+    Ghost,
+    Gem,
+    ShieldCheck
 } from 'lucide-react';
 import { WEATHER_CONDITIONS_DATA } from '../../data/gm/gmStatusData';
 import { useCharacterStore } from '../../store/useCharacterStore';
@@ -257,7 +265,15 @@ const FIELD_ICON_MAP: Record<string, React.ComponentType<{ size?: number; classN
     TreePine,
     Compass,
     Star,
-    ShieldAlert
+    ShieldAlert,
+    Target,
+    Hourglass,
+    Crosshair,
+    Sparkle,
+    Flower2,
+    Ghost,
+    Gem,
+    ShieldCheck
 };
 
 export function FieldEffectIcon({

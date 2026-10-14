@@ -224,9 +224,16 @@
 }
 
 .hb-fe-icon-picker {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(16, 1fr);
     gap: 6px;
+    justify-items: center;
+}
+
+@media (max-width: 600px) {
+    .hb-fe-icon-picker {
+        grid-template-columns: repeat(8, 1fr);
+    }
 }
 
 .hb-fe-icon-btn {
@@ -240,12 +247,23 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.15s ease;
+    outline: none;
+    contain: paint;
+    transition:
+        border-color 0.15s ease,
+        background-color 0.15s ease,
+        color 0.15s ease;
 }
 
 .hb-fe-icon-btn:hover {
     border-color: var(--primary);
     transform: scale(1.05);
+}
+
+.hb-fe-icon-btn:focus,
+.hb-fe-icon-btn:focus-visible {
+    outline: none;
+    border-color: var(--primary);
 }
 
 .hb-fe-icon-btn--active {

@@ -492,7 +492,10 @@ async function runCombatEngineTests() {
         terrain: null,
         other: null
     } as any);
-    assert(checkCondition('rain', false), 'Condition "rain" evaluates to true when Rain weather is active with rounds > 0');
+    assert(
+        checkCondition('rain', false),
+        'Condition "rain" evaluates to true when Rain weather is active with rounds > 0'
+    );
 
     // When rain has 0 rounds remaining
     store.setActiveBattlefield({

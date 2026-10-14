@@ -111,14 +111,19 @@ export function InitiativeFieldEffectsModal({
                                         }}
                                     >
                                         <div className="init-field-card__header">
-                                            <div className="init-field-card__identity">
-                                                <span className="init-field-card__icon" style={{ color }}>
-                                                    <FieldEffectIcon icon={info.icon} size={15} />
-                                                </span>
-                                                <span className="init-field-card__name text-title-primary">
-                                                    {item.subLabel ? `${item.subLabel} ` : ''}
-                                                    {info.name}
-                                                </span>
+                                            <div className="init-field-card__top-row">
+                                                <div className="init-field-card__identity">
+                                                    <span className="init-field-card__icon" style={{ color }}>
+                                                        <FieldEffectIcon icon={info.icon} size={15} />
+                                                    </span>
+                                                    <span
+                                                        className="init-field-card__name text-title-primary"
+                                                        title={info.name}
+                                                    >
+                                                        {item.subLabel ? `${item.subLabel} ` : ''}
+                                                        {info.name}
+                                                    </span>
+                                                </div>
                                                 <span
                                                     className="init-field-card__badge"
                                                     style={{ backgroundColor: color, color: '#ffffff' }}
@@ -128,53 +133,55 @@ export function InitiativeFieldEffectsModal({
                                             </div>
 
                                             {/* Stepper Controls */}
-                                            {canEdit ? (
-                                                <div className="init-field-card__controls">
-                                                    <div className="init-field-stepper">
-                                                        <button
-                                                            type="button"
-                                                            className="init-field-stepper__btn"
-                                                            onClick={() => handleStepRounds(item, -1)}
-                                                            title="Decrease Remaining Rounds"
-                                                            aria-label="Decrease Rounds"
-                                                        >
-                                                            <Minus size={12} />
-                                                        </button>
-                                                        <span className="init-field-stepper__value text-value-highlight">
-                                                            {item.remainingRounds}{' '}
-                                                            <span className="init-field-stepper__unit">
-                                                                {item.remainingRounds === 1 ? 'Rnd' : 'Rnds'}
+                                            <div className="init-field-card__controls-row">
+                                                {canEdit ? (
+                                                    <div className="init-field-card__controls">
+                                                        <div className="init-field-stepper">
+                                                            <button
+                                                                type="button"
+                                                                className="init-field-stepper__btn"
+                                                                onClick={() => handleStepRounds(item, -1)}
+                                                                title="Decrease Remaining Rounds"
+                                                                aria-label="Decrease Rounds"
+                                                            >
+                                                                <Minus size={12} />
+                                                            </button>
+                                                            <span className="init-field-stepper__value text-value-highlight">
+                                                                {item.remainingRounds}{' '}
+                                                                <span className="init-field-stepper__unit">
+                                                                    {item.remainingRounds === 1 ? 'Rnd' : 'Rnds'}
+                                                                </span>
                                                             </span>
-                                                        </span>
+                                                            <button
+                                                                type="button"
+                                                                className="init-field-stepper__btn"
+                                                                onClick={() => handleStepRounds(item, 1)}
+                                                                title="Increase Remaining Rounds"
+                                                                aria-label="Increase Rounds"
+                                                            >
+                                                                <Plus size={12} />
+                                                            </button>
+                                                        </div>
+
                                                         <button
                                                             type="button"
-                                                            className="init-field-stepper__btn"
-                                                            onClick={() => handleStepRounds(item, 1)}
-                                                            title="Increase Remaining Rounds"
-                                                            aria-label="Increase Rounds"
+                                                            className="init-field-card__delete-btn"
+                                                            onClick={() => handleDelete(item)}
+                                                            title="Remove Effect from Battlefield"
+                                                            aria-label="Delete Effect"
                                                         >
-                                                            <Plus size={12} />
+                                                            <Trash2 size={13} />
                                                         </button>
                                                     </div>
-
-                                                    <button
-                                                        type="button"
-                                                        className="init-field-card__delete-btn"
-                                                        onClick={() => handleDelete(item)}
-                                                        title="Remove Effect from Battlefield"
-                                                        aria-label="Delete Effect"
-                                                    >
-                                                        <Trash2 size={13} />
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <div className="init-field-card__readonly-rounds text-value-highlight">
-                                                    {item.remainingRounds}{' '}
-                                                    <span className="init-field-stepper__unit">
-                                                        {item.remainingRounds === 1 ? 'Rnd' : 'Rnds'}
-                                                    </span>
-                                                </div>
-                                            )}
+                                                ) : (
+                                                    <div className="init-field-card__readonly-rounds text-value-highlight">
+                                                        {item.remainingRounds}{' '}
+                                                        <span className="init-field-stepper__unit">
+                                                            {item.remainingRounds === 1 ? 'Rnd' : 'Rnds'}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* Effect Rules */}

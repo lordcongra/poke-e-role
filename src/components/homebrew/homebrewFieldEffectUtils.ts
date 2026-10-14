@@ -23,6 +23,14 @@ import {
     Compass,
     Star,
     ShieldAlert,
+    Target,
+    Hourglass,
+    Crosshair,
+    Sparkle,
+    Flower2,
+    Ghost,
+    Gem,
+    ShieldCheck,
     type LucideIcon
 } from 'lucide-react';
 
@@ -56,7 +64,15 @@ export const AVAILABLE_FIELD_ICONS: FieldIconOption[] = [
     { key: 'TreePine', label: 'Forest', Icon: TreePine },
     { key: 'Compass', label: 'Zone', Icon: Compass },
     { key: 'Star', label: 'Star', Icon: Star },
-    { key: 'ShieldAlert', label: 'Hazard', Icon: ShieldAlert }
+    { key: 'ShieldAlert', label: 'Hazard', Icon: ShieldAlert },
+    { key: 'Target', label: 'Target', Icon: Target },
+    { key: 'Hourglass', label: 'Time', Icon: Hourglass },
+    { key: 'Crosshair', label: 'Aim', Icon: Crosshair },
+    { key: 'Sparkle', label: 'Sparkle', Icon: Sparkle },
+    { key: 'Flower2', label: 'Flora', Icon: Flower2 },
+    { key: 'Ghost', label: 'Ghost', Icon: Ghost },
+    { key: 'Gem', label: 'Crystal', Icon: Gem },
+    { key: 'ShieldCheck', label: 'Guard', Icon: ShieldCheck }
 ];
 
 export const PRESET_FIELD_COLORS: string[] = [
