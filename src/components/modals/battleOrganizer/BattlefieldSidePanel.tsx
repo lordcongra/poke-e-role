@@ -3,10 +3,7 @@ import { Shield, Plus, Trash2, Zap } from 'lucide-react';
 import { RemainingRoundsBoxes } from './RemainingRoundsBoxes';
 import { fetchMoveLookupIndex } from '../../../utils/api/api';
 import type { MoveLookupEntry } from '../../../utils/api/apiTypes';
-import type {
-    BattlefieldSideData,
-    BattleOrganizerTimerEffect
-} from '../../../types/battleOrganizerTypes';
+import type { BattlefieldSideData, BattleOrganizerTimerEffect } from '../../../types/battleOrganizerTypes';
 
 export interface BattlefieldSidePanelProps {
     side: 'player' | 'foe';
@@ -26,12 +23,7 @@ const QUICK_CHIPS = [
     { name: 'Mist', supported: false }
 ];
 
-export function BattlefieldSidePanel({
-    side,
-    title,
-    sideData,
-    onUpdateSide
-}: BattlefieldSidePanelProps) {
+export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: BattlefieldSidePanelProps) {
     const [allMoves, setAllMoves] = useState<MoveLookupEntry[]>([]);
     const [activeDropdownIndex, setActiveDropdownIndex] = useState<0 | 1 | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -176,7 +168,7 @@ export function BattlefieldSidePanel({
                                 type="button"
                                 className={`bo-preset-chip ${active ? 'bo-preset-chip--active' : ''}`}
                                 onClick={() => handleToggleChip(chip.name)}
-                                title={`${chip.name}${chip.supported ? ' (⚡ Auto-reduces damage in targeting)' : ''}`}
+                                title={`${chip.name}${chip.supported ? ' (Supported in roll calculations)' : ' (Informational tracker)'}`}
                             >
                                 {chip.name} {chip.supported && <Zap size={11} className="bo-chip-zap" />}
                             </button>
@@ -192,7 +184,10 @@ export function BattlefieldSidePanel({
 
                     return (
                         <div key={idx} className="bo-field-group__row" style={{ position: 'relative' }}>
-                            <div style={{ flex: 1, position: 'relative' }} ref={isDropdownOpen ? dropdownRef : undefined}>
+                            <div
+                                style={{ flex: 1, position: 'relative' }}
+                                ref={isDropdownOpen ? dropdownRef : undefined}
+                            >
                                 <input
                                     type="text"
                                     className="bo-input bo-input--underline text-label"
@@ -206,7 +201,7 @@ export function BattlefieldSidePanel({
                                         idx === 0
                                             ? side === 'player'
                                                 ? 'e.g. Reflect, Light Screen'
-                                                : 'e.g. Light Screen, Protect'
+                                                : 'e.g. Light Screen, Reflect'
                                             : side === 'player'
                                               ? 'e.g. Safeguard, Tailwind'
                                               : 'e.g. Aurora Veil, Tailwind'
@@ -230,8 +225,12 @@ export function BattlefieldSidePanel({
                                                 >
                                                     <span className="bo-move-autocomplete-name">{m.name}</span>
                                                     {isSupported && (
-                                                        <span className="bo-supported-badge" title="Integrates directly into damage roll reduction">
-                                                            ⚡ Supported
+                                                        <span
+                                                            className="bo-supported-badge"
+                                                            title="Supported by combat math engine for rolls"
+                                                        >
+                                                            <Zap size={10} />
+                                                            <span>Supported</span>
                                                         </span>
                                                     )}
                                                 </div>

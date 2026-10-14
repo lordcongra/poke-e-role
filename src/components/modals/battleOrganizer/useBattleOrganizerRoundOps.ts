@@ -447,7 +447,9 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
                             })
                         );
                         if (!primaryHail && !extraHail) {
-                            console.warn('[BattleOrganizer] Aurora Veil activation blocked: Hail or Snowy weather required.');
+                            console.warn(
+                                '[BattleOrganizer] Aurora Veil activation blocked: Hail or Snowy weather required.'
+                            );
                             return prev;
                         }
                     }

@@ -119,13 +119,11 @@ export function DerivedBoard() {
 
     const isGravityActive = Boolean(
         activeBattlefield &&
-            ((activeBattlefield.other?.name?.toLowerCase().includes('gravity') &&
-                (activeBattlefield.other.remainingRounds > 0 || activeBattlefield.other.remainingRounds === -1)) ||
-                activeBattlefield.extraOther?.some(
-                    (o) =>
-                        o.name.toLowerCase().includes('gravity') &&
-                        (o.remainingRounds > 0 || o.remainingRounds === -1)
-                ))
+        ((activeBattlefield.other?.name?.toLowerCase().includes('gravity') &&
+            (activeBattlefield.other.remainingRounds > 0 || activeBattlefield.other.remainingRounds === -1)) ||
+            activeBattlefield.extraOther?.some(
+                (o) => o.name.toLowerCase().includes('gravity') && (o.remainingRounds > 0 || o.remainingRounds === -1)
+            ))
     );
     const baseEvade = dexTotal + calculateSkillTotal(Skill.EVASION, fullState, inventoryModifiers) + rankSkillBonus;
     const finalEvade = isGravityActive ? Math.max(1, baseEvade - 2) : baseEvade;
@@ -275,13 +273,22 @@ export function DerivedBoard() {
                             </div>
                             <div
                                 className="derived-board__box-content text-label"
-                                style={{ color: 'var(--text-main)', display: 'flex', flexDirection: 'column', gap: '2px' }}
+                                style={{
+                                    color: 'var(--text-main)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '2px'
+                                }}
                             >
                                 <span>{finalEvade}</span>
                                 {isGravityActive && (
                                     <span
                                         className="text-subtext"
-                                        style={{ fontSize: '0.65rem', color: 'var(--semantic-danger, #ef5350)', fontWeight: 600 }}
+                                        style={{
+                                            fontSize: '0.65rem',
+                                            color: 'var(--semantic-danger, #ef5350)',
+                                            fontWeight: 600
+                                        }}
                                         title="Gravity active: -2 Evasion Dice"
                                     >
                                         [Gravity -2]

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Star } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { RemainingRoundsBoxes } from './RemainingRoundsBoxes';
 import { TERRAIN_CONDITIONS_DATA, OTHER_FIELD_CONDITIONS_DATA } from '../../../utils/combat/fieldEffectsData';
@@ -57,7 +57,7 @@ export function BattlefieldEffectCard({
                 rounds: 4
             }));
         }
-        return OTHER_FIELD_CONDITIONS_DATA.map((o) => ({
+        return OTHER_FIELD_CONDITIONS_DATA.filter((o) => o.category === 'other').map((o) => ({
             name: o.name,
             rounds: o.defaultRounds ?? 4
         }));
@@ -85,7 +85,8 @@ export function BattlefieldEffectCard({
         if (value.toLowerCase().trim() === clean && (remainingRounds > 0 || remainingRounds === -1)) return true;
         return Boolean(
             extraEffects?.some(
-                (e) => e.name.toLowerCase().trim() === clean && ((e.remainingRounds ?? 0) > 0 || e.remainingRounds === -1)
+                (e) =>
+                    e.name.toLowerCase().trim() === clean && ((e.remainingRounds ?? 0) > 0 || e.remainingRounds === -1)
             )
         );
     };
@@ -347,7 +348,7 @@ export function BattlefieldEffectCard({
                             onClick={() => handleSelectPreset(preset)}
                             title={`Set ${preset.name} (${roundText})`}
                         >
-                            {preset.name} {preset.rounds === -1 ? '(Scene)' : ''}
+                            {preset.name}
                         </button>
                     );
                 })}
@@ -376,7 +377,8 @@ export function BattlefieldEffectCard({
                             title={`Set Custom: ${preset.name} (${roundText})`}
                             style={Object.keys(customStyle).length > 0 ? customStyle : undefined}
                         >
-                            ★ {preset.name} {preset.rounds === -1 ? '(Scene)' : ''}
+                            <Star size={10} fill="currentColor" style={{ marginRight: 4, verticalAlign: 'middle' }} />{' '}
+                            {preset.name}
                         </button>
                     );
                 })}

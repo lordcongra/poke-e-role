@@ -85,9 +85,7 @@ export function BattlefieldSection({
                                     ? 'Visible to players (Click to hide from player sheets)'
                                     : 'Hidden from players (Click to broadcast active weather/terrain/fields to player sheets)'
                             }
-                            aria-label={
-                                battlefield.broadcastToPlayers ? 'Broadcast to players' : 'Hidden from players'
-                            }
+                            aria-label={battlefield.broadcastToPlayers ? 'Broadcast to players' : 'Hidden from players'}
                         >
                             {battlefield.broadcastToPlayers ? <Eye size={12} /> : <EyeOff size={12} />}
                             <span>{battlefield.broadcastToPlayers ? 'Live to Players' : 'GM Only'}</span>
@@ -115,7 +113,7 @@ export function BattlefieldSection({
                             </div>
 
                             {/* Global Effects 3-Column Grid: Weather | Terrain | Other */}
-                            <div className="bo-effects-grid">
+                            <div className="bo-global-effects-grid">
                                 <BattlefieldEffectCard
                                     title="Weather"
                                     icon={<CloudSun size={14} />}

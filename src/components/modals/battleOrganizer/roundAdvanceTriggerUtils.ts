@@ -234,7 +234,9 @@ export function resolveCombatantRoundTriggers(
             const cSide = c.isPlayerSide ? battlefield?.playerSide : battlefield?.foeSide;
             const sideHasGrassy = Boolean(
                 cSide?.forceFields?.some(
-                    (ff) => (ff?.name || '').toLowerCase().includes('grassy') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                    (ff) =>
+                        (ff?.name || '').toLowerCase().includes('grassy') &&
+                        (ff.remainingRounds > 0 || ff.remainingRounds === -1)
                 ) ||
                 (cSide?.other || '').toLowerCase().includes('grassy') ||
                 cSide?.extraOther?.some((o) => o.toLowerCase().includes('grassy')) ||

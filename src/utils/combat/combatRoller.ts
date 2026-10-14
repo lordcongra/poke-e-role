@@ -249,7 +249,8 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     const side = state.identity.isNPC ? state.activeBattlefield?.foeSide : state.activeBattlefield?.playerSide;
     const hasTailwind = Boolean(
         side?.forceFields?.some(
-            (ff) => ff?.name?.toLowerCase().includes('tailwind') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+            (ff) =>
+                ff?.name?.toLowerCase().includes('tailwind') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
         )
     );
     if (hasTailwind && normalizedAcc1 === 'dex') {
@@ -626,7 +627,8 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
     const side = state.identity.isNPC ? state.activeBattlefield?.foeSide : state.activeBattlefield?.playerSide;
     const hasTailwind = Boolean(
         side?.forceFields?.some(
-            (ff) => ff?.name?.toLowerCase().includes('tailwind') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+            (ff) =>
+                ff?.name?.toLowerCase().includes('tailwind') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
         )
     );
     if (hasTailwind && normalizedAttr === 'dex') {
@@ -710,13 +712,13 @@ export async function rollGeneric(
     if (actionName.toLowerCase().includes('evas')) {
         const isGravityActive = Boolean(
             state.activeBattlefield &&
-                ((state.activeBattlefield.other?.name?.toLowerCase().includes('gravity') &&
-                    (state.activeBattlefield.other.remainingRounds > 0 || state.activeBattlefield.other.remainingRounds === -1)) ||
-                    state.activeBattlefield.extraOther?.some(
-                        (o) =>
-                            o.name.toLowerCase().includes('gravity') &&
-                            (o.remainingRounds > 0 || o.remainingRounds === -1)
-                    ))
+            ((state.activeBattlefield.other?.name?.toLowerCase().includes('gravity') &&
+                (state.activeBattlefield.other.remainingRounds > 0 ||
+                    state.activeBattlefield.other.remainingRounds === -1)) ||
+                state.activeBattlefield.extraOther?.some(
+                    (o) =>
+                        o.name.toLowerCase().includes('gravity') && (o.remainingRounds > 0 || o.remainingRounds === -1)
+                ))
         );
         if (isGravityActive) {
             finalDicePool = Math.max(1, finalDicePool - 2);
@@ -727,7 +729,8 @@ export async function rollGeneric(
     const side = state.identity.isNPC ? state.activeBattlefield?.foeSide : state.activeBattlefield?.playerSide;
     const hasTailwind = Boolean(
         side?.forceFields?.some(
-            (ff) => ff?.name?.toLowerCase().includes('tailwind') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+            (ff) =>
+                ff?.name?.toLowerCase().includes('tailwind') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
         )
     );
     if (hasTailwind && attribute.toLowerCase() === 'dex') {

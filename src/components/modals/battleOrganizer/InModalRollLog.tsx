@@ -577,17 +577,24 @@ export function InModalRollLog({
                                                     : defaultIsPlayerSide;
 
                                             // Precondition check for Aurora Veil: Requires Hail, Snow, or Snowy active weather
-                                            const isAuroraVeil = fieldDef.moveName.toLowerCase().includes('aurora veil');
+                                            const isAuroraVeil = fieldDef.moveName
+                                                .toLowerCase()
+                                                .includes('aurora veil');
                                             let auroraVeilBlocked = false;
                                             if (isAuroraVeil) {
                                                 const wName = (activeBf?.weather?.name || '').toLowerCase();
                                                 const wRounds = activeBf?.weather?.remainingRounds ?? 0;
-                                                const primaryHail = (wRounds > 0 || wRounds === -1) && /\b(hail|snow|snowy)\b/.test(wName);
+                                                const primaryHail =
+                                                    (wRounds > 0 || wRounds === -1) &&
+                                                    /\b(hail|snow|snowy)\b/.test(wName);
                                                 const extraHail = Boolean(
                                                     activeBf?.extraWeathers?.some((w) => {
                                                         const n = (w?.name || '').toLowerCase();
                                                         const rCount = w?.remainingRounds ?? 0;
-                                                        return (rCount > 0 || rCount === -1) && /\b(hail|snow|snowy)\b/.test(n);
+                                                        return (
+                                                            (rCount > 0 || rCount === -1) &&
+                                                            /\b(hail|snow|snowy)\b/.test(n)
+                                                        );
                                                     })
                                                 );
                                                 if (!primaryHail && !extraHail) {
@@ -600,8 +607,16 @@ export function InModalRollLog({
                                                     {/* Aurora Veil Precondition Warning Banner */}
                                                     {isAuroraVeil && auroraVeilBlocked && (
                                                         <div className="in-modal-roll-log__aurora-warning">
-                                                            <AlertTriangle size={13} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
-                                                            [WARNING] Aurora Veil can only be activated under Hail or Snowy weather!
+                                                            <AlertTriangle
+                                                                size={13}
+                                                                style={{
+                                                                    display: 'inline',
+                                                                    marginRight: 4,
+                                                                    verticalAlign: 'middle'
+                                                                }}
+                                                            />
+                                                            [WARNING] Aurora Veil can only be activated under Hail or
+                                                            Snowy weather!
                                                         </div>
                                                     )}
 
@@ -643,10 +658,7 @@ export function InModalRollLog({
                                                             className={`in-modal-roll-log__field-btn ${auroraVeilBlocked ? 'in-modal-roll-log__field-btn--disabled' : ''}`}
                                                             disabled={auroraVeilBlocked}
                                                             onClick={() =>
-                                                                onActivateFieldEffect(
-                                                                    fieldDef.moveName,
-                                                                    isPlayerSide
-                                                                )
+                                                                onActivateFieldEffect(fieldDef.moveName, isPlayerSide)
                                                             }
                                                             title={
                                                                 auroraVeilBlocked

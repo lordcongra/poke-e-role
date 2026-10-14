@@ -152,7 +152,11 @@ export function useBattleOrganizer() {
                 const newRounds = prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r));
 
                 let nextBf = prev.battlefield;
-                if (!prevCombatant || prevCombatant.isPlayerSide !== updated.isPlayerSide || prevCombatant.isFainted !== updated.isFainted) {
+                if (
+                    !prevCombatant ||
+                    prevCombatant.isPlayerSide !== updated.isPlayerSide ||
+                    prevCombatant.isFainted !== updated.isFainted
+                ) {
                     const playerTargets = updatedCombatants.filter((c) => c.isPlayerSide && !c.isFainted).length;
                     const foeTargets = updatedCombatants.filter((c) => !c.isPlayerSide && !c.isFainted).length;
                     nextBf = {

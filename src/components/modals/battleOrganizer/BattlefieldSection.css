@@ -411,3 +411,47 @@
     border: 1px solid rgba(255, 213, 79, 0.35);
 }
 
+/* --- Global Effects 3-Column Layout --- */
+.bo-global-effects-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+@media (max-width: 900px) {
+    .bo-global-effects-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Whole Scene Duration Toggle Button --- */
+.bo-rounds-scene-toggle-btn {
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid var(--border, #444);
+    background-color: var(--panel-bg, #1a1a1a);
+    color: var(--text-muted, #777);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.bo-rounds-scene-toggle-btn:hover {
+    border-color: var(--primary, #3b82f6);
+    color: var(--text-main, #fff);
+    background-color: color-mix(in srgb, var(--primary, #3b82f6) 20%, transparent);
+}
+
+.bo-rounds-scene-toggle-btn--active {
+    background-color: var(--primary, #3b82f6);
+    border-color: var(--primary, #3b82f6);
+    color: #ffffff;
+    box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
+}

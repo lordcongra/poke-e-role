@@ -152,50 +152,6 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         initials: 'WS',
         effects: ['-1 Damage from Fire-type Moves. (4 Rounds)'],
         defaultRounds: 4
-    },
-    {
-        id: 'field-reflect',
-        name: 'Reflect',
-        category: 'forceField',
-        badge: 'Barrier',
-        color: '#E91E63',
-        icon: 'Shield',
-        initials: 'RF',
-        effects: ['Reduces Physical Damage taken by the protected side by 1 for 4 rounds'],
-        defaultRounds: 4
-    },
-    {
-        id: 'field-light-screen',
-        name: 'Light Screen',
-        category: 'forceField',
-        badge: 'Screen',
-        color: '#AB47BC',
-        icon: 'Shield',
-        initials: 'LS',
-        effects: ['Reduces Special Damage taken by the protected side by 1 for 4 rounds'],
-        defaultRounds: 4
-    },
-    {
-        id: 'field-safeguard',
-        name: 'Safeguard',
-        category: 'forceField',
-        badge: 'Ward',
-        color: '#26A69A',
-        icon: 'Shield',
-        initials: 'SG',
-        effects: ['Protects the side from receiving Status Ailments and Confusion for 4 rounds'],
-        defaultRounds: 4
-    },
-    {
-        id: 'field-mist',
-        name: 'Mist',
-        category: 'forceField',
-        badge: 'Haze',
-        color: '#80DEEA',
-        icon: 'Shield',
-        initials: 'MS',
-        effects: ['Protects the side from having their stats or dice pools lowered by opponents'],
-        defaultRounds: 4
     }
 ];
 

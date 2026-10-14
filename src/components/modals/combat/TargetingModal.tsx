@@ -300,7 +300,9 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                         className="targeting-modal__input text-value-highlight"
                     />
                     {appliedFieldFactors.length > 0 && (
-                        <div style={{ fontSize: '0.76rem', color: 'var(--primary)', marginTop: '4px', fontWeight: 600 }}>
+                        <div
+                            style={{ fontSize: '0.76rem', color: 'var(--primary)', marginTop: '4px', fontWeight: 600 }}
+                        >
                             Active Force Field Reduction: {appliedFieldFactors.join(', ')}
                         </div>
                     )}

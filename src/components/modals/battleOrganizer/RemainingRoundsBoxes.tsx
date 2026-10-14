@@ -1,4 +1,4 @@
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, Infinity } from 'lucide-react';
 
 interface RemainingRoundsBoxesProps {
     value: number;
@@ -35,22 +35,41 @@ export function RemainingRoundsBoxes({
     const totalBoxes = value === -1 ? maxBoxes : Math.max(maxBoxes, value);
 
     return (
-        <div className="bo-rounds-boxes" title={`${title}: ${value === -1 ? 'Whole Scene (∞)' : `${value} rounds remaining`}`}>
+        <div
+            className="bo-rounds-boxes"
+            title={`${title}: ${value === -1 ? 'Whole Scene (∞)' : `${value} rounds remaining`}`}
+        >
+            <button
+                type="button"
+                className={`bo-rounds-scene-toggle-btn ${value === -1 ? 'bo-rounds-scene-toggle-btn--active' : ''}`}
+                onClick={() => onChange(value === -1 ? 4 : -1)}
+                title={
+                    value === -1
+                        ? 'Whole Scene Duration (Active) - Click to set 4 rounds'
+                        : 'Set to Whole Scene Duration (∞)'
+                }
+                aria-label="Toggle Whole Scene Duration"
+            >
+                <Infinity size={13} />
+            </button>
+
             <div className="bo-rounds-boxes__row">
                 {Array.from({ length: totalBoxes }, (_, index) => {
-                    const isFilled = value === -1 || index < value;
+                    const isFilled = value > 0 && index < value;
                     return (
                         <button
                             key={index}
                             type="button"
                             className={`bo-rounds-boxes__box ${isFilled ? 'bo-rounds-boxes__box--filled' : 'bo-rounds-boxes__box--empty'}`}
                             onClick={() => handleBoxClick(index)}
-                            title={value === -1 ? `Set to ${index + 1} remaining rounds` : `Set to ${index + 1} remaining round${index > 0 ? 's' : ''}`}
+                            title={
+                                value === -1
+                                    ? `Set to ${index + 1} remaining rounds`
+                                    : `Set to ${index + 1} remaining round${index > 0 ? 's' : ''}`
+                            }
                             aria-label={`Round slot ${index + 1} ${isFilled ? 'active' : 'inactive'}`}
                         >
-                            {value === -1 ? (
-                                <span className="bo-rounds-boxes__check">∞</span>
-                            ) : isFilled ? (
+                            {isFilled ? (
                                 <span className="bo-rounds-boxes__check">✓</span>
                             ) : (
                                 <span className="bo-rounds-boxes__num">{index + 1}</span>

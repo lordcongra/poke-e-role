@@ -120,7 +120,11 @@ export function calculateStatTotal(
     if (Object.values(CombatStat).includes(normalizedStat as CombatStat)) {
         const statistic = state.stats[normalizedStat as CombatStat];
         let total =
-            statistic.base + statistic.rank + statistic.buff - statistic.debuff + (itemBuffs.stats[normalizedStat] || 0);
+            statistic.base +
+            statistic.rank +
+            statistic.buff -
+            statistic.debuff +
+            (itemBuffs.stats[normalizedStat] || 0);
 
         if (normalizedStat === CombatStat.DEX && state.activeBattlefield) {
             const side = state.identity.isNPC ? state.activeBattlefield.foeSide : state.activeBattlefield.playerSide;
