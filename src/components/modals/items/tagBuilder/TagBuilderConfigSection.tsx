@@ -140,7 +140,122 @@ export function TagBuilderConfigSection({
                 </div>
             )}
 
+            {/* Battlefield Effect Controls */}
+            {category === 'battlefield' && (
+                <>
+                    <div className="tag-builder__row">
+                        <span className="tag-builder__row-label">Effect Name:</span>
+                        <input
+                            type="text"
+                            className="identity-grid__select tag-builder__select text-label"
+                            style={{
+                                color: 'var(--text-main)',
+                                flex: 1,
+                                padding: '4px 8px',
+                                background: 'rgba(0, 0, 0, 0.25)',
+                                border: '1px solid var(--border-color, rgba(255, 255, 255, 0.15))',
+                                borderRadius: '4px'
+                            }}
+                            placeholder={
+                                target === 'Force Field'
+                                    ? 'e.g. Reflect, Light Screen, Barrier'
+                                    : target === 'Entry Hazard'
+                                      ? 'e.g. Spikes, Stealth Rock, Caltrops'
+                                      : target === 'Weather'
+                                        ? 'e.g. Rain, Sunny, Sandstorm'
+                                        : target === 'Terrain'
+                                          ? 'e.g. Electric Terrain, Grassy Terrain'
+                                          : 'e.g. Trick Room, Gravity'
+                            }
+                            value={typeOption}
+                            onChange={(e) => onChangeConfig('typeOption', e.target.value)}
+                            list="battlefield-preset-suggestions"
+                        />
+                        <datalist id="battlefield-preset-suggestions">
+                            {target === 'Force Field' && (
+                                <>
+                                    <option value="Reflect" />
+                                    <option value="Light Screen" />
+                                    <option value="Aurora Veil" />
+                                    <option value="Tailwind" />
+                                    <option value="Safeguard" />
+                                    <option value="Mist" />
+                                    <option value="Lucky Chant" />
+                                </>
+                            )}
+                            {target === 'Entry Hazard' && (
+                                <>
+                                    <option value="Stealth Rock" />
+                                    <option value="Spikes" />
+                                    <option value="Toxic Spikes" />
+                                    <option value="Sticky Web" />
+                                </>
+                            )}
+                            {target === 'Weather' && (
+                                <>
+                                    <option value="Sunny" />
+                                    <option value="Rain" />
+                                    <option value="Sandstorm" />
+                                    <option value="Snowy" />
+                                    <option value="Hail" />
+                                </>
+                            )}
+                            {target === 'Terrain' && (
+                                <>
+                                    <option value="Electric Terrain" />
+                                    <option value="Grassy Terrain" />
+                                    <option value="Misty Terrain" />
+                                    <option value="Psychic Terrain" />
+                                </>
+                            )}
+                            {target === 'Battlefield (Other)' && (
+                                <>
+                                    <option value="Trick Room" />
+                                    <option value="Gravity" />
+                                    <option value="Ion Deluge" />
+                                    <option value="Wonder Room" />
+                                    <option value="Magic Room" />
+                                    <option value="Fairy Lock" />
+                                    <option value="Mud Sport" />
+                                    <option value="Water Sport" />
+                                </>
+                            )}
+                        </datalist>
+                    </div>
+
+                    <div className="tag-builder__row">
+                        <span className="tag-builder__row-label">Duration:</span>
+                        {target === 'Entry Hazard' ? (
+                            <span
+                                className="text-subtext"
+                                style={{ fontSize: '0.8rem', fontStyle: 'italic', padding: '6px 0' }}
+                            >
+                                Permanent until cleared (Whole Scene)
+                            </span>
+                        ) : (
+                            <select
+                                className="identity-grid__select tag-builder__select text-label"
+                                style={{ color: 'var(--text-main)', flex: 1 }}
+                                value={value === -1 ? 'scene' : value || 4}
+                                onChange={(e) => {
+                                    const val = e.target.value === 'scene' ? -1 : parseInt(e.target.value, 10);
+                                    onChangeConfig('value', val);
+                                }}
+                            >
+                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((r) => (
+                                    <option key={r} value={r}>
+                                        {r} {r === 1 ? 'Round' : 'Rounds'} {r === 4 ? '(Standard)' : ''}
+                                    </option>
+                                ))}
+                                <option value="scene">Whole Scene</option>
+                            </select>
+                        )}
+                    </div>
+                </>
+            )}
+
             {/* Condition Selector */}
+
             <div className="tag-builder__row">
                 <span className="tag-builder__row-label">Condition:</span>
                 <select

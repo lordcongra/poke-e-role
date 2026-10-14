@@ -137,6 +137,9 @@ export const getTargetOptions = (category: string, extraCategories: ExtraCategor
             'Minor Heal'
         ];
     }
+    if (category === 'battlefield') {
+        return ['Force Field', 'Entry Hazard', 'Weather', 'Terrain', 'Battlefield (Other)'];
+    }
     return [];
 };
 
@@ -244,6 +247,9 @@ export const getDefaultTargetForCategory = (
     }
     if (catId === 'move_mechanics') {
         return { target: 'High Critical', reqGroup: 'none', typeOption: '' };
+    }
+    if (catId === 'battlefield') {
+        return { target: 'Force Field', reqGroup: 'none', typeOption: '' };
     }
     return { target: '', reqGroup: 'none', typeOption: '' };
 };

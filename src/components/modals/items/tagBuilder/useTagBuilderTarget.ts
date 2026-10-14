@@ -106,7 +106,7 @@ export function useTagBuilderTarget(targetId: string, targetType: TagTargetType)
     };
 
     const existingTags: string[] =
-        targetType === 'move'
+        targetType === 'move' || targetType === 'homebrew_move'
             ? extractMoveTags(currentRawText).map((p) => p.tag)
             : currentRawText.match(/\[[^\]]+\]/g) || [];
 

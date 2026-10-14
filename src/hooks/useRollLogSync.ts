@@ -3,6 +3,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { imageManager } from '../utils/graphics/imageManager';
 import { cropImageTransparencyUrl } from '../utils/graphics/imageCropUtils';
 import { updateThemeColorMeta } from '../utils/common/colorUtils';
+import { clearRollLogCache } from '../utils/combat/rollLogSync';
 import type { RollSyncData } from './owlbearSync/owlbearSyncConstants';
 
 export function useRollLogSync() {
@@ -137,7 +138,9 @@ export function useRollLogSync() {
             try {
                 channel = new BroadcastChannel('pkr_roll_log_channel');
                 channel.onmessage = (event) => {
-                    if (event.data?.type === 'roll-log-update') {
+                    if (event.data?.type === 'roll-log-clear') {
+                        if (isMounted) setRolls([]);
+                    } else if (event.data?.type === 'roll-log-update') {
                         handleReload();
                     } else if (event.data?.type === 'roll-log-sync' && event.data.roll && isMounted) {
                         const roll = event.data.roll as RollSyncData;
@@ -238,12 +241,25 @@ export function useRollLogSync() {
 
     const dismiss = (id: string) => {
         const next = rolls.filter((r) => r.id !== id);
-        try {
-            localStorage.setItem('pkr_roll_log', JSON.stringify(next));
-        } catch (error) {
-            console.error('[useRollLogSync] Failed to save to localStorage', error);
+        if (next.length === 0) {
+            clearRollLogCache();
+            setRolls([]);
+        } else {
+            try {
+                localStorage.setItem('pkr_roll_log', JSON.stringify(next));
+            } catch (error) {
+                console.error('[useRollLogSync] Failed to save to localStorage', error);
+            }
+            setRolls(next);
+            window.dispatchEvent(new Event('pkr-roll-log-update'));
+            if (typeof BroadcastChannel !== 'undefined') {
+                try {
+                    const channel = new BroadcastChannel('pkr_roll_log_channel');
+                    channel.postMessage({ type: 'roll-log-update' });
+                    channel.close();
+                } catch {}
+            }
         }
-        setRolls(next);
         if (next.length === 0 && OBR.isAvailable) {
             OBR.onReady(() => {
                 OBR.popover.close('pkr-roll-log').catch(() => {});
@@ -252,11 +268,7 @@ export function useRollLogSync() {
     };
 
     const clearAll = () => {
-        try {
-            localStorage.setItem('pkr_roll_log', '[]');
-        } catch (error) {
-            console.error('[useRollLogSync] Failed to clear localStorage', error);
-        }
+        clearRollLogCache();
         setRolls([]);
         if (OBR.isAvailable) {
             OBR.onReady(() => {

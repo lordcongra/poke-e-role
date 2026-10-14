@@ -66,6 +66,23 @@ export function buildTagString(config: TagBuilderConfig): string {
         else if (target === 'Set Damage') tag = `[Set Damage ${Math.abs(numValue)}]`;
         else if (target === 'Powder') tag = `[Powder]`;
         else tag = `[${target}]`;
+    } else if (category === 'battlefield') {
+        if (!target) return '';
+        const name = typeOption.trim() || target;
+        const durStr = numValue === -1 ? ', scene' : `, ${numValue || 4}`;
+        if (target === 'Force Field') {
+            tag = `[Force Field: ${name}${durStr}]`;
+        } else if (target === 'Entry Hazard') {
+            tag = `[Hazard: ${name}]`;
+        } else if (target === 'Weather') {
+            tag = `[Weather: ${name}${durStr}]`;
+        } else if (target === 'Terrain') {
+            tag = `[Terrain: ${name}${durStr}]`;
+        } else if (target === 'Battlefield (Other)') {
+            tag = `[Battlefield: ${name}${durStr}]`;
+        } else {
+            tag = `[Battlefield: ${name}${durStr}]`;
+        }
     }
 
     if (tag && condition && condition !== 'none') {
@@ -148,6 +165,22 @@ export function generateExplanation(config: TagBuilderConfig, builtTag: string):
         base = `Inflicts or tracks ${target} status condition`;
     } else if (category === 'move_mechanics') {
         base = `Move mechanic: ${target}`;
+    } else if (category === 'battlefield') {
+        const name = typeOption.trim() || target;
+        const durText = num === -1 ? 'for the whole scene' : `for ${num || 4} round${(num || 4) === 1 ? '' : 's'}`;
+        if (target === 'Force Field') {
+            base = `Deploys "${name}" Force Field on the user's side ${durText} to protect and buff allies`;
+        } else if (target === 'Entry Hazard') {
+            base = `Sets "${name}" Entry Hazard on the opposing side (active for the whole scene until cleared)`;
+        } else if (target === 'Weather') {
+            base = `Changes battlefield weather to "${name}" ${durText}`;
+        } else if (target === 'Terrain') {
+            base = `Deploys "${name}" Terrain on the battlefield ${durText}`;
+        } else if (target === 'Battlefield (Other)') {
+            base = `Activates "${name}" battlefield effect ${durText}`;
+        } else {
+            base = `Activates battlefield effect "${name}" ${durText}`;
+        }
     }
 
     if (!base) base = `Applies ${builtTag}`;
@@ -228,7 +261,86 @@ export function parseTagStringToConfig(tagStr: string, isMoveContext = false): P
         }
     }
 
+    // Battlefield: Force Field
+    const ffMatch = clean.match(/^force field:\s*([^,\]]+)(?:,\s*(-?\d+|scene))?$/i);
+    if (ffMatch) {
+        const name = ffMatch[1].trim();
+        const durRaw = ffMatch[2]?.trim().toLowerCase();
+        const val = durRaw === 'scene' || durRaw === '-1' ? -1 : durRaw ? parseInt(durRaw, 10) || 4 : 4;
+        return {
+            category: 'battlefield',
+            target: 'Force Field',
+            typeOption: name,
+            value: val,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Battlefield: Hazard / Entry Hazard
+    const hzMatch = clean.match(/^(?:hazard|entry hazard):\s*([^,\]]+)$/i);
+    if (hzMatch) {
+        const name = hzMatch[1].trim();
+        return {
+            category: 'battlefield',
+            target: 'Entry Hazard',
+            typeOption: name,
+            value: -1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Battlefield: Weather
+    const wMatch = clean.match(/^weather:\s*([^,\]]+)(?:,\s*(-?\d+|scene))?$/i);
+    if (wMatch) {
+        const name = wMatch[1].trim();
+        const durRaw = wMatch[2]?.trim().toLowerCase();
+        const val = durRaw === 'scene' || durRaw === '-1' ? -1 : durRaw ? parseInt(durRaw, 10) || 4 : 4;
+        return {
+            category: 'battlefield',
+            target: 'Weather',
+            typeOption: name,
+            value: val,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Battlefield: Terrain
+    const tMatch = clean.match(/^terrain:\s*([^,\]]+)(?:,\s*(-?\d+|scene))?$/i);
+    if (tMatch) {
+        const name = tMatch[1].trim();
+        const durRaw = tMatch[2]?.trim().toLowerCase();
+        const val = durRaw === 'scene' || durRaw === '-1' ? -1 : durRaw ? parseInt(durRaw, 10) || 4 : 4;
+        return {
+            category: 'battlefield',
+            target: 'Terrain',
+            typeOption: name,
+            value: val,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Battlefield: Battlefield (Other) / Field
+    const bfMatch = clean.match(/^(?:battlefield|field):\s*([^,\]]+)(?:,\s*(-?\d+|scene))?$/i);
+    if (bfMatch) {
+        const name = bfMatch[1].trim();
+        const durRaw = bfMatch[2]?.trim().toLowerCase();
+        const val = durRaw === 'scene' || durRaw === '-1' ? -1 : durRaw ? parseInt(durRaw, 10) || 4 : 4;
+        return {
+            category: 'battlefield',
+            target: 'Battlefield (Other)',
+            typeOption: name,
+            value: val,
+            condition,
+            customMaxStacks
+        };
+    }
+
     // Move mechanics keywords (bracketed or unbracketed)
+
     const moveKeywordsMap: Record<string, string> = {
         'high critical': 'High Critical',
         'high crit': isMoveContext ? 'High Critical' : 'High Crit',

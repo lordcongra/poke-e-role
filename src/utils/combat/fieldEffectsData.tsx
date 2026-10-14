@@ -1,66 +1,7 @@
-import {
-    Sun,
-    CloudRain,
-    Wind,
-    Snowflake,
-    Zap,
-    Sprout,
-    Sparkles,
-    Eye,
-    Shield,
-    Flame,
-    Droplets,
-    Mountain,
-    Moon,
-    CloudLightning,
-    CloudFog,
-    Skull,
-    Feather,
-    Waves,
-    Heart,
-    Swords,
-    TreePine,
-    Compass,
-    Star,
-    ShieldAlert,
-    Target,
-    Hourglass,
-    Crosshair,
-    Sparkle,
-    Flower2,
-    Ghost,
-    Gem,
-    ShieldCheck
-} from 'lucide-react';
 import { WEATHER_CONDITIONS_DATA } from '../../data/gm/gmStatusData';
 import { useCharacterStore } from '../../store/useCharacterStore';
-
-export type FieldEffectIconKey =
-    | 'Sun'
-    | 'CloudRain'
-    | 'Wind'
-    | 'Snowflake'
-    | 'Zap'
-    | 'Sprout'
-    | 'Sparkles'
-    | 'Eye'
-    | 'Shield'
-    | 'Flame'
-    | 'Droplets'
-    | 'Mountain'
-    | 'Moon'
-    | 'CloudLightning'
-    | 'CloudFog'
-    | 'Skull'
-    | 'Feather'
-    | 'Waves'
-    | 'Heart'
-    | 'Swords'
-    | 'TreePine'
-    | 'Compass'
-    | 'Star'
-    | 'ShieldAlert'
-    | string;
+import { FieldEffectIcon, type FieldEffectIconKey } from './FieldEffectIcon';
+export { FieldEffectIcon, type FieldEffectIconKey };
 
 export interface FieldEffectInfo {
     id: string;
@@ -276,54 +217,6 @@ export function getFieldEffectInfo(
     };
 }
 
-const FIELD_ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-    Sun,
-    CloudRain,
-    Wind,
-    Snowflake,
-    Zap,
-    Sprout,
-    Sparkles,
-    Eye,
-    Shield,
-    Flame,
-    Droplets,
-    Mountain,
-    Moon,
-    CloudLightning,
-    CloudFog,
-    Skull,
-    Feather,
-    Waves,
-    Heart,
-    Swords,
-    TreePine,
-    Compass,
-    Star,
-    ShieldAlert,
-    Target,
-    Hourglass,
-    Crosshair,
-    Sparkle,
-    Flower2,
-    Ghost,
-    Gem,
-    ShieldCheck
-};
-
-export function FieldEffectIcon({
-    icon,
-    size = 14,
-    className
-}: {
-    icon: FieldEffectIconKey;
-    size?: number;
-    className?: string;
-}) {
-    const Component = FIELD_ICON_MAP[icon] || Sparkles;
-    return <Component size={size} className={className} />;
-}
-
 export interface MoveFieldEffectDefinition {
     moveName: string;
     effectName: string;
@@ -331,8 +224,16 @@ export interface MoveFieldEffectDefinition {
     rounds: number;
 }
 
+import { parseBattlefieldTagFromText } from './fieldEffectsTagUtils';
+export { parseBattlefieldTagFromText };
+
 export function detectMoveFieldEffect(text: string): MoveFieldEffectDefinition | null {
     if (!text) return null;
+
+    // 1. Direct tag parsing in text (e.g. if text contains bracketed battlefield tags)
+    const directTag = parseBattlefieldTagFromText(text);
+    if (directTag) return directTag;
+
     const clean = text.toLowerCase().trim();
     for (const def of MOVE_FIELD_EFFECT_MAP) {
         const lowerMove = def.moveName.toLowerCase();
@@ -341,7 +242,7 @@ export function detectMoveFieldEffect(text: string): MoveFieldEffectDefinition |
         }
     }
 
-    // Inspect custom homebrew field effects
+    // 2. Inspect custom homebrew field effects
     try {
         const customEffects = useCharacterStore.getState().roomCustomFieldEffects;
         if (customEffects && Array.isArray(customEffects)) {
@@ -372,11 +273,27 @@ export function detectMoveFieldEffect(text: string): MoveFieldEffectDefinition |
         // Safe fallback if store is not yet initialized
     }
 
+    // 3. Inspect roomCustomMoves and active sheet moves by name to check if move has an embedded battlefield tag in desc
+    try {
+        const state = useCharacterStore.getState();
+        const customMoves = state.roomCustomMoves || [];
+        const sheetMoves = state.moves || [];
+        const allMoves = [...customMoves, ...sheetMoves];
+
+        for (const move of allMoves) {
+            const mName = move.name?.trim().toLowerCase();
+            if (mName && (clean === mName || clean.includes(mName))) {
+                if (move.desc) {
+                    const tagDef = parseBattlefieldTagFromText(move.desc, move.name);
+                    if (tagDef) return tagDef;
+                }
+            }
+        }
+    } catch {
+        // Safe fallback if store is not yet initialized
+    }
+
     return null;
 }
 
-export {
-    type ActiveFieldEffectItem,
-    getEffectsByCategory,
-    getAllActiveFieldEffects
-} from './fieldEffectsActiveUtils';
+export { type ActiveFieldEffectItem, getEffectsByCategory, getAllActiveFieldEffects } from './fieldEffectsActiveUtils';

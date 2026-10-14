@@ -17,10 +17,21 @@ export interface TagBuilderModalProps {
     onClose: () => void;
 }
 
+export type TagCategory =
+    | 'stat'
+    | 'skill'
+    | 'combat'
+    | 'matchup'
+    | 'mechanic'
+    | 'turn_based'
+    | 'status'
+    | 'move_mechanics'
+    | 'battlefield';
+
 export type RequirementGroup = 'none' | 'type' | 'category' | 'modifier' | 'misc';
 
 export interface TagBuilderConfig {
-    category: string;
+    category: TagCategory | string;
     target: string;
     value: number;
     value2: number;
@@ -31,7 +42,7 @@ export interface TagBuilderConfig {
 }
 
 export interface PresetConfig {
-    category: string;
+    category: TagCategory | string;
     target: string;
     value: number;
     value2?: number;

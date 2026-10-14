@@ -23,6 +23,7 @@ import {
 import { parseRollLogEntry } from './battleOrganizerUtils';
 import { parseRollLabel } from '../../../utils/combat/rollLogParser';
 import { detectMoveFieldEffect } from '../../../utils/combat/fieldEffectsData';
+import { clearRollLogCache } from '../../../utils/combat/rollLogSync';
 import { RollFactorsModal } from '../rollFactors';
 import './InModalRollLog.css';
 
@@ -207,6 +208,22 @@ export function InModalRollLog({
         window.addEventListener('pkr-roll-log-update', handleReload);
         window.addEventListener('storage', handleReload);
 
+        let channel: BroadcastChannel | null = null;
+        if (typeof BroadcastChannel !== 'undefined') {
+            try {
+                channel = new BroadcastChannel('pkr_roll_log_channel');
+                channel.onmessage = (event) => {
+                    if (event.data?.type === 'roll-log-clear') {
+                        if (isMounted) setRolls([]);
+                    } else if (event.data?.type === 'roll-log-update') {
+                        handleReload();
+                    }
+                };
+            } catch (chanErr) {
+                console.warn('[InModalRollLog] BroadcastChannel setup failed:', chanErr);
+            }
+        }
+
         const unsubs: Array<() => void> = [];
         if (OBR.isAvailable) {
             unsubs.push(
@@ -238,6 +255,11 @@ export function InModalRollLog({
             window.removeEventListener('pkr-roll-log-event', handleNewRoll);
             window.removeEventListener('pkr-roll-log-update', handleReload);
             window.removeEventListener('storage', handleReload);
+            if (channel) {
+                try {
+                    channel.close();
+                } catch {}
+            }
             unsubs.forEach((unsub) => unsub());
         };
     }, []);
@@ -246,8 +268,21 @@ export function InModalRollLog({
         try {
             const newRolls = rolls.filter((r) => r.id !== id);
             setRolls(newRolls);
-            localStorage.setItem('pkr_roll_log', JSON.stringify(newRolls));
-            window.dispatchEvent(new Event('pkr-roll-log-update'));
+            if (newRolls.length === 0) {
+                clearRollLogCache();
+            } else {
+                localStorage.setItem('pkr_roll_log', JSON.stringify(newRolls));
+                window.dispatchEvent(new Event('pkr-roll-log-update'));
+                if (typeof BroadcastChannel !== 'undefined') {
+                    try {
+                        const channel = new BroadcastChannel('pkr_roll_log_channel');
+                        channel.postMessage({ type: 'roll-log-update' });
+                        channel.close();
+                    } catch (e) {
+                        console.warn('[InModalRollLog] Failed to broadcast on BroadcastChannel:', e);
+                    }
+                }
+            }
         } catch (error) {
             console.error('[InModalRollLog] Failed to dismiss roll:', error);
         }
@@ -256,8 +291,7 @@ export function InModalRollLog({
     const handleClearAll = () => {
         try {
             setRolls([]);
-            localStorage.removeItem('pkr_roll_log');
-            window.dispatchEvent(new Event('pkr-roll-log-update'));
+            clearRollLogCache();
         } catch (error) {
             console.error('[InModalRollLog] Failed to clear rolls:', error);
         }

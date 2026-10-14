@@ -62,9 +62,13 @@ export function MoveEditModal({ moveId, onClose }: MoveEditModalProps) {
     const accStr = `${(move.acc1 || 'STR').toUpperCase()} + ${(move.acc2 === 'none' ? 'None' : move.acc2 || 'Brawl').toUpperCase()}`;
     const dmgStr =
         move.category === 'Status' ? '-' : `${move.dmg1 ? move.dmg1.toUpperCase() + ' + ' : ''}${move.power}`;
-
     return (
-        <div className="move-edit-modal__overlay" onClick={onClose} role="dialog" aria-modal="true">
+        <div
+            className="move-edit-modal__overlay"
+            onClick={(e) => e.target === e.currentTarget && onClose()}
+            role="dialog"
+            aria-modal="true"
+        >
             <div
                 className="move-edit-modal__dialog"
                 onClick={(e) => e.stopPropagation()}

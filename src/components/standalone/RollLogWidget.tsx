@@ -3,6 +3,7 @@ import { imageManager } from '../../utils/graphics/imageManager';
 import { cropImageTransparencyUrl } from '../../utils/graphics/imageCropUtils';
 import { Dices, Trash2, ChevronDown, ChevronUp, X, Info } from 'lucide-react';
 import { parseRollLabel } from '../../utils/combat/rollLogParser';
+import { clearRollLogCache } from '../../utils/combat/rollLogSync';
 import { RollFactorsModal } from '../modals/rollFactors';
 import './RollLogWidget.css';
 
@@ -96,10 +97,31 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
         window.addEventListener('pkr-roll-log-update', handleUpdate);
         window.addEventListener('storage', handleUpdate);
 
+        let channel: BroadcastChannel | null = null;
+        if (typeof BroadcastChannel !== 'undefined') {
+            try {
+                channel = new BroadcastChannel('pkr_roll_log_channel');
+                channel.onmessage = (event) => {
+                    if (event.data?.type === 'roll-log-clear') {
+                        if (isMounted) setRolls([]);
+                    } else if (event.data?.type === 'roll-log-update') {
+                        handleUpdate();
+                    }
+                };
+            } catch (chanErr) {
+                console.warn('[RollLogWidget] BroadcastChannel setup failed:', chanErr);
+            }
+        }
+
         return () => {
             isMounted = false;
             window.removeEventListener('pkr-roll-log-update', handleUpdate);
             window.removeEventListener('storage', handleUpdate);
+            if (channel) {
+                try {
+                    channel.close();
+                } catch {}
+            }
         };
     }, []);
 
@@ -107,8 +129,19 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
         try {
             const newRolls = rolls.filter((r) => r.id !== id);
             setRolls(newRolls);
-            localStorage.setItem('pkr_roll_log', JSON.stringify(newRolls));
-            window.dispatchEvent(new Event('pkr-roll-log-update'));
+            if (newRolls.length === 0) {
+                clearRollLogCache();
+            } else {
+                localStorage.setItem('pkr_roll_log', JSON.stringify(newRolls));
+                window.dispatchEvent(new Event('pkr-roll-log-update'));
+                if (typeof BroadcastChannel !== 'undefined') {
+                    try {
+                        const channel = new BroadcastChannel('pkr_roll_log_channel');
+                        channel.postMessage({ type: 'roll-log-update' });
+                        channel.close();
+                    } catch {}
+                }
+            }
         } catch (error) {
             console.error('[RollLogWidget] Failed to update roll log in local storage.', error);
         }
@@ -117,8 +150,7 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
     const clearAll = () => {
         try {
             setRolls([]);
-            localStorage.removeItem('pkr_roll_log');
-            window.dispatchEvent(new Event('pkr-roll-log-update'));
+            clearRollLogCache();
         } catch (error) {
             console.error('[RollLogWidget] Failed to clear roll log in local storage.', error);
         }

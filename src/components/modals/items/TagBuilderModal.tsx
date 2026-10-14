@@ -44,14 +44,16 @@ export function TagBuilderModal({ targetId, targetType, initialTag, onClose }: T
         targetType
     );
 
+    const isMove = targetType === 'move' || targetType === 'homebrew_move';
+
     // Search Query State
     const [searchQuery, setSearchQuery] = useState('');
 
     // Tag Builder Configuration State
     const [config, setConfig] = useState<TagBuilderConfig>(() => {
         const defaults: TagBuilderConfig = {
-            category: targetType === 'move' ? 'move_mechanics' : 'stat',
-            target: targetType === 'move' ? 'High Critical' : 'Str',
+            category: isMove ? 'move_mechanics' : 'stat',
+            target: isMove ? 'High Critical' : 'Str',
             value: 1,
             value2: 6,
             reqGroup: 'none',
@@ -60,7 +62,7 @@ export function TagBuilderModal({ targetId, targetType, initialTag, onClose }: T
             customMaxStacks: 5
         };
         if (initialTag) {
-            const parsed = parseTagStringToConfig(initialTag, targetType === 'move');
+            const parsed = parseTagStringToConfig(initialTag, isMove);
             if (parsed) {
                 return {
                     ...defaults,
@@ -107,7 +109,12 @@ export function TagBuilderModal({ targetId, targetType, initialTag, onClose }: T
         { id: 'mechanic', label: 'Mechanics', icon: <Wrench size={14} /> },
         { id: 'turn_based', label: 'Turn-Based', icon: <Clock size={14} /> },
         { id: 'status', label: 'Status', icon: <Sparkles size={14} /> },
-        ...(targetType === 'move' ? [{ id: 'move_mechanics', label: 'Move Modifiers', icon: <Flame size={14} /> }] : [])
+        ...(isMove
+            ? [
+                  { id: 'move_mechanics', label: 'Move Modifiers', icon: <Flame size={14} /> },
+                  { id: 'battlefield', label: 'Battlefield', icon: <Sparkles size={14} /> }
+              ]
+            : [])
     ];
 
     const applyPreset = (presetKey: string) => {
@@ -147,7 +154,6 @@ export function TagBuilderModal({ targetId, targetType, initialTag, onClose }: T
         onClose();
     };
 
-    const isMove = targetType === 'move';
     const searchResults = useMemo(() => {
         return searchEffects(searchQuery, isMove, extraCategories);
     }, [searchQuery, isMove, extraCategories]);
@@ -168,8 +174,14 @@ export function TagBuilderModal({ targetId, targetType, initialTag, onClose }: T
     const isValueInputVisible = showValueInput(config.category, config.target);
 
     return (
-        <div className="tag-builder__overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-            <div className="tag-builder__content">
+        <div
+            className="tag-builder__overlay"
+            onClick={(e) => {
+                e.stopPropagation();
+                if (e.target === e.currentTarget) onClose();
+            }}
+        >
+            <div className="tag-builder__content" onClick={(e) => e.stopPropagation()}>
                 {/* Modal Header */}
                 <div className="tag-builder__header">
                     <div className="tag-builder__title-group">

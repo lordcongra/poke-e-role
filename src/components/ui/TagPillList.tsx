@@ -58,10 +58,17 @@ const getTagCategoryIcon = (text: string) => {
         lower.includes('status:') ||
         lower.includes('poison') ||
         lower.includes('burn') ||
-        lower.includes('paralysis')
+        lower.includes('paralysis') ||
+        lower.includes('force field') ||
+        lower.includes('hazard') ||
+        lower.includes('weather') ||
+        lower.includes('terrain') ||
+        lower.includes('battlefield') ||
+        lower.includes('field:')
     ) {
         return <Sparkles size={11} className="tag-pill__icon tag-pill__icon--status" />;
     }
+
     if (
         lower.includes('high crit') ||
         lower.includes('low acc') ||

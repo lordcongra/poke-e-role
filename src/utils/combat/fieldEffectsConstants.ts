@@ -164,10 +164,7 @@ export const FORCE_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         color: '#E91E63',
         icon: 'Shield',
         initials: 'RF',
-        effects: [
-            '-1 Damage from Physical Moves (Defense +1 for all allies)',
-            'Protects user and allies for 4 rounds'
-        ],
+        effects: ['-1 Damage from Physical Moves (Defense +1 for all allies)', 'Protects user and allies for 4 rounds'],
         defaultRounds: 4
     },
     {
@@ -206,10 +203,7 @@ export const FORCE_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         color: '#4CAF50',
         icon: 'Wind',
         initials: 'TW',
-        effects: [
-            '+2 Dexterity bonus to user and all allies',
-            'Boosts Initiative and movement speed for 4 rounds'
-        ],
+        effects: ['+2 Dexterity bonus to user and all allies', 'Boosts Initiative and movement speed for 4 rounds'],
         defaultRounds: 4
     },
     {
@@ -220,10 +214,7 @@ export const FORCE_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         color: '#8BC34A',
         icon: 'ShieldCheck',
         initials: 'SG',
-        effects: [
-            'Protects user and allies from Major and Minor Status Ailments',
-            'Lasts for 4 rounds'
-        ],
+        effects: ['Protects user and allies from Major and Minor Status Ailments', 'Lasts for 4 rounds'],
         defaultRounds: 4
     },
     {
@@ -234,10 +225,7 @@ export const FORCE_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         color: '#80DEEA',
         icon: 'CloudFog',
         initials: 'MS',
-        effects: [
-            'Protects user and allies from stat and skill reductions inflicted by foes',
-            'Lasts for 4 rounds'
-        ],
+        effects: ['Protects user and allies from stat and skill reductions inflicted by foes', 'Lasts for 4 rounds'],
         defaultRounds: 4
     },
     {

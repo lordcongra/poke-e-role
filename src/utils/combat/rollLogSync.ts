@@ -82,3 +82,43 @@ export async function broadcastRollLog(rollLogData: RollSyncData): Promise<void>
         console.error('[RollLogSync] Failed to broadcast roll log:', error);
     }
 }
+
+/**
+ * Universal purge function for clearing the roll log cache across all windows,
+ * iframes, BroadcastChannels, and OBR popovers.
+ */
+export function clearRollLogCache(): void {
+    try {
+        localStorage.setItem('pkr_roll_log', '[]');
+        localStorage.removeItem('pkr_roll_log');
+    } catch (e) {
+        console.warn('[RollLogSync] Failed to clear roll log in localStorage:', e);
+    }
+
+    try {
+        window.dispatchEvent(new Event('pkr-roll-log-update'));
+        window.dispatchEvent(new Event('storage'));
+    } catch (e) {
+        console.warn('[RollLogSync] Failed to dispatch local roll log update events:', e);
+    }
+
+    if (typeof BroadcastChannel !== 'undefined') {
+        try {
+            const channel = new BroadcastChannel('pkr_roll_log_channel');
+            channel.postMessage({ type: 'roll-log-clear' });
+            channel.close();
+        } catch (chanErr) {
+            console.warn('[RollLogSync] Failed to broadcast clear on BroadcastChannel:', chanErr);
+        }
+    }
+
+    if (OBR.isAvailable) {
+        try {
+            OBR.broadcast
+                .sendMessage(`${EXTENSION_ID}/roll-log-update`, {})
+                .catch((err) => console.warn('[RollLogSync] Failed to send roll-log-update broadcast:', err));
+        } catch (obrErr) {
+            console.warn('[RollLogSync] Failed to broadcast clear to OBR:', obrErr);
+        }
+    }
+}

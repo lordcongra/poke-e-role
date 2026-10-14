@@ -16,7 +16,8 @@ const CATEGORY_LABELS: Record<string, string> = {
     mechanic: 'Mechanics',
     turn_based: 'Turn-Based',
     status: 'Status',
-    move_mechanics: 'Move Modifiers'
+    move_mechanics: 'Move Modifiers',
+    battlefield: 'Battlefield'
 };
 
 const TARGET_KEYWORDS: Record<string, string[]> = {
@@ -103,7 +104,36 @@ const TARGET_KEYWORDS: Record<string, string[]> = {
     'Wind Move': ['wind power', 'wind rider', 'gust', 'air'],
     'Basic Heal': ['heal', 'recover', 'roost'],
     'Complete Heal': ['full restore', 'heal all'],
-    'Minor Heal': ['small heal', 'drain']
+    'Minor Heal': ['small heal', 'drain'],
+
+    // Battlefield
+    'Force Field': [
+        'shield',
+        'barrier',
+        'reflect',
+        'light screen',
+        'aurora veil',
+        'tailwind',
+        'safeguard',
+        'mist',
+        'lucky chant',
+        'ward'
+    ],
+    'Entry Hazard': ['hazard', 'spikes', 'stealth rock', 'toxic spikes', 'sticky web', 'trap'],
+    Weather: ['weather', 'rain', 'sunny', 'sun', 'sandstorm', 'snow', 'snowy', 'hail'],
+    Terrain: ['terrain', 'electric terrain', 'grassy terrain', 'misty terrain', 'psychic terrain'],
+    'Battlefield (Other)': [
+        'field',
+        'battlefield',
+        'trick room',
+        'gravity',
+        'ion deluge',
+        'wonder room',
+        'magic room',
+        'fairy lock',
+        'mud sport',
+        'water sport'
+    ]
 };
 
 export function getAllSearchableEffects(isMove: boolean, extraCategories: ExtraCategory[]): SearchResultItem[] {
@@ -115,7 +145,7 @@ export function getAllSearchableEffects(isMove: boolean, extraCategories: ExtraC
         'mechanic',
         'turn_based',
         'status',
-        ...(isMove ? ['move_mechanics'] : [])
+        ...(isMove ? ['move_mechanics', 'battlefield'] : [])
     ];
 
     const results: SearchResultItem[] = [];

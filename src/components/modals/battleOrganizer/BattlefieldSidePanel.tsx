@@ -333,7 +333,9 @@ export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: Ba
                     className="bo-input bo-input--underline text-label"
                     value={sideData.other}
                     onChange={(e) => onUpdateSide('other', e.target.value)}
-                    placeholder={side === 'player' ? 'e.g. Rainbow, Swamp, Custom Buff' : 'e.g. Sea of Fire, Custom Buff'}
+                    placeholder={
+                        side === 'player' ? 'e.g. Rainbow, Swamp, Custom Buff' : 'e.g. Sea of Fire, Custom Buff'
+                    }
                 />
                 {sideData.extraOther &&
                     sideData.extraOther.map((extra, oIdx) => (
