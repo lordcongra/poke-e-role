@@ -251,6 +251,10 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
         side?.forceFields?.some(
             (ff) =>
                 ff?.name?.toLowerCase().includes('tailwind') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+        ) ||
+        side?.extraForceFields?.some(
+            (ff) =>
+                ff?.name?.toLowerCase().includes('tailwind') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
         )
     );
     if (hasTailwind && normalizedAcc1 === 'dex') {
@@ -629,6 +633,10 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
         side?.forceFields?.some(
             (ff) =>
                 ff?.name?.toLowerCase().includes('tailwind') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+        ) ||
+        side?.extraForceFields?.some(
+            (ff) =>
+                ff?.name?.toLowerCase().includes('tailwind') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
         )
     );
     if (hasTailwind && normalizedAttr === 'dex') {
@@ -729,6 +737,10 @@ export async function rollGeneric(
     const side = state.identity.isNPC ? state.activeBattlefield?.foeSide : state.activeBattlefield?.playerSide;
     const hasTailwind = Boolean(
         side?.forceFields?.some(
+            (ff) =>
+                ff?.name?.toLowerCase().includes('tailwind') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+        ) ||
+        side?.extraForceFields?.some(
             (ff) =>
                 ff?.name?.toLowerCase().includes('tailwind') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
         )

@@ -133,6 +133,11 @@ export function calculateStatTotal(
                     (ff) =>
                         ff?.name?.toLowerCase().includes('tailwind') &&
                         (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                ) ||
+                side?.extraForceFields?.some(
+                    (ff) =>
+                        ff?.name?.toLowerCase().includes('tailwind') &&
+                        (ff.remainingRounds > 0 || ff.remainingRounds === -1)
                 )
             );
             if (hasTailwind) {
@@ -292,6 +297,11 @@ export function getWeatherDamageBonus(
         if (side) {
             const sideHasGrassy = Boolean(
                 side.forceFields?.some(
+                    (ff) =>
+                        (ff?.name || '').toLowerCase().includes('grassy') &&
+                        (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                ) ||
+                side.extraForceFields?.some(
                     (ff) =>
                         (ff?.name || '').toLowerCase().includes('grassy') &&
                         (ff.remainingRounds > 0 || ff.remainingRounds === -1)

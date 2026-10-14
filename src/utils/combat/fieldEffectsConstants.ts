@@ -181,7 +181,33 @@ export const MOVE_FIELD_EFFECT_MAP: MoveFieldEffectDefinition[] = [
     { moveName: 'Light Screen', effectName: 'Light Screen', category: 'forceField', rounds: 4 },
     { moveName: 'Glitzy Glow', effectName: 'Light Screen', category: 'forceField', rounds: 4 },
     { moveName: 'Safeguard', effectName: 'Safeguard', category: 'forceField', rounds: 4 },
-    { moveName: 'Mist', effectName: 'Mist', category: 'forceField', rounds: 4 }
+    { moveName: 'Mist', effectName: 'Mist', category: 'forceField', rounds: 4 },
+    { moveName: 'Stealth Rock', effectName: 'Stealth Rock', category: 'entryHazard', rounds: -1 },
+    { moveName: 'Spikes', effectName: 'Spikes', category: 'entryHazard', rounds: -1 },
+    { moveName: 'Toxic Spikes', effectName: 'Toxic Spikes', category: 'entryHazard', rounds: -1 },
+    { moveName: 'Sticky Web', effectName: 'Sticky Web', category: 'entryHazard', rounds: -1 },
+    { moveName: 'Ceaseless Edge', effectName: 'Spikes', category: 'entryHazard', rounds: -1 },
+    { moveName: 'Stone Axe', effectName: 'Stealth Rock', category: 'entryHazard', rounds: -1 }
+];
+
+export const CANONICAL_HAZARDS = [
+    'Stealth Rock',
+    'Spikes',
+    'Toxic Spikes',
+    'Sticky Web',
+    'Ceaseless Edge',
+    'Stone Axe'
+];
+
+export const CANONICAL_SIDE_OTHER = [
+    'Lucky Chant',
+    'Quick Guard',
+    'Wide Guard',
+    'Crafty Shield',
+    'Mat Block',
+    'Rainbow',
+    'Swamp',
+    'Sea of Fire'
 ];
 
 export const FIELD_EFFECT_INITIALS_MAP: Record<string, string> = {
@@ -218,6 +244,8 @@ export const FIELD_EFFECT_INITIALS_MAP: Record<string, string> = {
     'stealth rock': 'SR',
     'toxic spikes': 'TS',
     'sticky web': 'SW',
+    'ceaseless edge': 'CE',
+    'stone axe': 'SA',
     wr: 'WR',
     mr: 'MR',
     fl: 'FL',

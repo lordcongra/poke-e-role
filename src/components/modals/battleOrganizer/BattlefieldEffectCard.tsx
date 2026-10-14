@@ -2,6 +2,7 @@ import React from 'react';
 import { Plus, Trash2, Star } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { RemainingRoundsBoxes } from './RemainingRoundsBoxes';
+import { BattlefieldAutocompleteInput, type AutocompleteSuggestion } from './BattlefieldAutocompleteInput';
 import { TERRAIN_CONDITIONS_DATA, OTHER_FIELD_CONDITIONS_DATA } from '../../../utils/combat/fieldEffectsData';
 import { WEATHER_CONDITIONS_DATA } from '../../../data/gm/gmStatusData';
 import type { BattleOrganizerTimerEffect } from '../../../types/battleOrganizerTypes';
@@ -80,6 +81,26 @@ export function BattlefieldEffectCard({
         }));
     }, [roomCustomFieldEffects, category, role]);
 
+    const suggestions: AutocompleteSuggestion[] = React.useMemo(() => {
+        const canonical = canonicalPresets.map((p) => ({
+            name: p.name,
+            rounds: p.rounds,
+            category
+        }));
+        const custom = customPresets.map((p) => ({
+            name: p.name,
+            rounds: p.rounds,
+            category
+        }));
+        return [...canonical, ...custom];
+    }, [canonicalPresets, customPresets, category]);
+
+    const getFilteredSuggestions = (query: string): AutocompleteSuggestion[] => {
+        const clean = query.trim().toLowerCase();
+        if (!clean) return suggestions;
+        return suggestions.filter((s) => s.name.toLowerCase().includes(clean));
+    };
+
     const isPresetActive = (presetName: string) => {
         const clean = presetName.toLowerCase().trim();
         if (value.toLowerCase().trim() === clean && (remainingRounds > 0 || remainingRounds === -1)) return true;
@@ -148,6 +169,11 @@ export function BattlefieldEffectCard({
         }
     };
 
+    const handleSelectSuggestion = (item: AutocompleteSuggestion) => {
+        onChangeName(item.name);
+        onChangeRounds(item.rounds ?? 4);
+    };
+
     const handleExtraNameChange = (idx: number, text: string) => {
         if (!extraEffects || !onChangeExtras) return;
         const next = [...extraEffects];
@@ -156,6 +182,13 @@ export function BattlefieldEffectCard({
         if (text.trim() && prevRounds === 0) newRounds = 4;
         else if (!text.trim() && (prevRounds > 0 || prevRounds === -1)) newRounds = 0;
         next[idx] = { ...next[idx], name: text, remainingRounds: newRounds };
+        onChangeExtras(next);
+    };
+
+    const handleSelectExtraSuggestion = (idx: number, item: AutocompleteSuggestion) => {
+        if (!extraEffects || !onChangeExtras) return;
+        const next = [...extraEffects];
+        next[idx] = { ...next[idx], name: item.name, remainingRounds: item.rounds ?? 4 };
         onChangeExtras(next);
     };
 
@@ -191,11 +224,11 @@ export function BattlefieldEffectCard({
 
             {/* Primary Slot */}
             <div className="bo-effect-card__body">
-                <input
-                    type="text"
-                    className="bo-input bo-input--underline text-label"
+                <BattlefieldAutocompleteInput
                     value={value}
-                    onChange={(e) => handleInputChange(e.target.value)}
+                    onChange={handleInputChange}
+                    onSelect={handleSelectSuggestion}
+                    suggestions={getFilteredSuggestions(value)}
                     placeholder={placeholder}
                 />
                 <RemainingRoundsBoxes
@@ -214,13 +247,12 @@ export function BattlefieldEffectCard({
                             className="bo-effect-card__body"
                             style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                         >
-                            <input
-                                type="text"
-                                className="bo-input bo-input--underline text-label"
+                            <BattlefieldAutocompleteInput
                                 value={extra.name}
-                                onChange={(e) => handleExtraNameChange(idx, e.target.value)}
+                                onChange={(val) => handleExtraNameChange(idx, val)}
+                                onSelect={(item) => handleSelectExtraSuggestion(idx, item)}
+                                suggestions={getFilteredSuggestions(extra.name)}
                                 placeholder={`Secondary ${title}...`}
-                                style={{ flex: 1 }}
                             />
                             <RemainingRoundsBoxes
                                 value={extra.remainingRounds}
@@ -233,17 +265,6 @@ export function BattlefieldEffectCard({
                                 onClick={() => handleRemoveExtra(idx)}
                                 title={`Remove this ${title.toLowerCase()}`}
                                 aria-label={`Remove this ${title.toLowerCase()}`}
-                                style={{
-                                    background: 'transparent',
-                                    border: 'none',
-                                    color: 'var(--semantic-danger, #ef5350)',
-                                    cursor: 'pointer',
-                                    padding: '3px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    borderRadius: '4px'
-                                }}
                             >
                                 <Trash2 size={13} />
                             </button>

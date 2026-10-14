@@ -65,7 +65,7 @@ export type FieldEffectIconKey =
 export interface FieldEffectInfo {
     id: string;
     name: string;
-    category: 'weather' | 'terrain' | 'other' | 'forceField';
+    category: 'weather' | 'terrain' | 'other' | 'forceField' | 'entryHazard';
     badge: string;
     color: string;
     icon: FieldEffectIconKey;
@@ -78,11 +78,20 @@ import {
     TERRAIN_CONDITIONS_DATA,
     OTHER_FIELD_CONDITIONS_DATA,
     MOVE_FIELD_EFFECT_MAP,
-    FIELD_EFFECT_INITIALS_MAP
+    FIELD_EFFECT_INITIALS_MAP,
+    CANONICAL_HAZARDS,
+    CANONICAL_SIDE_OTHER
 } from './fieldEffectsConstants';
 import type { BattlefieldData, BattleOrganizerTimerEffect } from '../../types/battleOrganizerTypes';
 
-export { TERRAIN_CONDITIONS_DATA, OTHER_FIELD_CONDITIONS_DATA, MOVE_FIELD_EFFECT_MAP, FIELD_EFFECT_INITIALS_MAP };
+export {
+    TERRAIN_CONDITIONS_DATA,
+    OTHER_FIELD_CONDITIONS_DATA,
+    MOVE_FIELD_EFFECT_MAP,
+    FIELD_EFFECT_INITIALS_MAP,
+    CANONICAL_HAZARDS,
+    CANONICAL_SIDE_OTHER
+};
 
 export function getFieldEffectInitials(rawName: string): string {
     if (!rawName) return '??';
@@ -293,7 +302,7 @@ export function FieldEffectIcon({
 export interface MoveFieldEffectDefinition {
     moveName: string;
     effectName: string;
-    category: 'weather' | 'terrain' | 'other' | 'forceField';
+    category: 'weather' | 'terrain' | 'other' | 'forceField' | 'entryHazard';
     rounds: number;
 }
 

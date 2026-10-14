@@ -5,6 +5,7 @@ export interface BattleOrganizerTimerEffect {
 
 export interface BattlefieldSideData {
     forceFields: [BattleOrganizerTimerEffect, BattleOrganizerTimerEffect];
+    extraForceFields?: BattleOrganizerTimerEffect[];
     entryHazard: string;
     extraHazards?: string[];
     cover: string;

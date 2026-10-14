@@ -211,8 +211,9 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                     ? activeBattlefield.playerSide
                     : activeBattlefield.foeSide;
 
-                if (targetSide?.forceFields) {
-                    const activeFields = targetSide.forceFields.filter(
+                if (targetSide) {
+                    const allForceFields = [...(targetSide.forceFields || []), ...(targetSide.extraForceFields || [])];
+                    const activeFields = allForceFields.filter(
                         (ff) => ff?.name?.trim() && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
                     );
 

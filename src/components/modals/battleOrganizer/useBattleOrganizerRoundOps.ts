@@ -134,14 +134,16 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
                     forceFields: [
                         dec(prev.battlefield.playerSide.forceFields[0]),
                         dec(prev.battlefield.playerSide.forceFields[1])
-                    ]
+                    ],
+                    extraForceFields: (prev.battlefield.playerSide.extraForceFields || []).map(dec)
                 },
                 foeSide: {
                     ...prev.battlefield.foeSide,
                     forceFields: [
                         dec(prev.battlefield.foeSide.forceFields[0]),
                         dec(prev.battlefield.foeSide.forceFields[1])
-                    ]
+                    ],
+                    extraForceFields: (prev.battlefield.foeSide.extraForceFields || []).map(dec)
                 }
             };
 
@@ -434,6 +436,20 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
                     bf.terrain = { name: def.effectName, remainingRounds: def.rounds };
                 } else if (def.category === 'other') {
                     bf.other = { name: def.effectName, remainingRounds: def.rounds };
+                } else if (def.category === 'entryHazard') {
+                    const sideKey = isPlayerSide ? 'playerSide' : 'foeSide';
+                    const side = { ...bf[sideKey] };
+                    if (!side.entryHazard || !side.entryHazard.trim()) {
+                        side.entryHazard = def.effectName;
+                    } else if (side.entryHazard.toLowerCase().trim() !== def.effectName.toLowerCase().trim()) {
+                        const currentExtras = side.extraHazards || [];
+                        if (
+                            !currentExtras.some((h) => h.toLowerCase().trim() === def.effectName.toLowerCase().trim())
+                        ) {
+                            side.extraHazards = [...currentExtras, def.effectName];
+                        }
+                    }
+                    bf[sideKey] = side;
                 } else if (def.category === 'forceField') {
                     if (def.effectName === 'Aurora Veil') {
                         const wName = (bf.weather?.name || '').toLowerCase();
@@ -461,9 +477,32 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
                         BattleOrganizerTimerEffect
                     ];
                     const emptyIdx = forceFields.findIndex((f) => !f.name.trim() || f.remainingRounds <= 0);
-                    const targetIdx = emptyIdx !== -1 ? emptyIdx : 0;
-                    forceFields[targetIdx] = { name: def.effectName, remainingRounds: def.rounds };
-                    side.forceFields = forceFields;
+                    if (emptyIdx !== -1) {
+                        forceFields[emptyIdx] = { name: def.effectName, remainingRounds: def.rounds };
+                        side.forceFields = forceFields;
+                    } else {
+                        const inBase = forceFields.some(
+                            (f) => f.name.toLowerCase().trim() === def.effectName.toLowerCase().trim()
+                        );
+                        if (inBase) {
+                            side.forceFields = forceFields.map((f) =>
+                                f.name.toLowerCase().trim() === def.effectName.toLowerCase().trim()
+                                    ? { ...f, remainingRounds: def.rounds }
+                                    : f
+                            ) as [BattleOrganizerTimerEffect, BattleOrganizerTimerEffect];
+                        } else {
+                            const extras = [...(side.extraForceFields || [])];
+                            const existingIdx = extras.findIndex(
+                                (f) => f.name.toLowerCase().trim() === def.effectName.toLowerCase().trim()
+                            );
+                            if (existingIdx !== -1) {
+                                extras[existingIdx] = { name: def.effectName, remainingRounds: def.rounds };
+                            } else {
+                                extras.push({ name: def.effectName, remainingRounds: def.rounds });
+                            }
+                            side.extraForceFields = extras;
+                        }
+                    }
                     bf[sideKey] = side;
                 }
                 return { ...prev, battlefield: bf };
