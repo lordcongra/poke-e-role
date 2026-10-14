@@ -71,6 +71,7 @@ export interface FieldEffectInfo {
     icon: FieldEffectIconKey;
     effects: string[];
     initials: string;
+    defaultRounds?: number;
 }
 
 import {
@@ -357,11 +358,11 @@ export function getEffectsByCategory(
 ): BattleOrganizerTimerEffect[] {
     if (!battlefield) return [];
     const results: BattleOrganizerTimerEffect[] = [];
+    const isActive = (eff?: BattleOrganizerTimerEffect | null) =>
+        Boolean(eff?.name?.trim() && ((eff.remainingRounds ?? 0) > 0 || eff.remainingRounds === -1));
 
     const primary = battlefield[category];
-    if (primary?.name?.trim() && (primary.remainingRounds ?? 0) > 0) {
-        results.push(primary);
-    }
+    if (isActive(primary)) results.push(primary);
 
     const extras =
         category === 'weather'
@@ -372,9 +373,7 @@ export function getEffectsByCategory(
 
     if (extras && Array.isArray(extras)) {
         for (const item of extras) {
-            if (item?.name?.trim() && (item.remainingRounds ?? 0) > 0) {
-                results.push(item);
-            }
+            if (isActive(item)) results.push(item);
         }
     }
 
@@ -384,9 +383,11 @@ export function getEffectsByCategory(
 export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | undefined): ActiveFieldEffectItem[] {
     if (!battlefield) return [];
     const results: ActiveFieldEffectItem[] = [];
+    const isActive = (eff?: BattleOrganizerTimerEffect | null) =>
+        Boolean(eff?.name?.trim() && ((eff.remainingRounds ?? 0) > 0 || eff.remainingRounds === -1));
 
     // Weather Primary & Extras
-    if (battlefield.weather?.name?.trim() && (battlefield.weather.remainingRounds ?? 0) > 0) {
+    if (isActive(battlefield.weather)) {
         results.push({
             ...battlefield.weather,
             category: 'weather',
@@ -396,7 +397,7 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
         });
     }
     battlefield.extraWeathers?.forEach((w, idx) => {
-        if (w?.name?.trim() && (w.remainingRounds ?? 0) > 0) {
+        if (isActive(w)) {
             results.push({
                 ...w,
                 category: 'weather',
@@ -409,7 +410,7 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
     });
 
     // Terrain Primary & Extras
-    if (battlefield.terrain?.name?.trim() && (battlefield.terrain.remainingRounds ?? 0) > 0) {
+    if (isActive(battlefield.terrain)) {
         results.push({
             ...battlefield.terrain,
             category: 'terrain',
@@ -419,7 +420,7 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
         });
     }
     battlefield.extraTerrains?.forEach((t, idx) => {
-        if (t?.name?.trim() && (t.remainingRounds ?? 0) > 0) {
+        if (isActive(t)) {
             results.push({
                 ...t,
                 category: 'terrain',
@@ -432,7 +433,7 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
     });
 
     // Other Primary & Extras
-    if (battlefield.other?.name?.trim() && (battlefield.other.remainingRounds ?? 0) > 0) {
+    if (isActive(battlefield.other)) {
         results.push({
             ...battlefield.other,
             category: 'other',
@@ -442,7 +443,7 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
         });
     }
     battlefield.extraOther?.forEach((o, idx) => {
-        if (o?.name?.trim() && (o.remainingRounds ?? 0) > 0) {
+        if (isActive(o)) {
             results.push({
                 ...o,
                 category: 'other',
@@ -456,7 +457,7 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
 
     // Force Fields (Player & Foe)
     battlefield.playerSide?.forceFields?.forEach((ff, idx) => {
-        if (ff?.name?.trim() && (ff.remainingRounds ?? 0) > 0) {
+        if (isActive(ff)) {
             results.push({
                 ...ff,
                 category: 'forceField',
@@ -470,7 +471,7 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
     });
 
     battlefield.foeSide?.forceFields?.forEach((ff, idx) => {
-        if (ff?.name?.trim() && (ff.remainingRounds ?? 0) > 0) {
+        if (isActive(ff)) {
             results.push({
                 ...ff,
                 category: 'forceField',

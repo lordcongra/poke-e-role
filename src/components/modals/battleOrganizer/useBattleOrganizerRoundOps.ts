@@ -118,7 +118,7 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
             // 1. Decrement all Battlefield Remaining Rounds timers
             const dec = (timer: BattleOrganizerTimerEffect): BattleOrganizerTimerEffect => ({
                 ...timer,
-                remainingRounds: Math.max(0, timer.remainingRounds - 1)
+                remainingRounds: timer.remainingRounds === -1 ? -1 : Math.max(0, timer.remainingRounds - 1)
             });
 
             const newBattlefield: BattlefieldData = {
@@ -435,6 +435,23 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
                 } else if (def.category === 'other') {
                     bf.other = { name: def.effectName, remainingRounds: def.rounds };
                 } else if (def.category === 'forceField') {
+                    if (def.effectName === 'Aurora Veil') {
+                        const wName = (bf.weather?.name || '').toLowerCase();
+                        const wRounds = bf.weather?.remainingRounds ?? 0;
+                        const primaryHail = (wRounds > 0 || wRounds === -1) && /\b(hail|snow|snowy)\b/.test(wName);
+                        const extraHail = Boolean(
+                            bf.extraWeathers?.some((w) => {
+                                const n = (w?.name || '').toLowerCase();
+                                const rCount = w?.remainingRounds ?? 0;
+                                return (rCount > 0 || rCount === -1) && /\b(hail|snow|snowy)\b/.test(n);
+                            })
+                        );
+                        if (!primaryHail && !extraHail) {
+                            console.warn('[BattleOrganizer] Aurora Veil activation blocked: Hail or Snowy weather required.');
+                            return prev;
+                        }
+                    }
+
                     const sideKey = isPlayerSide ? 'playerSide' : 'foeSide';
                     const side = { ...bf[sideKey] };
                     const forceFields = [...side.forceFields] as [

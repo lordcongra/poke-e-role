@@ -59,7 +59,7 @@ export function BattlefieldEffectCard({
         }
         return OTHER_FIELD_CONDITIONS_DATA.map((o) => ({
             name: o.name,
-            rounds: o.name.toLowerCase().includes('deluge') ? 1 : 4
+            rounds: o.defaultRounds ?? 4
         }));
     }, [category]);
 
@@ -82,18 +82,20 @@ export function BattlefieldEffectCard({
 
     const isPresetActive = (presetName: string) => {
         const clean = presetName.toLowerCase().trim();
-        if (value.toLowerCase().trim() === clean && remainingRounds > 0) return true;
+        if (value.toLowerCase().trim() === clean && (remainingRounds > 0 || remainingRounds === -1)) return true;
         return Boolean(
-            extraEffects?.some((e) => e.name.toLowerCase().trim() === clean && (e.remainingRounds ?? 0) > 0)
+            extraEffects?.some(
+                (e) => e.name.toLowerCase().trim() === clean && ((e.remainingRounds ?? 0) > 0 || e.remainingRounds === -1)
+            )
         );
     };
 
     const handleSelectPreset = (preset: PresetItem) => {
         const cleanPreset = preset.name.toLowerCase().trim();
 
-        // 1. If currently in primary slot: only toggle off if remainingRounds > 0, reactivate if remainingRounds === 0
+        // 1. If currently in primary slot: only toggle off if remainingRounds > 0 or -1, reactivate if remainingRounds === 0
         if (value.toLowerCase().trim() === cleanPreset) {
-            if (remainingRounds > 0) {
+            if (remainingRounds > 0 || remainingRounds === -1) {
                 onChangeName('');
                 onChangeRounds(0);
                 setPendingPreset(null);
@@ -106,10 +108,10 @@ export function BattlefieldEffectCard({
             }
         }
 
-        // 2. If currently in secondary slot: only toggle off if remainingRounds > 0, reactivate if 0
+        // 2. If currently in secondary slot: only toggle off if active, reactivate if 0
         const matchingExtra = extraEffects?.find((e) => e.name.toLowerCase().trim() === cleanPreset);
         if (matchingExtra) {
-            if ((matchingExtra.remainingRounds ?? 0) > 0) {
+            if ((matchingExtra.remainingRounds ?? 0) > 0 || matchingExtra.remainingRounds === -1) {
                 onChangeExtras?.(extraEffects!.filter((e) => e.name.toLowerCase().trim() !== cleanPreset));
                 setPendingPreset(null);
                 return;
@@ -140,7 +142,7 @@ export function BattlefieldEffectCard({
         onChangeName(text);
         if (text.trim() && remainingRounds === 0) {
             onChangeRounds(4);
-        } else if (!text.trim() && remainingRounds > 0) {
+        } else if (!text.trim() && (remainingRounds > 0 || remainingRounds === -1)) {
             onChangeRounds(0);
         }
     };
@@ -151,7 +153,7 @@ export function BattlefieldEffectCard({
         const prevRounds = next[idx]?.remainingRounds ?? 0;
         let newRounds = prevRounds;
         if (text.trim() && prevRounds === 0) newRounds = 4;
-        else if (!text.trim() && prevRounds > 0) newRounds = 0;
+        else if (!text.trim() && (prevRounds > 0 || prevRounds === -1)) newRounds = 0;
         next[idx] = { ...next[idx], name: text, remainingRounds: newRounds };
         onChangeExtras(next);
     };
@@ -336,15 +338,16 @@ export function BattlefieldEffectCard({
             <div className="bo-preset-chips-row">
                 {canonicalPresets.map((preset) => {
                     const isActive = isPresetActive(preset.name);
+                    const roundText = preset.rounds === -1 ? 'Whole Scene' : `${preset.rounds} rounds`;
                     return (
                         <button
                             key={preset.name}
                             type="button"
                             className={`bo-preset-chip ${isActive ? 'bo-preset-chip--active' : ''}`}
                             onClick={() => handleSelectPreset(preset)}
-                            title={`Set ${preset.name} (${preset.rounds} rounds)`}
+                            title={`Set ${preset.name} (${roundText})`}
                         >
-                            {preset.name}
+                            {preset.name} {preset.rounds === -1 ? '(Scene)' : ''}
                         </button>
                     );
                 })}
@@ -352,6 +355,7 @@ export function BattlefieldEffectCard({
                 {/* Custom Homebrew Chips */}
                 {customPresets.map((preset, pIdx) => {
                     const isActive = isPresetActive(preset.name);
+                    const roundText = preset.rounds === -1 ? 'Whole Scene' : `${preset.rounds} rounds`;
                     const customStyle: React.CSSProperties = {};
                     if (preset.color) {
                         if (isActive) {
@@ -369,10 +373,10 @@ export function BattlefieldEffectCard({
                             type="button"
                             className={`bo-preset-chip bo-preset-chip--custom ${isActive ? 'bo-preset-chip--active' : ''}`}
                             onClick={() => handleSelectPreset(preset)}
-                            title={`Set Custom: ${preset.name} (${preset.rounds} rounds)`}
+                            title={`Set Custom: ${preset.name} (${roundText})`}
                             style={Object.keys(customStyle).length > 0 ? customStyle : undefined}
                         >
-                            ★ {preset.name}
+                            ★ {preset.name} {preset.rounds === -1 ? '(Scene)' : ''}
                         </button>
                     );
                 })}

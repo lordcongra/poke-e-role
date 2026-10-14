@@ -283,6 +283,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
             layoutMode={mode}
             onCycleLayoutMode={handleCycleRollLogMode}
             onActivateFieldEffect={activateFieldEffectFromMove}
+            battlefield={battlefield}
         />
     );
 

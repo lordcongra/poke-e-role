@@ -1,13 +1,15 @@
 export interface BattleOrganizerTimerEffect {
     name: string;
-    remainingRounds: number; // 0 to 4+
+    remainingRounds: number; // 0 to 4+, or -1 for Until End of Scene
 }
 
 export interface BattlefieldSideData {
     forceFields: [BattleOrganizerTimerEffect, BattleOrganizerTimerEffect];
     entryHazard: string;
+    extraHazards?: string[];
     cover: string;
     other: string;
+    extraOther?: string[];
 }
 
 export type BattlefieldSideHighlight = 'all' | 'player' | 'foe';

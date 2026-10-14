@@ -7,6 +7,7 @@ import { STATS_META_ID } from '../../../utils/graphics/graphicsManager';
 import { calculateTargetDefensesFromMeta } from '../../../utils/combat/combatUtils';
 import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { parseCombatTags } from '../../../utils/tagParser/index';
+import { extractIsNpc } from '../../../utils/combat/initiativeHelpers';
 import { TooltipIcon } from '../../ui/TooltipIcon';
 import './TargetingModal.css';
 
@@ -19,7 +20,8 @@ interface TargetingModalProps {
         isCrit: boolean,
         effectiveness: number,
         reduction: number,
-        override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number }
+        override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number },
+        fieldFactors?: string[]
     ) => void;
 }
 
@@ -28,6 +30,7 @@ interface TargetOption {
     name: string;
     def: number;
     isTera: boolean;
+    isPlayerSide: boolean;
 }
 
 export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingModalProps) {
@@ -35,6 +38,7 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
     const [isCrit, setIsCrit] = useState(false);
     const [effectiveness, setEffectiveness] = useState<number>(0);
     const [targets, setTargets] = useState<TargetOption[]>([]);
+    const [appliedFieldFactors, setAppliedFieldFactors] = useState<string[]>([]);
 
     // Override States
     const [overrideType, setOverrideType] = useState<'none' | 'dice' | 'flat' | 'dice-ignore'>('none');
@@ -79,6 +83,14 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                                 let name = String(c.name || 'Unknown');
                                 let isTera = false;
                                 let targetDef = 1;
+                                let isPlayerSide = true;
+
+                                if (typeof c.isPlayerSide === 'boolean') {
+                                    isPlayerSide = c.isPlayerSide;
+                                } else if (matchingChar && matchingChar.metadata) {
+                                    const meta = matchingChar.metadata as Record<string, unknown>;
+                                    isPlayerSide = !extractIsNpc(meta);
+                                }
 
                                 if (matchingChar && matchingChar.metadata) {
                                     const meta = matchingChar.metadata as Record<string, unknown>;
@@ -101,7 +113,8 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                                     id: charId,
                                     name,
                                     def: targetDef,
-                                    isTera
+                                    isTera,
+                                    isPlayerSide
                                 });
                             });
                         }
@@ -122,8 +135,9 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
 
                             const { def, spd } = calculateTargetDefensesFromMeta(meta);
                             const targetDef = isPhysicalMove ? def : spd;
+                            const isPlayerSide = !extractIsNpc(item.metadata);
 
-                            availableTargets.push({ id: item.id, name, def: targetDef, isTera });
+                            availableTargets.push({ id: item.id, name, def: targetDef, isTera, isPlayerSide });
                         }
                     });
                 } catch (error) {
@@ -158,26 +172,71 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
     }, [isPhysicalMove, ruleset]);
 
     const handleConfirm = () => {
-        onRoll(baseDamage, isCrit, effectiveness, reduction, {
-            active: overrideType !== 'none',
-            // Fallback to 'dice' to satisfy the strict interface constraint when override is not active.
-            type: overrideType === 'none' ? 'dice' : overrideType,
-            value: overrideValue
-        });
+        onRoll(
+            baseDamage,
+            isCrit,
+            effectiveness,
+            reduction,
+            {
+                active: overrideType !== 'none',
+                // Fallback to 'dice' to satisfy the strict interface constraint when override is not active.
+                type: overrideType === 'none' ? 'dice' : overrideType,
+                value: overrideValue
+            },
+            appliedFieldFactors
+        );
     };
 
     const handleTargetSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const val = e.target.value;
-        if (val !== 'manual') {
-            const selectedTarget = targets.find((t) => t.id === val);
-            if (selectedTarget) {
-                setReduction(selectedTarget.def);
+        if (val === 'manual') {
+            setAppliedFieldFactors([]);
+            return;
+        }
 
-                // Automatically check SE if both combatants are Terastallized!
-                if (activeTransformation === 'Terastallize' && selectedTarget.isTera) {
-                    setEffectiveness(1);
+        const selectedTarget = targets.find((t) => t.id === val);
+        if (selectedTarget) {
+            let targetReduction = selectedTarget.def;
+            const factors: string[] = [];
+
+            // Automatically check SE if both combatants are Terastallized!
+            if (activeTransformation === 'Terastallize' && selectedTarget.isTera) {
+                setEffectiveness(1);
+            }
+
+            // Inspect activeBattlefield for side force fields
+            const activeBattlefield = useCharacterStore.getState().activeBattlefield;
+            if (activeBattlefield) {
+                const targetSide = selectedTarget.isPlayerSide
+                    ? activeBattlefield.playerSide
+                    : activeBattlefield.foeSide;
+
+                if (targetSide?.forceFields) {
+                    const activeFields = targetSide.forceFields.filter(
+                        (ff) => ff?.name?.trim() && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                    );
+
+                    const hasReflect = activeFields.some((ff) => ff.name.toLowerCase().includes('reflect'));
+                    const hasLightScreen = activeFields.some((ff) => ff.name.toLowerCase().includes('light screen'));
+                    const hasAuroraVeil = activeFields.some((ff) => ff.name.toLowerCase().includes('aurora veil'));
+
+                    if (hasReflect && isPhysicalMove) {
+                        targetReduction += 1;
+                        factors.push('Reflect (-1 Dmg)');
+                    }
+                    if (hasLightScreen && !isPhysicalMove) {
+                        targetReduction += 1;
+                        factors.push('Light Screen (-1 Dmg)');
+                    }
+                    if (hasAuroraVeil) {
+                        targetReduction += 1;
+                        factors.push('Aurora Veil (-1 Dmg)');
+                    }
                 }
             }
+
+            setReduction(targetReduction);
+            setAppliedFieldFactors(factors);
         }
     };
 
@@ -240,6 +299,11 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                         min="0"
                         className="targeting-modal__input text-value-highlight"
                     />
+                    {appliedFieldFactors.length > 0 && (
+                        <div style={{ fontSize: '0.76rem', color: 'var(--primary)', marginTop: '4px', fontWeight: 600 }}>
+                            Active Force Field Reduction: {appliedFieldFactors.join(', ')}
+                        </div>
+                    )}
                     {reduction > 0 && baseDamage + bankedDice - reduction <= 0 && overrideType === 'none' && (
                         <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '4px' }}>
                             <em>

@@ -69,7 +69,8 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         effects: [
             'Turn order is reversed: slower combatants act first in Initiative order',
             'Lasts for 4 rounds or until cancelled'
-        ]
+        ],
+        defaultRounds: 4
     },
     {
         id: 'other-gravity',
@@ -83,7 +84,8 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
             'Grounds Flying and Levitating Pokémon (removes Ground immunity)',
             'All Pokémon have -2 dice penalty to Evasion rolls',
             'High-flying/bouncing moves cannot be used'
-        ]
+        ],
+        defaultRounds: 4
     },
     {
         id: 'other-ion-deluge',
@@ -93,7 +95,63 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         color: '#FFD54F',
         icon: 'Zap',
         initials: 'ID',
-        effects: ['All Normal-type moves become Electric-type for the rest of the round']
+        effects: ['All Normal-type moves become Electric-type for the rest of the scene.'],
+        defaultRounds: -1
+    },
+    {
+        id: 'other-wonder-room',
+        name: 'Wonder Room',
+        category: 'other',
+        badge: 'Dimension',
+        color: '#26C6DA',
+        icon: 'Sparkles',
+        initials: 'WR',
+        effects: ['Defense and Sp. Defense calculations are swapped for all Pokémon. (4 Rounds)'],
+        defaultRounds: 4
+    },
+    {
+        id: 'other-magic-room',
+        name: 'Magic Room',
+        category: 'other',
+        badge: 'Dimension',
+        color: '#AB47BC',
+        icon: 'Sparkles',
+        initials: 'MR',
+        effects: ['Held items lose their effects; no items can be used. (4 Rounds)'],
+        defaultRounds: 4
+    },
+    {
+        id: 'other-fairy-lock',
+        name: 'Fairy Lock',
+        category: 'other',
+        badge: 'Lock',
+        color: '#EC407A',
+        icon: 'Sparkles',
+        initials: 'FL',
+        effects: ['All Pokémon are afflicted with Block and cannot flee or retreat next round. (1 Round)'],
+        defaultRounds: 1
+    },
+    {
+        id: 'other-mud-sport',
+        name: 'Mud Sport',
+        category: 'other',
+        badge: 'Sport',
+        color: '#8D6E63',
+        icon: 'Droplets',
+        initials: 'MS',
+        effects: ['-1 Damage from Electric-type Moves. (4 Rounds)'],
+        defaultRounds: 4
+    },
+    {
+        id: 'other-water-sport',
+        name: 'Water Sport',
+        category: 'other',
+        badge: 'Sport',
+        color: '#42A5F5',
+        icon: 'Droplets',
+        initials: 'WS',
+        effects: ['-1 Damage from Fire-type Moves. (4 Rounds)'],
+        defaultRounds: 4
     },
     {
         id: 'field-reflect',
@@ -103,7 +161,8 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         color: '#E91E63',
         icon: 'Shield',
         initials: 'RF',
-        effects: ['Reduces Physical Damage taken by the protected side by 1 for 4 rounds']
+        effects: ['Reduces Physical Damage taken by the protected side by 1 for 4 rounds'],
+        defaultRounds: 4
     },
     {
         id: 'field-light-screen',
@@ -113,7 +172,8 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         color: '#AB47BC',
         icon: 'Shield',
         initials: 'LS',
-        effects: ['Reduces Special Damage taken by the protected side by 1 for 4 rounds']
+        effects: ['Reduces Special Damage taken by the protected side by 1 for 4 rounds'],
+        defaultRounds: 4
     },
     {
         id: 'field-safeguard',
@@ -123,7 +183,8 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         color: '#26A69A',
         icon: 'Shield',
         initials: 'SG',
-        effects: ['Protects the side from receiving Status Ailments and Confusion for 4 rounds']
+        effects: ['Protects the side from receiving Status Ailments and Confusion for 4 rounds'],
+        defaultRounds: 4
     },
     {
         id: 'field-mist',
@@ -133,7 +194,8 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         color: '#80DEEA',
         icon: 'Shield',
         initials: 'MS',
-        effects: ['Protects the side from having their stats or dice pools lowered by opponents']
+        effects: ['Protects the side from having their stats or dice pools lowered by opponents'],
+        defaultRounds: 4
     }
 ];
 
@@ -143,15 +205,25 @@ export const MOVE_FIELD_EFFECT_MAP: MoveFieldEffectDefinition[] = [
     { moveName: 'Sandstorm', effectName: 'Sandstorm', category: 'weather', rounds: 4 },
     { moveName: 'Hail', effectName: 'Hail', category: 'weather', rounds: 4 },
     { moveName: 'Snowscape', effectName: 'Snowy', category: 'weather', rounds: 4 },
+    { moveName: 'Chilly Reception', effectName: 'Snowy', category: 'weather', rounds: 4 },
     { moveName: 'Electric Terrain', effectName: 'Electric Terrain', category: 'terrain', rounds: 4 },
     { moveName: 'Grassy Terrain', effectName: 'Grassy Terrain', category: 'terrain', rounds: 4 },
     { moveName: 'Misty Terrain', effectName: 'Misty Terrain', category: 'terrain', rounds: 4 },
     { moveName: 'Psychic Terrain', effectName: 'Psychic Terrain', category: 'terrain', rounds: 4 },
     { moveName: 'Trick Room', effectName: 'Trick Room', category: 'other', rounds: 4 },
     { moveName: 'Gravity', effectName: 'Gravity', category: 'other', rounds: 4 },
-    { moveName: 'Ion Deluge', effectName: 'Ion Deluge', category: 'other', rounds: 4 },
+    { moveName: 'Ion Deluge', effectName: 'Ion Deluge', category: 'other', rounds: -1 },
+    { moveName: 'Wonder Room', effectName: 'Wonder Room', category: 'other', rounds: 4 },
+    { moveName: 'Magic Room', effectName: 'Magic Room', category: 'other', rounds: 4 },
+    { moveName: 'Fairy Lock', effectName: 'Fairy Lock', category: 'other', rounds: 1 },
+    { moveName: 'Mud Sport', effectName: 'Mud Sport', category: 'other', rounds: 4 },
+    { moveName: 'Water Sport', effectName: 'Water Sport', category: 'other', rounds: 4 },
+    { moveName: 'Tailwind', effectName: 'Tailwind', category: 'forceField', rounds: 4 },
+    { moveName: 'Aurora Veil', effectName: 'Aurora Veil', category: 'forceField', rounds: 4 },
     { moveName: 'Reflect', effectName: 'Reflect', category: 'forceField', rounds: 4 },
+    { moveName: 'Baddy Bad', effectName: 'Reflect', category: 'forceField', rounds: 4 },
     { moveName: 'Light Screen', effectName: 'Light Screen', category: 'forceField', rounds: 4 },
+    { moveName: 'Glitzy Glow', effectName: 'Light Screen', category: 'forceField', rounds: 4 },
     { moveName: 'Safeguard', effectName: 'Safeguard', category: 'forceField', rounds: 4 },
     { moveName: 'Mist', effectName: 'Mist', category: 'forceField', rounds: 4 }
 ];
@@ -162,6 +234,7 @@ export const FIELD_EFFECT_INITIALS_MAP: Record<string, string> = {
     sandstorm: 'SS',
     snowy: 'SW',
     hail: 'HL',
+    'chilly reception': 'CR',
     'desolate weather': 'DW',
     desolate: 'DW',
     typhoon: 'TP',
@@ -175,6 +248,11 @@ export const FIELD_EFFECT_INITIALS_MAP: Record<string, string> = {
     'trick room': 'TR',
     gravity: 'GR',
     'ion deluge': 'ID',
+    'wonder room': 'WR',
+    'magic room': 'MR',
+    'fairy lock': 'FL',
+    'mud sport': 'MS',
+    'water sport': 'WS',
     reflect: 'RF',
     'light screen': 'LS',
     safeguard: 'SG',
@@ -183,5 +261,10 @@ export const FIELD_EFFECT_INITIALS_MAP: Record<string, string> = {
     spikes: 'SP',
     'stealth rock': 'SR',
     'toxic spikes': 'TS',
-    'sticky web': 'SW'
+    'sticky web': 'SW',
+    wr: 'WR',
+    mr: 'MR',
+    fl: 'FL',
+    ms: 'MS',
+    ws: 'WS'
 };

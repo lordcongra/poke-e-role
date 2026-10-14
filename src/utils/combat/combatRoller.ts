@@ -246,6 +246,16 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     }
     if (statuses.paralysisDexterityPenalty < 0 && normalizedAcc1 === 'dex') tags.push(`Paralysis: -2 Dice`);
 
+    const side = state.identity.isNPC ? state.activeBattlefield?.foeSide : state.activeBattlefield?.playerSide;
+    const hasTailwind = Boolean(
+        side?.forceFields?.some(
+            (ff) => ff?.name?.toLowerCase().includes('tailwind') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+        )
+    );
+    if (hasTailwind && normalizedAcc1 === 'dex') {
+        tags.push('Tailwind (+2 Dexterity)');
+    }
+
     if (customFirstHitAccTag) tags.push(customFirstHitAccTag);
     if (chancesUsed > 0) tags.push(`Chances: Max ${chancesUsed} Rerolls`);
 
@@ -327,7 +337,8 @@ export async function executeDamageRoll(
     isCritical: boolean,
     effectiveness: number,
     reduction: number,
-    override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number }
+    override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number },
+    fieldFactors?: string[]
 ) {
     const nickname = state.identity.nickname || state.identity.species || 'Someone';
     const abilityString = (state.identity.ability || '').toLowerCase();
@@ -340,6 +351,11 @@ export async function executeDamageRoll(
     let actualDicePool = baseDamage - reduction;
     let finalFlatMod = state.trackers.globalSucc;
     const tags: string[] = [];
+
+    if (fieldFactors && fieldFactors.length > 0) {
+        const normalizedFactors = fieldFactors.map((f) => f.replace('-1 Dmg', '-1 Damage'));
+        tags.push(`Factors: ${normalizedFactors.join(', ')}`);
+    }
 
     // Deal with Overrides
     if (override.active) {
@@ -484,7 +500,7 @@ export async function executeDamageRoll(
         else if (stabBonus > 0) tags.push(stabTag);
 
         const isHalfHp = state.health.hpCurr <= Math.floor(state.health.hpMax / 2);
-        const weatherInfo = getWeatherDamageBonus(move.type, state.activeBattlefield, isHalfHp);
+        const weatherInfo = getWeatherDamageBonus(move.type, state.activeBattlefield, isHalfHp, state.identity.isNPC);
         if (weatherInfo.diceBonus > 0) {
             actualDicePool += weatherInfo.diceBonus;
         }
@@ -605,9 +621,17 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
             : '';
 
     const chancesUsed = state.trackers.chances;
-
     if (chancesUsed > 0) tags.push(`Chances: Max ${chancesUsed} Rerolls`);
     if (statuses.paralysisDexterityPenalty < 0 && normalizedAttr === 'dex') tags.push(`Paralysis: -2 Dice`);
+    const side = state.identity.isNPC ? state.activeBattlefield?.foeSide : state.activeBattlefield?.playerSide;
+    const hasTailwind = Boolean(
+        side?.forceFields?.some(
+            (ff) => ff?.name?.toLowerCase().includes('tailwind') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+        )
+    );
+    if (hasTailwind && normalizedAttr === 'dex') {
+        tags.push('Tailwind (+2 Dexterity)');
+    }
 
     if (statuses.isAsleep) {
         if (hasComatose) tags.push(`ASLEEP (Comatose)`);
@@ -682,6 +706,33 @@ export async function rollGeneric(
         tags.push(`Tracker Mod: ${state.trackers.globalSucc > 0 ? '+' : ''}${state.trackers.globalSucc} Succ`);
     if (chancesUsed > 0) tags.push(`Chances: Max ${chancesUsed} Rerolls`);
     if (statuses.paralysisDexterityPenalty < 0 && attribute.toLowerCase() === 'dex') tags.push(`Paralysis: -2 Dice`);
+
+    if (actionName.toLowerCase().includes('evas')) {
+        const isGravityActive = Boolean(
+            state.activeBattlefield &&
+                ((state.activeBattlefield.other?.name?.toLowerCase().includes('gravity') &&
+                    (state.activeBattlefield.other.remainingRounds > 0 || state.activeBattlefield.other.remainingRounds === -1)) ||
+                    state.activeBattlefield.extraOther?.some(
+                        (o) =>
+                            o.name.toLowerCase().includes('gravity') &&
+                            (o.remainingRounds > 0 || o.remainingRounds === -1)
+                    ))
+        );
+        if (isGravityActive) {
+            finalDicePool = Math.max(1, finalDicePool - 2);
+            tags.push('Gravity (-2 Evasion Dice)');
+        }
+    }
+
+    const side = state.identity.isNPC ? state.activeBattlefield?.foeSide : state.activeBattlefield?.playerSide;
+    const hasTailwind = Boolean(
+        side?.forceFields?.some(
+            (ff) => ff?.name?.toLowerCase().includes('tailwind') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+        )
+    );
+    if (hasTailwind && attribute.toLowerCase() === 'dex') {
+        tags.push('Tailwind (+2 Dexterity)');
+    }
 
     if (statuses.isAsleep) {
         if (hasComatose) tags.push(`ASLEEP (Comatose)`);

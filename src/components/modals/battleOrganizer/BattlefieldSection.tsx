@@ -1,8 +1,8 @@
 import React from 'react';
-import { ChevronDown, MapPin, CloudSun, Mountain, Sparkles, Shield, Eye, EyeOff } from 'lucide-react';
+import { ChevronDown, MapPin, CloudSun, Mountain, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { BattlefieldPitch } from './BattlefieldPitch';
-import { RemainingRoundsBoxes } from './RemainingRoundsBoxes';
 import { BattlefieldEffectCard } from './BattlefieldEffectCard';
+import { BattlefieldSidePanel } from './BattlefieldSidePanel';
 import type {
     BattlefieldData,
     BattleOrganizerTimerEffect,
@@ -49,29 +49,6 @@ export function BattlefieldSection({
     rollLogMode,
     renderRollLog
 }: BattlefieldSectionProps) {
-    const handlePlayerForceFieldChange = (idx: 0 | 1, text: string) => {
-        const fields = [...battlefield.playerSide.forceFields] as [
-            BattleOrganizerTimerEffect,
-            BattleOrganizerTimerEffect
-        ];
-        const prevRounds = fields[idx].remainingRounds;
-        let newRounds = prevRounds;
-        if (text.trim() && prevRounds === 0) newRounds = 4;
-        else if (!text.trim() && prevRounds > 0) newRounds = 0;
-        fields[idx] = { name: text, remainingRounds: newRounds };
-        updatePlayerSide('forceFields', fields);
-    };
-
-    const handleFoeForceFieldChange = (idx: 0 | 1, text: string) => {
-        const fields = [...battlefield.foeSide.forceFields] as [BattleOrganizerTimerEffect, BattleOrganizerTimerEffect];
-        const prevRounds = fields[idx].remainingRounds;
-        let newRounds = prevRounds;
-        if (text.trim() && prevRounds === 0) newRounds = 4;
-        else if (!text.trim() && prevRounds > 0) newRounds = 0;
-        fields[idx] = { name: text, remainingRounds: newRounds };
-        updateFoeSide('forceFields', fields);
-    };
-
     return (
         <div className={rollLogMode === 'battlefield-nested' ? 'bo-battlefield-nest-row' : 'bo-battlefield-wrap'}>
             <div
@@ -98,71 +75,71 @@ export function BattlefieldSection({
                         <span className="bo-pill-header__text text-theme-header">Battlefield</span>
                         <button
                             type="button"
-                            className={`bo-pill-visibility-btn ${(battlefield.broadcastToPlayers ?? true) ? 'is-broadcast' : 'is-hidden'}`}
+                            className={`bo-pill-visibility-btn ${battlefield.broadcastToPlayers ? 'is-broadcast' : 'is-hidden'}`}
                             onClick={(e) => {
                                 e.stopPropagation();
-                                updateBattlefield('broadcastToPlayers', !(battlefield.broadcastToPlayers ?? true));
+                                updateBattlefield('broadcastToPlayers', !battlefield.broadcastToPlayers);
                             }}
                             title={
-                                (battlefield.broadcastToPlayers ?? true)
-                                    ? 'Visible to Players (Click to Hide)'
-                                    : 'Hidden from Players (Pre-staging, Click to Reveal)'
+                                battlefield.broadcastToPlayers
+                                    ? 'Visible to players (Click to hide from player sheets)'
+                                    : 'Hidden from players (Click to broadcast active weather/terrain/fields to player sheets)'
+                            }
+                            aria-label={
+                                battlefield.broadcastToPlayers ? 'Broadcast to players' : 'Hidden from players'
                             }
                         >
-                            {(battlefield.broadcastToPlayers ?? true) ? <Eye size={13} /> : <EyeOff size={13} />}
-                            <span>{(battlefield.broadcastToPlayers ?? true) ? 'Visible' : 'Hidden'}</span>
+                            {battlefield.broadcastToPlayers ? <Eye size={12} /> : <EyeOff size={12} />}
+                            <span>{battlefield.broadcastToPlayers ? 'Live to Players' : 'GM Only'}</span>
                         </button>
                         <ChevronDown
-                            size={14}
-                            style={{
-                                transform: isBattlefieldOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                                transition: 'transform 0.2s ease'
-                            }}
+                            size={16}
+                            className={`bo-pill-header__chevron ${!isBattlefieldOpen ? 'bo-pill-header__chevron--collapsed' : ''}`}
                         />
                     </div>
 
                     {isBattlefieldOpen && (
                         <>
-                            {/* Battlefield Location */}
-                            <div className="bo-location-row">
+                            {/* Location Bar */}
+                            <div className="bo-field-row bo-field-row--location">
                                 <label className="bo-field-label text-label">
-                                    <MapPin size={14} /> Battlefield Location
+                                    <MapPin size={15} /> Location
                                 </label>
                                 <input
                                     type="text"
-                                    className="bo-input bo-input--underline text-label"
+                                    className="bo-input bo-input--underline bo-input--large text-title-primary"
                                     value={battlefield.location}
                                     onChange={(e) => updateBattlefield('location', e.target.value)}
-                                    placeholder="e.g. Viridian Forest Clearing / Distortion World"
+                                    placeholder="e.g. Viridian Forest, Mt. Moon..."
                                 />
                             </div>
 
-                            {/* Global Battlefield Row: Weather, Terrain, Other */}
-                            <div className="bo-global-effects-grid">
+                            {/* Global Effects 3-Column Grid: Weather | Terrain | Other */}
+                            <div className="bo-effects-grid">
                                 <BattlefieldEffectCard
-                                    title="Active Weather"
+                                    title="Weather"
                                     icon={<CloudSun size={14} />}
                                     value={battlefield.weather.name}
                                     remainingRounds={battlefield.weather.remainingRounds}
-                                    onChangeName={(name) => updateBattlefieldWeather('name', name)}
-                                    onChangeRounds={(rounds) => updateBattlefieldWeather('remainingRounds', rounds)}
+                                    onChangeName={(val) => updateBattlefieldWeather('name', val)}
+                                    onChangeRounds={(val) => updateBattlefieldWeather('remainingRounds', val)}
                                     extraEffects={battlefield.extraWeathers}
                                     onChangeExtras={(extras) => updateBattlefield('extraWeathers', extras)}
                                     category="weather"
-                                    placeholder="e.g. Rain, Harsh Sun, Sandstorm"
+                                    placeholder="e.g. Rain, Sun, Hail..."
                                 />
 
                                 <BattlefieldEffectCard
-                                    title="Active Terrain"
+                                    title="Terrain"
                                     icon={<Mountain size={14} />}
                                     value={battlefield.terrain.name}
                                     remainingRounds={battlefield.terrain.remainingRounds}
-                                    onChangeName={(name) => updateBattlefieldTerrain('name', name)}
-                                    onChangeRounds={(rounds) => updateBattlefieldTerrain('remainingRounds', rounds)}
+                                    onChangeName={(val) => updateBattlefieldTerrain('name', val)}
+                                    onChangeRounds={(val) => updateBattlefieldTerrain('remainingRounds', val)}
                                     extraEffects={battlefield.extraTerrains}
                                     onChangeExtras={(extras) => updateBattlefield('extraTerrains', extras)}
                                     category="terrain"
-                                    placeholder="e.g. Electric Terrain, Grassy Terrain"
+                                    placeholder="e.g. Electric Terrain, Grassy Terrain..."
                                 />
 
                                 <BattlefieldEffectCard
@@ -170,110 +147,23 @@ export function BattlefieldSection({
                                     icon={<Sparkles size={14} />}
                                     value={battlefield.other.name}
                                     remainingRounds={battlefield.other.remainingRounds}
-                                    onChangeName={(name) => updateBattlefieldOther('name', name)}
-                                    onChangeRounds={(rounds) => updateBattlefieldOther('remainingRounds', rounds)}
+                                    onChangeName={(val) => updateBattlefieldOther('name', val)}
+                                    onChangeRounds={(val) => updateBattlefieldOther('remainingRounds', val)}
                                     extraEffects={battlefield.extraOther}
                                     onChangeExtras={(extras) => updateBattlefield('extraOther', extras)}
                                     category="other"
-                                    placeholder="e.g. Gravity, Trick Room, Ion Deluge"
+                                    placeholder="e.g. Trick Room, Gravity..."
                                 />
                             </div>
 
                             {/* Split Stadium Pitch Grid: Player's Side | Pitch | Foe's Side */}
                             <div className="bo-stadium-split-grid">
-                                {/* Player's Side */}
-                                <div className="bo-side-panel bo-side-panel--player">
-                                    <h3 className="bo-side-title bo-side-title--player text-title-primary">
-                                        Player's Side
-                                    </h3>
-
-                                    {/* Force Fields */}
-                                    <div className="bo-field-group">
-                                        <div className="bo-field-group__header">
-                                            <span className="bo-field-label text-label">
-                                                <Shield size={14} /> Force Field
-                                            </span>
-                                            <span className="bo-rounds-label text-subtext">Remaining Rounds</span>
-                                        </div>
-                                        <div className="bo-field-group__row">
-                                            <input
-                                                type="text"
-                                                className="bo-input bo-input--underline text-label"
-                                                value={battlefield.playerSide.forceFields[0].name}
-                                                onChange={(e) => handlePlayerForceFieldChange(0, e.target.value)}
-                                                placeholder="e.g. Reflect, Light Screen"
-                                            />
-                                            <RemainingRoundsBoxes
-                                                value={battlefield.playerSide.forceFields[0].remainingRounds}
-                                                onChange={(val) => {
-                                                    const fields = [...battlefield.playerSide.forceFields] as [
-                                                        (typeof battlefield.playerSide.forceFields)[0],
-                                                        (typeof battlefield.playerSide.forceFields)[1]
-                                                    ];
-                                                    fields[0] = { ...fields[0], remainingRounds: val };
-                                                    updatePlayerSide('forceFields', fields);
-                                                }}
-                                                title="Player Force Field 1 Rounds"
-                                            />
-                                        </div>
-                                        <div className="bo-field-group__row">
-                                            <input
-                                                type="text"
-                                                className="bo-input bo-input--underline text-label"
-                                                value={battlefield.playerSide.forceFields[1].name}
-                                                onChange={(e) => handlePlayerForceFieldChange(1, e.target.value)}
-                                                placeholder="e.g. Safeguard, Tailwind"
-                                            />
-                                            <RemainingRoundsBoxes
-                                                value={battlefield.playerSide.forceFields[1].remainingRounds}
-                                                onChange={(val) => {
-                                                    const fields = [...battlefield.playerSide.forceFields] as [
-                                                        (typeof battlefield.playerSide.forceFields)[0],
-                                                        (typeof battlefield.playerSide.forceFields)[1]
-                                                    ];
-                                                    fields[1] = { ...fields[1], remainingRounds: val };
-                                                    updatePlayerSide('forceFields', fields);
-                                                }}
-                                                title="Player Force Field 2 Rounds"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Hazard & Cover subgrid */}
-                                    <div className="bo-side-subgrid">
-                                        <div className="bo-subfield">
-                                            <label className="bo-field-label text-label">Entry Hazard</label>
-                                            <input
-                                                type="text"
-                                                className="bo-input bo-input--underline text-label"
-                                                value={battlefield.playerSide.entryHazard}
-                                                onChange={(e) => updatePlayerSide('entryHazard', e.target.value)}
-                                                placeholder="e.g. Stealth Rock, Spikes"
-                                            />
-                                        </div>
-                                        <div className="bo-subfield">
-                                            <label className="bo-field-label text-label">Cover</label>
-                                            <input
-                                                type="text"
-                                                className="bo-input bo-input--underline text-label"
-                                                value={battlefield.playerSide.cover}
-                                                onChange={(e) => updatePlayerSide('cover', e.target.value)}
-                                                placeholder="e.g. Half Cover (+1 Def)"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="bo-subfield">
-                                        <label className="bo-field-label text-label">Other</label>
-                                        <input
-                                            type="text"
-                                            className="bo-input bo-input--underline text-label"
-                                            value={battlefield.playerSide.other}
-                                            onChange={(e) => updatePlayerSide('other', e.target.value)}
-                                            placeholder="e.g. Cheer, Safeguard"
-                                        />
-                                    </div>
-                                </div>
+                                <BattlefieldSidePanel
+                                    side="player"
+                                    title="Player's Side"
+                                    sideData={battlefield.playerSide}
+                                    onUpdateSide={updatePlayerSide}
+                                />
 
                                 {/* Center Stadium Graphic */}
                                 <div className="bo-center-pitch-panel">
@@ -287,97 +177,12 @@ export function BattlefieldSection({
                                     />
                                 </div>
 
-                                {/* Foe's Side */}
-                                <div className="bo-side-panel bo-side-panel--foe">
-                                    <h3 className="bo-side-title bo-side-title--foe text-title-primary">Foe's Side</h3>
-
-                                    {/* Force Fields */}
-                                    <div className="bo-field-group">
-                                        <div className="bo-field-group__header">
-                                            <span className="bo-field-label text-label">
-                                                <Shield size={14} /> Force Field
-                                            </span>
-                                            <span className="bo-rounds-label text-subtext">Remaining Rounds</span>
-                                        </div>
-                                        <div className="bo-field-group__row">
-                                            <input
-                                                type="text"
-                                                className="bo-input bo-input--underline text-label"
-                                                value={battlefield.foeSide.forceFields[0].name}
-                                                onChange={(e) => handleFoeForceFieldChange(0, e.target.value)}
-                                                placeholder="e.g. Light Screen, Protect"
-                                            />
-                                            <RemainingRoundsBoxes
-                                                value={battlefield.foeSide.forceFields[0].remainingRounds}
-                                                onChange={(val) => {
-                                                    const fields = [...battlefield.foeSide.forceFields] as [
-                                                        (typeof battlefield.foeSide.forceFields)[0],
-                                                        (typeof battlefield.foeSide.forceFields)[1]
-                                                    ];
-                                                    fields[0] = { ...fields[0], remainingRounds: val };
-                                                    updateFoeSide('forceFields', fields);
-                                                }}
-                                                title="Foe Force Field 1 Rounds"
-                                            />
-                                        </div>
-                                        <div className="bo-field-group__row">
-                                            <input
-                                                type="text"
-                                                className="bo-input bo-input--underline text-label"
-                                                value={battlefield.foeSide.forceFields[1].name}
-                                                onChange={(e) => handleFoeForceFieldChange(1, e.target.value)}
-                                                placeholder="e.g. Aurora Veil, Tailwind"
-                                            />
-                                            <RemainingRoundsBoxes
-                                                value={battlefield.foeSide.forceFields[1].remainingRounds}
-                                                onChange={(val) => {
-                                                    const fields = [...battlefield.foeSide.forceFields] as [
-                                                        (typeof battlefield.foeSide.forceFields)[0],
-                                                        (typeof battlefield.foeSide.forceFields)[1]
-                                                    ];
-                                                    fields[1] = { ...fields[1], remainingRounds: val };
-                                                    updateFoeSide('forceFields', fields);
-                                                }}
-                                                title="Foe Force Field 2 Rounds"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Hazard & Cover subgrid */}
-                                    <div className="bo-side-subgrid">
-                                        <div className="bo-subfield">
-                                            <label className="bo-field-label text-label">Entry Hazard</label>
-                                            <input
-                                                type="text"
-                                                className="bo-input bo-input--underline text-label"
-                                                value={battlefield.foeSide.entryHazard}
-                                                onChange={(e) => updateFoeSide('entryHazard', e.target.value)}
-                                                placeholder="e.g. Toxic Spikes, Sticky Web"
-                                            />
-                                        </div>
-                                        <div className="bo-subfield">
-                                            <label className="bo-field-label text-label">Cover</label>
-                                            <input
-                                                type="text"
-                                                className="bo-input bo-input--underline text-label"
-                                                value={battlefield.foeSide.cover}
-                                                onChange={(e) => updateFoeSide('cover', e.target.value)}
-                                                placeholder="e.g. Full Cover (+2 Def)"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="bo-subfield">
-                                        <label className="bo-field-label text-label">Other</label>
-                                        <input
-                                            type="text"
-                                            className="bo-input bo-input--underline text-label"
-                                            value={battlefield.foeSide.other}
-                                            onChange={(e) => updateFoeSide('other', e.target.value)}
-                                            placeholder="e.g. Safeguard, Mist"
-                                        />
-                                    </div>
-                                </div>
+                                <BattlefieldSidePanel
+                                    side="foe"
+                                    title="Foe's Side"
+                                    sideData={battlefield.foeSide}
+                                    onUpdateSide={updateFoeSide}
+                                />
                             </div>
                         </>
                     )}

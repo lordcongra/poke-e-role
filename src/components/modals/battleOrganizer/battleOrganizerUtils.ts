@@ -298,8 +298,10 @@ export const createDefaultBattlefield = (): BattlefieldData => ({
             { name: '', remainingRounds: 0 }
         ],
         entryHazard: '',
+        extraHazards: [],
         cover: '',
-        other: ''
+        other: '',
+        extraOther: []
     },
     foeSide: {
         forceFields: [
@@ -307,8 +309,10 @@ export const createDefaultBattlefield = (): BattlefieldData => ({
             { name: '', remainingRounds: 0 }
         ],
         entryHazard: '',
+        extraHazards: [],
         cover: '',
-        other: ''
+        other: '',
+        extraOther: []
     },
     playerTargets: '',
     foeTargets: '',

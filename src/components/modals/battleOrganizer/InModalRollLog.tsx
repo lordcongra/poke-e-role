@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
-import type { CombatantRowData, RollLogLayoutMode } from '../../../types/battleOrganizerTypes';
+import type { BattlefieldData, CombatantRowData, RollLogLayoutMode } from '../../../types/battleOrganizerTypes';
+import { useCharacterStore } from '../../../store/useCharacterStore';
 import { imageManager } from '../../../utils/graphics/imageManager';
 import { cropImageTransparencyUrl } from '../../../utils/graphics/imageCropUtils';
 import {
@@ -16,7 +17,8 @@ import {
     LayoutGrid,
     Type,
     Info,
-    Sparkles
+    Sparkles,
+    AlertTriangle
 } from 'lucide-react';
 import { parseRollLogEntry } from './battleOrganizerUtils';
 import { parseRollLabel } from '../../../utils/combat/rollLogParser';
@@ -43,6 +45,7 @@ export interface InModalRollLogProps {
     layoutMode?: RollLogLayoutMode;
     onCycleLayoutMode?: () => void;
     onActivateFieldEffect?: (moveName: string, isPlayerSide?: boolean) => void;
+    battlefield?: BattlefieldData;
 }
 
 export function InModalRollLog({
@@ -50,8 +53,12 @@ export function InModalRollLog({
     onMarkAction,
     layoutMode = 'floating',
     onCycleLayoutMode,
-    onActivateFieldEffect
+    onActivateFieldEffect,
+    battlefield
 }: InModalRollLogProps) {
+    const storeBattlefield = useCharacterStore((state) => state.activeBattlefield);
+    const activeBf = battlefield || storeBattlefield;
+    const [sideOverrides, setSideOverrides] = useState<Record<string, boolean>>({});
     const [rolls, setRolls] = useState<RollLogEntry[]>(() => {
         try {
             const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
@@ -562,22 +569,95 @@ export function InModalRollLog({
                                         (() => {
                                             const fieldDef = detectMoveFieldEffect(moveName || cleanLabel);
                                             if (!fieldDef) return null;
+
+                                            const defaultIsPlayerSide = matchedCombatant?.isPlayerSide ?? true;
+                                            const isPlayerSide =
+                                                sideOverrides[r.id] !== undefined
+                                                    ? sideOverrides[r.id]
+                                                    : defaultIsPlayerSide;
+
+                                            // Precondition check for Aurora Veil: Requires Hail, Snow, or Snowy active weather
+                                            const isAuroraVeil = fieldDef.moveName.toLowerCase().includes('aurora veil');
+                                            let auroraVeilBlocked = false;
+                                            if (isAuroraVeil) {
+                                                const wName = (activeBf?.weather?.name || '').toLowerCase();
+                                                const wRounds = activeBf?.weather?.remainingRounds ?? 0;
+                                                const primaryHail = (wRounds > 0 || wRounds === -1) && /\b(hail|snow|snowy)\b/.test(wName);
+                                                const extraHail = Boolean(
+                                                    activeBf?.extraWeathers?.some((w) => {
+                                                        const n = (w?.name || '').toLowerCase();
+                                                        const rCount = w?.remainingRounds ?? 0;
+                                                        return (rCount > 0 || rCount === -1) && /\b(hail|snow|snowy)\b/.test(n);
+                                                    })
+                                                );
+                                                if (!primaryHail && !extraHail) {
+                                                    auroraVeilBlocked = true;
+                                                }
+                                            }
+
                                             return (
                                                 <div className="in-modal-roll-log__field-effect-bar">
-                                                    <button
-                                                        type="button"
-                                                        className="in-modal-roll-log__field-btn"
-                                                        onClick={() =>
-                                                            onActivateFieldEffect(
-                                                                fieldDef.moveName,
-                                                                matchedCombatant?.isPlayerSide ?? true
-                                                            )
-                                                        }
-                                                        title={`Activate ${fieldDef.moveName} (${fieldDef.rounds} Rounds) on the Battlefield`}
-                                                    >
-                                                        <Sparkles size={14} /> Activate {fieldDef.moveName} (
-                                                        {fieldDef.rounds} Rounds)
-                                                    </button>
+                                                    {/* Aurora Veil Precondition Warning Banner */}
+                                                    {isAuroraVeil && auroraVeilBlocked && (
+                                                        <div className="in-modal-roll-log__aurora-warning">
+                                                            <AlertTriangle size={13} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
+                                                            [WARNING] Aurora Veil can only be activated under Hail or Snowy weather!
+                                                        </div>
+                                                    )}
+
+                                                    <div className="in-modal-roll-log__field-action-row">
+                                                        {/* Ally / Foe side override toggle */}
+                                                        {fieldDef.category === 'forceField' && (
+                                                            <div className="in-modal-roll-log__field-side-toggle">
+                                                                <button
+                                                                    type="button"
+                                                                    className={`in-modal-roll-log__side-btn in-modal-roll-log__side-btn--ally ${isPlayerSide ? 'active' : ''}`}
+                                                                    onClick={() =>
+                                                                        setSideOverrides((prev) => ({
+                                                                            ...prev,
+                                                                            [r.id]: true
+                                                                        }))
+                                                                    }
+                                                                    title="Apply effect to Ally side"
+                                                                >
+                                                                    Ally
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    className={`in-modal-roll-log__side-btn in-modal-roll-log__side-btn--foe ${!isPlayerSide ? 'active' : ''}`}
+                                                                    onClick={() =>
+                                                                        setSideOverrides((prev) => ({
+                                                                            ...prev,
+                                                                            [r.id]: false
+                                                                        }))
+                                                                    }
+                                                                    title="Apply effect to Foe side"
+                                                                >
+                                                                    Foe
+                                                                </button>
+                                                            </div>
+                                                        )}
+
+                                                        <button
+                                                            type="button"
+                                                            className={`in-modal-roll-log__field-btn ${auroraVeilBlocked ? 'in-modal-roll-log__field-btn--disabled' : ''}`}
+                                                            disabled={auroraVeilBlocked}
+                                                            onClick={() =>
+                                                                onActivateFieldEffect(
+                                                                    fieldDef.moveName,
+                                                                    isPlayerSide
+                                                                )
+                                                            }
+                                                            title={
+                                                                auroraVeilBlocked
+                                                                    ? 'Aurora Veil can only be activated under Hail or Snowy weather!'
+                                                                    : `Activate ${fieldDef.moveName} (${fieldDef.rounds} Rounds) on ${isPlayerSide ? "Ally's" : "Foe's"} Side`
+                                                            }
+                                                        >
+                                                            <Sparkles size={14} /> Activate {fieldDef.moveName} (
+                                                            {fieldDef.rounds} Rounds)
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             );
                                         })()}

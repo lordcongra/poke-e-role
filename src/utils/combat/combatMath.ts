@@ -106,7 +106,12 @@ export function getStatusPenalties(state: CharacterState) {
     return { confusionPenalty, paralysisDexterityPenalty, isAsleep, isFrozen };
 }
 
-export function calculateStatTotal(statKey: string, state: CharacterState, itemBuffs: CombatBonuses): number {
+export function calculateStatTotal(
+    statKey: string,
+    state: CharacterState,
+    itemBuffs: CombatBonuses,
+    factorTags?: string[]
+): number {
     if (!statKey) return 0;
     const normalizedStat = ATTRIBUTE_MAPPING[statKey] || statKey.toLowerCase().trim();
     if (!normalizedStat || normalizedStat === 'none') return 0;
@@ -114,10 +119,27 @@ export function calculateStatTotal(statKey: string, state: CharacterState, itemB
 
     if (Object.values(CombatStat).includes(normalizedStat as CombatStat)) {
         const statistic = state.stats[normalizedStat as CombatStat];
-        return Math.max(
-            1,
-            statistic.base + statistic.rank + statistic.buff - statistic.debuff + (itemBuffs.stats[normalizedStat] || 0)
-        );
+        let total =
+            statistic.base + statistic.rank + statistic.buff - statistic.debuff + (itemBuffs.stats[normalizedStat] || 0);
+
+        if (normalizedStat === CombatStat.DEX && state.activeBattlefield) {
+            const side = state.identity.isNPC ? state.activeBattlefield.foeSide : state.activeBattlefield.playerSide;
+            const hasTailwind = Boolean(
+                side?.forceFields?.some(
+                    (ff) =>
+                        ff?.name?.toLowerCase().includes('tailwind') &&
+                        (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                )
+            );
+            if (hasTailwind) {
+                total += 2;
+                if (factorTags) {
+                    factorTags.push('Tailwind (+2 Dexterity)');
+                }
+            }
+        }
+
+        return Math.max(1, total);
     }
 
     if (Object.values(SocialStat).includes(normalizedStat as SocialStat)) {
@@ -152,7 +174,8 @@ export function calculateSkillTotal(skillKey: string, state: CharacterState, ite
 export function getWeatherDamageBonus(
     moveType: string | undefined,
     battlefield: CharacterState['activeBattlefield'],
-    isHalfHp?: boolean
+    isHalfHp?: boolean,
+    isNPC?: boolean
 ): { diceBonus: number; flatPenalty: number; tag: string } {
     if (!moveType || !battlefield) return { diceBonus: 0, flatPenalty: 0, tag: '' };
 
@@ -229,6 +252,7 @@ export function getWeatherDamageBonus(
 
     // 2. Terrain damage bonuses (+1 die to matching moves for Electric, Grassy, and Psychic Terrain)
     const activeTerrains = getEffectsByCategory(battlefield, 'terrain');
+    let hasGlobalGrassy = false;
     for (const t of activeTerrains) {
         const cleanTerrain = (t.name || '').trim().toLowerCase();
         if (cleanTerrain.includes('electric')) {
@@ -237,6 +261,7 @@ export function getWeatherDamageBonus(
                 tagDescriptions.push('Electric Terrain (+1 Dice to Electric Damage Pool)');
             }
         } else if (cleanTerrain.includes('grassy')) {
+            hasGlobalGrassy = true;
             if (cleanType === 'grass') {
                 diceBonus += 1;
                 tagDescriptions.push('Grassy Terrain (+1 Dice to Grass Damage Pool)');
@@ -245,6 +270,36 @@ export function getWeatherDamageBonus(
             if (cleanType === 'psychic') {
                 diceBonus += 1;
                 tagDescriptions.push('Psychic Terrain (+1 Dice to Psychic Damage Pool)');
+            }
+        }
+    }
+
+    // Side Grassy Terrain check (applies only to combatants on that side)
+    if (!hasGlobalGrassy && cleanType === 'grass' && battlefield) {
+        let effectiveIsNpc = isNPC;
+        if (effectiveIsNpc === undefined) {
+            try {
+                effectiveIsNpc = useCharacterStore.getState().identity.isNPC;
+            } catch {
+                effectiveIsNpc = false;
+            }
+        }
+        const side = effectiveIsNpc ? battlefield.foeSide : battlefield.playerSide;
+        if (side) {
+            const sideHasGrassy = Boolean(
+                side.forceFields?.some(
+                    (ff) =>
+                        (ff?.name || '').toLowerCase().includes('grassy') &&
+                        (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                ) ||
+                (side.other || '').toLowerCase().includes('grassy') ||
+                side.extraOther?.some((o) => o.toLowerCase().includes('grassy')) ||
+                (side.entryHazard || '').toLowerCase().includes('grassy') ||
+                side.extraHazards?.some((h) => h.toLowerCase().includes('grassy'))
+            );
+            if (sideHasGrassy) {
+                diceBonus += 1;
+                tagDescriptions.push('Grassy Terrain (+1 Dice to Grass Damage Pool)');
             }
         }
     }

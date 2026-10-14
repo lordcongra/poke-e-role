@@ -117,6 +117,19 @@ export function DerivedBoard() {
     const clashPhysical = strTotal + calculateSkillTotal(Skill.CLASH, fullState, inventoryModifiers) + rankSkillBonus;
     const clashSpecial = speTotal + calculateSkillTotal(Skill.CLASH, fullState, inventoryModifiers) + rankSkillBonus;
 
+    const isGravityActive = Boolean(
+        activeBattlefield &&
+            ((activeBattlefield.other?.name?.toLowerCase().includes('gravity') &&
+                (activeBattlefield.other.remainingRounds > 0 || activeBattlefield.other.remainingRounds === -1)) ||
+                activeBattlefield.extraOther?.some(
+                    (o) =>
+                        o.name.toLowerCase().includes('gravity') &&
+                        (o.remainingRounds > 0 || o.remainingRounds === -1)
+                ))
+    );
+    const baseEvade = dexTotal + calculateSkillTotal(Skill.EVASION, fullState, inventoryModifiers) + rankSkillBonus;
+    const finalEvade = isGravityActive ? Math.max(1, baseEvade - 2) : baseEvade;
+
     return (
         <CollapsingSection title="INFO">
             <div className="derived-board__container">
@@ -251,17 +264,29 @@ export function DerivedBoard() {
                                 EVADE{' '}
                                 <TooltipIcon
                                     onClick={() =>
-                                        setTooltipInfo({ title: 'Evade', desc: 'Evade: Dexterity + Evasion' })
+                                        setTooltipInfo({
+                                            title: 'Evade',
+                                            desc: isGravityActive
+                                                ? 'Evade: Dexterity + Evasion (Gravity: -2 Dice)'
+                                                : 'Evade: Dexterity + Evasion'
+                                        })
                                     }
                                 />
                             </div>
                             <div
                                 className="derived-board__box-content text-label"
-                                style={{ color: 'var(--text-main)' }}
+                                style={{ color: 'var(--text-main)', display: 'flex', flexDirection: 'column', gap: '2px' }}
                             >
-                                {dexTotal +
-                                    calculateSkillTotal(Skill.EVASION, fullState, inventoryModifiers) +
-                                    rankSkillBonus}
+                                <span>{finalEvade}</span>
+                                {isGravityActive && (
+                                    <span
+                                        className="text-subtext"
+                                        style={{ fontSize: '0.65rem', color: 'var(--semantic-danger, #ef5350)', fontWeight: 600 }}
+                                        title="Gravity active: -2 Evasion Dice"
+                                    >
+                                        [Gravity -2]
+                                    </span>
+                                )}
                             </div>
                         </div>
 

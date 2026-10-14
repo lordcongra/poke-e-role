@@ -24,30 +24,33 @@ export function RemainingRoundsBoxes({
     };
 
     const handleIncrement = () => {
-        onChange(value + 1);
+        onChange(value === -1 ? 1 : value + 1);
     };
 
     const handleDecrement = () => {
+        if (value <= 0 || value === -1) return;
         onChange(Math.max(0, value - 1));
     };
 
-    const totalBoxes = Math.max(maxBoxes, value);
+    const totalBoxes = value === -1 ? maxBoxes : Math.max(maxBoxes, value);
 
     return (
-        <div className="bo-rounds-boxes" title={`${title}: ${value} rounds remaining`}>
+        <div className="bo-rounds-boxes" title={`${title}: ${value === -1 ? 'Whole Scene (∞)' : `${value} rounds remaining`}`}>
             <div className="bo-rounds-boxes__row">
                 {Array.from({ length: totalBoxes }, (_, index) => {
-                    const isFilled = index < value;
+                    const isFilled = value === -1 || index < value;
                     return (
                         <button
                             key={index}
                             type="button"
                             className={`bo-rounds-boxes__box ${isFilled ? 'bo-rounds-boxes__box--filled' : 'bo-rounds-boxes__box--empty'}`}
                             onClick={() => handleBoxClick(index)}
-                            title={`Set to ${index + 1} remaining round${index > 0 ? 's' : ''}`}
+                            title={value === -1 ? `Set to ${index + 1} remaining rounds` : `Set to ${index + 1} remaining round${index > 0 ? 's' : ''}`}
                             aria-label={`Round slot ${index + 1} ${isFilled ? 'active' : 'inactive'}`}
                         >
-                            {isFilled ? (
+                            {value === -1 ? (
+                                <span className="bo-rounds-boxes__check">∞</span>
+                            ) : isFilled ? (
                                 <span className="bo-rounds-boxes__check">✓</span>
                             ) : (
                                 <span className="bo-rounds-boxes__num">{index + 1}</span>
@@ -62,16 +65,16 @@ export function RemainingRoundsBoxes({
                     type="button"
                     className="bo-rounds-boxes__btn"
                     onClick={handleDecrement}
-                    disabled={value <= 0}
+                    disabled={value <= 0 || value === -1}
                     title="Decrease remaining rounds (-1)"
                     aria-label="Decrease rounds"
                 >
                     <Minus size={10} />
                 </button>
                 <span
-                    className={`bo-rounds-boxes__count ${value > 0 ? 'bo-rounds-boxes__count--active' : 'bo-rounds-boxes__count--zero'}`}
+                    className={`bo-rounds-boxes__count ${value > 0 || value === -1 ? 'bo-rounds-boxes__count--active' : 'bo-rounds-boxes__count--zero'}`}
                 >
-                    {value}
+                    {value === -1 ? 'Scene' : value}
                 </span>
                 <button
                     type="button"

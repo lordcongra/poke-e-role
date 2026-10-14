@@ -99,7 +99,8 @@ export function MovesTable() {
         isCrit: boolean,
         effectiveness: number,
         reduction: number,
-        override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number }
+        override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number },
+        fieldFactors?: string[]
     ) => {
         if (targetingMove) {
             executeDamageRoll(
@@ -109,7 +110,8 @@ export function MovesTable() {
                 isCrit,
                 effectiveness,
                 reduction,
-                override
+                override,
+                fieldFactors
             );
         }
         setTargetingMove(null);

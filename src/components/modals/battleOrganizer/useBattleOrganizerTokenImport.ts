@@ -114,7 +114,7 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                                 actions,
                                 evadeUsed,
                                 clashUsed,
-                                isPlayerSide: true,
+                                isPlayerSide: !isNPC,
                                 hpCurr,
                                 hpMax,
                                 willCurr,
@@ -271,9 +271,17 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                                 combatants: mergedCombatants
                             };
 
+                            const playerTargets = mergedCombatants.filter((c) => c.isPlayerSide && !c.isFainted).length;
+                            const foeTargets = mergedCombatants.filter((c) => !c.isPlayerSide && !c.isFainted).length;
+
                             return {
                                 ...prev,
-                                rounds: prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r))
+                                rounds: prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r)),
+                                battlefield: {
+                                    ...prev.battlefield,
+                                    playerTargets,
+                                    foeTargets
+                                }
                             };
                         }
 
@@ -283,9 +291,17 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                             combatants: combatantRows
                         };
 
+                        const playerTargets = combatantRows.filter((c) => c.isPlayerSide && !c.isFainted).length;
+                        const foeTargets = combatantRows.filter((c) => !c.isPlayerSide && !c.isFainted).length;
+
                         return {
                             ...prev,
-                            rounds: prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r))
+                            rounds: prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r)),
+                            battlefield: {
+                                ...prev.battlefield,
+                                playerTargets,
+                                foeTargets
+                            }
                         };
                     });
 

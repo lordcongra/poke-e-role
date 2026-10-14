@@ -17,7 +17,7 @@ export function updateBattlefieldEffectRounds(
     targetItem: ActiveFieldEffectItem,
     newRounds: number
 ): BattlefieldData {
-    const rounds = Math.max(0, newRounds);
+    const rounds = newRounds === -1 ? -1 : Math.max(0, newRounds);
 
     if (targetItem.category === 'weather') {
         if (!targetItem.isExtra) {
@@ -32,7 +32,7 @@ export function updateBattlefieldEffectRounds(
         } else if (targetItem.extraIndex !== undefined && battlefield.extraWeathers) {
             const nextExtras = battlefield.extraWeathers
                 .map((w, idx) => (idx === targetItem.extraIndex ? { ...w, remainingRounds: rounds } : w))
-                .filter((w) => w.remainingRounds > 0 && w.name.trim().length > 0);
+                .filter((w) => (w.remainingRounds > 0 || w.remainingRounds === -1) && w.name.trim().length > 0);
             return {
                 ...battlefield,
                 extraWeathers: nextExtras
@@ -51,7 +51,7 @@ export function updateBattlefieldEffectRounds(
         } else if (targetItem.extraIndex !== undefined && battlefield.extraTerrains) {
             const nextExtras = battlefield.extraTerrains
                 .map((t, idx) => (idx === targetItem.extraIndex ? { ...t, remainingRounds: rounds } : t))
-                .filter((t) => t.remainingRounds > 0 && t.name.trim().length > 0);
+                .filter((t) => (t.remainingRounds > 0 || t.remainingRounds === -1) && t.name.trim().length > 0);
             return {
                 ...battlefield,
                 extraTerrains: nextExtras
@@ -70,7 +70,7 @@ export function updateBattlefieldEffectRounds(
         } else if (targetItem.extraIndex !== undefined && battlefield.extraOther) {
             const nextExtras = battlefield.extraOther
                 .map((o, idx) => (idx === targetItem.extraIndex ? { ...o, remainingRounds: rounds } : o))
-                .filter((o) => o.remainingRounds > 0 && o.name.trim().length > 0);
+                .filter((o) => (o.remainingRounds > 0 || o.remainingRounds === -1) && o.name.trim().length > 0);
             return {
                 ...battlefield,
                 extraOther: nextExtras

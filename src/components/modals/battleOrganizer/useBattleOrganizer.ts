@@ -144,12 +144,25 @@ export function useBattleOrganizer() {
             updateState((prev) => {
                 const round = prev.rounds[prev.activeRoundIndex];
                 if (!round) return prev;
+                const updatedCombatants = round.combatants.map((c) => (c.id === updated.id ? updated : c));
                 const updatedRound: BattleRoundData = {
                     ...round,
-                    combatants: round.combatants.map((c) => (c.id === updated.id ? updated : c))
+                    combatants: updatedCombatants
                 };
                 const newRounds = prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r));
-                return { ...prev, rounds: newRounds };
+
+                let nextBf = prev.battlefield;
+                if (!prevCombatant || prevCombatant.isPlayerSide !== updated.isPlayerSide || prevCombatant.isFainted !== updated.isFainted) {
+                    const playerTargets = updatedCombatants.filter((c) => c.isPlayerSide && !c.isFainted).length;
+                    const foeTargets = updatedCombatants.filter((c) => !c.isPlayerSide && !c.isFainted).length;
+                    nextBf = {
+                        ...prev.battlefield,
+                        playerTargets,
+                        foeTargets
+                    };
+                }
+
+                return { ...prev, rounds: newRounds, battlefield: nextBf };
             });
 
             if (prevCombatant) {

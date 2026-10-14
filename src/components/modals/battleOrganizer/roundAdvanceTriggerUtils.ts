@@ -125,7 +125,7 @@ export function resolveCombatantRoundTriggers(
         const n = (w.name || '').toLowerCase();
         return n.includes('snow') || n.includes('hail');
     });
-    const hasGrassy = activeTerrains.some((t) => (t.name || '').toLowerCase().includes('grassy'));
+    const hasGlobalGrassy = activeTerrains.some((t) => (t.name || '').toLowerCase().includes('grassy'));
 
     // Sort combatants in initiative order (descending)
     const sorted = [...combatants].sort((a, b) => {
@@ -230,7 +230,19 @@ export function resolveCombatantRoundTriggers(
             const reasons: string[] = [];
             let healSum = 0;
 
-            // Grassy Terrain (applies to grounded Pokémon; Flying is airborne)
+            // Grassy Terrain (applies to grounded Pokémon on Grassy Terrain; Flying is airborne)
+            const cSide = c.isPlayerSide ? battlefield?.playerSide : battlefield?.foeSide;
+            const sideHasGrassy = Boolean(
+                cSide?.forceFields?.some(
+                    (ff) => (ff?.name || '').toLowerCase().includes('grassy') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                ) ||
+                (cSide?.other || '').toLowerCase().includes('grassy') ||
+                cSide?.extraOther?.some((o) => o.toLowerCase().includes('grassy')) ||
+                (cSide?.entryHazard || '').toLowerCase().includes('grassy') ||
+                cSide?.extraHazards?.some((h) => h.toLowerCase().includes('grassy'))
+            );
+            const hasGrassy = hasGlobalGrassy || sideHasGrassy;
+
             if (hasGrassy) {
                 if (cleanTypes.includes('flying')) {
                     // Flying type is airborne -> not grounded

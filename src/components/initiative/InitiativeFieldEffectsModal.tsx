@@ -49,7 +49,8 @@ export function InitiativeFieldEffectsModal({
 
     const handleStepRounds = (item: ActiveFieldEffectItem, delta: number) => {
         if (!activeBattlefield) return;
-        const nextRounds = Math.max(0, item.remainingRounds + delta);
+        if (item.remainingRounds === -1 && delta < 0) return;
+        const nextRounds = item.remainingRounds === -1 ? (delta > 0 ? 1 : -1) : Math.max(0, item.remainingRounds + delta);
         const updated = updateBattlefieldEffectRounds(activeBattlefield, item, nextRounds);
         syncBattlefieldUpdate(updated);
     };
@@ -141,16 +142,23 @@ export function InitiativeFieldEffectsModal({
                                                                 type="button"
                                                                 className="init-field-stepper__btn"
                                                                 onClick={() => handleStepRounds(item, -1)}
-                                                                title="Decrease Remaining Rounds"
+                                                                disabled={item.remainingRounds === -1 || item.remainingRounds <= 0}
+                                                                title={item.remainingRounds === -1 ? 'Whole Scene effect (Cannot decrease below Scene)' : 'Decrease Remaining Rounds'}
                                                                 aria-label="Decrease Rounds"
                                                             >
                                                                 <Minus size={12} />
                                                             </button>
                                                             <span className="init-field-stepper__value text-value-highlight">
-                                                                {item.remainingRounds}{' '}
-                                                                <span className="init-field-stepper__unit">
-                                                                    {item.remainingRounds === 1 ? 'Rnd' : 'Rnds'}
-                                                                </span>
+                                                                {item.remainingRounds === -1 ? (
+                                                                    'Scene'
+                                                                ) : (
+                                                                    <>
+                                                                        {item.remainingRounds}{' '}
+                                                                        <span className="init-field-stepper__unit">
+                                                                            {item.remainingRounds === 1 ? 'Rnd' : 'Rnds'}
+                                                                        </span>
+                                                                    </>
+                                                                )}
                                                             </span>
                                                             <button
                                                                 type="button"
@@ -175,10 +183,16 @@ export function InitiativeFieldEffectsModal({
                                                     </div>
                                                 ) : (
                                                     <div className="init-field-card__readonly-rounds text-value-highlight">
-                                                        {item.remainingRounds}{' '}
-                                                        <span className="init-field-stepper__unit">
-                                                            {item.remainingRounds === 1 ? 'Rnd' : 'Rnds'}
-                                                        </span>
+                                                        {item.remainingRounds === -1 ? (
+                                                            'Scene'
+                                                        ) : (
+                                                            <>
+                                                                {item.remainingRounds}{' '}
+                                                                <span className="init-field-stepper__unit">
+                                                                    {item.remainingRounds === 1 ? 'Rnd' : 'Rnds'}
+                                                                </span>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
