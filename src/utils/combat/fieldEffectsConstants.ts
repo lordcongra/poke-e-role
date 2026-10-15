@@ -340,14 +340,7 @@ export const MOVE_FIELD_EFFECT_MAP: MoveFieldEffectDefinition[] = [
     { moveName: 'Stone Axe', effectName: 'Stealth Rock', category: 'entryHazard', rounds: -1 }
 ];
 
-export const CANONICAL_HAZARDS = [
-    'Stealth Rock',
-    'Spikes',
-    'Toxic Spikes',
-    'Sticky Web',
-    'Ceaseless Edge',
-    'Stone Axe'
-];
+export const CANONICAL_HAZARDS = ['Stealth Rock', 'Spikes', 'Toxic Spikes', 'Sticky Web'];
 
 /** @deprecated Deprecated in favor of freeform text input in side panels */
 export const CANONICAL_SIDE_OTHER: string[] = [];

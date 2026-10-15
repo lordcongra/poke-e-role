@@ -1,7 +1,7 @@
 import type { CharacterState } from '../../../store/storeTypes';
 import { checkCondition } from '../../../utils/tagParser/conditionChecker';
 import { getAbilityText } from '../../../utils/combat/combatUtils';
-import { getEffectsByCategory, getAllActiveFieldEffects } from '../../../utils/combat/fieldEffectsData';
+import { getAllActiveFieldEffects } from '../../../utils/combat/fieldEffectsData';
 
 export interface RoundEndTrigger {
     id: string;
@@ -135,21 +135,38 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
         }
     });
 
-    // 4. Inspect Active Grassy Terrains across all terrain slots
-    const activeTerrains = getEffectsByCategory(state.activeBattlefield, 'terrain');
-    activeTerrains.forEach((t, idx) => {
-        if (t.name?.toLowerCase().includes('grassy')) {
+    // 4. Inspect Active Grassy Terrain for character's side: In Pokerole, Grassy Terrain healing (+1 HP) ONLY applies to the side it is on
+    if (state.activeBattlefield) {
+        const side = state.identity.isNPC ? state.activeBattlefield.foeSide : state.activeBattlefield.playerSide;
+        const sideHasGrassy = Boolean(
+            side?.forceFields?.some(
+                (ff) =>
+                    (ff?.name || '').toLowerCase().includes('grassy') &&
+                    (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+            ) ||
+            side?.extraForceFields?.some(
+                (ff) =>
+                    (ff?.name || '').toLowerCase().includes('grassy') &&
+                    (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+            ) ||
+            (side?.other || '').toLowerCase().includes('grassy') ||
+            side?.extraOther?.some((o) => o.toLowerCase().includes('grassy')) ||
+            (side?.entryHazard || '').toLowerCase().includes('grassy') ||
+            side?.extraHazards?.some((h) => h.toLowerCase().includes('grassy'))
+        );
+
+        if (sideHasGrassy) {
             triggers.push({
-                id: `grassy-terrain-heal-${idx}`,
-                source: t.name || 'Grassy Terrain',
+                id: 'grassy-terrain-heal-side',
+                source: 'Grassy Terrain',
                 type: 'healHp',
                 amount: 1,
-                promptText: `${t.name || 'Grassy Terrain'} (Active): Restore 1 HP?`,
+                promptText: 'Grassy Terrain (Active): Restore 1 HP?',
                 conditionText: 'Grassy Terrain',
                 checked: true
             });
         }
-    });
+    }
 
     // 5. Inspect tags on all active custom field effects
     if (state.activeBattlefield && state.roomCustomFieldEffects) {

@@ -115,7 +115,6 @@ export function resolveCombatantRoundTriggers(
     charDataMap: Map<string, CombatantCharacterData>
 ): CombatantRoundTriggerInfo[] {
     const activeWeathers = getEffectsByCategory(battlefield, 'weather');
-    const activeTerrains = getEffectsByCategory(battlefield, 'terrain');
 
     const hasSandstorm = activeWeathers.some((w) => (w.name || '').toLowerCase().includes('sand'));
     const hasHail = activeWeathers.some((w) => (w.name || '').toLowerCase().includes('hail'));
@@ -125,7 +124,6 @@ export function resolveCombatantRoundTriggers(
         const n = (w.name || '').toLowerCase();
         return n.includes('snow') || n.includes('hail');
     });
-    const hasGlobalGrassy = activeTerrains.some((t) => (t.name || '').toLowerCase().includes('grassy'));
 
     // Sort combatants in initiative order (descending)
     const sorted = [...combatants].sort((a, b) => {
@@ -182,19 +180,36 @@ export function resolveCombatantRoundTriggers(
         } else if (hasSandstorm) {
             hasDamageTrigger = true;
             damageAmount = 1;
+            const hasSandstormImmunityAbility =
+                abilityActive &&
+                (['sand rush', 'sand force', 'overcoat', 'magic guard'].includes(abilityLower) ||
+                    /immune:\s*(?:weather\s*dmg|sandstorm)/i.test(abilityTags));
+
             if (cleanTypes.some((t) => ['rock', 'ground', 'steel'].includes(t))) {
                 isDamageImmune = true;
                 const matchType = types.find((t) => ['rock', 'ground', 'steel'].includes(t.toLowerCase()));
                 damageImmuneReason = `Immune (${matchType || 'Type'})`;
+            } else if (hasSandstormImmunityAbility) {
+                isDamageImmune = true;
+                damageImmuneReason = 'Immune (Ability)';
             } else {
                 damageReason = 'Sandstorm (1 Dmg)';
             }
         } else if (hasHail) {
             hasDamageTrigger = true;
             damageAmount = 1;
+            const hasHailImmunityAbility =
+                abilityActive &&
+                (['overcoat', 'magic guard', 'ice body'].includes(abilityLower) ||
+                    hasIceBody ||
+                    /immune:\s*(?:weather\s*dmg|hail)/i.test(abilityTags));
+
             if (cleanTypes.includes('ice')) {
                 isDamageImmune = true;
                 damageImmuneReason = 'Immune (Ice)';
+            } else if (hasHailImmunityAbility) {
+                isDamageImmune = true;
+                damageImmuneReason = 'Immune (Ability)';
             } else {
                 damageReason = 'Hail (1 Dmg)';
             }
@@ -230,10 +245,15 @@ export function resolveCombatantRoundTriggers(
             const reasons: string[] = [];
             let healSum = 0;
 
-            // Grassy Terrain (applies to grounded Pokémon on Grassy Terrain; Flying is airborne)
+            // Grassy Terrain: In Pokerole, Grassy Terrain (+1 HP) ONLY applies to grounded Pokémon on the side that has it
             const cSide = c.isPlayerSide ? battlefield?.playerSide : battlefield?.foeSide;
             const sideHasGrassy = Boolean(
                 cSide?.forceFields?.some(
+                    (ff) =>
+                        (ff?.name || '').toLowerCase().includes('grassy') &&
+                        (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                ) ||
+                cSide?.extraForceFields?.some(
                     (ff) =>
                         (ff?.name || '').toLowerCase().includes('grassy') &&
                         (ff.remainingRounds > 0 || ff.remainingRounds === -1)
@@ -243,9 +263,8 @@ export function resolveCombatantRoundTriggers(
                 (cSide?.entryHazard || '').toLowerCase().includes('grassy') ||
                 cSide?.extraHazards?.some((h) => h.toLowerCase().includes('grassy'))
             );
-            const hasGrassy = hasGlobalGrassy || sideHasGrassy;
 
-            if (hasGrassy) {
+            if (sideHasGrassy) {
                 if (cleanTypes.includes('flying')) {
                     // Flying type is airborne -> not grounded
                 } else {
@@ -279,7 +298,7 @@ export function resolveCombatantRoundTriggers(
                 if (c.hpCurr !== undefined && c.hpMax !== undefined && c.hpCurr >= c.hpMax) {
                     healingIneligibleReason = 'Full HP';
                 }
-            } else if (hasGrassy && cleanTypes.includes('flying')) {
+            } else if (sideHasGrassy && cleanTypes.includes('flying')) {
                 hasHealingTrigger = true;
                 isHealingIneligible = true;
                 healingIneligibleReason = 'Airborne (Flying)';

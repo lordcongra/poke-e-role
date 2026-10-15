@@ -3,6 +3,8 @@ import { ChevronDown, MapPin, CloudSun, Mountain, Sparkles, Eye, EyeOff } from '
 import { BattlefieldPitch } from './BattlefieldPitch';
 import { BattlefieldEffectCard } from './BattlefieldEffectCard';
 import { BattlefieldSidePanel } from './BattlefieldSidePanel';
+import { GrassyTerrainSideModal, type GrassySideChoice } from './GrassyTerrainSideModal';
+import { applyForceFieldToSide } from './battlefieldPresetUtils';
 import type {
     BattlefieldData,
     BattleOrganizerTimerEffect,
@@ -49,6 +51,23 @@ export function BattlefieldSection({
     rollLogMode,
     renderRollLog
 }: BattlefieldSectionProps) {
+    const [isGrassyModalOpen, setIsGrassyModalOpen] = React.useState(false);
+
+    const handleApplyGrassyTerrain = (sideChoice: GrassySideChoice) => {
+        const rounds = 4;
+        updateBattlefieldTerrain('name', 'Grassy Terrain');
+        updateBattlefieldTerrain('remainingRounds', rounds);
+
+        if (sideChoice === 'player' || sideChoice === 'both') {
+            const updated = applyForceFieldToSide(battlefield.playerSide, 'Grassy Terrain', rounds);
+            updateBattlefield('playerSide', updated);
+        }
+        if (sideChoice === 'foe' || sideChoice === 'both') {
+            const updated = applyForceFieldToSide(battlefield.foeSide, 'Grassy Terrain', rounds);
+            updateBattlefield('foeSide', updated);
+        }
+    };
+
     return (
         <div className={rollLogMode === 'battlefield-nested' ? 'bo-battlefield-nest-row' : 'bo-battlefield-wrap'}>
             <div
@@ -138,6 +157,7 @@ export function BattlefieldSection({
                                     onChangeExtras={(extras) => updateBattlefield('extraTerrains', extras)}
                                     category="terrain"
                                     placeholder="e.g. Electric Terrain, Grassy Terrain..."
+                                    onTriggerGrassyModal={() => setIsGrassyModalOpen(true)}
                                 />
 
                                 <BattlefieldEffectCard
@@ -189,6 +209,11 @@ export function BattlefieldSection({
             {rollLogMode === 'battlefield-nested' && renderRollLog && (
                 <div className="bo-battlefield-nest-sidebar">{renderRollLog('battlefield-nested')}</div>
             )}
+            <GrassyTerrainSideModal
+                isOpen={isGrassyModalOpen}
+                onClose={() => setIsGrassyModalOpen(false)}
+                onApply={handleApplyGrassyTerrain}
+            />
         </div>
     );
 }

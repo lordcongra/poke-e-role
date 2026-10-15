@@ -206,9 +206,31 @@ export function checkCondition(
             if (cond === 'electric terrain' || cond === 'electric') {
                 if (terrainName.includes('electric')) return true;
             }
-            // Grassy Terrain
+            // Grassy Terrain (applies only to combatants on the side that has Grassy Terrain)
             if (cond === 'grassy terrain' || cond === 'grassy') {
-                if (terrainName.includes('grassy')) return true;
+                try {
+                    const isNpc = useCharacterStore.getState().identity.isNPC;
+                    const side = isNpc ? activeBattlefield?.foeSide : activeBattlefield?.playerSide;
+                    const sideHasGrassy = Boolean(
+                        side?.forceFields?.some(
+                            (ff) =>
+                                (ff?.name || '').toLowerCase().includes('grassy') &&
+                                (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                        ) ||
+                        side?.extraForceFields?.some(
+                            (ff) =>
+                                (ff?.name || '').toLowerCase().includes('grassy') &&
+                                (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                        ) ||
+                        (side?.other || '').toLowerCase().includes('grassy') ||
+                        side?.extraOther?.some((o) => o.toLowerCase().includes('grassy')) ||
+                        (side?.entryHazard || '').toLowerCase().includes('grassy') ||
+                        side?.extraHazards?.some((h) => h.toLowerCase().includes('grassy'))
+                    );
+                    if (sideHasGrassy) return true;
+                } catch {
+                    if (terrainName.includes('grassy')) return true;
+                }
             }
             // Misty Terrain
             if (cond === 'misty terrain' || cond === 'misty') {

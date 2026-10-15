@@ -12,6 +12,7 @@ import type {
 } from '../../../types/battleOrganizerTypes';
 import { createDefaultActions, createDefaultCombatant, createDefaultBattlefield } from './battleOrganizerUtils';
 import { detectMoveFieldEffect } from '../../../utils/combat/fieldEffectsData';
+import { applyForceFieldToSide } from './battlefieldPresetUtils';
 
 export interface UseBattleOrganizerRoundOpsProps {
     updateState: (
@@ -434,6 +435,10 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
                     bf.weather = { name: def.effectName, remainingRounds: def.rounds };
                 } else if (def.category === 'terrain') {
                     bf.terrain = { name: def.effectName, remainingRounds: def.rounds };
+                    if (def.effectName.toLowerCase().trim() === 'grassy terrain') {
+                        const sideKey = isPlayerSide ? 'playerSide' : 'foeSide';
+                        bf[sideKey] = applyForceFieldToSide(bf[sideKey], def.effectName, def.rounds);
+                    }
                 } else if (def.category === 'other') {
                     bf.other = { name: def.effectName, remainingRounds: def.rounds };
                 } else if (def.category === 'entryHazard') {
@@ -471,39 +476,7 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
                     }
 
                     const sideKey = isPlayerSide ? 'playerSide' : 'foeSide';
-                    const side = { ...bf[sideKey] };
-                    const forceFields = [...side.forceFields] as [
-                        BattleOrganizerTimerEffect,
-                        BattleOrganizerTimerEffect
-                    ];
-                    const emptyIdx = forceFields.findIndex((f) => !f.name.trim() || f.remainingRounds <= 0);
-                    if (emptyIdx !== -1) {
-                        forceFields[emptyIdx] = { name: def.effectName, remainingRounds: def.rounds };
-                        side.forceFields = forceFields;
-                    } else {
-                        const inBase = forceFields.some(
-                            (f) => f.name.toLowerCase().trim() === def.effectName.toLowerCase().trim()
-                        );
-                        if (inBase) {
-                            side.forceFields = forceFields.map((f) =>
-                                f.name.toLowerCase().trim() === def.effectName.toLowerCase().trim()
-                                    ? { ...f, remainingRounds: def.rounds }
-                                    : f
-                            ) as [BattleOrganizerTimerEffect, BattleOrganizerTimerEffect];
-                        } else {
-                            const extras = [...(side.extraForceFields || [])];
-                            const existingIdx = extras.findIndex(
-                                (f) => f.name.toLowerCase().trim() === def.effectName.toLowerCase().trim()
-                            );
-                            if (existingIdx !== -1) {
-                                extras[existingIdx] = { name: def.effectName, remainingRounds: def.rounds };
-                            } else {
-                                extras.push({ name: def.effectName, remainingRounds: def.rounds });
-                            }
-                            side.extraForceFields = extras;
-                        }
-                    }
-                    bf[sideKey] = side;
+                    bf[sideKey] = applyForceFieldToSide(bf[sideKey], def.effectName, def.rounds);
                 }
                 return { ...prev, battlefield: bf };
             }, true);

@@ -660,7 +660,8 @@ export function InModalRollLog({
                                                     <div className="in-modal-roll-log__field-action-row">
                                                         {/* Ally / Foe side override toggle */}
                                                         {(fieldDef.category === 'forceField' ||
-                                                            fieldDef.category === 'entryHazard') && (
+                                                            fieldDef.category === 'entryHazard' ||
+                                                            fieldDef.effectName.toLowerCase().includes('grassy')) && (
                                                             <div className="in-modal-roll-log__field-side-toggle">
                                                                 <button
                                                                     type="button"
@@ -701,7 +702,16 @@ export function InModalRollLog({
                                                             title={
                                                                 auroraVeilBlocked
                                                                     ? 'Aurora Veil can only be activated under Hail or Snowy weather!'
-                                                                    : `Activate ${fieldDef.moveName}${fieldDef.rounds > 0 ? ` (${fieldDef.rounds} Rounds)` : ''} on ${isPlayerSide ? "Ally's" : "Foe's"} Side`
+                                                                    : fieldDef.effectName
+                                                                            .toLowerCase()
+                                                                            .includes('grassy')
+                                                                      ? `Activate ${fieldDef.moveName}${fieldDef.rounds > 0 ? ` (${fieldDef.rounds} Rounds)` : ''} (Terrain + ${isPlayerSide ? "Ally's" : "Foe's"} Side)`
+                                                                      : `Activate ${fieldDef.moveName}${fieldDef.rounds > 0 ? ` (${fieldDef.rounds} Rounds)` : ''}${
+                                                                            fieldDef.category === 'forceField' ||
+                                                                            fieldDef.category === 'entryHazard'
+                                                                                ? ` on ${isPlayerSide ? "Ally's" : "Foe's"} Side`
+                                                                                : ''
+                                                                        }`
                                                             }
                                                         >
                                                             <Sparkles size={14} /> Activate {fieldDef.moveName}

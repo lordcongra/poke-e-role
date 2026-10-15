@@ -19,6 +19,7 @@ export interface BattlefieldEffectCardProps {
     onChangeExtras?: (extras: BattleOrganizerTimerEffect[]) => void;
     category: 'weather' | 'terrain' | 'other';
     placeholder: string;
+    onTriggerGrassyModal?: () => void;
 }
 
 interface PresetItem {
@@ -39,7 +40,8 @@ export function BattlefieldEffectCard({
     extraEffects,
     onChangeExtras,
     category,
-    placeholder
+    placeholder,
+    onTriggerGrassyModal
 }: BattlefieldEffectCardProps) {
     const roomCustomFieldEffects = useCharacterStore((state) => state.roomCustomFieldEffects);
     const role = useCharacterStore((state) => state.role);
@@ -117,6 +119,18 @@ export function BattlefieldEffectCard({
     const handleSelectPreset = (preset: PresetItem) => {
         const cleanPreset = preset.name.toLowerCase().trim();
 
+        // Special Grassy Terrain flow: present side picker modal if not already active
+        if (category === 'terrain' && cleanPreset === 'grassy terrain' && onTriggerGrassyModal) {
+            if (value.toLowerCase().trim() === cleanPreset && (remainingRounds > 0 || remainingRounds === -1)) {
+                onChangeName('');
+                onChangeRounds(0);
+                setPendingPreset(null);
+                return;
+            }
+            onTriggerGrassyModal();
+            return;
+        }
+
         // 1. If currently in primary slot: only toggle off if remainingRounds > 0 or -1, reactivate if remainingRounds === 0
         if (value.toLowerCase().trim() === cleanPreset) {
             if (remainingRounds > 0 || remainingRounds === -1) {
@@ -164,6 +178,15 @@ export function BattlefieldEffectCard({
 
     const handleInputChange = (text: string) => {
         onChangeName(text);
+        if (
+            category === 'terrain' &&
+            text.trim().toLowerCase() === 'grassy terrain' &&
+            onTriggerGrassyModal &&
+            value.trim().toLowerCase() !== 'grassy terrain'
+        ) {
+            onTriggerGrassyModal();
+            return;
+        }
         if (text.trim() && remainingRounds === 0) {
             onChangeRounds(4);
         } else if (!text.trim() && (remainingRounds > 0 || remainingRounds === -1)) {
@@ -172,6 +195,10 @@ export function BattlefieldEffectCard({
     };
 
     const handleSelectSuggestion = (item: AutocompleteSuggestion) => {
+        if (category === 'terrain' && item.name.toLowerCase().trim() === 'grassy terrain' && onTriggerGrassyModal) {
+            onTriggerGrassyModal();
+            return;
+        }
         onChangeName(item.name);
         onChangeRounds(item.rounds ?? 4);
     };
