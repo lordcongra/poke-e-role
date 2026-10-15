@@ -12,6 +12,7 @@ import { GeneratorThresholdsSection } from './GeneratorThresholdsSection';
 import { GeneratorSpeciesFilterSection } from './GeneratorSpeciesFilterSection';
 import { GeneratorPrivacySection } from './GeneratorPrivacySection';
 import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
+import { getPokemonGeneration } from '../../../utils/generators/pokemonFilterUtils';
 import {
     loadLocalDataset,
     SPECIES_URLS,
@@ -119,8 +120,13 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                 : null;
 
         const filterByRecRank = Boolean(activeConfig.filterRecommendedRank);
+        const filterByGen = Boolean(
+            activeConfig.allowedGenerations &&
+            activeConfig.allowedGenerations.length > 0 &&
+            activeConfig.allowedGenerations.length < 9
+        );
 
-        if (!filterByRecRank && !manualFilter) return uniqueSpecies;
+        if (!filterByRecRank && !manualFilter && !filterByGen) return uniqueSpecies;
 
         const targetRankLower = activeTargetRecRank.toLowerCase();
 
@@ -136,6 +142,10 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                         const matchesType2 = Boolean(p.type2 && p.type2 !== 'None' && manualFilter.includes(p.type2));
                         if (!matchesType1 && !matchesType2) return false;
                     }
+                    if (filterByGen) {
+                        const gen = getPokemonGeneration(p.dexId);
+                        if (gen === null || !activeConfig.allowedGenerations!.includes(gen)) return false;
+                    }
                     return true;
                 })
                 .map((p) => p.name.toLowerCase())
@@ -146,6 +156,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
         activeConfig.filterRecommendedRank,
         activeConfig.typeSpecialtyMode,
         activeConfig.manualTypes,
+        activeConfig.allowedGenerations,
         activeTargetRecRank,
         pokedexLookup,
         uniqueSpecies

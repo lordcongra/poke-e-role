@@ -90,7 +90,10 @@ export function getEligibleTeamPool(
     }
 
     let targetTypes: string[] = [];
-    const filterOpts: PokemonLookupFilterOptions = { ...config };
+    const filterOpts: PokemonLookupFilterOptions = {
+        ...config,
+        allowedGenerations: config.allowedGenerations ?? [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    };
 
     switch (mode) {
         case 'biome_only': {
@@ -158,6 +161,7 @@ export function getEligibleTeamPool(
     if (eligiblePool.length === 0 && mode === 'combo') {
         eligiblePool = filterPokemonLookupPool(lookupList, conceptTypes, {
             ...config,
+            allowedGenerations: filterOpts.allowedGenerations,
             biomeId: undefined,
             allowedLineLengths: [1, 2, 3],
             allowedStageIndices: [1, 2, 3]
@@ -181,6 +185,18 @@ export function getEligibleTeamPool(
             allowedStageIndices: [1, 2, 3]
         });
     }
+
+    // Fallback 5: If still empty, relax generation restrictions as final fallback
+    if (eligiblePool.length === 0 && filterOpts.allowedGenerations && filterOpts.allowedGenerations.length < 9) {
+        eligiblePool = filterPokemonLookupPool(lookupList, ['Any'], {
+            ...filterOpts,
+            filterRecommendedRank: false,
+            allowedLineLengths: [1, 2, 3],
+            allowedStageIndices: [1, 2, 3],
+            allowedGenerations: undefined
+        });
+    }
+
     return eligiblePool;
 }
 

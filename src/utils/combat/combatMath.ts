@@ -545,14 +545,16 @@ export function calculateDefTotal(state: CharacterState, itemBuffs?: CombatBonus
             const clean = (w.name || '').trim().toLowerCase();
             return (clean.includes('snow') || clean === 'snowy') && !clean.includes('hail');
         });
-        const isIce =
-            state.identity.type1?.toLowerCase() === 'ice' || state.identity.type2?.toLowerCase() === 'ice';
+        const isIce = state.identity.type1?.toLowerCase() === 'ice' || state.identity.type2?.toLowerCase() === 'ice';
         if (isSnowy && isIce) {
             weatherBonus = 1;
         }
     }
 
-    return Math.max(1, vitTotal + state.derived.defBuff - state.derived.defDebuff + invMods.def + rankBonus + weatherBonus);
+    return Math.max(
+        1,
+        vitTotal + state.derived.defBuff - state.derived.defDebuff + invMods.def + rankBonus + weatherBonus
+    );
 }
 
 export function calculateSDefTotal(state: CharacterState, itemBuffs?: CombatBonuses): number {
@@ -569,14 +571,16 @@ export function calculateSDefTotal(state: CharacterState, itemBuffs?: CombatBonu
     if (state.activeBattlefield) {
         const activeWeathers = getEffectsByCategory(state.activeBattlefield, 'weather');
         const isSand = activeWeathers.some((w) => (w.name || '').trim().toLowerCase().includes('sand'));
-        const isRock =
-            state.identity.type1?.toLowerCase() === 'rock' || state.identity.type2?.toLowerCase() === 'rock';
+        const isRock = state.identity.type1?.toLowerCase() === 'rock' || state.identity.type2?.toLowerCase() === 'rock';
         if (isSand && isRock) {
             weatherBonus = 1;
         }
     }
 
-    return Math.max(1, sdefBase + state.derived.sdefBuff - state.derived.sdefDebuff + invMods.spd + rankBonus + weatherBonus);
+    return Math.max(
+        1,
+        sdefBase + state.derived.sdefBuff - state.derived.sdefDebuff + invMods.spd + rankBonus + weatherBonus
+    );
 }
 
 export function calculateBaseInitiative(state: CharacterState, itemBuffs?: CombatBonuses): number {

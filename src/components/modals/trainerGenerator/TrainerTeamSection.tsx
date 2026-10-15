@@ -10,6 +10,7 @@ import {
     type SlotMixMode
 } from '../../../utils/generators/trainerGeneratorLogic';
 import type { Rank } from '../../../store/entityTypes';
+import { TrainerTeamFilterSubSection } from './TrainerTeamFilterSubSection';
 import './TrainerGeneratorModal.css';
 
 export type TeamThemeStrategy = 'concept' | 'biome' | 'mix' | 'custom';
@@ -45,6 +46,8 @@ export interface TrainerTeamSectionProps {
     setAllowedLineLengths: React.Dispatch<React.SetStateAction<number[]>>;
     allowedStageIndices: number[];
     setAllowedStageIndices: React.Dispatch<React.SetStateAction<number[]>>;
+    allowedGenerations: number[];
+    setAllowedGenerations: React.Dispatch<React.SetStateAction<number[]>>;
     includeLegendaries: boolean;
     setIncludeLegendaries: (val: boolean) => void;
     includeMythicals: boolean;
@@ -101,6 +104,8 @@ export const TrainerTeamSection: React.FC<TrainerTeamSectionProps> = ({
     setAllowedLineLengths,
     allowedStageIndices,
     setAllowedStageIndices,
+    allowedGenerations,
+    setAllowedGenerations,
     includeLegendaries,
     setIncludeLegendaries,
     includeMythicals,
@@ -154,18 +159,6 @@ export const TrainerTeamSection: React.FC<TrainerTeamSectionProps> = ({
         resolvedTeamBiomeId !== 'match_trainer'
             ? BIOME_MAP[resolvedTeamBiomeId]
             : null;
-
-    const handleToggleLineLength = (len: number) => {
-        setAllowedLineLengths((prev: number[]) =>
-            prev.includes(len) ? (prev.length > 1 ? prev.filter((l: number) => l !== len) : prev) : [...prev, len]
-        );
-    };
-
-    const handleToggleStageIndex = (stage: number) => {
-        setAllowedStageIndices((prev: number[]) =>
-            prev.includes(stage) ? (prev.length > 1 ? prev.filter((s: number) => s !== stage) : prev) : [...prev, stage]
-        );
-    };
 
     const handleToggleManualType = (t: string) => {
         setManualTypes((prev: string[]) => {
@@ -944,178 +937,29 @@ export const TrainerTeamSection: React.FC<TrainerTeamSectionProps> = ({
                         </div>
                     </div>
 
-                    {/* Evolutionary Filter Controls */}
-                    <div className="trainer-gen-modal__grid--2col">
-                        <div className="trainer-gen-modal__field">
-                            <label className="trainer-gen-modal__field-label text-label">
-                                Evolution Line Length:
-                                <TooltipIcon
-                                    onClick={() =>
-                                        onOpenTooltip({
-                                            title: 'Line Length Filter',
-                                            desc: 'Single-Stage: Pokémon that do not evolve (e.g. Lapras, Heracross).\n\n2-Stage: Two forms (e.g. Rattata -> Raticate).\n\n3-Stage: Three forms (e.g. Charmander -> Charmeleon -> Charizard).'
-                                        })
-                                    }
-                                />
-                            </label>
-                            <div className="trainer-gen-modal__checkbox-group">
-                                <label className="trainer-gen-modal__checkbox-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={allowedLineLengths.includes(1)}
-                                        onChange={() => handleToggleLineLength(1)}
-                                    />
-                                    <span>Single-Stage</span>
-                                </label>
-                                <label className="trainer-gen-modal__checkbox-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={allowedLineLengths.includes(2)}
-                                        onChange={() => handleToggleLineLength(2)}
-                                    />
-                                    <span>2-Stage Line</span>
-                                </label>
-                                <label className="trainer-gen-modal__checkbox-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={allowedLineLengths.includes(3)}
-                                        onChange={() => handleToggleLineLength(3)}
-                                    />
-                                    <span>3-Stage Line</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div className="trainer-gen-modal__field">
-                            <label className="trainer-gen-modal__field-label text-label">
-                                Evolution Stage Level:
-                                <TooltipIcon
-                                    onClick={() =>
-                                        onOpenTooltip({
-                                            title: 'Stage Level',
-                                            desc: 'Filter species based on their current stage position. 1st Evo = Basic/Baby Pokémon; 2nd Evo = Middle Stage; 3rd Evo = Final Evolution.'
-                                        })
-                                    }
-                                />
-                            </label>
-                            <div className="trainer-gen-modal__checkbox-group">
-                                <label className="trainer-gen-modal__checkbox-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={allowedStageIndices.includes(1)}
-                                        onChange={() => handleToggleStageIndex(1)}
-                                    />
-                                    <span>1st Evo / Basic</span>
-                                </label>
-                                <label className="trainer-gen-modal__checkbox-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={allowedStageIndices.includes(2)}
-                                        onChange={() => handleToggleStageIndex(2)}
-                                    />
-                                    <span>2nd Evo / Middle</span>
-                                </label>
-                                <label className="trainer-gen-modal__checkbox-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={allowedStageIndices.includes(3)}
-                                        onChange={() => handleToggleStageIndex(3)}
-                                    />
-                                    <span>3rd Evo / Final</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Exclusions & Scalar Loyalty */}
-                    <div className="trainer-gen-modal__grid--2col">
-                        <div className="trainer-gen-modal__field">
-                            <label className="trainer-gen-modal__field-label text-label">
-                                Special Forms & Species:
-                            </label>
-                            <div className="trainer-gen-modal__checkbox-group">
-                                <label className="trainer-gen-modal__checkbox-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={includeLegendaries}
-                                        onChange={(e) => setIncludeLegendaries(e.target.checked)}
-                                    />
-                                    <span>Legendaries</span>
-                                </label>
-                                <label className="trainer-gen-modal__checkbox-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={includeMythicals}
-                                        onChange={(e) => setIncludeMythicals(e.target.checked)}
-                                    />
-                                    <span>Mythicals</span>
-                                </label>
-                                <label className="trainer-gen-modal__checkbox-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={includeUltraBeasts}
-                                        onChange={(e) => setIncludeUltraBeasts(e.target.checked)}
-                                    />
-                                    <span>Ultra Beasts</span>
-                                </label>
-                                <label className="trainer-gen-modal__checkbox-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={includeParadox}
-                                        onChange={(e) => setIncludeParadox(e.target.checked)}
-                                    />
-                                    <span>Paradox</span>
-                                </label>
-                                <label className="trainer-gen-modal__checkbox-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={includeMegas}
-                                        onChange={(e) => setIncludeMegas(e.target.checked)}
-                                    />
-                                    <span>Megas / Special Forms</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div className="trainer-gen-modal__field" style={{ justifyContent: 'center' }}>
-                            <label className="trainer-gen-modal__checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    checked={scaleLoyaltyHappiness}
-                                    onChange={(e) => setScaleLoyaltyHappiness(e.target.checked)}
-                                />
-                                <span>
-                                    <Sparkles size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                                    Scale Pokémon Loyalty & Happiness with Rank
-                                </span>
-                                <TooltipIcon
-                                    onClick={() =>
-                                        onOpenTooltip({
-                                            title: 'Scalar Loyalty & Happiness',
-                                            desc: 'Scales bond according to corebook rank achievements: Starter/Rookie Pokémon start at 1–2; Standard rank has 1 maxed partner (5) with others at 2–3; Expert and Ace+ rosters feature loyal 5/5 partners.'
-                                        })
-                                    }
-                                />
-                            </label>
-
-                            <label className="trainer-gen-modal__checkbox-label" style={{ marginTop: '8px' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={allowDuplicates}
-                                    onChange={(e) => setAllowDuplicates(e.target.checked)}
-                                />
-                                <span>Allow Duplicate Pokémon</span>
-                                <TooltipIcon
-                                    onClick={() =>
-                                        onOpenTooltip({
-                                            title: 'Allow Duplicate Pokémon',
-                                            desc: 'When unchecked (default), each Pokémon generated for the team will be a unique species. Check this box if you want to allow trainers to carry multiple Pokémon of the exact same species (e.g. two Lapras).'
-                                        })
-                                    }
-                                />
-                            </label>
-                        </div>
-                    </div>
+                    <TrainerTeamFilterSubSection
+                        allowedLineLengths={allowedLineLengths}
+                        setAllowedLineLengths={setAllowedLineLengths}
+                        allowedStageIndices={allowedStageIndices}
+                        setAllowedStageIndices={setAllowedStageIndices}
+                        allowedGenerations={allowedGenerations}
+                        setAllowedGenerations={setAllowedGenerations}
+                        includeLegendaries={includeLegendaries}
+                        setIncludeLegendaries={setIncludeLegendaries}
+                        includeMythicals={includeMythicals}
+                        setIncludeMythicals={setIncludeMythicals}
+                        includeUltraBeasts={includeUltraBeasts}
+                        setIncludeUltraBeasts={setIncludeUltraBeasts}
+                        includeParadox={includeParadox}
+                        setIncludeParadox={setIncludeParadox}
+                        includeMegas={includeMegas}
+                        setIncludeMegas={setIncludeMegas}
+                        scaleLoyaltyHappiness={scaleLoyaltyHappiness}
+                        setScaleLoyaltyHappiness={setScaleLoyaltyHappiness}
+                        allowDuplicates={allowDuplicates}
+                        setAllowDuplicates={setAllowDuplicates}
+                        onOpenTooltip={onOpenTooltip}
+                    />
                 </>
             )}
         </div>

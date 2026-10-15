@@ -42,13 +42,10 @@ function extractTargetTypesAndTera(
     const stateObj = (meta.state || meta) as Record<string, unknown>;
     const identityObj = (stateObj?.identity || meta.identity || {}) as Record<string, unknown>;
     const isTera =
-        meta['active-transformation'] === 'Terastallize' ||
-        identityObj.activeTransformation === 'Terastallize';
+        meta['active-transformation'] === 'Terastallize' || identityObj.activeTransformation === 'Terastallize';
     const t1 = String(identityObj.type1 || meta.type1 || meta.Type1 || extraMeta?.type1 || extraMeta?.Type1 || '');
     const t2 = String(identityObj.type2 || meta.type2 || meta.Type2 || extraMeta?.type2 || extraMeta?.Type2 || '');
-    const teraAffinity = isTera
-        ? String(identityObj.terastallizeAffinity || meta['terastallize-affinity'] || '')
-        : '';
+    const teraAffinity = isTera ? String(identityObj.terastallizeAffinity || meta['terastallize-affinity'] || '') : '';
     const rawTypes = isTera && teraAffinity ? [teraAffinity] : [t1, t2];
     return { isTera, types: rawTypes.filter(Boolean).map((t) => t.trim().toLowerCase()) };
 }

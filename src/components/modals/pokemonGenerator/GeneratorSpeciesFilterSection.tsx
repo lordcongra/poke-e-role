@@ -29,6 +29,18 @@ const SPECIAL_SPECIES_ITEMS = [
     { key: 'includeMegas', label: 'Megas / Special Forms' }
 ] as const;
 
+const GENERATION_ITEMS = [
+    { gen: 1, label: 'Gen 1', region: 'Kanto' },
+    { gen: 2, label: 'Gen 2', region: 'Johto' },
+    { gen: 3, label: 'Gen 3', region: 'Hoenn' },
+    { gen: 4, label: 'Gen 4', region: 'Sinnoh' },
+    { gen: 5, label: 'Gen 5', region: 'Unova' },
+    { gen: 6, label: 'Gen 6', region: 'Kalos' },
+    { gen: 7, label: 'Gen 7', region: 'Alola' },
+    { gen: 8, label: 'Gen 8', region: 'Galar / Hisui' },
+    { gen: 9, label: 'Gen 9', region: 'Paldea' }
+] as const;
+
 export function GeneratorSpeciesFilterSection({
     config,
     onUpdateConfig,
@@ -53,6 +65,20 @@ export function GeneratorSpeciesFilterSection({
                 : current
             : [...current, stage].sort();
         onUpdateConfig({ allowedStageIndices: next });
+    };
+
+    const handleToggleGeneration = (gen: number) => {
+        const current = config.allowedGenerations ?? [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        const next = current.includes(gen) ? current.filter((x) => x !== gen) : [...current, gen].sort((a, b) => a - b);
+        onUpdateConfig({ allowedGenerations: next });
+    };
+
+    const handleSelectAllGens = () => {
+        onUpdateConfig({ allowedGenerations: [1, 2, 3, 4, 5, 6, 7, 8, 9] });
+    };
+
+    const handleClearGens = () => {
+        onUpdateConfig({ allowedGenerations: [] });
     };
 
     return (
@@ -115,6 +141,68 @@ export function GeneratorSpeciesFilterSection({
                             </label>
                         ))}
                     </div>
+                </div>
+            </div>
+
+            {/* Generation Filter */}
+            <div className="generator-modal__filter-item" style={{ marginTop: '4px' }}>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: '4px'
+                    }}
+                >
+                    <label className="generator-modal__filter-label text-label">
+                        Generation Filter:
+                        <TooltipIcon
+                            onClick={() =>
+                                onOpenTooltip({
+                                    title: 'Generation Filter',
+                                    desc: "Filter Pokémon by Generation (Gen 1 to Gen 9) based on their National Pokédex number. Special forms, Megas, and regional variants inherit their base Pokémon's generation (e.g. Alolan Vulpix is Gen 1; Mega Lucario is Gen 4)."
+                                })
+                            }
+                        />
+                    </label>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                            type="button"
+                            className="action-button action-button--dark action-button--small"
+                            onClick={handleSelectAllGens}
+                            style={{ fontSize: '0.7rem', padding: '1px 6px', height: 'auto' }}
+                        >
+                            All
+                        </button>
+                        <button
+                            type="button"
+                            className="action-button action-button--dark action-button--small"
+                            onClick={handleClearGens}
+                            style={{ fontSize: '0.7rem', padding: '1px 6px', height: 'auto' }}
+                        >
+                            Clear
+                        </button>
+                    </div>
+                </div>
+                <div className="generator-modal__checkbox-subgroup" style={{ gap: '10px' }}>
+                    {GENERATION_ITEMS.map(({ gen, label, region }) => {
+                        const isChecked = (config.allowedGenerations ?? [1, 2, 3, 4, 5, 6, 7, 8, 9]).includes(gen);
+                        return (
+                            <label
+                                key={gen}
+                                className="generator-modal__checkbox-label text-label"
+                                title={`${label} (${region})`}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => handleToggleGeneration(gen)}
+                                    className="generator-modal__checkbox"
+                                />
+                                <span>{label}</span>
+                            </label>
+                        );
+                    })}
                 </div>
             </div>
 

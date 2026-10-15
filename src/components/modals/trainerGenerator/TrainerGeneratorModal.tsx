@@ -81,9 +81,10 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
         'concept_only'
     ]);
 
-    // Evolution Stage Filters
+    // Evolution Stage & Generation Filters
     const [allowedLineLengths, setAllowedLineLengths] = useState<number[]>([1, 2, 3]);
     const [allowedStageIndices, setAllowedStageIndices] = useState<number[]>([1, 2, 3]);
+    const [allowedGenerations, setAllowedGenerations] = useState<number[]>([1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
     // Exclusions & Special Toggles
     const [includeLegendaries, setIncludeLegendaries] = useState<boolean>(false);
@@ -251,6 +252,9 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
 
         const rankModes: ('match_trainer' | 'random')[] = ['match_trainer', 'random'];
         setTeamRankMode(rankModes[Math.floor(Math.random() * rankModes.length)]);
+
+        // Reset Generation filter on surprise me
+        setAllowedGenerations([1, 2, 3, 4, 5, 6, 7, 8, 9]);
     };
 
     const handleGenerate = async () => {
@@ -326,6 +330,7 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                 buildType,
                 allowedLineLengths,
                 allowedStageIndices,
+                allowedGenerations,
                 includeLegendaries,
                 includeMythicals,
                 includeUltraBeasts,
@@ -418,6 +423,7 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                     buildType,
                     allowedLineLengths,
                     allowedStageIndices,
+                    allowedGenerations,
                     includeLegendaries,
                     includeMythicals,
                     includeUltraBeasts,
@@ -541,6 +547,8 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                     setAllowedLineLengths={setAllowedLineLengths}
                     allowedStageIndices={allowedStageIndices}
                     setAllowedStageIndices={setAllowedStageIndices}
+                    allowedGenerations={allowedGenerations}
+                    setAllowedGenerations={setAllowedGenerations}
                     includeLegendaries={includeLegendaries}
                     setIncludeLegendaries={setIncludeLegendaries}
                     includeMythicals={includeMythicals}

@@ -51,6 +51,7 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
         scaleLoyaltyHappiness: true,
         allowedLineLengths: [1, 2, 3],
         allowedStageIndices: [1, 2, 3],
+        allowedGenerations: [1, 2, 3, 4, 5, 6, 7, 8, 9],
         filterRecommendedRank: false,
         recommendedRankMode: 'match',
         exactRecommendedRank: 'Standard',

@@ -133,8 +133,7 @@ export function resolveCombatantRoundTriggers(
     });
 
     return sorted.map((c) => {
-        const charInfo =
-            charDataMap.get(c.name.toLowerCase().trim()) ||
+        const charInfo = charDataMap.get(c.name.toLowerCase().trim()) ||
             (c.tokenId && charDataMap.get(c.tokenId)) || {
                 types: [],
                 ability: '',

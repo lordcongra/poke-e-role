@@ -213,6 +213,7 @@ export interface GeneratorConfig {
     scaleLoyaltyHappiness?: boolean;
     allowedLineLengths?: number[];
     allowedStageIndices?: number[];
+    allowedGenerations?: number[];
     usedSpecies?: Set<string>;
     slotIndex?: number;
 

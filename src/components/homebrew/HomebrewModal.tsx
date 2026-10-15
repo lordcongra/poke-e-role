@@ -10,8 +10,14 @@ import { HomebrewForms } from './HomebrewForms';
 import { HomebrewStatuses } from './HomebrewStatuses';
 import { HomebrewFieldEffects } from './HomebrewFieldEffects';
 import type {
-    CustomType, CustomAbility, CustomMove, CustomPokemon,
-    CustomItem, CustomForm, CustomStatus, CustomFieldEffect
+    CustomType,
+    CustomAbility,
+    CustomMove,
+    CustomPokemon,
+    CustomItem,
+    CustomForm,
+    CustomStatus,
+    CustomFieldEffect
 } from '../../store/storeTypes';
 import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { downloadJson } from '../../utils/common/fileSystemHelpers';
@@ -139,7 +145,8 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
         reader.readAsText(file);
     };
 
-    const overlayClass = `homebrew-modal__overlay ${!isStandaloneMode ? 'homebrew-modal__overlay--obr' : isMaximized ? 'homebrew-modal__overlay--maximized' : ''}`.trim();
+    const overlayClass =
+        `homebrew-modal__overlay ${!isStandaloneMode ? 'homebrew-modal__overlay--obr' : isMaximized ? 'homebrew-modal__overlay--maximized' : ''}`.trim();
     const contentClass = `homebrew-modal__content ${
         !isStandaloneMode
             ? 'homebrew-modal__content--obr'

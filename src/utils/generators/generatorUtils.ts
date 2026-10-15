@@ -138,6 +138,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                 includeParadox: Boolean(config.includeParadox),
                 allowedLineLengths: config.allowedLineLengths ?? [1, 2, 3],
                 allowedStageIndices: config.allowedStageIndices ?? [1, 2, 3],
+                allowedGenerations: config.allowedGenerations ?? [1, 2, 3, 4, 5, 6, 7, 8, 9],
                 biomeId: config.selectedBiome,
                 usedSpecies: config.usedSpecies,
                 filterRecommendedRank: Boolean(config.filterRecommendedRank),
@@ -184,6 +185,15 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                 eligible = filterPokemonLookupPool(lookupIndex, resolvedTypes, {
                     ...filterOpts,
                     filterRecommendedRank: false
+                });
+            }
+
+            if (eligible.length === 0 && filterOpts.allowedGenerations && filterOpts.allowedGenerations.length < 9) {
+                // Ultimate generation fallback if pool is empty
+                eligible = filterPokemonLookupPool(lookupIndex, resolvedTypes, {
+                    ...filterOpts,
+                    filterRecommendedRank: false,
+                    allowedGenerations: undefined
                 });
             }
 

@@ -205,7 +205,8 @@ export function RoundWeatherDamageModal({
                                                     )}
                                                     <span
                                                         className={`bo-weather-dmg-modal__status-tag ${
-                                                            damageReason === 'Fainted' || damageImmuneReason === 'Fainted'
+                                                            damageReason === 'Fainted' ||
+                                                            damageImmuneReason === 'Fainted'
                                                                 ? 'bo-weather-dmg-modal__status-tag--fainted'
                                                                 : isDamageImmune
                                                                   ? 'bo-weather-dmg-modal__status-tag--immune'

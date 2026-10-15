@@ -179,7 +179,8 @@ export function BattlefieldSection({
                                 <Info size={13} className="bo-battlefield-hint__icon" aria-hidden="true" />
                                 <span>
                                     Weather, Terrain, and Other chips with a{' '}
-                                    <span className="bo-battlefield-hint__badge">highlighted outline</span> are supported by the Pokérole dice/math engine and auto-apply to sheets.
+                                    <span className="bo-battlefield-hint__badge">highlighted outline</span> are
+                                    supported by the Pokérole dice/math engine and auto-apply to sheets.
                                 </span>
                             </div>
 

@@ -27,6 +27,7 @@ export interface TrainerGeneratorConfig {
     buildType: 'minmax' | 'average' | 'wild';
     allowedLineLengths: number[];
     allowedStageIndices: number[];
+    allowedGenerations: number[];
     includeLegendaries: boolean;
     includeMythicals: boolean;
     includeUltraBeasts: boolean;

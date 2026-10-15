@@ -85,6 +85,39 @@ export interface PokedexLookupItem {
     moves: Array<[string, string]>;
 }
 
+export interface GenerationRange {
+    min: number;
+    max: number;
+    label: string;
+    region: string;
+}
+
+export const GENERATION_RANGES: Record<number, GenerationRange> = {
+    1: { min: 1, max: 151, label: 'Gen 1', region: 'Kanto' },
+    2: { min: 152, max: 251, label: 'Gen 2', region: 'Johto' },
+    3: { min: 252, max: 386, label: 'Gen 3', region: 'Hoenn' },
+    4: { min: 387, max: 493, label: 'Gen 4', region: 'Sinnoh' },
+    5: { min: 494, max: 649, label: 'Gen 5', region: 'Unova' },
+    6: { min: 650, max: 721, label: 'Gen 6', region: 'Kalos' },
+    7: { min: 722, max: 809, label: 'Gen 7', region: 'Alola' },
+    8: { min: 810, max: 905, label: 'Gen 8', region: 'Galar / Hisui' },
+    9: { min: 906, max: 1025, label: 'Gen 9', region: 'Paldea' }
+};
+
+export function getPokemonGeneration(dexId: string): number | null {
+    if (!dexId) return null;
+    const num = parseInt(dexId, 10);
+    if (isNaN(num)) return null;
+
+    for (let gen = 1; gen <= 9; gen++) {
+        const range = GENERATION_RANGES[gen];
+        if (range && num >= range.min && num <= range.max) {
+            return gen;
+        }
+    }
+    return null;
+}
+
 export interface PokemonLookupFilterOptions {
     includeMegas?: boolean;
     includeLegendaries?: boolean;
@@ -93,6 +126,7 @@ export interface PokemonLookupFilterOptions {
     includeParadox?: boolean;
     allowedLineLengths?: number[];
     allowedStageIndices?: number[];
+    allowedGenerations?: number[];
     biomeId?: string;
     usedSpecies?: Set<string>;
     filterRecommendedRank?: boolean;
@@ -181,6 +215,13 @@ export function filterPokemonLookupPool(
             const monRank = mon.recommendedRank.toLowerCase();
             const allowed = config.allowedRecommendedRanks.map((r) => r.toLowerCase());
             if (!allowed.includes(monRank)) return false;
+        }
+
+        // 9. Generation filter
+        if (config.allowedGenerations && config.allowedGenerations.length < 9) {
+            if (config.allowedGenerations.length === 0) return false;
+            const gen = getPokemonGeneration(mon.dexId);
+            if (gen === null || !config.allowedGenerations.includes(gen)) return false;
         }
 
         return true;
