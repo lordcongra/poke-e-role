@@ -45,6 +45,16 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
     const isActive = (eff?: BattleOrganizerTimerEffect | null) =>
         Boolean(eff?.name?.trim() && ((eff.remainingRounds ?? 0) > 0 || eff.remainingRounds === -1));
 
+    const isGrassy = (eff?: BattleOrganizerTimerEffect | null) =>
+        Boolean(eff && isActive(eff) && eff.name.toLowerCase().includes('grassy'));
+
+    const sideHasGrassyTerrain = Boolean(
+        battlefield.playerSide?.forceFields?.some(isGrassy) ||
+        battlefield.playerSide?.extraForceFields?.some(isGrassy) ||
+        battlefield.foeSide?.forceFields?.some(isGrassy) ||
+        battlefield.foeSide?.extraForceFields?.some(isGrassy)
+    );
+
     // Weather Primary & Extras
     if (isActive(battlefield.weather)) {
         results.push({
@@ -68,26 +78,33 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
         }
     });
 
-    // Terrain Primary & Extras
+    // Terrain Primary & Extras (suppressed for Grassy Terrain if any side has it active)
+    const isTerrainGrassy = (t?: BattleOrganizerTimerEffect | null) =>
+        Boolean(t?.name && t.name.toLowerCase().includes('grassy'));
+
     if (isActive(battlefield.terrain)) {
-        results.push({
-            ...battlefield.terrain,
-            category: 'terrain',
-            id: 'terrain-primary',
-            prefix: 'Terrain',
-            isExtra: false
-        });
+        if (!sideHasGrassyTerrain || !isTerrainGrassy(battlefield.terrain)) {
+            results.push({
+                ...battlefield.terrain,
+                category: 'terrain',
+                id: 'terrain-primary',
+                prefix: 'Terrain',
+                isExtra: false
+            });
+        }
     }
     battlefield.extraTerrains?.forEach((t, idx) => {
         if (isActive(t)) {
-            results.push({
-                ...t,
-                category: 'terrain',
-                id: `terrain-extra-${idx}`,
-                prefix: 'Terrain',
-                isExtra: true,
-                extraIndex: idx
-            });
+            if (!sideHasGrassyTerrain || !isTerrainGrassy(t)) {
+                results.push({
+                    ...t,
+                    category: 'terrain',
+                    id: `terrain-extra-${idx}`,
+                    prefix: 'Terrain',
+                    isExtra: true,
+                    extraIndex: idx
+                });
+            }
         }
     });
 
