@@ -3,7 +3,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import type { MoveData, SkillData, ExtraCategory } from '../../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { NumberSpinner } from '../ui/NumberSpinner';
-import { fetchMoveData } from '../../utils/api/api';
+import { fetchMoveData, ALL_MOVES, loadLocalDataset } from '../../utils/api/api';
 import {
     rollAccuracy,
     calculateBaseDamage,
@@ -40,6 +40,7 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
     const moveUpMove = useCharacterStore((state) => state.moveUpMove);
     const moveDownMove = useCharacterStore((state) => state.moveDownMove);
     const applyMoveData = useCharacterStore((state) => state.applyMoveData);
+    const roomCustomMoves = useCharacterStore((state) => state.roomCustomMoves);
 
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
     const combinedTypes = [...POKEMON_TYPES, ...roomCustomTypes.map((type) => type.name)];
@@ -57,6 +58,24 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
 
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [bankModalOpen, setBankModalOpen] = useState(false);
+
+    const handleNameChange = async (newName: string) => {
+        updateMove(move.id, 'name', newName);
+        const trimmed = newName.trim();
+        if (!trimmed) return;
+
+        if (ALL_MOVES.length === 0) {
+            await loadLocalDataset();
+        }
+
+        const clean = trimmed.toLowerCase();
+        const matchesAllMoves = ALL_MOVES.some((m) => m.toLowerCase() === clean);
+        const matchesCustom = roomCustomMoves.some((m) => m.name.toLowerCase() === clean);
+        if (matchesAllMoves || matchesCustom) {
+            const data = await fetchMoveData(trimmed);
+            if (data) applyMoveData(move.id, data as Record<string, unknown>);
+        }
+    };
 
     const handleNameBlur = async (event: React.FocusEvent<HTMLInputElement>) => {
         const value = event.target.value.trim();
@@ -101,8 +120,9 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
 
     const accuracyTotal = calculateBaseAccuracy(move, fullState, itemBuffs);
 
-    const baseDamage = move.category === 'Status' ? 0 : calculateBaseDamage(move, fullState, itemBuffs);
-    const damageTotal = move.category === 'Status' ? '-' : baseDamage + bankedDiceForThisMove;
+    const isStatusOrNoDamage = move.category === 'Status' || (move.power === 0 && !move.dmg1);
+    const baseDamage = isStatusOrNoDamage ? 0 : calculateBaseDamage(move, fullState, itemBuffs);
+    const damageTotal = isStatusOrNoDamage ? '-' : baseDamage + bankedDiceForThisMove;
 
     const handleAccuracyClick = () => {
         if (totalBanked > 0) {
@@ -173,7 +193,7 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                             type="text"
                             list="move-list"
                             value={move.name}
-                            onChange={(event) => updateMove(move.id, 'name', event.target.value)}
+                            onChange={(event) => handleNameChange(event.target.value)}
                             onBlur={handleNameBlur}
                             className="form-input--transparent move-row__name-input text-label"
                             style={{

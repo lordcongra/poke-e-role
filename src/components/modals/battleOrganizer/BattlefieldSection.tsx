@@ -136,11 +136,11 @@ export function BattlefieldSection({
                                 <BattlefieldEffectCard
                                     title="Weather"
                                     icon={<CloudSun size={14} />}
-                                    value={battlefield.weather.name}
-                                    remainingRounds={battlefield.weather.remainingRounds}
+                                    value={battlefield.weather?.name ?? ''}
+                                    remainingRounds={battlefield.weather?.remainingRounds ?? 0}
                                     onChangeName={(val) => updateBattlefieldWeather('name', val)}
                                     onChangeRounds={(val) => updateBattlefieldWeather('remainingRounds', val)}
-                                    extraEffects={battlefield.extraWeathers}
+                                    extraEffects={battlefield.extraWeathers ?? []}
                                     onChangeExtras={(extras) => updateBattlefield('extraWeathers', extras)}
                                     category="weather"
                                     placeholder="e.g. Rain, Sun, Hail..."
@@ -149,11 +149,11 @@ export function BattlefieldSection({
                                 <BattlefieldEffectCard
                                     title="Terrain"
                                     icon={<Mountain size={14} />}
-                                    value={battlefield.terrain.name}
-                                    remainingRounds={battlefield.terrain.remainingRounds}
+                                    value={battlefield.terrain?.name ?? ''}
+                                    remainingRounds={battlefield.terrain?.remainingRounds ?? 0}
                                     onChangeName={(val) => updateBattlefieldTerrain('name', val)}
                                     onChangeRounds={(val) => updateBattlefieldTerrain('remainingRounds', val)}
-                                    extraEffects={battlefield.extraTerrains}
+                                    extraEffects={battlefield.extraTerrains ?? []}
                                     onChangeExtras={(extras) => updateBattlefield('extraTerrains', extras)}
                                     category="terrain"
                                     placeholder="e.g. Electric Terrain, Grassy Terrain..."
@@ -163,11 +163,11 @@ export function BattlefieldSection({
                                 <BattlefieldEffectCard
                                     title="Other"
                                     icon={<Sparkles size={14} />}
-                                    value={battlefield.other.name}
-                                    remainingRounds={battlefield.other.remainingRounds}
+                                    value={battlefield.other?.name ?? ''}
+                                    remainingRounds={battlefield.other?.remainingRounds ?? 0}
                                     onChangeName={(val) => updateBattlefieldOther('name', val)}
                                     onChangeRounds={(val) => updateBattlefieldOther('remainingRounds', val)}
-                                    extraEffects={battlefield.extraOther}
+                                    extraEffects={battlefield.extraOther ?? []}
                                     onChangeExtras={(extras) => updateBattlefield('extraOther', extras)}
                                     category="other"
                                     placeholder="e.g. Trick Room, Gravity..."

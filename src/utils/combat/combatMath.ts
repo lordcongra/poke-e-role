@@ -373,6 +373,10 @@ export function getWeatherDamageBonus(
 }
 
 export function calculateBaseDamage(move: MoveData, state: CharacterState, itemBuffs?: CombatBonuses): number {
+    if (move.category === 'Status' || (move.power === 0 && !move.dmg1)) {
+        return 0;
+    }
+
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
     const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
     const extraDice = state.trackers.globalDmg + invMods.dmg;
@@ -420,6 +424,9 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState, itemB
 }
 
 export function calculateTotalDamage(move: MoveData, state: CharacterState, itemBuffs?: CombatBonuses): number {
+    if (move.category === 'Status' || (move.power === 0 && !move.dmg1)) {
+        return 0;
+    }
     const isHalfHp = state.health.hpCurr <= Math.floor(state.health.hpMax / 2);
     const weather = getWeatherDamageBonus(move.type, state.activeBattlefield, isHalfHp);
     const totalModifier = weather.diceBonus - weather.flatPenalty;

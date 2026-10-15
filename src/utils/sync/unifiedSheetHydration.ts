@@ -191,7 +191,8 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
             finalMeta['nickname'] = summaryMeta['nickname'] ?? '';
         }
         if (summaryMeta?.['rank']) finalMeta['rank'] = summaryMeta['rank'];
-        if (summaryMeta?.['moves-data'] && summaryMeta['moves-data'] !== '[]') {
+        const hasLiveTokenMoves = Boolean(tokenItemMeta?.['moves-data'] && tokenItemMeta['moves-data'] !== '[]');
+        if (!hasLiveTokenMoves && summaryMeta?.['moves-data'] && summaryMeta['moves-data'] !== '[]') {
             finalMeta['moves-data'] = summaryMeta['moves-data'];
         }
         if (summaryMeta?.['type1']) finalMeta['type1'] = summaryMeta['type1'];

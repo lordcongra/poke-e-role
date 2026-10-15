@@ -321,6 +321,52 @@ export const createDefaultBattlefield = (): BattlefieldData => ({
     highlightedSide: 'all'
 });
 
+export const sanitizeBattlefield = (raw?: Partial<BattlefieldData> | null): BattlefieldData => {
+    const def = createDefaultBattlefield();
+    if (!raw) return def;
+    const sanitizeSide = (
+        side?: Partial<BattlefieldData['playerSide']> | null,
+        defaultSide = def.playerSide
+    ): BattlefieldData['playerSide'] => {
+        if (!side) return defaultSide;
+        const ff0 = side.forceFields?.[0] ?? defaultSide.forceFields[0];
+        const ff1 = side.forceFields?.[1] ?? defaultSide.forceFields[1];
+        return {
+            ...defaultSide,
+            ...side,
+            forceFields: [
+                { name: ff0?.name ?? '', remainingRounds: ff0?.remainingRounds ?? 0 },
+                { name: ff1?.name ?? '', remainingRounds: ff1?.remainingRounds ?? 0 }
+            ],
+            extraForceFields: Array.isArray(side.extraForceFields) ? side.extraForceFields : [],
+            extraHazards: Array.isArray(side.extraHazards) ? side.extraHazards : [],
+            extraOther: Array.isArray(side.extraOther) ? side.extraOther : []
+        };
+    };
+
+    return {
+        ...def,
+        ...raw,
+        weather: {
+            name: raw.weather?.name ?? def.weather.name,
+            remainingRounds: raw.weather?.remainingRounds ?? def.weather.remainingRounds
+        },
+        terrain: {
+            name: raw.terrain?.name ?? def.terrain.name,
+            remainingRounds: raw.terrain?.remainingRounds ?? def.terrain.remainingRounds
+        },
+        other: {
+            name: raw.other?.name ?? def.other.name,
+            remainingRounds: raw.other?.remainingRounds ?? def.other.remainingRounds
+        },
+        extraWeathers: Array.isArray(raw.extraWeathers) ? raw.extraWeathers : [],
+        extraTerrains: Array.isArray(raw.extraTerrains) ? raw.extraTerrains : [],
+        extraOther: Array.isArray(raw.extraOther) ? raw.extraOther : [],
+        playerSide: sanitizeSide(raw.playerSide, def.playerSide),
+        foeSide: sanitizeSide(raw.foeSide, def.foeSide)
+    };
+};
+
 export const createDefaultState = (): BattleOrganizerState => ({
     battlefield: createDefaultBattlefield(),
     rounds: [

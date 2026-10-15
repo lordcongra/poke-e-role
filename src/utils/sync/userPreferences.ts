@@ -54,7 +54,9 @@ function isLegacyEntityKey(key: string): boolean {
         key.startsWith('pkr_idb_') ||
         key.startsWith('pkr_storage_') ||
         key === 'pkr_last_master_backup_time' ||
-        key === 'pkr_last_local_change_time'
+        key === 'pkr_last_local_change_time' ||
+        key === 'pkr_roll_log' ||
+        key.startsWith('pkr_roll_log_')
     );
 }
 
@@ -64,6 +66,7 @@ function isLegacyEntityKey(key: string): boolean {
 export function isPersistentSettingKey(key: string): boolean {
     if (!key || typeof key !== 'string') return false;
     if (key.startsWith('pkr_char_temp') || key.startsWith('_pkr_temp')) return false;
+    if (key === 'pkr_roll_log' || key.startsWith('pkr_roll_log_')) return false;
     if (
         key.startsWith('pkr_char_') ||
         key.startsWith('pkr_pc_') ||

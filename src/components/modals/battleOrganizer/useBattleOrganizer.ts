@@ -24,6 +24,7 @@ import {
     createDefaultActions,
     createDefaultCombatant,
     createDefaultBattlefield,
+    sanitizeBattlefield,
     createDefaultState
 } from './battleOrganizerUtils';
 import { useBattleOrganizerSync } from './useBattleOrganizerSync';
@@ -44,6 +45,7 @@ export {
     createDefaultActions,
     createDefaultCombatant,
     createDefaultBattlefield,
+    sanitizeBattlefield,
     createDefaultState
 };
 
@@ -54,7 +56,10 @@ export function useBattleOrganizer() {
             if (saved) {
                 const parsed = JSON.parse(saved);
                 if (parsed && Array.isArray(parsed.rounds) && parsed.rounds.length > 0) {
-                    return parsed;
+                    return {
+                        ...parsed,
+                        battlefield: sanitizeBattlefield(parsed.battlefield)
+                    };
                 }
             }
         } catch (e) {

@@ -10,7 +10,8 @@ import {
     LEGACY_OBR_SCENE_META_KEY,
     parseStatusesFromMetadata,
     parseHealthAndWillFromMetadata,
-    parseRollLogEntry
+    parseRollLogEntry,
+    sanitizeBattlefield
 } from './battleOrganizerUtils';
 
 export interface UseBattleOrganizerSyncProps {
@@ -202,11 +203,15 @@ export function useBattleOrganizerSync({
                             clearTimeout(saveTimerRef.current);
                             saveTimerRef.current = null;
                         }
+                        const sanitized = {
+                            ...parsed,
+                            battlefield: sanitizeBattlefield(parsed.battlefield)
+                        };
                         lastSavedJsonRef.current = e.newValue;
-                        if (parsed.battlefield) {
-                            useCharacterStore.getState().setActiveBattlefield(parsed.battlefield);
+                        if (sanitized.battlefield) {
+                            useCharacterStore.getState().setActiveBattlefield(sanitized.battlefield);
                         }
-                        setState(parsed);
+                        setState(sanitized);
                     }
                 } catch (err) {
                     console.error('[BattleOrganizer] Failed to parse storage update:', err);
@@ -264,6 +269,10 @@ export function useBattleOrganizerSync({
                     }
 
                     if (processedIncoming.battlefield) {
+                        processedIncoming = {
+                            ...processedIncoming,
+                            battlefield: sanitizeBattlefield(processedIncoming.battlefield)
+                        };
                         if (currentRole !== 'GM' && processedIncoming.battlefield.broadcastToPlayers === false) {
                             useCharacterStore.getState().setActiveBattlefield(null);
                         } else {

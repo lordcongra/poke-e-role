@@ -1,5 +1,6 @@
 import OBR from '@owlbear-rodeo/sdk';
 import { isStandaloneMode } from '../sync/storageAdapter';
+import { removeSettingFromIndexedDB } from '../sync/userPreferences';
 import { isBattleOrganizerOpen } from '../../components/modals/battleOrganizer/battleOrganizerSettingsHelper';
 import { EXTENSION_ID, type RollSyncData } from '../../hooks/owlbearSync/owlbearSyncConstants';
 
@@ -90,7 +91,7 @@ export async function broadcastRollLog(rollLogData: RollSyncData): Promise<void>
 export function clearRollLogCache(): void {
     try {
         localStorage.setItem('pkr_roll_log', '[]');
-        localStorage.removeItem('pkr_roll_log');
+        removeSettingFromIndexedDB('pkr_roll_log').catch(() => {});
     } catch (e) {
         console.warn('[RollLogSync] Failed to clear roll log in localStorage:', e);
     }

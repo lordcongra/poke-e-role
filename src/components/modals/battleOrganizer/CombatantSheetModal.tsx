@@ -5,7 +5,12 @@ import { useCharacterStore } from '../../../store/useCharacterStore';
 import { useResolvedImageUrl } from '../../../utils/graphics/useResolvedImageUrl';
 import OBR, { type Image } from '@owlbear-rodeo/sdk';
 import { hydrateActiveSheet } from '../../../utils/sync/unifiedSheetHydration';
-import { setActiveTokenId, setIsPcSheetActive, hasPendingUpdates } from '../../../utils/sync/obr';
+import {
+    setActiveTokenId,
+    setIsPcSheetActive,
+    hasPendingUpdates,
+    flushCharacterToOwlbear
+} from '../../../utils/sync/obr';
 import { hasCharacterSheetChanged } from '../pcStorage/pcSheetSyncUtils';
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
 import { extractTokenImage } from '../../../utils/combat/initiativeHelpers';
@@ -90,6 +95,7 @@ export function CombatantSheetModal({
         });
 
         return () => {
+            flushCharacterToOwlbear().catch(() => {});
             unsubStore();
             setIsPcSheetActive(false);
             const prevId = prevTokenIdRef.current;
@@ -241,6 +247,7 @@ export function CombatantSheetModal({
 
         return () => {
             isMounted = false;
+            flushCharacterToOwlbear().catch(() => {});
             if (unsubScene) {
                 unsubScene();
             }
@@ -253,23 +260,33 @@ export function CombatantSheetModal({
 
     const handlePrev = () => {
         if (!hasMultiple) return;
+        flushCharacterToOwlbear().catch(() => {});
         const prevIdx = (currentIndex - 1 + selectableCombatants.length) % selectableCombatants.length;
         onSelectCombatant(selectableCombatants[prevIdx]);
     };
 
     const handleNext = () => {
         if (!hasMultiple) return;
+        flushCharacterToOwlbear().catch(() => {});
         const nextIdx = (currentIndex + 1) % selectableCombatants.length;
         onSelectCombatant(selectableCombatants[nextIdx]);
     };
 
     const handleSelectChange = (id: string) => {
         const found = selectableCombatants.find((c) => c.id === id);
-        if (found) onSelectCombatant(found);
+        if (found) {
+            flushCharacterToOwlbear().catch(() => {});
+            onSelectCombatant(found);
+        }
+    };
+
+    const handleClose = () => {
+        flushCharacterToOwlbear().catch(() => {});
+        onClose();
     };
 
     return (
-        <div className="bo-sheet-modal__overlay" onClick={onClose} role="dialog" aria-modal="true">
+        <div className="bo-sheet-modal__overlay" onClick={handleClose} role="dialog" aria-modal="true">
             <div className="bo-sheet-modal__content" onClick={(e) => e.stopPropagation()}>
                 {/* Header */}
                 <div className="bo-sheet-modal__header">
@@ -334,7 +351,7 @@ export function CombatantSheetModal({
                         <button
                             type="button"
                             className="action-button action-button--ghost bo-sheet-modal__close"
-                            onClick={onClose}
+                            onClick={handleClose}
                             title="Close Sheet"
                             aria-label="Close Character Sheet"
                         >
