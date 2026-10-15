@@ -150,6 +150,27 @@ export function HomebrewMoveCard({
                         </div>
                     </div>
 
+                    <div className="homebrew-move__battlefield-row">
+                        <span className="text-label">Battlefield Category:</span>
+                        <select
+                            value={move.battlefieldCategory || 'none'}
+                            onChange={(event) =>
+                                canEdit &&
+                                updateCustomMove(
+                                    move.id,
+                                    'battlefieldCategory',
+                                    event.target.value as 'none' | 'forceField' | 'entryHazard'
+                                )
+                            }
+                            disabled={!canEdit}
+                            className="homebrew-move__select text-label"
+                        >
+                            <option value="none">None</option>
+                            <option value="forceField">Force Field / Team Buff</option>
+                            <option value="entryHazard">Entry Hazard</option>
+                        </select>
+                    </div>
+
                     <div className="homebrew-move__stat-row">
                         <span className="text-label">Accuracy:</span>
                         <div className="homebrew-move__dual-col">

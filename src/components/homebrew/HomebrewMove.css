@@ -52,10 +52,17 @@
     text-align: center;
 }
 
+.homebrew-move__battlefield-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 /* Mobile Overrides */
 @media (max-width: 768px) {
     .homebrew-move__row,
-    .homebrew-move__stat-row {
+    .homebrew-move__stat-row,
+    .homebrew-move__battlefield-row {
         flex-wrap: wrap;
     }
     .homebrew-move__power-box {

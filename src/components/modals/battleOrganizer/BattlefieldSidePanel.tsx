@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Shield, Plus, Trash2 } from 'lucide-react';
 import { RemainingRoundsBoxes } from './RemainingRoundsBoxes';
 import { BattlefieldAutocompleteInput, type AutocompleteSuggestion } from './BattlefieldAutocompleteInput';
+import { useCharacterStore } from '../../../store/useCharacterStore';
 import { fetchMoveLookupIndex } from '../../../utils/api/api';
 import type { MoveLookupEntry } from '../../../utils/api/apiTypes';
 import type { BattlefieldSideData, BattleOrganizerTimerEffect } from '../../../types/battleOrganizerTypes';
@@ -17,6 +18,7 @@ export interface BattlefieldSidePanelProps {
 const SUPPORTED_SIDE_MOVES = new Set(['reflect', 'light screen', 'aurora veil', 'tailwind']);
 
 export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: BattlefieldSidePanelProps) {
+    const roomCustomMoves = useCharacterStore((state) => state.roomCustomMoves);
     const [allMoves, setAllMoves] = useState<MoveLookupEntry[]>([]);
 
     useEffect(() => {
@@ -129,6 +131,7 @@ export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: Ba
     // Autocomplete suggestion builders
     const getForceFieldSuggestions = (query: string): AutocompleteSuggestion[] => {
         const clean = query.trim().toLowerCase();
+        const customFieldMoves = roomCustomMoves.filter((m) => m.battlefieldCategory === 'forceField');
         if (!clean) {
             const defaults: AutocompleteSuggestion[] = [
                 { name: 'Reflect', rounds: 4, supported: true },
@@ -139,10 +142,31 @@ export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: Ba
                 { name: 'Mist', rounds: 4, supported: false },
                 { name: 'Lucky Chant', rounds: -1, supported: false }
             ];
-            return defaults;
+            const defaultNames = new Set(defaults.map((d) => d.name.toLowerCase()));
+            const customDefaults: AutocompleteSuggestion[] = customFieldMoves
+                .filter((m) => !defaultNames.has(m.name.toLowerCase()))
+                .map((m) => ({
+                    name: m.name,
+                    rounds: 4,
+                    supported: SUPPORTED_SIDE_MOVES.has(m.name.toLowerCase())
+                }));
+            return [...defaults, ...customDefaults];
         }
-        return allMoves
+
+        const matchedCustom: AutocompleteSuggestion[] = customFieldMoves
             .filter((m) => m.name.toLowerCase().includes(clean))
+            .map((m) => {
+                const isLuckyChant = m.name.toLowerCase() === 'lucky chant';
+                return {
+                    name: m.name,
+                    rounds: isLuckyChant ? -1 : 4,
+                    supported: SUPPORTED_SIDE_MOVES.has(m.name.toLowerCase())
+                };
+            });
+        const customNames = new Set(matchedCustom.map((c) => c.name.toLowerCase()));
+
+        const matchedMoves = allMoves
+            .filter((m) => m.name.toLowerCase().includes(clean) && !customNames.has(m.name.toLowerCase()))
             .slice(0, 15)
             .map((m) => {
                 const isLuckyChant = m.name.toLowerCase() === 'lucky chant';
@@ -152,25 +176,36 @@ export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: Ba
                     supported: SUPPORTED_SIDE_MOVES.has(m.name.toLowerCase())
                 };
             });
+        return [...matchedCustom, ...matchedMoves];
     };
 
     const getHazardSuggestions = (query: string): AutocompleteSuggestion[] => {
         const clean = query.trim().toLowerCase();
+        const customHazardMoves = roomCustomMoves.filter((m) => m.battlefieldCategory === 'entryHazard');
         if (!clean) {
-            return CANONICAL_HAZARDS.map((name) => ({ name }));
+            const canonicalHazards = CANONICAL_HAZARDS.map((name) => ({ name }));
+            const canonicalNames = new Set(CANONICAL_HAZARDS.map((h) => h.toLowerCase()));
+            const customHazards = customHazardMoves
+                .filter((m) => !canonicalNames.has(m.name.toLowerCase()))
+                .map((m) => ({ name: m.name }));
+            return [...canonicalHazards, ...customHazards];
         }
         const matchedCanonicals = CANONICAL_HAZARDS.filter((h) => h.toLowerCase().includes(clean)).map((name) => ({
             name
         }));
+        const canonicalNames = new Set(matchedCanonicals.map((c) => c.name.toLowerCase()));
+        const matchedCustom = customHazardMoves
+            .filter((m) => m.name.toLowerCase().includes(clean) && !canonicalNames.has(m.name.toLowerCase()))
+            .map((m) => ({ name: m.name }));
+        const existingNames = new Set([
+            ...matchedCanonicals.map((c) => c.name.toLowerCase()),
+            ...matchedCustom.map((c) => c.name.toLowerCase())
+        ]);
         const matchedMoves = allMoves
-            .filter(
-                (m) =>
-                    m.name.toLowerCase().includes(clean) &&
-                    !matchedCanonicals.some((c) => c.name.toLowerCase() === m.name.toLowerCase())
-            )
+            .filter((m) => m.name.toLowerCase().includes(clean) && !existingNames.has(m.name.toLowerCase()))
             .slice(0, 10)
             .map((m) => ({ name: m.name }));
-        return [...matchedCanonicals, ...matchedMoves];
+        return [...matchedCanonicals, ...matchedCustom, ...matchedMoves];
     };
 
     return (

@@ -278,7 +278,8 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 acc1: 'dex',
                 acc2: 'brawl',
                 dmg1: 'str',
-                desc: ''
+                desc: '',
+                battlefieldCategory: 'none'
             }
         ];
         set({ roomCustomMoves: newMoves, needsBackup: true });

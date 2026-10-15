@@ -266,6 +266,7 @@ export interface CustomMove {
     dmg1Alt?: string;
     desc: string;
     gmOnly?: boolean;
+    battlefieldCategory?: 'none' | 'forceField' | 'entryHazard';
 }
 
 export interface CustomPokemon {
