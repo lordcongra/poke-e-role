@@ -95,7 +95,12 @@ export function InitiativeTrackerContent({
                 </div>
 
                 <div className="init-tracker__field-strip">
-                    <InitiativeFieldEffectsBar isGM={isGM} isStandaloneMode={isStandaloneMode} isGhost={isGhost} />
+                    <InitiativeFieldEffectsBar
+                        layout={layout}
+                        isGM={isGM}
+                        isStandaloneMode={isStandaloneMode}
+                        isGhost={isGhost}
+                    />
                 </div>
             </div>
 

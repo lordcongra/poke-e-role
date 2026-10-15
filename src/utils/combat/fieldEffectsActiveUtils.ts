@@ -1,7 +1,7 @@
 import type { BattlefieldData, BattleOrganizerTimerEffect } from '../../types/battleOrganizerTypes';
 
 export interface ActiveFieldEffectItem extends BattleOrganizerTimerEffect {
-    category: 'weather' | 'terrain' | 'other' | 'forceField';
+    category: 'weather' | 'terrain' | 'other' | 'forceField' | 'entryHazard';
     id: string;
     subLabel?: string;
     prefix?: string;
@@ -17,8 +17,14 @@ export function getEffectsByCategory(
 ): BattleOrganizerTimerEffect[] {
     if (!battlefield) return [];
     const results: BattleOrganizerTimerEffect[] = [];
-    const isActive = (eff?: BattleOrganizerTimerEffect | null) =>
-        Boolean(eff?.name?.trim() && ((eff.remainingRounds ?? 0) > 0 || eff.remainingRounds === -1));
+    const getRounds = (eff?: (BattleOrganizerTimerEffect & { rounds?: number }) | null): number => {
+        if (!eff) return 0;
+        return eff.remainingRounds ?? eff.rounds ?? 0;
+    };
+    const isActive = (eff?: (BattleOrganizerTimerEffect & { rounds?: number }) | null) => {
+        const r = getRounds(eff);
+        return Boolean(eff?.name?.trim() && (r > 0 || r === -1));
+    };
 
     const primary = battlefield[category];
     if (isActive(primary)) results.push(primary);
@@ -42,8 +48,16 @@ export function getEffectsByCategory(
 export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | undefined): ActiveFieldEffectItem[] {
     if (!battlefield) return [];
     const results: ActiveFieldEffectItem[] = [];
-    const isActive = (eff?: BattleOrganizerTimerEffect | null) =>
-        Boolean(eff?.name?.trim() && ((eff.remainingRounds ?? 0) > 0 || eff.remainingRounds === -1));
+
+    const getRounds = (eff?: (BattleOrganizerTimerEffect & { rounds?: number }) | null): number => {
+        if (!eff) return 0;
+        return eff.remainingRounds ?? eff.rounds ?? 0;
+    };
+
+    const isActive = (eff?: (BattleOrganizerTimerEffect & { rounds?: number }) | null) => {
+        const r = getRounds(eff);
+        return Boolean(eff?.name?.trim() && (r > 0 || r === -1));
+    };
 
     const isGrassy = (eff?: BattleOrganizerTimerEffect | null) =>
         Boolean(eff && isActive(eff) && eff.name.toLowerCase().includes('grassy'));
@@ -59,6 +73,7 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
     if (isActive(battlefield.weather)) {
         results.push({
             ...battlefield.weather,
+            remainingRounds: getRounds(battlefield.weather),
             category: 'weather',
             id: 'weather-primary',
             prefix: 'Weather',
@@ -69,6 +84,7 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
         if (isActive(w)) {
             results.push({
                 ...w,
+                remainingRounds: getRounds(w),
                 category: 'weather',
                 id: `weather-extra-${idx}`,
                 prefix: 'Weather',
@@ -86,6 +102,7 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
         if (!sideHasGrassyTerrain || !isTerrainGrassy(battlefield.terrain)) {
             results.push({
                 ...battlefield.terrain,
+                remainingRounds: getRounds(battlefield.terrain),
                 category: 'terrain',
                 id: 'terrain-primary',
                 prefix: 'Terrain',
@@ -98,6 +115,7 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
             if (!sideHasGrassyTerrain || !isTerrainGrassy(t)) {
                 results.push({
                     ...t,
+                    remainingRounds: getRounds(t),
                     category: 'terrain',
                     id: `terrain-extra-${idx}`,
                     prefix: 'Terrain',
@@ -108,20 +126,45 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
         }
     });
 
-    // Other Primary & Extras
-    if (isActive(battlefield.other)) {
+    // Other Primary & Extras (support single object or array)
+    const rawOther = battlefield.other as
+        | (BattleOrganizerTimerEffect & { rounds?: number })
+        | (BattleOrganizerTimerEffect & { rounds?: number })[]
+        | undefined;
+
+    if (Array.isArray(rawOther)) {
+        rawOther.forEach((o, idx) => {
+            if (isActive(o) && o?.name) {
+                results.push({
+                    ...o,
+                    name: o.name,
+                    remainingRounds: getRounds(o),
+                    category: 'other',
+                    id: idx === 0 ? 'other-primary' : `other-extra-${idx}`,
+                    prefix: 'Global',
+                    isExtra: idx !== 0,
+                    extraIndex: idx !== 0 ? idx : undefined
+                });
+            }
+        });
+    } else if (isActive(rawOther) && rawOther?.name) {
         results.push({
-            ...battlefield.other,
+            ...rawOther,
+            name: rawOther.name,
+            remainingRounds: getRounds(rawOther),
             category: 'other',
             id: 'other-primary',
             prefix: 'Global',
             isExtra: false
         });
     }
+
     battlefield.extraOther?.forEach((o, idx) => {
-        if (isActive(o)) {
+        if (isActive(o) && o?.name) {
             results.push({
                 ...o,
+                name: o.name,
+                remainingRounds: getRounds(o),
                 category: 'other',
                 id: `other-extra-${idx}`,
                 prefix: 'Global',
@@ -133,9 +176,11 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
 
     // Force Fields (Player & Foe) - base slots
     battlefield.playerSide?.forceFields?.forEach((ff, idx) => {
-        if (isActive(ff)) {
+        if (isActive(ff) && ff?.name) {
             results.push({
                 ...ff,
+                name: ff.name,
+                remainingRounds: getRounds(ff),
                 category: 'forceField',
                 id: `player-ff-${idx}`,
                 subLabel: 'Ally',
@@ -148,9 +193,11 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
 
     // Player Extra Force Fields
     battlefield.playerSide?.extraForceFields?.forEach((eff, idx) => {
-        if (isActive(eff)) {
+        if (isActive(eff) && eff?.name) {
             results.push({
                 ...eff,
+                name: eff.name,
+                remainingRounds: getRounds(eff),
                 category: 'forceField',
                 id: `player-extra-ff-${idx}`,
                 subLabel: 'Ally',
@@ -162,11 +209,34 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
         }
     });
 
+    // Player Hazards (if present as timer objects)
+    const playerHazards = (
+        battlefield.playerSide as { hazards?: (BattleOrganizerTimerEffect & { rounds?: number })[] }
+    )?.hazards;
+    if (Array.isArray(playerHazards)) {
+        playerHazards.forEach((h, idx) => {
+            if (isActive(h) && h?.name) {
+                results.push({
+                    ...h,
+                    name: h.name,
+                    remainingRounds: getRounds(h),
+                    category: 'entryHazard',
+                    id: `player-hazard-${idx}`,
+                    subLabel: 'Ally',
+                    prefix: 'Ally Hazard',
+                    side: 'player'
+                });
+            }
+        });
+    }
+
     // Foe Force Fields - base slots
     battlefield.foeSide?.forceFields?.forEach((ff, idx) => {
-        if (isActive(ff)) {
+        if (isActive(ff) && ff?.name) {
             results.push({
                 ...ff,
+                name: ff.name,
+                remainingRounds: getRounds(ff),
                 category: 'forceField',
                 id: `foe-ff-${idx}`,
                 subLabel: 'Foe',
@@ -179,9 +249,11 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
 
     // Foe Extra Force Fields
     battlefield.foeSide?.extraForceFields?.forEach((eff, idx) => {
-        if (isActive(eff)) {
+        if (isActive(eff) && eff?.name) {
             results.push({
                 ...eff,
+                name: eff.name,
+                remainingRounds: getRounds(eff),
                 category: 'forceField',
                 id: `foe-extra-ff-${idx}`,
                 subLabel: 'Foe',
@@ -192,6 +264,27 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
             });
         }
     });
+
+    // Foe Hazards (if present as timer objects)
+    const foeHazards = (
+        battlefield.foeSide as { hazards?: (BattleOrganizerTimerEffect & { rounds?: number })[] }
+    )?.hazards;
+    if (Array.isArray(foeHazards)) {
+        foeHazards.forEach((h, idx) => {
+            if (isActive(h) && h?.name) {
+                results.push({
+                    ...h,
+                    name: h.name,
+                    remainingRounds: getRounds(h),
+                    category: 'entryHazard',
+                    id: `foe-hazard-${idx}`,
+                    subLabel: 'Foe',
+                    prefix: 'Foe Hazard',
+                    side: 'foe'
+                });
+            }
+        });
+    }
 
     return results;
 }

@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import {
@@ -26,12 +27,36 @@ interface TooltipPosition {
 }
 
 export interface InitiativeFieldEffectsBarProps {
+    layout?: 'vertical' | 'horizontal';
     isGM?: boolean;
     isStandaloneMode?: boolean;
     isGhost?: boolean;
 }
 
+// Module-level synchronized expand state across visible and ghost tracker instances
+let sharedIsExpanded = false;
+const listeners = new Set<() => void>();
+
+function getSharedExpanded() {
+    return sharedIsExpanded;
+}
+
+function setSharedExpanded(expanded: boolean) {
+    if (sharedIsExpanded !== expanded) {
+        sharedIsExpanded = expanded;
+        listeners.forEach((listener) => listener());
+    }
+}
+
+function subscribeExpanded(listener: () => void) {
+    listeners.add(listener);
+    return () => {
+        listeners.delete(listener);
+    };
+}
+
 export function InitiativeFieldEffectsBar({
+    layout = 'vertical',
     isGM,
     isStandaloneMode: isStandaloneProp,
     isGhost = false
@@ -41,6 +66,8 @@ export function InitiativeFieldEffectsBar({
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedEffectId, setSelectedEffectId] = useState<string | null>(null);
     const barRef = useRef<HTMLDivElement>(null);
+
+    const isExpanded = useSyncExternalStore(subscribeExpanded, getSharedExpanded);
 
     // Dismiss tooltip on outside click
     useEffect(() => {
@@ -58,8 +85,6 @@ export function InitiativeFieldEffectsBar({
         };
     }, []);
 
-    if (!activeBattlefield) return null;
-
     const allActive = getAllActiveFieldEffects(activeBattlefield);
     const items: ActiveConditionItem[] = allActive.map((item) => ({
         id: item.id,
@@ -68,12 +93,31 @@ export function InitiativeFieldEffectsBar({
         subLabel: item.subLabel
     }));
 
-    if (items.length === 0) return null;
+    const threshold = layout === 'vertical' ? 3 : 2;
+    const hasToggle = items.length > threshold;
+    const maxCollapsedChips = layout === 'vertical' ? 2 : 1;
+    const visibleItems = hasToggle && !isExpanded ? items.slice(0, maxCollapsedChips) : items;
+    const hiddenCount = items.length - maxCollapsedChips;
+
+    // Reset expand state if conditions drop below threshold or layout changes
+    useEffect(() => {
+        if (!isGhost && !hasToggle && sharedIsExpanded) {
+            setSharedExpanded(false);
+        }
+    }, [hasToggle, isGhost]);
+
+    useEffect(() => {
+        if (!isGhost) {
+            setSharedExpanded(false);
+        }
+    }, [layout, isGhost]);
+
+    if (!activeBattlefield || items.length === 0) return null;
 
     if (isGhost) {
         return (
-            <div className="init-field-bar" aria-hidden="true">
-                {items.map((item) => (
+            <div className={`init-field-bar init-field-bar--${layout}`} aria-hidden="true">
+                {visibleItems.map((item) => (
                     <div key={item.id} className="init-field-chip-wrap">
                         <div
                             className="init-field-chip"
@@ -90,6 +134,20 @@ export function InitiativeFieldEffectsBar({
                         </div>
                     </div>
                 ))}
+                {hasToggle && (
+                    <div className="init-field-chip-wrap">
+                        <div className="init-field-chip init-field-chip--toggle">
+                            {!isExpanded ? (
+                                <>
+                                    <span>+{hiddenCount}</span>
+                                    <ChevronDown size={11} />
+                                </>
+                            ) : (
+                                <ChevronUp size={11} />
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
@@ -102,7 +160,8 @@ export function InitiativeFieldEffectsBar({
         const barEl = barRef.current;
         const barRect = barEl?.getBoundingClientRect() ?? chipRect;
         const trackerEl = chipEl.closest('.init-tracker');
-        const isHorizontal = trackerEl?.classList.contains('init-tracker--horizontal') ?? false;
+        const isHorizontal =
+            layout === 'horizontal' || (trackerEl?.classList.contains('init-tracker--horizontal') ?? false);
         const trackerRect = trackerEl?.getBoundingClientRect() ?? {
             left: 0,
             right: window.innerWidth,
@@ -138,8 +197,8 @@ export function InitiativeFieldEffectsBar({
 
     return (
         <>
-            <div className="init-field-bar" ref={barRef}>
-                {items.map((item) => {
+            <div className={`init-field-bar init-field-bar--${layout}`} ref={barRef}>
+                {visibleItems.map((item) => {
                     const isHovered = tooltipPos?.id === item.id;
                     const badgeColor = item.info.color;
 
@@ -170,6 +229,36 @@ export function InitiativeFieldEffectsBar({
                         </div>
                     );
                 })}
+
+                {hasToggle && (
+                    <div className="init-field-chip-wrap">
+                        <button
+                            type="button"
+                            className="init-field-chip init-field-chip--toggle"
+                            onClick={() => {
+                                setTooltipPos(null);
+                                setSharedExpanded(!isExpanded);
+                            }}
+                            title={
+                                !isExpanded
+                                    ? `Show ${hiddenCount} more field effect${hiddenCount > 1 ? 's' : ''}`
+                                    : 'Collapse field effects'
+                            }
+                            aria-label={
+                                !isExpanded ? `Show ${hiddenCount} more field effects` : 'Collapse field effects'
+                            }
+                        >
+                            {!isExpanded ? (
+                                <>
+                                    <span>+{hiddenCount}</span>
+                                    <ChevronDown size={11} />
+                                </>
+                            ) : (
+                                <ChevronUp size={11} />
+                            )}
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* On-hover Floating Tooltip via Portal */}
