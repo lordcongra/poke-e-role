@@ -473,3 +473,37 @@
     color: #ffffff;
     box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
 }
+
+/* --- Supported Battlefield Effects Hint --- */
+.bo-battlefield-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--text-muted, #aaa);
+    margin: -6px 0 14px 2px;
+    line-height: 1.35;
+}
+
+.bo-battlefield-hint__icon {
+    flex-shrink: 0;
+    color: var(--primary, #3b82f6);
+}
+
+.bo-battlefield-hint__badge {
+    display: inline-block;
+    padding: 0 5px;
+    margin: 0 2px;
+    border-radius: 8px;
+    border: 1.5px solid var(--primary, #3b82f6);
+    background: color-mix(in srgb, var(--primary, #3b82f6) 12%, var(--panel-alt, #242424));
+    color: var(--text-main, #fff);
+    font-weight: 600;
+    font-size: 0.68rem;
+}
+
+@media print {
+    .bo-battlefield-hint {
+        display: none !important;
+    }
+}

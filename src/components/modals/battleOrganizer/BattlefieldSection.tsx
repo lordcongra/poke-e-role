@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, MapPin, CloudSun, Mountain, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { ChevronDown, MapPin, CloudSun, Mountain, Sparkles, Eye, EyeOff, Info } from 'lucide-react';
 import { BattlefieldPitch } from './BattlefieldPitch';
 import { BattlefieldEffectCard } from './BattlefieldEffectCard';
 import { BattlefieldSidePanel } from './BattlefieldSidePanel';
@@ -172,6 +172,15 @@ export function BattlefieldSection({
                                     category="other"
                                     placeholder="e.g. Trick Room, Gravity..."
                                 />
+                            </div>
+
+                            {/* Supported Effects Engine Note (Hidden in print) */}
+                            <div className="bo-battlefield-hint text-subtext no-print">
+                                <Info size={13} className="bo-battlefield-hint__icon" aria-hidden="true" />
+                                <span>
+                                    Weather, Terrain, and Other chips with a{' '}
+                                    <span className="bo-battlefield-hint__badge">highlighted outline</span> are supported by the Pokérole dice/math engine and auto-apply to sheets.
+                                </span>
                             </div>
 
                             {/* Split Stadium Pitch Grid: Player's Side | Pitch | Foe's Side */}
