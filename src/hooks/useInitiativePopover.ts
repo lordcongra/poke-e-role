@@ -97,12 +97,11 @@ export function useInitiativePopover(isObrReady: boolean) {
             if (isNaN(anchorPosition.top) || !isFinite(anchorPosition.top)) anchorPosition.top = 0;
 
             const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-            const themeToPass = document.body.getAttribute('data-theme') || 'dark';
-            const url = `${baseUrl}/initiative-tracker.html?layout=${initiativeTrackerLayout || 'vertical'}&theme=${themeToPass}&shape=${initiativeTrackerAvatarShape || 'circle'}&mw=${initiativeTrackerMaxWidth || 400}&mh=${initiativeTrackerMaxHeight || 600}`;
-
             const isVertical = (initiativeTrackerLayout || 'vertical') === 'vertical';
-            const defaultWidth = isVertical ? 180 : 400;
+            const defaultWidth = isVertical ? 200 : 400;
             const defaultHeight = isVertical ? 380 : 120;
+            const themeToPass = document.body.getAttribute('data-theme') || 'dark';
+            const url = `${baseUrl}/initiative-tracker.html?layout=${initiativeTrackerLayout || 'vertical'}&theme=${themeToPass}&shape=${initiativeTrackerAvatarShape || 'circle'}&mw=${initiativeTrackerMaxWidth || 0}&mh=${initiativeTrackerMaxHeight || 0}`;
 
             let savedW = defaultWidth;
             let savedH = defaultHeight;

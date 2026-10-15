@@ -148,9 +148,14 @@ export function CombatantCard({
 
             <div className="init-tracker__info">
                 <div className="init-tracker__name-row">
-                    <span className="init-tracker__name text-label" title={c.name}>
-                        {c.name}
-                    </span>
+                    <div className="init-tracker__name-wrapper">
+                        <span
+                            className={`init-tracker__name text-label ${c.name.length > 10 ? 'init-tracker__name--marquee' : ''}`}
+                            title={c.name}
+                        >
+                            {c.name}
+                        </span>
+                    </div>
                     {isGM && (
                         <button
                             type="button"

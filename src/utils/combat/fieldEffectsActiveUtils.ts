@@ -210,9 +210,8 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
     });
 
     // Player Hazards (if present as timer objects)
-    const playerHazards = (
-        battlefield.playerSide as { hazards?: (BattleOrganizerTimerEffect & { rounds?: number })[] }
-    )?.hazards;
+    const playerHazards = (battlefield.playerSide as { hazards?: (BattleOrganizerTimerEffect & { rounds?: number })[] })
+        ?.hazards;
     if (Array.isArray(playerHazards)) {
         playerHazards.forEach((h, idx) => {
             if (isActive(h) && h?.name) {
@@ -266,9 +265,8 @@ export function getAllActiveFieldEffects(battlefield: BattlefieldData | null | u
     });
 
     // Foe Hazards (if present as timer objects)
-    const foeHazards = (
-        battlefield.foeSide as { hazards?: (BattleOrganizerTimerEffect & { rounds?: number })[] }
-    )?.hazards;
+    const foeHazards = (battlefield.foeSide as { hazards?: (BattleOrganizerTimerEffect & { rounds?: number })[] })
+        ?.hazards;
     if (Array.isArray(foeHazards)) {
         foeHazards.forEach((h, idx) => {
             if (isActive(h) && h?.name) {

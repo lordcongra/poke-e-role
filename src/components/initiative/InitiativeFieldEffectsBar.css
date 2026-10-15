@@ -9,9 +9,15 @@
 }
 
 .init-field-bar--vertical {
-    max-width: 132px;
+    max-width: 100%;
     width: 100%;
-    gap: 4px;
+    gap: 3px;
+}
+
+.init-field-bar--vertical .init-field-chip {
+    min-width: 36px;
+    padding: 1px 3px;
+    gap: 2px;
 }
 
 .init-field-bar--horizontal {

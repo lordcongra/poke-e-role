@@ -95,7 +95,7 @@ export function InitiativeFieldEffectsBar({
 
     const threshold = layout === 'vertical' ? 3 : 2;
     const hasToggle = items.length > threshold;
-    const maxCollapsedChips = layout === 'vertical' ? 2 : 1;
+    const maxCollapsedChips = layout === 'vertical' ? 3 : 1;
     const visibleItems = hasToggle && !isExpanded ? items.slice(0, maxCollapsedChips) : items;
     const hiddenCount = items.length - maxCollapsedChips;
 

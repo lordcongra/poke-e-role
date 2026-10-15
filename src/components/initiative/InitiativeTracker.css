@@ -177,6 +177,26 @@
     align-items: center;
 }
 
+.init-tracker__list--vertical .init-tracker__list-item {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.init-tracker--vertical .init-tracker__card,
+.init-tracker__list--vertical .init-tracker__card {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.init-tracker--horizontal .init-tracker__card,
+.init-tracker__list--horizontal .init-tracker__card {
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
 .init-tracker__empty {
     padding: 20px;
     text-align: center;
@@ -314,6 +334,15 @@
         overflow-x: hidden !important;
         padding: 6px !important;
         box-sizing: border-box;
+    }
+
+    /* Force cards and list items in the mobile drawer to span full width */
+    .init-tracker__standalone-panel .init-tracker__list-item,
+    .init-tracker__standalone-panel .init-tracker__card {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        box-sizing: border-box !important;
     }
 
     /* Hide the horizontal 'flow arrow' since we are stacking vertically */

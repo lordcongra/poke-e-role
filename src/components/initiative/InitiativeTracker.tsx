@@ -143,7 +143,15 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                 >
                     <div
                         className={`init-tracker init-tracker--${layout} init-tracker__standalone-panel`}
-                        style={{ flexDirection: layout === 'horizontal' ? 'row' : 'column' }}
+                        style={{
+                            flexDirection: layout === 'horizontal' ? 'row' : 'column',
+                            maxWidth:
+                                maxTrackerWidth > 0
+                                    ? `${maxTrackerWidth}px`
+                                    : layout === 'vertical'
+                                      ? '200px'
+                                      : undefined
+                        }}
                     >
                         <InitiativeTrackerContent isGhost={false} {...trackerContentProps} />
                     </div>

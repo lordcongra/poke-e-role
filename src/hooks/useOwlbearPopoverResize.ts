@@ -38,7 +38,8 @@ export function useOwlbearPopoverResize({
                 const naturalWidth = ghostEl.offsetWidth;
                 const naturalHeight = ghostEl.offsetHeight;
 
-                const limitW = maxTrackerWidth > 0 ? maxTrackerWidth : viewportMaxWidth > 0 ? viewportMaxWidth : 800;
+                const defaultLimitW = layout === 'vertical' ? 200 : viewportMaxWidth > 0 ? viewportMaxWidth : 800;
+                const limitW = maxTrackerWidth > 0 ? maxTrackerWidth : defaultLimitW;
                 const limitH = maxTrackerHeight > 0 ? maxTrackerHeight : 9999;
 
                 let targetWidth = naturalWidth + 12; // 6px padding on each side for wrapper shadow
