@@ -28,7 +28,7 @@ import {
     HardDrive
 } from 'lucide-react';
 
-export const CURRENT_VERSION = '3.7.0';
+export const CURRENT_VERSION = '3.7.1';
 
 export interface ChangelogHighlight {
     id: string;
@@ -130,12 +130,43 @@ export function getChangelogDiff(lastSeenVersion: string | null): ChangelogDiffR
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
-        version: '3.7.0',
+        version: '3.7.1',
         date: 'October 2026',
         highlights: [
             {
+                id: 'battlefield-effects',
+                version: '3.7.1',
+                title: 'Battlefield Effects & Tracker Sync',
+                icon: Swords,
+                badge: 'Combat & Arena',
+                summary:
+                    'Activate weather, terrains, force fields, team buffs, and entry hazards in the Battle Organizer with live sync to the Initiative Tracker and interactive info buttons.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Global & Battlefield Effects in Battle Organizer:</strong> Activate various weather
+                            conditions (Rain, Harsh Sunlight, Sandstorm, Snow, Fog), terrain effects (Electric,
+                            Grassy, Psychic, Misty), team force fields (Reflect, Light Screen, Safeguard, Mist), side
+                            buffs, and entry hazards (Stealth Rock, Spikes, Toxic Spikes, Sticky Web) directly inside the
+                            Battle Organizer arena.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Initiative Tracker Condition Chips:</strong> All active battlefield conditions and
+                            force fields are automatically synced and pinned onto the Initiative Tracker as clean,
+                            color-coded condition chips for all players and GMs.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Informational Hovers & Quick Duration Controls:</strong> Hover over any active
+                            condition chip on the tracker to view its full mechanical rules and stat modifiers. Click on
+                            any chip to open a quick inspector modal to review details or adjust remaining round durations
+                            on the fly.
+                        </p>
+                    </div>
+                )
+            },
+            {
                 id: 'pokemon-pc-storage',
-                version: '3.7.0',
+                version: '3.7.1',
                 title: 'Pokémon PC Storage & Adventure Vaults',
                 icon: HardDrive,
                 badge: 'Major System',
@@ -185,37 +216,71 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                         </div>
                     </div>
                 )
-            },
-            {
-                id: 'welcome-overview',
-                version: '3.7.0',
-                title: 'Welcome Overview & Sheet Controls',
-                icon: MousePointerClick,
-                badge: 'Overview & Tools',
-                summary:
-                    'Brand new landing screen when no character is selected with quick-launch tools, 1-click sheet deselect controls, and customizable unselected theme colors.',
-                details: (
-                    <div>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>New Welcome Overview:</strong> When opening the extension without a token or
-                            character selected, a clean landing screen greets you with quick-launch cards for Pokémon PC
-                            Storage, Generators, the Battle Organizer, and Homebrew Workshop.
-                        </p>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>1-Click Return to Menu / Deselect:</strong> Dedicated deselect buttons in both the
-                            character header and top toolbar allow you to easily close any open sheet and return to the
-                            main overview without losing your place during combat.
-                        </p>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Custom Base Overview Theme:</strong> Personalize your own preferred theme colors for
-                            the overview screen when no token is active. Your active Pokémon will still display their own
-                            vibrant typing colors (such as Fire orange or Water blue) unless you choose to override them
-                            globally.
-                        </p>
-                    </div>
-                )
             }
         ],
+        changes: [
+            <strong
+                key="battlefield-sync-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Swords size={16} /> Battlefield Effects & Initiative Tracker Sync
+            </strong>,
+            <ul
+                key="battlefield-sync-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Battle Organizer Global Effects:</strong> Activate weather effects (Rain, Sun, Sandstorm, Snow, Fog),
+                    terrain effects (Electric, Grassy, Psychic, Misty), team force fields (Reflect, Light Screen, Safeguard, Mist),
+                    side buffs, and entry hazards (Stealth Rock, Spikes, Toxic Spikes, Sticky Web) directly in the Battle Organizer.
+                </li>
+                <li>
+                    <strong>Initiative Tracker Condition Chips:</strong> All active battlefield conditions and force fields
+                    are automatically pinned to the top of your Initiative Tracker, ensuring both GMs and players can see ongoing conditions at a glance.
+                </li>
+                <li>
+                    <strong>Informational Tooltips & Inspector:</strong> Hover over any active condition chip on the tracker
+                    to view its mechanical rules and stat modifiers. Click on any chip to open a quick inspector modal to review details or adjust remaining round durations.
+                </li>
+            </ul>,
+            <strong
+                key="gen-filter-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Sparkles size={16} /> Generation Filters for Pokémon & Trainer Generators
+            </strong>,
+            <ul
+                key="gen-filter-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Generation Filtering:</strong> The Pokémon Generator and the Pokémon generator inside the
+                    Trainer Generator now allow you to specify which generations (Gen 1 through Gen 9) to generate from.
+                </li>
+            </ul>
+        ]
+    },
+    {
+        version: '3.7.0',
+        date: 'October 2026',
         changes: [
             <strong
                 key="pc-storage-title"

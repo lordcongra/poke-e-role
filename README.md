@@ -1,4 +1,4 @@
-# Pokerole 3.0 Sheet v3.7.0 (Standalone PWA & Owlbear Rodeo Extension)
+# Pokerole 3.0 Sheet v3.7.1 (Standalone PWA & Owlbear Rodeo Extension)
 
 A highly automated, modular character sheet and GM Toolkit for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings).
 
@@ -84,12 +84,14 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 ### ⚔️ The Initiative Tracker
 
 - **Native Integration:** Integrated initiative tracker that you can populate with Pokemon or Trainers by rolling on their sheets or by clicking the "+" icon in the tracker to select any token by name to add! Combine this with the Battle Organizer (explained below) to keep track of your battles round by round, action by action.
+- **Live Battlefield & Global Effects Sync:** Active weather conditions (Rain, Harsh Sunlight, Sandstorm, Snow, Fog), terrain effects (Electric, Grassy, Psychic, Misty), team force fields (Reflect, Light Screen, Safeguard, Mist), side buffs, and entry hazards (Stealth Rock, Spikes, Toxic Spikes, Sticky Web) configured in the Battle Organizer automatically synchronize directly to the Initiative Tracker header as interactive condition chips for both players and GMs.
+- **Informational Hovers & Round Controls:** Hover over any active condition chip on the tracker to instantly inspect its rules, stat modifiers, and mechanical effects in a rich tooltip, or click on a chip to open the inspector dialog and adjust remaining round durations on the fly.
 - **Fully Customizable:** Your tracker layout saves instantly to your personal browser memory. Do you want a horizontal tracker on the bottom of your screen, while your GM wants a vertical list on the right? You can both have it!
 - **Auto-Scrolling:** Set strict maximum dimension limits so the tracker never dominates your screen. If the turn passes to a Pokémon that is hidden off-screen, the tracker will elegantly smooth-scroll them right into the center of your view.
 
 ### ⚔️ The Battle Organizer (Encounter & Combat Manager)
 
-- **Interactive Arena & Battlefield Tracking:** Manage stadium pitch layouts, active weather conditions (Rain, Sun, Sandstorm, Snow, Fog, etc.), terrains (Electric, Grassy, Psychic, Misty), and environmental hazards (Stealth Rock, Spikes, Toxic Spikes, Sticky Web).
+- **Interactive Arena & Battlefield Tracking:** Manage stadium pitch layouts, active weather conditions (Rain, Sun, Sandstorm, Snow, Fog, etc.), terrains (Electric, Grassy, Psychic, Misty), team buffs, and environmental hazards (Stealth Rock, Spikes, Toxic Spikes, Sticky Web) with live syncing to the Initiative Tracker and automatic round decrementing.
 - **Auto-Decrementing Force Fields & Timers:** Track Player and Foe Force Fields (Reflect, Light Screen, Safeguard, Mist) with interactive 1–4 round duration boxes that automatically tick down as combat rounds advance.
 - **Round-by-Round Planning:** Full multi-round workflow allowing GMs to add new rounds, duplicate previous setups, reorder rounds, or delete rounds, with seamless 1-click round advancing.
 - **Combatant Action Slots:** Track individual action slots per Pokémon/combatant with quick toggles for completed/used actions (`✓`), clash/evade/failed actions (`✗`), active held items, and persistent status condition badges.
@@ -222,6 +224,6 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 To install this extension into your Owlbear Rodeo room, copy the Manifest URL below and paste it into your Owlbear Rodeo extension manager:
 
-`https://lordcongra.github.io/poke-e-role/manifest.json?v=3.7.0`
+`https://lordcongra.github.io/poke-e-role/manifest.json?v=3.7.1`
 
 _(Note: If the sheet updates, you can force Owlbear to fetch the newest version by bumping the version tag at the end of the URL!)_
