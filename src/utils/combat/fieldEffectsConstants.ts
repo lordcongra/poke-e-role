@@ -139,7 +139,9 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         color: '#8D6E63',
         icon: 'Droplets',
         initials: 'MS',
-        effects: ['-1 Damage from Electric-type Moves. (4 Rounds)'],
+        effects: [
+            "Physical & Special Electric-Type Moves have Power 0. Pokémon weak to Electric-Type Moves won't receive Super-Effective Damage from them. (4 Rounds)"
+        ],
         defaultRounds: 4
     },
     {
@@ -150,7 +152,9 @@ export const OTHER_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         color: '#42A5F5',
         icon: 'Droplets',
         initials: 'WS',
-        effects: ['-1 Damage from Fire-type Moves. (4 Rounds)'],
+        effects: [
+            "Physical & Special Fire-Type Moves have Power 0. Pokémon weak to Fire-Type Moves won't receive Super-Effective Damage from them. (4 Rounds)"
+        ],
         defaultRounds: 4
     }
 ];

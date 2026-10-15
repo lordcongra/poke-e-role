@@ -27,12 +27,7 @@ export function isBattlefieldPresetSupported(name: string, category: 'weather' |
         );
     }
     if (category === 'other') {
-        return (
-            clean.includes('trick room') ||
-            clean.includes('gravity') ||
-            clean.includes('mud sport') ||
-            clean.includes('water sport')
-        );
+        return clean.includes('trick room') || clean.includes('gravity');
     }
     return false;
 }
@@ -91,12 +86,6 @@ export function getBattlefieldPresetTooltip(
         }
         if (clean.includes('gravity')) {
             return `Gravity (${roundText}) — Supported: Grounds airborne combatants, -2 Dice penalty to Evasion`;
-        }
-        if (clean.includes('mud sport')) {
-            return `Mud Sport (${roundText}) — Supported: -1 Flat Damage from Electric moves`;
-        }
-        if (clean.includes('water sport')) {
-            return `Water Sport (${roundText}) — Supported: -1 Flat Damage from Fire moves`;
         }
     }
 

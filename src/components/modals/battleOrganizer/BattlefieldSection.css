@@ -289,18 +289,20 @@
 }
 
 .bo-preset-chip--supported {
-    border: 1px solid rgba(255, 202, 40, 0.65);
+    border: 1.5px solid var(--primary, #3b82f6);
+    color: var(--text-main, #fff);
+    background: color-mix(in srgb, var(--primary, #3b82f6) 10%, var(--panel-alt, #242424));
 }
 
 .bo-preset-chip--supported:hover {
-    border-color: rgba(255, 202, 40, 0.95);
-    background: color-mix(in srgb, #ffca28 15%, var(--panel-alt, #242424));
+    background: color-mix(in srgb, var(--primary, #3b82f6) 20%, var(--panel-alt, #242424));
+    box-shadow: 0 0 6px color-mix(in srgb, var(--primary, #3b82f6) 30%, transparent);
 }
 
 .bo-preset-chip--supported.bo-preset-chip--active {
     background: var(--primary, #3b82f6);
-    border-color: rgba(255, 202, 40, 0.9);
-    box-shadow: 0 0 5px rgba(255, 202, 40, 0.4);
+    border-color: var(--primary, #3b82f6);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--primary, #3b82f6) 45%, transparent);
     color: #ffffff;
 }
 
@@ -322,7 +324,7 @@
 }
 
 .bo-chip-zap {
-    color: #ffca28;
+    color: var(--primary, #3b82f6);
     vertical-align: middle;
 }
 
@@ -420,11 +422,11 @@
     gap: 2px;
     font-size: 0.65rem;
     font-weight: 700;
-    color: #ffd54f;
-    background: color-mix(in srgb, #ffb300 20%, transparent);
+    color: var(--primary, #3b82f6);
+    background: color-mix(in srgb, var(--primary, #3b82f6) 18%, transparent);
     padding: 1px 5px;
     border-radius: 4px;
-    border: 1px solid rgba(255, 213, 79, 0.35);
+    border: 1px solid color-mix(in srgb, var(--primary, #3b82f6) 40%, transparent);
 }
 
 /* --- Global Effects 3-Column Layout --- */

@@ -311,23 +311,6 @@ export function getWeatherDamageBonus(
         }
     }
 
-    // 3. Other field effects (Mud Sport / Water Sport)
-    const activeOthers = getEffectsByCategory(battlefield, 'other');
-    for (const o of activeOthers) {
-        const cleanOther = (o.name || '').trim().toLowerCase();
-        if (cleanOther.includes('mud sport')) {
-            if (cleanType === 'electric') {
-                flatPenalty += 1;
-                tagDescriptions.push('Mud Sport (-1 Flat Damage from Electric Moves)');
-            }
-        } else if (cleanOther.includes('water sport')) {
-            if (cleanType === 'fire') {
-                flatPenalty += 1;
-                tagDescriptions.push('Water Sport (-1 Flat Damage from Fire Moves)');
-            }
-        }
-    }
-
     // 4. Parse damage tags from active custom homebrew field effects
     try {
         const customEffects = useCharacterStore.getState().roomCustomFieldEffects;
