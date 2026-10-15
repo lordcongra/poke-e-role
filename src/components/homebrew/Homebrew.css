@@ -10,20 +10,51 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.homebrew-modal__overlay--obr,
+.homebrew-modal__overlay--maximized {
+    padding: 0;
 }
 
 .homebrew-modal__content {
     background: var(--panel-bg);
-    border-radius: 8px;
-    width: 600px;
-    max-width: 95vw;
-    border: 2px solid var(--primary); /* 🔥 Dynamic Border */
-    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
-    max-height: 90vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     transition: border-color 0.3s ease;
+}
+
+.homebrew-modal__content--obr {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.homebrew-modal__content--standalone {
+    width: 100%;
+    max-width: 1050px;
+    height: 88vh;
+    max-height: 88vh;
+    border-radius: 10px;
+    border: 2px solid var(--primary);
+    box-shadow: 0 8px 30px color-mix(in srgb, var(--dark) 60%, transparent);
+}
+
+.homebrew-modal__content--standalone-maximized {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100vh;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 .homebrew-modal__header {
@@ -51,6 +82,13 @@
     gap: 8px;
 }
 
+.homebrew-modal__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.homebrew-modal__header-btn,
 .homebrew-modal__close-btn {
     background: transparent;
     border: none;
@@ -62,13 +100,14 @@
     transition: transform 0.2s ease;
 }
 
+.homebrew-modal__header-btn:hover,
 .homebrew-modal__close-btn:hover {
     transform: scale(1.1);
 }
 
 .homebrew-modal__tabs {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(8, 1fr);
     gap: 6px;
 }
 
@@ -337,7 +376,13 @@
     padding: 6px;
 }
 
-/* --- Mobile Overrides --- */
+/* --- Responsive Overrides --- */
+@media (max-width: 950px) {
+    .homebrew-modal__tabs {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
 @media (max-width: 768px) {
     .homebrew-card__header {
         flex-wrap: wrap;
@@ -356,7 +401,9 @@
         flex: 1 1 auto;
         text-align: center;
     }
+}
 
+@media (max-width: 500px) {
     .homebrew-modal__tabs {
         grid-template-columns: repeat(2, 1fr);
     }

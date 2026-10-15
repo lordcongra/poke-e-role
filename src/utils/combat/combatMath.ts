@@ -251,10 +251,10 @@ export function getWeatherDamageBonus(
                 flatPenalty += 1;
                 tagDescriptions.push('Rain (-1 Flat Damage from Fire Moves)');
             }
-        } else if (cleanName.includes('snow') || cleanName.includes('hail')) {
+        } else if ((cleanName.includes('snow') || cleanName === 'snowy') && !cleanName.includes('hail')) {
             if (cleanType === 'ice') {
                 diceBonus += 1;
-                tagDescriptions.push('Snow (+1 Dice to Ice Damage Pool)');
+                tagDescriptions.push('Snowy (+1 Dice to Ice Damage Pool)');
             }
         }
     }
@@ -272,6 +272,11 @@ export function getWeatherDamageBonus(
             if (cleanType === 'psychic') {
                 diceBonus += 1;
                 tagDescriptions.push('Psychic Terrain (+1 Dice to Psychic Damage Pool)');
+            }
+        } else if (cleanTerrain.includes('misty')) {
+            if (cleanType === 'dragon') {
+                flatPenalty += 1;
+                tagDescriptions.push('Misty Terrain (-1 Flat Damage from Dragon Moves)');
             }
         }
     }
@@ -533,7 +538,21 @@ export function calculateDefTotal(state: CharacterState, itemBuffs?: CombatBonus
     const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
     const rankBonus = getRankBonusStats(state.identity.rank).def;
 
-    return Math.max(1, vitTotal + state.derived.defBuff - state.derived.defDebuff + invMods.def + rankBonus);
+    let weatherBonus = 0;
+    if (state.activeBattlefield) {
+        const activeWeathers = getEffectsByCategory(state.activeBattlefield, 'weather');
+        const isSnowy = activeWeathers.some((w) => {
+            const clean = (w.name || '').trim().toLowerCase();
+            return (clean.includes('snow') || clean === 'snowy') && !clean.includes('hail');
+        });
+        const isIce =
+            state.identity.type1?.toLowerCase() === 'ice' || state.identity.type2?.toLowerCase() === 'ice';
+        if (isSnowy && isIce) {
+            weatherBonus = 1;
+        }
+    }
+
+    return Math.max(1, vitTotal + state.derived.defBuff - state.derived.defDebuff + invMods.def + rankBonus + weatherBonus);
 }
 
 export function calculateSDefTotal(state: CharacterState, itemBuffs?: CombatBonuses): number {
@@ -546,7 +565,18 @@ export function calculateSDefTotal(state: CharacterState, itemBuffs?: CombatBonu
     if (state.identity.ruleset === 'tabletop') sdefBase = vitTotal;
     const rankBonus = getRankBonusStats(state.identity.rank).sdef;
 
-    return Math.max(1, sdefBase + state.derived.sdefBuff - state.derived.sdefDebuff + invMods.spd + rankBonus);
+    let weatherBonus = 0;
+    if (state.activeBattlefield) {
+        const activeWeathers = getEffectsByCategory(state.activeBattlefield, 'weather');
+        const isSand = activeWeathers.some((w) => (w.name || '').trim().toLowerCase().includes('sand'));
+        const isRock =
+            state.identity.type1?.toLowerCase() === 'rock' || state.identity.type2?.toLowerCase() === 'rock';
+        if (isSand && isRock) {
+            weatherBonus = 1;
+        }
+    }
+
+    return Math.max(1, sdefBase + state.derived.sdefBuff - state.derived.sdefDebuff + invMods.spd + rankBonus + weatherBonus);
 }
 
 export function calculateBaseInitiative(state: CharacterState, itemBuffs?: CombatBonuses): number {

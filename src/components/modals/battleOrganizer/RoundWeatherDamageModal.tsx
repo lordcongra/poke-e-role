@@ -167,56 +167,58 @@ export function RoundWeatherDamageModal({
                                     <Flame size={14} color="#ef5350" />
                                     <span>Damage Effects (Sandstorm, Hail, Solar Power, Dry Skin)</span>
                                 </div>
-                                {damageStatuses.map(({ combatant: c, isDamageImmune, damageReason }) => {
-                                    const isChecked = selectedDamageIds.has(c.id);
-                                    return (
-                                        <div
-                                            key={`dmg-${c.id}`}
-                                            className={`bo-weather-dmg-modal__row ${isDamageImmune ? 'is-immune' : ''}`}
-                                            onClick={() => handleToggleDamage(c.id)}
-                                        >
-                                            <div className="bo-weather-dmg-modal__left">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isChecked}
-                                                    onChange={() => handleToggleDamage(c.id)}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="bo-weather-dmg-modal__checkbox"
-                                                />
-                                                {c.image && (
-                                                    <img
-                                                        src={c.image}
-                                                        alt={c.name}
-                                                        className="bo-weather-dmg-modal__avatar"
+                                {damageStatuses.map(
+                                    ({ combatant: c, isDamageImmune, damageReason, damageImmuneReason }) => {
+                                        const isChecked = selectedDamageIds.has(c.id);
+                                        return (
+                                            <div
+                                                key={`dmg-${c.id}`}
+                                                className={`bo-weather-dmg-modal__row ${isDamageImmune ? 'is-immune' : ''}`}
+                                                onClick={() => handleToggleDamage(c.id)}
+                                            >
+                                                <div className="bo-weather-dmg-modal__left">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isChecked}
+                                                        onChange={() => handleToggleDamage(c.id)}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="bo-weather-dmg-modal__checkbox"
                                                     />
-                                                )}
-                                                <span className="bo-weather-dmg-modal__name">{c.name}</span>
-                                                <span className="bo-weather-dmg-modal__init-badge">
-                                                    Init {c.initiative || '0'}
-                                                </span>
-                                            </div>
-
-                                            <div className="bo-weather-dmg-modal__right">
-                                                {c.hpCurr !== undefined && (
-                                                    <span className="bo-weather-dmg-modal__hp-info">
-                                                        HP: {c.hpCurr}/{c.hpMax ?? c.hpCurr}
+                                                    {c.image && (
+                                                        <img
+                                                            src={c.image}
+                                                            alt={c.name}
+                                                            className="bo-weather-dmg-modal__avatar"
+                                                        />
+                                                    )}
+                                                    <span className="bo-weather-dmg-modal__name">{c.name}</span>
+                                                    <span className="bo-weather-dmg-modal__init-badge">
+                                                        Init {c.initiative || '0'}
                                                     </span>
-                                                )}
-                                                <span
-                                                    className={`bo-weather-dmg-modal__status-tag ${
-                                                        damageReason === 'Fainted'
-                                                            ? 'bo-weather-dmg-modal__status-tag--fainted'
-                                                            : isDamageImmune
-                                                              ? 'bo-weather-dmg-modal__status-tag--immune'
-                                                              : 'bo-weather-dmg-modal__status-tag--vulnerable'
-                                                    }`}
-                                                >
-                                                    {damageReason}
-                                                </span>
+                                                </div>
+
+                                                <div className="bo-weather-dmg-modal__right">
+                                                    {c.hpCurr !== undefined && (
+                                                        <span className="bo-weather-dmg-modal__hp-info">
+                                                            HP: {c.hpCurr}/{c.hpMax ?? c.hpCurr}
+                                                        </span>
+                                                    )}
+                                                    <span
+                                                        className={`bo-weather-dmg-modal__status-tag ${
+                                                            damageReason === 'Fainted' || damageImmuneReason === 'Fainted'
+                                                                ? 'bo-weather-dmg-modal__status-tag--fainted'
+                                                                : isDamageImmune
+                                                                  ? 'bo-weather-dmg-modal__status-tag--immune'
+                                                                  : 'bo-weather-dmg-modal__status-tag--vulnerable'
+                                                        }`}
+                                                    >
+                                                        {damageReason || damageImmuneReason}
+                                                    </span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    }
+                                )}
                             </div>
                         )}
 

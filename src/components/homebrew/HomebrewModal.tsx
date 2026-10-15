@@ -10,18 +10,12 @@ import { HomebrewForms } from './HomebrewForms';
 import { HomebrewStatuses } from './HomebrewStatuses';
 import { HomebrewFieldEffects } from './HomebrewFieldEffects';
 import type {
-    CustomType,
-    CustomAbility,
-    CustomMove,
-    CustomPokemon,
-    CustomItem,
-    CustomForm,
-    CustomStatus,
-    CustomFieldEffect
+    CustomType, CustomAbility, CustomMove, CustomPokemon,
+    CustomItem, CustomForm, CustomStatus, CustomFieldEffect
 } from '../../store/storeTypes';
 import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { downloadJson } from '../../utils/common/fileSystemHelpers';
-import { Hammer, X, Radio, Save, FolderOpen, AlertTriangle } from 'lucide-react';
+import { Hammer, X, Radio, Save, FolderOpen, AlertTriangle, Maximize2, Minimize2 } from 'lucide-react';
 import { HomebrewStorageTracker } from './HomebrewStorageTracker';
 import './Homebrew.css';
 
@@ -29,6 +23,27 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
     const role = useCharacterStore((state) => state.role);
     const access = useCharacterStore((state) => state.identity.homebrewAccess);
     const canEdit = isStandaloneMode || role === 'GM' || access === 'Full';
+
+    const [isMaximized, setIsMaximized] = useState<boolean>(() => {
+        if (!isStandaloneMode) return true;
+        try {
+            return localStorage.getItem('pkr_homebrew_standalone_maximized') === 'true';
+        } catch {
+            return false;
+        }
+    });
+
+    const toggleMaximize = () => {
+        setIsMaximized((prev) => {
+            const next = !prev;
+            try {
+                localStorage.setItem('pkr_homebrew_standalone_maximized', String(next));
+            } catch (e) {
+                console.error('[HomebrewModal] Failed to persist maximize state', e);
+            }
+            return next;
+        });
+    };
 
     const [activeTab, setActiveTab] = useState<
         'types' | 'abilities' | 'moves' | 'pokemon' | 'items' | 'forms' | 'statuses' | 'fieldEffects'
@@ -124,9 +139,18 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
         reader.readAsText(file);
     };
 
+    const overlayClass = `homebrew-modal__overlay ${!isStandaloneMode ? 'homebrew-modal__overlay--obr' : isMaximized ? 'homebrew-modal__overlay--maximized' : ''}`.trim();
+    const contentClass = `homebrew-modal__content ${
+        !isStandaloneMode
+            ? 'homebrew-modal__content--obr'
+            : isMaximized
+              ? 'homebrew-modal__content--standalone-maximized'
+              : 'homebrew-modal__content--standalone'
+    }`.trim();
+
     return (
-        <div className="homebrew-modal__overlay">
-            <div className="homebrew-modal__content">
+        <div className={overlayClass}>
+            <div className={contentClass}>
                 <div className="homebrew-modal__header">
                     <div className="homebrew-modal__title-row">
                         <h3
@@ -135,11 +159,28 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                         >
                             <Hammer size={20} /> Homebrew Workshop
                         </h3>
-                        <button onClick={onClose} className="homebrew-modal__close-btn text-theme-header">
-                            <X size={20} />
-                        </button>
+                        <div className="homebrew-modal__header-actions">
+                            {isStandaloneMode && (
+                                <button
+                                    onClick={toggleMaximize}
+                                    className="homebrew-modal__header-btn text-theme-header"
+                                    title={isMaximized ? 'Restore Window' : 'Maximize Window'}
+                                    aria-label={isMaximized ? 'Restore Window' : 'Maximize Window'}
+                                >
+                                    {isMaximized ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+                                </button>
+                            )}
+                            <button
+                                onClick={onClose}
+                                className="homebrew-modal__close-btn text-theme-header"
+                                title="Close Workshop"
+                                aria-label="Close Workshop"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
                     </div>
-                    <div className="homebrew-modal__tabs" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                    <div className="homebrew-modal__tabs">
                         <button
                             onClick={() => setActiveTab('types')}
                             className={`homebrew-modal__tab ${activeTab === 'types' ? 'homebrew-modal__tab--active' : ''}`}

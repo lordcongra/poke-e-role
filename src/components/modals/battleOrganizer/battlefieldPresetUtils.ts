@@ -27,7 +27,7 @@ export function isBattlefieldPresetSupported(name: string, category: 'weather' |
         );
     }
     if (category === 'other') {
-        return clean.includes('trick room') || clean.includes('gravity');
+        return clean.includes('gravity');
     }
     return false;
 }
@@ -81,9 +81,6 @@ export function getBattlefieldPresetTooltip(
         }
     }
     if (category === 'other') {
-        if (clean.includes('trick room')) {
-            return `Trick Room (${roundText}) — Supported: Turn order reversed (slower combatants act first)`;
-        }
         if (clean.includes('gravity')) {
             return `Gravity (${roundText}) — Supported: Grounds airborne combatants, -2 Dice penalty to Evasion`;
         }

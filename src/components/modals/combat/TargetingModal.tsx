@@ -8,6 +8,7 @@ import { calculateTargetDefensesFromMeta } from '../../../utils/combat/combatUti
 import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { parseCombatTags } from '../../../utils/tagParser/index';
 import { extractIsNpc } from '../../../utils/combat/initiativeHelpers';
+import { getEffectsByCategory } from '../../../utils/combat/fieldEffectsData';
 import { TooltipIcon } from '../../ui/TooltipIcon';
 import './TargetingModal.css';
 
@@ -31,6 +32,25 @@ interface TargetOption {
     def: number;
     isTera: boolean;
     isPlayerSide: boolean;
+    types: string[];
+}
+
+function extractTargetTypesAndTera(
+    meta: Record<string, unknown>,
+    extraMeta?: Record<string, unknown>
+): { isTera: boolean; types: string[] } {
+    const stateObj = (meta.state || meta) as Record<string, unknown>;
+    const identityObj = (stateObj?.identity || meta.identity || {}) as Record<string, unknown>;
+    const isTera =
+        meta['active-transformation'] === 'Terastallize' ||
+        identityObj.activeTransformation === 'Terastallize';
+    const t1 = String(identityObj.type1 || meta.type1 || meta.Type1 || extraMeta?.type1 || extraMeta?.Type1 || '');
+    const t2 = String(identityObj.type2 || meta.type2 || meta.Type2 || extraMeta?.type2 || extraMeta?.Type2 || '');
+    const teraAffinity = isTera
+        ? String(identityObj.terastallizeAffinity || meta['terastallize-affinity'] || '')
+        : '';
+    const rawTypes = isTera && teraAffinity ? [teraAffinity] : [t1, t2];
+    return { isTera, types: rawTypes.filter(Boolean).map((t) => t.trim().toLowerCase()) };
 }
 
 export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingModalProps) {
@@ -84,6 +104,7 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                                 let isTera = false;
                                 let targetDef = 1;
                                 let isPlayerSide = true;
+                                let types: string[] = [];
 
                                 if (typeof c.isPlayerSide === 'boolean') {
                                     isPlayerSide = c.isPlayerSide;
@@ -95,15 +116,9 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                                 if (matchingChar && matchingChar.metadata) {
                                     const meta = matchingChar.metadata as Record<string, unknown>;
                                     name = String(meta.nickname || meta.species || c.name || 'Unknown');
-
-                                    const stateObj = (meta.state || meta) as Record<string, unknown>;
-                                    const identityObj = (stateObj?.identity || meta.identity || {}) as Record<
-                                        string,
-                                        unknown
-                                    >;
-                                    isTera =
-                                        meta['active-transformation'] === 'Terastallize' ||
-                                        identityObj.activeTransformation === 'Terastallize';
+                                    const extracted = extractTargetTypesAndTera(meta);
+                                    isTera = extracted.isTera;
+                                    types = extracted.types;
 
                                     const { def, spd } = calculateTargetDefensesFromMeta(meta);
                                     targetDef = isPhysicalMove ? def : spd;
@@ -114,7 +129,8 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                                     name,
                                     def: targetDef,
                                     isTera,
-                                    isPlayerSide
+                                    isPlayerSide,
+                                    types
                                 });
                             });
                         }
@@ -131,13 +147,16 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                         if (item.metadata['pokerole-pmd-extension/initiative'] !== undefined) {
                             const meta = (item.metadata[STATS_META_ID] || item.metadata) as Record<string, unknown>;
                             const name = String(meta.nickname || meta.species || item.name);
-                            const isTera = meta['active-transformation'] === 'Terastallize';
+                            const { isTera, types } = extractTargetTypesAndTera(
+                                meta,
+                                item.metadata as Record<string, unknown>
+                            );
 
                             const { def, spd } = calculateTargetDefensesFromMeta(meta);
                             const targetDef = isPhysicalMove ? def : spd;
                             const isPlayerSide = !extractIsNpc(item.metadata);
 
-                            availableTargets.push({ id: item.id, name, def: targetDef, isTera, isPlayerSide });
+                            availableTargets.push({ id: item.id, name, def: targetDef, isTera, isPlayerSide, types });
                         }
                     });
                 } catch (error) {
@@ -200,13 +219,39 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
             const factors: string[] = [];
 
             // Automatically check SE if both combatants are Terastallized!
+            let currentEff = effectiveness;
             if (activeTransformation === 'Terastallize' && selectedTarget.isTera) {
+                currentEff = 1;
                 setEffectiveness(1);
             }
 
-            // Inspect activeBattlefield for side force fields
+            // Inspect activeBattlefield for weather and side force fields
             const activeBattlefield = useCharacterStore.getState().activeBattlefield;
             if (activeBattlefield) {
+                const activeWeathers = getEffectsByCategory(activeBattlefield, 'weather');
+                const isSandstorm = activeWeathers.some((w) => (w.name || '').trim().toLowerCase().includes('sand'));
+                const isSnowy = activeWeathers.some((w) => {
+                    const c = (w.name || '').trim().toLowerCase();
+                    return (c.includes('snow') || c === 'snowy') && !c.includes('hail');
+                });
+                const isStrongWinds = activeWeathers.some((w) => {
+                    const c = (w.name || '').trim().toLowerCase();
+                    return c.includes('strong winds') || c.includes('delta stream');
+                });
+
+                if (isSandstorm && selectedTarget.types.includes('rock') && !isPhysicalMove) {
+                    targetReduction += 1;
+                    factors.push('Sandstorm (+1 Sp.Def)');
+                }
+                if (isSnowy && selectedTarget.types.includes('ice') && isPhysicalMove) {
+                    targetReduction += 1;
+                    factors.push('Snowy (+1 Def)');
+                }
+                if (isStrongWinds && selectedTarget.types.includes('flying') && currentEff > 0) {
+                    setEffectiveness(0);
+                    factors.push('Strong Winds (Neutral SE damage to Flying)');
+                }
+
                 const targetSide = selectedTarget.isPlayerSide
                     ? activeBattlefield.playerSide
                     : activeBattlefield.foeSide;
