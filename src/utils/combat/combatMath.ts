@@ -425,8 +425,7 @@ export function calculateTotalDamage(move: MoveData, state: CharacterState, item
     }
     const isHalfHp = state.health.hpCurr <= Math.floor(state.health.hpMax / 2);
     const weather = getWeatherDamageBonus(move.type, state.activeBattlefield, isHalfHp, state.identity.isNPC, state);
-    const totalModifier = weather.diceBonus - weather.flatPenalty;
-    return Math.max(1, calculateBaseDamage(move, state, itemBuffs) + totalModifier);
+    return Math.max(1, calculateBaseDamage(move, state, itemBuffs) + weather.diceBonus);
 }
 
 export const isMasterOrChampionRank = (rank: string): boolean => ['Master', 'Champion'].includes(rank);

@@ -7,6 +7,8 @@ import { fetchMoveData, ALL_MOVES, loadLocalDataset } from '../../utils/api/api'
 import {
     rollAccuracy,
     calculateBaseDamage,
+    calculateTotalDamage,
+    getWeatherDamageBonus,
     calculateBaseAccuracy,
     parseCombatTags,
     getAbilityText
@@ -108,6 +110,8 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
     useCharacterStore((state) => state.trackers.firstHitDmg);
     useCharacterStore((state) => state.trackers.firstHitAcc);
     useCharacterStore((state) => state.activeBattlefield);
+    useCharacterStore((state) => state.identity.isNPC);
+    useCharacterStore((state) => state.roomCustomFieldEffects);
 
     const abilityText = getAbilityText(ability, customAbilities);
     const itemBuffs = parseCombatTags(inventory, extraCategories, move, abilityText, passives);
@@ -121,7 +125,15 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
     const accuracyTotal = calculateBaseAccuracy(move, fullState, itemBuffs);
 
     const isStatusOrNoDamage = move.category === 'Status' || (move.power === 0 && !move.dmg1);
-    const baseDamage = isStatusOrNoDamage ? 0 : calculateBaseDamage(move, fullState, itemBuffs);
+    const isHalfHp = fullState.health.hpCurr <= Math.floor(fullState.health.hpMax / 2);
+    const weatherInfo = getWeatherDamageBonus(
+        move.type,
+        fullState.activeBattlefield,
+        isHalfHp,
+        fullState.identity.isNPC,
+        fullState
+    );
+    const baseDamage = isStatusOrNoDamage ? 0 : calculateTotalDamage(move, fullState, itemBuffs);
     const damageTotal = isStatusOrNoDamage ? '-' : baseDamage + bankedDiceForThisMove;
 
     const handleAccuracyClick = () => {
@@ -317,6 +329,11 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                         <span
                             className="move-card__damage-text text-value-highlight"
                             style={{ color: 'var(--primary)' }}
+                            title={
+                                !isStatusOrNoDamage && weatherInfo.tag
+                                    ? `Base: ${calculateBaseDamage(move, fullState, itemBuffs)}, ${weatherInfo.tag}`
+                                    : undefined
+                            }
                         >
                             {damageTotal}
                         </span>

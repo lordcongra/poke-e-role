@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
-import OBR from '@owlbear-rodeo/sdk';
 import { Target, XCircle, Swords } from 'lucide-react';
 import type { MoveData } from '../../../store/storeTypes';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { STATS_META_ID } from '../../../utils/graphics/graphicsManager';
-import { calculateTargetDefensesFromMeta } from '../../../utils/combat/combatUtils';
-import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import { parseCombatTags } from '../../../utils/tagParser/index';
-import { extractIsNpc } from '../../../utils/combat/initiativeHelpers';
 import { getEffectsByCategory } from '../../../utils/combat/fieldEffectsData';
+import { getWeatherDamageBonus } from '../../../utils/combat/combatUtils';
 import { TooltipIcon } from '../../ui/TooltipIcon';
+import { type TargetOption, loadAvailableTargets } from './targetingModalUtils';
 import './TargetingModal.css';
 
 interface TargetingModalProps {
@@ -24,30 +22,6 @@ interface TargetingModalProps {
         override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number },
         fieldFactors?: string[]
     ) => void;
-}
-
-interface TargetOption {
-    id: string;
-    name: string;
-    def: number;
-    isTera: boolean;
-    isPlayerSide: boolean;
-    types: string[];
-}
-
-function extractTargetTypesAndTera(
-    meta: Record<string, unknown>,
-    extraMeta?: Record<string, unknown>
-): { isTera: boolean; types: string[] } {
-    const stateObj = (meta.state || meta) as Record<string, unknown>;
-    const identityObj = (stateObj?.identity || meta.identity || {}) as Record<string, unknown>;
-    const isTera =
-        meta['active-transformation'] === 'Terastallize' || identityObj.activeTransformation === 'Terastallize';
-    const t1 = String(identityObj.type1 || meta.type1 || meta.Type1 || extraMeta?.type1 || extraMeta?.Type1 || '');
-    const t2 = String(identityObj.type2 || meta.type2 || meta.Type2 || extraMeta?.type2 || extraMeta?.Type2 || '');
-    const teraAffinity = isTera ? String(identityObj.terastallizeAffinity || meta['terastallize-affinity'] || '') : '';
-    const rawTypes = isTera && teraAffinity ? [teraAffinity] : [t1, t2];
-    return { isTera, types: rawTypes.filter(Boolean).map((t) => t.trim().toLowerCase()) };
 }
 
 export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingModalProps) {
@@ -69,6 +43,20 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
     const role = useCharacterStore((state) => state.role);
     const isPhysicalMove = String(move.category).startsWith('Phys');
 
+    const activeBattlefield = useCharacterStore((state) => state.activeBattlefield);
+    const isNPC = useCharacterStore((state) => state.identity.isNPC);
+    const hpCurr = useCharacterStore((state) => state.health.hpCurr);
+    const hpMax = useCharacterStore((state) => state.health.hpMax);
+    const isHalfHp = hpCurr <= Math.floor(hpMax / 2);
+    const fullState = useCharacterStore.getState();
+    const weatherInfo = getWeatherDamageBonus(
+        move.type,
+        activeBattlefield,
+        isHalfHp,
+        isNPC,
+        fullState
+    );
+
     const inventory = useCharacterStore((state) => state.inventory);
     const passives = useCharacterStore((state) => state.passives);
     const extraCategories = useCharacterStore((state) => state.extraCategories);
@@ -81,106 +69,11 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
     useEffect(() => {
         let isMounted = true;
 
-        const loadTargets = async () => {
-            const availableTargets: TargetOption[] = [];
-
-            // --- PATH 1: STANDALONE MODE ---
-            if (isStandaloneMode) {
-                try {
-                    const savedList = localStorage.getItem('pkr_standalone_init_list');
-                    if (savedList) {
-                        const initList = JSON.parse(savedList) as Record<string, unknown>[];
-                        if (Array.isArray(initList)) {
-                            const localChars = await storageAdapter.getLocalCharacters();
-
-                            initList.forEach((c) => {
-                                const charId = String(c.id || '');
-                                const matchingChar = localChars.find((lc) => lc.id === charId);
-
-                                let name = String(c.name || 'Unknown');
-                                let isTera = false;
-                                let targetDef = 1;
-                                let isPlayerSide = true;
-                                let types: string[] = [];
-
-                                if (typeof c.isPlayerSide === 'boolean') {
-                                    isPlayerSide = c.isPlayerSide;
-                                } else if (matchingChar && matchingChar.metadata) {
-                                    const meta = matchingChar.metadata as Record<string, unknown>;
-                                    isPlayerSide = !extractIsNpc(meta);
-                                }
-
-                                if (matchingChar && matchingChar.metadata) {
-                                    const meta = matchingChar.metadata as Record<string, unknown>;
-                                    name = String(meta.nickname || meta.species || c.name || 'Unknown');
-                                    const extracted = extractTargetTypesAndTera(meta);
-                                    isTera = extracted.isTera;
-                                    types = extracted.types;
-
-                                    const { def, spd } = calculateTargetDefensesFromMeta(meta);
-                                    targetDef = isPhysicalMove ? def : spd;
-                                }
-
-                                availableTargets.push({
-                                    id: charId,
-                                    name,
-                                    def: targetDef,
-                                    isTera,
-                                    isPlayerSide,
-                                    types
-                                });
-                            });
-                        }
-                    }
-                } catch (error) {
-                    console.error('[TargetingModal] Error loading standalone targets:', error);
-                }
+        loadAvailableTargets(isPhysicalMove).then((loadedTargets) => {
+            if (isMounted) {
+                setTargets(loadedTargets);
             }
-            // --- PATH 2: OWLBEAR RODEO MODE ---
-            else if (OBR.isAvailable) {
-                try {
-                    const items = await OBR.scene.items.getItems();
-                    items.forEach((item) => {
-                        if (item.metadata['pokerole-pmd-extension/initiative'] !== undefined) {
-                            const meta = (item.metadata[STATS_META_ID] || item.metadata) as Record<string, unknown>;
-                            const name = String(meta.nickname || meta.species || item.name);
-                            const { isTera, types } = extractTargetTypesAndTera(
-                                meta,
-                                item.metadata as Record<string, unknown>
-                            );
-
-                            const { def, spd } = calculateTargetDefensesFromMeta(meta);
-                            const targetDef = isPhysicalMove ? def : spd;
-                            const isPlayerSide = !extractIsNpc(item.metadata);
-
-                            availableTargets.push({ id: item.id, name, def: targetDef, isTera, isPlayerSide, types });
-                        }
-                    });
-                } catch (error) {
-                    console.error('[TargetingModal] Error loading OBR targets:', error);
-                }
-            }
-
-            const nameGroups: Record<string, string[]> = {};
-            availableTargets.forEach((t) => {
-                if (!nameGroups[t.name]) nameGroups[t.name] = [];
-                nameGroups[t.name].push(t.id);
-            });
-            Object.values(nameGroups).forEach((ids) => ids.sort());
-
-            const formattedTargets = availableTargets.map((t) => {
-                const ids = nameGroups[t.name];
-                if (ids && ids.length > 1) {
-                    const num = ids.indexOf(t.id) + 1;
-                    return { ...t, name: `${t.name} #${num}` };
-                }
-                return t;
-            });
-
-            if (isMounted) setTargets(formattedTargets);
-        };
-
-        loadTargets();
+        });
 
         return () => {
             isMounted = false;
@@ -307,6 +200,15 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                     <span>
                         Base Dmg: <strong>{baseDamage}</strong>
                     </span>
+                    {weatherInfo.diceBonus > 0 && (
+                        <span
+                            className="text-value-highlight"
+                            style={{ color: 'var(--primary)', fontWeight: 600 }}
+                            title={weatherInfo.tag}
+                        >
+                            (+{weatherInfo.diceBonus} {weatherInfo.tag.split(' ')[0]})
+                        </span>
+                    )}
                     {bankedDice > 0 && (
                         <span className="text-value-highlight" style={{ color: 'var(--primary)', fontWeight: 600 }}>
                             (+{bankedDice} Banked)
