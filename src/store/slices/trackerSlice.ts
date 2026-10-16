@@ -1,7 +1,8 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState, TrackerSlice } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/sync/obr';
-import { parseCombatTags, getAbilityText } from '../../utils/combat/combatUtils';
+import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../../utils/combat/combatUtils';
+import { CombatStat } from '../../types/enums';
 
 export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSlice> = (set) => ({
     statuses: [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }],
@@ -222,7 +223,7 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                 moves: newMoves
             };
         }),
-    longRest: () =>
+    longRest: (resetBuffs = false) =>
         set((state) => {
             const newStatuses = state.statuses.filter((s) => s.name === 'Healthy');
             if (newStatuses.length === 0)
@@ -230,28 +231,85 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
 
             const newMoves = state.moves.map((m) => ({ ...m, active: false }));
 
-            try {
-                saveToOwlbear({
-                    'hp-curr': state.health.hpMax,
-                    'temporary-hit-points': 0,
-                    'temporary-hit-points-max': 0,
-                    'will-curr': state.will.willMax,
-                    'temporary-will': 0,
-                    'temporary-will-max': 0,
-                    'actions-used': 0,
-                    'evasions-used': false,
-                    'clashes-used': false,
-                    'chances-used': 0,
-                    'fate-used': 0,
-                    'ignored-pain-mod': 0,
-                    'first-hit-acc-active': false,
-                    'first-hit-dmg-active': false,
-                    'banked-acc-dice': '{}',
-                    'boost-levels': '{}',
-                    'effects-data': '[]',
-                    'moves-data': JSON.stringify(newMoves),
-                    'status-list': JSON.stringify(newStatuses)
+            let targetHpMax = state.health.hpMax;
+            let targetWillMax = state.will.willMax;
+            let newStats = state.stats;
+            let newDerived = state.derived;
+
+            const updatesToSave: Record<string, unknown> = {
+                'hp-curr': targetHpMax,
+                'temporary-hit-points': 0,
+                'temporary-hit-points-max': 0,
+                'will-curr': targetWillMax,
+                'temporary-will': 0,
+                'temporary-will-max': 0,
+                'actions-used': 0,
+                'evasions-used': false,
+                'clashes-used': false,
+                'chances-used': 0,
+                'fate-used': 0,
+                'ignored-pain-mod': 0,
+                'first-hit-acc-active': false,
+                'first-hit-dmg-active': false,
+                'banked-acc-dice': '{}',
+                'boost-levels': '{}',
+                'effects-data': '[]',
+                'moves-data': JSON.stringify(newMoves),
+                'status-list': JSON.stringify(newStatuses)
+            };
+
+            if (resetBuffs) {
+                newStats = { ...state.stats };
+                const combatStats = [CombatStat.STR, CombatStat.DEX, CombatStat.VIT, CombatStat.SPE, CombatStat.INS];
+                combatStats.forEach((stat) => {
+                    if (newStats[stat]) {
+                        newStats[stat] = {
+                            ...newStats[stat],
+                            buff: 0,
+                            debuff: 0
+                        };
+                    }
+                    updatesToSave[`${stat}-buff`] = 0;
+                    updatesToSave[`${stat}-debuff`] = 0;
                 });
+
+                newDerived = {
+                    ...state.derived,
+                    defBuff: 0,
+                    defDebuff: 0,
+                    sdefBuff: 0,
+                    sdefDebuff: 0
+                };
+                updatesToSave['def-buff'] = 0;
+                updatesToSave['def-debuff'] = 0;
+                updatesToSave['spd-buff'] = 0;
+                updatesToSave['spd-debuff'] = 0;
+
+                const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+                const invMods = parseCombatTags(
+                    state.inventory,
+                    state.extraCategories,
+                    undefined,
+                    abilityText,
+                    state.passives
+                );
+                const fakeState = {
+                    ...state,
+                    stats: newStats,
+                    derived: newDerived
+                } as CharacterState;
+
+                targetHpMax = calculateMaxHp(fakeState, invMods);
+                targetWillMax = calculateMaxWill(fakeState, invMods);
+
+                updatesToSave['hp-curr'] = targetHpMax;
+                updatesToSave['hp-max-display'] = targetHpMax;
+                updatesToSave['will-curr'] = targetWillMax;
+                updatesToSave['will-max-display'] = targetWillMax;
+            }
+
+            try {
+                saveToOwlbear(updatesToSave);
             } catch (e) {
                 console.warn('[TrackerSlice] Failed to save long rest state to Owlbear.', e);
             }
@@ -259,13 +317,15 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             return {
                 health: {
                     ...state.health,
-                    hpCurr: state.health.hpMax,
+                    hpCurr: targetHpMax,
+                    hpMax: targetHpMax,
                     temporaryHitPoints: 0,
                     temporaryHitPointsMax: 0
                 },
                 will: {
                     ...state.will,
-                    willCurr: state.will.willMax,
+                    willCurr: targetWillMax,
+                    willMax: targetWillMax,
                     temporaryWill: 0,
                     temporaryWillMax: 0
                 },
@@ -284,7 +344,8 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                 },
                 effects: [],
                 moves: newMoves,
-                statuses: newStatuses
+                statuses: newStatuses,
+                ...(resetBuffs ? { stats: newStats, derived: newDerived } : {})
             };
         }),
 

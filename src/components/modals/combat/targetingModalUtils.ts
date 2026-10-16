@@ -91,10 +91,7 @@ export async function loadAvailableTargets(isPhysicalMove: boolean): Promise<Tar
                 if (item.metadata['pokerole-pmd-extension/initiative'] !== undefined) {
                     const meta = (item.metadata[STATS_META_ID] || item.metadata) as Record<string, unknown>;
                     const name = String(meta.nickname || meta.species || item.name);
-                    const { isTera, types } = extractTargetTypesAndTera(
-                        meta,
-                        item.metadata as Record<string, unknown>
-                    );
+                    const { isTera, types } = extractTargetTypesAndTera(meta, item.metadata as Record<string, unknown>);
 
                     const { def, spd } = calculateTargetDefensesFromMeta(meta);
                     const targetDef = isPhysicalMove ? def : spd;

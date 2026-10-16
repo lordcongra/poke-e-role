@@ -296,10 +296,9 @@ export function getWeatherDamageBonus(
                 currentState = undefined;
             }
         }
-        const side =
-            (currentState ? resolveCharacterSide(currentState) === 'foe' : Boolean(isNPC))
-                ? battlefield.foeSide
-                : battlefield.playerSide;
+        const side = (currentState ? resolveCharacterSide(currentState) === 'foe' : Boolean(isNPC))
+            ? battlefield.foeSide
+            : battlefield.playerSide;
         if (side) {
             const sideHasGrassy = Boolean(
                 side.forceFields?.some(

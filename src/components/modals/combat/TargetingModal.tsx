@@ -49,13 +49,7 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
     const hpMax = useCharacterStore((state) => state.health.hpMax);
     const isHalfHp = hpCurr <= Math.floor(hpMax / 2);
     const fullState = useCharacterStore.getState();
-    const weatherInfo = getWeatherDamageBonus(
-        move.type,
-        activeBattlefield,
-        isHalfHp,
-        isNPC,
-        fullState
-    );
+    const weatherInfo = getWeatherDamageBonus(move.type, activeBattlefield, isHalfHp, isNPC, fullState);
 
     const inventory = useCharacterStore((state) => state.inventory);
     const passives = useCharacterStore((state) => state.passives);

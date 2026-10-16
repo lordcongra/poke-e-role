@@ -39,6 +39,16 @@
     line-height: 1.4;
 }
 
+.rest-modal__checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    accent-color: var(--primary);
+    user-select: none;
+}
+
 .rest-modal__actions {
     display: flex;
     justify-content: space-between;
