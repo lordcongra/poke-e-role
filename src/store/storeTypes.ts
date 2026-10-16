@@ -429,6 +429,7 @@ export interface IdentitySlice {
         social: string;
         hand: string;
         isNPC: boolean;
+        isPlayerSide?: boolean;
         learnset: Array<{ Learned: string; Name: string }>;
         pokemonBackup?: string;
         trainerBackup?: string;

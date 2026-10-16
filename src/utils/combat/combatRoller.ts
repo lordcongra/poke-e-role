@@ -505,7 +505,13 @@ export async function executeDamageRoll(
         else if (stabBonus > 0) tags.push(stabTag);
 
         const isHalfHp = state.health.hpCurr <= Math.floor(state.health.hpMax / 2);
-        const weatherInfo = getWeatherDamageBonus(move.type, state.activeBattlefield, isHalfHp, state.identity.isNPC);
+        const weatherInfo = getWeatherDamageBonus(
+            move.type,
+            state.activeBattlefield,
+            isHalfHp,
+            state.identity.isNPC,
+            state
+        );
         if (weatherInfo.diceBonus > 0) {
             actualDicePool += weatherInfo.diceBonus;
         }

@@ -13,6 +13,7 @@ interface FieldRowItem {
     info: FieldEffectInfo;
     remainingRounds: number;
     prefix?: string;
+    displayName: string;
 }
 
 export function ActiveFieldEffectsRow() {
@@ -22,12 +23,17 @@ export function ActiveFieldEffectsRow() {
     if (!activeBattlefield) return null;
 
     const allActive = getAllActiveFieldEffects(activeBattlefield);
-    const items: FieldRowItem[] = allActive.map((item) => ({
-        id: item.id,
-        info: getFieldEffectInfo(item.name, item.category),
-        remainingRounds: item.remainingRounds,
-        prefix: item.prefix
-    }));
+    const items: FieldRowItem[] = allActive.map((item) => {
+        const info = getFieldEffectInfo(item.name, item.category);
+        const displayName = item.subLabel ? `${item.subLabel} ${info.name}` : info.name;
+        return {
+            id: item.id,
+            info,
+            remainingRounds: item.remainingRounds,
+            prefix: item.prefix,
+            displayName
+        };
+    });
 
     if (items.length === 0) return null;
 
@@ -48,12 +54,12 @@ export function ActiveFieldEffectsRow() {
                                     background: `color-mix(in srgb, ${color} 15%, var(--panel-bg))`
                                 }}
                                 onClick={() => setSelectedId((curr) => (curr === item.id ? null : item.id))}
-                                title={`${item.prefix ? item.prefix + ': ' : ''}${item.info.name} (${item.remainingRounds} Rnds) - Click for rules`}
+                                title={`${item.displayName} (${item.remainingRounds} Rnds) - Click for rules`}
                             >
                                 <span className="sheet-field-pill__icon" style={{ color }}>
                                     <FieldEffectIcon icon={item.info.icon} size={13} />
                                 </span>
-                                <span className="sheet-field-pill__label">{item.info.name}</span>
+                                <span className="sheet-field-pill__label">{item.displayName}</span>
                                 <span className="sheet-field-pill__rounds">
                                     {item.remainingRounds} {item.remainingRounds === 1 ? 'Rnd' : 'Rnds'}
                                 </span>
@@ -64,7 +70,7 @@ export function ActiveFieldEffectsRow() {
                                     <div className="sheet-field-card__header">
                                         <div className="sheet-field-card__title">
                                             <FieldEffectIcon icon={item.info.icon} size={14} />
-                                            <span>{item.info.name}</span>
+                                            <span>{item.displayName}</span>
                                         </div>
                                         <span
                                             className="sheet-field-card__badge"

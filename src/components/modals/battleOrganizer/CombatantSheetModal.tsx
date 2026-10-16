@@ -194,6 +194,10 @@ export function CombatantSheetModal({
                     if (tokenImgUrl) {
                         store.setIdentity('tokenImageUrl', tokenImgUrl);
                     }
+                    store.setIdentity(
+                        'isPlayerSide' as any,
+                        combatant.isPlayerSide !== undefined ? combatant.isPlayerSide : !combatant.isNPC
+                    );
                     setNoTokenLinked(false);
                 } else if (isMounted) {
                     setNoTokenLinked(true);

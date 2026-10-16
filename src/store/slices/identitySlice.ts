@@ -16,6 +16,7 @@ import { getKnownAbility } from '../../data/abilities/knownAbilities';
 
 const EXCLUDED_FROM_TOKEN_SAVE = new Set([
     'entityId',
+    'isPlayerSide',
     'printConfig',
     'tokenImageUrl',
     'isPrinting',

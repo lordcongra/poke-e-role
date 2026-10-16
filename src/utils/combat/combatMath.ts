@@ -4,6 +4,7 @@ import { parseCombatTags, type CombatBonuses } from '../tagParser/index';
 import { checkCondition } from '../tagParser/conditionChecker';
 import { getEffectsByCategory, getAllActiveFieldEffects } from './fieldEffectsData';
 import { useCharacterStore } from '../../store/useCharacterStore';
+import { resolveCharacterSide } from './combatantSideUtils';
 
 // PROXY EXPORT: Prevents app crashes if a file is still directly importing from combatMath!
 export { parseCombatTags };
@@ -127,7 +128,10 @@ export function calculateStatTotal(
             (itemBuffs.stats[normalizedStat] || 0);
 
         if (normalizedStat === CombatStat.DEX && state.activeBattlefield) {
-            const side = state.identity.isNPC ? state.activeBattlefield.foeSide : state.activeBattlefield.playerSide;
+            const side =
+                resolveCharacterSide(state) === 'foe'
+                    ? state.activeBattlefield.foeSide
+                    : state.activeBattlefield.playerSide;
             const hasTailwind = Boolean(
                 side?.forceFields?.some(
                     (ff) =>
@@ -184,7 +188,8 @@ export function getWeatherDamageBonus(
     moveType: string | undefined,
     battlefield: CharacterState['activeBattlefield'],
     isHalfHp?: boolean,
-    isNPC?: boolean
+    isNPC?: boolean,
+    state?: CharacterState
 ): { diceBonus: number; flatPenalty: number; tag: string } {
     if (!moveType || !battlefield) return { diceBonus: 0, flatPenalty: 0, tag: '' };
 
@@ -283,15 +288,18 @@ export function getWeatherDamageBonus(
 
     // Side Grassy Terrain check: In Pokerole, Grassy Terrain (+1 Grass Damage) ONLY applies to the side it is on
     if (cleanType === 'grass' && battlefield) {
-        let effectiveIsNpc = isNPC;
-        if (effectiveIsNpc === undefined) {
+        let currentState = state;
+        if (!currentState) {
             try {
-                effectiveIsNpc = useCharacterStore.getState().identity.isNPC;
+                currentState = useCharacterStore.getState();
             } catch {
-                effectiveIsNpc = false;
+                currentState = undefined;
             }
         }
-        const side = effectiveIsNpc ? battlefield.foeSide : battlefield.playerSide;
+        const side =
+            (currentState ? resolveCharacterSide(currentState) === 'foe' : Boolean(isNPC))
+                ? battlefield.foeSide
+                : battlefield.playerSide;
         if (side) {
             const sideHasGrassy = Boolean(
                 side.forceFields?.some(
@@ -416,7 +424,7 @@ export function calculateTotalDamage(move: MoveData, state: CharacterState, item
         return 0;
     }
     const isHalfHp = state.health.hpCurr <= Math.floor(state.health.hpMax / 2);
-    const weather = getWeatherDamageBonus(move.type, state.activeBattlefield, isHalfHp);
+    const weather = getWeatherDamageBonus(move.type, state.activeBattlefield, isHalfHp, state.identity.isNPC, state);
     const totalModifier = weather.diceBonus - weather.flatPenalty;
     return Math.max(1, calculateBaseDamage(move, state, itemBuffs) + totalModifier);
 }
