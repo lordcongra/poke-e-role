@@ -30,6 +30,9 @@ const { hydrateStateFromMetadata } = await import('../src/utils/sync/stateMapper
 const { applyRoomUpdatesToMeta, mapRoomSettings } = await import('../src/utils/sync/roomSettingsMeta');
 const { BASE_ITEM_CHARGES, getBaseItemCharges, getItemEffectiveCharges, consumeChargeFromInventory } =
     await import('../src/utils/items/itemCharges');
+const { BASE_ITEM_EFFECTS, getBaseItemEffect, applyItemUsageEffects, statusMatchesCure } =
+    await import('../src/utils/items/itemUsageEffects');
+const { createInventorySlice } = await import('../src/store/slices/inventorySlice');
 
 /**
  * Automated Verification Suite for Token Metadata & Serialization Invariants.
@@ -921,6 +924,234 @@ runTest(
         assert.equal(step4.newInventory.length, 1);
         assert.equal(step4.newInventory[0].qty, 3);
         assert.equal(step4.newInventory[0].charges, 2);
+    }
+);
+
+runTest(
+    'itemUsageEffects: BASE_ITEM_EFFECTS contains all required items and getBaseItemEffect is case-insensitive',
+    () => {
+        // Multi-unit potions & drinks
+        const multiUnits = [
+            'Potion',
+            'Super Potion',
+            'Hyper Potion',
+            'Remedy',
+            'Energy Root',
+            'Fresh Water',
+            'Soda Pop',
+            'Lemonade',
+            'MooMoo Milk',
+            'Berry Juice'
+        ];
+        for (const name of multiUnits) {
+            const effect = getBaseItemEffect(name);
+            assert.ok(effect, `Expected effect for ${name}`);
+            assert.equal(effect.healHp, 1, `Expected 1 HP heal for ${name}`);
+        }
+
+        // Flat heals
+        assert.equal(getBaseItemEffect('Sitrus Berry')?.healHp, 3);
+        assert.equal(getBaseItemEffect('Oran Berry')?.healHp, 1);
+        assert.equal(getBaseItemEffect('Chocolate')?.healHp, 1);
+        assert.equal(getBaseItemEffect('Honey')?.healHp, 1);
+
+        // Full heals & revives
+        assert.equal(getBaseItemEffect('Max Potion')?.healHp, 99);
+        assert.deepEqual(getBaseItemEffect('Full Restore'), { healHp: 99, cures: ['All Status'] });
+        assert.deepEqual(getBaseItemEffect('Revival Herb'), { healHp: 99, cures: ['Fainted'] });
+        assert.deepEqual(getBaseItemEffect('Max Revive'), { healHp: 99, cures: ['Fainted'] });
+        assert.deepEqual(getBaseItemEffect('Revive'), { healHp: 1, cures: ['Fainted'] });
+
+        // Status cures
+        assert.deepEqual(getBaseItemEffect('Burn Heal'), { cures: ['Burn'] });
+        assert.deepEqual(getBaseItemEffect('Antidote'), { cures: ['Poison'] });
+        assert.deepEqual(getBaseItemEffect('Awakening'), { cures: ['Sleep'] });
+        assert.deepEqual(getBaseItemEffect('Paralyze Heal'), { cures: ['Paralysis'] });
+        assert.deepEqual(getBaseItemEffect('Ice Heal'), { cures: ['Frozen Solid'] });
+        assert.deepEqual(getBaseItemEffect('Baked Goods'), { cures: ['Sleep', 'Poison', 'Frozen Solid', 'Paralysis'] });
+        assert.deepEqual(getBaseItemEffect('Full Heal'), { cures: ['All Status'] });
+        assert.deepEqual(getBaseItemEffect('Lum Berry'), { cures: ['All Status'] });
+
+        // Case-insensitivity check
+        assert.equal(getBaseItemEffect('  sItRuS bErRy  ')?.healHp, 3);
+    }
+);
+
+runTest('itemUsageEffects: statusMatchesCure matches degrees of burns, poison variants, and custom statuses', () => {
+    const burn1 = { id: '1', name: '1st Degree Burn', customName: '', rounds: 0 };
+    const burn2 = { id: '2', name: '2nd Degree Burn', customName: '', rounds: 0 };
+    const burn3 = { id: '3', name: '3rd Degree Burn', customName: '', rounds: 0 };
+    const poison = { id: '4', name: 'Poison', customName: '', rounds: 0 };
+    const badlyPoisoned = { id: '5', name: 'Badly Poisoned', customName: '', rounds: 0 };
+    const fainted = { id: '6', name: 'Fainted', customName: '', rounds: 0 };
+    const healthy = { id: '7', name: 'Healthy', customName: '', rounds: 0 };
+    const customStatus = { id: '8', name: 'Custom...', customName: 'Frostbite', rounds: 0 };
+
+    // Burn curing
+    assert.equal(statusMatchesCure(burn1, 'Burn'), true);
+    assert.equal(statusMatchesCure(burn2, 'Burn'), true);
+    assert.equal(statusMatchesCure(burn3, 'Burn'), true);
+    assert.equal(statusMatchesCure(poison, 'Burn'), false);
+
+    // Poison curing
+    assert.equal(statusMatchesCure(poison, 'Poison'), true);
+    assert.equal(statusMatchesCure(badlyPoisoned, 'Poison'), true);
+    assert.equal(statusMatchesCure(burn1, 'Poison'), false);
+
+    // All Status curing
+    assert.equal(statusMatchesCure(burn1, 'All Status'), true);
+    assert.equal(statusMatchesCure(badlyPoisoned, 'All Status'), true);
+    assert.equal(statusMatchesCure(customStatus, 'All Status'), true);
+    assert.equal(statusMatchesCure(fainted, 'All Status'), false, 'All Status should NEVER cure Fainted');
+    assert.equal(statusMatchesCure(healthy, 'All Status'), false, 'All Status should not target Healthy');
+
+    // Fainted curing
+    assert.equal(statusMatchesCure(fainted, 'Fainted'), true);
+    assert.equal(statusMatchesCure(burn1, 'Fainted'), false);
+
+    // Custom status matching
+    const registry = [{ id: 'c1', name: 'Frostbite', description: '', effects: '', color: '#00f', textColor: '#fff' }];
+    assert.equal(statusMatchesCure(customStatus, 'Frostbite', registry), true);
+});
+
+runTest('itemUsageEffects: applyItemUsageEffects applies HP/Will capping, cures statuses, and inserts Healthy', () => {
+    const health = {
+        hpCurr: 2,
+        hpMax: 5,
+        hpBase: 4,
+        temporaryHitPoints: 0,
+        temporaryHitPointsMax: 0
+    };
+    const will = {
+        willCurr: 1,
+        willMax: 4,
+        willBase: 4,
+        temporaryWill: 0,
+        temporaryWillMax: 0
+    };
+    const statuses = [
+        { id: 's1', name: 'Poison', customName: '', rounds: 1 },
+        { id: 's2', name: '1st Degree Burn', customName: '', rounds: 2 }
+    ];
+
+    // 1. Antidote cures Poison only
+    const antidoteResult = applyItemUsageEffects(
+        { id: 'i1', name: 'Antidote', qty: 1, desc: '' },
+        health,
+        will,
+        statuses
+    );
+    assert.equal(antidoteResult.hpHealed, 0);
+    assert.deepEqual(antidoteResult.curedStatusNames, ['Poison']);
+    assert.equal(antidoteResult.nextStatuses.length, 1);
+    assert.equal(antidoteResult.nextStatuses[0].name, '1st Degree Burn');
+    assert.equal(antidoteResult.summaryText, 'Cured Poison.');
+
+    // 2. Sitrus Berry heals 3 HP capped at hpMax (2 + 3 = 5)
+    const sitrusResult = applyItemUsageEffects(
+        { id: 'i2', name: 'Sitrus Berry', qty: 1, desc: '' },
+        health,
+        will,
+        statuses
+    );
+    assert.equal(sitrusResult.hpHealed, 3);
+    assert.equal(sitrusResult.nextHealth.hpCurr, 5);
+    assert.equal(sitrusResult.nextHealth.currentHitPoints, 5);
+    assert.equal(sitrusResult.summaryText, 'Healed 3 HP.');
+
+    // 3. Max Potion heals to full (from 2 to 5)
+    const maxPotionResult = applyItemUsageEffects(
+        { id: 'i3', name: 'Max Potion', qty: 1, desc: '' },
+        health,
+        will,
+        statuses
+    );
+    assert.equal(maxPotionResult.hpHealed, 3);
+    assert.equal(maxPotionResult.nextHealth.hpCurr, 5);
+
+    // 4. Full Restore heals to full and cures all non-fainted, inserting Healthy
+    const fullRestoreResult = applyItemUsageEffects(
+        { id: 'i4', name: 'Full Restore', qty: 1, desc: '' },
+        health,
+        will,
+        statuses
+    );
+    assert.equal(fullRestoreResult.hpHealed, 3);
+    assert.equal(fullRestoreResult.nextHealth.hpCurr, 5);
+    assert.deepEqual(fullRestoreResult.curedStatusNames, ['Poison', '1st Degree Burn']);
+    assert.equal(fullRestoreResult.nextStatuses.length, 1);
+    assert.equal(fullRestoreResult.nextStatuses[0].name, 'Healthy');
+    assert.equal(fullRestoreResult.summaryText, 'Healed 3 HP. Cured Poison, 1st Degree Burn.');
+
+    // 5. Revive restores 1 HP and cures Fainted
+    const faintedHealth = { ...health, hpCurr: 0 };
+    const faintedStatuses = [{ id: 'f1', name: 'Fainted', customName: '', rounds: 0 }];
+    const reviveResult = applyItemUsageEffects(
+        { id: 'i5', name: 'Revive', qty: 1, desc: '' },
+        faintedHealth,
+        will,
+        faintedStatuses
+    );
+    assert.equal(reviveResult.hpHealed, 1);
+    assert.equal(reviveResult.nextHealth.hpCurr, 1);
+    assert.deepEqual(reviveResult.curedStatusNames, ['Fainted']);
+    assert.equal(reviveResult.nextStatuses.length, 1);
+    assert.equal(reviveResult.nextStatuses[0].name, 'Healthy');
+
+    // 6. Custom item restoring Will
+    const willItem = { id: 'i6', name: 'Elixir', qty: 1, desc: '', healWill: 2 };
+    const willResult = applyItemUsageEffects(willItem, health, will, []);
+    assert.equal(willResult.willHealed, 2);
+    assert.equal(willResult.nextWill.willCurr, 3);
+    assert.equal(willResult.summaryText, 'Restored 2 Will.');
+});
+
+runTest(
+    'inventorySlice: useInventoryItem decrements charges or qty, heals, cures statuses, and updates atomic state',
+    () => {
+        let currentState: any = {
+            identity: { nickname: 'Pikachu', species: 'Pikachu' },
+            health: { hpCurr: 2, hpMax: 5, hpBase: 4, temporaryHitPoints: 0, temporaryHitPointsMax: 0 },
+            will: { willCurr: 1, willMax: 4, willBase: 4, temporaryWill: 0, temporaryWillMax: 0 },
+            statuses: [{ id: 's1', name: '1st Degree Burn', customName: '', rounds: 1 }],
+            roomCustomStatuses: [],
+            inventory: [
+                { id: 'item-pot', name: 'Potion', qty: 1, charges: 2, maxCharges: 2, desc: '' },
+                { id: 'item-berry', name: 'Sitrus Berry', qty: 2, desc: '' },
+                { id: 'item-burn', name: 'Burn Heal', qty: 1, desc: '' }
+            ]
+        };
+
+        const setFn = (updater: any) => {
+            const updates = typeof updater === 'function' ? updater(currentState) : updater;
+            currentState = { ...currentState, ...updates };
+        };
+
+        const slice = createInventorySlice(setFn as any, (() => currentState) as any, {} as any);
+
+        // 1. Use charged Potion: heals 1 HP (2 -> 3), consumes 1 charge (charges 2 -> 1, qty stays 1)
+        slice.useInventoryItem('item-pot');
+        assert.equal(currentState.health.hpCurr, 3);
+        const potItem = currentState.inventory.find((i: any) => i.id === 'item-pot');
+        assert.ok(potItem);
+        assert.equal(potItem.charges, 1);
+        assert.equal(potItem.qty, 1);
+
+        // 2. Use Sitrus Berry: heals 3 HP (3 -> 5 capped at hpMax), decrements qty from 2 to 1
+        slice.useInventoryItem('item-berry');
+        assert.equal(currentState.health.hpCurr, 5);
+        const berryItem = currentState.inventory.find((i: any) => i.id === 'item-berry');
+        assert.ok(berryItem);
+        assert.equal(berryItem.qty, 1);
+
+        // 3. Use Burn Heal: cures 1st Degree Burn, inserts Healthy, decrements qty from 1 -> removed
+        slice.useInventoryItem('item-burn');
+        assert.equal(currentState.statuses.length, 1);
+        assert.equal(currentState.statuses[0].name, 'Healthy');
+        assert.equal(
+            currentState.inventory.some((i: any) => i.id === 'item-burn'),
+            false
+        );
     }
 );
 

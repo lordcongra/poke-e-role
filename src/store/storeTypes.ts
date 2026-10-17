@@ -25,6 +25,8 @@ import type {
     CustomStatus,
     CustomFieldEffect,
     PendingDemoRoll,
+    CharacterHealth,
+    CharacterWill,
     CustomType as BaseCustomType
 } from './entityTypes';
 
@@ -136,20 +138,8 @@ export interface PrintConfig {
 }
 
 export interface CoreSlice {
-    health: {
-        hpCurr: number;
-        hpMax: number;
-        hpBase: number;
-        temporaryHitPoints: number;
-        temporaryHitPointsMax: number;
-    };
-    will: {
-        willCurr: number;
-        willMax: number;
-        willBase: number;
-        temporaryWill: number;
-        temporaryWillMax: number;
-    };
+    health: CharacterHealth;
+    will: CharacterWill;
     derived: {
         defBuff: number;
         defDebuff: number;
@@ -164,8 +154,14 @@ export interface CoreSlice {
     skills: Record<Skill, SkillData>;
 
     setDerived: <K extends keyof CoreSlice['derived']>(field: K, value: CoreSlice['derived'][K]) => void;
-    updateHealth: <K extends keyof CoreSlice['health']>(field: K, value: CoreSlice['health'][K]) => void;
-    updateWill: <K extends keyof CoreSlice['will']>(field: K, value: CoreSlice['will'][K]) => void;
+    updateHealth: <K extends 'hpCurr' | 'hpMax' | 'hpBase' | 'temporaryHitPoints' | 'temporaryHitPointsMax'>(
+        field: K,
+        value: CoreSlice['health'][K]
+    ) => void;
+    updateWill: <K extends 'willCurr' | 'willMax' | 'willBase' | 'temporaryWill' | 'temporaryWillMax'>(
+        field: K,
+        value: CoreSlice['will'][K]
+    ) => void;
     setExtra: <K extends keyof CoreSlice['extras']>(category: K, value: CoreSlice['extras'][K]) => void;
     setStat: <K extends keyof StatData>(stat: CombatStat, field: K, value: StatData[K]) => void;
     setSocialStat: <K extends keyof StatData>(stat: SocialStat, field: K, value: StatData[K]) => void;
@@ -229,6 +225,7 @@ export interface InventorySlice {
     addCustomInfo: () => void;
     updateCustomInfo: (id: string, field: keyof CustomInfo, value: string) => void;
     removeCustomInfo: (id: string) => void;
+    useInventoryItem: (id: string) => void;
 }
 
 export interface PassivesSlice {

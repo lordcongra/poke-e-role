@@ -4,7 +4,9 @@ import { saveToOwlbear } from '../../utils/sync/obr';
 import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../../utils/combat/combatUtils';
 import { imageManager } from '../../utils/graphics/imageManager';
 import { KNOWN_ITEMS } from '../../data/constants';
-import { getBaseItemCharges } from '../../utils/items/itemCharges';
+import { getBaseItemCharges, getItemEffectiveCharges, consumeChargeFromInventory } from '../../utils/items/itemCharges';
+import { applyItemUsageEffects } from '../../utils/items/itemUsageEffects';
+import { broadcastInfo } from '../../utils/combat/diceRoller';
 
 const syncHealthWill = (
     state: CharacterState,
@@ -334,5 +336,61 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
                 console.error('[InventorySlice] Failed to save removed custom info to Owlbear:', error);
             }
             return { customInfo: newInfo };
+        }),
+
+    useInventoryItem: (id: string) =>
+        set((state) => {
+            const item = state.inventory.find((i) => i.id === id);
+            if (!item) return state;
+
+            const { nextHealth, nextWill, nextStatuses, summaryText } = applyItemUsageEffects(
+                item,
+                state.health,
+                state.will,
+                state.statuses,
+                state.roomCustomStatuses
+            );
+
+            const effective = getItemEffectiveCharges(item);
+            let nextInventory: InventoryItem[];
+
+            if (effective.hasCharges) {
+                const result = consumeChargeFromInventory(state.inventory, id);
+                nextInventory = result.newInventory;
+            } else {
+                const currentQty = item.qty ?? 1;
+                if (currentQty <= 1) {
+                    nextInventory = state.inventory.filter((i) => i.id !== id);
+                } else {
+                    nextInventory = state.inventory.map((i) => (i.id === id ? { ...i, qty: currentQty - 1 } : i));
+                }
+            }
+
+            const updatesToSave: Record<string, unknown> = {
+                'current-hp': nextHealth.currentHitPoints ?? nextHealth.hpCurr,
+                'hp-curr': nextHealth.hpCurr,
+                'will-curr': nextWill.willCurr,
+                'status-list': JSON.stringify(nextStatuses),
+                'inv-data': JSON.stringify(nextInventory)
+            };
+
+            try {
+                saveToOwlbear(updatesToSave);
+            } catch (error) {
+                console.error('[InventorySlice] Failed to save used item to Owlbear:', error);
+            }
+
+            const characterName = state.identity?.nickname || state.identity?.species || 'Trainer';
+            const broadcastMessage = `Used ${item.name || 'Item'}. ${summaryText}`;
+            broadcastInfo(characterName || 'Trainer', broadcastMessage).catch((error) => {
+                console.error('[InventorySlice] Failed to broadcast item usage:', error);
+            });
+
+            return {
+                inventory: nextInventory,
+                health: nextHealth,
+                will: nextWill,
+                statuses: nextStatuses
+            };
         })
 });

@@ -82,7 +82,7 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
                     ...(field === 'hpBase' ? { 'hp-base': safeValue } : {})
                 });
             } catch (e) {
-                console.warn(`[CoreSlice] Failed to save health update (${field}) to Owlbear.`, e);
+                console.warn(`[CoreSlice] Failed to save health update (${String(field)}) to Owlbear.`, e);
             }
 
             return { health: newHealth };
@@ -118,7 +118,7 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
                     ...(field === 'willBase' ? { 'will-base': safeValue } : {})
                 });
             } catch (e) {
-                console.warn(`[CoreSlice] Failed to save will update (${field}) to Owlbear.`, e);
+                console.warn(`[CoreSlice] Failed to save will update (${String(field)}) to Owlbear.`, e);
             }
 
             return { will: newWill };

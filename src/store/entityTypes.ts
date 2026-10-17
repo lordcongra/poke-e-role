@@ -36,6 +36,24 @@ export interface MoveData {
     dualScaleSelected?: boolean;
 }
 
+export interface CharacterHealth {
+    hpCurr: number;
+    hpMax: number;
+    hpBase: number;
+    temporaryHitPoints: number;
+    temporaryHitPointsMax: number;
+    currentHitPoints?: number;
+    maxHitPoints?: number;
+}
+
+export interface CharacterWill {
+    willCurr: number;
+    willMax: number;
+    willBase: number;
+    temporaryWill: number;
+    temporaryWillMax: number;
+}
+
 export interface StatusItem {
     id: string;
     name: string;
