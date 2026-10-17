@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import type { InventoryItem } from '../../../store/entityTypes';
 import { getItemEffectiveCharges, CORE_CURABLE_STATUSES } from '../../../utils/items/itemCharges';
+import { getBaseItemEffect, isLegacyBottleCapacity, hasItemUsageEffect } from '../../../utils/items/itemUsageEffects';
 import { NumberSpinner } from '../../ui/NumberSpinner';
 import { RotateCcw, Sparkles, ChevronDown, ChevronUp, Heart, Zap, ShieldAlert } from 'lucide-react';
 
@@ -15,9 +16,15 @@ export function ItemChargesControl({ item }: ItemChargesControlProps) {
     const roomCustomStatuses = useCharacterStore((state) => state.roomCustomStatuses);
 
     const effective = getItemEffectiveCharges(item);
+    const baseEffect = getBaseItemEffect(item.name || '');
+    const isLegacyBottle = isLegacyBottleCapacity(item);
+    const displayHealHp = isLegacyBottle ? 1 : item.healHp;
+    const hpPlaceholder = baseEffect?.healHp !== undefined ? String(baseEffect.healHp) : '0';
+    const willPlaceholder = baseEffect?.healWill !== undefined ? String(baseEffect.healWill) : '0';
+
     const isChargesActive =
         typeof item.charges === 'number' || typeof item.maxCharges === 'number' || effective.hasCharges;
-    const hasEffects = Boolean(item.healHp || item.healWill || (item.cures && item.cures.length > 0));
+    const hasEffects = hasItemUsageEffect(item);
     const [showEffects, setShowEffects] = useState(() => hasEffects);
 
     const handleToggleHasCharges = (checked: boolean) => {
@@ -138,8 +145,8 @@ export function ItemChargesControl({ item }: ItemChargesControlProps) {
                                 min={0}
                                 max={99}
                                 className="item-charges-control__num-input text-subtext"
-                                value={item.healHp ?? ''}
-                                placeholder="0"
+                                value={displayHealHp ?? ''}
+                                placeholder={hpPlaceholder}
                                 onChange={(e) => handleNumEffect('healHp', e.target.value)}
                             />
                         </label>
@@ -153,7 +160,7 @@ export function ItemChargesControl({ item }: ItemChargesControlProps) {
                                 max={99}
                                 className="item-charges-control__num-input text-subtext"
                                 value={item.healWill ?? ''}
-                                placeholder="0"
+                                placeholder={willPlaceholder}
                                 onChange={(e) => handleNumEffect('healWill', e.target.value)}
                             />
                         </label>

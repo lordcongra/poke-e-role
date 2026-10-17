@@ -1,5 +1,5 @@
 import type { InventoryItem, StatusItem, CustomStatus, CharacterHealth, CharacterWill } from '../../store/entityTypes';
-import { getItemEffectiveCharges } from './itemCharges';
+import { getItemEffectiveCharges, getBaseItemCharges } from './itemCharges';
 
 export interface ItemEffectDefinition {
     healHp?: number;
@@ -132,6 +132,22 @@ export function statusMatchesCure(status: StatusItem, cure: string, customStatus
 }
 
 /**
+ * Checks whether an item's configured healHp reflects the legacy bug where
+ * total bottle capacity was saved into healHp instead of the 1 HP per-charge heal.
+ */
+export function isLegacyBottleCapacity(item: { name?: string; healHp?: number; maxCharges?: number }): boolean {
+    if (!item.name || typeof item.healHp !== 'number') return false;
+    const baseEffect = getBaseItemEffect(item.name);
+    const baseCharges = getBaseItemCharges(item.name);
+    return Boolean(
+        baseCharges !== undefined &&
+        baseCharges > 1 &&
+        baseEffect?.healHp === 1 &&
+        (item.healHp === baseCharges || item.healHp === item.maxCharges)
+    );
+}
+
+/**
  * Pure function that calculates HP healing, Will restoration, and status cures
  * for an item usage event.
  */
@@ -143,7 +159,7 @@ export function applyItemUsageEffects(
     customStatuses: CustomStatus[] = []
 ): ItemUsageResult {
     const baseEffect = getBaseItemEffect(item.name || '');
-    const healHpAmount = item.healHp ?? baseEffect?.healHp ?? 0;
+    const healHpAmount = isLegacyBottleCapacity(item) ? 1 : (item.healHp ?? baseEffect?.healHp ?? 0);
     const healWillAmount = item.healWill ?? baseEffect?.healWill ?? 0;
     const curesList = item.cures ?? baseEffect?.cures ?? [];
 

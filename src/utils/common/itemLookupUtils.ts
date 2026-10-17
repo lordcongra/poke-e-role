@@ -5,6 +5,7 @@ import { getItemArt, harvestTokensItemArt } from '../graphics/itemArtCatalog';
 import { isStandaloneMode } from '../sync/storageAdapter';
 
 import { getBaseItemCharges } from '../items/itemCharges';
+import { getBaseItemEffect } from '../items/itemUsageEffects';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomItem } from '../../store/entityTypes';
 
@@ -93,24 +94,36 @@ export async function lookupItemDetails(rawName: string): Promise<ItemLookupResu
               ? customItem.maxCharges
               : defaultCharges;
 
+    const baseEffect = getBaseItemEffect(canonicalName) ?? getBaseItemEffect(trimmed);
+
     const healHp =
-        typeof data?.HealthRestored === 'number'
-            ? data.HealthRestored
-            : typeof data?.healthRestored === 'number'
-              ? data.healthRestored
-              : typeof data?.healHp === 'number'
-                ? data.healHp
-                : customItem?.healHp;
+        typeof customItem?.healHp === 'number'
+            ? customItem.healHp
+            : typeof data?.healHp === 'number'
+              ? data.healHp
+              : typeof baseEffect?.healHp === 'number'
+                ? baseEffect.healHp
+                : typeof data?.HealthRestored === 'number'
+                  ? defaultCharges && defaultCharges > 1
+                      ? 1
+                      : data.HealthRestored
+                  : typeof data?.healthRestored === 'number'
+                    ? defaultCharges && defaultCharges > 1
+                        ? 1
+                        : data.healthRestored
+                    : undefined;
 
     const healWill =
-        typeof data?.healWill === 'number'
-            ? data.healWill
-            : typeof data?.HealWill === 'number'
-              ? data.HealWill
-              : customItem?.healWill;
+        typeof customItem?.healWill === 'number'
+            ? customItem.healWill
+            : typeof data?.healWill === 'number'
+              ? data.healWill
+              : typeof data?.HealWill === 'number'
+                ? data.HealWill
+                : baseEffect?.healWill;
 
     let cures: string[] | undefined = undefined;
-    const rawCures = data?.Cures ?? data?.cures ?? customItem?.cures;
+    const rawCures = customItem?.cures ?? data?.Cures ?? data?.cures ?? baseEffect?.cures;
     if (Array.isArray(rawCures)) {
         cures = rawCures.map(String);
     } else if (typeof rawCures === 'string' && rawCures.trim()) {

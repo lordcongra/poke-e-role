@@ -30,7 +30,7 @@ const { hydrateStateFromMetadata } = await import('../src/utils/sync/stateMapper
 const { applyRoomUpdatesToMeta, mapRoomSettings } = await import('../src/utils/sync/roomSettingsMeta');
 const { BASE_ITEM_CHARGES, getBaseItemCharges, getItemEffectiveCharges, consumeChargeFromInventory } =
     await import('../src/utils/items/itemCharges');
-const { BASE_ITEM_EFFECTS, getBaseItemEffect, applyItemUsageEffects, statusMatchesCure } =
+const { BASE_ITEM_EFFECTS, getBaseItemEffect, applyItemUsageEffects, statusMatchesCure, isLegacyBottleCapacity } =
     await import('../src/utils/items/itemUsageEffects');
 const { createInventorySlice } = await import('../src/store/slices/inventorySlice');
 
@@ -1104,6 +1104,73 @@ runTest('itemUsageEffects: applyItemUsageEffects applies HP/Will capping, cures 
     assert.equal(willResult.willHealed, 2);
     assert.equal(willResult.nextWill.willCurr, 3);
     assert.equal(willResult.summaryText, 'Restored 2 Will.');
+
+    // 7. Defensive legacy normalization & item heal invariants
+    const injuredHealth = { hpCurr: 1, hpMax: 20, hpBase: 20, temporaryHitPoints: 0, temporaryHitPointsMax: 0 };
+
+    // Super Potion: healHp undefined -> 1 HP
+    const superDef = applyItemUsageEffects(
+        { id: 'sp-1', name: 'Super Potion', qty: 1, desc: '', charges: 4, maxCharges: 4 },
+        injuredHealth,
+        will,
+        []
+    );
+    assert.equal(superDef.hpHealed, 1, 'Super Potion with undefined healHp should heal 1 HP');
+    assert.equal(superDef.nextHealth.hpCurr, 2);
+
+    // Super Potion: legacy healHp: 4 -> defensively normalized to 1 HP
+    const superLegacy = applyItemUsageEffects(
+        { id: 'sp-2', name: 'Super Potion', qty: 1, desc: '', charges: 4, maxCharges: 4, healHp: 4 },
+        injuredHealth,
+        will,
+        []
+    );
+    assert.equal(superLegacy.hpHealed, 1, 'Super Potion with legacy healHp: 4 should defensively heal 1 HP');
+    assert.equal(superLegacy.nextHealth.hpCurr, 2);
+
+    // Hyper Potion: healHp undefined -> 1 HP
+    const hyperDef = applyItemUsageEffects(
+        { id: 'hp-1', name: 'Hyper Potion', qty: 1, desc: '', charges: 14, maxCharges: 14 },
+        injuredHealth,
+        will,
+        []
+    );
+    assert.equal(hyperDef.hpHealed, 1, 'Hyper Potion with undefined healHp should heal 1 HP');
+    assert.equal(hyperDef.nextHealth.hpCurr, 2);
+
+    // Hyper Potion: legacy healHp: 14 -> defensively normalized to 1 HP
+    const hyperLegacy = applyItemUsageEffects(
+        { id: 'hp-2', name: 'Hyper Potion', qty: 1, desc: '', charges: 14, maxCharges: 14, healHp: 14 },
+        injuredHealth,
+        will,
+        []
+    );
+    assert.equal(hyperLegacy.hpHealed, 1, 'Hyper Potion with legacy healHp: 14 should defensively heal 1 HP');
+    assert.equal(hyperLegacy.nextHealth.hpCurr, 2);
+
+    // Sitrus Berry: flat heal 3 HP
+    const sitrus = applyItemUsageEffects(
+        { id: 'sb-1', name: 'Sitrus Berry', qty: 1, desc: '' },
+        injuredHealth,
+        will,
+        []
+    );
+    assert.equal(sitrus.hpHealed, 3, 'Sitrus Berry should heal 3 HP');
+    assert.equal(sitrus.nextHealth.hpCurr, 4);
+
+    // Max Potion: full heal (99 HP) restoring up to max HP (from 1 to 20 = 19 HP healed)
+    const maxPot = applyItemUsageEffects({ id: 'mp-1', name: 'Max Potion', qty: 1, desc: '' }, injuredHealth, will, []);
+    assert.equal(maxPot.hpHealed, 19, 'Max Potion should fully heal character to max HP');
+    assert.equal(maxPot.nextHealth.hpCurr, 20);
+});
+
+runTest('itemUsageEffects: isLegacyBottleCapacity accurately detects legacy bottle capacity attributes', () => {
+    assert.equal(isLegacyBottleCapacity({ name: 'Super Potion', healHp: 4, maxCharges: 4 }), true);
+    assert.equal(isLegacyBottleCapacity({ name: 'Hyper Potion', healHp: 14, maxCharges: 14 }), true);
+    assert.equal(isLegacyBottleCapacity({ name: 'Potion', healHp: 2, maxCharges: 2 }), true);
+    assert.equal(isLegacyBottleCapacity({ name: 'Super Potion', healHp: 1, maxCharges: 4 }), false);
+    assert.equal(isLegacyBottleCapacity({ name: 'Sitrus Berry', healHp: 3 }), false);
+    assert.equal(isLegacyBottleCapacity({ name: 'Custom Drink', healHp: 4 }), false);
 });
 
 runTest(
