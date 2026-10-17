@@ -7,6 +7,7 @@ import { getItemEffectiveCharges, consumeChargeFromInventory } from './itemCharg
 import { saveToOwlbear } from '../sync/obr';
 import { resolveEffectiveActiveTrainer } from '../pc/pcActiveTrainerOps';
 import { renderTokenGraphicsForMeta } from '../../hooks/owlbearSync/setupOwlbearTokenSync';
+import { METADATA_ID } from '../../hooks/owlbearSync/owlbearSyncConstants';
 import { broadcastInfo } from '../combat/diceRoller';
 
 export interface ItemTargetCandidate {
@@ -24,10 +25,10 @@ export interface ItemTargetCandidate {
 }
 
 /**
- * Evaluates whether an item used by a Trainer has target options among sent-out Pokémon.
+ * Evaluates whether an item used by a Trainer has target options among their belt slot Pokémon.
  * Returns empty array if active character is not a Trainer or item is not restorative.
- * Returns [trainerCandidate, ...pokemonCandidates] if sent-out Pokémon exist.
- * Returns empty array if none are on the map (allowing direct self-use without prompting).
+ * Returns [trainerCandidate, ...pokemonCandidates] if belt slot Pokémon exist in the party.
+ * Returns empty array if the party has no candidate Pokémon (allowing direct self-use without prompting).
  */
 export function getTrainerItemTargets(store: CharacterState, item: InventoryItem): ItemTargetCandidate[] {
     const mode = store.identity?.mode;
@@ -84,13 +85,14 @@ export function getTrainerItemTargets(store: CharacterState, item: InventoryItem
         return [];
     };
 
-    // 1. Party Pokémon that are on map
+    // Belt slot Pokémon in the Trainer's party
     if (Array.isArray(trainer.party)) {
         for (const slotId of trainer.party) {
             if (!slotId || seenEntityIds.has(slotId)) continue;
             const sum = allSummaries[slotId];
-            if (sum && sum.isOnMap) {
+            if (sum && !seenEntityIds.has(sum.entityId)) {
                 seenEntityIds.add(slotId);
+                seenEntityIds.add(sum.entityId);
                 pokemonCandidates.push({
                     id: sum.entityId,
                     name: sum.name || sum.species || 'Pokémon',
@@ -108,28 +110,7 @@ export function getTrainerItemTargets(store: CharacterState, item: InventoryItem
         }
     }
 
-    // 2. Additional summaries matching trainerId that are on map
-    for (const sum of Object.values(allSummaries)) {
-        if (!sum || seenEntityIds.has(sum.entityId)) continue;
-        if (sum.trainerId === trainer.id && sum.isOnMap) {
-            seenEntityIds.add(sum.entityId);
-            pokemonCandidates.push({
-                id: sum.entityId,
-                name: sum.name || sum.species || 'Pokémon',
-                species: sum.species,
-                hp: sum.hp ?? 0,
-                maxHp: sum.maxHp ?? 1,
-                will: sum.will ?? 0,
-                maxWill: sum.maxWill ?? 1,
-                statuses: parseStatuses(sum),
-                avatarUrl: sum.tokenImageUrl,
-                isTrainer: false,
-                mapTokenId: sum.mapTokenId
-            });
-        }
-    }
-
-    // If no sent-out Pokémon exist, return empty array to allow direct self-use
+    // If no candidate Pokémon exist in the party, return empty array to allow direct self-use
     if (pokemonCandidates.length === 0) {
         return [];
     }
@@ -152,7 +133,7 @@ export function getTrainerItemTargets(store: CharacterState, item: InventoryItem
 }
 
 /**
- * Applies a restorative item to a sent-out Pokémon target, updates Pokémon summary & token,
+ * Applies a restorative item to a targeted Pokémon (belt slot or sent-out), updates Pokémon summary & token,
  * consumes item charge/qty from Trainer's inventory, and broadcasts usage to the room.
  */
 export async function applyItemToPokemonTarget(
@@ -225,6 +206,23 @@ export async function applyItemToPokemonTarget(
     );
 
     // 3. Update Pokémon summary via store.updatePokemonSummary(...)
+    let updatedSavedTokenItem = summary.savedTokenItem;
+    if (updatedSavedTokenItem) {
+        updatedSavedTokenItem = {
+            ...updatedSavedTokenItem,
+            metadata: {
+                ...(updatedSavedTokenItem.metadata || {}),
+                [METADATA_ID]: {
+                    ...((updatedSavedTokenItem.metadata?.[METADATA_ID] as Record<string, unknown>) || {}),
+                    'hp-curr': nextHealth.hpCurr,
+                    'current-hp': nextHealth.hpCurr,
+                    'will-curr': nextWill.willCurr,
+                    'status-list': JSON.stringify(nextStatuses)
+                }
+            }
+        };
+    }
+
     const updatedSummary: PcPokemonSummary = {
         ...summary,
         hp: nextHealth.hpCurr ?? summary.hp,
@@ -236,7 +234,8 @@ export async function applyItemToPokemonTarget(
             'current-hp': nextHealth.hpCurr,
             'will-curr': nextWill.willCurr,
             'status-list': JSON.stringify(nextStatuses)
-        }
+        },
+        savedTokenItem: updatedSavedTokenItem
     };
     store.updatePokemonSummary(updatedSummary);
 
@@ -245,16 +244,30 @@ export async function applyItemToPokemonTarget(
         try {
             await OBR.scene.items.updateItems([summary.mapTokenId], (items) => {
                 for (const it of items) {
-                    it.metadata['hp-curr'] = nextHealth.hpCurr;
-                    it.metadata['current-hp'] = nextHealth.hpCurr;
-                    it.metadata['will-curr'] = nextWill.willCurr;
-                    it.metadata['status-list'] = JSON.stringify(nextStatuses);
+                    const metaUpdates: Record<string, unknown> = {
+                        'hp-curr': nextHealth.hpCurr,
+                        'current-hp': nextHealth.hpCurr,
+                        'will-curr': nextWill.willCurr,
+                        'status-list': JSON.stringify(nextStatuses),
+                        lastModified: updatedSummary.lastModified
+                    };
+                    if (!it.metadata[METADATA_ID]) it.metadata[METADATA_ID] = {};
+                    Object.assign(it.metadata[METADATA_ID] as Record<string, unknown>, metaUpdates);
+                    if (it.metadata['pokerole-pmd-extension/stats']) {
+                        Object.assign(
+                            it.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>,
+                            metaUpdates
+                        );
+                    }
                 }
             });
             const [updatedToken] = await OBR.scene.items.getItems([summary.mapTokenId]);
             if (updatedToken) {
                 const role = store.role || 'PLAYER';
-                await renderTokenGraphicsForMeta(updatedToken, updatedToken.metadata, role, false);
+                const tokenMeta = (updatedToken.metadata[METADATA_ID] ||
+                    updatedToken.metadata['pokerole-pmd-extension/stats'] ||
+                    updatedSummary.fullMetadata) as Record<string, unknown>;
+                await renderTokenGraphicsForMeta(updatedToken, tokenMeta, role, false);
             }
         } catch (e) {
             console.warn('[itemTargeting] Failed to update token scene metadata or graphics:', e);

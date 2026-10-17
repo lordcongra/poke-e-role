@@ -94,7 +94,9 @@ export function ItemTargetPromptModal({ item, candidates, onSelectTarget, onClos
                                         <img
                                             src={candidate.avatarUrl}
                                             alt={candidate.name}
-                                            className="item-target-card__avatar-img"
+                                            className={`item-target-card__avatar-img ${
+                                                candidate.isTrainer ? 'item-target-card__avatar-img--trainer' : ''
+                                            }`.trim()}
                                         />
                                     ) : (
                                         <div className="item-target-card__avatar-fallback">

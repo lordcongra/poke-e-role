@@ -167,6 +167,15 @@
     background: rgba(0, 0, 0, 0.3);
 }
 
+.item-target-card--trainer .item-target-card__avatar-img,
+.item-target-card__avatar-img--trainer {
+    object-position: top center;
+}
+
+.item-target-card--pokemon .item-target-card__avatar-img {
+    object-fit: contain;
+}
+
 .item-target-card__avatar-fallback {
     width: 44px;
     height: 44px;

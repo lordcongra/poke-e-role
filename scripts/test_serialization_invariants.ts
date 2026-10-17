@@ -35,6 +35,7 @@ const { BASE_ITEM_EFFECTS, getBaseItemEffect, applyItemUsageEffects, statusMatch
     await import('../src/utils/items/itemUsageEffects');
 const { createInventorySlice } = await import('../src/store/slices/inventorySlice');
 const { getTrainerItemTargets, applyItemToPokemonTarget } = await import('../src/utils/items/itemTargeting');
+const { METADATA_ID } = await import('../src/hooks/owlbearSync/owlbearSyncConstants');
 
 /**
  * Automated Verification Suite for Token Metadata & Serialization Invariants.
@@ -1229,7 +1230,7 @@ runTest(
 );
 
 await runTest(
-    'itemTargeting: getTrainerItemTargets returns empty for non-trainer or non-restorative, and candidates when pokemon is on map',
+    'itemTargeting: getTrainerItemTargets returns empty for non-trainer or non-restorative, and candidates for belt slot pokemon',
     () => {
         const mockStore: any = {
             identity: {
@@ -1284,6 +1285,17 @@ await runTest(
                         maxWill: 4,
                         isOnMap: false, // In party but NOT on map!
                         trainerId: 'tr-red'
+                    },
+                    'pkmn-box': {
+                        entityId: 'pkmn-box',
+                        name: 'Boxy',
+                        species: 'Snorlax',
+                        hp: 10,
+                        maxHp: 10,
+                        will: 5,
+                        maxWill: 5,
+                        isOnMap: false,
+                        trainerId: 'tr-red'
                     }
                 }
             }
@@ -1301,29 +1313,41 @@ await runTest(
         const targetsForNonTrainer = getTrainerItemTargets(nonTrainerStore, potionItem);
         assert.equal(targetsForNonTrainer.length, 0);
 
-        // 3. Trainer with sent-out Pikachu on map -> [Red (Trainer), Sparky (Pokemon)]
+        // 3. Trainer with belt slot Pokémon (Sparky on map, Blaze not on map) -> [Red (Trainer), Sparky (Pokemon), Blaze (Pokemon)]
+        // Box Pokémon (pkmn-box) must be excluded
         const targets = getTrainerItemTargets(mockStore, potionItem);
-        assert.equal(targets.length, 2);
+        assert.equal(targets.length, 3);
         assert.equal(targets[0].isTrainer, true);
         assert.equal(targets[0].name, 'Red');
         assert.equal(targets[1].isTrainer, false);
         assert.equal(targets[1].name, 'Sparky');
         assert.equal(targets[1].statuses.length, 1);
         assert.equal(targets[1].statuses[0].name, 'Paralyzed');
+        assert.equal(targets[2].isTrainer, false);
+        assert.equal(targets[2].name, 'Blaze');
+        assert.ok(!targets.some((t: any) => t.id === 'pkmn-box'));
 
-        // 4. When no Pokémon are on map -> empty array (allowing direct self-use without prompt)
-        const mockStoreNoMap: any = {
+        // 4. When trainer.party is empty -> empty array (allowing direct self-use without prompt)
+        const mockStoreEmptyParty: any = {
             ...mockStore,
             pcData: {
                 ...mockStore.pcData,
-                pokemonSummaries: {
-                    ...mockStore.pcData.pokemonSummaries,
-                    'pkmn-pika': { ...mockStore.pcData.pokemonSummaries['pkmn-pika'], isOnMap: false }
+                campaigns: {
+                    ...mockStore.pcData.campaigns,
+                    'camp-1': {
+                        ...mockStore.pcData.campaigns['camp-1'],
+                        trainers: {
+                            'tr-red': {
+                                ...mockStore.pcData.campaigns['camp-1'].trainers['tr-red'],
+                                party: []
+                            }
+                        }
+                    }
                 }
             }
         };
-        const targetsNoMap = getTrainerItemTargets(mockStoreNoMap, potionItem);
-        assert.equal(targetsNoMap.length, 0);
+        const targetsEmptyParty = getTrainerItemTargets(mockStoreEmptyParty, potionItem);
+        assert.equal(targetsEmptyParty.length, 0);
     }
 );
 
@@ -1352,6 +1376,15 @@ await runTest(
                         fullMetadata: {
                             'hp-curr': 2,
                             'status-list': JSON.stringify([{ id: 'p1', name: 'Paralyzed', customName: '', rounds: 1 }])
+                        },
+                        savedTokenItem: {
+                            id: 'tok-pika',
+                            metadata: {
+                                [METADATA_ID]: {
+                                    'hp-curr': 2,
+                                    'current-hp': 2
+                                }
+                            }
                         }
                     }
                 }
@@ -1382,6 +1415,11 @@ await runTest(
 
         // Status wasn't curable by basic Potion, so Paralyzed remains
         assert.ok(updatedSummary.fullMetadata['status-list'].includes('Paralyzed'));
+
+        // savedTokenItem metadata should also be synchronized
+        assert.ok(updatedSummary.savedTokenItem);
+        assert.equal(updatedSummary.savedTokenItem.metadata[METADATA_ID]['hp-curr'], 3);
+        assert.equal(updatedSummary.savedTokenItem.metadata[METADATA_ID]['current-hp'], 3);
     }
 );
 

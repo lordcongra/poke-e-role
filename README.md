@@ -1,4 +1,4 @@
-# Pokerole 3.0 Sheet v3.7.1 (Standalone PWA & Owlbear Rodeo Extension)
+# Pokerole 3.0 Sheet v3.7.2 (Standalone PWA & Owlbear Rodeo Extension)
 
 A highly automated, modular character sheet and GM Toolkit for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings).
 
@@ -56,6 +56,13 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 ---
 
 ## 🌟 Features
+
+### 🎒 Item Charges, Automated Healing & Trainer PC Sync
+
+- **Item Charges & Auto-Populating Consumables:** Multi-use item charges are now a core feature across all inventories! Applicable official consumables (such as Potions, Super/Hyper Potions, Remedies, Energy Roots, and drinks) automatically auto-populate with their standard charges, featuring visual charge pips on inventory cards and list rows that count down with each use.
+- **Automated Medicine & Item Effects:** Using Potions, Ethers, and status restoratives opens a target selector for party members or allies, automatically restoring HP, recovering Will points, and cleansing status ailments.
+- **Trainer to Pokémon PC Sync:** When playing as a Trainer, using an item on any Pokémon in your belt party automatically synchronizes their restored health and cleared status ailments directly to that Pokémon's stored sheet in PC Storage and active tokens on the map.
+- **Homebrew & Custom Item Integration:** Craft custom items in the Homebrew Workshop or customize them in the Item Editor with custom maximum charges, HP/Will restoration values, and specific status condition cures.
 
 ### 💾 Pokémon PC Storage & Adventure Vaults
 
@@ -224,6 +231,6 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 To install this extension into your Owlbear Rodeo room, copy the Manifest URL below and paste it into your Owlbear Rodeo extension manager:
 
-`https://lordcongra.github.io/poke-e-role/manifest.json?v=3.7.1`
+`https://lordcongra.github.io/poke-e-role/manifest.json?v=3.7.2`
 
 _(Note: If the sheet updates, you can force Owlbear to fetch the newest version by bumping the version tag at the end of the URL!)_

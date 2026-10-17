@@ -28,7 +28,7 @@ import {
     HardDrive
 } from 'lucide-react';
 
-export const CURRENT_VERSION = '3.7.1';
+export const CURRENT_VERSION = '3.7.2';
 
 export interface ChangelogHighlight {
     id: string;
@@ -130,43 +130,41 @@ export function getChangelogDiff(lastSeenVersion: string | null): ChangelogDiffR
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
-        version: '3.7.1',
+        version: '3.7.2',
         date: 'October 2026',
         highlights: [
             {
-                id: 'battlefield-effects',
-                version: '3.7.1',
-                title: 'Battlefield Effects & Tracker Sync',
-                icon: Swords,
-                badge: 'Combat & Arena',
+                id: 'item-charges',
+                version: '3.7.2',
+                title: 'Item Charges & Auto-Populated Consumables',
+                icon: Package,
+                badge: 'Items & Inventory',
                 summary:
-                    'Activate weather, terrains, force fields, team buffs, and entry hazards in the Battle Organizer with live sync to the Initiative Tracker and interactive info buttons.',
+                    'Item charges are now supported across the sheet and auto-populate on applicable consumables! Standard multi-use items like Potions, Remedies, and drinks automatically gain their official charges, track uses with visual pips, and sync party item healing directly to PC Storage.',
                 details: (
                     <div>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Global & Battlefield Effects in Battle Organizer:</strong> Activate various weather
-                            conditions (Rain, Harsh Sunlight, Sandstorm, Snow, Fog), terrain effects (Electric,
-                            Grassy, Psychic, Misty), team force fields (Reflect, Light Screen, Safeguard, Mist), side
-                            buffs, and entry hazards (Stealth Rock, Spikes, Toxic Spikes, Sticky Web) directly inside the
-                            Battle Organizer arena.
+                            <strong>Item Charges & Auto-Populating Consumables:</strong> Item charges have been added as an optional checkbox to all item entries! Pre-existing Pokérole items (such as Potions,
+                            Super/Hyper Potions, Remedies, Energy Roots, and drinks like MooMoo Milk or Fresh Water) now
+                            automatically auto-populate with their RAW multi-use charges, displaying interactive charge
+                            pips or numbers on inventory cards and list rows that count down with each use.
                         </p>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Initiative Tracker Condition Chips:</strong> All active battlefield conditions and
-                            force fields are automatically synced and pinned onto the Initiative Tracker as clean,
-                            color-coded condition chips for all players and GMs.
+                            <strong>Trainer & Pokémon PC Storage Sync:</strong> When playing as a Trainer, using an item on
+                            any Pokémon in your party automatically synchronizes their updated health, Will, and cleared
+                            status conditions directly into PC Storage and onto active map tokens.
                         </p>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Informational Hovers & Quick Duration Controls:</strong> Hover over any active
-                            condition chip on the tracker to view its full mechanical rules and stat modifiers. Click on
-                            any chip to open a quick inspector modal to review details or adjust remaining round durations
-                            on the fly.
+                            <strong>Custom Charges & Homebrew Integration:</strong> Full charge and effect customization in
+                            the Item Editor and Homebrew Workshop, allowing you to easily configure max charges, recovery
+                            values, and cured ailments on custom items.
                         </p>
                     </div>
                 )
             },
             {
                 id: 'pokemon-pc-storage',
-                version: '3.7.1',
+                version: '3.7.2',
                 title: 'Pokémon PC Storage & Adventure Vaults',
                 icon: HardDrive,
                 badge: 'Major System',
@@ -216,8 +214,79 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                         </div>
                     </div>
                 )
+            },
+            {
+                id: 'battlefield-effects',
+                version: '3.7.2',
+                title: 'Battlefield Effects & Tracker Sync',
+                icon: Swords,
+                badge: 'Combat & Arena',
+                summary:
+                    'Activate weather, terrains, force fields, team buffs, and entry hazards in the Battle Organizer with live sync to the Initiative Tracker and interactive info buttons.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Global & Battlefield Effects in Battle Organizer:</strong> Activate various weather
+                            conditions (Rain, Harsh Sunlight, Sandstorm, Snow, Fog), terrain effects (Electric,
+                            Grassy, Psychic, Misty), team force fields (Reflect, Light Screen, Safeguard, Mist), side
+                            buffs, and entry hazards (Stealth Rock, Spikes, Toxic Spikes, Sticky Web) directly inside the
+                            Battle Organizer arena.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Initiative Tracker Condition Chips:</strong> All active battlefield conditions and
+                            force fields are automatically synced and pinned onto the Initiative Tracker as clean,
+                            color-coded condition chips for all players and GMs.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Informational Hovers & Quick Duration Controls:</strong> Hover over any active
+                            condition chip on the tracker to view its full mechanical rules and stat modifiers. Click on
+                            any chip to open a quick inspector modal to review details or adjust remaining round durations
+                            on the fly.
+                        </p>
+                    </div>
+                )
             }
         ],
+        changes: [
+            <strong
+                key="item-charges-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Package size={16} /> Item Charges, Automated Effects & Trainer PC Sync
+            </strong>,
+            <ul
+                key="item-charges-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Item Charges & Auto-Populating Consumables:</strong> Multi-use item charges are now supported across
+                    the sheet! Applicable official consumables (such as Potions, Super/Hyper Potions, Remedies, Energy Roots,
+                    and drinks) now automatically auto-populate with their standard charges, complete with visual charge pips on
+                    inventory cards and rows.
+                </li>
+                <li>
+                    <strong>Trainer to PC Storage Sync:</strong> Items used by a Trainer on their party Pokémon seamlessly
+                    update and synchronize health, Will, and status changes directly into PC Storage and active map tokens.
+                </li>
+                <li>
+                    <strong>Item Editor & Homebrew Integration:</strong> Easily customize max charges, healing amounts, and
+                    cured conditions when creating or editing items in the Homebrew Workshop and Item Editor.
+                </li>
+            </ul>
+        ]
+    },
+    {
+        version: '3.7.1',
+        date: 'October 2026',
         changes: [
             <strong
                 key="battlefield-sync-title"
@@ -317,7 +386,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 <li>
                     <strong>Map Deployment (Auto-Place & Click to Place):</strong> Summon Pokémon directly from your party or
                     boxes to the battle map. Choose <em>Auto-Place</em> to drop in front of your trainer token or <em>Click to
-                    Place</em> to target exact map coordinates.
+                        Place</em> to target exact map coordinates.
                 </li>
                 <li>
                     <strong>1-Click Token Recall:</strong> Return active map tokens back into your party or PC storage with a
