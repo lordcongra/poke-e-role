@@ -5,6 +5,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomItem } from '../../store/storeTypes';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import { ItemImageSection } from '../modals/items/ItemImageSection';
+import { HomebrewItemEffectsSection } from './HomebrewItemEffectsSection';
 import { imageManager, autoCropTransparency } from '../../utils/graphics/imageManager';
 import { setItemArt } from '../../utils/graphics/itemArtCatalog';
 import { ChevronDown, Tag, Copy, X, AlertTriangle, Package } from 'lucide-react';
@@ -328,6 +329,7 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }:
                         disabled={!canEdit}
                         className="homebrew-card__textarea homebrew-card__textarea--large text-subtext"
                     />
+                    <HomebrewItemEffectsSection item={item} canEdit={canEdit} />
                 </>
             )}
 

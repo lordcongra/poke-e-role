@@ -6,6 +6,7 @@ import { KNOWN_ITEMS } from '../../../data/constants';
 import { setItemArt, getItemArt, useItemArt } from '../../../utils/graphics/itemArtCatalog';
 import { TagBuilderModal } from './TagBuilderModal';
 import { ItemImageSection } from './ItemImageSection';
+import { ItemChargesControl } from './ItemChargesControl';
 import { broadcastInfo } from '../../../utils/combat/diceRoller';
 import { NumberSpinner } from '../../ui/NumberSpinner';
 import OBR, { type ImageDownload } from '@owlbear-rodeo/sdk';
@@ -404,6 +405,9 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                         </button>
                     </div>
 
+                    {/* Charges and Usage Effects Control */}
+                    <ItemChargesControl item={item} />
+
                     {/* Effect / Notes Area */}
                     <div className="item-edit-modal__desc-container">
                         <div className="item-edit-modal__desc-header">
@@ -536,11 +540,6 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                         Done
                     </button>
                 </div>
-
-                {/* Tag Builder Modal Sub-dialog */}
-                {showTagBuilder && (
-                    <TagBuilderModal targetId={item.id} targetType="item" onClose={() => setShowTagBuilder(false)} />
-                )}
 
                 {/* Delete Confirmation Modal Sub-dialog */}
                 {showDeleteConfirm && (

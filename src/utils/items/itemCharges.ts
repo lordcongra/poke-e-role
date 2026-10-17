@@ -18,6 +18,23 @@ export const BASE_ITEM_CHARGES: Record<string, number> = {
 };
 
 /**
+ * Standard curable core statuses in Pokérole for item usage effects.
+ */
+export const CORE_CURABLE_STATUSES = [
+    'All Statuses',
+    'Burn',
+    'Poison',
+    'Badly Poisoned',
+    'Paralysis',
+    'Sleep',
+    'Frozen Solid',
+    'Confusion',
+    'Disable',
+    'Flinch',
+    'In Love'
+] as const;
+
+/**
  * Looks up default multi-use charges for a base item by name.
  */
 export function getBaseItemCharges(name: string): number | undefined {

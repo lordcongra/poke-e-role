@@ -209,6 +209,7 @@ export interface InventorySlice {
         quantity?: number;
         active?: boolean;
         tags?: string;
+        imageUrl?: string;
         charges?: number;
         maxCharges?: number;
         healHp?: number;

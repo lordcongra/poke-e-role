@@ -94,6 +94,11 @@ export interface ItemApiResponse {
     effect?: string;
     HealthRestored?: number;
     healthRestored?: number;
+    charges?: number;
+    maxCharges?: number;
+    healHp?: number;
+    healWill?: number;
+    HealWill?: number;
     Cures?: string | string[];
     cures?: string | string[];
     Boost?: string;

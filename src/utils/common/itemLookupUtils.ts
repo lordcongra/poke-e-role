@@ -5,6 +5,8 @@ import { getItemArt, harvestTokensItemArt } from '../graphics/itemArtCatalog';
 import { isStandaloneMode } from '../sync/storageAdapter';
 
 import { getBaseItemCharges } from '../items/itemCharges';
+import { useCharacterStore } from '../../store/useCharacterStore';
+import type { CustomItem } from '../../store/entityTypes';
 
 export interface ItemLookupResult {
     found: boolean;
@@ -67,32 +69,67 @@ export async function lookupItemDetails(rawName: string): Promise<ItemLookupResu
         } catch {}
     }
 
-    const defaultCharges = getBaseItemCharges(canonicalName) ?? getBaseItemCharges(trimmed);
+    let customItem: CustomItem | undefined;
+    try {
+        const customItems = useCharacterStore.getState().roomCustomItems || [];
+        customItem = customItems.find(
+            (ci) =>
+                ci.name.trim().toLowerCase() === canonicalName.toLowerCase() ||
+                ci.name.trim().toLowerCase() === trimmed.toLowerCase()
+        );
+    } catch {}
+
+    const defaultCharges =
+        typeof data?.charges === 'number'
+            ? data.charges
+            : customItem?.charges !== undefined
+              ? customItem.charges
+              : (getBaseItemCharges(canonicalName) ?? getBaseItemCharges(trimmed));
+
+    const maxCharges =
+        typeof data?.maxCharges === 'number'
+            ? data.maxCharges
+            : customItem?.maxCharges !== undefined
+              ? customItem.maxCharges
+              : defaultCharges;
+
     const healHp =
         typeof data?.HealthRestored === 'number'
             ? data.HealthRestored
             : typeof data?.healthRestored === 'number'
               ? data.healthRestored
-              : undefined;
+              : typeof data?.healHp === 'number'
+                ? data.healHp
+                : customItem?.healHp;
+
+    const healWill =
+        typeof data?.healWill === 'number'
+            ? data.healWill
+            : typeof data?.HealWill === 'number'
+              ? data.HealWill
+              : customItem?.healWill;
 
     let cures: string[] | undefined = undefined;
-    const rawCures = data?.Cures ?? data?.cures;
+    const rawCures = data?.Cures ?? data?.cures ?? customItem?.cures;
     if (Array.isArray(rawCures)) {
         cures = rawCures.map(String);
     } else if (typeof rawCures === 'string' && rawCures.trim()) {
         cures = [rawCures.trim()];
     }
 
+    const effectiveImageUrl = knownArt || customItem?.imageUrl || data?.imageUrl;
+
     return {
-        found,
+        found: found || Boolean(customItem),
         name: canonicalName,
-        description: cleanDesc,
+        description: cleanDesc || customItem?.description || '',
         tags,
-        fullDescription: cleanDesc,
-        imageUrl: knownArt,
+        fullDescription: cleanDesc || customItem?.description || '',
+        imageUrl: effectiveImageUrl,
         charges: defaultCharges,
-        maxCharges: defaultCharges,
+        maxCharges,
         healHp,
+        healWill,
         cures
     };
 }

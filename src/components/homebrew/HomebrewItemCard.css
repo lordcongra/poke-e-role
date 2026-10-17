@@ -47,3 +47,141 @@
     border-bottom: 1px dashed var(--border);
     margin-bottom: 8px;
 }
+
+/* =========================================
+   ⚡ HOMEBREW ITEM EFFECTS & CHARGES
+   ========================================= */
+.homebrew-item-effects {
+    margin-top: 8px;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.homebrew-item-effects__toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.homebrew-item-effects__toggle:hover {
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.homebrew-item-effects__toggle-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.homebrew-item-effects__badge {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--primary) 25%, transparent);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.homebrew-item-effects__body {
+    padding: 10px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--panel-bg);
+}
+
+.homebrew-item-effects__fields-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+}
+
+.homebrew-item-effects__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.homebrew-item-effects__field-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.homebrew-item-effects__input {
+    width: 100%;
+    padding: 4px 6px;
+    background: var(--input-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 0.8rem;
+}
+
+.homebrew-item-effects__input:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+
+.homebrew-item-effects__cures-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.homebrew-item-effects__cures-title {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.homebrew-item-effects__pills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-height: 120px;
+    overflow-y: auto;
+    padding: 2px;
+}
+
+.homebrew-item-effects__pill {
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.homebrew-item-effects__pill:hover:not(:disabled) {
+    border-color: var(--primary);
+    color: var(--text-main);
+}
+
+.homebrew-item-effects__pill--selected {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
+    font-weight: 600;
+}

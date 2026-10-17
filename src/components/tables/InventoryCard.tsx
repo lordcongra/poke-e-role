@@ -104,7 +104,14 @@ export const InventoryCard = memo(function InventoryCard({
             }
             if (result.tags) update(item.id, 'tags', result.tags);
             if (/\[.*?\]/.test(item.desc)) {
-                update(item.id, 'desc', item.desc.replace(/\[.*?\]/g, '').replace(/\n\s*\n+/g, '\n').trim());
+                update(
+                    item.id,
+                    'desc',
+                    item.desc
+                        .replace(/\[.*?\]/g, '')
+                        .replace(/\n\s*\n+/g, '\n')
+                        .trim()
+                );
             }
             const targetImg = result.imageUrl || getItemArt(result.name) || getItemArt(query);
             if (targetImg && (!item.imageUrl || item.imageUrl === 'none')) {

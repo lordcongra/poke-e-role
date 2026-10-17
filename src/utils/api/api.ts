@@ -332,7 +332,16 @@ export async function fetchItemData(itemName: string): Promise<ItemApiResponse |
     const isGm = isUserGm();
     const custom = homebrewItems.find((i) => i.name.trim().toLowerCase() === cleanName);
     if (custom && (isGm || !custom.gmOnly)) {
-        return { Name: custom.name, Description: custom.description, imageUrl: custom.imageUrl };
+        return {
+            Name: custom.name,
+            Description: custom.description,
+            imageUrl: custom.imageUrl,
+            charges: custom.charges,
+            maxCharges: custom.maxCharges,
+            HealthRestored: custom.healHp,
+            healWill: custom.healWill,
+            cures: custom.cures
+        };
     }
 
     // 2. Check Local Dataset

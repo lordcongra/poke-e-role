@@ -78,14 +78,15 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
                 .trim();
             const tags = item.tags || (legacyTags.length > 0 ? legacyTags.join(' ') : knownMatch?.tags || undefined);
 
+            const customMatch = state.roomCustomItems?.find((i) => i.name.toLowerCase() === rawName.toLowerCase());
             const baseCharges = getBaseItemCharges(rawName);
-            const resolvedCharges = item.charges !== undefined ? item.charges : baseCharges;
+            const resolvedCharges = item.charges ?? customMatch?.charges ?? baseCharges;
             const resolvedMaxCharges =
-                item.maxCharges !== undefined
-                    ? item.maxCharges
-                    : item.charges !== undefined
-                      ? item.charges
-                      : baseCharges;
+                item.maxCharges ?? customMatch?.maxCharges ?? item.charges ?? customMatch?.charges ?? baseCharges;
+            const resolvedHealHp = item.healHp ?? customMatch?.healHp;
+            const resolvedHealWill = item.healWill ?? customMatch?.healWill;
+            const resolvedCures = item.cures ?? customMatch?.cures;
+            const resolvedImageUrl = item.imageUrl || customMatch?.imageUrl;
 
             const newInventory: InventoryItem[] = [
                 ...state.inventory,
@@ -96,11 +97,12 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
                     desc: cleanDesc,
                     tags,
                     active: item.active || false,
+                    imageUrl: resolvedImageUrl,
                     charges: resolvedCharges,
                     maxCharges: resolvedMaxCharges,
-                    healHp: item.healHp,
-                    healWill: item.healWill,
-                    cures: item.cures
+                    healHp: resolvedHealHp,
+                    healWill: resolvedHealWill,
+                    cures: resolvedCures
                 }
             ];
             const updatesToSave: Record<string, unknown> = { 'inv-data': JSON.stringify(newInventory) };
