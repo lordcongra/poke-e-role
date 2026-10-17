@@ -59,6 +59,11 @@ export interface InventoryItem {
     showInRollLog?: boolean;
     boostLevel?: number;
     tags?: string;
+    charges?: number;
+    maxCharges?: number;
+    healHp?: number;
+    healWill?: number;
+    cures?: string[];
 }
 
 export interface PassiveItem {
@@ -251,6 +256,11 @@ export interface CustomItem {
     rarity?: string;
     gmOnly?: boolean;
     imageUrl?: string;
+    charges?: number;
+    maxCharges?: number;
+    healHp?: number;
+    healWill?: number;
+    cures?: string[];
 }
 
 export interface CustomMove {

@@ -4,6 +4,8 @@ import { KNOWN_ITEMS } from '../../data/constants';
 import { getItemArt, harvestTokensItemArt } from '../graphics/itemArtCatalog';
 import { isStandaloneMode } from '../sync/storageAdapter';
 
+import { getBaseItemCharges } from '../items/itemCharges';
+
 export interface ItemLookupResult {
     found: boolean;
     name: string;
@@ -11,6 +13,11 @@ export interface ItemLookupResult {
     tags: string;
     fullDescription: string;
     imageUrl?: string;
+    charges?: number;
+    maxCharges?: number;
+    healHp?: number;
+    healWill?: number;
+    cures?: string[];
 }
 
 /**
@@ -60,13 +67,33 @@ export async function lookupItemDetails(rawName: string): Promise<ItemLookupResu
         } catch {}
     }
 
+    const defaultCharges = getBaseItemCharges(canonicalName) ?? getBaseItemCharges(trimmed);
+    const healHp =
+        typeof data?.HealthRestored === 'number'
+            ? data.HealthRestored
+            : typeof data?.healthRestored === 'number'
+              ? data.healthRestored
+              : undefined;
+
+    let cures: string[] | undefined = undefined;
+    const rawCures = data?.Cures ?? data?.cures;
+    if (Array.isArray(rawCures)) {
+        cures = rawCures.map(String);
+    } else if (typeof rawCures === 'string' && rawCures.trim()) {
+        cures = [rawCures.trim()];
+    }
+
     return {
         found,
         name: canonicalName,
         description: cleanDesc,
         tags,
         fullDescription: cleanDesc,
-        imageUrl: knownArt
+        imageUrl: knownArt,
+        charges: defaultCharges,
+        maxCharges: defaultCharges,
+        healHp,
+        cures
     };
 }
 

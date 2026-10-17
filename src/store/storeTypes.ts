@@ -213,6 +213,11 @@ export interface InventorySlice {
         quantity?: number;
         active?: boolean;
         tags?: string;
+        charges?: number;
+        maxCharges?: number;
+        healHp?: number;
+        healWill?: number;
+        cures?: string[];
     }) => void;
     updateInventoryItem: <K extends keyof InventoryItem>(id: string, field: K, value: InventoryItem[K]) => void;
     removeInventoryItem: (id: string) => void;

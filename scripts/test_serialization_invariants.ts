@@ -28,6 +28,8 @@ mockWindow.top = mockWindow;
 const { flattenStateToMetadata } = await import('../src/utils/sync/flattenStateToMetadata');
 const { hydrateStateFromMetadata } = await import('../src/utils/sync/stateMapper');
 const { applyRoomUpdatesToMeta, mapRoomSettings } = await import('../src/utils/sync/roomSettingsMeta');
+const { BASE_ITEM_CHARGES, getBaseItemCharges, getItemEffectiveCharges, consumeChargeFromInventory } =
+    await import('../src/utils/items/itemCharges');
 
 /**
  * Automated Verification Suite for Token Metadata & Serialization Invariants.
@@ -787,6 +789,140 @@ runTest('hydrateStateFromMetadata hydrates gmEcoBadge and round-trips through fl
     const rehydrated = hydrateStateFromMetadata(flattened, baseState);
     assert.equal(rehydrated.identity?.gmEcoBadge, true, 're-hydrating flattened metadata preserves gmEcoBadge: true');
 });
+
+runTest('Explicitly serializes and hydrates item charges: 0, healHp: 0, and healWill: 0', () => {
+    const baseState = createTestCharacterState({
+        inventory: [
+            {
+                id: 'inv-item-1',
+                name: 'Potion',
+                qty: 1,
+                desc: 'A pocket sized spray potion',
+                charges: 0,
+                maxCharges: 2,
+                healHp: 0,
+                healWill: 0,
+                cures: ['Burn', 'Freeze']
+            }
+        ]
+    });
+
+    const flattened = flattenStateToMetadata(baseState);
+    assert.ok(flattened['inv-data'], 'inv-data should exist in flattened metadata');
+    const parsedRaw = JSON.parse(String(flattened['inv-data']));
+    assert.equal(parsedRaw[0].charges, 0, 'charges should explicitly serialize 0');
+    assert.equal(parsedRaw[0].maxCharges, 2, 'maxCharges should explicitly serialize 2');
+    assert.equal(parsedRaw[0].healHp, 0, 'healHp should explicitly serialize 0');
+    assert.equal(parsedRaw[0].healWill, 0, 'healWill should explicitly serialize 0');
+    assert.deepEqual(parsedRaw[0].cures, ['Burn', 'Freeze'], 'cures should serialize array');
+
+    const hydrated = hydrateStateFromMetadata(flattened, baseState);
+    assert.equal(hydrated.inventory?.[0].charges, 0, 'charges: 0 should be hydrated');
+    assert.equal(hydrated.inventory?.[0].maxCharges, 2, 'maxCharges: 2 should be hydrated');
+    assert.equal(hydrated.inventory?.[0].healHp, 0, 'healHp: 0 should be hydrated');
+    assert.equal(hydrated.inventory?.[0].healWill, 0, 'healWill: 0 should be hydrated');
+    assert.deepEqual(hydrated.inventory?.[0].cures, ['Burn', 'Freeze'], 'cures should be hydrated');
+});
+
+runTest('itemCharges: BASE_ITEM_CHARGES covers the 11 audited items and getBaseItemCharges is case-insensitive', () => {
+    const expectedItems: Record<string, number> = {
+        Potion: 2,
+        'Super Potion': 4,
+        'Hyper Potion': 14,
+        Remedy: 4,
+        'Energy Root': 14,
+        'Fresh Water': 4,
+        'Soda Pop': 5,
+        Lemonade: 6,
+        'MooMoo Milk': 8,
+        'Berry Juice': 2,
+        'Pepper Spray Can': 5
+    };
+
+    for (const [name, count] of Object.entries(expectedItems)) {
+        assert.equal(BASE_ITEM_CHARGES[name], count, `BASE_ITEM_CHARGES should have ${name} = ${count}`);
+        assert.equal(
+            getBaseItemCharges(name.toLowerCase()),
+            count,
+            `getBaseItemCharges should match lowercase ${name}`
+        );
+        assert.equal(
+            getBaseItemCharges(`  ${name.toUpperCase()}  `),
+            count,
+            `getBaseItemCharges should trim and match`
+        );
+    }
+    assert.equal(getBaseItemCharges('Unknown Item'), undefined);
+});
+
+runTest('itemCharges: getItemEffectiveCharges handles explicit charges and fallback to base charges', () => {
+    // Explicit charges: 0
+    const explicitZero = getItemEffectiveCharges({ name: 'Potion', charges: 0, maxCharges: 2 });
+    assert.equal(explicitZero.hasCharges, true);
+    assert.equal(explicitZero.charges, 0);
+    assert.equal(explicitZero.maxCharges, 2);
+
+    // Fallback to base charges when undefined
+    const fallbackBase = getItemEffectiveCharges({ name: 'Super Potion' });
+    assert.equal(fallbackBase.hasCharges, true);
+    assert.equal(fallbackBase.charges, 4);
+    assert.equal(fallbackBase.maxCharges, 4);
+
+    // Non-charged item
+    const nonCharged = getItemEffectiveCharges({ name: 'Oran Berry' });
+    assert.equal(nonCharged.hasCharges, false);
+    assert.equal(nonCharged.charges, 0);
+    assert.equal(nonCharged.maxCharges, 0);
+});
+
+runTest(
+    'itemCharges: consumeChargeFromInventory splits multi-qty stacks and merges into existing matching charges',
+    () => {
+        // 1. Stack split: 5 Potions at 2 charges -> 4 at 2 charges + 1 at 1 charge
+        const initialInv = [
+            {
+                id: 'pot-stack-1',
+                name: 'Potion',
+                qty: 5,
+                desc: 'A potion',
+                charges: 2,
+                maxCharges: 2
+            }
+        ];
+
+        const step1 = consumeChargeFromInventory(initialInv, 'pot-stack-1');
+        assert.equal(step1.remainingCharges, 1);
+        assert.equal(step1.maxCharges, 2);
+        assert.equal(step1.newInventory.length, 2);
+        assert.equal(step1.newInventory[0].qty, 4);
+        assert.equal(step1.newInventory[0].charges, 2);
+        assert.equal(step1.newInventory[1].qty, 1);
+        assert.equal(step1.newInventory[1].charges, 1);
+
+        // 2. Consume from 4-stack when 1-charge stack already exists -> merges into existing 1-charge item
+        const step2 = consumeChargeFromInventory(step1.newInventory, 'pot-stack-1');
+        assert.equal(step2.newInventory.length, 2);
+        assert.equal(step2.newInventory[0].qty, 3);
+        assert.equal(step2.newInventory[0].charges, 2);
+        assert.equal(step2.newInventory[1].qty, 2);
+        assert.equal(step2.newInventory[1].charges, 1);
+
+        // 3. Consume from a stack of 2 at 1 charge -> remainingCharges === 0, decrements qty to 1
+        const oneChargeItemId = step2.newInventory[1].id;
+        const step3 = consumeChargeFromInventory(step2.newInventory, oneChargeItemId);
+        assert.equal(step3.remainingCharges, 0);
+        assert.equal(step3.newInventory.length, 2);
+        assert.equal(step3.newInventory[1].qty, 1);
+        assert.equal(step3.newInventory[1].charges, 1);
+
+        // 4. Consume from single-qty item at 1 charge -> remainingCharges === 0, removed completely
+        const step4 = consumeChargeFromInventory(step3.newInventory, oneChargeItemId);
+        assert.equal(step4.remainingCharges, 0);
+        assert.equal(step4.newInventory.length, 1);
+        assert.equal(step4.newInventory[0].qty, 3);
+        assert.equal(step4.newInventory[0].charges, 2);
+    }
+);
 
 console.log('\n=============================================');
 console.log(`Results: ${passedCount} passed, ${failedCount} failed`);

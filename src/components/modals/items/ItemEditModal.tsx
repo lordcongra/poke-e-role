@@ -227,6 +227,20 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                 if (targetImg && (!item.imageUrl || item.imageUrl === 'none')) {
                     updateInventoryItem(item.id, 'imageUrl', targetImg);
                 }
+
+                if (result.charges !== undefined) {
+                    updateInventoryItem(item.id, 'charges', result.charges);
+                    updateInventoryItem(item.id, 'maxCharges', result.maxCharges);
+                }
+                if (result.healHp !== undefined) {
+                    updateInventoryItem(item.id, 'healHp', result.healHp);
+                }
+                if (result.healWill !== undefined) {
+                    updateInventoryItem(item.id, 'healWill', result.healWill);
+                }
+                if (result.cures !== undefined) {
+                    updateInventoryItem(item.id, 'cures', result.cures);
+                }
             }
         } catch (e) {
             console.error('[ItemEditModal] Failed to lookup item info:', e);

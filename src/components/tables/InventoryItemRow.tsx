@@ -117,6 +117,19 @@ export function InventoryItemRow({
                 if (targetImg && (!item.imageUrl || item.imageUrl === 'none')) {
                     useCharacterStore.getState().updateInventoryItem(item.id, 'imageUrl', targetImg);
                 }
+                if (result.charges !== undefined) {
+                    useCharacterStore.getState().updateInventoryItem(item.id, 'charges', result.charges);
+                    useCharacterStore.getState().updateInventoryItem(item.id, 'maxCharges', result.maxCharges);
+                }
+                if (result.healHp !== undefined) {
+                    useCharacterStore.getState().updateInventoryItem(item.id, 'healHp', result.healHp);
+                }
+                if (result.healWill !== undefined) {
+                    useCharacterStore.getState().updateInventoryItem(item.id, 'healWill', result.healWill);
+                }
+                if (result.cures !== undefined) {
+                    useCharacterStore.getState().updateInventoryItem(item.id, 'cures', result.cures);
+                }
             }
         } catch (e) {
             console.error('[InventoryItemRow] Failed to lookup item info:', e);

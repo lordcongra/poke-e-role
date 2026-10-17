@@ -238,7 +238,12 @@ function parseInventory(meta: Record<string, unknown>): InventoryItem[] {
                 active: i.active === true || i.active === 'true',
                 imageUrl,
                 showInRollLog: i.showInRollLog !== false && i.showInRollLog !== 'false',
-                boostLevel: typeof i.boostLevel === 'number' ? i.boostLevel : undefined
+                boostLevel: typeof i.boostLevel === 'number' && !isNaN(i.boostLevel) ? i.boostLevel : undefined,
+                charges: typeof i.charges === 'number' && !isNaN(i.charges) ? i.charges : undefined,
+                maxCharges: typeof i.maxCharges === 'number' && !isNaN(i.maxCharges) ? i.maxCharges : undefined,
+                healHp: typeof i.healHp === 'number' && !isNaN(i.healHp) ? i.healHp : undefined,
+                healWill: typeof i.healWill === 'number' && !isNaN(i.healWill) ? i.healWill : undefined,
+                cures: Array.isArray(i.cures) ? (i.cures as string[]) : undefined
             };
         });
     } catch (e) {

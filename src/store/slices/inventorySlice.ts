@@ -4,6 +4,7 @@ import { saveToOwlbear } from '../../utils/sync/obr';
 import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../../utils/combat/combatUtils';
 import { imageManager } from '../../utils/graphics/imageManager';
 import { KNOWN_ITEMS } from '../../data/constants';
+import { getBaseItemCharges } from '../../utils/items/itemCharges';
 
 const syncHealthWill = (
     state: CharacterState,
@@ -75,6 +76,15 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
                 .trim();
             const tags = item.tags || (legacyTags.length > 0 ? legacyTags.join(' ') : knownMatch?.tags || undefined);
 
+            const baseCharges = getBaseItemCharges(rawName);
+            const resolvedCharges = item.charges !== undefined ? item.charges : baseCharges;
+            const resolvedMaxCharges =
+                item.maxCharges !== undefined
+                    ? item.maxCharges
+                    : item.charges !== undefined
+                      ? item.charges
+                      : baseCharges;
+
             const newInventory: InventoryItem[] = [
                 ...state.inventory,
                 {
@@ -83,7 +93,12 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
                     name: rawName,
                     desc: cleanDesc,
                     tags,
-                    active: item.active || false
+                    active: item.active || false,
+                    charges: resolvedCharges,
+                    maxCharges: resolvedMaxCharges,
+                    healHp: item.healHp,
+                    healWill: item.healWill,
+                    cures: item.cures
                 }
             ];
             const updatesToSave: Record<string, unknown> = { 'inv-data': JSON.stringify(newInventory) };

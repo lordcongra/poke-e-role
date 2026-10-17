@@ -241,6 +241,11 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
                 if (item.imageUrl && item.imageUrl !== 'none') entry.imageUrl = item.imageUrl;
                 if (item.showInRollLog !== undefined) entry.showInRollLog = item.showInRollLog;
                 if (item.boostLevel !== undefined) entry.boostLevel = item.boostLevel;
+                if (item.charges !== undefined) entry.charges = item.charges;
+                if (item.maxCharges !== undefined) entry.maxCharges = item.maxCharges;
+                if (item.healHp !== undefined) entry.healHp = item.healHp;
+                if (item.healWill !== undefined) entry.healWill = item.healWill;
+                if (item.cures !== undefined) entry.cures = item.cures;
                 return entry;
             });
             flatMetadata['inv-data'] = JSON.stringify(cleanedInv);
