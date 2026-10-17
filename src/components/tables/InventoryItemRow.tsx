@@ -3,10 +3,13 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { lookupItemDetails } from '../../utils/common/itemLookupUtils';
 import { imageManager } from '../../utils/graphics/imageManager';
 import { useItemArt, setItemArt, getItemArt } from '../../utils/graphics/itemArtCatalog';
+import { getItemEffectiveCharges } from '../../utils/items/itemCharges';
+import { isItemUsable } from '../../utils/items/itemUsageEffects';
 import type { InventoryItem } from '../../store/storeTypes';
 import { NumberSpinner } from '../ui/NumberSpinner';
+import { ItemChargesBadge } from '../ui/ItemChargesBadge';
 import { KNOWN_ITEMS } from '../../data/constants';
-import { Info, Tag, ChevronUp, ChevronDown, X, Image as ImageIcon } from 'lucide-react';
+import { Info, Tag, ChevronUp, ChevronDown, X, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { extractItemTags } from '../modals/items/tagBuilder/tagBuilderLogic';
 import { TagPillList } from '../ui/TagPillList';
 import './InventoryTable.css';
@@ -33,8 +36,12 @@ export function InventoryItemRow({
     onEditItem
 }: InventoryItemRowProps) {
     const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
+    const useInventoryItem = useCharacterStore((state) => state.useInventoryItem);
     const moveUpInventoryItem = useCharacterStore((state) => state.moveUpInventoryItem);
     const moveDownInventoryItem = useCharacterStore((state) => state.moveDownInventoryItem);
+
+    const effectiveCharges = getItemEffectiveCharges(item);
+    const canUse = isItemUsable(item);
 
     const [localName, setLocalName] = useState(item.name);
     const [resolvedImg, setResolvedImg] = useState<string | null>(null);
@@ -93,44 +100,30 @@ export function InventoryItemRow({
 
         try {
             const result = await lookupItemDetails(query);
-            if (result) {
-                if (result.name && result.name !== item.name) {
-                    updateInventoryItem(item.id, 'name', result.name);
-                    setLocalName(result.name);
-                }
-                if (result.description) {
-                    if (forceOverwrite || !item.desc.trim()) {
-                        useCharacterStore.getState().updateInventoryItem(item.id, 'desc', result.description);
-                    }
-                }
-                if (result.tags) {
-                    useCharacterStore.getState().updateInventoryItem(item.id, 'tags', result.tags);
-                }
-                if (/\[.*?\]/.test(item.desc)) {
-                    const cleaned = item.desc
-                        .replace(/\[.*?\]/g, '')
-                        .replace(/\n\s*\n+/g, '\n')
-                        .trim();
-                    useCharacterStore.getState().updateInventoryItem(item.id, 'desc', cleaned);
-                }
-                const targetImg = result.imageUrl || getItemArt(result.name) || getItemArt(query);
-                if (targetImg && (!item.imageUrl || item.imageUrl === 'none')) {
-                    useCharacterStore.getState().updateInventoryItem(item.id, 'imageUrl', targetImg);
-                }
-                if (result.charges !== undefined) {
-                    useCharacterStore.getState().updateInventoryItem(item.id, 'charges', result.charges);
-                    useCharacterStore.getState().updateInventoryItem(item.id, 'maxCharges', result.maxCharges);
-                }
-                if (result.healHp !== undefined) {
-                    useCharacterStore.getState().updateInventoryItem(item.id, 'healHp', result.healHp);
-                }
-                if (result.healWill !== undefined) {
-                    useCharacterStore.getState().updateInventoryItem(item.id, 'healWill', result.healWill);
-                }
-                if (result.cures !== undefined) {
-                    useCharacterStore.getState().updateInventoryItem(item.id, 'cures', result.cures);
-                }
+            if (!result) return;
+            const update = useCharacterStore.getState().updateInventoryItem;
+            if (result.name && result.name !== item.name) {
+                update(item.id, 'name', result.name);
+                setLocalName(result.name);
             }
+            if (result.description && (forceOverwrite || !item.desc.trim())) {
+                update(item.id, 'desc', result.description);
+            }
+            if (result.tags) update(item.id, 'tags', result.tags);
+            if (/\[.*?\]/.test(item.desc)) {
+                update(item.id, 'desc', item.desc.replace(/\[.*?\]/g, '').replace(/\n\s*\n+/g, '\n').trim());
+            }
+            const targetImg = result.imageUrl || getItemArt(result.name) || getItemArt(query);
+            if (targetImg && (!item.imageUrl || item.imageUrl === 'none')) {
+                update(item.id, 'imageUrl', targetImg);
+            }
+            if (result.charges !== undefined) {
+                update(item.id, 'charges', result.charges);
+                update(item.id, 'maxCharges', result.maxCharges);
+            }
+            if (result.healHp !== undefined) update(item.id, 'healHp', result.healHp);
+            if (result.healWill !== undefined) update(item.id, 'healWill', result.healWill);
+            if (result.cures !== undefined) update(item.id, 'cures', result.cures);
         } catch (e) {
             console.error('[InventoryItemRow] Failed to lookup item info:', e);
         }
@@ -222,6 +215,24 @@ export function InventoryItemRow({
                         onKeyDown={handleNameKeyDown}
                         placeholder="Item Name"
                     />
+                    {effectiveCharges.hasCharges && (
+                        <ItemChargesBadge
+                            mode="compact"
+                            charges={effectiveCharges.charges}
+                            maxCharges={effectiveCharges.maxCharges}
+                        />
+                    )}
+                    {canUse && (
+                        <button
+                            type="button"
+                            className="action-button action-button--ghost action-button--xs inventory-item__icon-btn inventory-item__icon-btn--use"
+                            onClick={() => useInventoryItem(item.id)}
+                            title={`Use ${item.name || 'Item'}`}
+                            aria-label={`Use ${item.name || 'Item'}`}
+                        >
+                            <Sparkles size={14} />
+                        </button>
+                    )}
                     <button
                         type="button"
                         className="action-button action-button--ghost inventory-item__icon-btn inventory-item__icon-btn--info"

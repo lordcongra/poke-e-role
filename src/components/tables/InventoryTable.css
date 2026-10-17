@@ -399,6 +399,20 @@
     background: color-mix(in srgb, var(--primary) 18%, transparent) !important;
 }
 
+.inventory-item__icon-btn--use {
+    color: var(--primary);
+    transition:
+        color 0.2s ease,
+        background-color 0.2s ease,
+        transform 0.15s ease;
+}
+
+.inventory-item__icon-btn--use:hover {
+    color: #ffffff;
+    background: var(--primary);
+    transform: scale(1.08);
+}
+
 .inventory-item__desc-cell {
     padding: 3px 4px;
 }

@@ -208,6 +208,16 @@
     background: color-mix(in srgb, var(--primary) 12%, transparent);
 }
 
+.inventory-card__action-btn--use {
+    color: var(--primary);
+}
+
+.inventory-card__action-btn--use:hover:not(:disabled) {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: #ffffff !important;
+}
+
 .inventory-card__action-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;

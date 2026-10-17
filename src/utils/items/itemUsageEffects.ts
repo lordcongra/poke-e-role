@@ -1,4 +1,5 @@
 import type { InventoryItem, StatusItem, CustomStatus, CharacterHealth, CharacterWill } from '../../store/entityTypes';
+import { getItemEffectiveCharges } from './itemCharges';
 
 export interface ItemEffectDefinition {
     healHp?: number;
@@ -235,4 +236,34 @@ export function applyItemUsageEffects(
         curedStatusNames,
         summaryText
     };
+}
+
+/**
+ * Checks whether an item defines or inherits any direct usage effect (healing HP, restoring Will, or curing status).
+ */
+export function hasItemUsageEffect(item: {
+    name?: string;
+    healHp?: number;
+    healWill?: number;
+    cures?: string[];
+}): boolean {
+    if ((item.healHp ?? 0) > 0 || (item.healWill ?? 0) > 0 || (item.cures && item.cures.length > 0)) {
+        return true;
+    }
+    if (item.name && getBaseItemEffect(item.name) !== undefined) {
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Checks whether an item can be consumed/used via the quick use action
+ * (has charges or has a defined usage effect).
+ */
+export function isItemUsable(item: InventoryItem): boolean {
+    const effective = getItemEffectiveCharges(item);
+    if (effective.hasCharges) {
+        return true;
+    }
+    return hasItemUsageEffect(item);
 }

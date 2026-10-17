@@ -3,7 +3,10 @@ import type { InventoryItem } from '../../store/storeTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { imageManager } from '../../utils/graphics/imageManager';
 import { useItemArt } from '../../utils/graphics/itemArtCatalog';
-import { Check, Package, X } from 'lucide-react';
+import { getItemEffectiveCharges } from '../../utils/items/itemCharges';
+import { isItemUsable } from '../../utils/items/itemUsageEffects';
+import { ItemChargesBadge } from '../ui/ItemChargesBadge';
+import { Check, Package, Sparkles, X } from 'lucide-react';
 import './InventoryGridCard.css';
 
 interface InventoryGridCardProps {
@@ -20,7 +23,11 @@ export const InventoryGridCard = memo(function InventoryGridCard({
     onDelete
 }: InventoryGridCardProps) {
     const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
+    const useInventoryItem = useCharacterStore((state) => state.useInventoryItem);
     const [resolvedImg, setResolvedImg] = useState<string | null>(null);
+
+    const effectiveCharges = getItemEffectiveCharges(item);
+    const canUse = isItemUsable(item);
 
     const knownArt = useItemArt(item.name);
     const effectiveImageUrl =
@@ -64,22 +71,39 @@ export const InventoryGridCard = memo(function InventoryGridCard({
             onClick={onClick}
             title={`${item.name || 'Unnamed Item'}\n(Click to view & edit details)`}
         >
-            {/* Top Bar: Equip Toggle & Quantity / Delete */}
+            {/* Top Bar: Equip Toggle & Quick Use / Quantity & Delete */}
             <div className="inventory-grid-card__top-bar">
-                <button
-                    type="button"
-                    className={`inventory-grid-card__equip-btn ${
-                        item.active ? 'inventory-grid-card__equip-btn--active' : ''
-                    }`}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        updateInventoryItem(item.id, 'active', !item.active);
-                    }}
-                    title={item.active ? 'Equipped item (Click to unequip)' : 'Unequipped item (Click to equip)'}
-                    aria-label={item.active ? 'Unequip' : 'Equip'}
-                >
-                    <Check size={12} style={{ opacity: item.active ? 1 : 0.4 }} />
-                </button>
+                <div className="inventory-grid-card__top-left">
+                    <button
+                        type="button"
+                        className={`inventory-grid-card__equip-btn ${
+                            item.active ? 'inventory-grid-card__equip-btn--active' : ''
+                        }`}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            updateInventoryItem(item.id, 'active', !item.active);
+                        }}
+                        title={item.active ? 'Equipped item (Click to unequip)' : 'Unequipped item (Click to equip)'}
+                        aria-label={item.active ? 'Unequip' : 'Equip'}
+                    >
+                        <Check size={12} style={{ opacity: item.active ? 1 : 0.4 }} />
+                    </button>
+
+                    {canUse && (
+                        <button
+                            type="button"
+                            className="inventory-grid-card__use-btn"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                useInventoryItem(item.id);
+                            }}
+                            title={`Use ${item.name || 'Item'}`}
+                            aria-label={`Use ${item.name || 'Item'}`}
+                        >
+                            <Sparkles size={11} />
+                        </button>
+                    )}
+                </div>
 
                 <div className="inventory-grid-card__top-right">
                     <span className="inventory-grid-card__qty-badge">x{item.qty}</span>
@@ -111,6 +135,17 @@ export const InventoryGridCard = memo(function InventoryGridCard({
 
             {/* Name */}
             <span className="inventory-grid-card__name text-label">{item.name || 'Unnamed Item'}</span>
+
+            {/* Footer: Charges Badge */}
+            {effectiveCharges.hasCharges && (
+                <div className="inventory-grid-card__footer">
+                    <ItemChargesBadge
+                        mode="visual"
+                        charges={effectiveCharges.charges}
+                        maxCharges={effectiveCharges.maxCharges}
+                    />
+                </div>
+            )}
         </div>
     );
 });

@@ -72,6 +72,34 @@
     box-shadow: 0 1px 4px color-mix(in srgb, var(--primary) 40%, transparent);
 }
 
+.inventory-grid-card__top-left {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.inventory-grid-card__use-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--panel-bg);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.inventory-grid-card__use-btn:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
+    transform: scale(1.1);
+}
+
 .inventory-grid-card__qty-badge {
     font-size: 0.72rem;
     font-weight: 700;
@@ -176,6 +204,15 @@
     padding-top: 4px;
 }
 
+.inventory-grid-card__footer {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 3px;
+    padding-top: 1px;
+}
+
 /* =========================================
    Card Size Modifiers: sm, md, lg
    ========================================= */
@@ -191,7 +228,8 @@
     margin-bottom: 1px;
 }
 
-.inventory-grid-card--sm .inventory-grid-card__equip-btn {
+.inventory-grid-card--sm .inventory-grid-card__equip-btn,
+.inventory-grid-card--sm .inventory-grid-card__use-btn {
     width: 17px;
     height: 17px;
 }
@@ -224,7 +262,8 @@
     border-radius: 8px;
 }
 
-.inventory-grid-card--md .inventory-grid-card__equip-btn {
+.inventory-grid-card--md .inventory-grid-card__equip-btn,
+.inventory-grid-card--md .inventory-grid-card__use-btn {
     width: 20px;
     height: 20px;
 }
@@ -251,7 +290,8 @@
     border-radius: 8px;
 }
 
-.inventory-grid-card--lg .inventory-grid-card__equip-btn {
+.inventory-grid-card--lg .inventory-grid-card__equip-btn,
+.inventory-grid-card--lg .inventory-grid-card__use-btn {
     width: 22px;
     height: 22px;
 }
