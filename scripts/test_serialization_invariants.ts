@@ -7,6 +7,7 @@ const mockWindow: Record<string, unknown> = {
     location: { search: '', href: 'http://localhost/' },
     addEventListener: () => {},
     removeEventListener: () => {},
+    dispatchEvent: () => true,
     parent: { postMessage: () => {} }
 };
 mockWindow.self = mockWindow;
@@ -33,6 +34,7 @@ const { BASE_ITEM_CHARGES, getBaseItemCharges, getItemEffectiveCharges, consumeC
 const { BASE_ITEM_EFFECTS, getBaseItemEffect, applyItemUsageEffects, statusMatchesCure, isLegacyBottleCapacity } =
     await import('../src/utils/items/itemUsageEffects');
 const { createInventorySlice } = await import('../src/store/slices/inventorySlice');
+const { getTrainerItemTargets, applyItemToPokemonTarget } = await import('../src/utils/items/itemTargeting');
 
 /**
  * Automated Verification Suite for Token Metadata & Serialization Invariants.
@@ -45,12 +47,16 @@ const { createInventorySlice } = await import('../src/store/slices/inventorySlic
  * 5. Demonstration of nullish coalescing (??) correctness over falsy (||) fallbacks.
  */
 
+if (!(import.meta as any).env) {
+    (import.meta as any).env = { BASE_URL: '/' };
+}
+
 let passedCount = 0;
 let failedCount = 0;
 
-function runTest(name: string, fn: () => void) {
+async function runTest(name: string, fn: () => void | Promise<void>) {
     try {
-        fn();
+        await fn();
         console.log(`  ✓ PASS: ${name}`);
         passedCount++;
     } catch (err: unknown) {
@@ -1219,6 +1225,163 @@ runTest(
             currentState.inventory.some((i: any) => i.id === 'item-burn'),
             false
         );
+    }
+);
+
+await runTest(
+    'itemTargeting: getTrainerItemTargets returns empty for non-trainer or non-restorative, and candidates when pokemon is on map',
+    () => {
+        const mockStore: any = {
+            identity: {
+                mode: 'Trainer',
+                nickname: 'Red',
+                species: 'Human',
+                rank: 'Trainer'
+            },
+            health: { hpCurr: 4, hpMax: 5 },
+            will: { willCurr: 2, willMax: 4 },
+            statuses: [{ id: 'st-1', name: 'Healthy', customName: '', rounds: 0 }],
+            inventory: [],
+            roomCustomStatuses: [],
+            pcData: {
+                activeCampaignId: 'camp-1',
+                campaigns: {
+                    'camp-1': {
+                        id: 'camp-1',
+                        name: 'Kanto',
+                        activeTrainerId: 'tr-red',
+                        trainers: {
+                            'tr-red': {
+                                id: 'tr-red',
+                                name: 'Red',
+                                party: ['pkmn-pika', 'pkmn-char']
+                            }
+                        }
+                    }
+                },
+                pokemonSummaries: {
+                    'pkmn-pika': {
+                        entityId: 'pkmn-pika',
+                        name: 'Sparky',
+                        species: 'Pikachu',
+                        hp: 2,
+                        maxHp: 4,
+                        will: 1,
+                        maxWill: 3,
+                        isOnMap: true,
+                        trainerId: 'tr-red',
+                        fullMetadata: {
+                            'status-list': JSON.stringify([{ id: 'p1', name: 'Paralyzed', customName: '', rounds: 1 }])
+                        }
+                    },
+                    'pkmn-char': {
+                        entityId: 'pkmn-char',
+                        name: 'Blaze',
+                        species: 'Charizard',
+                        hp: 5,
+                        maxHp: 6,
+                        will: 4,
+                        maxWill: 4,
+                        isOnMap: false, // In party but NOT on map!
+                        trainerId: 'tr-red'
+                    }
+                }
+            }
+        };
+
+        const potionItem: any = { id: 'it-pot', name: 'Potion', healHp: 1 };
+        const swordItem: any = { id: 'it-sw', name: 'Iron Sword' }; // non-restorative
+
+        // 1. Non-restorative item -> empty array
+        const targetsForSword = getTrainerItemTargets(mockStore, swordItem);
+        assert.equal(targetsForSword.length, 0);
+
+        // 2. Non-trainer character -> empty array
+        const nonTrainerStore: any = { ...mockStore, identity: { ...mockStore.identity, mode: 'Pokemon', rank: 'Rookie' } };
+        const targetsForNonTrainer = getTrainerItemTargets(nonTrainerStore, potionItem);
+        assert.equal(targetsForNonTrainer.length, 0);
+
+        // 3. Trainer with sent-out Pikachu on map -> [Red (Trainer), Sparky (Pokemon)]
+        const targets = getTrainerItemTargets(mockStore, potionItem);
+        assert.equal(targets.length, 2);
+        assert.equal(targets[0].isTrainer, true);
+        assert.equal(targets[0].name, 'Red');
+        assert.equal(targets[1].isTrainer, false);
+        assert.equal(targets[1].name, 'Sparky');
+        assert.equal(targets[1].statuses.length, 1);
+        assert.equal(targets[1].statuses[0].name, 'Paralyzed');
+
+        // 4. When no Pokémon are on map -> empty array (allowing direct self-use without prompt)
+        const mockStoreNoMap: any = {
+            ...mockStore,
+            pcData: {
+                ...mockStore.pcData,
+                pokemonSummaries: {
+                    ...mockStore.pcData.pokemonSummaries,
+                    'pkmn-pika': { ...mockStore.pcData.pokemonSummaries['pkmn-pika'], isOnMap: false }
+                }
+            }
+        };
+        const targetsNoMap = getTrainerItemTargets(mockStoreNoMap, potionItem);
+        assert.equal(targetsNoMap.length, 0);
+    }
+);
+
+await runTest(
+    'itemTargeting: applyItemToPokemonTarget heals pokemon summary, updates OBR token, and decrements trainer charges',
+    async () => {
+        let updatedSummary: any = null;
+        let nextInv: any = null;
+
+        const mockStore: any = {
+            identity: { nickname: 'Red', species: 'Human', mode: 'Trainer' },
+            inventory: [
+                { id: 'it-pot', name: 'Potion', healHp: 1, charges: 2, maxCharges: 2 }
+            ],
+            pcData: {
+                pokemonSummaries: {
+                    'pkmn-pika': {
+                        entityId: 'pkmn-pika',
+                        name: 'Sparky',
+                        species: 'Pikachu',
+                        hp: 2,
+                        maxHp: 4,
+                        will: 1,
+                        maxWill: 3,
+                        isOnMap: true,
+                        fullMetadata: {
+                            'hp-curr': 2,
+                            'status-list': JSON.stringify([{ id: 'p1', name: 'Paralyzed', customName: '', rounds: 1 }])
+                        }
+                    }
+                }
+            },
+            updatePokemonSummary: (summary: any) => {
+                updatedSummary = summary;
+            }
+        };
+
+        const targetCandidate = {
+            id: 'pkmn-pika',
+            name: 'Sparky',
+            species: 'Pikachu',
+            hp: 2,
+            maxHp: 4,
+            will: 1,
+            maxWill: 3,
+            statuses: [{ id: 'p1', name: 'Paralyzed', customName: '', rounds: 1 }],
+            isTrainer: false
+        };
+
+        await applyItemToPokemonTarget(mockStore, mockStore.inventory[0], targetCandidate as any);
+
+        // Pokémon summary should be healed from 2 -> 3 HP
+        assert.ok(updatedSummary);
+        assert.equal(updatedSummary.hp, 3);
+        assert.equal(updatedSummary.fullMetadata['hp-curr'], 3);
+
+        // Status wasn't curable by basic Potion, so Paralyzed remains
+        assert.ok(updatedSummary.fullMetadata['status-list'].includes('Paralyzed'));
     }
 );
 

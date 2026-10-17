@@ -12,7 +12,15 @@ import { InventoryGridCard } from './InventoryGridCard';
 import { ItemInfoModal } from '../modals/items/ItemInfoModal';
 import { ItemEditModal } from '../modals/items/ItemEditModal';
 import { SmartTagsGuideModal } from '../modals/items/SmartTagsGuideModal';
-import { AlertTriangle, Plus, Check, Trash2, XCircle, List, LayoutGrid, Package } from 'lucide-react';
+import { ItemTargetPromptModal } from '../modals/items/ItemTargetPromptModal';
+import { ItemDeleteConfirmModal } from './ItemDeleteConfirmModal';
+import {
+    getTrainerItemTargets,
+    applyItemToPokemonTarget,
+    type ItemTargetCandidate
+} from '../../utils/items/itemTargeting';
+import type { InventoryItem } from '../../store/storeTypes';
+import { AlertTriangle, Plus, Check, List, LayoutGrid, Package } from 'lucide-react';
 import { PassivesTable } from './PassivesTable';
 import './InventoryTable.css';
 
@@ -23,6 +31,34 @@ export function InventoryTable() {
 
     const addInventoryItem = useCharacterStore((state) => state.addInventoryItem);
     const removeInventoryItem = useCharacterStore((state) => state.removeInventoryItem);
+    const useInventoryItem = useCharacterStore((state) => state.useInventoryItem);
+
+    const [targetPrompt, setTargetPrompt] = useState<{
+        item: InventoryItem;
+        candidates: ItemTargetCandidate[];
+    } | null>(null);
+
+    const handleUseItem = (item: InventoryItem) => {
+        const store = useCharacterStore.getState();
+        const candidates = getTrainerItemTargets(store, item);
+        if (candidates.length > 1) {
+            setTargetPrompt({ item, candidates });
+        } else {
+            useInventoryItem(item.id);
+        }
+    };
+
+    const handleSelectTarget = async (target: ItemTargetCandidate) => {
+        if (!targetPrompt) return;
+        const { item } = targetPrompt;
+        setTargetPrompt(null);
+        if (target.isTrainer) {
+            useInventoryItem(item.id);
+        } else {
+            const store = useCharacterStore.getState();
+            await applyItemToPokemonTarget(store, item, target);
+        }
+    };
 
     const notes = useCharacterStore((state) => state.notes);
     const setNotes = useCharacterStore((state) => state.setNotes);
@@ -221,6 +257,7 @@ export function InventoryTable() {
                                     size={cardSize}
                                     onClick={() => setEditingItemId(item.id)}
                                     onDelete={() => setDeleteItemId(item.id)}
+                                    onUseItem={handleUseItem}
                                 />
                             ))}
                         </div>
@@ -259,6 +296,7 @@ export function InventoryTable() {
                                             setTagBuilderData={setTagBuilderData}
                                             setDeleteItemId={setDeleteItemId}
                                             onEditItem={setEditingItemId}
+                                            onUseItem={handleUseItem}
                                         />
                                     ))}
                                 </tbody>
@@ -275,6 +313,7 @@ export function InventoryTable() {
                                     setTagBuilderData={setTagBuilderData}
                                     setDeleteItemId={setDeleteItemId}
                                     onEditItem={setEditingItemId}
+                                    onUseItem={handleUseItem}
                                 />
                             ))}
                         </div>
@@ -315,47 +354,25 @@ export function InventoryTable() {
 
             {showTagsGuide && <SmartTagsGuideModal onClose={() => setShowTagsGuide(false)} />}
 
-            {deleteItemId &&
-                (() => {
-                    const itemToDelete = inventory.find((i) => i.id === deleteItemId);
-                    return (
-                        <div className="inventory-table__modal-overlay">
-                            <div className="inventory-table__modal-content">
-                                <h3
-                                    className="inventory-table__modal-title modal-title-with-icon text-title-primary"
-                                    style={{ color: 'var(--semantic-danger)' }}
-                                >
-                                    <AlertTriangle size={20} /> Confirm Deletion
-                                </h3>
-                                <p
-                                    className="inventory-table__modal-text text-subtext"
-                                    style={{ color: 'var(--text-main)', fontSize: '0.9rem' }}
-                                >
-                                    Are you sure you want to delete &ldquo;{itemToDelete?.name || 'this Item'}&rdquo;?
-                                </p>
-                                <div className="inventory-table__modal-actions">
-                                    <button
-                                        type="button"
-                                        className="action-button action-button--dark inventory-table__modal-btn text-theme-header"
-                                        onClick={() => setDeleteItemId(null)}
-                                    >
-                                        <XCircle size={16} /> Cancel
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="action-button action-button--red inventory-table__modal-btn text-theme-header"
-                                        onClick={() => {
-                                            removeInventoryItem(deleteItemId);
-                                            setDeleteItemId(null);
-                                        }}
-                                    >
-                                        <Trash2 size={16} /> Delete
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })()}
+            {deleteItemId && (
+                <ItemDeleteConfirmModal
+                    item={inventory.find((i) => i.id === deleteItemId)}
+                    onCancel={() => setDeleteItemId(null)}
+                    onConfirm={() => {
+                        removeInventoryItem(deleteItemId);
+                        setDeleteItemId(null);
+                    }}
+                />
+            )}
+
+            {targetPrompt && (
+                <ItemTargetPromptModal
+                    item={targetPrompt.item}
+                    candidates={targetPrompt.candidates}
+                    onSelectTarget={handleSelectTarget}
+                    onClose={() => setTargetPrompt(null)}
+                />
+            )}
 
             {editingItemId && <ItemEditModal itemId={editingItemId} onClose={() => setEditingItemId(null)} />}
         </div>

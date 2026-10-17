@@ -3,17 +3,25 @@ import { useCharacterStore } from '../../../store/useCharacterStore';
 import type { InventoryItem } from '../../../store/entityTypes';
 import { getItemEffectiveCharges, CORE_CURABLE_STATUSES } from '../../../utils/items/itemCharges';
 import { getBaseItemEffect, isLegacyBottleCapacity, hasItemUsageEffect } from '../../../utils/items/itemUsageEffects';
+import {
+    getTrainerItemTargets,
+    applyItemToPokemonTarget,
+    type ItemTargetCandidate
+} from '../../../utils/items/itemTargeting';
+import { ItemTargetPromptModal } from './ItemTargetPromptModal';
 import { NumberSpinner } from '../../ui/NumberSpinner';
 import { RotateCcw, Sparkles, ChevronDown, ChevronUp, Heart, Zap, ShieldAlert } from 'lucide-react';
 
 interface ItemChargesControlProps {
     item: InventoryItem;
+    onUseItem?: (item: InventoryItem) => void;
 }
 
-export function ItemChargesControl({ item }: ItemChargesControlProps) {
+export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps) {
     const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
     const useInventoryItem = useCharacterStore((state) => state.useInventoryItem);
     const roomCustomStatuses = useCharacterStore((state) => state.roomCustomStatuses);
+    const [targetCandidates, setTargetCandidates] = useState<ItemTargetCandidate[] | null>(null);
 
     const effective = getItemEffectiveCharges(item);
     const baseEffect = getBaseItemEffect(item.name || '');
@@ -60,6 +68,30 @@ export function ItemChargesControl({ item }: ItemChargesControlProps) {
             )
     ];
 
+    const handleUse = () => {
+        if (onUseItem) {
+            onUseItem(item);
+            return;
+        }
+        const store = useCharacterStore.getState();
+        const candidates = getTrainerItemTargets(store, item);
+        if (candidates.length > 1) {
+            setTargetCandidates(candidates);
+        } else {
+            useInventoryItem(item.id);
+        }
+    };
+
+    const handleSelectTarget = async (target: ItemTargetCandidate) => {
+        setTargetCandidates(null);
+        if (target.isTrainer) {
+            useInventoryItem(item.id);
+        } else {
+            const store = useCharacterStore.getState();
+            await applyItemToPokemonTarget(store, item, target);
+        }
+    };
+
     return (
         <div className="item-charges-control">
             <div className="item-charges-control__main-row">
@@ -74,7 +106,7 @@ export function ItemChargesControl({ item }: ItemChargesControlProps) {
                 <button
                     type="button"
                     className="action-button action-button--theme item-charges-control__use-btn text-theme-header"
-                    onClick={() => useInventoryItem(item.id)}
+                    onClick={handleUse}
                     disabled={isChargesActive ? effective.charges <= 0 : (item.qty ?? 0) <= 0}
                     title={
                         isChargesActive
@@ -187,6 +219,15 @@ export function ItemChargesControl({ item }: ItemChargesControlProps) {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {targetCandidates && (
+                <ItemTargetPromptModal
+                    item={item}
+                    candidates={targetCandidates}
+                    onSelectTarget={handleSelectTarget}
+                    onClose={() => setTargetCandidates(null)}
+                />
             )}
         </div>
     );

@@ -25,6 +25,7 @@ interface InventoryCardProps {
     }) => void;
     setDeleteItemId: (id: string) => void;
     onEditItem?: (id: string) => void;
+    onUseItem?: (item: InventoryItem) => void;
 }
 
 export const InventoryCard = memo(function InventoryCard({
@@ -33,7 +34,8 @@ export const InventoryCard = memo(function InventoryCard({
     fetchingItems,
     setTagBuilderData,
     setDeleteItemId,
-    onEditItem
+    onEditItem,
+    onUseItem
 }: InventoryCardProps) {
     const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
     const useInventoryItem = useCharacterStore((state) => state.useInventoryItem);
@@ -270,7 +272,7 @@ export const InventoryCard = memo(function InventoryCard({
                     <button
                         type="button"
                         className="action-button action-button--dark inventory-card__action-btn inventory-card__action-btn--use"
-                        onClick={() => useInventoryItem(item.id)}
+                        onClick={() => (onUseItem ? onUseItem(item) : useInventoryItem(item.id))}
                         title={`Use ${item.name || 'Item'}`}
                         aria-label={`Use ${item.name || 'Item'}`}
                     >

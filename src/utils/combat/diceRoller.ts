@@ -262,7 +262,7 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
 export async function broadcastInfo(title: string, description: string) {
     const state = useCharacterStore.getState();
     const playerName = state.identity.nickname || state.identity.species || 'Trainer';
-    const icon = state.identity.tokenImageUrl || `${import.meta.env.BASE_URL || '/'}pokeball-token.svg`;
+    const icon = state.identity.tokenImageUrl || `${import.meta.env?.BASE_URL || '/'}pokeball-token.svg`;
     const targetVisibility = state.identity.rolls === 'Private (GM)' ? 'gm_only' : 'everyone';
     const privacyTag = targetVisibility === 'gm_only' && !title.startsWith('[PRIVATE]') ? '[PRIVATE] ' : '';
     const finalTitle = `${privacyTag}${title}`;

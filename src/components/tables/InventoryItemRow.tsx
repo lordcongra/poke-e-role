@@ -25,6 +25,7 @@ interface InventoryItemRowProps {
     }) => void;
     setDeleteItemId: (id: string) => void;
     onEditItem?: (id: string) => void;
+    onUseItem?: (item: InventoryItem) => void;
 }
 
 export function InventoryItemRow({
@@ -33,7 +34,8 @@ export function InventoryItemRow({
     fetchingItems,
     setTagBuilderData,
     setDeleteItemId,
-    onEditItem
+    onEditItem,
+    onUseItem
 }: InventoryItemRowProps) {
     const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
     const useInventoryItem = useCharacterStore((state) => state.useInventoryItem);
@@ -233,7 +235,7 @@ export function InventoryItemRow({
                         <button
                             type="button"
                             className="action-button action-button--ghost action-button--xs inventory-item__icon-btn inventory-item__icon-btn--use"
-                            onClick={() => useInventoryItem(item.id)}
+                            onClick={() => (onUseItem ? onUseItem(item) : useInventoryItem(item.id))}
                             title={`Use ${item.name || 'Item'}`}
                             aria-label={`Use ${item.name || 'Item'}`}
                         >

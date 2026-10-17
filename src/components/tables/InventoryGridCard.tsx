@@ -14,13 +14,15 @@ interface InventoryGridCardProps {
     size?: 'sm' | 'md' | 'lg';
     onClick: () => void;
     onDelete?: () => void;
+    onUseItem?: (item: InventoryItem) => void;
 }
 
 export const InventoryGridCard = memo(function InventoryGridCard({
     item,
     size = 'sm',
     onClick,
-    onDelete
+    onDelete,
+    onUseItem
 }: InventoryGridCardProps) {
     const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
     const useInventoryItem = useCharacterStore((state) => state.useInventoryItem);
@@ -95,7 +97,8 @@ export const InventoryGridCard = memo(function InventoryGridCard({
                             className="inventory-grid-card__use-btn"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                useInventoryItem(item.id);
+                                if (onUseItem) onUseItem(item);
+                                else useInventoryItem(item.id);
                             }}
                             title={`Use ${item.name || 'Item'}`}
                             aria-label={`Use ${item.name || 'Item'}`}
