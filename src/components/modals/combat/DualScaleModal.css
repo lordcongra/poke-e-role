@@ -173,6 +173,27 @@
     line-height: 1.2;
 }
 
+.dual-scale__close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted, #aaa);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+
+.dual-scale__close-btn:hover {
+    color: var(--text-main, #fff);
+    background: var(--panel-alt, rgba(255, 255, 255, 0.08));
+}
+
 /* Actions Footer */
 .dual-scale__actions {
     display: flex;
@@ -182,6 +203,7 @@
 }
 
 .dual-scale__btn {
+    flex: 1;
     width: 100%;
     padding: 9px 16px;
     font-size: 0.9rem;

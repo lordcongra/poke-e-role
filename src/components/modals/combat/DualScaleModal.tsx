@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Scale, CheckCircle, Check, Target, Swords, Sparkles, Shield } from 'lucide-react';
+import { Scale, CheckCircle, Check, Target, Swords, Sparkles, Shield, X } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import type { PendingDualScale, MoveData } from '../../../store/storeTypes';
 import {
@@ -35,9 +35,10 @@ interface DualScaleDialogProps {
         dmg1?: string,
         category?: 'Physical' | 'Special' | 'Status'
     ) => void;
+    onClose: () => void;
 }
 
-function DualScaleDialog({ pendingDualScale, resolveDualScale }: DualScaleDialogProps) {
+function DualScaleDialog({ pendingDualScale, resolveDualScale, onClose }: DualScaleDialogProps) {
     const fullState = useCharacterStore.getState();
     const inventory = useCharacterStore((state) => state.inventory);
     const passives = useCharacterStore((state) => state.passives);
@@ -154,8 +155,24 @@ function DualScaleDialog({ pendingDualScale, resolveDualScale }: DualScaleDialog
     };
 
     return (
-        <div className="dual-scale__overlay" role="dialog" aria-modal="true">
+        <div
+            className="dual-scale__overlay"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => {
+                if (e.target === e.currentTarget) onClose();
+            }}
+        >
             <div className="dual-scale__content">
+                <button
+                    type="button"
+                    className="dual-scale__close-btn"
+                    onClick={onClose}
+                    aria-label="Close"
+                    title="Close"
+                >
+                    <X size={18} />
+                </button>
                 <h3 className="dual-scale__title modal-title-with-icon text-title-primary">
                     <Scale size={20} /> Move Scaling Options
                 </h3>
@@ -347,6 +364,13 @@ function DualScaleDialog({ pendingDualScale, resolveDualScale }: DualScaleDialog
                 <div className="dual-scale__actions">
                     <button
                         type="button"
+                        className="action-button action-button--secondary dual-scale__btn"
+                        onClick={onClose}
+                    >
+                        <X size={16} /> Cancel
+                    </button>
+                    <button
+                        type="button"
                         className="action-button action-button--theme dual-scale__btn"
                         onClick={handleConfirm}
                     >
@@ -361,6 +385,7 @@ function DualScaleDialog({ pendingDualScale, resolveDualScale }: DualScaleDialog
 export function DualScaleModal() {
     const pendingDualScale = useCharacterStore((state) => state.pendingDualScale);
     const resolveDualScale = useCharacterStore((state) => state.resolveDualScale);
+    const setPendingDualScale = useCharacterStore((state) => state.setPendingDualScale);
 
     if (!pendingDualScale) return null;
 
@@ -369,6 +394,7 @@ export function DualScaleModal() {
             key={pendingDualScale.moveId}
             pendingDualScale={pendingDualScale}
             resolveDualScale={resolveDualScale}
+            onClose={() => setPendingDualScale(null)}
         />
     );
 }

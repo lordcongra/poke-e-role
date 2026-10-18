@@ -61,29 +61,44 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [bankModalOpen, setBankModalOpen] = useState(false);
 
-    const handleNameChange = async (newName: string) => {
+    const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const newName = event.target.value;
         updateMove(move.id, 'name', newName);
-        const trimmed = newName.trim();
-        if (!trimmed) return;
 
-        if (ALL_MOVES.length === 0) {
-            await loadLocalDataset();
-        }
-
-        const clean = trimmed.toLowerCase();
-        const matchesAllMoves = ALL_MOVES.some((m) => m.toLowerCase() === clean);
-        const matchesCustom = roomCustomMoves.some((m) => m.name.toLowerCase() === clean);
-        if (matchesAllMoves || matchesCustom) {
-            const data = await fetchMoveData(trimmed);
-            if (data) applyMoveData(move.id, data as Record<string, unknown>);
+        const nativeEvent = event.nativeEvent as InputEvent;
+        if (nativeEvent?.inputType === 'insertReplacementText') {
+            event.currentTarget.blur();
         }
     };
 
     const handleNameBlur = async (event: React.FocusEvent<HTMLInputElement>) => {
         const value = event.target.value.trim();
-        if (value) {
+        if (!value) return;
+
+        if (ALL_MOVES.length === 0) {
+            await loadLocalDataset();
+        }
+
+        const clean = value.toLowerCase();
+        const baseClean = clean.split(' (')[0].trim();
+        const matchesAllMoves = ALL_MOVES.some((m) => {
+            const mClean = m.toLowerCase();
+            return mClean === clean || mClean === baseClean;
+        });
+        const matchesCustom = roomCustomMoves.some((m) => {
+            const mClean = m.name.toLowerCase();
+            return mClean === clean || mClean === baseClean;
+        });
+
+        if (matchesAllMoves || matchesCustom) {
             const data = await fetchMoveData(value);
             if (data) applyMoveData(move.id, data as Record<string, unknown>);
+        }
+    };
+
+    const handleNameKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+            event.currentTarget.blur();
         }
     };
 
@@ -205,8 +220,9 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                             type="text"
                             list="move-list"
                             value={move.name}
-                            onChange={(event) => handleNameChange(event.target.value)}
+                            onChange={handleNameChange}
                             onBlur={handleNameBlur}
+                            onKeyDown={handleNameKeyDown}
                             className="form-input--transparent move-row__name-input text-label"
                             style={{
                                 border: '1px solid var(--border)',
