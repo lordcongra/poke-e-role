@@ -1309,7 +1309,10 @@ await runTest(
         assert.equal(targetsForSword.length, 0);
 
         // 2. Non-trainer character -> empty array
-        const nonTrainerStore: any = { ...mockStore, identity: { ...mockStore.identity, mode: 'Pokemon', rank: 'Rookie' } };
+        const nonTrainerStore: any = {
+            ...mockStore,
+            identity: { ...mockStore.identity, mode: 'Pokemon', rank: 'Rookie' }
+        };
         const targetsForNonTrainer = getTrainerItemTargets(nonTrainerStore, potionItem);
         assert.equal(targetsForNonTrainer.length, 0);
 
@@ -1359,9 +1362,7 @@ await runTest(
 
         const mockStore: any = {
             identity: { nickname: 'Red', species: 'Human', mode: 'Trainer' },
-            inventory: [
-                { id: 'it-pot', name: 'Potion', healHp: 1, charges: 2, maxCharges: 2 }
-            ],
+            inventory: [{ id: 'it-pot', name: 'Potion', healHp: 1, charges: 2, maxCharges: 2 }],
             pcData: {
                 pokemonSummaries: {
                     'pkmn-pika': {

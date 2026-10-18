@@ -152,7 +152,7 @@ export function InventoryTable() {
                 <button
                     type="button"
                     className={`inventory-table__view-toggle-btn ${
-                        viewMode === 'list' ? 'inventory-table__view-toggle-btn--active' : ''
+                        viewMode === 'list' ? 'inventory-table__view-toggle-btn--active text-theme-header' : ''
                     }`}
                     onClick={() => handleSetViewMode('list')}
                     title="List View"
@@ -163,7 +163,7 @@ export function InventoryTable() {
                 <button
                     type="button"
                     className={`inventory-table__view-toggle-btn ${
-                        viewMode === 'card' ? 'inventory-table__view-toggle-btn--active' : ''
+                        viewMode === 'card' ? 'inventory-table__view-toggle-btn--active text-theme-header' : ''
                     }`}
                     onClick={() => handleSetViewMode('card')}
                     title="Card Grid View"
@@ -179,7 +179,7 @@ export function InventoryTable() {
                             key={sz}
                             type="button"
                             className={`inventory-table__size-toggle-btn ${
-                                cardSize === sz ? 'inventory-table__size-toggle-btn--active' : ''
+                                cardSize === sz ? 'inventory-table__size-toggle-btn--active text-theme-header' : ''
                             }`}
                             onClick={() => handleSetCardSize(sz)}
                             title={`${sz === 'sm' ? 'Compact' : sz === 'md' ? 'Regular' : 'Spacious'} Card Size`}

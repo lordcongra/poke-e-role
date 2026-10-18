@@ -730,7 +730,8 @@ body {
 .action-button--red svg,
 .action-button--dark svg,
 .type-matchups__pill svg,
-.sidebar__init-badge svg {
+.sidebar__init-badge svg,
+.inventory-table__view-toggle-btn--active svg {
     filter: var(--shadow-icon);
 }
 

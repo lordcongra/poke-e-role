@@ -134,6 +134,10 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
+.inventory-table__view-toggle-btn--active svg {
+    filter: var(--shadow-icon);
+}
+
 /* Card Size Toggle */
 .inventory-table__size-toggle {
     display: inline-flex;
@@ -171,6 +175,9 @@
 .inventory-table__size-toggle-btn--active {
     background: var(--primary);
     color: #ffffff !important;
+    text-shadow:
+        1px 1px 2px rgba(0, 0, 0, 0.8),
+        0 1px 4px rgba(0, 0, 0, 0.6) !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
