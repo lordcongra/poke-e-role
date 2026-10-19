@@ -62,7 +62,7 @@ export async function executeMultiTargetDamageRoll(
 ): Promise<void> {
     const nickname = state.identity.nickname || state.identity.species || 'Someone';
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-    const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
+    const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, move, abilityText, state.passives);
     const icon = state.identity.tokenImageUrl || `${import.meta.env?.BASE_URL || '/'}pokeball-token.svg`;
     const targetVisibility = state.identity.rolls === 'Private (GM)' ? 'gm_only' : 'everyone';
     const privacyTag = targetVisibility === 'gm_only' ? '[PRIVATE] ' : '';
@@ -165,6 +165,50 @@ export async function executeMultiTargetDamageRoll(
         useCharacterStore.getState().updateTracker('firstHitDmg', false);
     }
 
+    const allDmgSourceTexts = [
+        ...(itemBuffs.dmgPassiveNames || []),
+        ...(itemBuffs.dmgItemNames || []),
+        ...(itemBuffs.dmgAbilityNames || [])
+    ].join(' ');
+    const hasSourcedTempHp = /temp\s*hp/i.test(allDmgSourceTexts);
+
+    if (itemBuffs.gainTempHp > 0 && !hasSourcedTempHp) tags.push(`Gains ${itemBuffs.gainTempHp} Temp HP`);
+    if (itemBuffs.tempHpOnHit > 0 && !hasSourcedTempHp) tags.push(`Gains ${itemBuffs.tempHpOnHit} Temp HP on Hit`);
+    if (itemBuffs.tempHpDmgRatio && !hasSourcedTempHp) tags.push(`Gains ${itemBuffs.tempHpDmgRatio} Dmg as Temp HP`);
+
+    const moveDescription = (move.desc || '').toLowerCase();
+    if (moveDescription.includes('powder') || moveDescription.includes('spore')) {
+        tags.push('POWDER: Grass-types are immune');
+    }
+
+    const pureDmgItems = Array.from(
+        new Set(itemBuffs.dmgItemNames.filter((name) => !itemBuffs.dmgPassiveNames?.includes(name)))
+    );
+    for (const item of pureDmgItems) {
+        const tagStr = `Item: ${item}`;
+        if (!tags.includes(tagStr)) {
+            tags.push(tagStr);
+        }
+    }
+    if (itemBuffs.dmgPassiveNames && itemBuffs.dmgPassiveNames.length > 0) {
+        const uniquePassives = Array.from(new Set(itemBuffs.dmgPassiveNames));
+        for (const passive of uniquePassives) {
+            const tagStr = `Passive: ${passive}`;
+            if (!tags.includes(tagStr)) {
+                tags.push(tagStr);
+            }
+        }
+    }
+    if (itemBuffs.dmgAbilityNames && itemBuffs.dmgAbilityNames.length > 0) {
+        const uniqueAbilities = Array.from(new Set(itemBuffs.dmgAbilityNames));
+        for (const ability of uniqueAbilities) {
+            const tagStr = `Ability: ${ability}`;
+            if (!tags.includes(tagStr)) {
+                tags.push(tagStr);
+            }
+        }
+    }
+
     // 1. Filter active targets
     const activeTargets = selections.filter((s) => !s.isEvaded);
 
@@ -202,19 +246,21 @@ export async function executeMultiTargetDamageRoll(
             const effMod = target.effectiveness;
             const finalDamage = Math.max(0, override.value + effMod);
             const effStr = effMod > 0 ? ` (+${effMod} SE)` : effMod < 0 ? ` (${effMod} NVE)` : '';
-            const title = `${privacyTag}${nickname} rolled ${move.name || 'Damage'} vs ${target.name}`;
 
-            const messageLines = [
-                `Direct Damage Override: ${override.value} Flat Dmg${effStr} = ${finalDamage} Total Damage`
-            ];
-            if (tags.length > 0) {
-                messageLines.push(`• Modifiers: ${tags.join(' | ')}`);
+            const targetTags = [...tags];
+            if (effMod > 0) {
+                targetTags.push(`SUPER EFFECTIVE (+${effMod} Succ)`);
+            } else if (effMod < 0) {
+                targetTags.push(`NOT VERY EFFECTIVE (${effMod} Succ)`);
             }
-            messageLines.push('• Damage is informational only — please apply damage manually to target sheets.');
+            const finalTags = targetTags.length > 0 ? ` [ ${targetTags.join(' | ')} ]` : '';
+            const title = `${privacyTag}${nickname} rolled ${move.name || 'Damage'} vs ${target.name}${finalTags}`;
+
+            const message = `Direct Damage Override: ${override.value} Flat Dmg${effStr} = ${finalDamage} Total Damage`;
 
             await emitRollLogEntry({
                 title,
-                message: messageLines.join('\n\n'),
+                message,
                 icon,
                 nickname,
                 tokenId: state.tokenId || undefined,
@@ -378,13 +424,21 @@ export async function executeMultiTargetDamageRoll(
             if (isCritical) {
                 footnotes.push("• It's a critical hit!");
             }
-            if (tags.length > 0) {
-                footnotes.push(`• Modifiers: ${tags.join(' | ')}`);
-            }
-            footnotes.push('• Damage is informational only — please apply damage manually to target sheets.');
 
-            const messageContent = `${diceBreakdownLines.join('\n')}\n\n${dmgLine}\n\n${footnotes.join('\n')}`;
-            const title = `${privacyTag}${nickname} rolled ${move.name || 'Damage'} vs ${target.name}`;
+            const targetTags = [...tags];
+            if (effMod > 0) {
+                targetTags.push(`SUPER EFFECTIVE (+${effMod} Succ)`);
+            } else if (effMod < 0) {
+                targetTags.push(`NOT VERY EFFECTIVE (${effMod} Succ)`);
+            }
+            const finalTags = targetTags.length > 0 ? ` [ ${targetTags.join(' | ')} ]` : '';
+            const title = `${privacyTag}${nickname} rolled ${move.name || 'Damage'} vs ${target.name}${finalTags}`;
+
+            const messageParts = [diceBreakdownLines.join('\n'), dmgLine];
+            if (footnotes.length > 0) {
+                messageParts.push(footnotes.join('\n'));
+            }
+            const messageContent = messageParts.join('\n\n');
 
             await emitRollLogEntry({
                 title,

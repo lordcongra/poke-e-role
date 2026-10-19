@@ -141,6 +141,7 @@
 /* Quick Action Buttons */
 .targeting-modal__quick-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 6px;
     margin-bottom: 8px;
 }
@@ -193,7 +194,8 @@
 /* Multi-Target Table */
 .targeting-modal__table-container {
     max-height: 200px;
-    overflow-x: hidden;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     overflow-y: auto;
     border: 1px solid var(--border);
     border-radius: 6px;
@@ -203,6 +205,7 @@
 
 .targeting-modal__table {
     width: 100%;
+    min-width: 450px;
     border-collapse: collapse;
     font-size: 0.8rem;
 }
@@ -439,4 +442,10 @@
 .targeting-info__actions {
     display: flex;
     justify-content: center;
+}
+
+@media (max-width: 480px) {
+    .targeting-modal__content {
+        padding: 10px;
+    }
 }

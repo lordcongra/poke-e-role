@@ -1,4 +1,5 @@
 import { AlertCircle, AlertTriangle, Shield, CheckSquare, Check, X } from 'lucide-react';
+import { NumberSpinner } from '../../ui/NumberSpinner';
 import { buildDefenseTierGroups, type MultiTargetSelection, type MultiTargetRowData } from './targetingModalUtils';
 
 interface MultiTargetSectionProps {
@@ -130,7 +131,7 @@ export function MultiTargetSection({
                             <tr>
                                 <th style={{ width: '36px', textAlign: 'center' }}>Hit</th>
                                 <th style={{ width: 'auto' }}>Target</th>
-                                <th style={{ width: '55px', textAlign: 'center' }}>{isPhysicalMove ? 'DEF' : 'SPD'}</th>
+                                <th style={{ width: '76px', textAlign: 'center' }}>{isPhysicalMove ? 'DEF' : 'SPD'}</th>
                                 <th style={{ width: '100px', textAlign: 'center' }}>Clash/Evade?</th>
                                 <th style={{ width: '95px', textAlign: 'right' }}>Effectiveness</th>
                             </tr>
@@ -174,14 +175,12 @@ export function MultiTargetSection({
 
                                     {/* Defense Input / Badge */}
                                     <td style={{ textAlign: 'center' }}>
-                                        <input
-                                            type="number"
-                                            min="0"
+                                        <NumberSpinner
                                             value={target.def}
-                                            onChange={(e) => onChangeDef(target.id, Number(e.target.value) || 0)}
+                                            onChange={(val) => onChangeDef(target.id, val)}
+                                            min={0}
+                                            max={99}
                                             disabled={!target.selected}
-                                            className="targeting-modal__def-input text-value-highlight"
-                                            title="Effective Defense for this target"
                                         />
                                     </td>
 
