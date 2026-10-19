@@ -1,8 +1,193 @@
 import OBR from '@owlbear-rodeo/sdk';
+import type { MoveData } from '../../../store/storeTypes';
+import type { BattlefieldData } from '../../../types/battleOrganizerTypes';
+import { BASE_TYPE_CHART } from '../../../data/typeMatchups';
 import { STATS_META_ID } from '../../../utils/graphics/graphicsManager';
 import { calculateTargetDefensesFromMeta } from '../../../utils/combat/combatUtils';
 import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { extractIsNpc } from '../../../utils/combat/initiativeHelpers';
+import { getEffectsByCategory } from '../../../utils/combat/fieldEffectsData';
+
+export const RANK_TARGET_LIMITS: Record<string, number> = {
+    Starter: 1,
+    Rookie: 2,
+    Standard: 3,
+    Advanced: 4,
+    Expert: 5,
+    Ace: 6,
+    Master: 8,
+    Champion: 10
+};
+
+export function getMaxTargetsForRank(rank?: string): number {
+    if (!rank) return 1;
+    const cleanRank = rank.trim();
+    const matchedKey = Object.keys(RANK_TARGET_LIMITS).find(
+        (k) => k.toLowerCase() === cleanRank.toLowerCase()
+    );
+    return matchedKey ? RANK_TARGET_LIMITS[matchedKey] : 1;
+}
+
+export function detectMoveTargetingType(move: MoveData): 'single' | 'target-all' | 'area' {
+    const desc = (move.desc || '').toLowerCase();
+    const rawTarget = String((move as unknown as Record<string, unknown>).target || '').toLowerCase();
+
+    // Check Area Move first (hits all combatants including allies)
+    if (
+        rawTarget === 'area' ||
+        /\barea\s+move\b/i.test(desc) ||
+        /\barea\s+attack\b/i.test(desc) ||
+        /\btarget:\s*area\b/i.test(desc) ||
+        /\btarget\s+area\b/i.test(desc)
+    ) {
+        return 'area';
+    }
+
+    // Check Target All in Range / Target All Foes / Target All Allies
+    if (
+        rawTarget.includes('all foes') ||
+        rawTarget.includes('all in range') ||
+        /\btarget\s+all\s+in\s+range\b/i.test(desc) ||
+        /\btarget\s+all\s+foes\b/i.test(desc) ||
+        /\btarget:\s*all\s+foes\b/i.test(desc) ||
+        /\btarget\s+all\s+allies\b/i.test(desc) ||
+        /\btarget\s+allies\s+in\s+range\b/i.test(desc) ||
+        /\btarget\s+all\b/i.test(desc)
+    ) {
+        return 'target-all';
+    }
+
+    return 'single';
+}
+
+export function calculateDefaultEffectiveness(moveType: string, targetTypes: string[]): number {
+    const cleanMoveType = moveType.trim();
+    if (!cleanMoveType || targetTypes.length === 0) return 0;
+
+    let totalMult = 1;
+    for (const t of targetTypes) {
+        if (!t) continue;
+        const defKey = Object.keys(BASE_TYPE_CHART).find(
+            (k) => k.toLowerCase() === t.trim().toLowerCase()
+        );
+        if (defKey) {
+            const atkMap = BASE_TYPE_CHART[defKey];
+            const atkKey = Object.keys(atkMap).find(
+                (k) => k.toLowerCase() === cleanMoveType.toLowerCase()
+            );
+            if (atkKey !== undefined) {
+                totalMult *= atkMap[atkKey];
+            }
+        }
+    }
+
+    if (totalMult >= 4) return 2;
+    if (totalMult >= 2) return 1;
+    if (totalMult <= 0.25) return -2;
+    if (totalMult <= 0.5) return -1;
+    return 0;
+}
+
+export interface MultiTargetSelection {
+    id: string;
+    name: string;
+    def: number;
+    effectiveness: number;
+    isEvaded: boolean;
+    isPlayerSide: boolean;
+    types?: string[];
+}
+
+export interface MultiTargetRowData {
+    id: string;
+    name: string;
+    selected: boolean;
+    def: number;
+    effectiveness: number;
+    isEvaded: boolean;
+    isPlayerSide: boolean;
+    types: string[];
+}
+
+export function initializeMultiTargetRows(
+    targets: TargetOption[],
+    moveType: string,
+    isPhysicalMove: boolean,
+    activeBattlefield: BattlefieldData | null | undefined,
+    activeTransformation: string | undefined,
+    mode: 'single' | 'target-all' | 'area',
+    maxTargets: number
+): MultiTargetRowData[] {
+    const rows: MultiTargetRowData[] = targets.map((t) => {
+        const { targetDef } = calculateTargetDefAndFactors(t, isPhysicalMove, activeBattlefield);
+        const isTera = activeTransformation === 'Terastallize' && t.isTera;
+        return {
+            id: t.id,
+            name: t.name,
+            selected: false,
+            def: targetDef,
+            effectiveness: isTera ? 1 : calculateDefaultEffectiveness(moveType, t.types),
+            isEvaded: false,
+            isPlayerSide: t.isPlayerSide,
+            types: t.types
+        };
+    });
+
+    if (mode === 'area') {
+        rows.slice(0, maxTargets).forEach((r) => (r.selected = true));
+    } else if (mode === 'target-all') {
+        const foes = rows.filter((r) => !r.isPlayerSide);
+        (foes.length > 0 ? foes : rows).slice(0, maxTargets).forEach((r) => (r.selected = true));
+    }
+
+    return rows;
+}
+
+export interface DefenseTierGroup {
+    effectiveDef: number;
+    dicePool: number;
+    incrementalDice: number;
+    targets: MultiTargetSelection[];
+}
+
+export function buildDefenseTierGroups(
+    selections: MultiTargetSelection[],
+    baseDamage: number
+): DefenseTierGroup[] {
+    const activeTargets = selections.filter((s) => !s.isEvaded);
+    if (activeTargets.length === 0) return [];
+
+    const groupsMap = new Map<number, MultiTargetSelection[]>();
+    for (const target of activeTargets) {
+        const def = target.def;
+        if (!groupsMap.has(def)) {
+            groupsMap.set(def, []);
+        }
+        groupsMap.get(def)!.push(target);
+    }
+
+    // Sort defenses descending (highest defense first = smallest pool first)
+    const sortedDefs = Array.from(groupsMap.keys()).sort((a, b) => b - a);
+
+    const result: DefenseTierGroup[] = [];
+    let previousPool = 0;
+
+    for (const def of sortedDefs) {
+        const targets = groupsMap.get(def)!;
+        const dicePool = Math.max(1, baseDamage - def);
+        const incrementalDice = Math.max(0, dicePool - previousPool);
+        previousPool = Math.max(previousPool, dicePool);
+
+        result.push({
+            effectiveDef: def,
+            dicePool,
+            incrementalDice,
+            targets
+        });
+    }
+
+    return result;
+}
 
 export interface TargetOption {
     id: string;
@@ -120,4 +305,70 @@ export async function loadAvailableTargets(isPhysicalMove: boolean): Promise<Tar
         }
         return t;
     });
+}
+
+export function calculateTargetDefAndFactors(
+    target: TargetOption,
+    isPhysicalMove: boolean,
+    activeBattlefield?: BattlefieldData | null
+): { targetDef: number; factors: string[]; forceNeutralFlying: boolean } {
+    let targetDef = target.def;
+    const factors: string[] = [];
+    let forceNeutralFlying = false;
+
+    if (activeBattlefield) {
+        const activeWeathers = getEffectsByCategory(activeBattlefield, 'weather');
+        const isSandstorm = activeWeathers.some((w) => (w.name || '').trim().toLowerCase().includes('sand'));
+        const isSnowy = activeWeathers.some((w) => {
+            const c = (w.name || '').trim().toLowerCase();
+            return (c.includes('snow') || c === 'snowy') && !c.includes('hail');
+        });
+        const isStrongWinds = activeWeathers.some((w) => {
+            const c = (w.name || '').trim().toLowerCase();
+            return c.includes('strong winds') || c.includes('delta stream');
+        });
+
+        if (isSandstorm && target.types.includes('rock') && !isPhysicalMove) {
+            targetDef += 1;
+            factors.push('Sandstorm (+1 Sp.Def)');
+        }
+        if (isSnowy && target.types.includes('ice') && isPhysicalMove) {
+            targetDef += 1;
+            factors.push('Snowy (+1 Def)');
+        }
+        if (isStrongWinds && target.types.includes('flying')) {
+            forceNeutralFlying = true;
+            factors.push('Strong Winds (Neutral SE damage to Flying)');
+        }
+
+        const targetSide = target.isPlayerSide
+            ? activeBattlefield.playerSide
+            : activeBattlefield.foeSide;
+
+        if (targetSide) {
+            const allForceFields = [...(targetSide.forceFields || []), ...(targetSide.extraForceFields || [])];
+            const activeFields = allForceFields.filter(
+                (ff) => ff?.name?.trim() && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+            );
+
+            const hasReflect = activeFields.some((ff) => ff.name.toLowerCase().includes('reflect'));
+            const hasLightScreen = activeFields.some((ff) => ff.name.toLowerCase().includes('light screen'));
+            const hasAuroraVeil = activeFields.some((ff) => ff.name.toLowerCase().includes('aurora veil'));
+
+            if (hasReflect && isPhysicalMove) {
+                targetDef += 1;
+                factors.push('Reflect (-1 Dmg)');
+            }
+            if (hasLightScreen && !isPhysicalMove) {
+                targetDef += 1;
+                factors.push('Light Screen (-1 Dmg)');
+            }
+            if (hasAuroraVeil) {
+                targetDef += 1;
+                factors.push('Aurora Veil (-1 Dmg)');
+            }
+        }
+    }
+
+    return { targetDef, factors, forceNeutralFlying };
 }

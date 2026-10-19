@@ -13,10 +13,10 @@
 
 .targeting-modal__content {
     background: var(--panel-bg);
-    padding: 15px;
+    padding: 16px;
     border-radius: 8px;
-    width: 320px;
-    max-width: 90%;
+    width: 460px;
+    max-width: 95%;
     max-height: 90vh;
     max-height: 90dvh;
     overflow-y: auto;
@@ -29,13 +29,131 @@
 .targeting-modal__title {
     margin-top: 0;
     border-bottom: 1px solid var(--border);
-    padding-bottom: 4px;
+    padding-bottom: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
 }
 
+.targeting-modal__sub-header {
+    margin-bottom: 12px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+}
+
+/* Mode Switcher Pills */
+.targeting-modal__mode-switcher {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    background: var(--panel-alt);
+    padding: 4px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.targeting-modal__mode-pill {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 6px 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.targeting-modal__mode-pill:hover {
+    color: var(--text-main);
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+.targeting-modal__mode-pill--active {
+    background: var(--primary);
+    color: #ffffff;
+}
+
+.targeting-modal__mode-pill--active:hover {
+    background: var(--primary);
+    color: #ffffff;
+}
+
+/* Quota Bar */
+.targeting-modal__quota-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.targeting-modal__quota-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-main);
+}
+
+.targeting-modal__quota-badge--warning {
+    background: color-mix(in srgb, var(--semantic-danger) 20%, transparent);
+    border-color: var(--semantic-danger);
+    color: var(--semantic-danger);
+    font-weight: 700;
+}
+
+/* Alerts */
+.targeting-modal__alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+.targeting-modal__alert--info {
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    border: 1px solid var(--primary);
+    color: var(--text-main);
+}
+
+.targeting-modal__alert--warning {
+    background: color-mix(in srgb, var(--semantic-danger) 15%, transparent);
+    border: 1px solid var(--semantic-danger);
+    color: var(--semantic-danger);
+}
+
+/* Quick Action Buttons */
+.targeting-modal__quick-actions {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.targeting-modal__quick-btn {
+    padding: 3px 8px;
+    font-size: 0.74rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Form Groups & Inputs */
 .targeting-modal__form-group {
     margin-bottom: 10px;
 }
@@ -47,7 +165,7 @@
 .targeting-modal__select,
 .targeting-modal__input {
     width: 100%;
-    padding: 4px;
+    padding: 5px 8px;
     border: 1px solid var(--border);
     border-radius: 4px;
     margin-top: 2px;
@@ -65,8 +183,172 @@
     outline: none;
 }
 
+.targeting-modal__select--compact {
+    padding: 2px 4px;
+    font-size: 0.75rem;
+    width: auto;
+    max-width: 80px;
+}
+
+/* Multi-Target Table */
+.targeting-modal__table-container {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 12px;
+    background: var(--panel-alt);
+}
+
+.targeting-modal__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+
+.targeting-modal__table th {
+    position: sticky;
+    top: 0;
+    background: var(--panel-bg);
+    padding: 6px 8px;
+    font-weight: 600;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    z-index: 1;
+}
+
+.targeting-modal__table-row {
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+    transition: background 0.15s ease;
+}
+
+.targeting-modal__table-row:last-child {
+    border-bottom: none;
+}
+
+.targeting-modal__table-row:hover {
+    background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+.targeting-modal__table-row--selected {
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.targeting-modal__table-row--evaded {
+    opacity: 0.65;
+    background: color-mix(in srgb, var(--dark) 20%, transparent);
+}
+
+.targeting-modal__table td {
+    padding: 6px 8px;
+    vertical-align: middle;
+}
+
+.targeting-modal__target-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.targeting-modal__target-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+    font-weight: 600;
+}
+
+.targeting-modal__side-tag {
+    font-size: 0.68rem;
+    padding: 1px 5px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.targeting-modal__side-tag--ally {
+    background: color-mix(in srgb, #3b82f6 25%, transparent);
+    color: #60a5fa;
+    border: 1px solid color-mix(in srgb, #3b82f6 40%, transparent);
+}
+
+.targeting-modal__side-tag--foe {
+    background: color-mix(in srgb, #ef4444 25%, transparent);
+    color: #f87171;
+    border: 1px solid color-mix(in srgb, #ef4444 40%, transparent);
+}
+
+.targeting-modal__def-input {
+    width: 44px;
+    padding: 2px 4px;
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--input-bg);
+    font-size: 0.8rem;
+}
+
+.targeting-modal__empty-notice {
+    padding: 16px;
+    text-align: center;
+    color: var(--text-muted);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+
+/* Defense Tiers Preview Box */
+.targeting-modal__tiers-box {
+    margin-bottom: 12px;
+    padding: 8px 10px;
+    background: var(--panel-alt);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.targeting-modal__tiers-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--primary);
+    font-size: 0.78rem;
+}
+
+.targeting-modal__tier-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.targeting-modal__tier-item {
+    font-size: 0.75rem;
+    line-height: 1.35;
+    padding: 3px 6px;
+    border-radius: 4px;
+    background: var(--panel-bg);
+}
+
+.targeting-modal__tier-badge {
+    font-weight: 700;
+}
+
+.targeting-modal__tier-inc {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.targeting-modal__tier-empty {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* Overrides & Checkboxes */
 .targeting-modal__override-box {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     padding: 8px;
     background: var(--panel-alt);
     border-radius: 6px;
@@ -106,7 +388,7 @@
 
 .targeting-modal__btn {
     flex: 1;
-    padding: 6px;
+    padding: 7px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -131,7 +413,7 @@
     background: var(--panel-bg);
     padding: 20px;
     border-radius: 6px;
-    max-width: 320px;
+    max-width: 340px;
     width: 90%;
     border: 2px solid var(--primary);
     box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);

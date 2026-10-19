@@ -12,7 +12,9 @@ import {
     getAbilityText,
     calculateStatTotal
 } from '../../utils/combat/combatUtils';
+import { executeMultiTargetDamageRoll } from '../../utils/combat/multiTargetDamageRoller';
 import { TargetingModal } from '../modals/combat/TargetingModal';
+import type { MultiTargetSelection } from '../modals/combat/targetingModalUtils';
 import { MoveCard } from './MoveCard';
 import { MoveRow } from './MoveRow';
 import { CollapsingSection } from '../ui/CollapsingSection';
@@ -110,6 +112,27 @@ export function MovesTable() {
                 isCrit,
                 effectiveness,
                 reduction,
+                override,
+                fieldFactors
+            );
+        }
+        setTargetingMove(null);
+    };
+
+    const handleExecuteMultiDamage = (
+        baseDamage: number,
+        isCrit: boolean,
+        selections: MultiTargetSelection[],
+        override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number },
+        fieldFactors?: string[]
+    ) => {
+        if (targetingMove) {
+            executeMultiTargetDamageRoll(
+                targetingMove,
+                useCharacterStore.getState(),
+                baseDamage,
+                isCrit,
+                selections,
                 override,
                 fieldFactors
             );
@@ -249,6 +272,7 @@ export function MovesTable() {
                     baseDamage={calculateBaseDamage(targetingMove, useCharacterStore.getState())}
                     onClose={() => setTargetingMove(null)}
                     onRoll={handleExecuteDamage}
+                    onMultiRoll={handleExecuteMultiDamage}
                 />
             )}
 
