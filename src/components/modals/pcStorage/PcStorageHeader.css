@@ -341,6 +341,10 @@ html[data-theme='dark'] .pc-header__nav-arrow:hover:not(:disabled),
     align-items: center;
 }
 
+.pc-header__rename-ok svg {
+    filter: var(--shadow-icon);
+}
+
 .pc-header__box-extra-actions {
     display: flex;
     align-items: center;

@@ -217,6 +217,10 @@
     border-color: var(--primary);
 }
 
+.transformation-modal__btn--revert:hover svg {
+    filter: var(--shadow-icon);
+}
+
 /* --- Confirmation Modal --- */
 .transformation-modal__confirm-overlay {
     position: fixed;

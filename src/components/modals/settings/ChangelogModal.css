@@ -234,6 +234,10 @@
     box-shadow: 0 2px 5px color-mix(in srgb, var(--primary) 35%, transparent);
 }
 
+.changelog-card--newest .changelog-card__icon-box svg {
+    filter: var(--shadow-icon);
+}
+
 .changelog-card__badge--latest {
     background: var(--primary);
     color: #ffffff;
@@ -243,6 +247,10 @@
     display: inline-flex;
     align-items: center;
     gap: 3px;
+}
+
+.changelog-card__badge--latest svg {
+    filter: var(--shadow-icon);
 }
 
 .changelog-card__header {

@@ -138,6 +138,10 @@
     color: #fff;
 }
 
+.campaign-type-card__check svg {
+    filter: var(--shadow-icon);
+}
+
 .campaign-type-card__desc {
     margin: 0;
     font-size: 0.75rem;

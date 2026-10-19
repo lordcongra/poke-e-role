@@ -115,6 +115,10 @@
     font-size: 0.85rem;
 }
 
+.homebrew-form-card__pill-delete svg {
+    filter: var(--shadow-icon);
+}
+
 .homebrew-form-card__pill-delete:hover {
     color: var(--semantic-danger);
 }

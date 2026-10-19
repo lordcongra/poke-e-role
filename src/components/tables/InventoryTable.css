@@ -420,6 +420,10 @@
     transform: scale(1.08);
 }
 
+.inventory-item__icon-btn--use:hover svg {
+    filter: var(--shadow-icon) !important;
+}
+
 .inventory-item__desc-cell {
     padding: 3px 4px;
 }

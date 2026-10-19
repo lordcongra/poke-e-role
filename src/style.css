@@ -731,7 +731,20 @@ body {
 .action-button--dark svg,
 .type-matchups__pill svg,
 .sidebar__init-badge svg,
-.inventory-table__view-toggle-btn--active svg {
+.sidebar__context-item:hover svg,
+.inventory-table__view-toggle-btn--active svg,
+.inventory-grid-card__equip-btn--active svg,
+.inventory-grid-card__use-btn:hover svg,
+.inventory-card__action-btn--use:hover svg,
+.inventory-item__icon-btn--use:hover svg,
+.pc-header__rename-ok svg,
+.campaign-type-card__check svg,
+.changelog-card--newest .changelog-card__icon-box svg,
+.changelog-card__badge--latest svg,
+.bug-report-modal__btn-submit svg,
+.hb-fe-icon-btn--active svg,
+.homebrew-form-card__pill-delete svg,
+.transformation-modal__btn--revert:hover svg {
     filter: var(--shadow-icon);
 }
 
