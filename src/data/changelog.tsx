@@ -25,10 +25,11 @@ import {
     Bookmark,
     Sparkles,
     MousePointerClick,
-    HardDrive
+    HardDrive,
+    Target
 } from 'lucide-react';
 
-export const CURRENT_VERSION = '3.7.2';
+export const CURRENT_VERSION = '3.7.3';
 
 export interface ChangelogHighlight {
     id: string;
@@ -130,12 +131,45 @@ export function getChangelogDiff(lastSeenVersion: string | null): ChangelogDiffR
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
-        version: '3.7.2',
+        version: '3.7.3',
         date: 'October 2026',
         highlights: [
             {
+                id: 'multi-target-damage',
+                version: '3.7.3',
+                title: 'Multi-Target Damage & Area Attacks',
+                icon: Target,
+                badge: 'Combat & Moves',
+                summary:
+                    'Select and damage multiple opponents for Area attacks and Target All in Range moves! Features automatic defense calculations, smart sequenced dice pools, and individual roll logs.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Multi-Target Selection for Area & Range Moves:</strong> When rolling damage for
+                            moves that hit multiple combatants (such as <em>Area</em> moves or <em>Target All in Range</em> attacks),
+                            the targeting modal now allows selecting and damaging multiple targets simultaneously. Target limits
+                            automatically scale according to your character&apos;s Rank.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Automated Defenses & Type Matchups:</strong> Opponent Defenses, weaknesses, and
+                            resistances are calculated automatically per target. Review combat modifiers, adjust manual overrides,
+                            or toggle clashed/evaded combatants with intuitive controls before rolling.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Smart Sequenced Dice Rolling:</strong> Attacks roll in intelligent Defense tiers from highest
+                            Defense to lowest, drawing from a shared dice pool and rolling additional differential dice for lower
+                            Defense opponents rather than rolling redundant dice pools.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Dedicated Target Roll Logs:</strong> Every target receives a dedicated roll log entry in
+                            chat detailing their specific damage dealt, effectiveness modifiers, and clash or evasion results.
+                        </p>
+                    </div>
+                )
+            },
+            {
                 id: 'item-charges',
-                version: '3.7.2',
+                version: '3.7.3',
                 title: 'Item Charges & Auto-Populated Consumables',
                 icon: Package,
                 badge: 'Items & Inventory',
@@ -164,7 +198,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
             },
             {
                 id: 'pokemon-pc-storage',
-                version: '3.7.2',
+                version: '3.7.3',
                 title: 'Pokémon PC Storage & Adventure Vaults',
                 icon: HardDrive,
                 badge: 'Major System',
@@ -217,7 +251,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
             },
             {
                 id: 'battlefield-effects',
-                version: '3.7.2',
+                version: '3.7.3',
                 title: 'Battlefield Effects & Tracker Sync',
                 icon: Swords,
                 badge: 'Combat & Arena',
@@ -247,6 +281,53 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 )
             }
         ],
+        changes: [
+            <strong
+                key="multi-target-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Target size={16} /> Multi-Target Damage & Area Attacks
+            </strong>,
+            <ul
+                key="multi-target-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Multi-Target Damage Selection:</strong> When using Area moves or attacks that target all foes in
+                    range, you can now select and damage multiple targets simultaneously directly from the targeting modal.
+                </li>
+                <li>
+                    <strong>Rank-Based Target Limits:</strong> Multi-target selections automatically respect your character&apos;s
+                    Trainer or Pokémon Rank limit, while Area moves automatically include all combatants in range.
+                </li>
+                <li>
+                    <strong>Automated Defenses & Type Matchups:</strong> Opponent Defenses, weaknesses, and resistances are
+                    computed per target, with individual manual override and clash/evade toggles available for each opponent.
+                </li>
+                <li>
+                    <strong>Sequenced Defense Rolling:</strong> Instead of separate redundant rolls, damage rolls in intelligent
+                    Defense tiers so higher Defense opponents draw from the shared dice pool and lower Defense opponents receive
+                    additional differential dice.
+                </li>
+                <li>
+                    <strong>Dedicated Target Roll Logs:</strong> Transparent, individual roll log messages are generated for
+                    each targeted combatant, detailing damage dealt, effectiveness modifiers, and clash or evade results.
+                </li>
+            </ul>
+        ]
+    },
+    {
+        version: '3.7.2',
+        date: 'October 2026',
         changes: [
             <strong
                 key="item-charges-title"
@@ -280,10 +361,6 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 <li>
                     <strong>Item Editor & Homebrew Integration:</strong> Easily customize max charges, healing amounts, and
                     cured conditions when creating or editing items in the Homebrew Workshop and Item Editor.
-                </li>
-                <li>
-                    <strong>Multi-Target Damage Sequencing & Target Logs:</strong> Multi-target and Area attack damage rolls
-                    now roll in sequence based on opponent Defenses and generate clear, individual roll log entries for each target.
                 </li>
             </ul>
         ]
@@ -569,27 +646,6 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                         </p>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
                             <strong>Cleaner Roll Logs with Factors Breakdown:</strong> Roll messages now display clean, easy-to-read math. Whenever abilities, items, or passives modify a roll, tap the new <strong>Factors</strong> button inside the roll log to inspect a complete breakdown of what contributed! Every factor (stat stage buffs, extra dice, and condition penalties like Confusion or Pain Penalties) is separated into its own card so you know exactly where every modifier comes from.
-                        </p>
-                    </div>
-                )
-            },
-            {
-                id: 'bag-grid-and-move-wishlist',
-                version: '3.6.6',
-                title: 'Bag Overhaul & Move Wishlist',
-                icon: Package,
-                badge: 'Bag & Moves',
-                summary: 'Visual Card Grid view with S/M/L scaling, custom item artwork, and Learnset Move Wishlists.',
-                details: (
-                    <div>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Visual Bag & Card Grid View:</strong> Toggle your Bag between the classic compact table and a dynamic Card Grid view with customizable card scaling (Small, Medium, Large density), plus quick hover deletion with safety double-confirmation.
-                        </p>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Automatic Item Artwork Sync:</strong> Whenever an item&apos;s artwork is set using an Owlbear Rodeo asset or web link, that image is automatically memorized and synced across all characters and teammates in the room! If anyone adds the same item, it automatically adopts the artwork. You can also pre-assign artwork to custom items directly in the Homebrew Workshop so they sync to all players seamlessly. (Note: local uploads from your device stay private to your own device, while OBR Library images and web URLs sync to everyone).
-                        </p>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Learnset Move Wishlist:</strong> Bookmark desired or future moves directly in your Pokémon&apos;s Learnset modal with a 1-click star/wishlist toggle, or add custom wishlist moves to plan your build progression ahead of time.
                         </p>
                     </div>
                 )
