@@ -4,10 +4,52 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { isStandaloneMode } from '../sync/storageAdapter';
 import { parseCombatTags } from '../tagParser/index';
 import { getAbilityText, getWeatherDamageBonus, getPainPenalty } from './combatUtils';
-import type { MultiTargetSelection } from '../../components/modals/combat/targetingModalUtils';
+import { buildDefenseTierGroups, type MultiTargetSelection } from '../../components/modals/combat/targetingModalUtils';
 import { addRollLogEntry } from './diceRoller';
 import { broadcastRollLog } from './rollLogSync';
 import { showDicePlusRetirementNotice } from '../../hooks/owlbearSync/owlbearSyncConstants';
+
+async function emitRollLogEntry(params: {
+    title: string;
+    message: string;
+    icon: string;
+    nickname: string;
+    tokenId?: string;
+    targetVisibility: 'everyone' | 'gm_only';
+    isCritical: boolean;
+    playerId: string;
+    obrPlayerName: string;
+}): Promise<void> {
+    if (isStandaloneMode || !OBR.isAvailable) {
+        addRollLogEntry(
+            params.title,
+            params.message,
+            params.icon,
+            params.nickname,
+            params.nickname,
+            params.tokenId,
+            'damage',
+            params.isCritical,
+            params.targetVisibility
+        );
+        return;
+    }
+
+    const rollLogData = {
+        id: crypto.randomUUID(),
+        player: params.obrPlayerName,
+        characterName: params.nickname,
+        tokenId: params.tokenId,
+        playerId: params.playerId,
+        label: params.title,
+        result: params.message,
+        icon: params.icon,
+        rollType: 'damage',
+        targetVisibility: params.targetVisibility,
+        isCrit: params.isCritical
+    };
+    await broadcastRollLog(rollLogData);
+}
 
 export async function executeMultiTargetDamageRoll(
     move: MoveData,
@@ -123,24 +165,74 @@ export async function executeMultiTargetDamageRoll(
         useCharacterStore.getState().updateTracker('firstHitDmg', false);
     }
 
+    // 1. Filter active targets
     const activeTargets = selections.filter((s) => !s.isEvaded);
-    const isFlatOverride = override.active && override.type === 'flat';
-    const ignoresDef = override.active && override.type === 'dice-ignore';
 
-    // Calculate individual target pools (with invariant: minimum 1 die if not flat override)
-    const targetPools = new Map<string, number>();
-    for (const t of activeTargets) {
-        const effDef = ignoresDef ? 0 : t.def;
-        const pool = isFlatOverride ? 0 : Math.max(1, effectiveBaseDamage - effDef);
-        targetPools.set(t.id, pool);
+    let playerId = '';
+    let obrPlayerName = nickname;
+    if (!isStandaloneMode && OBR.isAvailable) {
+        try {
+            playerId = await OBR.player.getId();
+            obrPlayerName = await OBR.player.getName();
+        } catch {
+            playerId = '';
+            obrPlayerName = nickname;
+        }
     }
 
-    // Maximum dice pool required across all targets
-    const maxDice =
-        activeTargets.length > 0 && !isFlatOverride
-            ? Math.max(...activeTargets.map((t) => targetPools.get(t.id) ?? 1))
-            : 0;
+    // If all targets are evaded/clashed: log clean informational entry and return early
+    if (activeTargets.length === 0) {
+        await emitRollLogEntry({
+            title: `${privacyTag}[Multi-Target] All targets Clashed or Evaded (0 damage)`,
+            message: `All selected targets successfully clashed or evaded ${move.name || 'the move'}. No damage dealt.`,
+            icon,
+            nickname,
+            tokenId: state.tokenId || undefined,
+            targetVisibility,
+            isCritical: false,
+            playerId,
+            obrPlayerName
+        });
+        return;
+    }
 
+    // 2. Flat True-Damage Override
+    if (override.active && override.type === 'flat') {
+        for (const target of activeTargets) {
+            const effMod = target.effectiveness;
+            const finalDamage = Math.max(0, override.value + effMod);
+            const effStr = effMod > 0 ? ` (+${effMod} SE)` : effMod < 0 ? ` (${effMod} NVE)` : '';
+            const title = `${privacyTag}${nickname} rolled ${move.name || 'Damage'} vs ${target.name}`;
+
+            const messageLines = [
+                `Direct Damage Override: ${override.value} Flat Dmg${effStr} = ${finalDamage} Total Damage`
+            ];
+            if (tags.length > 0) {
+                messageLines.push(`• Modifiers: ${tags.join(' | ')}`);
+            }
+            messageLines.push('• Damage is informational only — please apply damage manually to target sheets.');
+
+            await emitRollLogEntry({
+                title,
+                message: messageLines.join('\n\n'),
+                icon,
+                nickname,
+                tokenId: state.tokenId || undefined,
+                targetVisibility,
+                isCritical: false,
+                playerId,
+                obrPlayerName
+            });
+        }
+        return;
+    }
+
+    // 3. Sequenced Defense Tiers
+    const ignoresDef = override.active && override.type === 'dice-ignore';
+    const targetsForTiers = ignoresDef ? activeTargets.map((t) => ({ ...t, def: 0 })) : activeTargets;
+    const tiers = buildDefenseTierGroups(targetsForTiers, effectiveBaseDamage);
+
+    const maxDice = tiers.length > 0 ? tiers[tiers.length - 1].dicePool : 0;
     let overrideDice: number[] | null = null;
     if (isGmDemo && maxDice > 0 && !isStandaloneMode) {
         overrideDice = await new Promise<number[] | null>((resolve) => {
@@ -156,142 +248,9 @@ export async function executeMultiTargetDamageRoll(
         if (!overrideDice) return;
     }
 
-    const diceResults: number[] = [];
-    const diceData: { type: number; result: number }[] = [];
-    const diceResultStrings: string[] = [];
-
-    for (let i = 0; i < maxDice; i++) {
-        const result = overrideDice ? overrideDice[i] : Math.floor(Math.random() * 6) + 1;
-        diceResults.push(result);
-        diceData.push({ type: 6, result });
-        diceResultStrings.push(`${result}${result > 3 ? '✓' : '✖'}`);
-    }
-
-    const targetLines: string[] = [];
-    let anyZeroSucc = false;
-    let anySeNegated = false;
-
-    for (const target of selections) {
-        if (target.isEvaded) {
-            targetLines.push(`• ${target.name}: Evaded/Clashed`);
-            continue;
-        }
-
-        if (isFlatOverride) {
-            const effMod = target.effectiveness;
-            const totalDmg = Math.max(0, override.value + effMod);
-            const effStr = effMod > 0 ? ` (+${effMod} SE)` : effMod < 0 ? ` (${effMod} NVE)` : '';
-            targetLines.push(
-                `• ${target.name} (Direct Override): ${override.value} Flat Dmg${effStr} = ${totalDmg} Total Damage`
-            );
-            continue;
-        }
-
-        const effDef = ignoresDef ? 0 : target.def;
-        const tPool = targetPools.get(target.id) ?? Math.max(1, effectiveBaseDamage - effDef);
-        const tSlice = diceResults.slice(0, tPool);
-        const rawSucc = tSlice.filter((d) => d > 3).length;
-
-        let effMod = target.effectiveness;
-        let seNegated = false;
-        if (rawSucc === 0 && effMod > 0) {
-            effMod = 0;
-            seNegated = true;
-            anySeNegated = true;
-        }
-        if (rawSucc === 0) {
-            anyZeroSucc = true;
-        }
-
-        const poolWord = tPool === 1 ? 'die' : 'dice';
-        const defLabel = ignoresDef ? 'DEF 0 [Ignored]' : `DEF ${effDef}`;
-
-        if (rawSucc > 0) {
-            const baseDmg = rawSucc + attackerFlatMod;
-            const totalDmg = Math.max(0, baseDmg + effMod);
-            const effStr = effMod > 0 ? ` (+${effMod} SE)` : effMod < 0 ? ` (${effMod} NVE)` : '';
-            targetLines.push(
-                `• ${target.name} (${defLabel}, ${tPool} ${poolWord} -> ${rawSucc} Succ): ${baseDmg} Dmg${effStr} = ${totalDmg} Total Damage`
-            );
-        } else {
-            // 0 successes rule: deals 1 base damage (unless resistant/immune/protect)
-            const baseDmg = 1 + attackerFlatMod;
-            const totalDmg = Math.max(0, baseDmg + effMod);
-            const negatedStr = seNegated ? ' [SE Negated]' : '';
-            const effStr = effMod < 0 ? ` (${effMod} NVE)` : '';
-            targetLines.push(
-                `• ${target.name} (${defLabel}, ${tPool} ${poolWord} -> 0 Succ): Deals 1 Base Dmg${negatedStr}${effStr} = ${totalDmg} Total Damage`
-            );
-        }
-    }
-
-    const headerDice =
-        maxDice > 0 ? `Rolled Dice Pool (${maxDice}d6): [ ${diceResultStrings.join(', ')} ]\n\n` : '';
-    const breakdownText = targetLines.join('\n');
-    const footnotes: string[] = [];
-    if (anySeNegated) {
-        footnotes.push('• 0 base successes: Super Effective bonus negated.');
-    }
-    if (anyZeroSucc) {
-        footnotes.push(
-            '• 0 Successes: Still deals 1 Base Damage (unless target has Resistance / Protect). Added effects do not trigger.'
-        );
-    }
-    if (isCritical) {
-        footnotes.push("• It's a critical hit!");
-    }
-    footnotes.push('• Damage is informational only — please apply damage manually to target sheets.');
-
-    const finalCompiledMsg = `${headerDice}${breakdownText}\n\n${footnotes.join('\n')}`;
-    const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
-    const cleanLabel = `${nickname} rolled ${move.name || 'Damage'} (Multi-Target)!${finalTags}`;
-    const finalLabel = `${privacyTag}${cleanLabel}`;
-
-    // --- STANDALONE MODE (no OBR connection) ---
-    if (isStandaloneMode || !OBR.isAvailable) {
-        addRollLogEntry(
-            finalLabel,
-            finalCompiledMsg,
-            icon,
-            nickname,
-            nickname,
-            state.tokenId || undefined,
-            'damage',
-            isCritical,
-            targetVisibility
-        );
-        return;
-    }
-
-    // --- NATIVE OBR ROLL ---
-    try {
-        const playerId = await OBR.player.getId();
-        const obrPlayerName = await OBR.player.getName();
-
-        // PERFORMANCE MODE (Pure Roll Log without 3D Dice)
-        if (diceEngine === 'log-only') {
-            const rollLogData = {
-                id: crypto.randomUUID(),
-                player: obrPlayerName,
-                characterName: nickname,
-                tokenId: state.tokenId || undefined,
-                playerId: playerId,
-                label: finalLabel,
-                result: finalCompiledMsg,
-                icon,
-                rollType: 'damage',
-                targetVisibility,
-                isCrit: isCritical
-            };
-            await broadcastRollLog(rollLogData);
-            return;
-        }
-
-        // --- NATIVE OBR 3D DICE ROLL (Custom Action Rolls) ---
-        const critPrefix = isCritical ? 'CRITICAL HIT! | ' : '';
-        const mensaje = `${obrPlayerName} | ${critPrefix}${finalLabel}`;
-
-        let diceTheme: Record<string, unknown> | undefined = undefined;
+    // Load dice theme for Custom Action Rolls
+    let diceTheme: Record<string, unknown> | undefined = undefined;
+    if (diceEngine === 'car' && !isStandaloneMode && OBR.isAvailable) {
         try {
             const roomMeta = await OBR.room.getMetadata();
             const allThemes = roomMeta['com.grupos-acciones.dice/roomDiceThemes'] as
@@ -310,33 +269,134 @@ export async function executeMultiTargetDamageRoll(
         } catch (e) {
             console.warn('[MultiTargetDamageRoller] Failed to load dice theme', e);
         }
+    }
 
-        const broadcastPayload = { mensaje, icon, diceData, diceTheme };
-        if (targetVisibility === 'gm_only') {
-            await OBR.broadcast.sendMessage('tirada:mensaje', broadcastPayload, { destination: 'LOCAL' });
+    const accumulatedDice: number[] = [];
+    const critPrefix = isCritical ? 'CRITICAL HIT! | ' : '';
+
+    // Roll and broadcast 3D dice tier by tier
+    for (let tierIndex = 0; tierIndex < tiers.length; tierIndex++) {
+        const tier = tiers[tierIndex];
+        const countToRoll = tierIndex === 0 ? tier.dicePool : tier.incrementalDice;
+
+        if (countToRoll > 0) {
+            let tierRollResults: number[] = [];
+            if (overrideDice) {
+                tierRollResults = overrideDice.slice(accumulatedDice.length, accumulatedDice.length + countToRoll);
+            } else {
+                for (let i = 0; i < countToRoll; i++) {
+                    tierRollResults.push(Math.floor(Math.random() * 6) + 1);
+                }
+            }
+            accumulatedDice.push(...tierRollResults);
+
+            if (diceEngine === 'car' && !isStandaloneMode && OBR.isAvailable) {
+                const diceData = tierRollResults.map((result) => ({ type: 6, result }));
+                const tierSuffix =
+                    tiers.length > 1
+                        ? tierIndex === 0
+                            ? ` (Tier 1 vs DEF ${tier.effectiveDef})`
+                            : ` (+${tier.incrementalDice}d6 Remainder vs DEF ${tier.effectiveDef})`
+                        : '';
+                const mensaje = `${obrPlayerName} | ${critPrefix}${privacyTag}${nickname} rolled ${move.name || 'Damage'}${tierSuffix}`;
+                const broadcastPayload = { mensaje, icon, diceData, diceTheme };
+
+                if (targetVisibility === 'gm_only') {
+                    await OBR.broadcast.sendMessage('tirada:mensaje', broadcastPayload, { destination: 'LOCAL' });
+                } else {
+                    await OBR.broadcast.sendMessage('tirada:mensaje', broadcastPayload, { destination: 'ALL' });
+                }
+
+                if (tierIndex < tiers.length - 1) {
+                    await new Promise((r) => setTimeout(r, 600));
+                }
+            }
+        }
+    }
+
+    // Allow 3D dice animation to settle before emitting roll logs
+    if (diceEngine === 'car' && !isStandaloneMode && OBR.isAvailable) {
+        const delayMs = targetVisibility === 'gm_only' ? 250 : 3500;
+        await new Promise((r) => setTimeout(r, delayMs));
+    }
+
+    // 4. Generate & emit individual roll log per targeted Pokémon
+    for (let tierIndex = 0; tierIndex < tiers.length; tierIndex++) {
+        const tier = tiers[tierIndex];
+        const tierDiceSlice = accumulatedDice.slice(0, tier.dicePool);
+
+        const diceBreakdownLines: string[] = [];
+        let effectiveSucc = 0;
+
+        if (tierIndex === 0 || tier.incrementalDice === 0) {
+            const rawSucc = tierDiceSlice.filter((d) => d > 3).length;
+            effectiveSucc = rawSucc;
+            const tierDiceResults = tierDiceSlice.map((d) => `${d}${d > 3 ? '✓' : '✖'}`).join(', ');
+            diceBreakdownLines.push(`Dice Pool (${tier.dicePool}d6): [ ${tierDiceResults} ] (${rawSucc} Succ)`);
         } else {
-            await OBR.broadcast.sendMessage('tirada:mensaje', broadcastPayload, { destination: 'ALL' });
+            const baseDiceSlice = accumulatedDice.slice(0, tier.dicePool - tier.incrementalDice);
+            const baseSucc = baseDiceSlice.filter((d) => d > 3).length;
+            const baseDiceResults = baseDiceSlice.map((d) => `${d}${d > 3 ? '✓' : '✖'}`).join(', ');
+
+            const remainderDiceSlice = accumulatedDice.slice(tier.dicePool - tier.incrementalDice, tier.dicePool);
+            const remainderSucc = remainderDiceSlice.filter((d) => d > 3).length;
+            const remainderDiceResults = remainderDiceSlice.map((d) => `${d}${d > 3 ? '✓' : '✖'}`).join(', ');
+
+            const totalSucc = baseSucc + remainderSucc;
+            effectiveSucc = totalSucc;
+
+            diceBreakdownLines.push(`Base Dice Pool: [ ${baseDiceResults} ] (${baseSucc} Succ)`);
+            diceBreakdownLines.push(
+                `+ Remainder vs DEF ${tier.effectiveDef} (+${tier.incrementalDice}d6): [ ${remainderDiceResults} ] (${remainderSucc} Succ)`
+            );
+            diceBreakdownLines.push(`Total (${tier.dicePool}d6): ${totalSucc} Successes`);
         }
 
-        const delayMs = targetVisibility === 'gm_only' ? 250 : 3500;
-        setTimeout(async () => {
-            const rollLogData = {
-                id: crypto.randomUUID(),
-                player: obrPlayerName,
-                characterName: nickname,
-                tokenId: state.tokenId || undefined,
-                playerId: playerId,
-                label: finalLabel,
-                result: finalCompiledMsg,
-                icon,
-                rollType: 'damage',
-                targetVisibility,
-                isCrit: isCritical
-            };
+        for (const target of tier.targets) {
+            let effMod = target.effectiveness;
+            let seNegated = false;
+            if (effectiveSucc === 0 && effMod > 0) {
+                effMod = 0;
+                seNegated = true;
+            }
 
-            await broadcastRollLog(rollLogData);
-        }, delayMs);
-    } catch (error) {
-        console.error('[MultiTargetDamageRoller] Failed to broadcast roll:', error);
+            const baseDmg = (effectiveSucc > 0 ? effectiveSucc : 1) + attackerFlatMod;
+            const finalDamage = Math.max(0, baseDmg + effMod);
+            const effStr =
+                effMod > 0 ? ` (+${effMod} SE)` : effMod < 0 ? ` (${effMod} NVE)` : seNegated ? ' [SE Negated]' : '';
+            const dmgLine = `${baseDmg} Dmg${effStr} = ${finalDamage} Total Damage`;
+
+            const footnotes: string[] = [];
+            if (seNegated) {
+                footnotes.push('• 0 base successes: Super Effective bonus negated.');
+            }
+            if (effectiveSucc === 0) {
+                footnotes.push(
+                    '• 0 Successes: Still deals 1 Base Damage (unless target has Resistance / Protect). Added effects do not trigger.'
+                );
+            }
+            if (isCritical) {
+                footnotes.push("• It's a critical hit!");
+            }
+            if (tags.length > 0) {
+                footnotes.push(`• Modifiers: ${tags.join(' | ')}`);
+            }
+            footnotes.push('• Damage is informational only — please apply damage manually to target sheets.');
+
+            const messageContent = `${diceBreakdownLines.join('\n')}\n\n${dmgLine}\n\n${footnotes.join('\n')}`;
+            const title = `${privacyTag}${nickname} rolled ${move.name || 'Damage'} vs ${target.name}`;
+
+            await emitRollLogEntry({
+                title,
+                message: messageContent,
+                icon,
+                nickname,
+                tokenId: state.tokenId || undefined,
+                targetVisibility,
+                isCritical,
+                playerId,
+                obrPlayerName
+            });
+        }
     }
 }

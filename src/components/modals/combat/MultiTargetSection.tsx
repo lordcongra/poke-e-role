@@ -64,9 +64,7 @@ export function MultiTargetSection({
     }));
 
     const tierGroups =
-        !override.active || override.type !== 'flat'
-            ? buildDefenseTierGroups(selectionsForTiers, effectiveBase)
-            : [];
+        !override.active || override.type !== 'flat' ? buildDefenseTierGroups(selectionsForTiers, effectiveBase) : [];
 
     return (
         <div className="targeting-modal__multi-section">
@@ -75,8 +73,8 @@ export function MultiTargetSection({
                 <div className="targeting-modal__alert targeting-modal__alert--info">
                     <AlertCircle size={15} />
                     <span>
-                        <strong>Area Move:</strong> Pokérole area attacks hit all combatants in range up to your
-                        Rank limit (<strong>{maxTargets}</strong>) unless obstructed.
+                        <strong>Area Move:</strong> Pokérole area attacks hit all combatants in range up to your Rank
+                        limit (<strong>{maxTargets}</strong>) unless obstructed.
                     </span>
                 </div>
             )}
@@ -86,8 +84,8 @@ export function MultiTargetSection({
                 <div className="targeting-modal__alert targeting-modal__alert--warning">
                     <AlertTriangle size={15} />
                     <span>
-                        Selected <strong>{selectedCount}</strong> targets. Your rank ({rank || 'Standard'}) allows
-                        a maximum of <strong>{maxTargets}</strong>.
+                        Selected <strong>{selectedCount}</strong> targets. Your rank ({rank || 'Standard'}) allows a
+                        maximum of <strong>{maxTargets}</strong>.
                     </span>
                 </div>
             )}
@@ -130,13 +128,11 @@ export function MultiTargetSection({
                     <table className="targeting-modal__table">
                         <thead>
                             <tr>
-                                <th style={{ width: '32px', textAlign: 'center' }}>Hit</th>
-                                <th>Target</th>
-                                <th style={{ width: '60px', textAlign: 'center' }}>
-                                    {isPhysicalMove ? 'DEF' : 'SPD'}
-                                </th>
-                                <th style={{ width: '65px', textAlign: 'center' }}>Evaded?</th>
-                                <th style={{ width: '85px', textAlign: 'right' }}>Effectiveness</th>
+                                <th style={{ width: '36px', textAlign: 'center' }}>Hit</th>
+                                <th style={{ width: 'auto' }}>Target</th>
+                                <th style={{ width: '55px', textAlign: 'center' }}>{isPhysicalMove ? 'DEF' : 'SPD'}</th>
+                                <th style={{ width: '100px', textAlign: 'center' }}>Clash/Evade?</th>
+                                <th style={{ width: '95px', textAlign: 'right' }}>Effectiveness</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -197,7 +193,7 @@ export function MultiTargetSection({
                                             disabled={!target.selected}
                                             onChange={() => onToggleEvaded(target.id)}
                                             className="targeting-modal__checkbox"
-                                            title="Mark as Evaded or Clashed (0 damage)"
+                                            title="Mark as Clashed or Evaded (0 damage)"
                                         />
                                     </td>
 
@@ -206,9 +202,7 @@ export function MultiTargetSection({
                                         <select
                                             value={target.effectiveness}
                                             disabled={!target.selected || target.isEvaded}
-                                            onChange={(e) =>
-                                                onChangeEffectiveness(target.id, Number(e.target.value))
-                                            }
+                                            onChange={(e) => onChangeEffectiveness(target.id, Number(e.target.value))}
                                             className="targeting-modal__select targeting-modal__select--compact text-label"
                                             style={{ color: 'var(--text-main)' }}
                                         >
@@ -233,14 +227,14 @@ export function MultiTargetSection({
                 </div>
                 {override.active && override.type === 'flat' ? (
                     <div className="targeting-modal__tier-item text-subtext">
-                        <strong>True Damage Override:</strong> Flat {override.value} Damage applied directly
-                        (modified by each target's effectiveness).
+                        <strong>True Damage Override:</strong> Flat {override.value} Damage applied directly (modified
+                        by each target's effectiveness).
                     </div>
                 ) : tierGroups.length === 0 ? (
                     <div className="targeting-modal__tier-empty text-subtext">
                         {selectedCount === 0
                             ? 'Select at least one target to preview dice pools.'
-                            : 'All selected targets are marked as Evaded/Clashed.'}
+                            : 'All selected targets are marked as Clashed/Evaded.'}
                     </div>
                 ) : (
                     <div className="targeting-modal__tier-list">

@@ -281,6 +281,10 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     <strong>Item Editor & Homebrew Integration:</strong> Easily customize max charges, healing amounts, and
                     cured conditions when creating or editing items in the Homebrew Workshop and Item Editor.
                 </li>
+                <li>
+                    <strong>Multi-Target Damage Sequencing & Target Logs:</strong> Multi-target and Area attack damage rolls
+                    now roll in sequence based on opponent Defenses and generate clear, individual roll log entries for each target.
+                </li>
             </ul>
         ]
     },

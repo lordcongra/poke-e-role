@@ -41,9 +41,7 @@ export function TargetingModalOverrideSection({
                     className="targeting-modal__select text-label"
                     style={{ color: 'var(--text-main)', flex: 2 }}
                     value={overrideType}
-                    onChange={(e) =>
-                        onOverrideTypeChange(e.target.value as 'none' | 'dice' | 'flat' | 'dice-ignore')
-                    }
+                    onChange={(e) => onOverrideTypeChange(e.target.value as 'none' | 'dice' | 'flat' | 'dice-ignore')}
                 >
                     <option value="none">Disabled</option>
                     <option value="dice">Dice Pool (Vs Def)</option>

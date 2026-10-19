@@ -32,8 +32,7 @@ export function SingleTargetSection({
     onReductionChange,
     onEffectivenessChange
 }: SingleTargetSectionProps) {
-    const isPoolDepleted =
-        reduction > 0 && baseDamage + bankedDice - reduction <= 0 && overrideType === 'none';
+    const isPoolDepleted = reduction > 0 && baseDamage + bankedDice - reduction <= 0 && overrideType === 'none';
 
     return (
         <div className="targeting-modal__single-section">

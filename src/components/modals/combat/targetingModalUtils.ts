@@ -22,9 +22,7 @@ export const RANK_TARGET_LIMITS: Record<string, number> = {
 export function getMaxTargetsForRank(rank?: string): number {
     if (!rank) return 1;
     const cleanRank = rank.trim();
-    const matchedKey = Object.keys(RANK_TARGET_LIMITS).find(
-        (k) => k.toLowerCase() === cleanRank.toLowerCase()
-    );
+    const matchedKey = Object.keys(RANK_TARGET_LIMITS).find((k) => k.toLowerCase() === cleanRank.toLowerCase());
     return matchedKey ? RANK_TARGET_LIMITS[matchedKey] : 1;
 }
 
@@ -67,14 +65,10 @@ export function calculateDefaultEffectiveness(moveType: string, targetTypes: str
     let totalMult = 1;
     for (const t of targetTypes) {
         if (!t) continue;
-        const defKey = Object.keys(BASE_TYPE_CHART).find(
-            (k) => k.toLowerCase() === t.trim().toLowerCase()
-        );
+        const defKey = Object.keys(BASE_TYPE_CHART).find((k) => k.toLowerCase() === t.trim().toLowerCase());
         if (defKey) {
             const atkMap = BASE_TYPE_CHART[defKey];
-            const atkKey = Object.keys(atkMap).find(
-                (k) => k.toLowerCase() === cleanMoveType.toLowerCase()
-            );
+            const atkKey = Object.keys(atkMap).find((k) => k.toLowerCase() === cleanMoveType.toLowerCase());
             if (atkKey !== undefined) {
                 totalMult *= atkMap[atkKey];
             }
@@ -150,10 +144,7 @@ export interface DefenseTierGroup {
     targets: MultiTargetSelection[];
 }
 
-export function buildDefenseTierGroups(
-    selections: MultiTargetSelection[],
-    baseDamage: number
-): DefenseTierGroup[] {
+export function buildDefenseTierGroups(selections: MultiTargetSelection[], baseDamage: number): DefenseTierGroup[] {
     const activeTargets = selections.filter((s) => !s.isEvaded);
     if (activeTargets.length === 0) return [];
 
@@ -341,9 +332,7 @@ export function calculateTargetDefAndFactors(
             factors.push('Strong Winds (Neutral SE damage to Flying)');
         }
 
-        const targetSide = target.isPlayerSide
-            ? activeBattlefield.playerSide
-            : activeBattlefield.foeSide;
+        const targetSide = target.isPlayerSide ? activeBattlefield.playerSide : activeBattlefield.foeSide;
 
         if (targetSide) {
             const allForceFields = [...(targetSide.forceFields || []), ...(targetSide.extraForceFields || [])];

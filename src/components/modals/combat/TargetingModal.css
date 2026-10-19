@@ -15,8 +15,8 @@
     background: var(--panel-bg);
     padding: 16px;
     border-radius: 8px;
-    width: 460px;
-    max-width: 95%;
+    width: 580px;
+    max-width: 96vw;
     max-height: 90vh;
     max-height: 90dvh;
     overflow-y: auto;
@@ -193,6 +193,7 @@
 /* Multi-Target Table */
 .targeting-modal__table-container {
     max-height: 200px;
+    overflow-x: hidden;
     overflow-y: auto;
     border: 1px solid var(--border);
     border-radius: 6px;

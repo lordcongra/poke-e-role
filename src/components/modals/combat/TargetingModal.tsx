@@ -78,7 +78,13 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
     const isPhysicalMove = String(move.category).startsWith('Phys');
     const maxTargets = getMaxTargetsForRank(rank);
     const isHalfHp = hpCurr <= Math.floor(hpMax / 2);
-    const weatherInfo = getWeatherDamageBonus(move.type, activeBattlefield, isHalfHp, isNPC, useCharacterStore.getState());
+    const weatherInfo = getWeatherDamageBonus(
+        move.type,
+        activeBattlefield,
+        isHalfHp,
+        isNPC,
+        useCharacterStore.getState()
+    );
     const itemBuffs = parseCombatTags(inventory, extraCategories, move, undefined, passives);
     const critDice = 2 + (itemBuffs.critDmg || 0);
     const bankedDice = (move.id && bankedAccDice[move.id]) || 0;
@@ -101,7 +107,9 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
                 )
             );
         });
-        return () => { isMounted = false; };
+        return () => {
+            isMounted = false;
+        };
     }, [isPhysicalMove, ruleset, activeTransformation, activeBattlefield, move.type, detectedMode, maxTargets]);
 
     const handleTargetSelect = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -113,8 +121,15 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
         }
         const sel = targets.find((t) => t.id === val);
         if (sel) {
-            const { targetDef, factors, forceNeutralFlying } = calculateTargetDefAndFactors(sel, isPhysicalMove, activeBattlefield);
-            let eff = activeTransformation === 'Terastallize' && sel.isTera ? 1 : calculateDefaultEffectiveness(move.type, sel.types);
+            const { targetDef, factors, forceNeutralFlying } = calculateTargetDefAndFactors(
+                sel,
+                isPhysicalMove,
+                activeBattlefield
+            );
+            let eff =
+                activeTransformation === 'Terastallize' && sel.isTera
+                    ? 1
+                    : calculateDefaultEffectiveness(move.type, sel.types);
             if (forceNeutralFlying && eff > 0) eff = 0;
             setReduction(targetDef);
             setEffectiveness(eff);
@@ -122,18 +137,28 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
         }
     };
 
-    const handleToggleTarget = (id: string) => setMultiTargets((p) => p.map((r) => (r.id === id ? { ...r, selected: !r.selected } : r)));
-    const handleToggleEvaded = (id: string) => setMultiTargets((p) => p.map((r) => (r.id === id ? { ...r, isEvaded: !r.isEvaded } : r)));
-    const handleChangeEffectiveness = (id: string, val: number) => setMultiTargets((p) => p.map((r) => (r.id === id ? { ...r, effectiveness: val } : r)));
-    const handleChangeDef = (id: string, val: number) => setMultiTargets((p) => p.map((r) => (r.id === id ? { ...r, def: val } : r)));
+    const handleToggleTarget = (id: string) =>
+        setMultiTargets((p) => p.map((r) => (r.id === id ? { ...r, selected: !r.selected } : r)));
+    const handleToggleEvaded = (id: string) =>
+        setMultiTargets((p) => p.map((r) => (r.id === id ? { ...r, isEvaded: !r.isEvaded } : r)));
+    const handleChangeEffectiveness = (id: string, val: number) =>
+        setMultiTargets((p) => p.map((r) => (r.id === id ? { ...r, effectiveness: val } : r)));
+    const handleChangeDef = (id: string, val: number) =>
+        setMultiTargets((p) => p.map((r) => (r.id === id ? { ...r, def: val } : r)));
 
     const handleSelectAllFoes = () => {
         let count = 0;
-        setMultiTargets((p) => p.map((r) => (!r.isPlayerSide && count < maxTargets ? (count++, { ...r, selected: true }) : { ...r, selected: false })));
+        setMultiTargets((p) =>
+            p.map((r) =>
+                !r.isPlayerSide && count < maxTargets ? (count++, { ...r, selected: true }) : { ...r, selected: false }
+            )
+        );
     };
     const handleSelectAll = () => {
         let count = 0;
-        setMultiTargets((p) => p.map((r) => (count < maxTargets ? (count++, { ...r, selected: true }) : { ...r, selected: false })));
+        setMultiTargets((p) =>
+            p.map((r) => (count < maxTargets ? (count++, { ...r, selected: true }) : { ...r, selected: false }))
+        );
     };
     const handleClearAll = () => setMultiTargets((p) => p.map((r) => ({ ...r, selected: false })));
 
@@ -152,13 +177,25 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
 
     const handleConfirm = () => {
         if (isRollDisabled) return;
-        const override = { active: overrideType !== 'none', type: overrideType === 'none' ? ('dice' as const) : overrideType, value: overrideValue };
+        const override = {
+            active: overrideType !== 'none',
+            type: overrideType === 'none' ? ('dice' as const) : overrideType,
+            value: overrideValue
+        };
         if (mode === 'single') {
             onRoll(baseDamage, isCrit, effectiveness, reduction, override, appliedFieldFactors);
         } else {
-            const selections: MultiTargetSelection[] = multiTargets.filter((r) => r.selected).map((r) => ({
-                id: r.id, name: r.name, def: r.def, effectiveness: r.effectiveness, isEvaded: r.isEvaded, isPlayerSide: r.isPlayerSide, types: r.types
-            }));
+            const selections: MultiTargetSelection[] = multiTargets
+                .filter((r) => r.selected)
+                .map((r) => ({
+                    id: r.id,
+                    name: r.name,
+                    def: r.def,
+                    effectiveness: r.effectiveness,
+                    isEvaded: r.isEvaded,
+                    isPlayerSide: r.isPlayerSide,
+                    types: r.types
+                }));
             if (onMultiRoll) {
                 onMultiRoll(baseDamage, isCrit, selections, override, appliedFieldFactors);
             } else {
@@ -207,7 +244,11 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
                         baseDamage={baseDamage}
                         bankedDice={bankedDice}
                         weatherBonus={weatherInfo.diceBonus}
-                        override={{ active: overrideType !== 'none', type: overrideType === 'none' ? 'dice' : overrideType, value: overrideValue }}
+                        override={{
+                            active: overrideType !== 'none',
+                            type: overrideType === 'none' ? 'dice' : overrideType,
+                            value: overrideValue
+                        }}
                         maxTargets={maxTargets}
                         rank={rank || 'Standard'}
                         onToggleTarget={handleToggleTarget}
@@ -230,18 +271,35 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
                 />
 
                 <div className="targeting-modal__checkbox-row">
-                    <label className="targeting-modal__checkbox-label text-label" style={{ color: 'var(--semantic-danger)' }}>
-                        <input type="checkbox" checked={isCrit} onChange={(e) => setIsCrit(e.target.checked)} className="targeting-modal__checkbox" />
+                    <label
+                        className="targeting-modal__checkbox-label text-label"
+                        style={{ color: 'var(--semantic-danger)' }}
+                    >
+                        <input
+                            type="checkbox"
+                            checked={isCrit}
+                            onChange={(e) => setIsCrit(e.target.checked)}
+                            className="targeting-modal__checkbox"
+                        />
                         Critical Hit? (+{critDice} Dice)
-                        <TooltipIcon onClick={() => setModalConfig({
-                            title: 'Critical Hit Modifiers',
-                            content: 'Checking this box strictly applies Critical Hit modifiers to the roll (like triggering the Expert Belt or Sniper ability). It automatically adds the standard +2 Base Dice bonus.'
-                        })} />
+                        <TooltipIcon
+                            onClick={() =>
+                                setModalConfig({
+                                    title: 'Critical Hit Modifiers',
+                                    content:
+                                        'Checking this box strictly applies Critical Hit modifiers to the roll (like triggering the Expert Belt or Sniper ability). It automatically adds the standard +2 Base Dice bonus.'
+                                })
+                            }
+                        />
                     </label>
                 </div>
 
                 <div className="targeting-modal__actions">
-                    <button type="button" className="action-button action-button--dark targeting-modal__btn text-theme-header" onClick={onClose}>
+                    <button
+                        type="button"
+                        className="action-button action-button--dark targeting-modal__btn text-theme-header"
+                        onClick={onClose}
+                    >
                         <XCircle size={16} /> Cancel
                     </button>
                     <button
