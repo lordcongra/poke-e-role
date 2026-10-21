@@ -1,4 +1,5 @@
 import React from 'react';
+import { Scale } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import type { TempBuild, TempMove } from '../../../store/storeTypes';
 import { CombatStat, SocialStat, SKILL_CATEGORIES } from '../../../types/enums';
@@ -16,6 +17,7 @@ export interface PokemonBuildPreviewProps {
     onUpdateSoc: (soc: string, val: number) => void;
     onUpdateSkill: (skill: string, val: number) => void;
     onOpenTooltip: (info: { title: string; desc: string }) => void;
+    onUpdateMove?: (moveIndex: number, updates: Partial<TempMove>) => void;
     actionSlot?: React.ReactNode;
 }
 
@@ -79,6 +81,7 @@ export const PokemonBuildPreview: React.FC<PokemonBuildPreviewProps> = ({
     onUpdateSoc,
     onUpdateSkill,
     onOpenTooltip,
+    onUpdateMove,
     actionSlot
 }) => {
     const species = build.species;
@@ -87,6 +90,50 @@ export const PokemonBuildPreview: React.FC<PokemonBuildPreviewProps> = ({
     const visibleCategories = SKILL_CATEGORIES.filter(
         (category) => pmdSkills !== false || category.name !== 'Knowledge'
     );
+
+    const dualScaleCount = build.moves.filter(
+        (m) =>
+            (m.candidateAttrs && m.candidateAttrs.length > 1) ||
+            (m.candidateSkills && m.candidateSkills.length > 1) ||
+            (m.candidateDmgStats && m.candidateDmgStats.length > 1) ||
+            (m.candidateCategories && m.candidateCategories.length > 1)
+    ).length;
+
+    const getAttrPool = (statKey: string): number => {
+        const lowerKey = (statKey || '').toLowerCase();
+        const isCombat = Object.values(CombatStat).includes(lowerKey as CombatStat);
+        const isSocial = Object.values(SocialStat).includes(lowerKey as SocialStat);
+        if (isCombat) {
+            const baseStatVal = getPokemonBaseStat(build, lowerKey, lowerKey === 'ins' ? 1 : 2);
+            const allocatedStatVal = build.attr[lowerKey] || 0;
+            return baseStatVal + allocatedStatVal;
+        }
+        if (isSocial) {
+            return 1 + (build.soc[lowerKey] || 0);
+        }
+        if (lowerKey === 'will') {
+            const pd = (build.pokemonData || {}) as Record<string, unknown>;
+            const willBase = Number(pd.BaseWill) || 3;
+            const insBase = getPokemonBaseStat(build, 'ins', 1);
+            const insAllocated = build.attr['ins'] || 0;
+            return willBase + insBase + insAllocated;
+        }
+        return 0;
+    };
+
+    const getSkillPool = (skillKey: string): number => {
+        const lowerKey = (skillKey || '').toLowerCase();
+        if (!lowerKey || lowerKey === 'none') return 0;
+        return build.skills[lowerKey] || 0;
+    };
+
+    const getDmgPool = (dmgStatKey: string, power: number, stabBonus: number): number | string => {
+        const lowerKey = (dmgStatKey || '').toLowerCase();
+        if (!lowerKey || lowerKey === 'none') return 'N/A';
+        const baseDmgAttr = getPokemonBaseStat(build, lowerKey, lowerKey === 'ins' ? 1 : 2);
+        const allocatedDmgAttr = build.attr[lowerKey] || 0;
+        return baseDmgAttr + allocatedDmgAttr + (power || 0) + stabBonus;
+    };
 
     return (
         <>
@@ -248,32 +295,25 @@ export const PokemonBuildPreview: React.FC<PokemonBuildPreviewProps> = ({
 
             {/* Drafted Moves */}
             <div className="generator-preview__section">
-                <span className="generator-preview__section-title generator-preview__section-title--spaced text-title-primary">
-                    Drafted Moves ({build.moves.length})
-                </span>
+                <div className="generator-preview__section-header-row">
+                    <span className="generator-preview__section-title generator-preview__section-title--spaced text-title-primary">
+                        Drafted Moves ({build.moves.length})
+                    </span>
+                    {dualScaleCount > 0 && (
+                        <span
+                            className="generator-preview__dual-scale-alert"
+                            title={`${dualScaleCount} move(s) have variable scaling options available`}
+                        >
+                            <Scale size={13} /> {dualScaleCount} Dual-Scaling Move{dualScaleCount > 1 ? 's' : ''}
+                        </span>
+                    )}
+                </div>
                 <div className="generator-preview__grid-2">
                     {build.moves.map((move: TempMove, index: number) => {
                         const statKey = move.attr ? move.attr.toLowerCase() : 'str';
                         const skillKey = move.skill ? move.skill.toLowerCase() : 'brawl';
-                        const isCombatStat = Object.values(CombatStat).includes(statKey as CombatStat);
-                        const isSocialStat = Object.values(SocialStat).includes(statKey as SocialStat);
-
-                        let attrVal = 0;
-                        if (isCombatStat) {
-                            const baseStatVal = getPokemonBaseStat(build, statKey, statKey === 'ins' ? 1 : 2);
-                            const allocatedStatVal = build.attr[statKey] || 0;
-                            attrVal = baseStatVal + allocatedStatVal;
-                        } else if (isSocialStat) {
-                            attrVal = 1 + (build.soc[statKey] || 0);
-                        } else if (statKey === 'will') {
-                            const pd = (build.pokemonData || {}) as Record<string, unknown>;
-                            const willBase = Number(pd.BaseWill) || 3;
-                            const insBase = getPokemonBaseStat(build, 'ins', 1);
-                            const insAllocated = build.attr['ins'] || 0;
-                            attrVal = willBase + insBase + insAllocated;
-                        }
-
-                        const skillVal = skillKey && skillKey !== 'none' ? build.skills[skillKey] || 0 : 0;
+                        const attrVal = getAttrPool(statKey);
+                        const skillVal = getSkillPool(skillKey);
                         const accuracyPool = attrVal + skillVal;
 
                         const pokemonTypes = getPokemonTypes(build.species, build, metadata, pokedexLookup).map((t) =>
@@ -296,17 +336,7 @@ export const PokemonBuildPreview: React.FC<PokemonBuildPreviewProps> = ({
                         const hasStab = Boolean(moveType && (pokemonTypes.includes(moveType) || isProteanLibero));
                         const stabBonus = hasStab ? (abilityName === 'adaptability' ? 2 : 1) : 0;
 
-                        const damageStatistic = move.dmgStat ? move.dmgStat.toLowerCase() : '';
-                        let damagePool: string | number = 'N/A';
-                        if (damageStatistic) {
-                            const baseDmgAttr = getPokemonBaseStat(
-                                build,
-                                damageStatistic,
-                                damageStatistic === 'ins' ? 1 : 2
-                            );
-                            const allocatedDmgAttr = build.attr[damageStatistic] || 0;
-                            damagePool = baseDmgAttr + allocatedDmgAttr + (move.power || 0) + stabBonus;
-                        }
+                        const damagePool = getDmgPool(move.dmgStat, move.power || 0, stabBonus);
 
                         return (
                             <GeneratorPreviewMoveRow
@@ -317,6 +347,10 @@ export const PokemonBuildPreview: React.FC<PokemonBuildPreviewProps> = ({
                                 hasStab={hasStab}
                                 stabBonus={stabBonus}
                                 onOpenTooltip={onOpenTooltip}
+                                onUpdateMove={(updates) => onUpdateMove?.(index, updates)}
+                                getAttrPool={getAttrPool}
+                                getSkillPool={getSkillPool}
+                                getDmgPool={getDmgPool}
                             />
                         );
                     })}

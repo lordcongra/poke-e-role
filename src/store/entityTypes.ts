@@ -154,6 +154,8 @@ export interface TempMove {
     candidateAttrs?: string[];
     candidateDmgStats?: string[];
     candidateSkills?: string[];
+    candidateCategories?: string[];
+    dualScaleSelected?: boolean;
     marker?: string;
 }
 

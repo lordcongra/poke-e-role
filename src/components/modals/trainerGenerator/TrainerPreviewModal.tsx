@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { User, Shield, Dices, XCircle, CheckCircle } from 'lucide-react';
-import type { Rank } from '../../../store/storeTypes';
+import type { Rank, TempMove } from '../../../store/storeTypes';
 import { Skill } from '../../../types/enums';
 import { NATURES } from '../../../data/constants';
 import {
@@ -218,6 +218,27 @@ export function TrainerPreviewModal({
         });
     };
 
+    const updateActiveMemberMove = (moveIndex: number, updates: Partial<TempMove>) => {
+        if (typeof activeTab !== 'number') return;
+        setTeamMembers((prev) => {
+            const next = [...prev];
+            const current = next[activeTab];
+            if (!current || !current.build.moves[moveIndex]) return prev;
+            const updatedMoves = current.build.moves.map((m, i) => (i === moveIndex ? { ...m, ...updates } : m));
+            const updatedBuild = { ...current.build, moves: updatedMoves };
+            const tokenImgUrl = String(current.metadata['token-image-url'] || `${import.meta.env.BASE_URL || '/'}pokeball-token.svg`);
+            const freshMeta = buildTokenMetadataFromBuild(updatedBuild, String(current.metadata.nickname || ''), tokenImgUrl);
+            freshMeta['age'] = '';
+            if (current.metadata['loyalty-curr'] !== undefined) {
+                freshMeta['loyalty-curr'] = current.metadata['loyalty-curr'];
+                freshMeta['happiness-curr'] = current.metadata['happiness-curr'];
+            }
+            if (current.metadata['token-image-url']) freshMeta['token-image-url'] = current.metadata['token-image-url'];
+            next[activeTab] = { ...current, build: updatedBuild, metadata: freshMeta };
+            return next;
+        });
+    };
+
     // --- Final Spawn / Apply ---
     const handleApply = async () => {
         setIsSpawning(true);
@@ -360,6 +381,7 @@ export function TrainerPreviewModal({
                             onUpdateAttr={updateActiveMemberAttr}
                             onUpdateSoc={updateActiveMemberSoc}
                             onUpdateSkill={updateActiveMemberSkill}
+                            onUpdateMove={updateActiveMemberMove}
                             onOpenTooltip={setTooltipInfo}
                             actionSlot={
                                 <button

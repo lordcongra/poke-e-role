@@ -175,7 +175,8 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
                     acc1: move.attr,
                     acc2: move.skill,
                     dmg1: move.dmgStat,
-                    marker: move.marker || ''
+                    marker: move.marker || '',
+                    dualScaleSelected: move.dualScaleSelected ?? true
                 };
             });
 

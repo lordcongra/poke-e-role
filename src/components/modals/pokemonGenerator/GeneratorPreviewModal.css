@@ -58,6 +58,29 @@
     margin-bottom: 8px;
 }
 
+.generator-preview__section-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.generator-preview__dual-scale-alert {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--primary) 18%, transparent);
+    color: var(--primary);
+    border: 1px solid color-mix(in srgb, var(--primary) 38%, transparent);
+    letter-spacing: 0.2px;
+}
+
 .generator-preview__grid-5 {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -161,11 +184,20 @@
 /* Move Row Component Styles */
 .generator-preview-move {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    gap: 4px;
     background: var(--input-bg);
     border: 1px solid var(--border);
-    border-radius: 3px;
-    padding: 4px;
+    border-radius: 4px;
+    padding: 5px 6px;
+    transition: border-color 0.15s ease;
+}
+
+.generator-preview-move__main {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
 }
 
 .generator-preview-move__name {
@@ -174,6 +206,64 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.generator-preview-move__dual-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--primary) 20%, transparent);
+    color: var(--primary);
+    border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent);
+    line-height: 1.2;
+    flex-shrink: 0;
+}
+
+.generator-preview-move__selectors {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    padding-top: 4px;
+    border-top: 1px dashed color-mix(in srgb, var(--border) 60%, transparent);
+    width: 100%;
+}
+
+.generator-preview-move__select-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.generator-preview-move__select-label {
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.generator-preview-move__select {
+    background: var(--panel-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.generator-preview-move__select:hover,
+.generator-preview-move__select:focus {
+    border-color: var(--primary);
 }
 
 .generator-preview-move__stats {

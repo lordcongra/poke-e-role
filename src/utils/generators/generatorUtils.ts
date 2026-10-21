@@ -455,8 +455,14 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     ): TempMove => {
         const rawCategory = String(data.Category || 'Physical').toLowerCase();
         let cat = 'Status';
-        if (rawCategory.includes('phys')) cat = 'Phys';
-        else if (rawCategory.includes('spec') || rawCategory.includes('var')) cat = 'Spec';
+        let candidateCategories: string[] | undefined = undefined;
+        if (rawCategory === 'physical' || rawCategory.includes('phys')) cat = 'Phys';
+        else if (rawCategory === 'special' || rawCategory.includes('spec')) cat = 'Spec';
+        else if (rawCategory === 'status' || rawCategory.includes('stat') || rawCategory.includes('sup')) cat = 'Status';
+        else {
+            cat = 'Phys';
+            candidateCategories = ['Physical', 'Special', 'Status'];
+        }
 
         const rawAcc1 = String(data.Accuracy1 || '');
         const rawAcc2 = String(data.Accuracy2 || '');
@@ -501,6 +507,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             candidateAttrs,
             candidateDmgStats,
             candidateSkills,
+            candidateCategories,
             rawAcc1: rawAcc1,
             rawAcc2: rawAcc2,
             rawDmg1: rawDmg1,
@@ -660,6 +667,14 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             generatedSocials,
             finalBaseStats
         );
+        const hasCandidates =
+            (move.candidateAttrs && move.candidateAttrs.length > 1) ||
+            (move.candidateSkills && move.candidateSkills.length > 1) ||
+            (move.candidateDmgStats && move.candidateDmgStats.length > 1) ||
+            (move.candidateCategories && move.candidateCategories.length > 1);
+        if (hasCandidates) {
+            move.dualScaleSelected = true;
+        }
     });
 
     sortDraftedMoves(draftedMoves, type1, hasType2, type2);
@@ -841,7 +856,8 @@ export function buildTokenMetadataFromBuild(
             acc1: move.attr,
             acc2: move.skill,
             dmg1: move.dmgStat,
-            marker: move.marker || ''
+            marker: move.marker || '',
+            dualScaleSelected: move.dualScaleSelected ?? true
         };
     });
 

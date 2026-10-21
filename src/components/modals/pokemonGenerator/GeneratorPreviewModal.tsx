@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import OBR, { buildImage, type ImageDownload, type Item } from '@owlbear-rodeo/sdk';
 import { Search, Dices, CheckCircle, XCircle, ImagePlus, FilePlus } from 'lucide-react';
-import type { TempBuild } from '../../../store/storeTypes';
+import type { TempBuild, TempMove } from '../../../store/storeTypes';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { setActiveTokenId, METADATA_ID } from '../../../utils/sync/obr';
@@ -105,6 +105,24 @@ export function GeneratorPreviewModal({
             next[activeIndex] = {
                 ...current,
                 skills: { ...current.skills, [skillName]: Math.max(0, value) }
+            };
+            return next;
+        });
+    };
+
+    const handleUpdateMove = (moveIndex: number, updates: Partial<TempMove>) => {
+        setLocalBuilds((prev) => {
+            const next = [...prev];
+            const current = next[activeIndex];
+            if (!current || !current.moves[moveIndex]) return prev;
+            const updatedMoves = [...current.moves];
+            updatedMoves[moveIndex] = {
+                ...updatedMoves[moveIndex],
+                ...updates
+            };
+            next[activeIndex] = {
+                ...current,
+                moves: updatedMoves
             };
             return next;
         });
@@ -387,6 +405,7 @@ export function GeneratorPreviewModal({
                         onUpdateAttr={updateAttribute}
                         onUpdateSoc={updateSocial}
                         onUpdateSkill={updateSkill}
+                        onUpdateMove={handleUpdateMove}
                         onOpenTooltip={setTooltipInfo}
                         actionSlot={
                             isMultiple && onRerollIndex ? (
