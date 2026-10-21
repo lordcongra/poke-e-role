@@ -13,19 +13,22 @@ import {
     Swords,
     CloudRain,
     Target,
-    Heart,
     Info,
     ChevronsUpDown,
     Link2,
     Sparkles,
     UserCheck,
-    Zap
+    Zap,
+    Award
 } from 'lucide-react';
-import { GM_CHEAT_ITEMS, GM_SCREEN_CREDITS, type GmCheatItem } from '../../../data/gmScreenData';
+import { GM_CHEAT_ITEMS, type GmCheatItem } from '../../../data/gmScreenData';
 import { GmPokemonLookup } from './GmPokemonLookup';
 import { GmScreenCardContent } from './GmScreenCardContent';
+import { GmScreenCreditsModal } from './GmScreenCreditsModal';
 import { broadcastGmCheatItem } from './gmScreenBroadcastUtils';
+import { filterAndScoreCheatItems, getCheatItemTabCounts } from './gmScreenFilterUtils';
 import { getBaseShareUrl } from '../../../utils/common/helper';
+import { DiscordIcon } from '../../ui/DiscordIcon';
 import './GmScreenModal.css';
 
 interface GmScreenModalProps {
@@ -100,6 +103,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
     const [copiedGeneralLink, setCopiedGeneralLink] = useState<boolean>(false);
+    const [showCredits, setShowCredits] = useState<boolean>(false);
 
     useEffect(() => {
         try {
@@ -179,135 +183,11 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
     };
 
     const filteredItems = useMemo(() => {
-        const rawQuery = searchQuery.toLowerCase().trim();
-        const tabFiltered = GM_CHEAT_ITEMS.filter((item) => activeTab === 'all' || item.category === activeTab);
-
-        if (!rawQuery) {
-            return tabFiltered;
-        }
-
-        const queryTerms = rawQuery.split(/\s+/).filter(Boolean);
-
-        const scoredItems = tabFiltered
-            .map((item, originalIndex) => {
-                const titleLower = item.title.toLowerCase();
-                const summaryLower = item.summary.toLowerCase();
-                const badgeLower = item.badge?.toLowerCase() || '';
-                const categoryLower = item.category.toLowerCase();
-                const categoryLabelLower = item.categoryLabel.toLowerCase();
-                const keywordsLower = item.keywords.map((k) => k.toLowerCase());
-                const discordLower = item.discordMarkdown.toLowerCase();
-
-                let score = 0;
-
-                // 1. Title matches (highest priority)
-                if (titleLower === rawQuery) {
-                    score += 2000;
-                } else if (titleLower.startsWith(rawQuery)) {
-                    score += 1000;
-                } else if (
-                    new RegExp(`\\b${rawQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(titleLower)
-                ) {
-                    score += 700;
-                } else if (titleLower.includes(rawQuery)) {
-                    score += 400;
-                }
-
-                // 2. Badge matches
-                if (badgeLower === rawQuery) {
-                    score += 500;
-                } else if (badgeLower.includes(rawQuery)) {
-                    score += 250;
-                }
-
-                // 3. Category matches
-                if (categoryLower === rawQuery || categoryLabelLower === rawQuery) {
-                    score += 400;
-                } else if (categoryLower.includes(rawQuery) || categoryLabelLower.includes(rawQuery)) {
-                    score += 200;
-                }
-
-                // 4. Keyword matches
-                if (keywordsLower.includes(rawQuery)) {
-                    score += 350;
-                } else if (keywordsLower.some((k) => k.includes(rawQuery))) {
-                    score += 150;
-                }
-
-                // 5. Summary matches
-                if (summaryLower.includes(rawQuery)) {
-                    score += 80;
-                }
-
-                // 6. Discord text matches
-                if (discordLower.includes(rawQuery)) {
-                    score += 20;
-                }
-
-                // 7. Multi-word individual term scoring
-                if (queryTerms.length > 1) {
-                    let termHits = 0;
-                    for (const term of queryTerms) {
-                        let termHit = false;
-                        if (titleLower.includes(term)) {
-                            score += 150;
-                            termHit = true;
-                        }
-                        if (badgeLower.includes(term) || categoryLower.includes(term)) {
-                            score += 80;
-                            termHit = true;
-                        }
-                        if (keywordsLower.some((k) => k.includes(term))) {
-                            score += 60;
-                            termHit = true;
-                        }
-                        if (summaryLower.includes(term)) {
-                            score += 30;
-                            termHit = true;
-                        }
-                        if (discordLower.includes(term)) {
-                            score += 10;
-                            termHit = true;
-                        }
-                        if (termHit) termHits++;
-                    }
-                    if (termHits === queryTerms.length) {
-                        score += 300;
-                    }
-                }
-
-                return { item, score, originalIndex };
-            })
-            .filter(({ score }) => score > 0);
-
-        // Sort by score descending; preserve original array index on ties
-        scoredItems.sort((a, b) => {
-            if (b.score !== a.score) {
-                return b.score - a.score;
-            }
-            return a.originalIndex - b.originalIndex;
-        });
-
-        return scoredItems.map(({ item }) => item);
+        return filterAndScoreCheatItems(GM_CHEAT_ITEMS, searchQuery, activeTab);
     }, [searchQuery, activeTab]);
 
     const tabCounts = useMemo(() => {
-        const counts: Record<string, number> = {
-            all: GM_CHEAT_ITEMS.length,
-            rules: 0,
-            trainer: 0,
-            maneuvers: 0,
-            environment: 0,
-            progression: 0,
-            lookup: 0,
-            homebrew: 0
-        };
-        GM_CHEAT_ITEMS.forEach((item) => {
-            if (counts[item.category] !== undefined) {
-                counts[item.category]++;
-            }
-        });
-        return counts;
+        return getCheatItemTabCounts(GM_CHEAT_ITEMS);
     }, []);
 
     return (
@@ -323,6 +203,14 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                         </h3>
                     </div>
                     <div className="gm-screen-modal__header-actions">
+                        <button
+                            type="button"
+                            className="action-button action-button--dark gm-screen-modal__credits-btn"
+                            onClick={() => setShowCredits(true)}
+                            title="View credits & acknowledgments across the GM Screen"
+                        >
+                            <Award size={13} color="var(--primary)" /> Credits
+                        </button>
                         <button
                             type="button"
                             className="action-button action-button--dark gm-screen-modal__copy-link-btn"
@@ -543,18 +431,32 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                 </div>
 
                 <div className="gm-screen-modal__footer">
-                    <div className="gm-screen-modal__credit">
-                        <Heart size={14} color="var(--primary)" />
-                        <span>{GM_SCREEN_CREDITS}</span>
-                    </div>
-                    <div
-                        className="gm-screen-modal__contact text-subtext"
-                        style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}
-                    >
-                        Questions or suggestions? Contact <strong>@congra</strong> on the Pokérole Discord!
+                    <div className="gm-screen-modal__footer-content">
+                        <div className="gm-screen-modal__footer-item">
+                            <BookOpen size={13} color="var(--primary)" />
+                            <span>
+                                Find official 3.0 Corebook PDF in <strong>#pokerole-corebook</strong>
+                            </span>
+                        </div>
+                        <span className="gm-screen-modal__footer-divider">•</span>
+                        <div className="gm-screen-modal__footer-item">
+                            <DiscordIcon size={13} color="var(--primary)" />
+                            <span>
+                                Questions or suggestions? Contact <strong>@congra</strong> on{' '}
+                                <a
+                                    href="https://discord.gg/B9VcfYwWCJ"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="gm-screen-modal__footer-link"
+                                >
+                                    Discord
+                                </a>
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
+            {showCredits && <GmScreenCreditsModal onClose={() => setShowCredits(false)} />}
         </div>
     );
 }

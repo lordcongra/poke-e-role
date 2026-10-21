@@ -10,6 +10,7 @@ import {
     type BugReportDiagnostics
 } from '../../../utils/common/bugReportService';
 import './BugReportModal.css';
+import { DiscordIcon } from '../../ui/DiscordIcon';
 
 interface BugReportModalProps {
     onClose: () => void;
@@ -215,6 +216,22 @@ export function BugReportModal({ onClose }: BugReportModalProps) {
                                 Notice a bug or unexpected behavior? Describe what happened below and it will be
                                 delivered directly to Congra's Discord alerts channel.
                             </p>
+
+                            <div className="bug-report-modal__discord-callout">
+                                <div className="bug-report-modal__discord-callout-content">
+                                    For system questions, community feedback, or finding the official 3.0 Corebook PDF,
+                                    visit <strong>#pokerole-corebook</strong> in the Pokérole Discord.
+                                </div>
+                                <a
+                                    href="https://discord.gg/B9VcfYwWCJ"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="bug-report-modal__discord-link"
+                                    title="Join the Pokérole Discord"
+                                >
+                                    <DiscordIcon size={15} /> Pokérole Discord
+                                </a>
+                            </div>
 
                             {submitError && (
                                 <div className="bug-report-modal__error-box">

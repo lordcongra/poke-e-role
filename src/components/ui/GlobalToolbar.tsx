@@ -30,6 +30,7 @@ import { TrainerGeneratorModal } from '../modals/trainerGenerator';
 import { BugReportModal } from '../modals/settings';
 import { PcStorageModal } from '../modals/pcStorage/PcStorageModal';
 import { ToolbarImportModals } from './ToolbarImportModals';
+import { DiscordIcon } from './DiscordIcon';
 
 // Icons
 import {
@@ -486,6 +487,16 @@ export function GlobalToolbar() {
                 </div>
 
                 <div className="global-toolbar__header-actions" onClick={(e) => e.stopPropagation()}>
+                    <a
+                        href="https://discord.gg/B9VcfYwWCJ"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="global-toolbar__btn--discord-header action-button"
+                        title="Join the Pokérole Discord (Find the 3.0 Corebook in #pokerole-corebook)"
+                    >
+                        <DiscordIcon size={14} color="#5865F2" /> Discord
+                    </a>
+
                     <button
                         type="button"
                         className="global-toolbar__btn--bug-header action-button"

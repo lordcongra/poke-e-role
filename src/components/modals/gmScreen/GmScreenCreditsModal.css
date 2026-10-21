@@ -1,0 +1,260 @@
+.gm-credits-modal__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: color-mix(in srgb, var(--dark) 75%, transparent);
+    backdrop-filter: blur(4px);
+    z-index: 1400;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    box-sizing: border-box;
+    animation: gmCreditsFadeIn 0.15s ease-out;
+}
+
+@keyframes gmCreditsFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.gm-credits-modal__content {
+    background-color: var(--panel-bg);
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    width: 95%;
+    max-width: 680px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 40px color-mix(in srgb, var(--dark) 80%, transparent);
+    box-sizing: border-box;
+    overflow: hidden;
+    animation: gmCreditsScaleIn 0.15s ease-out;
+}
+
+@keyframes gmCreditsScaleIn {
+    from {
+        transform: scale(0.96);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
+.gm-credits-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background-color: var(--panel-alt);
+    flex-shrink: 0;
+}
+
+.gm-credits-modal__header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.gm-credits-modal__title {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gm-credits-modal__close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition:
+        color 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.gm-credits-modal__close-btn:hover {
+    color: var(--text-main);
+    background-color: color-mix(in srgb, var(--text-muted) 15%, transparent);
+}
+
+.gm-credits-modal__intro {
+    padding: 10px 16px;
+    background-color: color-mix(in srgb, var(--primary) 8%, var(--panel-bg));
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--text-main);
+}
+
+.gm-credits-modal__body {
+    padding: 14px 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+}
+
+.gm-credits-card {
+    background-color: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color 0.15s ease;
+}
+
+.gm-credits-card:hover {
+    border-color: color-mix(in srgb, var(--primary) 50%, var(--border));
+}
+
+.gm-credits-card__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gm-credits-card__badge-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.gm-credits-card__badge-icon--primary {
+    background-color: color-mix(in srgb, var(--primary) 20%, transparent);
+    color: var(--primary);
+}
+
+.gm-credits-card__badge-icon--accent {
+    background-color: color-mix(in srgb, #f59e0b 20%, transparent);
+    color: #f59e0b;
+}
+
+.gm-credits-card__badge-icon--secondary {
+    background-color: color-mix(in srgb, var(--secondary) 20%, transparent);
+    color: var(--secondary);
+}
+
+.gm-credits-card__badge-icon--theme {
+    background-color: color-mix(in srgb, #3b82f6 20%, transparent);
+    color: #3b82f6;
+}
+
+.gm-credits-card__title-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.gm-credits-card__name {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.gm-credits-card__role {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+}
+
+.gm-credits-card__desc {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--text-main);
+}
+
+.gm-credits-card__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.gm-credits-card__link {
+    font-size: 0.74rem;
+    padding: 4px 8px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.gm-credits-modal__footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    background-color: var(--panel-alt);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.gm-credits-modal__footer-text {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.gm-credits-modal__discord-btn {
+    text-decoration: none;
+    font-size: 0.78rem;
+    padding: 6px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .gm-credits-modal__content {
+        width: 100%;
+        max-height: 94vh;
+    }
+
+    .gm-credits-modal__header {
+        padding: 10px 12px;
+    }
+
+    .gm-credits-modal__title {
+        font-size: 0.9rem;
+    }
+
+    .gm-credits-modal__footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        text-align: center;
+    }
+
+    .gm-credits-modal__discord-btn {
+        justify-content: center;
+    }
+}

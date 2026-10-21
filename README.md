@@ -39,7 +39,7 @@ While these extensions do not tie directly into the character sheet, they are hi
 - **[Persistent Tokens](https://extensions.owlbear.rodeo/persistent-tokens):** Makes your tokens and their character sheets persist between scenes! Extremely helpful so you don't have to constantly export and import JSONs when switching maps.
 - **[Bag It!](https://bag-it-extension.narcolepticdracu.com/manifest.json):** Provides a real, visual inventory system for players to store, move, and trade items directly on the tabletop.
 - **[Embers](https://extensions.owlbear.rodeo/embers):** An amazing tool for setting up visual spell and attack effects on the map.
-    > **Pro Tip:** Want a head start on your move animations? Reach out to **`@congra`** in the Pokerole Discord to get a copy of his custom Embers spell effects JSON!
+    > **Pro Tip:** Want a head start on your move animations? Reach out to **`@congra`** in the [Pokérole Discord](https://discord.gg/B9VcfYwWCJ) to get a copy of his custom Embers spell effects JSON!
 
 ---
 
@@ -214,7 +214,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 - **Deep Linking for Players:** Generate shareable deep links to specific rules, status conditions, or tables so players can open straight to that section.
 - **Interactive Catching Calculator:** Real-time formula calculator supporting standard Pokéballs, Greatballs, Ultraballs, and custom Seal Power fill-in dice with wild rank and condition multipliers.
 - **Encounter Balancing Difficulty Matrix:** Full 5-column challenge evaluation matrix with color-coded difficulty badges (from _Effortless_ to _Punishing_).
-- **Community Requests & Feedback:** Have suggestions or want specific reference rules added? Reach out to **`@congra`** on the Pokérole Discord!
+- **Community Requests & Feedback:** Have suggestions or want specific reference rules added? Reach out to **`@congra`** on the [Pokérole Discord](https://discord.gg/B9VcfYwWCJ) (and grab the official 3.0 Corebook PDF in `#pokerole-corebook`)!
 - **Credits & Thanks:** Special thanks and credit to Willowlark for putting together and compiling the reference information for this cheat sheet!
 
 ### 🔒 Room Rules & GM Tools
@@ -224,6 +224,13 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 - **Generator Access Control:** GMs can control whether players have access to the Random Pokémon Generator and the Trainer & Team Generator (defaulted to GM Only to prevent unwanted map clutter or spoiler generation).
 - **GM Exclusive View:** Room Rules settings are strictly hidden from non-GM players to prevent tampering with campaign mechanics.
 - **Built-in NPC Toggle:** Mark a sheet as a "Private NPC" to instantly hide the sheet's contents from players, preventing meta-gaming during boss fights.
+
+---
+
+## 💬 Community & Pokérole 3.0 Corebook
+
+- **Join the Pokérole Discord:** **[https://discord.gg/B9VcfYwWCJ](https://discord.gg/B9VcfYwWCJ)** — Connect with players and Game Masters, find games, ask system and rules questions, share homebrew, and follow sheet updates.
+- **Official 3.0 Corebook PDF:** Head to the **`#pokerole-corebook`** channel on the Pokérole Discord to download the latest official 3.0 Corebook PDF!
 
 ---
 

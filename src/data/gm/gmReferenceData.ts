@@ -4,7 +4,7 @@
 
 export const GM_SCREEN_AUTHOR = 'Willowlark';
 export const GM_SCREEN_CREDITS =
-    "Pokerole 3.0 GM Screen reference compiled by Willowlark. Adapted and enhanced for Congra's Pokérole Autosheet.";
+    "Pokerole 3.0 GM Screen reference compiled by Willowlark. Adapted and enhanced for Congra's Pokérole Autosheet. Pokérole created and 3.0 Corebook developed by Little Glee Monster. Find the official 3.0 Corebook PDF in #pokerole-corebook on the Pokérole Discord.";
 
 // 6. COVER & HEALING
 
