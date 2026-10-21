@@ -148,44 +148,158 @@ export async function detachTokensFromParent(attachedTokens: Item[], sceneItems:
 }
 
 /**
+ * Extracts a stable identity key for an accessory item to detect duplicate props/attachments.
+ * Matches by source item ID, image artwork URL, token name, or text content.
+ */
+export function getAccessoryIdentityKey(item: Item): string {
+    const meta = (item.metadata || {}) as Record<string, unknown>;
+    const sourceId = (meta['pokerole-pmd-extension/source-item-id'] as string) || (meta.sourceItemId as string);
+    if (sourceId && typeof sourceId === 'string' && sourceId.trim()) {
+        return `source:${sourceId.trim()}`;
+    }
+    const imgUrl = (item as { image?: { url?: string } }).image?.url;
+    if (imgUrl && typeof imgUrl === 'string' && imgUrl.trim()) {
+        return `img:${imgUrl.trim()}`;
+    }
+    if (item.name && typeof item.name === 'string' && item.name.trim()) {
+        return `name:${item.name.trim()}`;
+    }
+    const text = (item as { text?: { plainText?: string } }).text?.plainText;
+    if (text && typeof text === 'string' && text.trim()) {
+        return `text:${text.trim()}`;
+    }
+    return `id:${item.id}`;
+}
+
+export const MAX_ATTACHMENTS_PER_TOKEN = 30;
+
+/**
+ * Checks whether two attachment items/bundles are stacked duplicates.
+ * Returns true ONLY if they share the exact same identity AND are placed at virtually
+ * the exact same position (within 1 pixel), meaning one is invisibly stacked on the other.
+ * Distinct intentional attachments (e.g. two identical bows placed at different positions) return false.
+ */
+export function areAttachmentsStackedDuplicates(
+    a: { item: Item; relativeOffset?: { x: number; y: number } },
+    b: { item: Item; relativeOffset?: { x: number; y: number } }
+): boolean {
+    const keyA = getAccessoryIdentityKey(a.item);
+    const keyB = getAccessoryIdentityKey(b.item);
+    if (keyA !== keyB) return false;
+
+    if (a.relativeOffset && b.relativeOffset) {
+        const dx = Math.abs(a.relativeOffset.x - b.relativeOffset.x);
+        const dy = Math.abs(a.relativeOffset.y - b.relativeOffset.y);
+        return dx < 1 && dy < 1;
+    }
+
+    const posA = a.item.position || { x: 0, y: 0 };
+    const posB = b.item.position || { x: 0, y: 0 };
+    const dx = Math.abs(posA.x - posB.x);
+    const dy = Math.abs(posA.y - posB.y);
+    return dx < 1 && dy < 1;
+}
+
+/**
+ * Deduplicates attachment bundles by pruning stacked duplicates (identical accessories
+ * placed at the exact same relative coordinates). Intentional distinct attachments
+ * (e.g. two identical bows placed at different offsets) are preserved.
+ * Enforces a safe ceiling (maximum 30 attachments per token) to prevent token bloat.
+ */
+export function sanitizeAttachmentBundles(bundles: AttachmentBundle[] | undefined): AttachmentBundle[] {
+    if (!bundles || !Array.isArray(bundles) || bundles.length === 0) {
+        return [];
+    }
+
+    const sanitized: AttachmentBundle[] = [];
+
+    for (const bundle of bundles) {
+        if (!bundle || !bundle.item) continue;
+
+        // Check if this bundle is an exact stacked duplicate of an already kept bundle
+        const isStackedDuplicate = sanitized.some((kept) => areAttachmentsStackedDuplicates(kept, bundle));
+
+        if (isStackedDuplicate) {
+            continue;
+        }
+
+        sanitized.push(bundle);
+        if (sanitized.length >= MAX_ATTACHMENTS_PER_TOKEN) {
+            break;
+        }
+    }
+
+    return sanitized;
+}
+
+/**
  * Extracts live relative attachment bundles for accessories attached to a parent token.
+ * Automatically sanitizes and deduplicates bundles before returning.
  */
 export function extractLiveAccessoryBundles(sceneItems: Item[], parent: Item): AttachmentBundle[] {
     const { accessoryTokens } = separateAttachments(sceneItems, parent.id);
-    return accessoryTokens.map((child) => calculateRelativeAttachment(parent, child));
+    const bundles = accessoryTokens.map((child) => calculateRelativeAttachment(parent, child));
+    return sanitizeAttachmentBundles(bundles);
 }
 
 /**
  * Compares stored attachment bundles against live scene accessory bundles.
- * Returns true if the count, child IDs, or relative transform has meaningfully changed.
+ * Returns true if the count, child identities, or relative transform has meaningfully changed.
+ * Stabilized against horizontal scale flips (Flip! extension) so scale sign inversions do not
+ * falsely trigger runaway attachment diffs.
  */
 export function hasAttachmentDiff(
     storedBundles: AttachmentBundle[] | undefined,
     liveBundles: AttachmentBundle[]
 ): boolean {
-    const stored = storedBundles || [];
-    if (stored.length !== liveBundles.length) return true;
-    if (stored.length === 0 && liveBundles.length === 0) return false;
+    const stored = sanitizeAttachmentBundles(storedBundles);
+    const live = sanitizeAttachmentBundles(liveBundles);
 
-    for (let i = 0; i < liveBundles.length; i++) {
-        const l = liveBundles[i];
-        const s = stored[i];
-        if (!s || s.item.id !== l.item.id) return true;
-        const dx = Math.abs(s.relativeOffset.x - l.relativeOffset.x);
-        const dy = Math.abs(s.relativeOffset.y - l.relativeOffset.y);
-        const dr = Math.abs(s.relativeRotation - l.relativeRotation);
-        const dsx = Math.abs(s.relativeScale.x - l.relativeScale.x);
-        const dsy = Math.abs(s.relativeScale.y - l.relativeScale.y);
-        if (dx > 0.01 || dy > 0.01 || dr > 0.01 || dsx > 0.01 || dsy > 0.01) {
-            return true;
+    if (stored.length !== live.length) return true;
+    if (stored.length === 0 && live.length === 0) return false;
+
+    // Track matched stored indices to handle multiple identical attachments cleanly
+    const matchedStoredIndices = new Set<number>();
+
+    for (const l of live) {
+        const lKey = getAccessoryIdentityKey(l.item);
+        let foundMatch = false;
+
+        for (let i = 0; i < stored.length; i++) {
+            if (matchedStoredIndices.has(i)) continue;
+            const s = stored[i];
+            const sKey = getAccessoryIdentityKey(s.item);
+
+            if (s.item.id === l.item.id || sKey === lKey) {
+                const dx = Math.abs(s.relativeOffset.x - l.relativeOffset.x);
+                const dy = Math.abs(s.relativeOffset.y - l.relativeOffset.y);
+                const dr = Math.abs(s.relativeRotation - l.relativeRotation);
+                const dsx = Math.abs(s.relativeScale.x - l.relativeScale.x);
+                const dsy = Math.abs(s.relativeScale.y - l.relativeScale.y);
+
+                // Account for horizontal flip sign inversion (Flip! extension)
+                const xOffsetDiff = Math.min(dx, Math.abs(s.relativeOffset.x + l.relativeOffset.x));
+                const xScaleDiff = Math.min(dsx, Math.abs(s.relativeScale.x + l.relativeScale.x));
+
+                if (xOffsetDiff <= 0.01 && dy <= 0.01 && dr <= 0.01 && xScaleDiff <= 0.01 && dsy <= 0.01) {
+                    matchedStoredIndices.add(i);
+                    foundMatch = true;
+                    break;
+                }
+            }
         }
+
+        if (!foundMatch) return true;
     }
+
     return false;
 }
 
 /**
  * Reconciles attached accessories on the live Owlbear Rodeo scene with desired bundles.
- * Spawns missing accessories and marks stale or detached accessories for removal.
+ * Self-heals by pruning stacked duplicate tokens on the canvas and only spawning missing
+ * accessories (capped at a safe maximum of 30 attachments).
+ * Preserves intentional distinct attachments (e.g. two identical bows placed at different positions).
  */
 export function reconcileTokenAttachmentsOnScene(
     parent: Item,
@@ -194,7 +308,7 @@ export function reconcileTokenAttachmentsOnScene(
     tagAsBackupToken: boolean = false
 ): { itemsToAdd: Item[]; idsToDelete: string[] } {
     const { accessoryTokens } = separateAttachments(sceneItems, parent.id);
-    const desired = desiredBundles || [];
+    const desired = sanitizeAttachmentBundles(desiredBundles);
     const itemsToAdd: Item[] = [];
     const idsToDelete: string[] = [];
 
@@ -206,30 +320,93 @@ export function reconcileTokenAttachmentsOnScene(
         return { itemsToAdd, idsToDelete };
     }
 
-    // Case 2: Desired attachments exist but scene token is missing them
-    if (accessoryTokens.length === 0) {
-        const idMap = new Map<string, string>();
-        idMap.set(parent.id, parent.id);
+    // Convert live accessories into bundles with relative offsets to check for stacked duplicates
+    const liveWithBundles = accessoryTokens.map((child) => ({
+        token: child,
+        bundle: calculateRelativeAttachment(parent, child)
+    }));
 
-        for (const bundle of desired) {
-            if (bundle?.item?.id && bundle.item.id !== parent.id) {
-                idMap.set(bundle.item.id, crypto.randomUUID());
+    // Active Canvas Self-Healing: Keep non-stacked live accessories, prune stacked duplicates
+    const survivingLive: Array<{ token: Item; bundle: AttachmentBundle }> = [];
+
+    for (const live of liveWithBundles) {
+        const isStackedDuplicate = survivingLive.some((survivor) =>
+            areAttachmentsStackedDuplicates(survivor.bundle, live.bundle)
+        );
+
+        if (isStackedDuplicate) {
+            idsToDelete.push(live.token.id);
+        } else {
+            survivingLive.push(live);
+        }
+    }
+
+    // Enforce safety ceiling (MAX_ATTACHMENTS_PER_TOKEN) on surviving live accessories
+    while (survivingLive.length > MAX_ATTACHMENTS_PER_TOKEN) {
+        const excess = survivingLive.pop()!;
+        idsToDelete.push(excess.token.id);
+    }
+
+    // Case 2: For each desired attachment bundle, spawn only if no matching live accessory exists
+    const matchedLiveIndices = new Set<number>();
+    const idMap = new Map<string, string>();
+    idMap.set(parent.id, parent.id);
+
+    for (const bundle of desired) {
+        if (bundle?.item?.id && bundle.item.id !== parent.id) {
+            idMap.set(bundle.item.id, crypto.randomUUID());
+        }
+    }
+
+    for (const bundle of desired) {
+        if (!bundle || !bundle.item || bundle.item.id === parent.id) continue;
+        const bKey = getAccessoryIdentityKey(bundle.item);
+
+        // Find if this bundle already has a matching live accessory on the canvas
+        let matchedIndex = -1;
+        for (let i = 0; i < survivingLive.length; i++) {
+            if (matchedLiveIndices.has(i)) continue;
+            const live = survivingLive[i];
+            const liveKey = getAccessoryIdentityKey(live.token);
+
+            if (live.token.id === bundle.item.id) {
+                matchedIndex = i;
+                break;
+            }
+
+            if (liveKey === bKey) {
+                const dx = Math.abs(bundle.relativeOffset.x - live.bundle.relativeOffset.x);
+                const flipDx = Math.abs(bundle.relativeOffset.x + live.bundle.relativeOffset.x);
+                const dy = Math.abs(bundle.relativeOffset.y - live.bundle.relativeOffset.y);
+
+                if ((dx < 1 || flipDx < 1) && dy < 1) {
+                    matchedIndex = i;
+                    break;
+                }
             }
         }
 
-        for (const bundle of desired) {
-            if (!bundle || !bundle.item || bundle.item.id === parent.id) continue;
-            const assignedId = idMap.get(bundle.item.id);
-            const targetParentId = (bundle.item.attachedTo && idMap.get(bundle.item.attachedTo)) || parent.id;
-            const child = applyRelativeAttachment(parent, bundle, targetParentId, assignedId);
-            if (tagAsBackupToken) {
-                child.metadata = {
-                    ...(child.metadata || {}),
-                    'pokerole-pmd-extension/is-backup-token': true
-                };
-            }
-            itemsToAdd.push(child);
+        if (matchedIndex !== -1) {
+            matchedLiveIndices.add(matchedIndex);
+            continue; // Already exists on canvas!
         }
+
+        // Safety ceiling check
+        if (survivingLive.length + itemsToAdd.length >= MAX_ATTACHMENTS_PER_TOKEN) {
+            break;
+        }
+
+        const assignedId = idMap.get(bundle.item.id);
+        const targetParentId = (bundle.item.attachedTo && idMap.get(bundle.item.attachedTo)) || parent.id;
+        const child = applyRelativeAttachment(parent, bundle, targetParentId, assignedId);
+
+        child.metadata = {
+            ...(child.metadata || {}),
+            'pokerole-pmd-extension/source-item-id': bundle.item.id,
+            ...(tagAsBackupToken ? { 'pokerole-pmd-extension/is-backup-token': true } : {})
+        };
+
+        itemsToAdd.push(child);
     }
 
     return { itemsToAdd, idsToDelete };

@@ -265,20 +265,21 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                 // AND PC storage has valid sheet data.
                 const isOutdated = (sumLastMod > tokenLastMod || !tokenLastMod) && hasValidFullMeta;
 
-                if (isOutdated) {
-                    const { itemsToAdd: attachToAdd, idsToDelete: attachToDelete } = reconcileTokenAttachmentsOnScene(
-                        primaryToken,
-                        sum.attachedItems,
-                        sceneItems,
-                        false
-                    );
-                    if (attachToDelete.length > 0) {
-                        duplicateIdsToDelete.push(...attachToDelete);
-                    }
-                    if (attachToAdd.length > 0) {
-                        attachmentsToAdd.push(...attachToAdd);
-                    }
+                // Always reconcile attachments to self-heal and prune any live scene duplicate accessories
+                const { itemsToAdd: attachToAdd, idsToDelete: attachToDelete } = reconcileTokenAttachmentsOnScene(
+                    primaryToken,
+                    sum.attachedItems,
+                    sceneItems,
+                    false
+                );
+                if (attachToDelete.length > 0) {
+                    duplicateIdsToDelete.push(...attachToDelete);
+                }
+                if (isOutdated && attachToAdd.length > 0) {
+                    attachmentsToAdd.push(...attachToAdd);
+                }
 
+                if (isOutdated) {
                     const sumTempHp = Number(sum.fullMetadata?.['temporary-hit-points']) || 0;
                     const sumTempWill = Number(sum.fullMetadata?.['temporary-will']) || 0;
 

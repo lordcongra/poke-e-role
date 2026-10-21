@@ -5,7 +5,7 @@ import { calculateRelativeAttachment } from './rehomeEngine';
 import { broadcastPlayerPc, broadcastGmPc } from '../../hooks/owlbearSync/setupOwlbearPcSync';
 
 import { isMatchingPokemonItem, isItemTrainer } from './pcItemMatching';
-import { separateAttachments, detachTokensFromParent } from './pcAttachmentOps';
+import { separateAttachments, detachTokensFromParent, sanitizeAttachmentBundles } from './pcAttachmentOps';
 
 export interface RecallPokemonResult {
     success: boolean;
@@ -47,7 +47,9 @@ export async function recallPokemonFromMap(
             sceneItems,
             resolvedParentId
         );
-        const bundles = accessoryTokens.map((child) => calculateRelativeAttachment(parent, child));
+        const bundles = sanitizeAttachmentBundles(
+            accessoryTokens.map((child) => calculateRelativeAttachment(parent, child))
+        );
 
         // Safely detach any attached character tokens on scene so they stay in world coordinates and are preserved
         if (characterTokens.length > 0) {

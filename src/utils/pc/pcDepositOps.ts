@@ -5,7 +5,7 @@ import { flattenStateToMetadata } from '../sync/stateMapper';
 import { calculateRelativeAttachment } from './rehomeEngine';
 import { isEntityLockedByGm } from './pcCandidateMatching';
 import { isItemTrainer } from './pcItemMatching';
-import { separateAttachments, detachTokensFromParent } from './pcAttachmentOps';
+import { separateAttachments, detachTokensFromParent, sanitizeAttachmentBundles } from './pcAttachmentOps';
 import { storageAdapter } from '../sync/storageAdapter';
 
 /**
@@ -390,7 +390,9 @@ export async function prepareDepositSummary(
             if (parent && !isItemTrainer(parent)) {
                 finalSummary.savedTokenItem = parent;
                 const { characterTokens, accessoryTokens } = separateAttachments(sceneItems, parent.id);
-                finalSummary.attachedItems = accessoryTokens.map((c) => calculateRelativeAttachment(parent, c));
+                finalSummary.attachedItems = sanitizeAttachmentBundles(
+                    accessoryTokens.map((c) => calculateRelativeAttachment(parent, c))
+                );
                 if (characterTokens.length > 0) {
                     await detachTokensFromParent(characterTokens, sceneItems);
                 }

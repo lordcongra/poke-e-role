@@ -36,6 +36,8 @@ const { BASE_ITEM_EFFECTS, getBaseItemEffect, applyItemUsageEffects, statusMatch
 const { createInventorySlice } = await import('../src/store/slices/inventorySlice');
 const { getTrainerItemTargets, applyItemToPokemonTarget } = await import('../src/utils/items/itemTargeting');
 const { METADATA_ID } = await import('../src/hooks/owlbearSync/owlbearSyncConstants');
+const { getAccessoryIdentityKey, sanitizeAttachmentBundles, hasAttachmentDiff, reconcileTokenAttachmentsOnScene } =
+    await import('../src/utils/pc/pcAttachmentOps');
 
 /**
  * Automated Verification Suite for Token Metadata & Serialization Invariants.
@@ -1421,6 +1423,231 @@ await runTest(
         assert.ok(updatedSummary.savedTokenItem);
         assert.equal(updatedSummary.savedTokenItem.metadata[METADATA_ID]['hp-curr'], 3);
         assert.equal(updatedSummary.savedTokenItem.metadata[METADATA_ID]['current-hp'], 3);
+    }
+);
+
+await runTest('attachments: getAccessoryIdentityKey extracts stable keys by source ID, image, name, or text', () => {
+    const itemWithSourceId = {
+        id: 't-1',
+        metadata: { 'pokerole-pmd-extension/source-item-id': 'orig-clay-42' }
+    } as any;
+    assert.equal(getAccessoryIdentityKey(itemWithSourceId), 'source:orig-clay-42');
+
+    const itemWithImage = {
+        id: 't-2',
+        image: { url: 'https://example.com/light_clay.png' }
+    } as any;
+    assert.equal(getAccessoryIdentityKey(itemWithImage), 'img:https://example.com/light_clay.png');
+
+    const itemWithName = {
+        id: 't-3',
+        name: 'Light Clay'
+    } as any;
+    assert.equal(getAccessoryIdentityKey(itemWithName), 'name:Light Clay');
+
+    const itemWithText = {
+        id: 't-4',
+        text: { plainText: 'Label Prop' }
+    } as any;
+    assert.equal(getAccessoryIdentityKey(itemWithText), 'text:Label Prop');
+
+    const bareItem = { id: 't-5' } as any;
+    assert.equal(getAccessoryIdentityKey(bareItem), 'id:t-5');
+});
+
+await runTest('attachments: sanitizeAttachmentBundles deduplicates by identity and caps at 30 items', () => {
+    const duplicateBundles = Array.from({ length: 15 }, (_, i) => ({
+        item: {
+            id: `item-${i}`,
+            image: { url: 'https://example.com/light_clay.png' },
+            name: 'Light Clay'
+        } as any,
+        relativeOffset: { x: 10, y: 10 },
+        relativeRotation: 0,
+        relativeScale: { x: 1, y: 1 }
+    }));
+
+    const sanitizedSingle = sanitizeAttachmentBundles(duplicateBundles);
+    // All 15 share the exact same image URL AND exact same relative offset (10, 10), so only 1 should survive
+    assert.equal(sanitizedSingle.length, 1);
+    assert.equal(sanitizedSingle[0].item.id, 'item-0');
+
+    // Test intentional identical attachments: two bows with identical image URL but placed at different offsets (left ear vs right ear)
+    const intentionalBows = [
+        {
+            item: { id: 'bow-left', image: { url: 'https://example.com/pink_bow.png' }, name: 'Pink Bow' } as any,
+            relativeOffset: { x: -25, y: -15 },
+            relativeRotation: 0,
+            relativeScale: { x: 1, y: 1 }
+        },
+        {
+            item: { id: 'bow-right', image: { url: 'https://example.com/pink_bow.png' }, name: 'Pink Bow' } as any,
+            relativeOffset: { x: 25, y: -15 },
+            relativeRotation: 0,
+            relativeScale: { x: 1, y: 1 }
+        }
+    ];
+    const sanitizedBows = sanitizeAttachmentBundles(intentionalBows);
+    // Both bows must be preserved because their positions are distinctly different
+    assert.equal(sanitizedBows.length, 2);
+    assert.equal(sanitizedBows[0].item.id, 'bow-left');
+    assert.equal(sanitizedBows[1].item.id, 'bow-right');
+
+    // Test ceiling cap with 35 unique accessories
+    const uniqueBundles = Array.from({ length: 35 }, (_, i) => ({
+        item: {
+            id: `item-${i}`,
+            image: { url: `https://example.com/item_${i}.png` },
+            name: `Item ${i}`
+        } as any,
+        relativeOffset: { x: i * 2, y: i * 2 },
+        relativeRotation: 0,
+        relativeScale: { x: 1, y: 1 }
+    }));
+
+    const sanitizedCapped = sanitizeAttachmentBundles(uniqueBundles);
+    assert.equal(sanitizedCapped.length, 30);
+});
+
+await runTest(
+    'attachments: reconcileTokenAttachmentsOnScene self-heals stacked duplicates while preserving intentional identical attachments',
+    () => {
+        const parent = {
+            id: 'poke-1',
+            layer: 'CHARACTER',
+            position: { x: 100, y: 100 },
+            scale: { x: 1, y: 1 },
+            rotation: 0
+        } as any;
+
+        // 5 duplicate Light Clay tokens stacked at exact same coordinates (110, 110)
+        const duplicateProps = Array.from({ length: 5 }, (_, i) => ({
+            id: `prop-${i}`,
+            layer: 'PROP',
+            attachedTo: 'poke-1',
+            image: { url: 'https://example.com/light_clay.png' },
+            name: 'Light Clay',
+            position: { x: 110, y: 110 },
+            scale: { x: 1, y: 1 },
+            rotation: 0
+        }));
+
+        // Plus 1 intentional bow on left ear and 1 intentional bow on right ear (same image URL, different positions)
+        const intentionalBow1 = {
+            id: 'live-bow-1',
+            layer: 'PROP',
+            attachedTo: 'poke-1',
+            image: { url: 'https://example.com/bow.png' },
+            name: 'Bow',
+            position: { x: 75, y: 85 },
+            scale: { x: 1, y: 1 },
+            rotation: 0
+        };
+        const intentionalBow2 = {
+            id: 'live-bow-2',
+            layer: 'PROP',
+            attachedTo: 'poke-1',
+            image: { url: 'https://example.com/bow.png' },
+            name: 'Bow',
+            position: { x: 125, y: 85 },
+            scale: { x: 1, y: 1 },
+            rotation: 0
+        };
+
+        const sceneItems = [parent, ...duplicateProps, intentionalBow1, intentionalBow2];
+
+        const desiredBundle = [
+            {
+                item: {
+                    id: 'orig-clay',
+                    image: { url: 'https://example.com/light_clay.png' },
+                    name: 'Light Clay'
+                } as any,
+                relativeOffset: { x: 10, y: 10 },
+                relativeRotation: 0,
+                relativeScale: { x: 1, y: 1 }
+            },
+            {
+                item: {
+                    id: 'orig-bow-1',
+                    image: { url: 'https://example.com/bow.png' },
+                    name: 'Bow'
+                } as any,
+                relativeOffset: { x: -25, y: -15 },
+                relativeRotation: 0,
+                relativeScale: { x: 1, y: 1 }
+            },
+            {
+                item: {
+                    id: 'orig-bow-2',
+                    image: { url: 'https://example.com/bow.png' },
+                    name: 'Bow'
+                } as any,
+                relativeOffset: { x: 25, y: -15 },
+                relativeRotation: 0,
+                relativeScale: { x: 1, y: 1 }
+            }
+        ];
+
+        const result = reconcileTokenAttachmentsOnScene(parent, desiredBundle, sceneItems, false);
+
+        // 4 stacked duplicate Light Clay tokens should be marked for deletion (prop-1, prop-2, prop-3, prop-4)
+        assert.equal(result.idsToDelete.length, 4);
+        assert.deepEqual(result.idsToDelete, ['prop-1', 'prop-2', 'prop-3', 'prop-4']);
+
+        // Both intentional bows and prop-0 are kept on the scene, so 0 new items need to be added!
+        assert.equal(result.itemsToAdd.length, 0);
+    }
+);
+
+await runTest(
+    'attachments: hasAttachmentDiff handles horizontal scale flip sign inversions without diff runaway',
+    () => {
+        const normalBundle = [
+            {
+                item: {
+                    id: 'clay-1',
+                    image: { url: 'https://example.com/light_clay.png' },
+                    name: 'Light Clay'
+                } as any,
+                relativeOffset: { x: 20, y: 15 },
+                relativeRotation: 0,
+                relativeScale: { x: 1, y: 1 }
+            }
+        ];
+
+        // When horizontally flipped by Flip! extension, relativeOffset.x and relativeScale.x invert sign
+        const flippedBundle = [
+            {
+                item: {
+                    id: 'clay-1',
+                    image: { url: 'https://example.com/light_clay.png' },
+                    name: 'Light Clay'
+                } as any,
+                relativeOffset: { x: -20, y: 15 },
+                relativeRotation: 0,
+                relativeScale: { x: -1, y: 1 }
+            }
+        ];
+
+        // hasAttachmentDiff should recognize this as a horizontal flip, NOT a changed attachment position!
+        const isDiff = hasAttachmentDiff(normalBundle, flippedBundle);
+        assert.equal(isDiff, false);
+
+        // A real position shift (e.g. y offset moved from 15 to 45) MUST still trigger diff
+        const movedBundle = [
+            {
+                item: {
+                    id: 'clay-1',
+                    image: { url: 'https://example.com/light_clay.png' },
+                    name: 'Light Clay'
+                } as any,
+                relativeOffset: { x: 20, y: 45 },
+                relativeRotation: 0,
+                relativeScale: { x: 1, y: 1 }
+            }
+        ];
+        assert.equal(hasAttachmentDiff(normalBundle, movedBundle), true);
     }
 );
 

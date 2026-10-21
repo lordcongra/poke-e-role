@@ -155,7 +155,7 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
 
                         // Reconcile scene tokens so any outdated map tokens instantly adopt the newer player PC info
                         if (OBR.isAvailable) {
-                            const sceneItems = await OBR.scene.items.getItems((i) => i.layer === 'CHARACTER');
+                            const sceneItems = await OBR.scene.items.getItems();
                             await reconcileSceneTokens(sceneItems, 'GM');
                         }
                     }
