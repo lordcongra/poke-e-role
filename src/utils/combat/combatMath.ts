@@ -50,10 +50,8 @@ export function getPainPenalty(
         if (buffs.ignorePain) return 0;
     }
 
-    const normalizedAttribute = String(attribute || '')
-        .toLowerCase()
-        .trim();
-    if (normalizedAttribute === 'vit' || normalizedAttribute === 'will') return 0;
+    const mappedAttr = (ATTRIBUTE_MAPPING[attribute] || attribute || '').toLowerCase().trim();
+    if (mappedAttr === 'vit' || mappedAttr === 'vitality' || mappedAttr === 'will') return 0;
 
     const currentHealth = Number(state.health.hpCurr) || 0;
     const maxHealth = Math.max(1, Number(state.health.hpMax) || 1);

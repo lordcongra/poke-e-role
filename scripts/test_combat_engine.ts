@@ -181,6 +181,13 @@ async function runCombatEngineTests() {
     const painWithIgnoreTag = getPainPenalty('str', useCharacterStore.getState(), ignorePainBuffs);
     assert(painWithIgnoreTag === 0, '[Ignore Pain] tag negates pain penalty at 1 HP');
 
+    // Test Vitality and Will exemptions (full names and abbreviations)
+    assert(getPainPenalty('vit', useCharacterStore.getState()) === 0, 'Pain Penalty exempts "vit" at 1 HP');
+    assert(getPainPenalty('Vitality', useCharacterStore.getState()) === 0, 'Pain Penalty exempts "Vitality" at 1 HP');
+    assert(getPainPenalty('vitality', useCharacterStore.getState()) === 0, 'Pain Penalty exempts "vitality" at 1 HP');
+    assert(getPainPenalty('will', useCharacterStore.getState()) === 0, 'Pain Penalty exempts "will" at 1 HP');
+    assert(getPainPenalty('Will', useCharacterStore.getState()) === 0, 'Pain Penalty exempts "Will" at 1 HP');
+
     // ----------------------------------------------------
     // TEST SUITE 3: Action Counters & First Hit Tracking
     // ----------------------------------------------------
