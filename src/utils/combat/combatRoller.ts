@@ -327,11 +327,41 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     // Append the limit parameter as the third chunk of the payload so the interceptor can catch it!
     const payload = isValidForBank ? `${move.id}_${itemBuffs.accFaceAddsDmg}_${itemBuffs.accFaceAddsDmgLimit}` : '';
 
+    // Calculate Chance Dice from move action, description, tags, item bonuses, and global trackers
+    const action = move.attackAction;
+    let parsedChance = 0;
+    let parsedEffect = '';
+    const descText = move.desc || '';
+    const chanceMatch = descText.match(/roll\s*(\d+)\s*chance\s*die(?:s)?\s*(?:to|for)\s*([^.]+)/i);
+    if (chanceMatch) {
+        parsedChance = parseInt(chanceMatch[1], 10) || 0;
+        parsedEffect = chanceMatch[2].trim();
+    } else {
+        const tagMatch = descText.match(/\[\s*chance\s*(\d+)(?::\s*([^\]]+))?\s*\]/i);
+        if (tagMatch) {
+            parsedChance = parseInt(tagMatch[1], 10) || 0;
+            parsedEffect = tagMatch[2]?.trim() || '';
+        }
+    }
+    const baseChance = action?.chanceDice ?? (parsedChance > 0 ? parsedChance : undefined);
+    const resolvedEffect = action?.chanceEffect || parsedEffect || undefined;
+    const globalChance = state.trackers.globalChance || 0;
+    const totalChance = (baseChance !== undefined ? baseChance : 0) + itemBuffs.chance + globalChance;
+
+    const chanceOptions =
+        totalChance > 0 && (baseChance !== undefined || itemBuffs.chance > 0 || globalChance > 0)
+            ? {
+                  chanceDice: totalChance,
+                  chanceEffect: resolvedEffect || 'Added Effect'
+              }
+            : undefined;
+
     await rollDicePlus(
         `${Math.max(1, dicePool)}d6>3${mathModifier}`,
         `${nickname} rolled ${move.name || 'a Move'} (Acc)!${finalTags}`,
         rollType,
-        payload
+        payload,
+        chanceOptions
     );
 }
 

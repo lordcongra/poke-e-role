@@ -7,6 +7,7 @@ import type {
     SkillData,
     SkillCheck,
     MoveData,
+    ItemAttackAction,
     StatusItem,
     EffectItem,
     InventoryItem,
@@ -225,6 +226,7 @@ export interface InventorySlice {
         gainTempHp?: number;
         dungeonPassive?: string;
         inflictsStatus?: string[];
+        attackAction?: ItemAttackAction;
     }) => void;
     updateInventoryItem: <K extends keyof InventoryItem>(id: string, field: K, value: InventoryItem[K]) => void;
     removeInventoryItem: (id: string) => void;
@@ -237,6 +239,7 @@ export interface InventorySlice {
     updateCustomInfo: (id: string, field: keyof CustomInfo, value: string) => void;
     removeCustomInfo: (id: string) => void;
     useInventoryItem: (id: string, options?: { chosenStat?: string }) => void;
+    consumeItemCharge: (id: string) => void;
 }
 
 export interface PassivesSlice {

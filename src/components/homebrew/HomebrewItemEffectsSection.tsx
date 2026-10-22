@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomItem } from '../../store/entityTypes';
 import { CORE_CURABLE_STATUSES } from '../../utils/items/itemCharges';
+import { ItemAttackActionConfig } from '../items/ItemAttackActionConfig';
 import {
     ChevronDown,
     ChevronUp,
@@ -48,7 +49,8 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
         item.statDebuff ||
         item.gainTempHp ||
         item.dungeonPassive ||
-        (item.inflictsStatus && item.inflictsStatus.length > 0)
+        (item.inflictsStatus && item.inflictsStatus.length > 0) ||
+        Boolean(item.attackAction)
     );
     const [isExpanded, setIsExpanded] = useState(() => hasConfigured);
 
@@ -434,6 +436,13 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
                                 })}
                         </div>
                     </div>
+
+                    {/* Attack / Move Action */}
+                    <ItemAttackActionConfig
+                        attackAction={item.attackAction}
+                        onChange={(action) => updateCustomItem(item.id, 'attackAction', action)}
+                        canEdit={canEdit}
+                    />
                 </div>
             )}
         </div>

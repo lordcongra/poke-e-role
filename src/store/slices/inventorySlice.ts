@@ -7,7 +7,7 @@ import { getBaseItemCharges, getItemEffectiveCharges, consumeChargeFromInventory
 import { applyItemUsageEffects } from '../../utils/items/itemUsageEffects';
 import { broadcastInfo } from '../../utils/combat/diceRoller';
 
-import { syncHealthWill, applyUsageToState } from '../../utils/items/inventoryItemOps';
+import { syncHealthWill, applyUsageToState, drainInventoryItemCharge } from '../../utils/items/inventoryItemOps';
 
 export const createInventorySlice: StateCreator<CharacterState, [], [], InventorySlice> = (set) => ({
     inventory: [],
@@ -60,6 +60,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             const resolvedGainTempHp = item.gainTempHp ?? customMatch?.gainTempHp;
             const resolvedDungeonPassive = item.dungeonPassive ?? customMatch?.dungeonPassive;
             const resolvedInflictsStatus = item.inflictsStatus ?? customMatch?.inflictsStatus;
+            const resolvedAttackAction = item.attackAction ?? customMatch?.attackAction;
 
             const newInventory: InventoryItem[] = [
                 ...state.inventory,
@@ -82,7 +83,8 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
                     statDebuff: resolvedStatDebuff,
                     gainTempHp: resolvedGainTempHp,
                     dungeonPassive: resolvedDungeonPassive,
-                    inflictsStatus: resolvedInflictsStatus
+                    inflictsStatus: resolvedInflictsStatus,
+                    attackAction: resolvedAttackAction
                 }
             ];
             const updatesToSave: Record<string, unknown> = { 'inv-data': JSON.stringify(newInventory) };
@@ -371,5 +373,23 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             });
 
             return partialState;
+        }),
+
+    consumeItemCharge: (id: string) =>
+        set((state) => {
+            const item = state.inventory.find((i) => i.id === id);
+            if (!item) return state;
+
+            const nextInventory = drainInventoryItemCharge(state.inventory, id);
+            const updatesToSave: Record<string, unknown> = { 'inv-data': JSON.stringify(nextInventory) };
+            const { health, will } = syncHealthWill(state, nextInventory, updatesToSave);
+
+            try {
+                saveToOwlbear(updatesToSave);
+            } catch (error) {
+                console.error('[InventorySlice] Failed to save consumed charge to Owlbear:', error);
+            }
+
+            return { inventory: nextInventory, health, will };
         })
 });

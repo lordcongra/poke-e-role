@@ -1,3 +1,5 @@
+import type { ItemAttackAction } from '../../store/entityTypes';
+
 export interface LocalIndexItem {
     name: string;
     path: string;
@@ -121,6 +123,7 @@ export interface ItemApiResponse {
     gainTempHp?: number;
     dungeonPassive?: string;
     inflictsStatus?: string[];
+    attackAction?: ItemAttackAction;
 }
 
 export interface NatureApiResponse {

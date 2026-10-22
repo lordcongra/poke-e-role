@@ -1,0 +1,96 @@
+.item-attack-action-config {
+    margin-top: 8px;
+    border: 1px solid var(--panel-alt, #374151);
+    border-radius: 6px;
+    background: var(--bg, #111827);
+    overflow: hidden;
+}
+
+.item-attack-action-config__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: var(--panel-bg, #1f2937);
+    cursor: pointer;
+    user-select: none;
+    gap: 8px;
+}
+
+.item-attack-action-config__header-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.item-attack-action-config__badge {
+    font-size: 0.72rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--primary, #3b82f6);
+    color: #fff;
+    font-weight: 500;
+}
+
+.item-attack-action-config__header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.item-attack-action-config__body {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1px solid var(--panel-alt, #374151);
+}
+
+.item-attack-action-config__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.item-attack-action-config__field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 90px;
+}
+
+.item-attack-action-config__label {
+    font-size: 0.75rem;
+    color: var(--text-muted, #9ca3af);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.item-attack-action-config__input,
+.item-attack-action-config__select {
+    padding: 4px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--panel-alt, #374151);
+    background: var(--panel-bg, #1f2937);
+    color: var(--text-main, #f3f4f6);
+    font-size: 0.82rem;
+    min-width: 0;
+}
+
+.item-attack-action-config__input:focus,
+.item-attack-action-config__select:focus {
+    outline: none;
+    border-color: var(--primary, #3b82f6);
+}
+
+.item-attack-action-config__enable-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}

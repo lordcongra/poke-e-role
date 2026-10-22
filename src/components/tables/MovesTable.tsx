@@ -21,6 +21,7 @@ import { CollapsingSection } from '../ui/CollapsingSection';
 import { GlobalModifiersModal } from '../modals/combat/GlobalModifiersModal';
 import { MovesTableModifiers } from './MovesTableModifiers';
 import { MovesTableLearnset } from './MovesTableLearnset';
+import { ItemMovesDrawer } from './learnset/ItemMovesDrawer';
 import { DualScaleModal } from '../modals/combat/DualScaleModal';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { Plus, AlertTriangle, Trash2, XCircle, Check } from 'lucide-react';
@@ -256,6 +257,7 @@ export function MovesTable() {
                 </button>
 
                 <MovesTableLearnset learnset={learnset} />
+                <ItemMovesDrawer onTarget={handleTargetClick} />
             </CollapsingSection>
 
             {showModifiersModal && (

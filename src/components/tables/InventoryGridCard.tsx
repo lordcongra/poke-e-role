@@ -6,7 +6,8 @@ import { useItemArt } from '../../utils/graphics/itemArtCatalog';
 import { getItemEffectiveCharges } from '../../utils/items/itemCharges';
 import { isItemUsable } from '../../utils/items/itemUsageEffects';
 import { ItemChargeBadge } from './ItemChargeBadge';
-import { Check, Package, Sparkles, X } from 'lucide-react';
+import { Check, Package, Sparkles, X, Swords } from 'lucide-react';
+import { resolveItemAttackAction, executeItemAttackRoll } from '../../utils/items/itemAttackRoller';
 import './InventoryGridCard.css';
 
 interface InventoryGridCardProps {
@@ -30,6 +31,9 @@ export const InventoryGridCard = memo(function InventoryGridCard({
 
     const effectiveCharges = getItemEffectiveCharges(item);
     const canUse = isItemUsable(item);
+    const roomCustomItems = useCharacterStore((state) => state.roomCustomItems);
+    const attackAction = resolveItemAttackAction(item, roomCustomItems);
+    const isAttackDepleted = (effectiveCharges.hasCharges && effectiveCharges.charges <= 0) || (item.qty ?? 1) <= 0;
 
     const knownArt = useItemArt(item.name);
     const effectiveImageUrl =
@@ -110,6 +114,27 @@ export const InventoryGridCard = memo(function InventoryGridCard({
                             aria-label={`Use ${item.name || 'Item'}`}
                         >
                             <Sparkles size={11} />
+                        </button>
+                    )}
+
+                    {attackAction && (
+                        <button
+                            type="button"
+                            className="inventory-grid-card__use-btn"
+                            disabled={isAttackDepleted}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (isAttackDepleted) return;
+                                executeItemAttackRoll(item, attackAction);
+                            }}
+                            title={
+                                isAttackDepleted
+                                    ? 'Item depleted (0 charges or quantity remaining)'
+                                    : `Attack / Throw ${item.name || 'Item'}`
+                            }
+                            aria-label={`Attack / Throw ${item.name || 'Item'}`}
+                        >
+                            <Swords size={11} />
                         </button>
                     )}
                 </div>

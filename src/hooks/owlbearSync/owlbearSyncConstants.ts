@@ -48,6 +48,9 @@ export interface RollSyncData {
     isDirectDamage?: boolean;
     isTarget?: boolean;
     applyDamage?: boolean;
+    chanceDice?: number;
+    chanceEffect?: string;
+    chanceRolled?: boolean;
 }
 
 export interface TransformData {

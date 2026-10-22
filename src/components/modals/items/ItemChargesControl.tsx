@@ -12,6 +12,7 @@ import { ItemTargetPromptModal } from './ItemTargetPromptModal';
 import { ItemStatChoiceModal } from './ItemStatChoiceModal';
 import { NumberSpinner } from '../../ui/NumberSpinner';
 import { RotateCcw, Sparkles, ChevronDown, ChevronUp, Heart, Zap, ShieldAlert } from 'lucide-react';
+import { ItemAttackActionConfig } from '../../items/ItemAttackActionConfig';
 
 interface ItemChargesControlProps {
     item: InventoryItem;
@@ -37,7 +38,7 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
 
     const isChargesActive =
         typeof item.charges === 'number' || typeof item.maxCharges === 'number' || effective.hasCharges;
-    const hasEffects = hasItemUsageEffect(item);
+    const hasEffects = hasItemUsageEffect(item) || Boolean(item.attackAction);
     const [showEffects, setShowEffects] = useState(() => hasEffects);
 
     const handleToggleHasCharges = (checked: boolean) => {
@@ -259,6 +260,11 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
                             })}
                         </div>
                     </div>
+
+                    <ItemAttackActionConfig
+                        attackAction={item.attackAction}
+                        onChange={(action) => updateInventoryItem(item.id, 'attackAction', action)}
+                    />
                 </div>
             )}
 

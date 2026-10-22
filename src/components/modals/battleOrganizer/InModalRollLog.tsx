@@ -24,6 +24,7 @@ import { parseRollLogEntry } from './battleOrganizerUtils';
 import { parseRollLabel } from '../../../utils/combat/rollLogParser';
 import { detectMoveFieldEffect } from '../../../utils/combat/fieldEffectsData';
 import { clearRollLogCache } from '../../../utils/combat/rollLogSync';
+import { executeChanceRoll } from '../../../utils/combat/diceRoller';
 import { RollFactorsModal } from '../rollFactors';
 import './InModalRollLog.css';
 
@@ -36,6 +37,9 @@ export interface RollLogEntry {
     result: string;
     icon: string;
     rollType?: string;
+    chanceDice?: number;
+    chanceEffect?: string;
+    chanceRolled?: boolean;
 }
 
 export type RollLogFontSize = 'sm' | 'md' | 'lg' | 'xl';
@@ -473,6 +477,33 @@ export function InModalRollLog({
                                     </div>
 
                                     <div className="in-modal-roll-log__result">{r.result}</div>
+
+                                    {r.chanceDice && r.chanceDice > 0 && (
+                                        <div style={{ marginTop: '5px', marginBottom: '4px' }}>
+                                            <button
+                                                type="button"
+                                                className="in-modal-roll-log__choice-btn in-modal-roll-log__choice-btn--yes"
+                                                style={{ width: '100%', justifyContent: 'center', gap: '5px', padding: '4px 8px' }}
+                                                disabled={r.chanceRolled}
+                                                onClick={() => executeChanceRoll(r as import('../../../hooks/owlbearSync/owlbearSyncConstants').RollSyncData)}
+                                                title={
+                                                    r.chanceRolled
+                                                        ? 'Chance dice already rolled for this action'
+                                                        : `Roll ${r.chanceDice}d6 needing 6 for ${r.chanceEffect || 'Effect'}`
+                                                }
+                                            >
+                                                {r.chanceRolled ? (
+                                                    <>
+                                                        <Check size={11} /> Chance Rolled ({r.chanceDice}d6)
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Sparkles size={11} /> Roll Chance Dice ({r.chanceDice}d6, Need 6)
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    )}
 
                                     {/* Action Rolls from Action Rolls menu: Confirm if user wants to add to round tracker / action counter */}
                                     {matchedCombatant && isActionRoll && onMarkAction && (

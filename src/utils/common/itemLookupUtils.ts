@@ -7,7 +7,7 @@ import { isStandaloneMode } from '../sync/storageAdapter';
 import { getBaseItemCharges } from '../items/itemCharges';
 import { getBaseItemEffect } from '../items/itemUsageEffects';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import type { CustomItem } from '../../store/entityTypes';
+import type { CustomItem, ItemAttackAction } from '../../store/entityTypes';
 
 export interface ItemLookupResult {
     found: boolean;
@@ -31,6 +31,7 @@ export interface ItemLookupResult {
     gainTempHp?: number;
     dungeonPassive?: string;
     inflictsStatus?: string[];
+    attackAction?: ItemAttackAction;
 }
 
 /**
@@ -153,6 +154,7 @@ export async function lookupItemDetails(rawName: string): Promise<ItemLookupResu
     const gainTempHp = customItem?.gainTempHp ?? data?.gainTempHp;
     const dungeonPassive = customItem?.dungeonPassive ?? data?.dungeonPassive;
     const inflictsStatus = customItem?.inflictsStatus ?? data?.inflictsStatus;
+    const attackAction = customItem?.attackAction ?? data?.attackAction;
 
     const effectiveImageUrl = customItem?.imageUrl || knownArt;
 
@@ -174,7 +176,8 @@ export async function lookupItemDetails(rawName: string): Promise<ItemLookupResu
         statDebuff,
         gainTempHp,
         dungeonPassive,
-        inflictsStatus
+        inflictsStatus,
+        attackAction
     };
 }
 

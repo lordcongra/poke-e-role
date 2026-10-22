@@ -9,7 +9,8 @@ import type { InventoryItem } from '../../store/storeTypes';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { ItemChargeBadge } from './ItemChargeBadge';
 import { KNOWN_ITEMS } from '../../data/constants';
-import { Info, Tag, ChevronUp, ChevronDown, X, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { Info, Tag, ChevronUp, ChevronDown, X, Image as ImageIcon, Sparkles, Swords } from 'lucide-react';
+import { resolveItemAttackAction, executeItemAttackRoll } from '../../utils/items/itemAttackRoller';
 import { extractItemTags } from '../modals/items/tagBuilder/tagBuilderLogic';
 import { TagPillList } from '../ui/TagPillList';
 import './InventoryTable.css';
@@ -44,6 +45,9 @@ export function InventoryItemRow({
 
     const effectiveCharges = getItemEffectiveCharges(item);
     const canUse = isItemUsable(item);
+    const roomCustomItems = useCharacterStore((state) => state.roomCustomItems);
+    const attackAction = resolveItemAttackAction(item, roomCustomItems);
+    const isAttackDepleted = (effectiveCharges.hasCharges && effectiveCharges.charges <= 0) || (item.qty ?? 1) <= 0;
 
     const [localName, setLocalName] = useState(item.name);
     const [resolvedImg, setResolvedImg] = useState<string | null>(null);
@@ -113,19 +117,10 @@ export function InventoryItemRow({
             }
             if (result.tags) update(item.id, 'tags', result.tags);
             if (/\[.*?\]/.test(item.desc)) {
-                update(
-                    item.id,
-                    'desc',
-                    item.desc
-                        .replace(/\[.*?\]/g, '')
-                        .replace(/\n\s*\n+/g, '\n')
-                        .trim()
-                );
+                update(item.id, 'desc', item.desc.replace(/\[.*?\]/g, '').replace(/\n\s*\n+/g, '\n').trim());
             }
             const targetImg = result.imageUrl || getItemArt(result.name) || getItemArt(query);
-            if (targetImg && (!item.imageUrl || item.imageUrl === 'none')) {
-                update(item.id, 'imageUrl', targetImg);
-            }
+            if (targetImg && (!item.imageUrl || item.imageUrl === 'none')) update(item.id, 'imageUrl', targetImg);
             if (result.charges !== undefined) {
                 update(item.id, 'charges', result.charges);
                 update(item.id, 'maxCharges', result.maxCharges);
@@ -133,6 +128,7 @@ export function InventoryItemRow({
             if (result.healHp !== undefined) update(item.id, 'healHp', result.healHp);
             if (result.healWill !== undefined) update(item.id, 'healWill', result.healWill);
             if (result.cures !== undefined) update(item.id, 'cures', result.cures);
+            if (result.attackAction !== undefined) update(item.id, 'attackAction', result.attackAction);
         } catch (e) {
             console.error('[InventoryItemRow] Failed to lookup item info:', e);
         }
@@ -245,6 +241,22 @@ export function InventoryItemRow({
                             <Sparkles size={14} />
                         </button>
                     )}
+                    {attackAction && (
+                        <button
+                            type="button"
+                            className="action-button action-button--ghost action-button--xs inventory-item__icon-btn inventory-item__icon-btn--attack"
+                            disabled={isAttackDepleted}
+                            onClick={() => executeItemAttackRoll(item, attackAction)}
+                            title={
+                                isAttackDepleted
+                                    ? 'Item depleted (0 charges or quantity remaining)'
+                                    : `Attack / Throw ${item.name || 'Item'}`
+                            }
+                            aria-label={`Attack / Throw ${item.name || 'Item'}`}
+                        >
+                            <Swords size={14} />
+                        </button>
+                    )}
                     <button
                         type="button"
                         className="action-button action-button--ghost inventory-item__icon-btn inventory-item__icon-btn--info"
@@ -326,32 +338,15 @@ export function InventoryItemRow({
                                     setTagBuilderData({ id: item.id, type: 'item', initialTag: tagStr })
                                 }
                                 onDeleteTag={(rawTag, tagIndex) => {
-                                    const currentTags =
-                                        item.tags !== undefined
-                                            ? item.tags
-                                            : (item.desc.match(/\[[^\]]+\]/g) || []).join(' ');
-                                    let updated = currentTags;
-                                    if (typeof tagIndex === 'number') {
-                                        let count = 0;
-                                        updated = currentTags.replace(/\[[^\]]+\]/g, (match) => {
-                                            if (count === tagIndex) {
-                                                count++;
-                                                return '';
-                                            }
-                                            count++;
-                                            return match;
-                                        });
-                                    } else {
-                                        updated = currentTags.replace(rawTag, '');
-                                    }
-                                    updated = updated.replace(/\s+/g, ' ').trim();
+                                    const currentTags = item.tags !== undefined ? item.tags : (item.desc.match(/\[[^\]]+\]/g) || []).join(' ');
+                                    let count = 0;
+                                    const updated = (typeof tagIndex === 'number'
+                                        ? currentTags.replace(/\[[^\]]+\]/g, (m) => count++ === tagIndex ? '' : m)
+                                        : currentTags.replace(rawTag, '')
+                                    ).replace(/\s+/g, ' ').trim();
                                     updateInventoryItem(item.id, 'tags', updated);
                                     if (item.desc.includes(rawTag)) {
-                                        const cleanDesc = item.desc
-                                            .replace(rawTag, '')
-                                            .replace(/\n\s*\n+/g, '\n')
-                                            .trim();
-                                        updateInventoryItem(item.id, 'desc', cleanDesc);
+                                        updateInventoryItem(item.id, 'desc', item.desc.replace(rawTag, '').replace(/\n\s*\n+/g, '\n').trim());
                                     }
                                 }}
                                 showAddButton={false}

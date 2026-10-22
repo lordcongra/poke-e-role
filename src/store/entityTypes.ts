@@ -21,6 +21,19 @@ export interface SkillCheck {
     skill: string;
 }
 
+export interface ItemAttackAction {
+    category: 'Physical' | 'Special' | 'Status';
+    type: string;
+    power: number;
+    acc1: string;
+    acc2?: string;
+    dmg1?: string;
+    dmg2?: string;
+    tags?: string;
+    chanceDice?: number;
+    chanceEffect?: string;
+}
+
 export interface MoveData {
     id: string;
     active: boolean;
@@ -34,6 +47,7 @@ export interface MoveData {
     desc?: string;
     marker?: string;
     dualScaleSelected?: boolean;
+    attackAction?: ItemAttackAction;
 }
 
 export interface CharacterHealth {
@@ -92,6 +106,7 @@ export interface InventoryItem {
     gainTempHp?: number;
     dungeonPassive?: string;
     inflictsStatus?: string[];
+    attackAction?: ItemAttackAction;
 }
 
 export interface PassiveItem {
@@ -303,6 +318,7 @@ export interface CustomItem {
     gainTempHp?: number;
     dungeonPassive?: string;
     inflictsStatus?: string[];
+    attackAction?: ItemAttackAction;
 }
 
 export interface CustomMove {

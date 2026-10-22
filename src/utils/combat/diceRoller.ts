@@ -33,7 +33,8 @@ export function addRollLogEntry(
     tokenId?: string,
     rollType?: string,
     isCrit?: boolean,
-    explicitTargetVisibility?: string
+    explicitTargetVisibility?: string,
+    options?: { chanceDice?: number; chanceEffect?: string; chanceRolled?: boolean }
 ) {
     const activeTokenId = tokenId || useCharacterStore.getState().tokenId || undefined;
     const detectedCrit = isCrit !== undefined ? isCrit : /critical hit/i.test(result) || /critical hit/i.test(label);
@@ -53,7 +54,10 @@ export function addRollLogEntry(
         icon: icon || `${import.meta.env.BASE_URL || '/'}pokeball-token.svg`,
         rollType,
         targetVisibility,
-        isCrit: detectedCrit
+        isCrit: detectedCrit,
+        chanceDice: options?.chanceDice,
+        chanceEffect: options?.chanceEffect,
+        chanceRolled: options?.chanceRolled
     };
 
     broadcastRollLog(rollLogData).catch((e) => {
@@ -304,7 +308,13 @@ export async function broadcastInfo(title: string, description: string) {
     }
 }
 
-export async function rollDicePlus(notation: string, label: string, rollType = 'roll', payload = '') {
+export async function rollDicePlus(
+    notation: string,
+    label: string,
+    rollType = 'roll',
+    payload = '',
+    options?: { chanceDice?: number; chanceEffect?: string; chanceRolled?: boolean }
+) {
     const state = useCharacterStore.getState();
     const rawEngine = (state.identity.diceEngine as unknown as string) || 'car';
     if (rawEngine === 'dice-plus') {
@@ -418,6 +428,12 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 } else {
                     popupMessage = `[${asteriskResults.join(', ')}] -> ${finalSuccesses} Total Damage`;
                 }
+            } else if (rollType === 'chance') {
+                if (finalSuccesses > 0) {
+                    popupMessage = `[${asteriskResults.join(', ')}] -> ${finalSuccesses} Success${finalSuccesses === 1 ? '' : 'es'}! Effect Inflicted!`;
+                } else {
+                    popupMessage = `[${asteriskResults.join(', ')}] -> 0 Successes (No Effect)`;
+                }
             } else {
                 popupMessage = `[${asteriskResults.join(', ')}]${modStr} -> ${finalSuccesses} Successes`;
             }
@@ -524,7 +540,8 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 state.tokenId || undefined,
                 rollType,
                 isCrit,
-                targetVisibility
+                targetVisibility,
+                options
             );
             return;
         }
@@ -547,7 +564,10 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 icon,
                 rollType,
                 targetVisibility,
-                isCrit
+                isCrit,
+                chanceDice: options?.chanceDice,
+                chanceEffect: options?.chanceEffect,
+                chanceRolled: options?.chanceRolled
             };
             await broadcastRollLog(rollLogData);
             return;
@@ -614,7 +634,10 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 icon,
                 rollType,
                 targetVisibility,
-                isCrit
+                isCrit,
+                chanceDice: options?.chanceDice,
+                chanceEffect: options?.chanceEffect,
+                chanceRolled: options?.chanceRolled
             };
 
             await broadcastRollLog(rollLogData);
@@ -622,6 +645,40 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
     } catch (error) {
         console.error('[DiceRoller] Broadcast Error:', error);
     }
+}
+
+/**
+ * Executes a 1-click Chance Die roll (e.g. 1d6>5 needing 6):
+ * - Marks the roll entry as chanceRolled in localStorage roll cache
+ * - Dispatches local update events
+ * - Rolls dice via rollDicePlus with rollType 'chance'
+ */
+export async function executeChanceRoll(roll: import('../../hooks/owlbearSync/owlbearSyncConstants').RollSyncData): Promise<void> {
+    if (!roll.chanceDice || roll.chanceDice <= 0) return;
+    const charName = roll.characterName || roll.player || 'Someone';
+    const effectLabel = roll.chanceEffect ? ` for ${roll.chanceEffect}` : '';
+    const label = `[Chance Roll] ${charName} rolled Chance Dice${effectLabel}! (Need 6)`;
+
+    try {
+        const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+        if (Array.isArray(storedLog)) {
+            const updatedLog = storedLog.map((r: import('../../hooks/owlbearSync/owlbearSyncConstants').RollSyncData) =>
+                r.id === roll.id ? { ...r, chanceRolled: true } : r
+            );
+            localStorage.setItem('pkr_roll_log', JSON.stringify(updatedLog));
+            window.dispatchEvent(new Event('pkr-roll-log-update'));
+            window.dispatchEvent(new Event('storage'));
+        }
+    } catch (e) {
+        console.warn('[executeChanceRoll] Failed to update chanceRolled in roll log:', e);
+    }
+
+    await rollDicePlus(
+        `${roll.chanceDice}d6>5`,
+        label,
+        'chance',
+        roll.chanceEffect || ''
+    );
 }
 
 // Export alias for cleaner naming while maintaining backward compatibility with all callers

@@ -1,5 +1,6 @@
 import type { CharacterState, InventoryItem } from '../../store/storeTypes';
 import type { ItemUsageResult } from './itemUsageEffects';
+import { getItemEffectiveCharges, consumeChargeFromInventory } from './itemCharges';
 import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../combat/combatUtils';
 
 /**
@@ -186,4 +187,30 @@ export function applyUsageToState(
         },
         updatesToSave
     };
+}
+
+/**
+ * Drains 1 charge from an item (respecting destroyOnDepletion retention),
+ * or decrements quantity by 1 if the item has no charge bar.
+ */
+export function drainInventoryItemCharge(
+    inventory: InventoryItem[],
+    itemId: string
+): InventoryItem[] {
+    const item = inventory.find((i) => i.id === itemId);
+    if (!item) return inventory;
+
+    const effective = getItemEffectiveCharges(item);
+    if (effective.hasCharges) {
+        return consumeChargeFromInventory(inventory, itemId).newInventory;
+    }
+
+    const currentQty = item.qty ?? 1;
+    if (currentQty <= 1) {
+        if (item.destroyOnDepletion === false) {
+            return inventory.map((i) => (i.id === itemId ? { ...i, qty: 0 } : i));
+        }
+        return inventory.filter((i) => i.id !== itemId);
+    }
+    return inventory.map((i) => (i.id === itemId ? { ...i, qty: currentQty - 1 } : i));
 }
