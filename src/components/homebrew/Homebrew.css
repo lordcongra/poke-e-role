@@ -209,6 +209,7 @@
 
 .homebrew-list__desc {
     margin: 0;
+    flex-shrink: 0;
 }
 
 .homebrew-list__search-row {
@@ -216,6 +217,7 @@
     gap: 8px;
     align-items: center;
     flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
 .homebrew-list__search-input {
@@ -234,6 +236,7 @@
     border-color: var(--primary);
     white-space: nowrap;
     text-align: center;
+    flex-shrink: 0;
 }
 
 .homebrew-list__scroll-area {
@@ -242,6 +245,7 @@
     gap: 10px;
     overflow-y: auto;
     flex: 1;
+    min-height: 0;
     padding-right: 4px;
     overscroll-behavior: contain;
 }
@@ -257,6 +261,7 @@
     margin-top: auto;
     border-top: 1px solid var(--border);
     padding-top: 10px;
+    flex-shrink: 0;
 }
 
 /* --- Homebrew Cards (Shared) --- */

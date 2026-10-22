@@ -1,13 +1,21 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { loadLocalDataset } from '../../utils/api/api';
 import type { CustomItem } from '../../store/storeTypes';
 import { HomebrewItemCard } from './HomebrewItemCard';
+import { HomebrewAccordionSection } from './HomebrewAccordionSection';
+import { HomebrewCategoryFilterPills } from './HomebrewCategoryFilterPills';
+import {
+    getCustomItemClassification,
+    groupCustomItemsByAccordion,
+    getDistinctCategoryPills
+} from './homebrewItemUtils';
 import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { downloadJson } from '../../utils/common/fileSystemHelpers';
-import { Plus, Save, FolderOpen, AlertTriangle } from 'lucide-react';
+import { Plus, Save, FolderOpen, AlertTriangle, Layers, LayoutList, ChevronDown, ChevronUp } from 'lucide-react';
 import './Homebrew.css';
+import './HomebrewItems.css';
 
 export function HomebrewItems() {
     const storeRole = useCharacterStore((state) => state.role);
@@ -25,6 +33,9 @@ export function HomebrewItems() {
     const fileReference = useRef<HTMLInputElement>(null);
     const [importData, setImportData] = useState<CustomItem[] | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('All');
+    const [viewMode, setViewMode] = useState<'accordion' | 'flat'>('accordion');
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
     const [availableCategories, setAvailableCategories] = useState<string[]>([]);
 
     useEffect(() => {
@@ -39,8 +50,63 @@ export function HomebrewItems() {
         });
     }, [roomCustomItems]);
 
-    const visibleItems = roomCustomItems.filter((item) => role === 'GM' || !item.gmOnly);
-    const filteredItems = visibleItems.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    const availableCustomGroups = useMemo(() => {
+        return Array.from(
+            new Set(
+                roomCustomItems
+                    .map((i) => {
+                        const { topLevelGroup, isCustomPocket } = getCustomItemClassification(i);
+                        return isCustomPocket ? topLevelGroup : null;
+                    })
+                    .filter(Boolean) as string[]
+            )
+        ).sort();
+    }, [roomCustomItems]);
+
+    const availableSubCategories = useMemo(() => {
+        return Array.from(
+            new Set(roomCustomItems.map((i) => i.subCategory?.trim()).filter(Boolean) as string[])
+        ).sort();
+    }, [roomCustomItems]);
+
+    const visibleItems = useMemo(
+        () => roomCustomItems.filter((item) => role === 'GM' || !item.gmOnly),
+        [roomCustomItems, role]
+    );
+
+    const categoryPills = useMemo(() => getDistinctCategoryPills(visibleItems), [visibleItems]);
+
+    const filteredItems = useMemo(() => {
+        const query = searchQuery.trim().toLowerCase();
+        return visibleItems.filter((item) => {
+            if (selectedCategory !== 'All') {
+                const { topLevelGroup } = getCustomItemClassification(item);
+                if (topLevelGroup !== selectedCategory) return false;
+            }
+            if (query && !item.name.toLowerCase().includes(query)) {
+                return false;
+            }
+            return true;
+        });
+    }, [visibleItems, selectedCategory, searchQuery]);
+
+    const accordionSections = useMemo(() => groupCustomItemsByAccordion(filteredItems), [filteredItems]);
+
+    const handleExpandAll = () => {
+        const next: Record<string, boolean> = {};
+        accordionSections.forEach((s) => {
+            next[s.accordionKey] = true;
+        });
+        setExpandedGroups(next);
+    };
+
+    const handleCollapseAll = () => {
+        const next: Record<string, boolean> = {};
+        accordionSections.forEach((s) => {
+            next[s.accordionKey] = false;
+        });
+        setExpandedGroups(next);
+    };
 
     const handleExport = () => {
         downloadJson(visibleItems, 'pokerole_custom_items.json');
@@ -74,30 +140,92 @@ export function HomebrewItems() {
                 descriptions when selected!
             </p>
 
-            <div className="homebrew-list__search-row">
-                <input
-                    type="text"
-                    placeholder="Search Items..."
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    className="homebrew-list__search-input"
+            <div className="homebrew-items__toolbar">
+                <div className="homebrew-list__search-row">
+                    <input
+                        type="text"
+                        placeholder="Search Items..."
+                        value={searchQuery}
+                        onChange={(event) => setSearchQuery(event.target.value)}
+                        className="homebrew-list__search-input"
+                    />
+                    {canEdit && (
+                        <button
+                            onClick={() => {
+                                setSearchQuery('');
+                                setSelectedCategory('All');
+                                addCustomItem();
+                                setExpandedGroups((prev) => ({ ...prev, Custom: true }));
+                            }}
+                            className="action-button action-button--dark homebrew-list__create-btn"
+                        >
+                            <Plus size={16} /> Create New
+                        </button>
+                    )}
+                </div>
+
+                <HomebrewCategoryFilterPills
+                    pills={categoryPills}
+                    selectedCategory={selectedCategory}
+                    onSelectCategory={setSelectedCategory}
                 />
-                {canEdit && (
-                    <button
-                        onClick={() => {
-                            setSearchQuery('');
-                            addCustomItem();
-                        }}
-                        className="action-button action-button--dark homebrew-list__create-btn"
-                    >
-                        <Plus size={16} /> Create New
-                    </button>
-                )}
+
+                <div className="homebrew-controls-row">
+                    <div className="homebrew-view-toggles" role="group" aria-label="View Mode">
+                        <button
+                            type="button"
+                            onClick={() => setViewMode('accordion')}
+                            className={`homebrew-toggle-btn ${viewMode === 'accordion' ? 'homebrew-toggle-btn--active' : ''}`}
+                            title="Grouped Accordion View"
+                        >
+                            <Layers size={14} /> Accordion
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setViewMode('flat')}
+                            className={`homebrew-toggle-btn ${viewMode === 'flat' ? 'homebrew-toggle-btn--active' : ''}`}
+                            title="Flat Cards View"
+                        >
+                            <LayoutList size={14} /> Flat Cards
+                        </button>
+                    </div>
+
+                    {viewMode === 'accordion' && accordionSections.length > 0 && (
+                        <div className="homebrew-accordion-actions">
+                            <button
+                                type="button"
+                                onClick={handleExpandAll}
+                                className="homebrew-accordion-toggle-all"
+                                title="Expand all category sections"
+                            >
+                                <ChevronDown size={14} /> Expand All
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleCollapseAll}
+                                className="homebrew-accordion-toggle-all"
+                                title="Collapse all category sections"
+                            >
+                                <ChevronUp size={14} /> Collapse All
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <datalist id="homebrew-categories-list">
                 {availableCategories.map((cat) => (
                     <option key={cat} value={cat} />
+                ))}
+            </datalist>
+            <datalist id="homebrew-custom-groups-list">
+                {availableCustomGroups.map((grp) => (
+                    <option key={grp} value={grp} />
+                ))}
+            </datalist>
+            <datalist id="homebrew-subcategories-list">
+                {availableSubCategories.map((sub) => (
+                    <option key={sub} value={sub} />
                 ))}
             </datalist>
 
@@ -106,6 +234,25 @@ export function HomebrewItems() {
                     <div className="homebrew-list__empty text-subtext" style={{ fontStyle: 'italic' }}>
                         {visibleItems.length === 0 ? 'No custom items yet.' : 'No items match your search.'}
                     </div>
+                ) : viewMode === 'accordion' ? (
+                    accordionSections.map((sec) => (
+                        <HomebrewAccordionSection
+                            key={sec.accordionKey}
+                            title={sec.accordionKey}
+                            items={sec.items}
+                            isOpen={expandedGroups[sec.accordionKey] !== false}
+                            onToggle={() =>
+                                setExpandedGroups((prev) => ({
+                                    ...prev,
+                                    [sec.accordionKey]: prev[sec.accordionKey] === false ? true : false
+                                }))
+                            }
+                            role={role}
+                            canEdit={canEdit}
+                            onRemoveItem={removeCustomItem}
+                            onDuplicateItem={duplicateCustomItem}
+                        />
+                    ))
                 ) : (
                     filteredItems.map((item) => (
                         <HomebrewItemCard

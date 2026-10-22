@@ -1,25 +1,48 @@
 .homebrew-item-card__row {
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.homebrew-item-card__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1 1 130px;
+    min-width: 0;
+}
+
+.homebrew-item-card__field-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    user-select: none;
 }
 
 .homebrew-item-card__select {
-    flex: 1;
-    padding: 4px;
+    width: 100%;
+    padding: 6px 8px;
     background: var(--input-bg);
     color: var(--text-main);
     border: 1px solid var(--border);
     border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 0.85rem;
 }
 
 .homebrew-item-card__input {
-    flex: 1;
-    padding: 4px;
+    width: 100%;
+    padding: 6px 8px;
     background: var(--input-bg);
     color: var(--text-main);
     border: 1px solid var(--border);
     border-radius: 4px;
     min-width: 0;
+    box-sizing: border-box;
+    font-size: 0.85rem;
 }
 
 .homebrew-item-card__thumb {

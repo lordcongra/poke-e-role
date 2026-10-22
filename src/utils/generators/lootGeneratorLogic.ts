@@ -88,6 +88,76 @@ function getCustomMoveWeight(power: number, category: string): number {
     return 20;
 }
 
+export function resolveCustomItemLootInfo(custom: CustomItem): {
+    pocketKey: string;
+    pocketLabel: string;
+    categoryKey: string;
+    categoryLabel: string;
+    filterId: string;
+    bucket: string;
+} {
+    const rawPocket = custom.pocket || 'Custom';
+    const isCustom = rawPocket === 'Custom' || rawPocket === 'Misc';
+
+    if (!isCustom) {
+        const pocketKey = rawPocket;
+        const pocketLabel = formatCamelCase(rawPocket);
+        const categoryKey = custom.category || 'Misc';
+        const categoryLabel = formatCamelCase(categoryKey);
+        const filterId = `custom_item_${pocketKey}_${categoryKey}`;
+        return {
+            pocketKey,
+            pocketLabel,
+            categoryKey,
+            categoryLabel,
+            filterId,
+            bucket: pocketKey
+        };
+    }
+
+    // Custom group handling
+    let group = custom.customGroup?.trim();
+    if (!group) {
+        if (custom.category?.trim() && custom.category.trim() !== 'Misc' && custom.category.trim() !== 'Custom') {
+            group = custom.category.trim();
+        } else {
+            group = 'Custom';
+        }
+    }
+
+    let sub = custom.subCategory?.trim();
+    if (!sub) {
+        if (
+            custom.customGroup &&
+            custom.category &&
+            custom.category.trim() !== custom.customGroup.trim() &&
+            custom.category.trim() !== 'Misc' &&
+            custom.category.trim() !== 'Custom'
+        ) {
+            sub = custom.category.trim();
+        } else if (group === 'Custom') {
+            sub = custom.category || 'Misc';
+        } else {
+            sub = 'Misc';
+        }
+    }
+
+    const pocketKey = group;
+    const pocketLabel = group;
+    const categoryKey = sub;
+    const categoryLabel = sub;
+    const filterId = `custom_item_${pocketKey}_${categoryKey}`;
+
+    return {
+        pocketKey,
+        pocketLabel,
+        categoryKey,
+        categoryLabel,
+        filterId,
+        bucket: pocketKey
+    };
+}
+
 export function generateLootPool(
     index: LocalDatasetIndex,
     filters: Record<string, boolean>,
@@ -117,14 +187,13 @@ export function generateLootPool(
         });
     }
 
-    // Safely dump ALL custom items into those exact same unified pocket buckets!
+    // Safely dump ALL custom items into their respective custom group or standard pocket buckets!
     const visibleCustomItems = roomCustomItems.filter((i) => !i.gmOnly);
     visibleCustomItems.forEach((custom) => {
-        const cPocket = custom.pocket || 'Custom';
-        const cCategory = custom.category || 'Misc';
+        const { filterId, bucket } = resolveCustomItemLootInfo(custom);
         const cRarity = custom.rarity || 'Uncommon';
-        if (filters[`custom_item_${cPocket}_${cCategory}`] && rarityFilters[cRarity]) {
-            masterPool.push({ type: 'homebrew', bucket: cPocket, data: custom });
+        if (filters[filterId] && rarityFilters[cRarity]) {
+            masterPool.push({ type: 'homebrew', bucket, data: custom });
         }
     });
 

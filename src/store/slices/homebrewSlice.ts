@@ -401,17 +401,17 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
     },
 
     addCustomItem: () => {
-        const newItems: CustomItem[] = [
-            ...get().roomCustomItems,
-            {
-                id: crypto.randomUUID(),
-                name: 'New Item',
-                description: '',
-                pocket: 'Misc',
-                category: 'Misc',
-                rarity: 'Uncommon'
-            }
-        ];
+        const newItem: CustomItem = {
+            id: crypto.randomUUID(),
+            name: 'New Item',
+            description: '',
+            pocket: 'Custom',
+            customGroup: 'Custom',
+            category: 'Misc',
+            subCategory: '',
+            rarity: 'Uncommon'
+        };
+        const newItems: CustomItem[] = [newItem, ...get().roomCustomItems];
         set({ roomCustomItems: newItems, needsBackup: true });
         syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, newItems);
         saveHomebrewLocal(get());

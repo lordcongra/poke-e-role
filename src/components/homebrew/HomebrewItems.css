@@ -1,0 +1,196 @@
+/* =========================================
+   📦 HOMEBREW ITEMS ACCORDION & FILTER PILLS
+   ========================================= */
+
+.homebrew-items__toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.homebrew-pills-row {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+}
+
+.homebrew-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 16px;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.homebrew-pill:hover {
+    background: color-mix(in srgb, var(--primary) 15%, var(--panel-alt));
+    border-color: var(--primary);
+}
+
+.homebrew-pill--active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+.homebrew-pill__badge {
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: color-mix(in srgb, currentColor 20%, transparent);
+    font-weight: 700;
+}
+
+/* Secondary controls (View Mode + Expand/Collapse) */
+.homebrew-controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.homebrew-view-toggles {
+    display: inline-flex;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px;
+    gap: 2px;
+}
+
+.homebrew-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.homebrew-toggle-btn:hover {
+    color: var(--text-main);
+}
+
+.homebrew-toggle-btn--active {
+    background: var(--primary);
+    color: #fff;
+}
+
+.homebrew-accordion-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.homebrew-accordion-toggle-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--panel-alt);
+    color: var(--text-muted);
+    font-size: 0.74rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.homebrew-accordion-toggle-all:hover {
+    color: var(--text-main);
+    border-color: var(--primary);
+}
+
+/* Accordion sections */
+.homebrew-accordion-group {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--panel-bg);
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+
+.homebrew-accordion-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--panel-alt);
+    border: none;
+    cursor: pointer;
+    color: var(--text-main);
+    text-align: left;
+    transition: background 0.15s ease;
+}
+
+.homebrew-accordion-header:hover {
+    background: color-mix(in srgb, var(--primary) 10%, var(--panel-alt));
+}
+
+.homebrew-accordion-header--open {
+    border-bottom: 1px solid var(--border);
+}
+
+.homebrew-accordion-header__title-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.homebrew-accordion-chevron {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+    transform: rotate(-90deg);
+}
+
+.homebrew-accordion-chevron--open {
+    transform: rotate(0deg);
+}
+
+.homebrew-accordion-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.homebrew-accordion-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--primary) 20%, transparent);
+    color: var(--primary);
+}
+
+.homebrew-accordion-body {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: color-mix(in srgb, var(--panel-bg) 50%, var(--bg));
+    flex-shrink: 0;
+}

@@ -6,6 +6,7 @@ import type { CustomItem } from '../../store/storeTypes';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import { ItemImageSection } from '../modals/items/ItemImageSection';
 import { HomebrewItemEffectsSection } from './HomebrewItemEffectsSection';
+import { HomebrewItemClassificationRow } from './HomebrewItemClassificationRow';
 import { imageManager, autoCropTransparency } from '../../utils/graphics/imageManager';
 import { setItemArt } from '../../utils/graphics/itemArtCatalog';
 import { ChevronDown, Tag, Copy, X, AlertTriangle, Package } from 'lucide-react';
@@ -24,10 +25,18 @@ interface HomebrewItemCardProps {
 export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }: HomebrewItemCardProps) {
     const updateCustomItem = useCharacterStore((state) => state.updateCustomItem);
 
+    const resolveInitialCustomGroup = (target: CustomItem) => {
+        if (target.customGroup?.trim()) return target.customGroup.trim();
+        if (target.category && target.category !== 'Misc' && target.category !== 'Custom') return target.category;
+        return target.pocket === 'Custom' ? 'Custom' : '';
+    };
+
     const [localName, setLocalName] = useState(item.name);
     const [localDescription, setLocalDescription] = useState(item.description);
-    const [localPocket, setLocalPocket] = useState(item.pocket || 'Misc');
+    const [localPocket, setLocalPocket] = useState(item.pocket || 'Custom');
+    const [localCustomGroup, setLocalCustomGroup] = useState(resolveInitialCustomGroup(item));
     const [localCategory, setLocalCategory] = useState(item.category || 'Misc');
+    const [localSubCategory, setLocalSubCategory] = useState(item.subCategory || '');
     const [localRarity, setLocalRarity] = useState(item.rarity || 'Uncommon');
     const [localGameMasterOnly, setLocalGameMasterOnly] = useState(item.gmOnly || false);
 
@@ -45,8 +54,10 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }:
         setPrevItem(item);
         setLocalName(item.name);
         setLocalDescription(item.description);
-        setLocalPocket(item.pocket || 'Misc');
+        setLocalPocket(item.pocket || 'Custom');
+        setLocalCustomGroup(resolveInitialCustomGroup(item));
         setLocalCategory(item.category || 'Misc');
+        setLocalSubCategory(item.subCategory || '');
         setLocalRarity(item.rarity || 'Uncommon');
         setLocalGameMasterOnly(item.gmOnly || false);
     }
@@ -265,58 +276,21 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }:
                             />
                         </div>
                     ) : null}
-                    <div className="homebrew-item-card__row">
-                        <select
-                            value={localPocket}
-                            onChange={(event) => canEdit && setLocalPocket(event.target.value)}
-                            onBlur={() =>
-                                canEdit &&
-                                localPocket !== item.pocket &&
-                                updateCustomItem(item.id, 'pocket', localPocket)
-                            }
-                            disabled={!canEdit}
-                            className="homebrew-item-card__select"
-                        >
-                            <option value="Medicine">Medicine</option>
-                            <option value="HeldItems">Held Items</option>
-                            <option value="Pokeballs">Pokéballs</option>
-                            <option value="TrainerItems">Trainer Items</option>
-                            <option value="EvolutionItem">Evolution Item</option>
-                            <option value="KeyItems">Key Items</option>
-                            <option value="Custom">Custom</option>
-                        </select>
-                        <input
-                            type="text"
-                            list="homebrew-categories-list"
-                            value={localCategory}
-                            onChange={(event) => canEdit && setLocalCategory(event.target.value)}
-                            onBlur={() =>
-                                canEdit &&
-                                localCategory !== item.category &&
-                                updateCustomItem(item.id, 'category', localCategory)
-                            }
-                            placeholder="Category (e.g. Healing, Berry)"
-                            disabled={!canEdit}
-                            className="homebrew-item-card__input"
-                        />
-                        <select
-                            value={localRarity}
-                            onChange={(event) => canEdit && setLocalRarity(event.target.value)}
-                            onBlur={() =>
-                                canEdit &&
-                                localRarity !== item.rarity &&
-                                updateCustomItem(item.id, 'rarity', localRarity)
-                            }
-                            disabled={!canEdit}
-                            className="homebrew-item-card__select"
-                        >
-                            <option value="Common">Common</option>
-                            <option value="Uncommon">Uncommon</option>
-                            <option value="Rare">Rare</option>
-                            <option value="Very Rare">Very Rare</option>
-                            <option value="Legendary">Legendary</option>
-                        </select>
-                    </div>
+                    <HomebrewItemClassificationRow
+                        item={item}
+                        canEdit={canEdit}
+                        localPocket={localPocket}
+                        setLocalPocket={setLocalPocket}
+                        localCustomGroup={localCustomGroup}
+                        setLocalCustomGroup={setLocalCustomGroup}
+                        localCategory={localCategory}
+                        setLocalCategory={setLocalCategory}
+                        localSubCategory={localSubCategory}
+                        setLocalSubCategory={setLocalSubCategory}
+                        localRarity={localRarity}
+                        setLocalRarity={setLocalRarity}
+                        onUpdateField={(field, val) => updateCustomItem(item.id, field, val)}
+                    />
                     <textarea
                         value={localDescription}
                         onChange={(event) => canEdit && setLocalDescription(event.target.value)}

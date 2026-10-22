@@ -54,7 +54,12 @@ export function RulesSectionGeneral({ onOpenInfo }: RulesSectionGeneralProps) {
                         value={diceEngine || 'car'}
                         onWheel={(e) => e.currentTarget.blur()}
                         onChange={(e) =>
-                            handleRoomSelectChange('diceEngine', e.target.value as 'car' | 'log-only', e, updateRoomSetting)
+                            handleRoomSelectChange(
+                                'diceEngine',
+                                e.target.value as 'car' | 'log-only',
+                                e,
+                                updateRoomSetting
+                            )
                         }
                     >
                         <option value="car">Custom Action Rolls (3D Dice & Roll Log)</option>
@@ -73,9 +78,11 @@ export function RulesSectionGeneral({ onOpenInfo }: RulesSectionGeneralProps) {
                                 color: 'var(--text-main)'
                             }}
                         >
-                            <span style={{ fontWeight: 600, color: 'var(--primary)' }}>⚡ Performance Mode Active:</span>{' '}
-                            All calculations, combat tags, crits, and health/tracker intercepts resolve instantly and log
-                            directly to the in-app roll log without rendering 3D dice. No external plugins required!
+                            <span style={{ fontWeight: 600, color: 'var(--primary)' }}>
+                                ⚡ Performance Mode Active:
+                            </span>{' '}
+                            All calculations, combat tags, crits, and health/tracker intercepts resolve instantly and
+                            log directly to the in-app roll log without rendering 3D dice. No external plugins required!
                         </div>
                     ) : (
                         <div
@@ -161,9 +168,10 @@ export function RulesSectionGeneral({ onOpenInfo }: RulesSectionGeneralProps) {
                                     }}
                                 />
                                 <div>
-                                    <strong>Dice+ Retired:</strong> The legacy Dice+ engine has been removed. All rolls now
-                                    route through <strong>Custom Action Rolls</strong>. If your Owlbear room does not have
-                                    CAR installed yet, use the button above to copy the manifest link to install it.
+                                    <strong>Dice+ Retired:</strong> The legacy Dice+ engine has been removed. All rolls
+                                    now route through <strong>Custom Action Rolls</strong>. If your Owlbear room does
+                                    not have CAR installed yet, use the button above to copy the manifest link to
+                                    install it.
                                 </div>
                             </div>
 

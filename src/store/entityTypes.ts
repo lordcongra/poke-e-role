@@ -273,6 +273,8 @@ export interface CustomItem {
     description: string;
     pocket?: string;
     category?: string;
+    subCategory?: string;
+    customGroup?: string;
     rarity?: string;
     gmOnly?: boolean;
     imageUrl?: string;

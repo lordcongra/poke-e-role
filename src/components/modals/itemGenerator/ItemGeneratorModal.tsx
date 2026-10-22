@@ -7,6 +7,7 @@ import {
     generateLootPool,
     rollLootItem,
     formatCamelCase,
+    resolveCustomItemLootInfo,
     type PoolItem
 } from '../../../utils/generators/lootGeneratorLogic';
 import { ItemGeneratorResultModal } from './ItemGeneratorResultModal';
@@ -103,26 +104,27 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
 
             setBasePockets(builtBasePockets);
 
-            const customPocketMap: Record<string, Set<string>> = {};
+            const customPocketMap: Record<string, { label: string; categories: Set<string> }> = {};
             const visibleCustomItems = roomCustomItems.filter((i) => !i.gmOnly);
 
             visibleCustomItems.forEach((item) => {
-                const pocket = item.pocket || 'Custom';
-                const category = item.category || 'Misc';
-                if (!customPocketMap[pocket]) customPocketMap[pocket] = new Set();
-                customPocketMap[pocket].add(category);
+                const { pocketKey, pocketLabel, categoryKey } = resolveCustomItemLootInfo(item);
+                if (!customPocketMap[pocketKey]) {
+                    customPocketMap[pocketKey] = { label: pocketLabel, categories: new Set() };
+                }
+                customPocketMap[pocketKey].categories.add(categoryKey);
             });
 
-            const builtCustomPockets: ItemPocket[] = Object.keys(customPocketMap).map((pocket) => {
-                const categoriesArray = Array.from(customPocketMap[pocket]);
+            const builtCustomPockets: ItemPocket[] = Object.entries(customPocketMap).map(([pocketKey, data]) => {
+                const categoriesArray = Array.from(data.categories);
                 const isFlat = categoriesArray.length === 1 && categoriesArray[0] === 'Misc';
                 return {
-                    pocket,
-                    label: formatCamelCase(pocket),
+                    pocket: pocketKey,
+                    label: data.label,
                     isFlat,
                     categories: categoriesArray.map((cat) => ({
-                        id: `custom_item_${pocket}_${cat}`,
-                        label: isFlat ? formatCamelCase(pocket) : formatCamelCase(cat)
+                        id: `custom_item_${pocketKey}_${cat}`,
+                        label: isFlat ? data.label : formatCamelCase(cat)
                     }))
                 };
             });
