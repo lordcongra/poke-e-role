@@ -9,6 +9,7 @@ import {
     type ItemTargetCandidate
 } from '../../../utils/items/itemTargeting';
 import { ItemTargetPromptModal } from './ItemTargetPromptModal';
+import { ItemStatChoiceModal } from './ItemStatChoiceModal';
 import { NumberSpinner } from '../../ui/NumberSpinner';
 import { RotateCcw, Sparkles, ChevronDown, ChevronUp, Heart, Zap, ShieldAlert } from 'lucide-react';
 
@@ -22,6 +23,10 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
     const useInventoryItem = useCharacterStore((state) => state.useInventoryItem);
     const roomCustomStatuses = useCharacterStore((state) => state.roomCustomStatuses);
     const [targetCandidates, setTargetCandidates] = useState<ItemTargetCandidate[] | null>(null);
+    const [statChoicePrompt, setStatChoicePrompt] = useState<{
+        item: InventoryItem;
+        target?: ItemTargetCandidate;
+    } | null>(null);
 
     const effective = getItemEffectiveCharges(item);
     const baseEffect = getBaseItemEffect(item.name || '');
@@ -77,6 +82,8 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
         const candidates = getTrainerItemTargets(store, item);
         if (candidates.length > 1) {
             setTargetCandidates(candidates);
+        } else if (item.permanentStatBoost?.stat === 'PlayerChoice') {
+            setStatChoicePrompt({ item });
         } else {
             useInventoryItem(item.id);
         }
@@ -84,11 +91,29 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
 
     const handleSelectTarget = async (target: ItemTargetCandidate) => {
         setTargetCandidates(null);
+        if (item.permanentStatBoost?.stat === 'PlayerChoice') {
+            setStatChoicePrompt({ item, target });
+            return;
+        }
         if (target.isTrainer) {
             useInventoryItem(item.id);
         } else {
             const store = useCharacterStore.getState();
             await applyItemToPokemonTarget(store, item, target);
+        }
+    };
+
+    const handleConfirmStatChoice = async (
+        chosenStat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight'
+    ) => {
+        if (!statChoicePrompt) return;
+        const { item: targetItem, target } = statChoicePrompt;
+        setStatChoicePrompt(null);
+        if (!target || target.isTrainer) {
+            useInventoryItem(targetItem.id, { chosenStat });
+        } else {
+            const store = useCharacterStore.getState();
+            await applyItemToPokemonTarget(store, targetItem, target, { chosenStat });
         }
     };
 
@@ -120,39 +145,55 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
             </div>
 
             {isChargesActive && (
-                <div className="item-charges-control__spinners-row">
-                    <div className="item-charges-control__spinner-group">
-                        <span className="item-charges-control__label text-subtext">Charges:</span>
-                        <NumberSpinner
-                            value={effective.charges}
-                            min={0}
-                            max={effective.maxCharges}
-                            onChange={(val) => updateInventoryItem(item.id, 'charges', val)}
-                        />
+                <>
+                    <div className="item-charges-control__spinners-row">
+                        <div className="item-charges-control__spinner-group">
+                            <span className="item-charges-control__label text-subtext">Charges:</span>
+                            <NumberSpinner
+                                value={effective.charges}
+                                min={0}
+                                max={effective.maxCharges}
+                                onChange={(val) => updateInventoryItem(item.id, 'charges', val)}
+                            />
+                        </div>
+                        <div className="item-charges-control__spinner-group">
+                            <span className="item-charges-control__label text-subtext">Max:</span>
+                            <NumberSpinner
+                                value={effective.maxCharges}
+                                min={1}
+                                max={99}
+                                onChange={(val) => {
+                                    updateInventoryItem(item.id, 'maxCharges', val);
+                                    if (effective.charges > val) updateInventoryItem(item.id, 'charges', val);
+                                }}
+                            />
+                        </div>
+                        <button
+                            type="button"
+                            className="action-button action-button--dark item-charges-control__refill-btn text-theme-header"
+                            onClick={() => updateInventoryItem(item.id, 'charges', effective.maxCharges)}
+                            disabled={effective.charges >= effective.maxCharges}
+                            title="Refill charges to max"
+                        >
+                            <RotateCcw size={12} />
+                            <span>Refill</span>
+                        </button>
                     </div>
-                    <div className="item-charges-control__spinner-group">
-                        <span className="item-charges-control__label text-subtext">Max:</span>
-                        <NumberSpinner
-                            value={effective.maxCharges}
-                            min={1}
-                            max={99}
-                            onChange={(val) => {
-                                updateInventoryItem(item.id, 'maxCharges', val);
-                                if (effective.charges > val) updateInventoryItem(item.id, 'charges', val);
-                            }}
-                        />
-                    </div>
-                    <button
-                        type="button"
-                        className="action-button action-button--dark item-charges-control__refill-btn text-theme-header"
-                        onClick={() => updateInventoryItem(item.id, 'charges', effective.maxCharges)}
-                        disabled={effective.charges >= effective.maxCharges}
-                        title="Refill charges to max"
+                    <label
+                        className="item-charges-control__toggle-label"
+                        style={{ marginTop: '4px', fontSize: '0.8rem', cursor: 'pointer' }}
+                        title="Keep this item in your inventory at 0 charges instead of discarding it when empty"
                     >
-                        <RotateCcw size={12} />
-                        <span>Refill</span>
-                    </button>
-                </div>
+                        <input
+                            type="checkbox"
+                            checked={item.destroyOnDepletion === false}
+                            onChange={(e) =>
+                                updateInventoryItem(item.id, 'destroyOnDepletion', e.target.checked ? false : undefined)
+                            }
+                        />
+                        <span className="text-subtext">Retain at 0 Charges (don't discard on empty)</span>
+                    </label>
+                </>
             )}
 
             <button
@@ -227,6 +268,14 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
                     candidates={targetCandidates}
                     onSelectTarget={handleSelectTarget}
                     onClose={() => setTargetCandidates(null)}
+                />
+            )}
+
+            {statChoicePrompt && (
+                <ItemStatChoiceModal
+                    item={statChoicePrompt.item}
+                    onSelectStat={handleConfirmStatChoice}
+                    onClose={() => setStatChoicePrompt(null)}
                 />
             )}
         </div>

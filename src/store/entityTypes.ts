@@ -79,9 +79,19 @@ export interface InventoryItem {
     tags?: string;
     charges?: number;
     maxCharges?: number;
+    destroyOnDepletion?: boolean;
     healHp?: number;
     healWill?: number;
     cures?: string[];
+    permanentStatBoost?: {
+        stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
+        value: number;
+    };
+    statBuff?: { stat: string; value: number };
+    statDebuff?: { stat: string; value: number };
+    gainTempHp?: number;
+    dungeonPassive?: string;
+    inflictsStatus?: string[];
 }
 
 export interface PassiveItem {
@@ -280,9 +290,19 @@ export interface CustomItem {
     imageUrl?: string;
     charges?: number;
     maxCharges?: number;
+    destroyOnDepletion?: boolean;
     healHp?: number;
     healWill?: number;
     cures?: string[];
+    permanentStatBoost?: {
+        stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
+        value: number;
+    };
+    statBuff?: { stat: string; value: number };
+    statDebuff?: { stat: string; value: number };
+    gainTempHp?: number;
+    dungeonPassive?: string;
+    inflictsStatus?: string[];
 }
 
 export interface CustomMove {

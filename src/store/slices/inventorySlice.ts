@@ -1,47 +1,13 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState, InventorySlice, InventoryItem, CustomInfo } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/sync/obr';
-import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../../utils/combat/combatUtils';
 import { imageManager } from '../../utils/graphics/imageManager';
 import { KNOWN_ITEMS } from '../../data/constants';
 import { getBaseItemCharges, getItemEffectiveCharges, consumeChargeFromInventory } from '../../utils/items/itemCharges';
 import { applyItemUsageEffects } from '../../utils/items/itemUsageEffects';
 import { broadcastInfo } from '../../utils/combat/diceRoller';
 
-const syncHealthWill = (
-    state: CharacterState,
-    newInventory: InventoryItem[],
-    updatesToSave: Record<string, unknown>
-) => {
-    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-    const inventoryModifiers = parseCombatTags(
-        newInventory,
-        state.extraCategories,
-        undefined,
-        abilityText,
-        state.passives
-    );
-    const fakeState = { ...state, inventory: newInventory };
-
-    const newHealth = { ...state.health };
-    const oldHpMax = newHealth.hpMax;
-    newHealth.hpMax = calculateMaxHp(fakeState, inventoryModifiers);
-    if (newHealth.hpMax > oldHpMax) newHealth.hpCurr += newHealth.hpMax - oldHpMax;
-    else if (newHealth.hpCurr > newHealth.hpMax) newHealth.hpCurr = newHealth.hpMax;
-
-    const newWill = { ...state.will };
-    const oldWillMax = newWill.willMax;
-    newWill.willMax = calculateMaxWill(fakeState, inventoryModifiers);
-    if (newWill.willMax > oldWillMax) newWill.willCurr += newWill.willMax - oldWillMax;
-    else if (newWill.willCurr > newWill.willMax) newWill.willCurr = newWill.willMax;
-
-    updatesToSave['hp-curr'] = newHealth.hpCurr;
-    updatesToSave['hp-max-display'] = newHealth.hpMax;
-    updatesToSave['will-curr'] = newWill.willCurr;
-    updatesToSave['will-max-display'] = newWill.willMax;
-
-    return { health: newHealth, will: newWill };
-};
+import { syncHealthWill, applyUsageToState } from '../../utils/items/inventoryItemOps';
 
 export const createInventorySlice: StateCreator<CharacterState, [], [], InventorySlice> = (set) => ({
     inventory: [],
@@ -79,6 +45,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             const tags = item.tags || (legacyTags.length > 0 ? legacyTags.join(' ') : knownMatch?.tags || undefined);
 
             const customMatch = state.roomCustomItems?.find((i) => i.name.toLowerCase() === rawName.toLowerCase());
+            const resolvedImageUrl = item.imageUrl || customMatch?.imageUrl;
             const baseCharges = getBaseItemCharges(rawName);
             const resolvedCharges = item.charges ?? customMatch?.charges ?? baseCharges;
             const resolvedMaxCharges =
@@ -86,7 +53,13 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             const resolvedHealHp = item.healHp ?? customMatch?.healHp;
             const resolvedHealWill = item.healWill ?? customMatch?.healWill;
             const resolvedCures = item.cures ?? customMatch?.cures;
-            const resolvedImageUrl = item.imageUrl || customMatch?.imageUrl;
+            const resolvedDestroyOnDepletion = item.destroyOnDepletion ?? customMatch?.destroyOnDepletion;
+            const resolvedPermanentStatBoost = item.permanentStatBoost ?? customMatch?.permanentStatBoost;
+            const resolvedStatBuff = item.statBuff ?? customMatch?.statBuff;
+            const resolvedStatDebuff = item.statDebuff ?? customMatch?.statDebuff;
+            const resolvedGainTempHp = item.gainTempHp ?? customMatch?.gainTempHp;
+            const resolvedDungeonPassive = item.dungeonPassive ?? customMatch?.dungeonPassive;
+            const resolvedInflictsStatus = item.inflictsStatus ?? customMatch?.inflictsStatus;
 
             const newInventory: InventoryItem[] = [
                 ...state.inventory,
@@ -100,9 +73,16 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
                     imageUrl: resolvedImageUrl,
                     charges: resolvedCharges,
                     maxCharges: resolvedMaxCharges,
+                    destroyOnDepletion: resolvedDestroyOnDepletion,
                     healHp: resolvedHealHp,
                     healWill: resolvedHealWill,
-                    cures: resolvedCures
+                    cures: resolvedCures,
+                    permanentStatBoost: resolvedPermanentStatBoost,
+                    statBuff: resolvedStatBuff,
+                    statDebuff: resolvedStatDebuff,
+                    gainTempHp: resolvedGainTempHp,
+                    dungeonPassive: resolvedDungeonPassive,
+                    inflictsStatus: resolvedInflictsStatus
                 }
             ];
             const updatesToSave: Record<string, unknown> = { 'inv-data': JSON.stringify(newInventory) };
@@ -340,41 +320,43 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             return { customInfo: newInfo };
         }),
 
-    useInventoryItem: (id: string) =>
+    useInventoryItem: (id: string, options?: { chosenStat?: string }) =>
         set((state) => {
             const item = state.inventory.find((i) => i.id === id);
             if (!item) return state;
 
-            const { nextHealth, nextWill, nextStatuses, summaryText } = applyItemUsageEffects(
+            const effective = getItemEffectiveCharges(item);
+            if (effective.hasCharges && effective.charges <= 0) {
+                return state;
+            }
+
+            const usage = applyItemUsageEffects(
                 item,
                 state.health,
                 state.will,
                 state.statuses,
-                state.roomCustomStatuses
+                state.roomCustomStatuses,
+                options
             );
 
-            const effective = getItemEffectiveCharges(item);
             let nextInventory: InventoryItem[];
-
             if (effective.hasCharges) {
                 const result = consumeChargeFromInventory(state.inventory, id);
                 nextInventory = result.newInventory;
             } else {
                 const currentQty = item.qty ?? 1;
                 if (currentQty <= 1) {
-                    nextInventory = state.inventory.filter((i) => i.id !== id);
+                    if (item.destroyOnDepletion === false) {
+                        nextInventory = state.inventory.map((i) => (i.id === id ? { ...i, qty: 0 } : i));
+                    } else {
+                        nextInventory = state.inventory.filter((i) => i.id !== id);
+                    }
                 } else {
                     nextInventory = state.inventory.map((i) => (i.id === id ? { ...i, qty: currentQty - 1 } : i));
                 }
             }
 
-            const updatesToSave: Record<string, unknown> = {
-                'current-hp': nextHealth.currentHitPoints ?? nextHealth.hpCurr,
-                'hp-curr': nextHealth.hpCurr,
-                'will-curr': nextWill.willCurr,
-                'status-list': JSON.stringify(nextStatuses),
-                'inv-data': JSON.stringify(nextInventory)
-            };
+            const { partialState, updatesToSave } = applyUsageToState(state, item, usage, nextInventory);
 
             try {
                 saveToOwlbear(updatesToSave);
@@ -383,16 +365,11 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             }
 
             const characterName = state.identity?.nickname || state.identity?.species || 'Trainer';
-            const broadcastMessage = `Used ${item.name || 'Item'}. ${summaryText}`;
+            const broadcastMessage = `Used ${item.name || 'Item'}. ${usage.summaryText}`;
             broadcastInfo(characterName || 'Trainer', broadcastMessage).catch((error) => {
                 console.error('[InventorySlice] Failed to broadcast item usage:', error);
             });
 
-            return {
-                inventory: nextInventory,
-                health: nextHealth,
-                will: nextWill,
-                statuses: nextStatuses
-            };
+            return partialState;
         })
 });

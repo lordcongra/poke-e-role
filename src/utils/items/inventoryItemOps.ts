@@ -1,0 +1,189 @@
+import type { CharacterState, InventoryItem } from '../../store/storeTypes';
+import type { ItemUsageResult } from './itemUsageEffects';
+import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../combat/combatUtils';
+
+/**
+ * Recalculates HP and Will maximums based on inventory stat tags and updates the save payload.
+ */
+export const syncHealthWill = (
+    state: CharacterState,
+    newInventory: InventoryItem[],
+    updatesToSave: Record<string, unknown>
+): { health: CharacterState['health']; will: CharacterState['will'] } => {
+    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const inventoryModifiers = parseCombatTags(
+        newInventory,
+        state.extraCategories,
+        undefined,
+        abilityText,
+        state.passives
+    );
+    const fakeState = { ...state, inventory: newInventory };
+
+    const newHealth = { ...state.health };
+    const oldHpMax = newHealth.hpMax;
+    newHealth.hpMax = calculateMaxHp(fakeState, inventoryModifiers);
+    if (newHealth.hpMax > oldHpMax) newHealth.hpCurr += newHealth.hpMax - oldHpMax;
+    else if (newHealth.hpCurr > newHealth.hpMax) newHealth.hpCurr = newHealth.hpMax;
+
+    const newWill = { ...state.will };
+    const oldWillMax = newWill.willMax;
+    newWill.willMax = calculateMaxWill(fakeState, inventoryModifiers);
+    if (newWill.willMax > oldWillMax) newWill.willCurr += newWill.willMax - oldWillMax;
+    else if (newWill.willCurr > newWill.willMax) newWill.willCurr = newWill.willMax;
+
+    updatesToSave['hp-curr'] = newHealth.hpCurr;
+    updatesToSave['hp-max-display'] = newHealth.hpMax;
+    updatesToSave['will-curr'] = newWill.willCurr;
+    updatesToSave['will-max-display'] = newWill.willMax;
+
+    return { health: newHealth, will: newWill };
+};
+
+/**
+ * Applies item usage effects (HP, Will, Temp HP, Stat Buffs/Debuffs, Passives) to CharacterState
+ * and prepares the delta updates payload for Owlbear Rodeo persistence.
+ */
+export function applyUsageToState(
+    state: CharacterState,
+    item: InventoryItem,
+    usage: ItemUsageResult,
+    nextInventory: InventoryItem[]
+): {
+    partialState: Partial<CharacterState>;
+    updatesToSave: Record<string, unknown>;
+} {
+    const updatesToSave: Record<string, unknown> = {
+        'current-hp': usage.nextHealth.currentHitPoints ?? usage.nextHealth.hpCurr,
+        'hp-curr': usage.nextHealth.hpCurr,
+        'will-curr': usage.nextWill.willCurr,
+        'status-list': JSON.stringify(usage.nextStatuses),
+        'inv-data': JSON.stringify(nextInventory)
+    };
+
+    if (usage.tempHpGained > 0) {
+        updatesToSave['temporary-hit-points'] = usage.nextHealth.temporaryHitPoints;
+        updatesToSave['temporary-hit-points-max'] = usage.nextHealth.temporaryHitPointsMax;
+    }
+
+    // Stat Buff & Debuff
+    let nextStats = state.stats;
+    let nextDerived = state.derived;
+
+    if (usage.statBuff) {
+        const sName = usage.statBuff.stat.trim().toLowerCase();
+        if (sName === 'defense' || sName === 'def') {
+            nextDerived = { ...nextDerived, defBuff: (nextDerived.defBuff || 0) + usage.statBuff.value };
+            updatesToSave['def-buff'] = nextDerived.defBuff;
+        } else if (sName === 'special defense' || sName === 'sdef' || sName === 'spdef') {
+            nextDerived = { ...nextDerived, sdefBuff: (nextDerived.sdefBuff || 0) + usage.statBuff.value };
+            updatesToSave['spd-buff'] = nextDerived.sdefBuff;
+        } else {
+            const combatKey =
+                sName === 'strength' || sName === 'str'
+                    ? 'str'
+                    : sName === 'dexterity' || sName === 'dex'
+                      ? 'dex'
+                      : sName === 'vitality' || sName === 'vit'
+                        ? 'vit'
+                        : sName === 'special' || sName === 'spe'
+                          ? 'spe'
+                          : sName === 'insight' || sName === 'ins'
+                            ? 'ins'
+                            : null;
+            if (combatKey && nextStats[combatKey]) {
+                nextStats = {
+                    ...nextStats,
+                    [combatKey]: {
+                        ...nextStats[combatKey],
+                        buff: (nextStats[combatKey].buff || 0) + usage.statBuff.value
+                    }
+                };
+                updatesToSave[`${combatKey}-buff`] = nextStats[combatKey].buff;
+            }
+        }
+    }
+
+    if (usage.statDebuff) {
+        const sName = usage.statDebuff.stat.trim().toLowerCase();
+        if (sName === 'defense' || sName === 'def') {
+            nextDerived = { ...nextDerived, defDebuff: (nextDerived.defDebuff || 0) + usage.statDebuff.value };
+            updatesToSave['def-debuff'] = nextDerived.defDebuff;
+        } else if (sName === 'special defense' || sName === 'sdef' || sName === 'spdef') {
+            nextDerived = { ...nextDerived, sdefDebuff: (nextDerived.sdefDebuff || 0) + usage.statDebuff.value };
+            updatesToSave['spd-debuff'] = nextDerived.sdefDebuff;
+        } else {
+            const combatKey =
+                sName === 'strength' || sName === 'str'
+                    ? 'str'
+                    : sName === 'dexterity' || sName === 'dex'
+                      ? 'dex'
+                      : sName === 'vitality' || sName === 'vit'
+                        ? 'vit'
+                        : sName === 'special' || sName === 'spe'
+                          ? 'spe'
+                          : sName === 'insight' || sName === 'ins'
+                            ? 'ins'
+                            : null;
+            if (combatKey && nextStats[combatKey]) {
+                nextStats = {
+                    ...nextStats,
+                    [combatKey]: {
+                        ...nextStats[combatKey],
+                        debuff: (nextStats[combatKey].debuff || 0) + usage.statDebuff.value
+                    }
+                };
+                updatesToSave[`${combatKey}-debuff`] = nextStats[combatKey].debuff;
+            }
+        }
+    }
+
+    // Permanent Stat Boost & Dungeon Passive
+    let nextPassives = state.passives;
+    let passivesChanged = false;
+
+    if (usage.permanentStatBoost) {
+        passivesChanged = true;
+        nextPassives = [
+            ...nextPassives,
+            {
+                id: crypto.randomUUID(),
+                name: `${item.name} (${usage.permanentStatBoost.stat})`,
+                desc: `[${usage.permanentStatBoost.stat} +${usage.permanentStatBoost.value}]`,
+                active: true,
+                showInConditions: true
+            }
+        ];
+    }
+
+    if (usage.dungeonPassive) {
+        passivesChanged = true;
+        nextPassives = [
+            ...nextPassives,
+            {
+                id: crypto.randomUUID(),
+                name: item.name,
+                desc: usage.dungeonPassive,
+                active: true,
+                showInConditions: true
+            }
+        ];
+    }
+
+    if (passivesChanged) {
+        updatesToSave['passives-data'] = JSON.stringify(nextPassives);
+    }
+
+    return {
+        partialState: {
+            inventory: nextInventory,
+            health: usage.nextHealth,
+            will: usage.nextWill,
+            statuses: usage.nextStatuses,
+            stats: nextStats,
+            derived: nextDerived,
+            passives: nextPassives
+        },
+        updatesToSave
+    };
+}

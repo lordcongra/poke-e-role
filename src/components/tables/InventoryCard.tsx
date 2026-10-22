@@ -7,7 +7,7 @@ import { getItemEffectiveCharges } from '../../utils/items/itemCharges';
 import { isItemUsable } from '../../utils/items/itemUsageEffects';
 import type { InventoryItem } from '../../store/storeTypes';
 import { NumberSpinner } from '../ui/NumberSpinner';
-import { ItemChargesBadge } from '../ui/ItemChargesBadge';
+import { ItemChargeBadge } from './ItemChargeBadge';
 import { KNOWN_ITEMS } from '../../data/constants';
 import { Info, Tag, ChevronUp, ChevronDown, X, Check, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { TagPillList } from '../ui/TagPillList';
@@ -200,13 +200,11 @@ export const InventoryCard = memo(function InventoryCard({
                         onChange={(value: number) => updateInventoryItem(item.id, 'qty', value)}
                         min={0}
                     />
-                    {effectiveCharges.hasCharges && (
-                        <ItemChargesBadge
-                            mode="compact"
-                            charges={effectiveCharges.charges}
-                            maxCharges={effectiveCharges.maxCharges}
-                        />
-                    )}
+                    <ItemChargeBadge
+                        item={item}
+                        effectiveCharges={effectiveCharges}
+                        mode="compact"
+                    />
                 </div>
 
                 <div className="inventory-card__header-actions">
@@ -272,8 +270,13 @@ export const InventoryCard = memo(function InventoryCard({
                     <button
                         type="button"
                         className="action-button action-button--dark inventory-card__action-btn inventory-card__action-btn--use"
+                        disabled={effectiveCharges.hasCharges && effectiveCharges.charges <= 0}
                         onClick={() => (onUseItem ? onUseItem(item) : useInventoryItem(item.id))}
-                        title={`Use ${item.name || 'Item'}`}
+                        title={
+                            effectiveCharges.hasCharges && effectiveCharges.charges <= 0
+                                ? 'Item depleted (0 charges remaining)'
+                                : `Use ${item.name || 'Item'}`
+                        }
                         aria-label={`Use ${item.name || 'Item'}`}
                     >
                         <Sparkles size={16} />

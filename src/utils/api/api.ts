@@ -338,9 +338,16 @@ export async function fetchItemData(itemName: string): Promise<ItemApiResponse |
             imageUrl: custom.imageUrl,
             charges: custom.charges,
             maxCharges: custom.maxCharges,
+            destroyOnDepletion: custom.destroyOnDepletion,
             HealthRestored: custom.healHp,
             healWill: custom.healWill,
-            cures: custom.cures
+            cures: custom.cures,
+            permanentStatBoost: custom.permanentStatBoost,
+            statBuff: custom.statBuff,
+            statDebuff: custom.statDebuff,
+            gainTempHp: custom.gainTempHp,
+            dungeonPassive: custom.dungeonPassive,
+            inflictsStatus: custom.inflictsStatus
         };
     }
 

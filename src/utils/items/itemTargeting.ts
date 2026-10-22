@@ -139,7 +139,8 @@ export function getTrainerItemTargets(store: CharacterState, item: InventoryItem
 export async function applyItemToPokemonTarget(
     store: CharacterState,
     item: InventoryItem,
-    target: ItemTargetCandidate
+    target: ItemTargetCandidate,
+    options?: { chosenStat?: string }
 ): Promise<void> {
     const summary = store.pcData?.pokemonSummaries?.[target.id];
     if (!summary) return;
@@ -154,7 +155,10 @@ export async function applyItemToPokemonTarget(
     } else {
         const currentQty = item.qty ?? 1;
         if (currentQty <= 1) {
-            nextInventory = store.inventory.filter((i) => i.id !== item.id);
+            nextInventory =
+                item.destroyOnDepletion === false
+                    ? store.inventory.map((i) => (i.id === item.id ? { ...i, qty: 0 } : i))
+                    : store.inventory.filter((i) => i.id !== item.id);
         } else {
             nextInventory = store.inventory.map((i) => (i.id === item.id ? { ...i, qty: currentQty - 1 } : i));
         }
@@ -167,13 +171,13 @@ export async function applyItemToPokemonTarget(
         console.error('[itemTargeting] Failed to save updated inventory to Owlbear:', e);
     }
 
-    // 2. Calculate restorative result with applyItemUsageEffects
+    // 2. Calculate restorative and usage result with applyItemUsageEffects
     const currentHealth: CharacterHealth = {
         hpCurr: summary.hp,
         hpMax: summary.maxHp,
         hpBase: summary.maxHp,
-        temporaryHitPoints: 0,
-        temporaryHitPointsMax: 0,
+        temporaryHitPoints: Number(summary.fullMetadata?.['temporary-hit-points']) || 0,
+        temporaryHitPointsMax: Number(summary.fullMetadata?.['temporary-hit-points-max']) || 0,
         currentHitPoints: summary.hp,
         maxHitPoints: summary.maxHp
     };
@@ -181,8 +185,8 @@ export async function applyItemToPokemonTarget(
         willCurr: summary.will,
         willMax: summary.maxWill,
         willBase: summary.maxWill,
-        temporaryWill: 0,
-        temporaryWillMax: 0
+        temporaryWill: Number(summary.fullMetadata?.['temporary-will']) || 0,
+        temporaryWillMax: Number(summary.fullMetadata?.['temporary-will-max']) || 0
     };
 
     let currentStatuses: StatusItem[] = [];
@@ -197,13 +201,111 @@ export async function applyItemToPokemonTarget(
         currentStatuses = [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
     }
 
-    const { nextHealth, nextWill, nextStatuses, summaryText } = applyItemUsageEffects(
+    const usage = applyItemUsageEffects(
         item,
         currentHealth,
         currentWill,
         currentStatuses,
-        store.roomCustomStatuses
+        store.roomCustomStatuses,
+        options
     );
+
+    const metaUpdates: Record<string, unknown> = {
+        'hp-curr': usage.nextHealth.hpCurr,
+        'current-hp': usage.nextHealth.hpCurr,
+        'will-curr': usage.nextWill.willCurr,
+        'status-list': JSON.stringify(usage.nextStatuses),
+        lastModified: Date.now()
+    };
+
+    if (usage.tempHpGained > 0) {
+        metaUpdates['temporary-hit-points'] = usage.nextHealth.temporaryHitPoints;
+        metaUpdates['temporary-hit-points-max'] = usage.nextHealth.temporaryHitPointsMax;
+    }
+
+    // Stat Buff & Debuff
+    if (usage.statBuff) {
+        const sName = usage.statBuff.stat.trim().toLowerCase();
+        const key =
+            sName === 'defense' || sName === 'def'
+                ? 'def-buff'
+                : sName === 'special defense' || sName === 'sdef' || sName === 'spdef'
+                  ? 'spd-buff'
+                  : sName === 'strength' || sName === 'str'
+                    ? 'str-buff'
+                    : sName === 'dexterity' || sName === 'dex'
+                      ? 'dex-buff'
+                      : sName === 'vitality' || sName === 'vit'
+                        ? 'vit-buff'
+                        : sName === 'special' || sName === 'spe'
+                          ? 'spe-buff'
+                          : sName === 'insight' || sName === 'ins'
+                            ? 'ins-buff'
+                            : null;
+        if (key) {
+            metaUpdates[key] = (Number(summary.fullMetadata?.[key]) || 0) + usage.statBuff.value;
+        }
+    }
+
+    if (usage.statDebuff) {
+        const sName = usage.statDebuff.stat.trim().toLowerCase();
+        const key =
+            sName === 'defense' || sName === 'def'
+                ? 'def-debuff'
+                : sName === 'special defense' || sName === 'sdef' || sName === 'spdef'
+                  ? 'spd-debuff'
+                  : sName === 'strength' || sName === 'str'
+                    ? 'str-debuff'
+                    : sName === 'dexterity' || sName === 'dex'
+                      ? 'dex-debuff'
+                      : sName === 'vitality' || sName === 'vit'
+                        ? 'vit-debuff'
+                        : sName === 'special' || sName === 'spe'
+                          ? 'spe-debuff'
+                          : sName === 'insight' || sName === 'ins'
+                            ? 'ins-debuff'
+                            : null;
+        if (key) {
+            metaUpdates[key] = (Number(summary.fullMetadata?.[key]) || 0) + usage.statDebuff.value;
+        }
+    }
+
+    // Permanent Stat Boost & Dungeon Passive
+    let passivesList: Array<{ id: string; name: string; desc: string; active?: boolean; showInConditions?: boolean }> =
+        [];
+    if (summary.fullMetadata?.['passives-data']) {
+        try {
+            const raw = summary.fullMetadata['passives-data'];
+            passivesList = typeof raw === 'string' ? JSON.parse(raw) : (raw as typeof passivesList);
+        } catch {}
+    }
+
+    let passivesChanged = false;
+    if (usage.permanentStatBoost) {
+        passivesChanged = true;
+        passivesList.push({
+            id: crypto.randomUUID(),
+            name: `${item.name} (${usage.permanentStatBoost.stat})`,
+            desc: `[${usage.permanentStatBoost.stat} +${usage.permanentStatBoost.value}]`,
+            active: true,
+            showInConditions: true
+        });
+    }
+
+    if (usage.dungeonPassive) {
+        passivesChanged = true;
+        passivesList.push({
+            id: crypto.randomUUID(),
+            name: item.name,
+            desc: usage.dungeonPassive,
+            active: true,
+            showInConditions: true
+        });
+    }
+
+    if (passivesChanged) {
+        metaUpdates['passives-data'] = JSON.stringify(passivesList);
+    }
 
     // 3. Update Pokémon summary via store.updatePokemonSummary(...)
     let updatedSavedTokenItem = summary.savedTokenItem;
@@ -214,10 +316,7 @@ export async function applyItemToPokemonTarget(
                 ...(updatedSavedTokenItem.metadata || {}),
                 [METADATA_ID]: {
                     ...((updatedSavedTokenItem.metadata?.[METADATA_ID] as Record<string, unknown>) || {}),
-                    'hp-curr': nextHealth.hpCurr,
-                    'current-hp': nextHealth.hpCurr,
-                    'will-curr': nextWill.willCurr,
-                    'status-list': JSON.stringify(nextStatuses)
+                    ...metaUpdates
                 }
             }
         };
@@ -225,15 +324,12 @@ export async function applyItemToPokemonTarget(
 
     const updatedSummary: PcPokemonSummary = {
         ...summary,
-        hp: nextHealth.hpCurr ?? summary.hp,
-        will: nextWill.willCurr ?? summary.will,
-        lastModified: Date.now(),
+        hp: usage.nextHealth.hpCurr ?? summary.hp,
+        will: usage.nextWill.willCurr ?? summary.will,
+        lastModified: metaUpdates.lastModified as number,
         fullMetadata: {
             ...(summary.fullMetadata || {}),
-            'hp-curr': nextHealth.hpCurr,
-            'current-hp': nextHealth.hpCurr,
-            'will-curr': nextWill.willCurr,
-            'status-list': JSON.stringify(nextStatuses)
+            ...metaUpdates
         },
         savedTokenItem: updatedSavedTokenItem
     };
@@ -244,13 +340,6 @@ export async function applyItemToPokemonTarget(
         try {
             await OBR.scene.items.updateItems([summary.mapTokenId], (items) => {
                 for (const it of items) {
-                    const metaUpdates: Record<string, unknown> = {
-                        'hp-curr': nextHealth.hpCurr,
-                        'current-hp': nextHealth.hpCurr,
-                        'will-curr': nextWill.willCurr,
-                        'status-list': JSON.stringify(nextStatuses),
-                        lastModified: updatedSummary.lastModified
-                    };
                     if (!it.metadata[METADATA_ID]) it.metadata[METADATA_ID] = {};
                     Object.assign(it.metadata[METADATA_ID] as Record<string, unknown>, metaUpdates);
                     if (it.metadata['pokerole-pmd-extension/stats']) {
@@ -277,7 +366,7 @@ export async function applyItemToPokemonTarget(
     // 5. Broadcast room notification: "${trainerName} used ${item.name} on ${pokemonName}. ${summaryText}"
     const trainerName = store.identity?.nickname || store.identity?.species || 'Trainer';
     const pokemonName = summary.name || summary.species || 'Pokémon';
-    const message = `${trainerName} used ${item.name || 'Item'} on ${pokemonName}. ${summaryText}`;
+    const message = `${trainerName} used ${item.name || 'Item'} on ${pokemonName}. ${usage.summaryText}`;
 
     if (OBR.isAvailable) {
         OBR.notification.show(message, 'INFO');

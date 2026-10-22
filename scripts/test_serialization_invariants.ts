@@ -936,6 +936,54 @@ runTest(
     }
 );
 
+runTest('itemCharges: destroyOnDepletion: false retains depleted item in inventory with explicit charges: 0', () => {
+    // Single item with destroyOnDepletion === false
+    const singleInv = [
+        {
+            id: 'canteen-1',
+            name: 'Travel Canteen',
+            qty: 1,
+            desc: 'A water bottle',
+            charges: 1,
+            maxCharges: 3,
+            destroyOnDepletion: false
+        }
+    ];
+
+    const result = consumeChargeFromInventory(singleInv, 'canteen-1');
+    assert.equal(result.remainingCharges, 0, 'Remaining charges should be 0');
+    assert.equal(result.newInventory.length, 1, 'Item should be retained in inventory');
+    assert.equal(result.newInventory[0].id, 'canteen-1', 'Retained item keeps same ID');
+    assert.equal(result.newInventory[0].charges, 0, 'Charges must be explicitly 0');
+    assert.equal(result.newInventory[0].maxCharges, 3, 'Max charges preserved');
+    assert.equal(result.newInventory[0].destroyOnDepletion, false, 'destroyOnDepletion preserved');
+
+    // Stack of 2 with 1 charge each and destroyOnDepletion === false
+    const stackInv = [
+        {
+            id: 'bottle-stack-1',
+            name: 'Spray Bottle',
+            qty: 2,
+            desc: 'A spray bottle',
+            charges: 1,
+            maxCharges: 2,
+            destroyOnDepletion: false
+        }
+    ];
+    const stackResult = consumeChargeFromInventory(stackInv, 'bottle-stack-1');
+    assert.equal(stackResult.remainingCharges, 0);
+    assert.equal(stackResult.newInventory.length, 2, 'Stack should split into 1 at 1 charge and 1 at 0 charges');
+    const fullCharge = stackResult.newInventory.find((i) => i.id === 'bottle-stack-1');
+    const emptyCharge = stackResult.newInventory.find((i) => i.id !== 'bottle-stack-1');
+    assert.ok(fullCharge, 'Remaining stack should exist');
+    assert.equal(fullCharge!.qty, 1);
+    assert.equal(fullCharge!.charges, 1);
+    assert.ok(emptyCharge, 'Depleted item should exist');
+    assert.equal(emptyCharge!.qty, 1);
+    assert.equal(emptyCharge!.charges, 0);
+    assert.equal(emptyCharge!.destroyOnDepletion, false);
+});
+
 runTest(
     'itemUsageEffects: BASE_ITEM_EFFECTS contains all required items and getBaseItemEffect is case-insensitive',
     () => {

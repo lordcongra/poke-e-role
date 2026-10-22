@@ -18,13 +18,18 @@ export const ItemChargesBadge = memo(function ItemChargesBadge({
     const safeMax = Math.max(1, maxCharges);
     const safeCharges = Math.max(0, Math.min(charges, safeMax));
     const percent = Math.min(100, Math.max(0, (safeCharges / safeMax) * 100));
+    const isDepleted = safeCharges === 0;
+    const depletedClass = isDepleted ? 'item-charges-badge--depleted' : '';
+    const badgeTitle = isDepleted
+        ? `Depleted: 0 / ${maxCharges} charges remaining`
+        : `Charges: ${charges} / ${maxCharges}`;
 
     if (mode === 'visual') {
         if (safeMax <= 6) {
             return (
                 <div
-                    className={`item-charges-badge item-charges-badge--visual item-charges-badge--pips ${className}`}
-                    title={`Charges: ${charges} / ${maxCharges}`}
+                    className={`item-charges-badge item-charges-badge--visual item-charges-badge--pips ${depletedClass} ${className}`.trim()}
+                    title={badgeTitle}
                     aria-label={`${charges} of ${maxCharges} charges remaining`}
                 >
                     <Zap size={11} className="item-charges-badge__icon" />
@@ -47,8 +52,8 @@ export const ItemChargesBadge = memo(function ItemChargesBadge({
 
         return (
             <div
-                className={`item-charges-badge item-charges-badge--visual item-charges-badge--bar ${className}`}
-                title={`Charges: ${charges} / ${maxCharges}`}
+                className={`item-charges-badge item-charges-badge--visual item-charges-badge--bar ${depletedClass} ${className}`.trim()}
+                title={badgeTitle}
                 aria-label={`${charges} of ${maxCharges} charges remaining`}
             >
                 <div className="item-charges-badge__progress-track">
@@ -66,8 +71,8 @@ export const ItemChargesBadge = memo(function ItemChargesBadge({
 
     return (
         <span
-            className={`item-charges-badge item-charges-badge--compact ${className}`}
-            title={`Charges: ${charges} / ${maxCharges}`}
+            className={`item-charges-badge item-charges-badge--compact ${depletedClass} ${className}`.trim()}
+            title={badgeTitle}
             aria-label={`${charges} of ${maxCharges} charges remaining`}
         >
             <Zap size={11} className="item-charges-badge__icon" />

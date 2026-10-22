@@ -104,3 +104,20 @@
     color: var(--text-muted, #aaaaaa);
     font-weight: 600;
 }
+
+/* =========================================
+   🚨 DEPLETED CHARGES STATE (0 / X)
+   ========================================= */
+.item-charges-badge--depleted {
+    background: color-mix(in srgb, var(--semantic-danger, #ef4444) 15%, var(--panel-alt, rgba(255, 255, 255, 0.08))) !important;
+    border-color: var(--semantic-danger, #ef4444) !important;
+    color: var(--semantic-danger, #ef4444) !important;
+}
+
+.item-charges-badge--depleted .item-charges-badge__icon {
+    color: var(--semantic-danger, #ef4444) !important;
+}
+
+.item-charges-badge--depleted.item-charges-badge--compact {
+    box-shadow: 0 0 4px color-mix(in srgb, var(--semantic-danger, #ef4444) 30%, transparent);
+}

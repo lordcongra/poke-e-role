@@ -212,9 +212,19 @@ export interface InventorySlice {
         imageUrl?: string;
         charges?: number;
         maxCharges?: number;
+        destroyOnDepletion?: boolean;
         healHp?: number;
         healWill?: number;
         cures?: string[];
+        permanentStatBoost?: {
+            stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
+            value: number;
+        };
+        statBuff?: { stat: string; value: number };
+        statDebuff?: { stat: string; value: number };
+        gainTempHp?: number;
+        dungeonPassive?: string;
+        inflictsStatus?: string[];
     }) => void;
     updateInventoryItem: <K extends keyof InventoryItem>(id: string, field: K, value: InventoryItem[K]) => void;
     removeInventoryItem: (id: string) => void;
@@ -226,7 +236,7 @@ export interface InventorySlice {
     addCustomInfo: () => void;
     updateCustomInfo: (id: string, field: keyof CustomInfo, value: string) => void;
     removeCustomInfo: (id: string) => void;
-    useInventoryItem: (id: string) => void;
+    useInventoryItem: (id: string, options?: { chosenStat?: string }) => void;
 }
 
 export interface PassivesSlice {

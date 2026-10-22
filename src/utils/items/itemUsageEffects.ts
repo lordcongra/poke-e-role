@@ -5,6 +5,15 @@ export interface ItemEffectDefinition {
     healHp?: number;
     healWill?: number;
     cures?: string[];
+    permanentStatBoost?: {
+        stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
+        value: number;
+    };
+    statBuff?: { stat: string; value: number };
+    statDebuff?: { stat: string; value: number };
+    gainTempHp?: number;
+    dungeonPassive?: string;
+    inflictsStatus?: string[];
 }
 
 export interface ItemUsageResult {
@@ -13,7 +22,13 @@ export interface ItemUsageResult {
     nextStatuses: StatusItem[];
     hpHealed: number;
     willHealed: number;
+    tempHpGained: number;
     curedStatusNames: string[];
+    inflictedStatusNames: string[];
+    permanentStatBoost?: { stat: string; value: number };
+    statBuff?: { stat: string; value: number };
+    statDebuff?: { stat: string; value: number };
+    dungeonPassive?: string;
     summaryText: string;
 }
 
@@ -54,7 +69,15 @@ export const BASE_ITEM_EFFECTS: Record<string, ItemEffectDefinition> = {
     'Ice Heal': { cures: ['Frozen Solid'] },
     'Baked Goods': { cures: ['Sleep', 'Poison', 'Frozen Solid', 'Paralysis'] },
     'Full Heal': { cures: ['All Status'] },
-    'Lum Berry': { cures: ['All Status'] }
+    'Lum Berry': { cures: ['All Status'] },
+
+    // Stat items & Rare Candy
+    'Rare Candy': { permanentStatBoost: { stat: 'PlayerChoice', value: 1 } },
+    Protein: { permanentStatBoost: { stat: 'Strength', value: 1 } },
+    Iron: { statBuff: { stat: 'Defense', value: 1 } },
+    Carbos: { permanentStatBoost: { stat: 'Dexterity', value: 1 } },
+    Calcium: { permanentStatBoost: { stat: 'Special', value: 1 } },
+    'HP Up': { permanentStatBoost: { stat: 'Vitality', value: 1 } }
 };
 
 /**
@@ -156,12 +179,29 @@ export function applyItemUsageEffects(
     currentHealth: CharacterHealth,
     currentWill: CharacterWill,
     currentStatuses: StatusItem[],
-    customStatuses: CustomStatus[] = []
+    customStatuses: CustomStatus[] = [],
+    options?: { chosenStat?: string }
 ): ItemUsageResult {
     const baseEffect = getBaseItemEffect(item.name || '');
     const healHpAmount = isLegacyBottleCapacity(item) ? 1 : (item.healHp ?? baseEffect?.healHp ?? 0);
     const healWillAmount = item.healWill ?? baseEffect?.healWill ?? 0;
     const curesList = item.cures ?? baseEffect?.cures ?? [];
+    const tempHpGain = item.gainTempHp ?? baseEffect?.gainTempHp ?? 0;
+    const inflictsList = item.inflictsStatus ?? baseEffect?.inflictsStatus ?? [];
+    const statBuff = item.statBuff ?? baseEffect?.statBuff;
+    const statDebuff = item.statDebuff ?? baseEffect?.statDebuff;
+    const rawPermanentBoost = item.permanentStatBoost ?? baseEffect?.permanentStatBoost;
+    const dungeonPassive = item.dungeonPassive ?? baseEffect?.dungeonPassive;
+
+    // Resolve permanent stat boost with chosenStat if applicable
+    let permanentStatBoost: { stat: string; value: number } | undefined;
+    if (rawPermanentBoost) {
+        const resolvedStat =
+            rawPermanentBoost.stat === 'PlayerChoice'
+                ? options?.chosenStat || 'Strength'
+                : options?.chosenStat || rawPermanentBoost.stat;
+        permanentStatBoost = { stat: resolvedStat, value: rawPermanentBoost.value };
+    }
 
     // --- HP HEALING ---
     const currentHp = currentHealth.hpCurr ?? currentHealth.currentHitPoints ?? 0;
@@ -175,12 +215,24 @@ export function applyItemUsageEffects(
     }
     const hpHealed = Math.max(0, targetHp - currentHp);
 
+    // --- TEMP HP ---
+    let tempHpGained = 0;
+    let nextTempHp = currentHealth.temporaryHitPoints ?? 0;
+    let nextTempHpMax = currentHealth.temporaryHitPointsMax ?? nextTempHp;
+    if (tempHpGain > 0) {
+        tempHpGained = tempHpGain;
+        nextTempHp += tempHpGain;
+        nextTempHpMax = Math.max(nextTempHpMax, nextTempHp);
+    }
+
     const nextHealth: CharacterHealth = {
         ...currentHealth,
         hpCurr: targetHp,
         hpMax: maxHp,
         currentHitPoints: targetHp,
-        maxHitPoints: maxHp
+        maxHitPoints: maxHp,
+        temporaryHitPoints: nextTempHp,
+        temporaryHitPointsMax: nextTempHpMax
     };
 
     // --- WILL RESTORATION ---
@@ -215,7 +267,31 @@ export function applyItemUsageEffects(
         }
     }
 
-    // If all statuses are removed, automatically insert 'Healthy'
+    // --- STATUS INFLICTION ---
+    const inflictedStatusNames: string[] = [];
+    if (inflictsList.length > 0) {
+        for (const inflict of inflictsList) {
+            const clean = inflict.trim();
+            if (!clean) continue;
+            const alreadyHas = nextStatuses.some(
+                (s) =>
+                    s.name.toLowerCase() === clean.toLowerCase() ||
+                    (s.customName && s.customName.toLowerCase() === clean.toLowerCase())
+            );
+            if (!alreadyHas) {
+                nextStatuses = nextStatuses.filter((s) => s.name !== 'Healthy');
+                nextStatuses.push({
+                    id: crypto.randomUUID(),
+                    name: clean,
+                    customName: '',
+                    rounds: 0
+                });
+                inflictedStatusNames.push(clean);
+            }
+        }
+    }
+
+    // If all statuses are removed and none inflicted, automatically insert 'Healthy'
     if (nextStatuses.length === 0) {
         nextStatuses.push({
             id: crypto.randomUUID(),
@@ -238,9 +314,28 @@ export function applyItemUsageEffects(
     if (willHealed > 0) {
         summaryParts.push(`Restored ${willHealed} Will`);
     }
+    if (tempHpGained > 0) {
+        summaryParts.push(`Gained ${tempHpGained} Temp HP`);
+    }
     if (curedStatusNames.length > 0) {
         summaryParts.push(`Cured ${curedStatusNames.join(', ')}`);
     }
+    if (inflictedStatusNames.length > 0) {
+        summaryParts.push(`Inflicted ${inflictedStatusNames.join(', ')}`);
+    }
+    if (statBuff) {
+        summaryParts.push(`+${statBuff.value} ${statBuff.stat}`);
+    }
+    if (statDebuff) {
+        summaryParts.push(`-${statDebuff.value} ${statDebuff.stat}`);
+    }
+    if (permanentStatBoost) {
+        summaryParts.push(`+${permanentStatBoost.value} ${permanentStatBoost.stat} (Permanent)`);
+    }
+    if (dungeonPassive) {
+        summaryParts.push(`Granted passive: ${dungeonPassive}`);
+    }
+
     const summaryText = summaryParts.length > 0 ? summaryParts.join('. ') + '.' : 'No effect.';
 
     return {
@@ -249,21 +344,43 @@ export function applyItemUsageEffects(
         nextStatuses,
         hpHealed,
         willHealed,
+        tempHpGained,
         curedStatusNames,
+        inflictedStatusNames,
+        permanentStatBoost,
+        statBuff,
+        statDebuff,
+        dungeonPassive,
         summaryText
     };
 }
 
 /**
- * Checks whether an item defines or inherits any direct usage effect (healing HP, restoring Will, or curing status).
+ * Checks whether an item defines or inherits any direct usage effect.
  */
 export function hasItemUsageEffect(item: {
     name?: string;
     healHp?: number;
     healWill?: number;
     cures?: string[];
+    permanentStatBoost?: unknown;
+    statBuff?: unknown;
+    statDebuff?: unknown;
+    gainTempHp?: number;
+    dungeonPassive?: string;
+    inflictsStatus?: string[];
 }): boolean {
-    if ((item.healHp ?? 0) > 0 || (item.healWill ?? 0) > 0 || (item.cures && item.cures.length > 0)) {
+    if (
+        (item.healHp ?? 0) > 0 ||
+        (item.healWill ?? 0) > 0 ||
+        (item.cures && item.cures.length > 0) ||
+        Boolean(item.permanentStatBoost) ||
+        Boolean(item.statBuff) ||
+        Boolean(item.statDebuff) ||
+        (item.gainTempHp ?? 0) > 0 ||
+        Boolean(item.dungeonPassive) ||
+        (item.inflictsStatus && item.inflictsStatus.length > 0)
+    ) {
         return true;
     }
     if (item.name && getBaseItemEffect(item.name) !== undefined) {

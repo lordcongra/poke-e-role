@@ -18,9 +18,19 @@ export interface ItemLookupResult {
     imageUrl?: string;
     charges?: number;
     maxCharges?: number;
+    destroyOnDepletion?: boolean;
     healHp?: number;
     healWill?: number;
     cures?: string[];
+    permanentStatBoost?: {
+        stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
+        value: number;
+    };
+    statBuff?: { stat: string; value: number };
+    statDebuff?: { stat: string; value: number };
+    gainTempHp?: number;
+    dungeonPassive?: string;
+    inflictsStatus?: string[];
 }
 
 /**
@@ -130,7 +140,21 @@ export async function lookupItemDetails(rawName: string): Promise<ItemLookupResu
         cures = [rawCures.trim()];
     }
 
-    const effectiveImageUrl = knownArt || customItem?.imageUrl || data?.imageUrl;
+    const destroyOnDepletion =
+        typeof customItem?.destroyOnDepletion === 'boolean'
+            ? customItem.destroyOnDepletion
+            : typeof data?.destroyOnDepletion === 'boolean'
+              ? data.destroyOnDepletion
+              : undefined;
+
+    const permanentStatBoost = customItem?.permanentStatBoost ?? data?.permanentStatBoost;
+    const statBuff = customItem?.statBuff ?? data?.statBuff;
+    const statDebuff = customItem?.statDebuff ?? data?.statDebuff;
+    const gainTempHp = customItem?.gainTempHp ?? data?.gainTempHp;
+    const dungeonPassive = customItem?.dungeonPassive ?? data?.dungeonPassive;
+    const inflictsStatus = customItem?.inflictsStatus ?? data?.inflictsStatus;
+
+    const effectiveImageUrl = customItem?.imageUrl || knownArt;
 
     return {
         found: found || Boolean(customItem),
@@ -141,9 +165,16 @@ export async function lookupItemDetails(rawName: string): Promise<ItemLookupResu
         imageUrl: effectiveImageUrl,
         charges: defaultCharges,
         maxCharges,
+        destroyOnDepletion,
         healHp,
         healWill,
-        cures
+        cures,
+        permanentStatBoost,
+        statBuff,
+        statDebuff,
+        gainTempHp,
+        dungeonPassive,
+        inflictsStatus
     };
 }
 

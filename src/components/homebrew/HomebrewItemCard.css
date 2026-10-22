@@ -208,3 +208,51 @@
     color: #ffffff;
     font-weight: 600;
 }
+
+.homebrew-item-effects__checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    user-select: none;
+    padding: 2px 0;
+}
+
+.homebrew-item-effects__select {
+    width: 100%;
+    padding: 4px 6px;
+    background: var(--input-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 0.8rem;
+}
+
+.homebrew-item-effects__select:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+
+.homebrew-item-effects__advisory {
+    margin-top: 4px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--semantic-danger) 15%, var(--panel-alt));
+    border: 1px solid var(--semantic-danger);
+    color: var(--text-main);
+    font-size: 0.74rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    line-height: 1.35;
+}
+
+.homebrew-item-effects__advisory-icon {
+    color: var(--semantic-danger);
+    flex-shrink: 0;
+    margin-top: 1px;
+}

@@ -5,7 +5,7 @@ import { imageManager } from '../../utils/graphics/imageManager';
 import { useItemArt } from '../../utils/graphics/itemArtCatalog';
 import { getItemEffectiveCharges } from '../../utils/items/itemCharges';
 import { isItemUsable } from '../../utils/items/itemUsageEffects';
-import { ItemChargesBadge } from '../ui/ItemChargesBadge';
+import { ItemChargeBadge } from './ItemChargeBadge';
 import { Check, Package, Sparkles, X } from 'lucide-react';
 import './InventoryGridCard.css';
 
@@ -95,12 +95,18 @@ export const InventoryGridCard = memo(function InventoryGridCard({
                         <button
                             type="button"
                             className="inventory-grid-card__use-btn"
+                            disabled={effectiveCharges.hasCharges && effectiveCharges.charges <= 0}
                             onClick={(e) => {
                                 e.stopPropagation();
+                                if (effectiveCharges.hasCharges && effectiveCharges.charges <= 0) return;
                                 if (onUseItem) onUseItem(item);
                                 else useInventoryItem(item.id);
                             }}
-                            title={`Use ${item.name || 'Item'}`}
+                            title={
+                                effectiveCharges.hasCharges && effectiveCharges.charges <= 0
+                                    ? 'Item depleted (0 charges remaining)'
+                                    : `Use ${item.name || 'Item'}`
+                            }
                             aria-label={`Use ${item.name || 'Item'}`}
                         >
                             <Sparkles size={11} />
@@ -142,10 +148,10 @@ export const InventoryGridCard = memo(function InventoryGridCard({
             {/* Footer: Charges Badge */}
             {effectiveCharges.hasCharges && (
                 <div className="inventory-grid-card__footer">
-                    <ItemChargesBadge
+                    <ItemChargeBadge
+                        item={item}
+                        effectiveCharges={effectiveCharges}
                         mode="visual"
-                        charges={effectiveCharges.charges}
-                        maxCharges={effectiveCharges.maxCharges}
                     />
                 </div>
             )}

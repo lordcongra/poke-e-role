@@ -587,3 +587,50 @@
 .inventory-item__delete-btn:hover {
     background: var(--semantic-danger) !important;
 }
+
+/* =========================================
+   👜 INVENTORY BAG CATEGORY FILTER BAR
+   ========================================= */
+.inventory-filter-bar {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 4px 2px 8px 2px;
+    scrollbar-width: thin;
+    user-select: none;
+}
+
+.inventory-filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 16px;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.inventory-filter-pill:hover {
+    background: color-mix(in srgb, var(--primary) 15%, var(--panel-alt));
+    border-color: var(--primary);
+}
+
+.inventory-filter-pill--active {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+}
+
+.inventory-filter-pill__badge {
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: color-mix(in srgb, currentColor 20%, transparent);
+    font-weight: 700;
+}

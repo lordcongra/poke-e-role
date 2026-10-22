@@ -136,13 +136,59 @@ export function consumeChargeFromInventory(
     const currentQty = targetItem.qty ?? 1;
 
     if (remainingCharges === 0) {
-        if (currentQty <= 1) {
-            newInventory.splice(itemIndex, 1);
+        if (targetItem.destroyOnDepletion === false) {
+            // Depletion retention: keep item at 0 charges instead of destroying it
+            if (currentQty <= 1) {
+                newInventory[itemIndex] = {
+                    ...targetItem,
+                    charges: 0,
+                    maxCharges: effectiveMaxCharges
+                };
+            } else {
+                // Stack of items > 1: decrement current stack, find or create 0-charge entry
+                newInventory[itemIndex] = {
+                    ...targetItem,
+                    qty: currentQty - 1,
+                    charges: effective.charges,
+                    maxCharges: effectiveMaxCharges
+                };
+
+                const matchingZeroIndex = newInventory.findIndex(
+                    (item, idx) =>
+                        idx !== itemIndex &&
+                        item.name.trim().toLowerCase() === targetItem.name.trim().toLowerCase() &&
+                        (item.charges === 0 || getItemEffectiveCharges(item).charges === 0) &&
+                        item.destroyOnDepletion === false
+                );
+
+                if (matchingZeroIndex !== -1) {
+                    const match = newInventory[matchingZeroIndex];
+                    newInventory[matchingZeroIndex] = {
+                        ...match,
+                        qty: (match.qty ?? 1) + 1,
+                        charges: 0,
+                        maxCharges: effectiveMaxCharges
+                    };
+                } else {
+                    const newEntry: InventoryItem = {
+                        ...targetItem,
+                        id: crypto.randomUUID(),
+                        qty: 1,
+                        charges: 0,
+                        maxCharges: effectiveMaxCharges
+                    };
+                    newInventory.splice(itemIndex + 1, 0, newEntry);
+                }
+            }
         } else {
-            newInventory[itemIndex] = {
-                ...targetItem,
-                qty: currentQty - 1
-            };
+            if (currentQty <= 1) {
+                newInventory.splice(itemIndex, 1);
+            } else {
+                newInventory[itemIndex] = {
+                    ...targetItem,
+                    qty: currentQty - 1
+                };
+            }
         }
     } else {
         // remainingCharges > 0

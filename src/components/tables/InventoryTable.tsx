@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { fetchItemData, loadLocalDataset, ALL_ITEMS } from '../../utils/api/api';
 import { KNOWN_ITEMS } from '../../data/constants';
 import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
-import { TooltipIcon } from '../ui/TooltipIcon';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { InventoryItemRow } from './InventoryItemRow';
 import { InventoryCard } from './InventoryCard';
@@ -13,14 +12,17 @@ import { ItemInfoModal } from '../modals/items/ItemInfoModal';
 import { ItemEditModal } from '../modals/items/ItemEditModal';
 import { SmartTagsGuideModal } from '../modals/items/SmartTagsGuideModal';
 import { ItemTargetPromptModal } from '../modals/items/ItemTargetPromptModal';
+import { ItemStatChoiceModal } from '../modals/items/ItemStatChoiceModal';
 import { ItemDeleteConfirmModal } from './ItemDeleteConfirmModal';
+import { InventoryFilterBar, isItemInInventoryCategory, type InventoryCategoryFilter } from './InventoryFilterBar';
+import { InventoryHeaderActions } from './InventoryHeaderActions';
 import {
     getTrainerItemTargets,
     applyItemToPokemonTarget,
     type ItemTargetCandidate
 } from '../../utils/items/itemTargeting';
 import type { InventoryItem } from '../../store/storeTypes';
-import { AlertTriangle, Plus, Check, List, LayoutGrid, Package } from 'lucide-react';
+import { Plus, Package, Check } from 'lucide-react';
 import { PassivesTable } from './PassivesTable';
 import './InventoryTable.css';
 
@@ -38,11 +40,20 @@ export function InventoryTable() {
         candidates: ItemTargetCandidate[];
     } | null>(null);
 
+    const [statChoicePrompt, setStatChoicePrompt] = useState<{
+        item: InventoryItem;
+        target?: ItemTargetCandidate;
+    } | null>(null);
+
+    const [selectedCategory, setSelectedCategory] = useState<InventoryCategoryFilter>('all');
+
     const handleUseItem = (item: InventoryItem) => {
         const store = useCharacterStore.getState();
         const candidates = getTrainerItemTargets(store, item);
         if (candidates.length > 1) {
             setTargetPrompt({ item, candidates });
+        } else if (item.permanentStatBoost?.stat === 'PlayerChoice') {
+            setStatChoicePrompt({ item });
         } else {
             useInventoryItem(item.id);
         }
@@ -52,11 +63,29 @@ export function InventoryTable() {
         if (!targetPrompt) return;
         const { item } = targetPrompt;
         setTargetPrompt(null);
+        if (item.permanentStatBoost?.stat === 'PlayerChoice') {
+            setStatChoicePrompt({ item, target });
+            return;
+        }
         if (target.isTrainer) {
             useInventoryItem(item.id);
         } else {
             const store = useCharacterStore.getState();
             await applyItemToPokemonTarget(store, item, target);
+        }
+    };
+
+    const handleConfirmStatChoice = async (
+        chosenStat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight'
+    ) => {
+        if (!statChoicePrompt) return;
+        const { item, target } = statChoicePrompt;
+        setStatChoicePrompt(null);
+        if (!target || target.isTrainer) {
+            useInventoryItem(item.id, { chosenStat });
+        } else {
+            const store = useCharacterStore.getState();
+            await applyItemToPokemonTarget(store, item, target, { chosenStat });
         }
     };
 
@@ -145,90 +174,9 @@ export function InventoryTable() {
         setFetchingItems((previous) => ({ ...previous, [id]: false }));
     };
 
-    const bagHeaderElements = (
-        <>
-            <TooltipIcon onClick={() => setShowTagsGuide(true)} />
-            <div className="inventory-table__view-toggle">
-                <button
-                    type="button"
-                    className={`inventory-table__view-toggle-btn ${
-                        viewMode === 'list' ? 'inventory-table__view-toggle-btn--active text-theme-header' : ''
-                    }`}
-                    onClick={() => handleSetViewMode('list')}
-                    title="List View"
-                    aria-label="List View"
-                >
-                    <List size={13} />
-                </button>
-                <button
-                    type="button"
-                    className={`inventory-table__view-toggle-btn ${
-                        viewMode === 'card' ? 'inventory-table__view-toggle-btn--active text-theme-header' : ''
-                    }`}
-                    onClick={() => handleSetViewMode('card')}
-                    title="Card Grid View"
-                    aria-label="Card Grid View"
-                >
-                    <LayoutGrid size={13} />
-                </button>
-            </div>
-            {viewMode === 'card' && (
-                <div className="inventory-table__size-toggle" title="Card Sizing">
-                    {(['sm', 'md', 'lg'] as const).map((sz) => (
-                        <button
-                            key={sz}
-                            type="button"
-                            className={`inventory-table__size-toggle-btn ${
-                                cardSize === sz ? 'inventory-table__size-toggle-btn--active text-theme-header' : ''
-                            }`}
-                            onClick={() => handleSetCardSize(sz)}
-                            title={`${sz === 'sm' ? 'Compact' : sz === 'md' ? 'Regular' : 'Spacious'} Card Size`}
-                        >
-                            {sz.toUpperCase()}
-                        </button>
-                    ))}
-                </div>
-            )}
-            {activeCount > 1 && (
-                <div
-                    className="inventory-table__warning text-label"
-                    style={{
-                        color: 'var(--semantic-danger)',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                    }}
-                >
-                    <AlertTriangle size={14} color="var(--semantic-danger)" /> Multiple items active
-                </div>
-            )}
-            <div className="inventory-table__currency-container">
-                <span
-                    className="inventory-table__currency-tp text-label"
-                    style={{ color: 'var(--secondary)' }}
-                    title="Training Points"
-                >
-                    TP:{' '}
-                    <input
-                        type="number"
-                        value={trainingPoints}
-                        onChange={(event) => setTrainingPoints(Number(event.target.value) || 0)}
-                        className="no-spinners inventory-table__currency-input inventory-table__currency-input--tp text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    />
-                </span>
-                <span className="inventory-table__currency-pd text-label" style={{ color: 'var(--primary)' }}>
-                    PD:{' '}
-                    <input
-                        type="number"
-                        value={pokedollars}
-                        onChange={(event) => setPokedollars(Number(event.target.value) || 0)}
-                        className="no-spinners inventory-table__currency-input text-subtext"
-                        style={{ color: 'var(--text-main)' }}
-                    />
-                </span>
-            </div>
-        </>
+    const filteredInventory = useMemo(
+        () => inventory.filter((item) => isItemInInventoryCategory(item, selectedCategory, roomCustomItems)),
+        [inventory, selectedCategory, roomCustomItems]
     );
 
     return (
@@ -241,16 +189,43 @@ export function InventoryTable() {
                     ))}
             </datalist>
 
-            <CollapsingSection title="BAG" headerElements={bagHeaderElements}>
+            <CollapsingSection
+                title="BAG"
+                headerElements={
+                    <InventoryHeaderActions
+                        viewMode={viewMode}
+                        onSetViewMode={handleSetViewMode}
+                        cardSize={cardSize}
+                        onSetCardSize={handleSetCardSize}
+                        onShowTagsGuide={() => setShowTagsGuide(true)}
+                        activeCount={activeCount}
+                        trainingPoints={trainingPoints}
+                        pokedollars={pokedollars}
+                        onSetTrainingPoints={setTrainingPoints}
+                        onSetPokedollars={setPokedollars}
+                    />
+                }
+            >
+                <InventoryFilterBar
+                    inventory={inventory}
+                    selectedCategory={selectedCategory}
+                    onSelectCategory={setSelectedCategory}
+                    customItems={roomCustomItems}
+                />
+
                 {viewMode === 'card' ? (
-                    inventory.length === 0 ? (
+                    filteredInventory.length === 0 ? (
                         <div className="inventory-table__empty-state">
                             <Package size={32} style={{ opacity: 0.5 }} />
-                            <span className="text-subtext">No items in your bag yet.</span>
+                            <span className="text-subtext">
+                                {inventory.length === 0
+                                    ? 'No items in your bag yet.'
+                                    : 'No items match this category.'}
+                            </span>
                         </div>
                     ) : (
                         <div className={`inventory-table__grid-container inventory-table__grid-container--${cardSize}`}>
-                            {inventory.map((item) => (
+                            {filteredInventory.map((item) => (
                                 <InventoryGridCard
                                     key={item.id}
                                     item={item}
@@ -287,7 +262,7 @@ export function InventoryTable() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {inventory.map((item) => (
+                                    {filteredInventory.map((item) => (
                                         <InventoryItemRow
                                             key={item.id}
                                             item={item}
@@ -304,7 +279,7 @@ export function InventoryTable() {
                         </div>
 
                         <div className="mobile-only-flex inventory-table__mobile-card-container">
-                            {inventory.map((item) => (
+                            {filteredInventory.map((item) => (
                                 <InventoryCard
                                     key={item.id}
                                     item={item}
@@ -371,6 +346,14 @@ export function InventoryTable() {
                     candidates={targetPrompt.candidates}
                     onSelectTarget={handleSelectTarget}
                     onClose={() => setTargetPrompt(null)}
+                />
+            )}
+
+            {statChoicePrompt && (
+                <ItemStatChoiceModal
+                    item={statChoicePrompt.item}
+                    onSelectStat={handleConfirmStatChoice}
+                    onClose={() => setStatChoicePrompt(null)}
                 />
             )}
 

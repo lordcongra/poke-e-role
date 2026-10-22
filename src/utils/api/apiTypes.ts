@@ -111,6 +111,16 @@ export interface ItemApiResponse {
     forTypes?: string;
     imageUrl?: string;
     Image?: string;
+    destroyOnDepletion?: boolean;
+    permanentStatBoost?: {
+        stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
+        value: number;
+    };
+    statBuff?: { stat: string; value: number };
+    statDebuff?: { stat: string; value: number };
+    gainTempHp?: number;
+    dungeonPassive?: string;
+    inflictsStatus?: string[];
 }
 
 export interface NatureApiResponse {
