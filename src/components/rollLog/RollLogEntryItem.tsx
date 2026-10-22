@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Info, Sparkles, Check } from 'lucide-react';
+import { X, Info, Dices, Check } from 'lucide-react';
 import { parseRollLabel } from '../../utils/combat/rollLogParser';
 import { executeChanceRoll } from '../../utils/combat/diceRoller';
 import type { RollSyncData } from '../../hooks/owlbearSync/owlbearSyncConstants';
@@ -75,45 +75,38 @@ export const RollLogEntryItem: React.FC<RollLogEntryItemProps> = ({ roll, resolv
                         </span>
                     </button>
                 )}
-            </div>
-            <div className="roll-log__entry-result text-subtext" style={{ color: 'var(--text-main)' }}>
-                {roll.result}
-            </div>
-            {roll.chanceDice && roll.chanceDice > 0 && (
-                <div style={{ marginTop: '6px' }}>
+                {roll.chanceDice && roll.chanceDice > 0 && (
                     <button
                         type="button"
-                        className="action-button action-button--theme action-button--xs"
-                        style={{
-                            width: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '5px',
-                            fontWeight: 600
-                        }}
+                        className="roll-log__chance-btn"
                         disabled={roll.chanceRolled}
-                        onClick={() => executeChanceRoll(roll)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            executeChanceRoll(roll);
+                        }}
                         title={
                             roll.chanceRolled
-                                ? 'Chance dice already rolled for this action'
-                                : `Roll ${roll.chanceDice}d6 needing 6 for ${roll.chanceEffect || 'Effect'}`
+                                ? `Chance dice already rolled (${roll.chanceDice}d6)`
+                                : `Roll ${roll.chanceDice}d6 (Need 6) for ${roll.chanceEffect || 'Effect'}`
                         }
                     >
                         {roll.chanceRolled ? (
                             <>
-                                <Check size={12} />
-                                <span>Chance Rolled ({roll.chanceDice}d6)</span>
+                                <Check size={11} />
+                                <span>Chance</span>
                             </>
                         ) : (
                             <>
-                                <Sparkles size={12} />
-                                <span>Roll Chance Dice ({roll.chanceDice}d6, Need 6)</span>
+                                <Dices size={12} />
+                                <span>Chance</span>
                             </>
                         )}
                     </button>
-                </div>
-            )}
+                )}
+            </div>
+            <div className="roll-log__entry-result text-subtext" style={{ color: 'var(--text-main)' }}>
+                {roll.result}
+            </div>
         </div>
     );
 };

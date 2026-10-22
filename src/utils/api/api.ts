@@ -346,6 +346,7 @@ export async function fetchItemData(itemName: string): Promise<ItemApiResponse |
             statBuff: custom.statBuff,
             statDebuff: custom.statDebuff,
             gainTempHp: custom.gainTempHp,
+            gainTempWill: custom.gainTempWill,
             dungeonPassive: custom.dungeonPassive,
             inflictsStatus: custom.inflictsStatus
         };

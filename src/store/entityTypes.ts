@@ -104,6 +104,7 @@ export interface InventoryItem {
     statBuff?: { stat: string; value: number };
     statDebuff?: { stat: string; value: number };
     gainTempHp?: number;
+    gainTempWill?: number;
     dungeonPassive?: string;
     inflictsStatus?: string[];
     attackAction?: ItemAttackAction;
@@ -316,6 +317,7 @@ export interface CustomItem {
     statBuff?: { stat: string; value: number };
     statDebuff?: { stat: string; value: number };
     gainTempHp?: number;
+    gainTempWill?: number;
     dungeonPassive?: string;
     inflictsStatus?: string[];
     attackAction?: ItemAttackAction;

@@ -93,13 +93,13 @@ export function groupCustomItemsByAccordion(items: CustomItem[]): AccordionItemS
             items: data.items
         }))
         .sort((a, b) => {
+            if (a.topLevelGroup === 'Custom' && b.topLevelGroup !== 'Custom') return -1;
+            if (b.topLevelGroup === 'Custom' && a.topLevelGroup !== 'Custom') return 1;
             const idxA = standardOrder.indexOf(a.topLevelGroup);
             const idxB = standardOrder.indexOf(b.topLevelGroup);
             if (idxA !== -1 && idxB !== -1) return idxA - idxB;
             if (idxA !== -1) return -1;
             if (idxB !== -1) return 1;
-            if (a.topLevelGroup === 'Custom' && b.topLevelGroup !== 'Custom') return 1;
-            if (b.topLevelGroup === 'Custom' && a.topLevelGroup !== 'Custom') return -1;
             return a.accordionKey.localeCompare(b.accordionKey);
         });
 }
@@ -120,13 +120,13 @@ export function getDistinctCategoryPills(items: CustomItem[]): CategoryPillData[
 
     const standardOrder = ['Medicine', 'Held Items', 'Pokéballs', 'Trainer Items', 'Evolution Items', 'Key Items'];
     const groups = Object.keys(counts).sort((a, b) => {
+        if (a === 'Custom' && b !== 'Custom') return -1;
+        if (b === 'Custom' && a !== 'Custom') return 1;
         const idxA = standardOrder.indexOf(a);
         const idxB = standardOrder.indexOf(b);
         if (idxA !== -1 && idxB !== -1) return idxA - idxB;
         if (idxA !== -1) return -1;
         if (idxB !== -1) return 1;
-        if (a === 'Custom' && b !== 'Custom') return 1;
-        if (b === 'Custom' && a !== 'Custom') return -1;
         return a.localeCompare(b);
     });
 

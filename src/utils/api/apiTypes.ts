@@ -121,6 +121,7 @@ export interface ItemApiResponse {
     statBuff?: { stat: string; value: number };
     statDebuff?: { stat: string; value: number };
     gainTempHp?: number;
+    gainTempWill?: number;
     dungeonPassive?: string;
     inflictsStatus?: string[];
     attackAction?: ItemAttackAction;

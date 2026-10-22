@@ -161,6 +161,13 @@
     outline: none;
 }
 
+.homebrew-item-effects .number-spinner {
+    height: 26px;
+    border: 1px solid var(--border);
+    width: 100%;
+}
+
+
 .homebrew-item-effects__cures-section {
     display: flex;
     flex-direction: column;

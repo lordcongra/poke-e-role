@@ -94,3 +94,11 @@
     font-size: 0.8rem;
     cursor: pointer;
 }
+
+.item-attack-action-config .number-spinner {
+    height: 28px;
+    border: 1px solid var(--panel-alt, #374151);
+    background: var(--panel-bg, #1f2937);
+    border-radius: 4px;
+}
+

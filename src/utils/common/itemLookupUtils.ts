@@ -29,6 +29,7 @@ export interface ItemLookupResult {
     statBuff?: { stat: string; value: number };
     statDebuff?: { stat: string; value: number };
     gainTempHp?: number;
+    gainTempWill?: number;
     dungeonPassive?: string;
     inflictsStatus?: string[];
     attackAction?: ItemAttackAction;
@@ -152,6 +153,7 @@ export async function lookupItemDetails(rawName: string): Promise<ItemLookupResu
     const statBuff = customItem?.statBuff ?? data?.statBuff;
     const statDebuff = customItem?.statDebuff ?? data?.statDebuff;
     const gainTempHp = customItem?.gainTempHp ?? data?.gainTempHp;
+    const gainTempWill = customItem?.gainTempWill ?? data?.gainTempWill;
     const dungeonPassive = customItem?.dungeonPassive ?? data?.dungeonPassive;
     const inflictsStatus = customItem?.inflictsStatus ?? data?.inflictsStatus;
     const attackAction = customItem?.attackAction ?? data?.attackAction;
@@ -175,6 +177,7 @@ export async function lookupItemDetails(rawName: string): Promise<ItemLookupResu
         statBuff,
         statDebuff,
         gainTempHp,
+        gainTempWill,
         dungeonPassive,
         inflictsStatus,
         attackAction

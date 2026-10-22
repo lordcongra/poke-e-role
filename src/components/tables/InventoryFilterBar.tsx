@@ -45,12 +45,14 @@ export function isItemInInventoryCategory(
             (item.cures && item.cures.length > 0) ||
             (item.inflictsStatus && item.inflictsStatus.length > 0) ||
             (item.gainTempHp ?? 0) > 0 ||
+            (item.gainTempWill ?? 0) > 0 ||
             Boolean(item.permanentStatBoost) ||
             (customMatch &&
                 ((customMatch.healHp ?? 0) > 0 ||
                     (customMatch.healWill ?? 0) > 0 ||
                     (customMatch.cures && customMatch.cures.length > 0) ||
                     (customMatch.gainTempHp ?? 0) > 0 ||
+                    (customMatch.gainTempWill ?? 0) > 0 ||
                     Boolean(customMatch.permanentStatBoost)))
         ) {
             return true;

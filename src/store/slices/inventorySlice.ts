@@ -58,6 +58,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             const resolvedStatBuff = item.statBuff ?? customMatch?.statBuff;
             const resolvedStatDebuff = item.statDebuff ?? customMatch?.statDebuff;
             const resolvedGainTempHp = item.gainTempHp ?? customMatch?.gainTempHp;
+            const resolvedGainTempWill = item.gainTempWill ?? customMatch?.gainTempWill;
             const resolvedDungeonPassive = item.dungeonPassive ?? customMatch?.dungeonPassive;
             const resolvedInflictsStatus = item.inflictsStatus ?? customMatch?.inflictsStatus;
             const resolvedAttackAction = item.attackAction ?? customMatch?.attackAction;
@@ -82,6 +83,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
                     statBuff: resolvedStatBuff,
                     statDebuff: resolvedStatDebuff,
                     gainTempHp: resolvedGainTempHp,
+                    gainTempWill: resolvedGainTempWill,
                     dungeonPassive: resolvedDungeonPassive,
                     inflictsStatus: resolvedInflictsStatus,
                     attackAction: resolvedAttackAction

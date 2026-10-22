@@ -3,6 +3,7 @@ import type { ItemAttackAction } from '../../store/entityTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { Swords, ChevronDown, ChevronUp } from 'lucide-react';
+import { NumberSpinner } from '../ui/NumberSpinner';
 import './ItemAttackActionConfig.css';
 
 const DEFAULT_TYPES = [
@@ -126,15 +127,15 @@ export function ItemAttackActionConfig({
                             </select>
                         </div>
 
-                        <div className="item-attack-action-config__field" style={{ maxWidth: '80px' }}>
+                        <div className="item-attack-action-config__field" style={{ maxWidth: '95px' }}>
                             <span className="item-attack-action-config__label">Power</span>
-                            <input
-                                type="number"
-                                min={0}
-                                className="item-attack-action-config__input"
+                            <NumberSpinner
                                 value={attackAction.power}
+                                min={0}
+                                max={99}
+                                compact
                                 disabled={!canEdit}
-                                onChange={(e) => updateField('power', Math.max(0, parseInt(e.target.value, 10) || 0))}
+                                onChange={(val) => updateField('power', Math.max(0, val))}
                             />
                         </div>
                     </div>
@@ -205,19 +206,15 @@ export function ItemAttackActionConfig({
                             />
                         </div>
 
-                        <div className="item-attack-action-config__field" style={{ maxWidth: '85px' }}>
+                        <div className="item-attack-action-config__field" style={{ maxWidth: '95px' }}>
                             <span className="item-attack-action-config__label">Chance Dice</span>
-                            <input
-                                type="number"
+                            <NumberSpinner
+                                value={attackAction.chanceDice ?? 0}
                                 min={0}
                                 max={6}
-                                className="item-attack-action-config__input"
-                                value={attackAction.chanceDice ?? 0}
+                                compact
                                 disabled={!canEdit}
-                                onChange={(e) => {
-                                    const val = parseInt(e.target.value, 10);
-                                    updateField('chanceDice', isNaN(val) || val <= 0 ? undefined : val);
-                                }}
+                                onChange={(val) => updateField('chanceDice', val <= 0 ? undefined : val)}
                             />
                         </div>
 

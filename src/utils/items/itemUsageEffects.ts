@@ -12,6 +12,7 @@ export interface ItemEffectDefinition {
     statBuff?: { stat: string; value: number };
     statDebuff?: { stat: string; value: number };
     gainTempHp?: number;
+    gainTempWill?: number;
     dungeonPassive?: string;
     inflictsStatus?: string[];
 }
@@ -23,6 +24,7 @@ export interface ItemUsageResult {
     hpHealed: number;
     willHealed: number;
     tempHpGained: number;
+    tempWillGained: number;
     curedStatusNames: string[];
     inflictedStatusNames: string[];
     permanentStatBoost?: { stat: string; value: number };
@@ -187,6 +189,7 @@ export function applyItemUsageEffects(
     const healWillAmount = item.healWill ?? baseEffect?.healWill ?? 0;
     const curesList = item.cures ?? baseEffect?.cures ?? [];
     const tempHpGain = item.gainTempHp ?? baseEffect?.gainTempHp ?? 0;
+    const tempWillGain = item.gainTempWill ?? baseEffect?.gainTempWill ?? 0;
     const inflictsList = item.inflictsStatus ?? baseEffect?.inflictsStatus ?? [];
     const statBuff = item.statBuff ?? baseEffect?.statBuff;
     const statDebuff = item.statDebuff ?? baseEffect?.statDebuff;
@@ -247,10 +250,22 @@ export function applyItemUsageEffects(
     }
     const willHealed = Math.max(0, targetWill - currentWillVal);
 
+    // --- TEMP WILL ---
+    let tempWillGained = 0;
+    let nextTempWill = currentWill.temporaryWill ?? 0;
+    let nextTempWillMax = currentWill.temporaryWillMax ?? nextTempWill;
+    if (tempWillGain > 0) {
+        tempWillGained = tempWillGain;
+        nextTempWill += tempWillGain;
+        nextTempWillMax = Math.max(nextTempWillMax, nextTempWill);
+    }
+
     const nextWill: CharacterWill = {
         ...currentWill,
         willCurr: targetWill,
-        willMax: maxWill
+        willMax: maxWill,
+        temporaryWill: nextTempWill,
+        temporaryWillMax: nextTempWillMax
     };
 
     // --- STATUS CURING ---
@@ -317,6 +332,9 @@ export function applyItemUsageEffects(
     if (tempHpGained > 0) {
         summaryParts.push(`Gained ${tempHpGained} Temp HP`);
     }
+    if (tempWillGained > 0) {
+        summaryParts.push(`Gained ${tempWillGained} Temp Will`);
+    }
     if (curedStatusNames.length > 0) {
         summaryParts.push(`Cured ${curedStatusNames.join(', ')}`);
     }
@@ -345,6 +363,7 @@ export function applyItemUsageEffects(
         hpHealed,
         willHealed,
         tempHpGained,
+        tempWillGained,
         curedStatusNames,
         inflictedStatusNames,
         permanentStatBoost,
@@ -367,6 +386,7 @@ export function hasItemUsageEffect(item: {
     statBuff?: unknown;
     statDebuff?: unknown;
     gainTempHp?: number;
+    gainTempWill?: number;
     dungeonPassive?: string;
     inflictsStatus?: string[];
 }): boolean {
@@ -378,6 +398,7 @@ export function hasItemUsageEffect(item: {
         Boolean(item.statBuff) ||
         Boolean(item.statDebuff) ||
         (item.gainTempHp ?? 0) > 0 ||
+        (item.gainTempWill ?? 0) > 0 ||
         Boolean(item.dungeonPassive) ||
         (item.inflictsStatus && item.inflictsStatus.length > 0)
     ) {

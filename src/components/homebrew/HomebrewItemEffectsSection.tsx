@@ -3,6 +3,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomItem } from '../../store/entityTypes';
 import { CORE_CURABLE_STATUSES } from '../../utils/items/itemCharges';
 import { ItemAttackActionConfig } from '../items/ItemAttackActionConfig';
+import { NumberSpinner } from '../ui/NumberSpinner';
 import {
     ChevronDown,
     ChevronUp,
@@ -48,31 +49,12 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
         item.statBuff ||
         item.statDebuff ||
         item.gainTempHp ||
+        item.gainTempWill ||
         item.dungeonPassive ||
         (item.inflictsStatus && item.inflictsStatus.length > 0) ||
         Boolean(item.attackAction)
     );
     const [isExpanded, setIsExpanded] = useState(() => hasConfigured);
-
-    const handleChargesChange = (raw: string) => {
-        if (!canEdit) return;
-        const trimmed = raw.trim();
-        const num = trimmed === '' ? undefined : parseInt(trimmed, 10);
-        if (num === undefined || isNaN(num) || num <= 0) {
-            updateCustomItem(item.id, 'charges', undefined);
-            updateCustomItem(item.id, 'maxCharges', undefined);
-        } else {
-            updateCustomItem(item.id, 'charges', num);
-            updateCustomItem(item.id, 'maxCharges', num);
-        }
-    };
-
-    const handleEffectNum = (field: 'healHp' | 'healWill' | 'gainTempHp', raw: string) => {
-        if (!canEdit) return;
-        const trimmed = raw.trim();
-        const num = trimmed === '' ? undefined : Math.max(0, parseInt(trimmed, 10) || 0);
-        updateCustomItem(item.id, field, num);
-    };
 
     const handleToggleCure = (statusName: string) => {
         if (!canEdit) return;
@@ -107,15 +89,6 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
         }
     };
 
-    const handlePermanentStatValue = (valStr: string) => {
-        if (!canEdit || !item.permanentStatBoost) return;
-        const num = Math.max(1, parseInt(valStr, 10) || 1);
-        updateCustomItem(item.id, 'permanentStatBoost', {
-            ...item.permanentStatBoost,
-            value: num
-        });
-    };
-
     const handleBuffSelect = (statVal: string) => {
         if (!canEdit) return;
         if (!statVal || statVal === 'None') {
@@ -126,12 +99,6 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
         }
     };
 
-    const handleBuffValue = (valStr: string) => {
-        if (!canEdit || !item.statBuff) return;
-        const num = Math.max(1, parseInt(valStr, 10) || 1);
-        updateCustomItem(item.id, 'statBuff', { ...item.statBuff, value: num });
-    };
-
     const handleDebuffSelect = (statVal: string) => {
         if (!canEdit) return;
         if (!statVal || statVal === 'None') {
@@ -140,12 +107,6 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
             const currentVal = item.statDebuff?.value ?? 1;
             updateCustomItem(item.id, 'statDebuff', { stat: statVal, value: currentVal });
         }
-    };
-
-    const handleDebuffValue = (valStr: string) => {
-        if (!canEdit || !item.statDebuff) return;
-        const num = Math.max(1, parseInt(valStr, 10) || 1);
-        updateCustomItem(item.id, 'statDebuff', { ...item.statDebuff, value: num });
     };
 
     const activeCustomNames = (roomCustomStatuses || [])
@@ -180,69 +141,83 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
                 <div className="homebrew-item-effects__body">
                     {/* Charges & Depletion */}
                     <div className="homebrew-item-effects__fields-grid">
-                        <label className="homebrew-item-effects__field">
+                        <div className="homebrew-item-effects__field">
                             <span className="homebrew-item-effects__field-label text-subtext">
                                 <Battery size={12} /> Default Charges
                             </span>
-                            <input
-                                type="number"
+                            <NumberSpinner
+                                value={item.charges ?? 0}
                                 min={0}
                                 max={99}
-                                className="homebrew-item-effects__input text-subtext"
-                                value={item.charges ?? ''}
-                                placeholder="0 (Single-use)"
+                                compact
                                 disabled={!canEdit}
-                                onChange={(e) => handleChargesChange(e.target.value)}
+                                onChange={(val) => {
+                                    if (val <= 0) {
+                                        updateCustomItem(item.id, 'charges', undefined);
+                                        updateCustomItem(item.id, 'maxCharges', undefined);
+                                    } else {
+                                        updateCustomItem(item.id, 'charges', val);
+                                        updateCustomItem(item.id, 'maxCharges', val);
+                                    }
+                                }}
                             />
-                        </label>
+                        </div>
 
-                        <label className="homebrew-item-effects__field">
+                        <div className="homebrew-item-effects__field">
                             <span className="homebrew-item-effects__field-label text-subtext">
                                 <Heart size={12} style={{ color: 'var(--semantic-danger)' }} /> Heal HP
                             </span>
-                            <input
-                                type="number"
+                            <NumberSpinner
+                                value={item.healHp ?? 0}
                                 min={0}
                                 max={99}
-                                className="homebrew-item-effects__input text-subtext"
-                                value={item.healHp ?? ''}
-                                placeholder="0"
+                                compact
                                 disabled={!canEdit}
-                                onChange={(e) => handleEffectNum('healHp', e.target.value)}
+                                onChange={(val) => updateCustomItem(item.id, 'healHp', val <= 0 ? undefined : val)}
                             />
-                        </label>
+                        </div>
 
-                        <label className="homebrew-item-effects__field">
+                        <div className="homebrew-item-effects__field">
                             <span className="homebrew-item-effects__field-label text-subtext">
                                 <Zap size={12} style={{ color: 'var(--primary)' }} /> Heal Will
                             </span>
-                            <input
-                                type="number"
+                            <NumberSpinner
+                                value={item.healWill ?? 0}
                                 min={0}
                                 max={99}
-                                className="homebrew-item-effects__input text-subtext"
-                                value={item.healWill ?? ''}
-                                placeholder="0"
+                                compact
                                 disabled={!canEdit}
-                                onChange={(e) => handleEffectNum('healWill', e.target.value)}
+                                onChange={(val) => updateCustomItem(item.id, 'healWill', val <= 0 ? undefined : val)}
                             />
-                        </label>
+                        </div>
 
-                        <label className="homebrew-item-effects__field">
+                        <div className="homebrew-item-effects__field">
                             <span className="homebrew-item-effects__field-label text-subtext">
                                 <ShieldPlus size={12} style={{ color: 'var(--secondary)' }} /> Gain Temp HP
                             </span>
-                            <input
-                                type="number"
+                            <NumberSpinner
+                                value={item.gainTempHp ?? 0}
                                 min={0}
                                 max={99}
-                                className="homebrew-item-effects__input text-subtext"
-                                value={item.gainTempHp ?? ''}
-                                placeholder="0"
+                                compact
                                 disabled={!canEdit}
-                                onChange={(e) => handleEffectNum('gainTempHp', e.target.value)}
+                                onChange={(val) => updateCustomItem(item.id, 'gainTempHp', val <= 0 ? undefined : val)}
                             />
-                        </label>
+                        </div>
+
+                        <div className="homebrew-item-effects__field">
+                            <span className="homebrew-item-effects__field-label text-subtext">
+                                <ShieldPlus size={12} style={{ color: 'var(--primary)' }} /> Gain Temp Will
+                            </span>
+                            <NumberSpinner
+                                value={item.gainTempWill ?? 0}
+                                min={0}
+                                max={99}
+                                compact
+                                disabled={!canEdit}
+                                onChange={(val) => updateCustomItem(item.id, 'gainTempWill', val <= 0 ? undefined : val)}
+                            />
+                        </div>
                     </div>
 
                     {/* Depletion Retention Option */}
@@ -277,15 +252,19 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
                                     </option>
                                 ))}
                             </select>
-                            <input
-                                type="number"
+                            <NumberSpinner
+                                value={item.permanentStatBoost?.value ?? 1}
                                 min={1}
                                 max={10}
-                                className="homebrew-item-effects__input text-subtext"
-                                value={item.permanentStatBoost?.value ?? 1}
+                                compact
                                 disabled={!canEdit || !item.permanentStatBoost}
-                                onChange={(e) => handlePermanentStatValue(e.target.value)}
-                                title="Stat boost amount (e.g. +1)"
+                                onChange={(val) => {
+                                    if (!item.permanentStatBoost) return;
+                                    updateCustomItem(item.id, 'permanentStatBoost', {
+                                        ...item.permanentStatBoost,
+                                        value: Math.max(1, val)
+                                    });
+                                }}
                             />
                         </div>
 
@@ -308,7 +287,7 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
                             <span className="homebrew-item-effects__field-label text-subtext">
                                 <TrendingUp size={12} style={{ color: 'var(--secondary)' }} /> Encounter Buff
                             </span>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 60px', gap: '4px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 75px', gap: '4px' }}>
                                 <select
                                     className="homebrew-item-effects__select text-subtext"
                                     value={item.statBuff?.stat || 'None'}
@@ -322,14 +301,16 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
                                         </option>
                                     ))}
                                 </select>
-                                <input
-                                    type="number"
+                                <NumberSpinner
+                                    value={item.statBuff?.value ?? 1}
                                     min={1}
                                     max={10}
-                                    className="homebrew-item-effects__input text-subtext"
-                                    value={item.statBuff?.value ?? 1}
+                                    compact
                                     disabled={!canEdit || !item.statBuff}
-                                    onChange={(e) => handleBuffValue(e.target.value)}
+                                    onChange={(val) => {
+                                        if (!item.statBuff) return;
+                                        updateCustomItem(item.id, 'statBuff', { ...item.statBuff, value: Math.max(1, val) });
+                                    }}
                                 />
                             </div>
                         </div>
@@ -338,7 +319,7 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
                             <span className="homebrew-item-effects__field-label text-subtext">
                                 <TrendingDown size={12} style={{ color: 'var(--semantic-danger)' }} /> Encounter Debuff
                             </span>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 60px', gap: '4px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 75px', gap: '4px' }}>
                                 <select
                                     className="homebrew-item-effects__select text-subtext"
                                     value={item.statDebuff?.stat || 'None'}
@@ -352,14 +333,16 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
                                         </option>
                                     ))}
                                 </select>
-                                <input
-                                    type="number"
+                                <NumberSpinner
+                                    value={item.statDebuff?.value ?? 1}
                                     min={1}
                                     max={10}
-                                    className="homebrew-item-effects__input text-subtext"
-                                    value={item.statDebuff?.value ?? 1}
+                                    compact
                                     disabled={!canEdit || !item.statDebuff}
-                                    onChange={(e) => handleDebuffValue(e.target.value)}
+                                    onChange={(val) => {
+                                        if (!item.statDebuff) return;
+                                        updateCustomItem(item.id, 'statDebuff', { ...item.statDebuff, value: Math.max(1, val) });
+                                    }}
                                 />
                             </div>
                         </div>
