@@ -226,8 +226,14 @@ export function TrainerPreviewModal({
             if (!current || !current.build.moves[moveIndex]) return prev;
             const updatedMoves = current.build.moves.map((m, i) => (i === moveIndex ? { ...m, ...updates } : m));
             const updatedBuild = { ...current.build, moves: updatedMoves };
-            const tokenImgUrl = String(current.metadata['token-image-url'] || `${import.meta.env.BASE_URL || '/'}pokeball-token.svg`);
-            const freshMeta = buildTokenMetadataFromBuild(updatedBuild, String(current.metadata.nickname || ''), tokenImgUrl);
+            const tokenImgUrl = String(
+                current.metadata['token-image-url'] || `${import.meta.env.BASE_URL || '/'}pokeball-token.svg`
+            );
+            const freshMeta = buildTokenMetadataFromBuild(
+                updatedBuild,
+                String(current.metadata.nickname || ''),
+                tokenImgUrl
+            );
             freshMeta['age'] = '';
             if (current.metadata['loyalty-curr'] !== undefined) {
                 freshMeta['loyalty-curr'] = current.metadata['loyalty-curr'];

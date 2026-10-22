@@ -1,4 +1,5 @@
 import type { Rank, GeneratorConfig } from '../../../store/storeTypes';
+import { Dices, Sparkles } from 'lucide-react';
 import { TooltipIcon } from '../../ui/TooltipIcon';
 import { RANKS } from '../../../data/constants';
 import { BIOMES, BIOME_TOOLTIP_NOTE } from '../../../data/biomeData';
@@ -31,7 +32,7 @@ export function GeneratorSpeciesSection({
     onOpenTooltip
 }: GeneratorSpeciesSectionProps) {
     const speciesPlaceholder = activeConfig.randomizeSpecies
-        ? 'Random Species (Enabled Below)'
+        ? 'Random Species (Active)'
         : activeConfig.filterRecommendedRank
           ? `e.g. Lucario (${activeTargetRecRank})`
           : 'e.g. Lucario';
@@ -56,16 +57,29 @@ export function GeneratorSpeciesSection({
             {/* Species, Rank & Location Row */}
             <div className="generator-modal__row">
                 <div className="generator-modal__col">
-                    <label className="text-label">Species:</label>
-                    <input
-                        type="text"
-                        list="generator-species-datalist"
-                        className="generator-modal__input text-label"
-                        placeholder={speciesPlaceholder}
-                        value={activeConfig.randomizeSpecies ? '' : currentSpecies}
-                        onChange={(e) => onUpdateSpecies(e.target.value)}
-                        disabled={activeConfig.randomizeSpecies}
-                    />
+                    <label className="text-label" htmlFor="generator-species-input">Species:</label>
+                    <div className="generator-modal__species-input-wrap">
+                        <input
+                            id="generator-species-input"
+                            type="text"
+                            list="generator-species-datalist"
+                            className="generator-modal__input text-label"
+                            placeholder={speciesPlaceholder}
+                            value={activeConfig.randomizeSpecies ? '' : currentSpecies}
+                            onChange={(e) => onUpdateSpecies(e.target.value)}
+                            disabled={activeConfig.randomizeSpecies}
+                        />
+                        <button
+                            type="button"
+                            className={`action-button ${activeConfig.randomizeSpecies ? 'action-button--theme' : 'action-button--dark'} generator-modal__dice-btn`}
+                            onClick={() => onUpdateConfig({ randomizeSpecies: !activeConfig.randomizeSpecies })}
+                            title={activeConfig.randomizeSpecies ? 'Randomize Species is ON (Click to disable)' : 'Randomize Species is OFF (Click to enable)'}
+                            aria-label="Randomize Species"
+                        >
+                            <Dices size={15} />
+                            <span>Random</span>
+                        </button>
+                    </div>
                     <datalist id="generator-species-datalist">
                         {displayedSpecies.map((s) => (
                             <option key={s} value={s} />
@@ -107,6 +121,71 @@ export function GeneratorSpeciesSection({
                             </option>
                         ))}
                     </select>
+                </div>
+            </div>
+
+            {/* Identity & Flavor Sub-row */}
+            <div className="generator-modal__identity-row">
+                <span className="generator-modal__subrow-label text-label">
+                    Identity &amp; Flavor:
+                </span>
+                <div className="generator-modal__identity-options">
+                    <label className="generator-modal__checkbox-label text-label">
+                        <input
+                            type="checkbox"
+                            checked={Boolean(activeConfig.randomizeGender)}
+                            onChange={(e) => onUpdateConfig({ randomizeGender: e.target.checked })}
+                            className="generator-modal__checkbox"
+                        />
+                        <span>Randomize Gender (50/50 M/F)</span>
+                        <TooltipIcon
+                            onClick={() =>
+                                onOpenTooltip({
+                                    title: 'Randomize Gender',
+                                    desc: 'Randomly assigns the Pokémon a 50/50 chance of being Male or Female upon generation.'
+                                })
+                            }
+                        />
+                    </label>
+
+                    <label className="generator-modal__checkbox-label text-label">
+                        <input
+                            type="checkbox"
+                            checked={Boolean(activeConfig.randomizeNature)}
+                            onChange={(e) => onUpdateConfig({ randomizeNature: e.target.checked })}
+                            className="generator-modal__checkbox"
+                        />
+                        <span>Randomize Nature</span>
+                        <TooltipIcon
+                            onClick={() =>
+                                onOpenTooltip({
+                                    title: 'Randomize Nature',
+                                    desc: 'Randomly assigns a nature from the standard list of 25 Pokémon natures upon generation.'
+                                })
+                            }
+                        />
+                    </label>
+
+                    <label className="generator-modal__checkbox-label text-label">
+                        <input
+                            type="checkbox"
+                            checked={activeConfig.scaleLoyaltyHappiness !== false}
+                            onChange={(e) => onUpdateConfig({ scaleLoyaltyHappiness: e.target.checked })}
+                            className="generator-modal__checkbox"
+                        />
+                        <span>
+                            <Sparkles size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                            Scale Loyalty &amp; Happiness with Rank
+                        </span>
+                        <TooltipIcon
+                            onClick={() =>
+                                onOpenTooltip({
+                                    title: 'Scalar Loyalty & Happiness',
+                                    desc: 'Scales bond according to corebook rank achievements: Starter/Rookie Pokémon start at 1–2; Standard rank has 1 maxed partner (5) with others at 2–3; Expert and Ace+ rosters feature loyal 5/5 partners.'
+                                })
+                            }
+                        />
+                    </label>
                 </div>
             </div>
 

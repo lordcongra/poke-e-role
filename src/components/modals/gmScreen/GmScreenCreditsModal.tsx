@@ -53,10 +53,10 @@ export function GmScreenCreditsModal({ onClose }: GmScreenCreditsModalProps) {
                         </div>
                         <p className="gm-credits-card__desc text-subtext">
                             The creator of the Pokérole tabletop roleplaying system and the sole developer behind the
-                            3.0 Corebook that this entire autosheet is built for (originally co-created with the Pokérole
-                            Project team). The official 3.0 Corebook PDF contains the complete system rules, moves,
-                            abilities, and Pokédex and is freely available in the <strong>#pokerole-corebook</strong>{' '}
-                            channel on the Pokérole Discord.
+                            3.0 Corebook that this entire autosheet is built for (originally co-created with the
+                            Pokérole Project team). The official 3.0 Corebook PDF contains the complete system rules,
+                            moves, abilities, and Pokédex and is freely available in the{' '}
+                            <strong>#pokerole-corebook</strong> channel on the Pokérole Discord.
                         </p>
                     </div>
 

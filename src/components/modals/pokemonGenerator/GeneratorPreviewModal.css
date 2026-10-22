@@ -396,9 +396,14 @@
     color: var(--text);
 }
 
-.generator-preview__tab-btn--active {
+.generator-preview__tab-btn--active,
+.generator-preview-modal__type-btn.active,
+.generator-preview-modal__type-btn--active {
     background: var(--primary);
-    color: var(--button-text, #fff);
+    color: #ffffff !important;
+    text-shadow:
+        1px 1px 2px rgba(0, 0, 0, 0.8),
+        0 1px 4px rgba(0, 0, 0, 0.6) !important;
     border-color: var(--primary);
 }
 

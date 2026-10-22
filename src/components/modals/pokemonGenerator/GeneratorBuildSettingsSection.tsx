@@ -30,31 +30,25 @@ export function GeneratorBuildSettingsSection({
                     </select>
                 </div>
                 <div className="generator-modal__col">
-                    <label className="text-label">
-                        Combat Bias:
-                        {config.autoSelectBias && (
-                            <span
-                                className="text-subtext"
-                                style={{ color: 'var(--primary)', marginLeft: '6px', fontWeight: 'bold' }}
-                            >
-                                (Auto-Detected)
-                            </span>
-                        )}
-                    </label>
+                    <label className="text-label">Combat Bias:</label>
                     <select
-                        value={config.autoSelectBias ? 'auto' : config.combatBias}
-                        onChange={(e) =>
-                            onUpdateConfig({ combatBias: e.target.value as GeneratorConfig['combatBias'] })
-                        }
+                        value={config.autoSelectBias || config.combatBias === 'auto' ? 'auto' : config.combatBias}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === 'auto') {
+                                onUpdateConfig({ combatBias: 'auto', autoSelectBias: true });
+                            } else {
+                                onUpdateConfig({ combatBias: val, autoSelectBias: false });
+                            }
+                        }}
                         className="generator-modal__select text-label"
-                        disabled={config.autoSelectBias}
                     >
-                        {config.autoSelectBias && <option value="auto">Auto-Detect (Phys vs Spec)</option>}
-                        <option value="balanced">Balanced</option>
+                        <option value="auto">Auto-Detect (Phys vs Spec)</option>
                         <option value="physical">Physical Attacker</option>
                         <option value="special">Special Attacker</option>
                         <option value="tank">Tank / Defender</option>
                         <option value="support">Status / Support</option>
+                        <option value="balanced">Balanced</option>
                     </select>
                 </div>
                 <div className="generator-modal__col">
@@ -89,8 +83,11 @@ export function GeneratorBuildSettingsSection({
 
             {/* 2-Column Checkbox Grid */}
             <div className="generator-modal__checkbox-group">
-                {/* LEFT COLUMN: Basic Settings */}
+                {/* LEFT COLUMN: Stat & Skill Rules */}
                 <div className="generator-modal__checkbox-col">
+                    <span className="generator-modal__group-header text-title-primary">
+                        Stat &amp; Skill Rules
+                    </span>
                     <label className="generator-modal__checkbox-label text-label">
                         <input
                             type="checkbox"
@@ -109,16 +106,16 @@ export function GeneratorBuildSettingsSection({
                         />
                     </label>
 
-                    <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
+                    <label className="generator-modal__checkbox-label text-label">
                         <input
                             type="checkbox"
                             checked={config.includePmd}
                             onChange={(e) => onUpdateConfig({ includePmd: e.target.checked })}
                             className="generator-modal__checkbox"
                         />
-                        Include Knowledge Skills (Lore, Medicine, etc.)
+                        Include Knowledge Skills (PMD)
                     </label>
-                    <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
+                    <label className="generator-modal__checkbox-label text-label">
                         <input
                             type="checkbox"
                             checked={config.includeCustom}
@@ -127,65 +124,14 @@ export function GeneratorBuildSettingsSection({
                         />
                         Include Custom Homebrew Skills
                     </label>
-                    <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
-                        <input
-                            type="checkbox"
-                            checked={config.randomizeSpecies}
-                            onChange={(e) => onUpdateConfig({ randomizeSpecies: e.target.checked })}
-                            className="generator-modal__checkbox"
-                        />
-                        Randomize Species
-                    </label>
-                    <label className="generator-modal__checkbox-label generator-modal__checkbox-label--indented text-label">
-                        <input
-                            type="checkbox"
-                            checked={config.autoSelectBias}
-                            onChange={(e) => onUpdateConfig({ autoSelectBias: e.target.checked })}
-                            className="generator-modal__checkbox"
-                        />
-                        <span style={{ fontWeight: 'normal' }}>Auto-Detect Attack Bias (Phys vs Spec)</span>
-                    </label>
                 </div>
 
-                {/* RIGHT COLUMN: Identity & Move Settings */}
+                {/* RIGHT COLUMN: Move Rules */}
                 <div className="generator-modal__checkbox-col">
+                    <span className="generator-modal__group-header text-title-primary">
+                        Move Rules
+                    </span>
                     <label className="generator-modal__checkbox-label text-label">
-                        <input
-                            type="checkbox"
-                            checked={config.randomizeGender}
-                            onChange={(e) => onUpdateConfig({ randomizeGender: e.target.checked })}
-                            className="generator-modal__checkbox"
-                        />
-                        Randomize Gender (50/50 M/F)
-                        <TooltipIcon
-                            onClick={() =>
-                                onOpenTooltip({
-                                    title: 'Randomize Gender',
-                                    desc: 'Randomly assigns the Pokémon a 50/50 chance of being Male or Female upon generation.'
-                                })
-                            }
-                        />
-                    </label>
-
-                    <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
-                        <input
-                            type="checkbox"
-                            checked={config.randomizeNature}
-                            onChange={(e) => onUpdateConfig({ randomizeNature: e.target.checked })}
-                            className="generator-modal__checkbox"
-                        />
-                        Randomize Nature
-                        <TooltipIcon
-                            onClick={() =>
-                                onOpenTooltip({
-                                    title: 'Randomize Nature',
-                                    desc: 'Randomly assigns a nature from the standard list of 25 Pokémon natures upon generation.'
-                                })
-                            }
-                        />
-                    </label>
-
-                    <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
                         <input
                             type="checkbox"
                             checked={config.includePreEvolutions}
@@ -251,7 +197,7 @@ export function GeneratorBuildSettingsSection({
                             onChange={(e) => onUpdateConfig({ allowOverrank: e.target.checked })}
                             className="generator-modal__checkbox"
                         />
-                        Allow Overrank (Draft 1 Higher Rank Move)
+                        Allow Overrank Moves
                         <TooltipIcon
                             onClick={() =>
                                 onOpenTooltip({

@@ -243,7 +243,7 @@ export async function generateSingleTeamMember(
         randomizeGender: true,
         randomizeNature: true,
         buildType: config.buildType || 'minmax',
-        combatBias: 'balanced',
+        combatBias: 'auto',
         defensePreference: 'auto',
         targetAtkCount: 2,
         targetSupCount: 1,

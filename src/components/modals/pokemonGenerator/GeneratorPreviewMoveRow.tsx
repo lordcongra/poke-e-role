@@ -115,7 +115,8 @@ export function GeneratorPreviewMoveRow({
                                     const pool = getAttrPool ? getAttrPool(opt) + currentSkillPool : undefined;
                                     return (
                                         <option key={opt} value={opt.toLowerCase()}>
-                                            {opt.toUpperCase()}{pool !== undefined ? ` (${pool})` : ''}
+                                            {opt.toUpperCase()}
+                                            {pool !== undefined ? ` (${pool})` : ''}
                                         </option>
                                     );
                                 })}
@@ -136,7 +137,8 @@ export function GeneratorPreviewMoveRow({
                                     const label = opt.charAt(0).toUpperCase() + opt.slice(1);
                                     return (
                                         <option key={opt} value={opt.toLowerCase()}>
-                                            {label}{pool !== undefined ? ` (${pool})` : ''}
+                                            {label}
+                                            {pool !== undefined ? ` (${pool})` : ''}
                                         </option>
                                     );
                                 })}
@@ -157,7 +159,8 @@ export function GeneratorPreviewMoveRow({
                                         : undefined;
                                     return (
                                         <option key={opt} value={opt.toLowerCase()}>
-                                            {opt.toUpperCase()}{pool !== undefined ? ` (${pool})` : ''}
+                                            {opt.toUpperCase()}
+                                            {pool !== undefined ? ` (${pool})` : ''}
                                         </option>
                                     );
                                 })}
@@ -169,4 +172,3 @@ export function GeneratorPreviewMoveRow({
         </div>
     );
 }
-

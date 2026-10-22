@@ -1,0 +1,167 @@
+import type { GeneratorConfig } from '../../../store/storeTypes';
+import { TooltipIcon } from '../../ui/TooltipIcon';
+import { NumberSpinner } from '../../ui/NumberSpinner';
+
+export interface GeneratorCombatRulesSectionProps {
+    config: GeneratorConfig;
+    onUpdateConfig: (partial: Partial<GeneratorConfig>) => void;
+    onOpenTooltip: (info: { title: string; desc: string }) => void;
+}
+
+export function GeneratorCombatRulesSection({
+    config,
+    onUpdateConfig,
+    onOpenTooltip
+}: GeneratorCombatRulesSectionProps) {
+    return (
+        <div className="generator-modal__checkbox-group">
+            {/* LEFT COLUMN: Stat & Skill Rules */}
+            <div className="generator-modal__checkbox-col">
+                <span className="generator-modal__group-header text-title-primary">
+                    Stat &amp; Skill Rules
+                </span>
+                <label className="generator-modal__checkbox-label text-label">
+                    <input
+                        type="checkbox"
+                        checked={config.ensureDefenses}
+                        onChange={(e) => onUpdateConfig({ ensureDefenses: e.target.checked })}
+                        className="generator-modal__checkbox"
+                    />
+                    Ensure Minimum Defenses (Scales with Rank)
+                    <TooltipIcon
+                        onClick={() =>
+                            onOpenTooltip({
+                                title: 'Ensure Minimum Defenses',
+                                desc: 'Calculates a defense quota by dividing total attribute points by 4. It guarantees Vitality and Insight reach this minimum quota before allocating points to offensive stats. Turn off for glass-cannon builds.'
+                            })
+                        }
+                    />
+                </label>
+
+                <label className="generator-modal__checkbox-label text-label">
+                    <input
+                        type="checkbox"
+                        checked={config.includePmd}
+                        onChange={(e) => onUpdateConfig({ includePmd: e.target.checked })}
+                        className="generator-modal__checkbox"
+                    />
+                    Include Knowledge Skills (PMD)
+                </label>
+
+                <label className="generator-modal__checkbox-label text-label">
+                    <input
+                        type="checkbox"
+                        checked={config.includeCustom}
+                        onChange={(e) => onUpdateConfig({ includeCustom: e.target.checked })}
+                        className="generator-modal__checkbox"
+                    />
+                    Include Custom Homebrew Skills
+                </label>
+            </div>
+
+            {/* RIGHT COLUMN: Move Rules */}
+            <div className="generator-modal__checkbox-col">
+                <span className="generator-modal__group-header text-title-primary">Move Rules</span>
+                <label className="generator-modal__checkbox-label text-label">
+                    <input
+                        type="checkbox"
+                        checked={config.includePreEvolutions}
+                        onChange={(e) => onUpdateConfig({ includePreEvolutions: e.target.checked })}
+                        className="generator-modal__checkbox"
+                    />
+                    Include Pre-Evolution Moves
+                    <TooltipIcon
+                        onClick={() =>
+                            onOpenTooltip({
+                                title: 'Pre-Evolution Fetching',
+                                desc: "Automatically traces your Pokémon's evolution line backwards to generate a broader move pool! Use the rank offset spinners below to simulate how many ranks ago this Pokémon evolved. Mega evolutions are automatically recognized and will share the base form's rank."
+                            })
+                        }
+                    />
+                </label>
+                {config.includePreEvolutions && (
+                    <div className="generator-modal__evo-group">
+                        <div className="generator-modal__evo-box">
+                            <strong className="generator-modal__evo-title text-title-primary">
+                                2-Stage Lines (e.g. Vulpix → Ninetales)
+                            </strong>
+                            <div className="generator-modal__evo-row">
+                                <span className="text-subtext">Base Form (Offset Down)</span>
+                                <NumberSpinner
+                                    value={config.evo2Stage1Offset}
+                                    onChange={(val) => onUpdateConfig({ evo2Stage1Offset: val })}
+                                    min={0}
+                                    max={7}
+                                />
+                            </div>
+                        </div>
+                        <div className="generator-modal__evo-box">
+                            <strong className="generator-modal__evo-title text-title-primary">
+                                3-Stage Lines (e.g. Charmander → Charizard)
+                            </strong>
+                            <div className="generator-modal__evo-row generator-modal__evo-row--spaced">
+                                <span className="text-subtext">Middle Form (Offset Down)</span>
+                                <NumberSpinner
+                                    value={config.evo3Stage2Offset}
+                                    onChange={(val) => onUpdateConfig({ evo3Stage2Offset: val })}
+                                    min={0}
+                                    max={7}
+                                />
+                            </div>
+                            <div className="generator-modal__evo-row">
+                                <span className="text-subtext">Base Form (Offset Down)</span>
+                                <NumberSpinner
+                                    value={config.evo3Stage1Offset}
+                                    onChange={(val) => onUpdateConfig({ evo3Stage1Offset: val })}
+                                    min={0}
+                                    max={7}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
+                    <input
+                        type="checkbox"
+                        checked={config.allowOverrank}
+                        onChange={(e) => onUpdateConfig({ allowOverrank: e.target.checked })}
+                        className="generator-modal__checkbox"
+                    />
+                    Allow Overrank Moves
+                    <TooltipIcon
+                        onClick={() =>
+                            onOpenTooltip({
+                                title: 'Overrank Generation',
+                                desc: 'Forces the generator to select exactly one move that normally belongs to a higher rank tier, expanding your tactical options.'
+                            })
+                        }
+                    />
+                </label>
+                {config.allowOverrank && (
+                    <div className="generator-modal__evo-group">
+                        <div className="generator-modal__evo-box generator-modal__evo-row">
+                            <span className="text-label">Max Ranks Above</span>
+                            <NumberSpinner
+                                value={config.overrankAmount}
+                                onChange={(val) => onUpdateConfig({ overrankAmount: val })}
+                                min={1}
+                                max={7}
+                            />
+                        </div>
+                        <label className="generator-modal__checkbox-label text-subtext">
+                            <input
+                                type="checkbox"
+                                checked={config.allowPreEvoOverrank}
+                                onChange={(e) => onUpdateConfig({ allowPreEvoOverrank: e.target.checked })}
+                                className="generator-modal__checkbox"
+                                disabled={!config.includePreEvolutions}
+                            />
+                            <span style={{ fontWeight: 'normal' }}>Include Pre-Evolutions in Pool</span>
+                        </label>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}

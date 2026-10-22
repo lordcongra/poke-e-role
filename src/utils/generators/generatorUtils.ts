@@ -273,7 +273,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
     let effectiveBias = config.combatBias;
 
-    if (config.autoSelectBias) {
+    if (config.autoSelectBias || config.combatBias === 'auto') {
         const strScore = limitStr + baseStr;
         const speScore = limitSpe + baseSpe;
 
@@ -458,7 +458,8 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         let candidateCategories: string[] | undefined = undefined;
         if (rawCategory === 'physical' || rawCategory.includes('phys')) cat = 'Phys';
         else if (rawCategory === 'special' || rawCategory.includes('spec')) cat = 'Spec';
-        else if (rawCategory === 'status' || rawCategory.includes('stat') || rawCategory.includes('sup')) cat = 'Status';
+        else if (rawCategory === 'status' || rawCategory.includes('stat') || rawCategory.includes('sup'))
+            cat = 'Status';
         else {
             cat = 'Phys';
             candidateCategories = ['Physical', 'Special', 'Status'];

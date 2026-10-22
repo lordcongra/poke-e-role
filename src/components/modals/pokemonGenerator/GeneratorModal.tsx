@@ -5,12 +5,10 @@ import { generateBuild } from '../../../utils/generators/generatorUtils';
 import type { TempBuild, Rank } from '../../../store/storeTypes';
 import { GeneratorPreviewModal } from './GeneratorPreviewModal';
 import { GeneratorBatchSection } from './GeneratorBatchSection';
-import { GeneratorSpeciesSection } from './GeneratorSpeciesSection';
-import { GeneratorTypeSection } from './GeneratorTypeSection';
-import { GeneratorBuildSettingsSection } from './GeneratorBuildSettingsSection';
-import { GeneratorThresholdsSection } from './GeneratorThresholdsSection';
-import { GeneratorSpeciesFilterSection } from './GeneratorSpeciesFilterSection';
-import { GeneratorPrivacySection } from './GeneratorPrivacySection';
+import { GeneratorCoreSection } from './GeneratorCoreSection';
+import { GeneratorSpeciesDrawer } from './GeneratorSpeciesDrawer';
+import { GeneratorCombatDrawer } from './GeneratorCombatDrawer';
+import { GeneratorPrivacyDrawer } from './GeneratorPrivacyDrawer';
 import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import { getPokemonGeneration } from '../../../utils/generators/pokemonFilterUtils';
 import {
@@ -39,6 +37,11 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
     const [isGenerating, setIsGenerating] = useState(false);
     const [previewBuilds, setPreviewBuilds] = useState<TempBuild[] | null>(null);
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
+
+    // Collapsible Drawer Toggles (Progressive Disclosure)
+    const [speciesDrawerOpen, setSpeciesDrawerOpen] = useState(false);
+    const [combatDrawerOpen, setCombatDrawerOpen] = useState(false);
+    const [privacyDrawerOpen, setPrivacyDrawerOpen] = useState(false);
 
     // Batch & Presets State
     const [batchCount, setBatchCount] = useState<number>(1);
@@ -255,6 +258,8 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
         );
     }
 
+    const showPrivacySection = isStandaloneMode || role === 'GM';
+
     return (
         <div className="generator-modal__overlay">
             <div className="generator-modal__content">
@@ -266,6 +271,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                 </p>
 
                 <div className="generator-modal__form-group">
+                    {/* 1. Header & Batch Section */}
                     <GeneratorBatchSection
                         batchCount={batchCount}
                         setBatchCount={setBatchCount}
@@ -277,33 +283,40 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                         destination={destination}
                         setDestination={setDestination}
                         activeTokenId={activeTokenId}
-                        sheetName={sheetName}
-                        setSheetName={setSheetName}
                     />
-                    <GeneratorSpeciesSection
+
+                    {/* 2. Core Identity & Combat Section (Always Visible) */}
+                    <GeneratorCoreSection
                         currentSpecies={currentSpecies}
                         onUpdateSpecies={updateCurrentSpecies}
                         currentRank={currentRank}
                         onUpdateRank={updateCurrentRank}
+                        sheetName={sheetName}
+                        onUpdateSheetName={setSheetName}
+                        destination={destination}
                         displayedSpecies={displayedSpecies}
                         activeConfig={activeConfig}
                         onUpdateConfig={setConfigProxy}
                         activeTargetRecRank={activeTargetRecRank}
+                        onOpenTooltip={setTooltipInfo}
+                    />
+
+                    {/* 3. Drawer 1: Species & Encounter Filters (Collapsed by default) */}
+                    <GeneratorSpeciesDrawer
+                        isOpen={speciesDrawerOpen}
+                        onToggle={() => setSpeciesDrawerOpen((v) => !v)}
+                        config={activeConfig}
+                        onUpdateConfig={setConfigProxy}
+                        currentRank={currentRank}
                         batchCount={batchCount}
                         syncPresets={syncPresets}
                         onOpenTooltip={setTooltipInfo}
                     />
-                    <GeneratorTypeSection
-                        config={activeConfig}
-                        onUpdateConfig={setConfigProxy}
-                        onOpenTooltip={setTooltipInfo}
-                    />
-                    <GeneratorBuildSettingsSection
-                        config={activeConfig}
-                        onUpdateConfig={setConfigProxy}
-                        onOpenTooltip={setTooltipInfo}
-                    />
-                    <GeneratorThresholdsSection
+
+                    {/* 4. Drawer 2: Advanced Combat Overrides (Collapsed by default) */}
+                    <GeneratorCombatDrawer
+                        isOpen={combatDrawerOpen}
+                        onToggle={() => setCombatDrawerOpen((v) => !v)}
                         config={activeConfig}
                         onUpdateConfig={setConfigProxy}
                         type1Label={type1Label}
@@ -311,17 +324,17 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                         hasType2={hasType2}
                         onOpenTooltip={setTooltipInfo}
                     />
-                    <GeneratorSpeciesFilterSection
-                        config={activeConfig}
-                        onUpdateConfig={setConfigProxy}
-                        batchCount={batchCount}
-                        onOpenTooltip={setTooltipInfo}
-                    />
-                    <GeneratorPrivacySection
-                        config={activeConfig}
-                        onUpdateConfig={setConfigProxy}
-                        onOpenTooltip={setTooltipInfo}
-                    />
+
+                    {/* 5. Drawer 3: GM Privacy Defaults (GM Only, Collapsed by default) */}
+                    {showPrivacySection && (
+                        <GeneratorPrivacyDrawer
+                            isOpen={privacyDrawerOpen}
+                            onToggle={() => setPrivacyDrawerOpen((v) => !v)}
+                            config={activeConfig}
+                            onUpdateConfig={setConfigProxy}
+                            onOpenTooltip={setTooltipInfo}
+                        />
+                    )}
                 </div>
 
                 {isStandaloneMode && destination === 'new' ? (

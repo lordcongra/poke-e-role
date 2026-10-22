@@ -8,7 +8,7 @@ import OBR from '@owlbear-rodeo/sdk';
 export const createGeneratorSlice: StateCreator<CharacterState, [], [], GeneratorSlice> = (set, get) => ({
     generatorConfig: {
         buildType: 'minmax',
-        combatBias: 'balanced',
+        combatBias: 'auto',
         defensePreference: 'auto',
         targetAtkCount: 4,
         targetSupCount: 1,
@@ -24,7 +24,7 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
         randomizeSpecies: false,
         randomizeGender: false,
         randomizeNature: false,
-        autoSelectBias: false,
+        autoSelectBias: true,
         ensureDefenses: false,
         minStats: { str: 0, dex: 0, vit: 0, spe: 0, ins: 0 },
         minSocials: { tou: 0, coo: 0, bea: 0, cut: 0, cle: 0 },

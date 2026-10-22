@@ -1,5 +1,4 @@
 import type { GeneratorConfig } from '../../../store/storeTypes';
-import { Filter, Sparkles } from 'lucide-react';
 import { TooltipIcon } from '../../ui/TooltipIcon';
 
 export interface GeneratorSpeciesFilterSectionProps {
@@ -69,7 +68,9 @@ export function GeneratorSpeciesFilterSection({
 
     const handleToggleGeneration = (gen: number) => {
         const current = config.allowedGenerations ?? [1, 2, 3, 4, 5, 6, 7, 8, 9];
-        const next = current.includes(gen) ? current.filter((x) => x !== gen) : [...current, gen].sort((a, b) => a - b);
+        const next = current.includes(gen)
+            ? current.filter((x) => x !== gen)
+            : [...current, gen].sort((a, b) => a - b);
         onUpdateConfig({ allowedGenerations: next });
     };
 
@@ -83,20 +84,77 @@ export function GeneratorSpeciesFilterSection({
 
     return (
         <div className="generator-modal__filter-panel">
-            <h4 className="generator-modal__filter-panel-title text-title-primary">
-                <Filter size={15} /> Species, Evolution & Special Filters
-            </h4>
+            {/* Generation Filter Pill Group */}
+            <div className="generator-modal__filter-item">
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: '6px'
+                    }}
+                >
+                    <label className="generator-modal__filter-label text-label">
+                        Generation Filter:
+                        <TooltipIcon
+                            onClick={() =>
+                                onOpenTooltip({
+                                    title: 'Generation Filter',
+                                    desc: "Filter Pokémon by Generation (Gen 1 to Gen 9) based on their National Pokédex number. Special forms, Megas, and regional variants inherit their base Pokémon's generation."
+                                })
+                            }
+                        />
+                    </label>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                            type="button"
+                            className="action-button action-button--dark action-button--small"
+                            onClick={handleSelectAllGens}
+                            style={{ fontSize: '0.72rem', padding: '2px 8px' }}
+                        >
+                            All
+                        </button>
+                        <button
+                            type="button"
+                            className="action-button action-button--dark action-button--small"
+                            onClick={handleClearGens}
+                            style={{ fontSize: '0.72rem', padding: '2px 8px' }}
+                        >
+                            Clear
+                        </button>
+                    </div>
+                </div>
+
+                <div className="generator-modal__gen-pills">
+                    {GENERATION_ITEMS.map(({ gen, label, region }) => {
+                        const isChecked = (config.allowedGenerations ?? [1, 2, 3, 4, 5, 6, 7, 8, 9]).includes(gen);
+                        return (
+                            <button
+                                key={gen}
+                                type="button"
+                                className={`generator-modal__gen-pill ${
+                                    isChecked ? 'generator-modal__gen-pill--active' : ''
+                                }`}
+                                onClick={() => handleToggleGeneration(gen)}
+                                title={`${label} (${region})`}
+                            >
+                                {label}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
 
             {/* Evolutionary Filters */}
             <div className="generator-modal__filter-grid">
                 <div className="generator-modal__filter-item">
                     <label className="generator-modal__filter-label text-label">
-                        Evolution Line Length:
+                        Line Length:
                         <TooltipIcon
                             onClick={() =>
                                 onOpenTooltip({
                                     title: 'Evolution Line Length',
-                                    desc: 'Filter Pokémon based on how many stages exist in their evolutionary family (e.g. Kangaskhan is Single-Stage; Lucario is 2-Stage; Charizard is 3-Stage).'
+                                    desc: 'Filter Pokémon based on how many stages exist in their evolutionary family.'
                                 })
                             }
                         />
@@ -118,12 +176,12 @@ export function GeneratorSpeciesFilterSection({
 
                 <div className="generator-modal__filter-item">
                     <label className="generator-modal__filter-label text-label">
-                        Evolution Stage Level:
+                        Evolution Stage:
                         <TooltipIcon
                             onClick={() =>
                                 onOpenTooltip({
                                     title: 'Stage Level',
-                                    desc: 'Filter species based on their current stage position. 1st Evo = Basic/Baby Pokémon; 2nd Evo = Middle Stage; 3rd Evo = Final Evolution.'
+                                    desc: 'Filter species based on current stage: 1st Evo = Basic; 2nd Evo = Middle; 3rd Evo = Final.'
                                 })
                             }
                         />
@@ -144,72 +202,10 @@ export function GeneratorSpeciesFilterSection({
                 </div>
             </div>
 
-            {/* Generation Filter */}
-            <div className="generator-modal__filter-item" style={{ marginTop: '4px' }}>
-                <div
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: '4px'
-                    }}
-                >
-                    <label className="generator-modal__filter-label text-label">
-                        Generation Filter:
-                        <TooltipIcon
-                            onClick={() =>
-                                onOpenTooltip({
-                                    title: 'Generation Filter',
-                                    desc: "Filter Pokémon by Generation (Gen 1 to Gen 9) based on their National Pokédex number. Special forms, Megas, and regional variants inherit their base Pokémon's generation (e.g. Alolan Vulpix is Gen 1; Mega Lucario is Gen 4)."
-                                })
-                            }
-                        />
-                    </label>
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                        <button
-                            type="button"
-                            className="action-button action-button--dark action-button--small"
-                            onClick={handleSelectAllGens}
-                            style={{ fontSize: '0.7rem', padding: '1px 6px', height: 'auto' }}
-                        >
-                            All
-                        </button>
-                        <button
-                            type="button"
-                            className="action-button action-button--dark action-button--small"
-                            onClick={handleClearGens}
-                            style={{ fontSize: '0.7rem', padding: '1px 6px', height: 'auto' }}
-                        >
-                            Clear
-                        </button>
-                    </div>
-                </div>
-                <div className="generator-modal__checkbox-subgroup" style={{ gap: '10px' }}>
-                    {GENERATION_ITEMS.map(({ gen, label, region }) => {
-                        const isChecked = (config.allowedGenerations ?? [1, 2, 3, 4, 5, 6, 7, 8, 9]).includes(gen);
-                        return (
-                            <label
-                                key={gen}
-                                className="generator-modal__checkbox-label text-label"
-                                title={`${label} (${region})`}
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={isChecked}
-                                    onChange={() => handleToggleGeneration(gen)}
-                                    className="generator-modal__checkbox"
-                                />
-                                <span>{label}</span>
-                            </label>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* Special Forms & Scalar Loyalty */}
+            {/* Special Forms & Batch Options */}
             <div className="generator-modal__filter-grid">
                 <div className="generator-modal__filter-item">
-                    <label className="generator-modal__filter-label text-label">Special Forms & Species:</label>
+                    <label className="generator-modal__filter-label text-label">Special Forms &amp; Species:</label>
                     <div className="generator-modal__checkbox-subgroup">
                         {SPECIAL_SPECIES_ITEMS.map(({ key, label }) => (
                             <label key={key} className="generator-modal__checkbox-label text-label">
@@ -225,30 +221,10 @@ export function GeneratorSpeciesFilterSection({
                     </div>
                 </div>
 
-                <div className="generator-modal__filter-item">
-                    <label className="generator-modal__checkbox-label text-label">
-                        <input
-                            type="checkbox"
-                            checked={config.scaleLoyaltyHappiness !== false}
-                            onChange={(e) => onUpdateConfig({ scaleLoyaltyHappiness: e.target.checked })}
-                            className="generator-modal__checkbox"
-                        />
-                        <span>
-                            <Sparkles size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                            Scale Pokémon Loyalty & Happiness with Rank
-                        </span>
-                        <TooltipIcon
-                            onClick={() =>
-                                onOpenTooltip({
-                                    title: 'Scalar Loyalty & Happiness',
-                                    desc: 'Scales bond according to corebook rank achievements: Starter/Rookie Pokémon start at 1–2; Standard rank has 1 maxed partner (5) with others at 2–3; Expert and Ace+ rosters feature loyal 5/5 partners.'
-                                })
-                            }
-                        />
-                    </label>
-
-                    {batchCount > 1 && (
-                        <label className="generator-modal__checkbox-label text-label" style={{ marginTop: '4px' }}>
+                {batchCount > 1 && (
+                    <div className="generator-modal__filter-item">
+                        <label className="generator-modal__filter-label text-label">Batch Options:</label>
+                        <label className="generator-modal__checkbox-label text-label">
                             <input
                                 type="checkbox"
                                 checked={Boolean(config.allowDuplicates)}
@@ -260,13 +236,13 @@ export function GeneratorSpeciesFilterSection({
                                 onClick={() =>
                                     onOpenTooltip({
                                         title: 'Allow Duplicate Pokémon',
-                                        desc: 'When unchecked (default), each Pokémon generated in the batch will be a unique species. Check this box if you want to allow multiple Pokémon of the exact same species.'
+                                        desc: 'When unchecked (default), each Pokémon generated in the batch will be a unique species.'
                                     })
                                 }
                             />
                         </label>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
         </div>
     );
