@@ -825,13 +825,30 @@ ${CORE_MANEUVERS_DATA.map(
         category: 'maneuvers',
         categoryLabel: 'Maneuvers',
         badge: 'Reaction 6',
-        summary: 'Strength/Special + Clash to contest incoming Move accuracy. Note: Requires using a Move to contest power!',
-        keywords: ['clash', 'reaction 6', 'contest', 'move', 'struggle', 'counter', 'maneuver'],
+        summary:
+            'Reaction 6 (↑6). Use a Physical/Special Move (Strength/Special + Clash) to contest incoming accuracy. On success, deals 1 damage to both. Not on multi-action chart; consumes 1 action.',
+        keywords: ['clash', 'reaction 6', 'contest', 'move', 'struggle', 'counter', 'maneuver', 'defense'],
         broadcastText: formatManeuverBroadcast(CORE_MANEUVERS_DATA[1]),
         discordMarkdown: `## 💥 **Maneuver: Clash** [Category: Support | Reaction 6 (↑6)]
 • **Accuracy:** \`Strength/Special + Clash\` | **Damage Pool:** \`—\` | **Target:** \`Target Self\`
-• **Effect:** Match the number of successes on the Accuracy roll of a Move that targets the User. If successful, the user Clashes (p. 68). This Maneuver is NOT affected by the Multiple Action difficulty chart.
-• *Note: Requires using a Move to contest power. Humans cannot Clash because Struggle is a Maneuver, not a Move.*
+• **Description:** Performing a Clash means you use a Physical or Special Move to try to deflect your foe’s Attack, resulting in both energies clashing and creating a small explosion that reduces the full force of the attack but may damage both parties.
+• **Effect:** Match the number of successes on the Accuracy roll of a Move that targets the User. If successful, the user Clashes.
+• **If Successful:**
+  - Clash Damage deals 1 damage to both Pokémon.
+  - Type Resistance / Weakness applies.
+  - Clashing counts as using a Move for the Round.
+  - Clashing does not activate Added Effects on the Move used to clash nor the one used to hit.
+  - Since Physical or Special Moves are used, some Abilities may be triggered by this.
+• **Certain Moves cannot be Clashed, such as:**
+  - Moves that use a Social Attribute on their Accuracy Roll.
+  - Support Moves.
+  - Moves that ignore Defenses / have Set Damage.
+  - Maneuvers (e.g. Struggle).
+  - Moves that Target the Battlefield.
+  - Area Moves can only be clashed by another Area Move.
+• ⚡ **Action Economy:** Evasion and Clash are not affected by the Multiple Action difficulty chart (they can be your 1st or 5th action). However, they consume one Action even if unsuccessful.
+• *Note: Requires using a Physical or Special Move to contest power. Humans cannot Clash because Struggle is a Maneuver, not a Move.*
+• 📖 **Example:** *Eevee lunges against Pikachu with a Tackle! Pikachu braces for the impact and uses Thundershock to clash Eevee's Tackle!* (Thundershock is a Special Move, so, for Clash Pikachu would have to roll: Special + Clash, and match or surpass the number of successes Eevee got on their Accuracy roll for Tackle.)
 • *"A power struggle can become a clash of mights, usually with explosive results."*`
     },
     {
@@ -854,12 +871,25 @@ ${CORE_MANEUVERS_DATA.map(
         category: 'maneuvers',
         categoryLabel: 'Maneuvers',
         badge: 'Reaction 6',
-        summary: 'Dexterity + Evasion reaction to dodge incoming attacks. Universal defense for Pokémon and Humans.',
-        keywords: ['evasion', 'dodge', 'evade', 'reaction 6', 'dexterity', 'maneuver'],
+        summary:
+            'Reaction 6 (↑6). Roll Dexterity + Evasion to dodge an incoming Move, negating all damage and effects. Not on multi-action chart; consumes 1 action.',
+        keywords: ['evasion', 'dodge', 'evade', 'reaction 6', 'dexterity', 'maneuver', 'defense'],
         broadcastText: formatManeuverBroadcast(CORE_MANEUVERS_DATA[3]),
         discordMarkdown: `## 💨 **Maneuver: Evasion** [Category: Support | Reaction 6 (↑6)]
 • **Accuracy:** \`Dexterity + Evasion\` | **Damage Pool:** \`—\` | **Target:** \`Target Self\`
-• **Effect:** Match the number of successes on the Accuracy roll of a Move that targets the User. If successful, the user Evades (p. 68). This Maneuver is NOT affected by the Multiple Action difficulty chart.
+• **Description:** Performing an Evasion means to get out of the path of danger and/or the blast radius of a Move. Dodging out of harm’s way and effectively reducing all potential damage taken to zero.
+• **Effect:** Match the number of successes on the Accuracy roll of a Move that targets the User. If successful, the user Evades.
+• **If Successful:**
+  - A successful Evasion means the Pokémon got away from their foe’s reach, thus, taking no damage nor effects from the Move targeting them. All this at the cost of one of its actions.
+• **Certain Moves cannot be Evaded, such as:**
+  - Moves that use a Social Attribute on their Accuracy Roll.
+  - Moves with the Added Effect "Never Miss".
+  - Moves that Target the Battlefield.
+• ⚡ **Action Economy:** Evasion and Clash are not affected by the Multiple Action difficulty chart (they can be your 1st or 5th action). However, they consume one Action even if unsuccessful.
+• *Note: Universal defense maneuver available to both Pokémon and Humans.*
+• ℹ️ *There are Moves and Abilities that allow you to Evade more than once per Round.*
+• ℹ️ *There are also Moves and Abilities able to temporarily prevent you from evading.*
+• 📖 **Example:** *Eevee lunges against Pikachu with a Tackle! But Pikachu jumps backwards just as Eevee runs in their direction!* (To Evade, Pikachu would have to roll: Dexterity + Evasion, and match or surpass the number of successes Eevee got on their Accuracy roll for Tackle.)
 • *"No time to think! If you hear 'Doooooodge!' You get out of the way A.S.A.P."*`
     },
     {

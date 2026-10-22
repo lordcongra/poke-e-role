@@ -149,9 +149,7 @@ export function GeneratorCoreSection({
                     <label className="text-label">Build Tier:</label>
                     <select
                         value={activeConfig.buildType}
-                        onChange={(e) =>
-                            onUpdateConfig({ buildType: e.target.value as GeneratorConfig['buildType'] })
-                        }
+                        onChange={(e) => onUpdateConfig({ buildType: e.target.value as GeneratorConfig['buildType'] })}
                         className="generator-modal__select text-label"
                     >
                         <option value="wild">Wild (Random)</option>

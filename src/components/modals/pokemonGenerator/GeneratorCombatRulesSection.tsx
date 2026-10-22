@@ -17,9 +17,7 @@ export function GeneratorCombatRulesSection({
         <div className="generator-modal__checkbox-group">
             {/* LEFT COLUMN: Stat & Skill Rules */}
             <div className="generator-modal__checkbox-col">
-                <span className="generator-modal__group-header text-title-primary">
-                    Stat &amp; Skill Rules
-                </span>
+                <span className="generator-modal__group-header text-title-primary">Stat &amp; Skill Rules</span>
                 <label className="generator-modal__checkbox-label text-label">
                     <input
                         type="checkbox"

@@ -57,7 +57,9 @@ export function GeneratorSpeciesSection({
             {/* Species, Rank & Location Row */}
             <div className="generator-modal__row">
                 <div className="generator-modal__col">
-                    <label className="text-label" htmlFor="generator-species-input">Species:</label>
+                    <label className="text-label" htmlFor="generator-species-input">
+                        Species:
+                    </label>
                     <div className="generator-modal__species-input-wrap">
                         <input
                             id="generator-species-input"
@@ -73,7 +75,11 @@ export function GeneratorSpeciesSection({
                             type="button"
                             className={`action-button ${activeConfig.randomizeSpecies ? 'action-button--theme' : 'action-button--dark'} generator-modal__dice-btn`}
                             onClick={() => onUpdateConfig({ randomizeSpecies: !activeConfig.randomizeSpecies })}
-                            title={activeConfig.randomizeSpecies ? 'Randomize Species is ON (Click to disable)' : 'Randomize Species is OFF (Click to enable)'}
+                            title={
+                                activeConfig.randomizeSpecies
+                                    ? 'Randomize Species is ON (Click to disable)'
+                                    : 'Randomize Species is OFF (Click to enable)'
+                            }
                             aria-label="Randomize Species"
                         >
                             <Dices size={15} />
@@ -126,9 +132,7 @@ export function GeneratorSpeciesSection({
 
             {/* Identity & Flavor Sub-row */}
             <div className="generator-modal__identity-row">
-                <span className="generator-modal__subrow-label text-label">
-                    Identity &amp; Flavor:
-                </span>
+                <span className="generator-modal__subrow-label text-label">Identity &amp; Flavor:</span>
                 <div className="generator-modal__identity-options">
                     <label className="generator-modal__checkbox-label text-label">
                         <input

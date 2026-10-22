@@ -18,6 +18,12 @@ export interface ManeuverData {
     flavor: string;
     icon?: string;
     note?: string;
+    description?: string;
+    example?: { scenario: string; roll: string };
+    ifSuccessful?: string[];
+    cannotBeUsedAgainst?: { title: string; items: string[] };
+    actionEconomyNote?: string;
+    additionalNotes?: string[];
 }
 
 export const MANEUVERS_CORE_RULES = {
@@ -27,6 +33,7 @@ export const MANEUVERS_CORE_RULES = {
     rules: [
         'Once per Round: Each Maneuver can only be used once per Round by a character.',
         'CANNOT Clash nor be Clashed: Maneuvers can NEVER be used to Clash against an opponent, nor can an opponent Clash against a Maneuver! (This is why Struggle cannot be used to Clash).',
+        'Action Economy Exception: Evasion and Clash are NOT affected by the Multiple Action difficulty chart (they can be your 1st or 5th action). However, they consume one Action even if unsuccessful.',
         'Typeless Damage: Maneuvers that deal damage (like Struggle) inflict Typeless Damage, ignoring type charts.',
         'Universal Access: Since anyone can perform them, both Humans and Pokémon can use maneuvers to enrich their strategy in and out of combat.',
         'Feel Free to Create Your Own: Storytellers and players can invent custom typeless maneuvers suited to their narrative.'
@@ -59,9 +66,39 @@ export const CORE_MANEUVERS_DATA: ManeuverData[] = [
         reaction: 'Reaction 6 (↑6)',
         reactionSpeed: 6,
         addedEffect:
-            'Match the number of successes on the Accuracy roll of a Move that targets the User. If successful, the user Clashes (p. 68). This Maneuver is NOT affected by the Multiple Action difficulty chart.',
+            'Match the number of successes on the Accuracy roll of a Move that targets the User. If successful, the user Clashes. This Maneuver is NOT affected by the Multiple Action difficulty chart.',
         flavor: 'A power struggle can become a clash of mights, usually with explosive results.',
-        note: 'Requires using a Move to contest power. Humans cannot Clash because Struggle is a Maneuver, not a Move.'
+        description:
+            'Performing a Clash means you use a Physical or Special Move to try to deflect your foe’s Attack, resulting in both energies clashing and creating a small explosion that reduces the full force of the attack but may damage both parties.',
+        example: {
+            scenario:
+                "Eevee lunges against Pikachu with a Tackle! Pikachu braces for the impact and uses Thundershock to clash Eevee's Tackle!",
+            roll: 'Thundershock is a Special Move, so, for Clash Pikachu would have to roll: Special + Clash, and match or surpass the number of successes Eevee got on their Accuracy roll for Tackle.'
+        },
+        ifSuccessful: [
+            'Clash Damage deals 1 damage to both Pokémon.',
+            'Type Resistance / Weakness applies.',
+            'Clashing counts as using a Move for the Round.',
+            'Clashing does not activate Added Effects on the Move used to clash nor the one used to hit.',
+            'Since Physical or Special Moves are used, some Abilities may be triggered by this.'
+        ],
+        cannotBeUsedAgainst: {
+            title: 'Certain Moves cannot be Clashed, such as:',
+            items: [
+                'Moves that use a Social Attribute on their Accuracy Roll.',
+                'Support Moves.',
+                'Moves that ignore Defenses / have Set Damage.',
+                'Maneuvers (e.g. Struggle).',
+                'Moves that Target the Battlefield.',
+                'Area Moves can only be clashed by another Area Move.'
+            ]
+        },
+        actionEconomyNote:
+            'Evasion and Clash are not affected by the Multiple Action difficulty chart (they can be your 1st or 5th action). However, they consume one Action even if unsuccessful.',
+        note: 'Requires using a Move to contest power. Humans cannot Clash because Struggle is a Maneuver, not a Move.',
+        additionalNotes: [
+            'Requires using a Physical or Special Move to contest power. Humans cannot Clash because Struggle is a Maneuver, not a Move.'
+        ]
     },
     {
         id: 'maneuver-cover-an-ally',
@@ -90,9 +127,34 @@ export const CORE_MANEUVERS_DATA: ManeuverData[] = [
         reaction: 'Reaction 6 (↑6)',
         reactionSpeed: 6,
         addedEffect:
-            'Match the number of successes on the Accuracy roll of a Move that targets the User. If successful, the user Evades (p. 68). This Maneuver is NOT affected by the Multiple Action difficulty chart.',
+            'Match the number of successes on the Accuracy roll of a Move that targets the User. If successful, the user Evades. This Maneuver is NOT affected by the Multiple Action difficulty chart.',
         flavor: 'No time to think! If you hear "Doooooodge!" You get out of the way A.S.A.P.',
-        note: 'Universal defense maneuver available to both Pokémon and Humans.'
+        description:
+            'Performing an Evasion means to get out of the path of danger and/or the blast radius of a Move. Dodging out of harm’s way and effectively reducing all potential damage taken to zero.',
+        example: {
+            scenario:
+                'Eevee lunges against Pikachu with a Tackle! But Pikachu jumps backwards just as Eevee runs in their direction!',
+            roll: 'To Evade, Pikachu would have to roll: Dexterity + Evasion, and match or surpass the number of successes Eevee got on their Accuracy roll for Tackle.'
+        },
+        ifSuccessful: [
+            'A successful Evasion means the Pokémon got away from their foe’s reach, thus, taking no damage nor effects from the Move targeting them. All this at the cost of one of its actions.'
+        ],
+        cannotBeUsedAgainst: {
+            title: 'Certain Moves cannot be Evaded, such as:',
+            items: [
+                'Moves that use a Social Attribute on their Accuracy Roll.',
+                'Moves with the Added Effect "Never Miss".',
+                'Moves that Target the Battlefield.'
+            ]
+        },
+        actionEconomyNote:
+            'Evasion and Clash are not affected by the Multiple Action difficulty chart (they can be your 1st or 5th action). However, they consume one Action even if unsuccessful.',
+        note: 'Universal defense maneuver available to both Pokémon and Humans.',
+        additionalNotes: [
+            'Universal defense maneuver available to both Pokémon and Humans.',
+            'There are Moves and Abilities that allow you to Evade more than once per Round.',
+            'There are also Moves and Abilities able to temporarily prevent you from evading.'
+        ]
     },
     {
         id: 'maneuver-grapple',
@@ -170,11 +232,31 @@ export function formatManeuverBroadcast(m: ManeuverData): string {
         `• **Accuracy**: ${m.accuracy}`,
         `• **Power**: ${m.power} | **Damage Pool**: ${m.damagePool}`,
         `• **Target**: ${m.target}${m.reaction ? ` | **Reaction**: ${m.reaction}` : ''}`,
-        `• **Effect**: ${m.addedEffect}`,
-        `*"${m.flavor}"*`
+        `• **Effect**: ${m.addedEffect}`
     ];
+    if (m.description) {
+        lines.push(`• **Description**: ${m.description}`);
+    }
+    if (m.ifSuccessful && m.ifSuccessful.length > 0) {
+        lines.push(`• **If Successful**:`);
+        m.ifSuccessful.forEach((s) => lines.push(`  - ${s}`));
+    }
+    if (m.cannotBeUsedAgainst && m.cannotBeUsedAgainst.items.length > 0) {
+        lines.push(`• **${m.cannotBeUsedAgainst.title}**:`);
+        m.cannotBeUsedAgainst.items.forEach((item) => lines.push(`  - ${item}`));
+    }
+    if (m.actionEconomyNote) {
+        lines.push(`⚡ **Action Economy**: ${m.actionEconomyNote}`);
+    }
+    if (m.example) {
+        lines.push(`📖 **Example**: *${m.example.scenario}* (${m.example.roll})`);
+    }
     if (m.note) {
         lines.push(`⚠️ *${m.note}*`);
     }
+    if (m.additionalNotes && m.additionalNotes.length > 0) {
+        m.additionalNotes.forEach((n) => lines.push(`ℹ️ *${n}*`));
+    }
+    lines.push(`*"${m.flavor}"*`);
     return lines.join('\n');
 }

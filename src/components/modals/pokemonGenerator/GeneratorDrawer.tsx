@@ -26,10 +26,7 @@ export function GeneratorDrawer({
     className = ''
 }: GeneratorDrawerProps) {
     return (
-        <div
-            className={`generator-drawer ${isOpen ? 'generator-drawer--open' : ''} ${className}`}
-            id={id}
-        >
+        <div className={`generator-drawer ${isOpen ? 'generator-drawer--open' : ''} ${className}`} id={id}>
             <button
                 type="button"
                 className={`generator-drawer__header ${isOpen ? 'generator-drawer__header--open' : ''}`}

@@ -21,14 +21,7 @@ export function GeneratorRecommendedRankSection({
 }: GeneratorRecommendedRankSectionProps) {
     const handleCustomSlotRankChange = (index: number, value: string) => {
         const nextArr = [
-            ...(config.customSlotRecommendedRanks || [
-                'Starter',
-                'Starter',
-                'Starter',
-                'Starter',
-                'Starter',
-                'Starter'
-            ])
+            ...(config.customSlotRecommendedRanks || ['Starter', 'Starter', 'Starter', 'Starter', 'Starter', 'Starter'])
         ];
         nextArr[index] = value;
         onUpdateConfig({ customSlotRecommendedRanks: nextArr });

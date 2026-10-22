@@ -31,9 +31,7 @@ export function GeneratorBatchSection({
             {/* Batch Count & Destination Row */}
             <div className="generator-modal__batch-header-row">
                 <div className="generator-modal__batch-count-group">
-                    <span className="generator-modal__destination-title text-title-primary">
-                        Quantity:
-                    </span>
+                    <span className="generator-modal__destination-title text-title-primary">Quantity:</span>
                     <div className="generator-modal__count-selector">
                         {[1, 2, 3, 4, 5, 6].map((count) => (
                             <button
@@ -65,13 +63,11 @@ export function GeneratorBatchSection({
                         >
                             {isStandaloneMode ? (
                                 <>
-                                    <FilePlus size={14} />{' '}
-                                    {batchCount > 1 ? `${batchCount} New Sheets` : 'New Sheet'}
+                                    <FilePlus size={14} /> {batchCount > 1 ? `${batchCount} New Sheets` : 'New Sheet'}
                                 </>
                             ) : (
                                 <>
-                                    <ImagePlus size={14} />{' '}
-                                    {batchCount > 1 ? `${batchCount} New Tokens` : 'New Token'}
+                                    <ImagePlus size={14} /> {batchCount > 1 ? `${batchCount} New Tokens` : 'New Token'}
                                 </>
                             )}
                         </button>
@@ -88,8 +84,7 @@ export function GeneratorBatchSection({
                                         : 'Overwrite currently selected token'
                                 }
                             >
-                                <AlertTriangle size={14} />{' '}
-                                {isStandaloneMode ? 'Overwrite Sheet' : 'Overwrite Token'}
+                                <AlertTriangle size={14} /> {isStandaloneMode ? 'Overwrite Sheet' : 'Overwrite Token'}
                             </button>
                         )}
                     </div>

@@ -16,7 +16,10 @@ export interface GeneratorSpeciesDrawerProps {
     onOpenTooltip: (info: { title: string; desc: string }) => void;
 }
 
-export function getSpeciesDrawerSummary(config: GeneratorConfig, currentRank: Rank): { text: string; isActive: boolean } {
+export function getSpeciesDrawerSummary(
+    config: GeneratorConfig,
+    currentRank: Rank
+): { text: string; isActive: boolean } {
     let typePart = 'Any Type';
     if (config.typeSpecialtyMode === 'monotype') typePart = 'Monotype';
     else if (config.typeSpecialtyMode === 'dual') typePart = 'Dual-Type';
@@ -86,11 +89,7 @@ export function GeneratorSpeciesDrawer({
             summaryVariant={summary.isActive ? 'active' : 'default'}
         >
             {/* 1. Type Drafting */}
-            <GeneratorTypeSection
-                config={config}
-                onUpdateConfig={onUpdateConfig}
-                onOpenTooltip={onOpenTooltip}
-            />
+            <GeneratorTypeSection config={config} onUpdateConfig={onUpdateConfig} onOpenTooltip={onOpenTooltip} />
 
             {/* 2. Generation, Evolutionary & Special Species Filters */}
             <GeneratorSpeciesFilterSection

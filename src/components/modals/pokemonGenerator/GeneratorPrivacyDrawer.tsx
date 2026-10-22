@@ -61,7 +61,10 @@ export function GeneratorPrivacyDrawer({
         >
             <div className="generator-modal__privacy-box">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <label className="generator-modal__checkbox-label text-label" style={{ margin: 0, fontWeight: 600 }}>
+                    <label
+                        className="generator-modal__checkbox-label text-label"
+                        style={{ margin: 0, fontWeight: 600 }}
+                    >
                         <input
                             type="checkbox"
                             checked={Boolean(config.privacyDefaults)}
@@ -81,7 +84,15 @@ export function GeneratorPrivacyDrawer({
                 </div>
 
                 {config.privacyDefaults && (
-                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', paddingLeft: '22px', marginTop: '8px' }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            gap: '16px',
+                            flexWrap: 'wrap',
+                            paddingLeft: '22px',
+                            marginTop: '8px'
+                        }}
+                    >
                         {PRIVACY_ITEMS.map(({ key, label }) => (
                             <label
                                 key={key}

@@ -225,7 +225,7 @@ export const REACTION_RULES_EXAMPLES: ReactionRuleExample[] = [
 export const REACTION_CORE_RULES = [
     {
         title: 'Action Economy Cost',
-        desc: 'Rolling any Reaction or Late Reaction consumes 1 of your character’s Actions for the Round, bound to the Multiple Action Difficulty chart.'
+        desc: 'Rolling any Reaction or Late Reaction consumes 1 of your character’s Actions for the Round, bound to the Multiple Action Difficulty chart. *(Exception: Evade and Clash maneuvers are NOT bound to the Multiple Action Difficulty chart—you only need to match or surpass the foe\'s Accuracy Roll—though they still consume 1 Action even if unsuccessful).*'
     },
     {
         title: '1 Reaction Per Turn Limit',

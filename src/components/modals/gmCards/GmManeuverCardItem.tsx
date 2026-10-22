@@ -1,4 +1,4 @@
-import { Megaphone, AlertCircle } from 'lucide-react';
+import { Megaphone, AlertCircle, CheckCircle2, ShieldAlert, Zap, BookOpen, Info } from 'lucide-react';
 import type { ManeuverData } from '../../../data/gmScreenData';
 
 interface GmManeuverCardItemProps {
@@ -89,7 +89,7 @@ export function GmManeuverCardItem({ maneuver: m, onBroadcast }: GmManeuverCardI
                 </div>
             </div>
 
-            {/* Middle: Accuracy, Damage Pool, Target, Effect */}
+            {/* Middle: Accuracy, Damage Pool, Target, Effect, Details */}
             <div
                 style={{
                     padding: '10px 12px',
@@ -128,6 +128,12 @@ export function GmManeuverCardItem({ maneuver: m, onBroadcast }: GmManeuverCardI
                     </div>
                 </div>
 
+                {m.description && (
+                    <p style={{ margin: 0, lineHeight: '1.45', color: 'var(--text-main)', fontSize: '0.85rem' }}>
+                        {m.description}
+                    </p>
+                )}
+
                 <div>
                     <span
                         style={{
@@ -143,7 +149,182 @@ export function GmManeuverCardItem({ maneuver: m, onBroadcast }: GmManeuverCardI
                     <p style={{ margin: 0, lineHeight: '1.45', color: 'var(--text-main)' }}>{m.addedEffect}</p>
                 </div>
 
-                {m.note && (
+                {m.ifSuccessful && m.ifSuccessful.length > 0 && (
+                    <div
+                        style={{
+                            padding: '8px 10px',
+                            backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                            border: '1px solid rgba(16, 185, 129, 0.3)',
+                            borderRadius: '6px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px'
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                color: '#10b981',
+                                fontWeight: 700,
+                                fontSize: '0.78rem'
+                            }}
+                        >
+                            <CheckCircle2 size={14} style={{ flexShrink: 0 }} />
+                            <span>IF SUCCESSFUL:</span>
+                        </div>
+                        <ul
+                            style={{
+                                margin: 0,
+                                paddingLeft: '18px',
+                                fontSize: '0.82rem',
+                                color: 'var(--text-main)',
+                                lineHeight: '1.45'
+                            }}
+                        >
+                            {m.ifSuccessful.map((item, idx) => (
+                                <li key={idx} style={{ marginBottom: idx === m.ifSuccessful!.length - 1 ? 0 : '3px' }}>
+                                    {item}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {m.cannotBeUsedAgainst && m.cannotBeUsedAgainst.items.length > 0 && (
+                    <div
+                        style={{
+                            padding: '8px 10px',
+                            backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                            borderRadius: '6px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px'
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                color: 'var(--semantic-danger, #ef4444)',
+                                fontWeight: 700,
+                                fontSize: '0.78rem'
+                            }}
+                        >
+                            <ShieldAlert size={14} style={{ flexShrink: 0 }} />
+                            <span>{m.cannotBeUsedAgainst.title.toUpperCase()}</span>
+                        </div>
+                        <ul
+                            style={{
+                                margin: 0,
+                                paddingLeft: '18px',
+                                fontSize: '0.82rem',
+                                color: 'var(--text-main)',
+                                lineHeight: '1.45'
+                            }}
+                        >
+                            {m.cannotBeUsedAgainst.items.map((item, idx) => (
+                                <li
+                                    key={idx}
+                                    style={{
+                                        marginBottom: idx === m.cannotBeUsedAgainst!.items.length - 1 ? 0 : '3px'
+                                    }}
+                                >
+                                    {item}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {m.actionEconomyNote && (
+                    <div
+                        style={{
+                            padding: '8px 10px',
+                            backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                            border: '1px solid rgba(59, 130, 246, 0.3)',
+                            borderRadius: '6px',
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '8px',
+                            fontSize: '0.82rem',
+                            color: 'var(--text-main)',
+                            lineHeight: '1.4'
+                        }}
+                    >
+                        <Zap size={14} style={{ color: '#3b82f6', flexShrink: 0, marginTop: '2px' }} />
+                        <div>
+                            <strong style={{ color: '#3b82f6', marginRight: '6px', fontSize: '0.78rem' }}>
+                                ACTION ECONOMY:
+                            </strong>
+                            <span>{m.actionEconomyNote}</span>
+                        </div>
+                    </div>
+                )}
+
+                {m.example && (
+                    <div
+                        style={{
+                            padding: '8px 10px',
+                            backgroundColor: 'var(--row-even)',
+                            border: '1px solid var(--border)',
+                            borderRadius: '6px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px',
+                            fontSize: '0.82rem',
+                            lineHeight: '1.4'
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                color: 'var(--primary)',
+                                fontWeight: 700,
+                                fontSize: '0.78rem'
+                            }}
+                        >
+                            <BookOpen size={14} style={{ flexShrink: 0 }} />
+                            <span>CANONICAL EXAMPLE:</span>
+                        </div>
+                        <p style={{ margin: 0, fontStyle: 'italic', color: 'var(--text-main)' }}>
+                            "{m.example.scenario}"
+                        </p>
+                        <p style={{ margin: 0, color: 'var(--text-sub)', fontSize: '0.8rem' }}>
+                            <strong style={{ color: 'var(--text-main)' }}>Roll:</strong> {m.example.roll}
+                        </p>
+                    </div>
+                )}
+
+                {m.additionalNotes && m.additionalNotes.length > 0 && (
+                    <div
+                        style={{
+                            padding: '6px 8px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--border)',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px',
+                            fontSize: '0.8rem',
+                            color: 'var(--text-sub)'
+                        }}
+                    >
+                        {m.additionalNotes.map((note, idx) => (
+                            <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                                <Info size={13} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--primary)' }} />
+                                <span style={{ lineHeight: '1.4' }}>{note}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {m.note && (!m.additionalNotes || !m.additionalNotes.includes(m.note)) && (
                     <div
                         style={{
                             padding: '6px 8px',

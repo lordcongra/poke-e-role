@@ -68,9 +68,7 @@ export function GeneratorSpeciesFilterSection({
 
     const handleToggleGeneration = (gen: number) => {
         const current = config.allowedGenerations ?? [1, 2, 3, 4, 5, 6, 7, 8, 9];
-        const next = current.includes(gen)
-            ? current.filter((x) => x !== gen)
-            : [...current, gen].sort((a, b) => a - b);
+        const next = current.includes(gen) ? current.filter((x) => x !== gen) : [...current, gen].sort((a, b) => a - b);
         onUpdateConfig({ allowedGenerations: next });
     };
 
