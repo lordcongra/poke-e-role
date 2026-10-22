@@ -8,7 +8,6 @@ import { GeneratorBatchSection } from './GeneratorBatchSection';
 import { GeneratorCoreSection } from './GeneratorCoreSection';
 import { GeneratorSpeciesDrawer } from './GeneratorSpeciesDrawer';
 import { GeneratorCombatDrawer } from './GeneratorCombatDrawer';
-import { GeneratorPrivacyDrawer } from './GeneratorPrivacyDrawer';
 import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import { getPokemonGeneration } from '../../../utils/generators/pokemonFilterUtils';
 import {
@@ -41,7 +40,6 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
     // Collapsible Drawer Toggles (Progressive Disclosure)
     const [speciesDrawerOpen, setSpeciesDrawerOpen] = useState(false);
     const [combatDrawerOpen, setCombatDrawerOpen] = useState(false);
-    const [privacyDrawerOpen, setPrivacyDrawerOpen] = useState(false);
 
     // Batch & Presets State
     const [batchCount, setBatchCount] = useState<number>(1);
@@ -299,6 +297,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                         onUpdateConfig={setConfigProxy}
                         activeTargetRecRank={activeTargetRecRank}
                         onOpenTooltip={setTooltipInfo}
+                        showPrivacySection={showPrivacySection}
                     />
 
                     {/* 3. Drawer 1: Species & Encounter Filters (Collapsed by default) */}
@@ -324,17 +323,6 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                         hasType2={hasType2}
                         onOpenTooltip={setTooltipInfo}
                     />
-
-                    {/* 5. Drawer 3: GM Privacy Defaults (GM Only, Collapsed by default) */}
-                    {showPrivacySection && (
-                        <GeneratorPrivacyDrawer
-                            isOpen={privacyDrawerOpen}
-                            onToggle={() => setPrivacyDrawerOpen((v) => !v)}
-                            config={activeConfig}
-                            onUpdateConfig={setConfigProxy}
-                            onOpenTooltip={setTooltipInfo}
-                        />
-                    )}
                 </div>
 
                 {isStandaloneMode && destination === 'new' ? (

@@ -6,16 +6,26 @@ interface NumberSpinnerProps {
     min?: number;
     max?: number;
     disabled?: boolean;
+    compact?: boolean;
+    className?: string;
 }
 
-export function NumberSpinner({ value, onChange, min = 0, max = 9999, disabled = false }: NumberSpinnerProps) {
+export function NumberSpinner({
+    value,
+    onChange,
+    min = 0,
+    max = 9999,
+    disabled = false,
+    compact = false,
+    className
+}: NumberSpinnerProps) {
     const charLength = Math.max(2, String(value).length);
+    const rootClasses = ['number-spinner', compact ? 'number-spinner--compact' : '', className]
+        .filter(Boolean)
+        .join(' ');
 
     return (
-        <div
-            className="number-spinner"
-            style={{ opacity: disabled ? 0.6 : 1, pointerEvents: disabled ? 'none' : 'auto' }}
-        >
+        <div className={rootClasses} style={{ opacity: disabled ? 0.6 : 1, pointerEvents: disabled ? 'none' : 'auto' }}>
             <button
                 type="button"
                 className="number-spinner__button"
@@ -23,14 +33,14 @@ export function NumberSpinner({ value, onChange, min = 0, max = 9999, disabled =
                 disabled={disabled}
                 title="Decrement (Shift+click for -10)"
             >
-                <Minus size={14} />
+                <Minus size={compact ? 10 : 14} />
             </button>
 
             <input
                 type="number"
                 className="number-spinner__input no-spinners"
                 style={{
-                    width: `${charLength + 0.5}ch`,
+                    width: compact ? '2ch' : `${charLength + 0.5}ch`,
                     backgroundColor: 'color-mix(in srgb, var(--primary) 15%, transparent)',
                     color: 'var(--text-main)',
                     borderRadius: '2px'
@@ -47,7 +57,7 @@ export function NumberSpinner({ value, onChange, min = 0, max = 9999, disabled =
                 disabled={disabled}
                 title="Increment (Shift+click for +10)"
             >
-                <Plus size={14} />
+                <Plus size={compact ? 10 : 14} />
             </button>
         </div>
     );

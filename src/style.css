@@ -474,6 +474,26 @@ body {
     margin: 0;
 }
 
+.number-spinner--compact {
+    height: 20px;
+}
+
+.number-spinner--compact .number-spinner__button {
+    width: 13px;
+    min-width: 13px;
+}
+
+.number-spinner--compact .number-spinner__button svg {
+    width: 10px;
+    height: 10px;
+}
+
+.number-spinner--compact .number-spinner__input {
+    font-size: 0.75rem;
+    padding: 0;
+    min-width: 16px;
+}
+
 /* =========================================
    🔤 FORMS & UTILS
    ========================================= */

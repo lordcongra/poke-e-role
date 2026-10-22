@@ -42,13 +42,12 @@ export function GeneratorThresholdsSection({
                         {Object.values(CombatStat).map((stat) => (
                             <div key={stat} className="generator-modal__min-item">
                                 <span className="text-label text-subtext">{stat.toUpperCase()}</span>
-                                <input
-                                    type="number"
+                                <NumberSpinner
+                                    compact
+                                    min={0}
+                                    max={5}
                                     value={config.minStats?.[stat] || 0}
-                                    onChange={(e) => setMinStat(stat, Number(e.target.value))}
-                                    min="0"
-                                    max="5"
-                                    className="generator-modal__comp-input"
+                                    onChange={(val) => setMinStat(stat, val)}
                                 />
                             </div>
                         ))}
@@ -57,13 +56,12 @@ export function GeneratorThresholdsSection({
                         {Object.values(SocialStat).map((stat) => (
                             <div key={stat} className="generator-modal__min-item">
                                 <span className="text-label text-subtext">{stat.toUpperCase()}</span>
-                                <input
-                                    type="number"
+                                <NumberSpinner
+                                    compact
+                                    min={0}
+                                    max={5}
                                     value={config.minSocials?.[stat] || 0}
-                                    onChange={(e) => setMinSocial(stat, Number(e.target.value))}
-                                    min="0"
-                                    max="5"
-                                    className="generator-modal__comp-input"
+                                    onChange={(val) => setMinSocial(stat, val)}
                                 />
                             </div>
                         ))}
@@ -80,24 +78,20 @@ export function GeneratorThresholdsSection({
                 <div className="generator-modal__comp-row">
                     <div className="generator-modal__comp-item">
                         <span className="text-label">Attacks</span>
-                        <input
-                            type="number"
+                        <NumberSpinner
+                            min={0}
+                            max={6}
                             value={config.targetAtkCount}
-                            onChange={(e) => onUpdateConfig({ targetAtkCount: Number(e.target.value) })}
-                            min="0"
-                            max="6"
-                            className="generator-modal__comp-input"
+                            onChange={(val) => onUpdateConfig({ targetAtkCount: val })}
                         />
                     </div>
                     <div className="generator-modal__comp-item">
                         <span className="text-label">Support</span>
-                        <input
-                            type="number"
+                        <NumberSpinner
+                            min={0}
+                            max={6}
                             value={config.targetSupCount}
-                            onChange={(e) => onUpdateConfig({ targetSupCount: Number(e.target.value) })}
-                            min="0"
-                            max="6"
-                            className="generator-modal__comp-input"
+                            onChange={(val) => onUpdateConfig({ targetSupCount: val })}
                         />
                     </div>
                 </div>
@@ -174,14 +168,12 @@ export function GeneratorThresholdsSection({
                                 />
                                 STAB 1
                             </label>
-                            <input
-                                type="number"
+                            <NumberSpinner
+                                min={0}
+                                max={6}
                                 value={config.primaryStabCount}
-                                onChange={(e) => onUpdateConfig({ primaryStabCount: Number(e.target.value) })}
-                                min="0"
-                                max="6"
-                                className="generator-modal__comp-input"
                                 disabled={!config.overridePrimaryStab}
+                                onChange={(val) => onUpdateConfig({ primaryStabCount: val })}
                             />
                         </div>
                         {hasType2 && (
@@ -195,14 +187,12 @@ export function GeneratorThresholdsSection({
                                     />
                                     STAB 2
                                 </label>
-                                <input
-                                    type="number"
+                                <NumberSpinner
+                                    min={0}
+                                    max={6}
                                     value={config.secondaryStabCount}
-                                    onChange={(e) => onUpdateConfig({ secondaryStabCount: Number(e.target.value) })}
-                                    min="0"
-                                    max="6"
-                                    className="generator-modal__comp-input"
                                     disabled={!config.overrideSecondaryStab}
+                                    onChange={(val) => onUpdateConfig({ secondaryStabCount: val })}
                                 />
                             </div>
                         )}
@@ -226,13 +216,11 @@ export function GeneratorThresholdsSection({
                             {config.coveragePreference === 'fixed' && (
                                 <div className="generator-modal__coverage-fixed-row">
                                     <span className="text-subtext">Coverage Count</span>
-                                    <input
-                                        type="number"
+                                    <NumberSpinner
+                                        min={0}
+                                        max={6}
                                         value={config.coverageCount}
-                                        onChange={(e) => onUpdateConfig({ coverageCount: Number(e.target.value) })}
-                                        min="0"
-                                        max="6"
-                                        className="generator-modal__comp-input"
+                                        onChange={(val) => onUpdateConfig({ coverageCount: val })}
                                     />
                                 </div>
                             )}

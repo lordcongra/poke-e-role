@@ -274,6 +274,13 @@
     font-size: 0.8rem;
 }
 
+.generator-modal__species-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+}
+
 .generator-modal__species-input-wrap {
     display: flex;
     gap: 5px;
@@ -489,10 +496,21 @@
 }
 
 .generator-modal__privacy-box {
-    background: var(--panel-alt);
+    background: var(--panel-bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 10px;
+    border-radius: 4px;
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.generator-modal__privacy-suboptions {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding-left: 22px;
+    animation: generatorDrawerFadeIn 0.15s ease-out;
 }
 
 /* ==========================================================================
@@ -501,7 +519,7 @@
 
 .generator-modal__side-by-side {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1.25fr 0.875fr 0.875fr;
     gap: 10px;
     align-items: stretch;
 }

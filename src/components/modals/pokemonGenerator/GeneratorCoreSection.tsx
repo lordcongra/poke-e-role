@@ -1,5 +1,5 @@
 import type { Rank, GeneratorConfig } from '../../../store/storeTypes';
-import { Dices, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { TooltipIcon } from '../../ui/TooltipIcon';
 import { RANKS } from '../../../data/constants';
 import { BIOMES, BIOME_TOOLTIP_NOTE } from '../../../data/biomeData';
@@ -18,7 +18,14 @@ export interface GeneratorCoreSectionProps {
     onUpdateConfig: (partial: Partial<GeneratorConfig>) => void;
     activeTargetRecRank: string;
     onOpenTooltip: (info: { title: string; desc: string }) => void;
+    showPrivacySection?: boolean;
 }
+
+const PRIVACY_ITEMS = [
+    { key: 'privateNpcLock', label: 'NPC-locked' },
+    { key: 'privateRolls', label: 'Private Rolls' },
+    { key: 'privateGmTrackers', label: 'GM-Only UI Trackers' }
+] as const;
 
 export function GeneratorCoreSection({
     currentSpecies,
@@ -32,7 +39,8 @@ export function GeneratorCoreSection({
     activeConfig,
     onUpdateConfig,
     activeTargetRecRank,
-    onOpenTooltip
+    onOpenTooltip,
+    showPrivacySection = false
 }: GeneratorCoreSectionProps) {
     const speciesPlaceholder = activeConfig.randomizeSpecies
         ? 'Random Species (Active)'
@@ -40,42 +48,44 @@ export function GeneratorCoreSection({
           ? `e.g. Lucario (${activeTargetRecRank})`
           : 'e.g. Lucario';
 
+    const handleTogglePrivacyDefaults = (checked: boolean) => {
+        onUpdateConfig({
+            privacyDefaults: checked,
+            privateNpcLock: checked ? (activeConfig.privateNpcLock ?? true) : false,
+            privateRolls: checked ? (activeConfig.privateRolls ?? true) : false,
+            privateGmTrackers: checked ? (activeConfig.privateGmTrackers ?? true) : false
+        });
+    };
+
     return (
         <div className="generator-modal__core-card">
             {/* Row 1: Species, Rank & Nickname */}
             <div className="generator-modal__row">
                 <div className="generator-modal__col generator-modal__col--species">
-                    <label className="text-label" htmlFor="generator-species-input">
-                        Species:
-                    </label>
-                    <div className="generator-modal__species-input-wrap">
-                        <input
-                            id="generator-species-input"
-                            type="text"
-                            list="generator-species-datalist"
-                            className="generator-modal__input text-label"
-                            placeholder={speciesPlaceholder}
-                            value={activeConfig.randomizeSpecies ? '' : currentSpecies}
-                            onChange={(e) => onUpdateSpecies(e.target.value)}
-                            disabled={activeConfig.randomizeSpecies}
-                        />
-                        <button
-                            type="button"
-                            className={`action-button ${
-                                activeConfig.randomizeSpecies ? 'action-button--theme' : 'action-button--dark'
-                            } generator-modal__dice-btn`}
-                            onClick={() => onUpdateConfig({ randomizeSpecies: !activeConfig.randomizeSpecies })}
-                            title={
-                                activeConfig.randomizeSpecies
-                                    ? 'Randomize Species is ON (Click to disable)'
-                                    : 'Randomize Species is OFF (Click to enable)'
-                            }
-                            aria-label="Randomize Species"
-                        >
-                            <Dices size={15} />
-                            <span>Random</span>
-                        </button>
+                    <div className="generator-modal__species-label-row">
+                        <label className="text-label" htmlFor="generator-species-input">
+                            Species:
+                        </label>
+                        <label className="generator-modal__checkbox-label text-label">
+                            <input
+                                type="checkbox"
+                                checked={Boolean(activeConfig.randomizeSpecies)}
+                                onChange={(e) => onUpdateConfig({ randomizeSpecies: e.target.checked })}
+                                className="generator-modal__checkbox"
+                            />
+                            Randomize
+                        </label>
                     </div>
+                    <input
+                        id="generator-species-input"
+                        type="text"
+                        list="generator-species-datalist"
+                        className="generator-modal__input text-label"
+                        placeholder={speciesPlaceholder}
+                        value={activeConfig.randomizeSpecies ? '' : currentSpecies}
+                        onChange={(e) => onUpdateSpecies(e.target.value)}
+                        disabled={activeConfig.randomizeSpecies}
+                    />
                     <datalist id="generator-species-datalist">
                         {displayedSpecies.map((s) => (
                             <option key={s} value={s} />
@@ -277,6 +287,54 @@ export function GeneratorCoreSection({
                     </label>
                 </div>
             </div>
+
+            {/* Row 4: GM Privacy Sub-box (GM Only / Standalone) */}
+            {showPrivacySection && (
+                <div className="generator-modal__privacy-box">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <label
+                            className="generator-modal__checkbox-label text-label"
+                            style={{ margin: 0, fontWeight: 600 }}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={Boolean(activeConfig.privacyDefaults)}
+                                onChange={(e) => handleTogglePrivacyDefaults(e.target.checked)}
+                                className="generator-modal__checkbox"
+                            />
+                            <span>Private Token Defaults (GM Only)</span>
+                            <TooltipIcon
+                                onClick={() =>
+                                    onOpenTooltip({
+                                        title: 'Private Token Defaults',
+                                        desc: 'Automatically configures generated Pokémon with GM-exclusive privacy settings so players cannot view rolls, stat modifications, or map token HUD trackers.'
+                                    })
+                                }
+                            />
+                        </label>
+                    </div>
+
+                    {activeConfig.privacyDefaults && (
+                        <div className="generator-modal__privacy-suboptions">
+                            {PRIVACY_ITEMS.map(({ key, label }) => (
+                                <label
+                                    key={key}
+                                    className="generator-modal__checkbox-label text-label"
+                                    style={{ margin: 0, fontSize: '0.82rem' }}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={Boolean(activeConfig[key])}
+                                        onChange={(e) => onUpdateConfig({ [key]: e.target.checked })}
+                                        className="generator-modal__checkbox"
+                                    />
+                                    <span>{label}</span>
+                                </label>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
