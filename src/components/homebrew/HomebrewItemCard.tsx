@@ -10,6 +10,8 @@ import { HomebrewItemClassificationRow } from './HomebrewItemClassificationRow';
 import { imageManager, autoCropTransparency } from '../../utils/graphics/imageManager';
 import { setItemArt } from '../../utils/graphics/itemArtCatalog';
 import { ChevronDown, Tag, Copy, X, AlertTriangle, Package } from 'lucide-react';
+import { TagPillList } from '../ui/TagPillList';
+import { extractItemTags } from '../modals/items/tagBuilder/tagBuilderLogic';
 import './Homebrew.css';
 import './HomebrewItemCard.css';
 import '../modals/items/ItemEditModal.css';
@@ -46,6 +48,7 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }:
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const [showTagBuilder, setShowTagBuilder] = useState(false);
+    const [tagBuilderInitialTag, setTagBuilderInitialTag] = useState<string | undefined>(undefined);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(item.name !== 'New Item');
 
@@ -223,7 +226,10 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }:
                 {canEdit && (
                     <>
                         <button
-                            onClick={() => setShowTagBuilder(true)}
+                            onClick={() => {
+                                setTagBuilderInitialTag(undefined);
+                                setShowTagBuilder(true);
+                            }}
                             className="action-button action-button--dark homebrew-card__btn"
                         >
                             <Tag size={14} /> Tags
@@ -303,6 +309,52 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }:
                         disabled={!canEdit}
                         className="homebrew-card__textarea homebrew-card__textarea--large text-subtext"
                     />
+                    {extractItemTags({ name: item.name, description: item.description, tags: item.tags }).length > 0 && (
+                        <div style={{ marginTop: '6px' }}>
+                            <TagPillList
+                                tags={extractItemTags({ name: item.name, description: item.description, tags: item.tags })}
+                                onEditTag={(tagStr) => {
+                                    setTagBuilderInitialTag(tagStr);
+                                    setShowTagBuilder(true);
+                                }}
+                                onDeleteTag={(rawTag) => {
+                                    const currentTags =
+                                        item.tags !== undefined
+                                            ? item.tags
+                                            : (item.description.match(/\[[^\]]+\]/g) || []).join(' ');
+                                    const updated = currentTags.replace(rawTag, '').replace(/\s+/g, ' ').trim();
+                                    updateCustomItem(item.id, 'tags', updated);
+                                    if (item.description.includes(rawTag)) {
+                                        const cleanDesc = item.description
+                                            .replace(rawTag, '')
+                                            .replace(/\n\s*\n+/g, '\n')
+                                            .trim();
+                                        updateCustomItem(item.id, 'description', cleanDesc);
+                                    }
+                                }}
+                                onAddTag={() => {
+                                    setTagBuilderInitialTag(undefined);
+                                    setShowTagBuilder(true);
+                                }}
+                                showAddButton={false}
+                            />
+                        </div>
+                    )}
+                    {canEdit && (
+                        <div style={{ marginTop: '6px', marginBottom: '4px', display: 'flex', gap: '8px' }}>
+                            <button
+                                type="button"
+                                className="action-button action-button--dark text-theme-header"
+                                style={{ fontSize: '0.75rem', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                onClick={() => {
+                                    setTagBuilderInitialTag(undefined);
+                                    setShowTagBuilder(true);
+                                }}
+                            >
+                                <Tag size={12} /> Add Smart Tags
+                            </button>
+                        </div>
+                    )}
                     <HomebrewItemEffectsSection item={item} canEdit={canEdit} />
                 </>
             )}
@@ -311,7 +363,11 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }:
                 <TagBuilderModal
                     targetId={item.id}
                     targetType="homebrew_item"
-                    onClose={() => setShowTagBuilder(false)}
+                    initialTag={tagBuilderInitialTag}
+                    onClose={() => {
+                        setShowTagBuilder(false);
+                        setTagBuilderInitialTag(undefined);
+                    }}
                 />
             )}
 

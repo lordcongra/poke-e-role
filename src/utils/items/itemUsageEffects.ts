@@ -412,9 +412,12 @@ export function hasItemUsageEffect(item: {
 
 /**
  * Checks whether an item can be consumed/used via the quick use action
- * (has charges or has a defined usage effect).
+ * (has charges or has a defined usage effect, but not a built-in attack action).
  */
-export function isItemUsable(item: InventoryItem): boolean {
+export function isItemUsable(item: InventoryItem, hasAttackAction?: boolean): boolean {
+    if (hasAttackAction || Boolean(item.attackAction)) {
+        return false;
+    }
     const effective = getItemEffectiveCharges(item);
     if (effective.hasCharges) {
         return true;

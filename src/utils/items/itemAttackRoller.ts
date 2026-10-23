@@ -29,15 +29,23 @@ export function buildEphemeralMoveFromItem(
     item: InventoryItem,
     action: ItemAttackAction
 ): MoveData {
+    const acc1 = action.acc1Alt ? `${action.acc1}/${action.acc1Alt}` : action.acc1;
+    const acc2 = action.acc2Alt
+        ? `${action.acc2 || 'none'}/${action.acc2Alt}`
+        : action.acc2 || 'none';
+    const dmg1 = action.dmg1Alt
+        ? `${action.dmg1 || ''}/${action.dmg1Alt}`
+        : action.dmg1 || '';
+
     return {
         id: `item-${item.id}`,
         active: true,
         name: item.name || 'Thrown Item',
         type: action.type || 'Normal',
         category: action.category || 'Physical',
-        acc1: action.acc1,
-        acc2: action.acc2 || 'none',
-        dmg1: action.dmg1 || '',
+        acc1,
+        acc2,
+        dmg1,
         power: action.power ?? 0,
         desc: [
             action.tags || '',

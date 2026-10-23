@@ -1699,6 +1699,146 @@ await runTest(
     }
 );
 
+await runTest(
+    'inventory: serialization & hydration preserves destroyOnDepletion=false and attackAction invariants',
+    () => {
+        const itemWithRetention = {
+            id: 'custom-wand-1',
+            qty: 1,
+            name: 'Wand of Sparks',
+            desc: 'Fires sparks at foes',
+            active: true,
+            charges: 0,
+            maxCharges: 5,
+            destroyOnDepletion: false,
+            healHp: 0,
+            healWill: 2,
+            cures: ['Paralysis'],
+            permanentStatBoost: { stat: 'Special' as const, value: 1 },
+            statBuff: { stat: 'Special', value: 2 },
+            statDebuff: { stat: 'Defense', value: 1 },
+            gainTempHp: 5,
+            gainTempWill: 3,
+            dungeonPassive: 'Glows in dark',
+            inflictsStatus: ['Burn'],
+            attackAction: {
+                acc1: 'Special',
+                acc2: 'Insight',
+                type: 'Electric',
+                category: 'Special' as const,
+                power: 2
+            }
+        };
+
+        const state = createTestCharacterState({
+            inventory: [itemWithRetention]
+        });
+
+        const flatMeta = flattenStateToMetadata(state);
+        assert.ok(flatMeta['inv-data'], 'Metadata must include inv-data');
+
+        const parsedRaw = JSON.parse(String(flatMeta['inv-data']));
+        assert.equal(parsedRaw.length, 1);
+        assert.equal(parsedRaw[0].destroyOnDepletion, false, 'Explicitly persists destroyOnDepletion: false');
+        assert.ok(parsedRaw[0].attackAction, 'Explicitly persists attackAction');
+        assert.equal(parsedRaw[0].attackAction.type, 'Electric');
+        assert.equal(parsedRaw[0].dungeonPassive, 'Glows in dark');
+        assert.equal(parsedRaw[0].gainTempHp, 5);
+
+        const hydrated = hydrateStateFromMetadata(flatMeta, state);
+        assert.ok(hydrated.inventory, 'Hydrated inventory must exist');
+        assert.equal(hydrated.inventory.length, 1);
+        const hydratedItem = hydrated.inventory[0];
+        assert.equal(hydratedItem.destroyOnDepletion, false, 'Hydrated item retains destroyOnDepletion: false');
+        assert.equal(hydratedItem.attackAction?.type, 'Electric');
+        assert.equal(hydratedItem.gainTempHp, 5);
+        assert.equal(hydratedItem.dungeonPassive, 'Glows in dark');
+        assert.deepEqual(hydratedItem.cures, ['Paralysis']);
+        assert.deepEqual(hydratedItem.inflictsStatus, ['Burn']);
+    }
+);
+
+await runTest(
+    'inventory: isItemUsable suppresses quick use button when attackAction exists',
+    async () => {
+        const { isItemUsable } = await import('../src/utils/items/itemUsageEffects');
+        const itemWithAttack = {
+            id: 'item-1',
+            qty: 1,
+            name: 'Flame Orb',
+            desc: 'Throws a fire orb',
+            charges: 3,
+            maxCharges: 3,
+            attackAction: {
+                acc1: 'Special',
+                acc2: 'Special',
+                type: 'Fire',
+                category: 'Special' as const,
+                power: 1
+            }
+        };
+
+        // Suppressed when item.attackAction exists
+        assert.equal(isItemUsable(itemWithAttack), false);
+        // Suppressed when hasAttackAction boolean flag is explicitly passed
+        assert.equal(isItemUsable({ id: 'item-2', qty: 1, name: 'Stone', desc: '', charges: 3, maxCharges: 3 }, true), false);
+
+        // Allowed when regular consumable item with charges has no attackAction
+        assert.equal(isItemUsable({ id: 'item-3', qty: 1, name: 'Potion', desc: 'Heals 1 HP', charges: 3, maxCharges: 3 }), true);
+    }
+);
+
+await runTest(
+    'inventory: applyLookupResultToItem maps all fields including destroyOnDepletion and attackAction',
+    async () => {
+        const { applyLookupResultToItem } = await import('../src/utils/items/inventoryItemOps');
+        const existing = {
+            id: 'item-base',
+            qty: 1,
+            name: 'Custom Wand',
+            desc: ''
+        };
+
+        const lookupResult = {
+            found: true,
+            name: 'Custom Wand',
+            description: 'Custom wand effect',
+            tags: '[Dmg +1]',
+            fullDescription: 'Custom wand effect [Dmg +1]',
+            charges: 5,
+            maxCharges: 5,
+            destroyOnDepletion: false,
+            healHp: 0,
+            healWill: 1,
+            cures: ['Burn'],
+            permanentStatBoost: { stat: 'Special' as const, value: 1 },
+            statBuff: { stat: 'Special', value: 1 },
+            statDebuff: { stat: 'Defense', value: 1 },
+            gainTempHp: 4,
+            gainTempWill: 2,
+            dungeonPassive: 'Dungeon light',
+            inflictsStatus: ['Blind'],
+            attackAction: {
+                acc1: 'Special',
+                acc2: 'Insight',
+                type: 'Psychic',
+                category: 'Special' as const,
+                power: 1
+            }
+        };
+
+        const updates = applyLookupResultToItem(existing, lookupResult);
+        assert.equal(updates.destroyOnDepletion, false);
+        assert.equal(updates.attackAction?.type, 'Psychic');
+        assert.equal(updates.desc, 'Custom wand effect');
+        assert.equal(updates.tags, '[Dmg +1]');
+        assert.equal(updates.charges, 5);
+        assert.equal(updates.healWill, 1);
+        assert.equal(updates.gainTempHp, 4);
+        assert.equal(updates.dungeonPassive, 'Dungeon light');
+    }
+);
+
 console.log('\n=============================================');
 console.log(`Results: ${passedCount} passed, ${failedCount} failed`);
 console.log('=============================================\n');

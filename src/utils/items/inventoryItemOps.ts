@@ -1,7 +1,9 @@
 import type { CharacterState, InventoryItem } from '../../store/storeTypes';
 import type { ItemUsageResult } from './itemUsageEffects';
+import type { ItemLookupResult } from '../common/itemLookupUtils';
 import { getItemEffectiveCharges, consumeChargeFromInventory } from './itemCharges';
 import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../combat/combatUtils';
+import { getItemArt } from '../graphics/itemArtCatalog';
 
 /**
  * Recalculates HP and Will maximums based on inventory stat tags and updates the save payload.
@@ -214,3 +216,83 @@ export function drainInventoryItemCharge(
     }
     return inventory.map((i) => (i.id === itemId ? { ...i, qty: currentQty - 1 } : i));
 }
+
+/**
+ * Maps an ItemLookupResult to a partial InventoryItem update object,
+ * ensuring all effect, charge, art, tag, and action fields are mapped cleanly.
+ */
+export function applyLookupResultToItem(
+    item: InventoryItem,
+    result: ItemLookupResult,
+    forceOverwrite = false
+): Partial<InventoryItem> {
+    const updates: Partial<InventoryItem> = {};
+
+    if (result.name && result.name !== item.name) {
+        updates.name = result.name;
+    }
+
+    if (result.description && (forceOverwrite || !item.desc.trim())) {
+        updates.desc = result.description;
+    } else if (/\[.*?\]/.test(item.desc)) {
+        updates.desc = item.desc
+            .replace(/\[.*?\]/g, '')
+            .replace(/\n\s*\n+/g, '\n')
+            .trim();
+    }
+
+    if (result.tags) {
+        updates.tags = result.tags;
+    }
+
+    const targetImg = result.imageUrl || getItemArt(result.name) || getItemArt(item.name);
+    if (targetImg && (!item.imageUrl || item.imageUrl === 'none')) {
+        updates.imageUrl = targetImg;
+    }
+
+    if (result.charges !== undefined) {
+        updates.charges = result.charges;
+    }
+    if (result.maxCharges !== undefined) {
+        updates.maxCharges = result.maxCharges;
+    }
+    if (result.destroyOnDepletion !== undefined) {
+        updates.destroyOnDepletion = result.destroyOnDepletion;
+    }
+    if (result.healHp !== undefined) {
+        updates.healHp = result.healHp;
+    }
+    if (result.healWill !== undefined) {
+        updates.healWill = result.healWill;
+    }
+    if (result.cures !== undefined) {
+        updates.cures = result.cures;
+    }
+    if (result.permanentStatBoost !== undefined) {
+        updates.permanentStatBoost = result.permanentStatBoost;
+    }
+    if (result.statBuff !== undefined) {
+        updates.statBuff = result.statBuff;
+    }
+    if (result.statDebuff !== undefined) {
+        updates.statDebuff = result.statDebuff;
+    }
+    if (result.gainTempHp !== undefined) {
+        updates.gainTempHp = result.gainTempHp;
+    }
+    if (result.gainTempWill !== undefined) {
+        updates.gainTempWill = result.gainTempWill;
+    }
+    if (result.dungeonPassive !== undefined) {
+        updates.dungeonPassive = result.dungeonPassive;
+    }
+    if (result.inflictsStatus !== undefined) {
+        updates.inflictsStatus = result.inflictsStatus;
+    }
+    if (result.attackAction !== undefined) {
+        updates.attackAction = result.attackAction;
+    }
+
+    return updates;
+}
+

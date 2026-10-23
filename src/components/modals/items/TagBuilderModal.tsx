@@ -29,22 +29,78 @@ import {
     PRESETS,
     getDefaultTargetForCategory
 } from './tagBuilder/tagBuilderConstants';
-import { buildTagString, generateExplanation, parseTagStringToConfig } from './tagBuilder/tagBuilderLogic';
+import { buildTagString, generateExplanation, parseTagStringToConfig, extractMoveTags } from './tagBuilder/tagBuilderLogic';
 import { searchEffects, type SearchResultItem } from './tagBuilder/tagBuilderSearch';
 import { TagBuilderConfigSection } from './tagBuilder/TagBuilderConfigSection';
 import { TagBuilderPreview } from './tagBuilder/TagBuilderPreview';
 import './TagBuilderModal.css';
 
-export function TagBuilderModal({ targetId, targetType, initialTag, onClose }: TagBuilderModalProps) {
+export function TagBuilderModal({
+    targetId,
+    targetType,
+    initialTag,
+    initialTagsText,
+    onSaveTagsText,
+    targetName: explicitTargetName,
+    onClose
+}: TagBuilderModalProps) {
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
     const extraCategories = useCharacterStore((state) => state.extraCategories);
 
-    const { targetName, existingTags, handleDeleteTag, handleReplaceTag, handleAppendTag } = useTagBuilderTarget(
-        targetId,
-        targetType
-    );
+    const storeTarget = useTagBuilderTarget(targetId || '', targetType);
 
+    const isControlled = typeof onSaveTagsText === 'function';
     const isMove = targetType === 'move' || targetType === 'homebrew_move';
+
+    const targetName =
+        explicitTargetName || (isControlled ? (isMove ? 'Move Action' : 'Item') : storeTarget.targetName);
+    const currentRawText = isControlled ? initialTagsText ?? '' : storeTarget.currentRawText;
+
+    const existingTags = isControlled
+        ? isMove
+            ? extractMoveTags(currentRawText).map((p) => p.tag)
+            : currentRawText.match(/\[[^\]]+\]/g) || []
+        : storeTarget.existingTags;
+
+    const handleDeleteTag = (tagToDelete: string) => {
+        if (isControlled && onSaveTagsText) {
+            let updated = currentRawText.replace(tagToDelete, '');
+            updated = updated
+                .replace(/\s+/g, ' ')
+                .replace(/\s*\.\s*\./g, '.')
+                .trim();
+            onSaveTagsText(updated);
+        } else {
+            storeTarget.handleDeleteTag(tagToDelete);
+        }
+    };
+
+    const handleAppendTag = (tagToAppend: string) => {
+        if (!tagToAppend) return;
+        if (isControlled && onSaveTagsText) {
+            const updated = currentRawText ? `${currentRawText} ${tagToAppend}`.trim() : tagToAppend;
+            onSaveTagsText(updated);
+        } else {
+            storeTarget.handleAppendTag(tagToAppend);
+        }
+    };
+
+    const handleReplaceTag = (oldTag: string, newTag: string) => {
+        if (isControlled && onSaveTagsText) {
+            if (!oldTag) {
+                handleAppendTag(newTag);
+                return;
+            }
+            if (currentRawText.includes(oldTag)) {
+                const updated = currentRawText.replace(oldTag, newTag).replace(/\s+/g, ' ').trim();
+                onSaveTagsText(updated);
+            } else {
+                handleAppendTag(newTag);
+            }
+        } else {
+            storeTarget.handleReplaceTag(oldTag, newTag);
+        }
+    };
 
     // Search Query State
     const [searchQuery, setSearchQuery] = useState('');

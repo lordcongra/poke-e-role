@@ -30,9 +30,9 @@ export const InventoryGridCard = memo(function InventoryGridCard({
     const [resolvedImg, setResolvedImg] = useState<string | null>(null);
 
     const effectiveCharges = getItemEffectiveCharges(item);
-    const canUse = isItemUsable(item);
     const roomCustomItems = useCharacterStore((state) => state.roomCustomItems);
     const attackAction = resolveItemAttackAction(item, roomCustomItems);
+    const canUse = isItemUsable(item, Boolean(attackAction));
     const isAttackDepleted = (effectiveCharges.hasCharges && effectiveCharges.charges <= 0) || (item.qty ?? 1) <= 0;
 
     const knownArt = useItemArt(item.name);

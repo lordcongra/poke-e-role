@@ -81,8 +81,14 @@ export function ItemMovesDrawer({ onTarget }: ItemMovesDrawerProps) {
                             (effective.hasCharges && effective.charges <= 0) || (item.qty ?? 1) <= 0;
                         const ephemeralMove = buildEphemeralMoveFromItem(item, action);
 
-                        const accStr = `${action.acc1.toUpperCase()} + ${(action.acc2 && action.acc2 !== 'none' ? action.acc2 : 'None').toUpperCase()}`;
-                        const dmgStr = action.dmg1 ? `${action.dmg1.toUpperCase()} + ${action.power}` : `Pwr ${action.power}`;
+                        const acc1Display = action.acc1Alt ? `${action.acc1.toUpperCase()}/${action.acc1Alt.toUpperCase()}` : action.acc1.toUpperCase();
+                        const acc2Val = action.acc2 && action.acc2 !== 'none' ? action.acc2 : 'None';
+                        const acc2Display = action.acc2Alt ? `${acc2Val.toUpperCase()}/${action.acc2Alt.toUpperCase()}` : acc2Val.toUpperCase();
+                        const accStr = `${acc1Display} + ${acc2Display}`;
+
+                        const dmg1Base = action.dmg1 ? action.dmg1.toUpperCase() : '';
+                        const dmg1Display = action.dmg1Alt ? `${dmg1Base || 'NONE'}/${action.dmg1Alt.toUpperCase()}` : dmg1Base;
+                        const dmgStr = dmg1Display ? `${dmg1Display} + ${action.power}` : `Pwr ${action.power}`;
 
                         return (
                             <div key={item.id} className="item-moves-drawer__row">

@@ -218,6 +218,21 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             return { inventory: newInventory, health, will, ...(statusChanged ? { statuses: newStatuses } : {}) };
         }),
 
+    updateInventoryItemMultiple: (id, updates) =>
+        set((state) => {
+            const newInventory = state.inventory.map((item) =>
+                item.id === id ? { ...item, ...updates } : item
+            );
+            const updatesToSave: Record<string, unknown> = { 'inv-data': JSON.stringify(newInventory) };
+            const { health, will } = syncHealthWill(state, newInventory, updatesToSave);
+            try {
+                saveToOwlbear(updatesToSave);
+            } catch (error) {
+                console.error('[InventorySlice] Failed to save multiple item updates to Owlbear:', error);
+            }
+            return { inventory: newInventory, health, will };
+        }),
+
     removeInventoryItem: (id) =>
         set((state) => {
             const itemToRemove = state.inventory.find((i) => i.id === id);

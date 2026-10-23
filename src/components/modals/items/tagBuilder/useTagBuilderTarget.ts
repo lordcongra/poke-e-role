@@ -54,7 +54,8 @@ export function useTagBuilderTarget(targetId: string, targetType: TagTargetType)
     } else if (targetType === 'homebrew_item') {
         const hbItem = customItems.find((i) => i.id === targetId);
         targetName = hbItem?.name || 'Custom Item';
-        currentRawText = hbItem?.description || '';
+        const legacyTags = (hbItem?.description?.match(/\[[^\]]+\]/g) || []).join(' ');
+        currentRawText = hbItem?.tags ?? (legacyTags || '');
     } else if (targetType === 'homebrew_form') {
         const hbForm = customForms.find((f) => f.id === targetId);
         targetName = hbForm?.name || 'Custom Form';
@@ -95,7 +96,15 @@ export function useTagBuilderTarget(targetId: string, targetType: TagTargetType)
         } else if (targetType === 'homebrew_move') {
             updateCustomMove(targetId, 'desc', newRawText);
         } else if (targetType === 'homebrew_item') {
-            updateCustomItem(targetId, 'description', newRawText);
+            updateCustomItem(targetId, 'tags', newRawText);
+            const hbItem = customItems.find((i) => i.id === targetId);
+            if (hbItem && /\[.*?\]/.test(hbItem.description || '')) {
+                const cleanDesc = (hbItem.description || '')
+                    .replace(/\[.*?\]/g, '')
+                    .replace(/\n\s*\n+/g, '\n')
+                    .trim();
+                updateCustomItem(targetId, 'description', cleanDesc);
+            }
         } else if (targetType === 'homebrew_form') {
             updateCustomForm(targetId, 'tags', newRawText);
         } else if (targetType === 'homebrew_status') {

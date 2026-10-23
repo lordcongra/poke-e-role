@@ -706,12 +706,13 @@ export function extractTagsFromText(text: string): ParsedTagPill[] {
  * or canonical tags from KNOWN_ITEMS if neither is present.
  */
 export function extractItemTags(
-    item: { name?: string; desc?: string; tags?: string } | null | undefined
+    item: { name?: string; desc?: string; description?: string; tags?: string } | null | undefined
 ): ParsedTagPill[] {
     if (!item) return [];
     const knownItem = KNOWN_ITEMS.find((k) => k.name.toLowerCase() === (item.name || '').trim().toLowerCase());
     const canonicalTags = knownItem?.tags || '';
-    const legacyTags = (item.desc || '').match(/\[[^\]]+\]/g)?.join(' ') || '';
+    const descText = item.desc ?? item.description ?? '';
+    const legacyTags = descText.match(/\[[^\]]+\]/g)?.join(' ') || '';
     const combined = `${item.tags || ''} ${legacyTags}`.trim() || canonicalTags;
     const pills = extractTagsFromText(combined);
     const seen = new Set<string>();

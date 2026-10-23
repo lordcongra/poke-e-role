@@ -159,12 +159,18 @@ export async function lookupItemDetails(rawName: string): Promise<ItemLookupResu
     const attackAction = customItem?.attackAction ?? data?.attackAction;
 
     const effectiveImageUrl = customItem?.imageUrl || knownArt;
+    const customItemTags =
+        customItem?.tags !== undefined
+            ? customItem.tags
+            : (customItem?.description?.match(/\[[^\]]+\]/g)?.join(' ') ?? undefined);
+    const effectiveTags = (customItemTags !== undefined ? customItemTags : tags) || '';
+    const customItemCleanDesc = customItem?.description ? cleanItemDescription(customItem.description) : '';
 
     return {
         found: found || Boolean(customItem),
         name: canonicalName,
-        description: cleanDesc || customItem?.description || '',
-        tags,
+        description: cleanDesc || customItemCleanDesc || '',
+        tags: effectiveTags,
         fullDescription: cleanDesc || customItem?.description || '',
         imageUrl: effectiveImageUrl,
         charges: defaultCharges,

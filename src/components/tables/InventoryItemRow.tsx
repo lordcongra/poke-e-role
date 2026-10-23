@@ -5,6 +5,7 @@ import { imageManager } from '../../utils/graphics/imageManager';
 import { useItemArt, setItemArt, getItemArt } from '../../utils/graphics/itemArtCatalog';
 import { getItemEffectiveCharges } from '../../utils/items/itemCharges';
 import { isItemUsable } from '../../utils/items/itemUsageEffects';
+import { applyLookupResultToItem } from '../../utils/items/inventoryItemOps';
 import type { InventoryItem } from '../../store/storeTypes';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { ItemChargeBadge } from './ItemChargeBadge';
@@ -39,14 +40,15 @@ export function InventoryItemRow({
     onUseItem
 }: InventoryItemRowProps) {
     const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
+    const updateInventoryItemMultiple = useCharacterStore((state) => state.updateInventoryItemMultiple);
     const useInventoryItem = useCharacterStore((state) => state.useInventoryItem);
     const moveUpInventoryItem = useCharacterStore((state) => state.moveUpInventoryItem);
     const moveDownInventoryItem = useCharacterStore((state) => state.moveDownInventoryItem);
 
     const effectiveCharges = getItemEffectiveCharges(item);
-    const canUse = isItemUsable(item);
     const roomCustomItems = useCharacterStore((state) => state.roomCustomItems);
     const attackAction = resolveItemAttackAction(item, roomCustomItems);
+    const canUse = isItemUsable(item, Boolean(attackAction));
     const isAttackDepleted = (effectiveCharges.hasCharges && effectiveCharges.charges <= 0) || (item.qty ?? 1) <= 0;
 
     const [localName, setLocalName] = useState(item.name);
@@ -107,28 +109,13 @@ export function InventoryItemRow({
         try {
             const result = await lookupItemDetails(query);
             if (!result) return;
-            const update = useCharacterStore.getState().updateInventoryItem;
-            if (result.name && result.name !== item.name) {
-                update(item.id, 'name', result.name);
-                setLocalName(result.name);
+            const updates = applyLookupResultToItem(item, result, forceOverwrite);
+            if (Object.keys(updates).length > 0) {
+                updateInventoryItemMultiple(item.id, updates);
+                if (updates.name) {
+                    setLocalName(updates.name);
+                }
             }
-            if (result.description && (forceOverwrite || !item.desc.trim())) {
-                update(item.id, 'desc', result.description);
-            }
-            if (result.tags) update(item.id, 'tags', result.tags);
-            if (/\[.*?\]/.test(item.desc)) {
-                update(item.id, 'desc', item.desc.replace(/\[.*?\]/g, '').replace(/\n\s*\n+/g, '\n').trim());
-            }
-            const targetImg = result.imageUrl || getItemArt(result.name) || getItemArt(query);
-            if (targetImg && (!item.imageUrl || item.imageUrl === 'none')) update(item.id, 'imageUrl', targetImg);
-            if (result.charges !== undefined) {
-                update(item.id, 'charges', result.charges);
-                update(item.id, 'maxCharges', result.maxCharges);
-            }
-            if (result.healHp !== undefined) update(item.id, 'healHp', result.healHp);
-            if (result.healWill !== undefined) update(item.id, 'healWill', result.healWill);
-            if (result.cures !== undefined) update(item.id, 'cures', result.cures);
-            if (result.attackAction !== undefined) update(item.id, 'attackAction', result.attackAction);
         } catch (e) {
             console.error('[InventoryItemRow] Failed to lookup item info:', e);
         }
@@ -143,7 +130,12 @@ export function InventoryItemRow({
         }
 
         const trimmedLower = val.trim().toLowerCase();
-        if (KNOWN_ITEMS.some((k) => k.name.toLowerCase() === trimmedLower) || Boolean(getItemArt(val))) {
+        const customItems = roomCustomItems || [];
+        if (
+            KNOWN_ITEMS.some((k) => k.name.toLowerCase() === trimmedLower) ||
+            customItems.some((c) => c.name.toLowerCase() === trimmedLower) ||
+            Boolean(getItemArt(val))
+        ) {
             handleApplyItemLookup(val, false);
         }
     };

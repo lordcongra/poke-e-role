@@ -243,9 +243,18 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
                 if (item.boostLevel !== undefined) entry.boostLevel = item.boostLevel;
                 if (item.charges !== undefined) entry.charges = item.charges;
                 if (item.maxCharges !== undefined) entry.maxCharges = item.maxCharges;
+                if (item.destroyOnDepletion !== undefined) entry.destroyOnDepletion = item.destroyOnDepletion;
                 if (item.healHp !== undefined) entry.healHp = item.healHp;
                 if (item.healWill !== undefined) entry.healWill = item.healWill;
                 if (item.cures !== undefined) entry.cures = item.cures;
+                if (item.permanentStatBoost !== undefined) entry.permanentStatBoost = item.permanentStatBoost;
+                if (item.statBuff !== undefined) entry.statBuff = item.statBuff;
+                if (item.statDebuff !== undefined) entry.statDebuff = item.statDebuff;
+                if (item.gainTempHp !== undefined) entry.gainTempHp = item.gainTempHp;
+                if (item.gainTempWill !== undefined) entry.gainTempWill = item.gainTempWill;
+                if (item.dungeonPassive !== undefined) entry.dungeonPassive = item.dungeonPassive;
+                if (item.inflictsStatus !== undefined) entry.inflictsStatus = item.inflictsStatus;
+                if (item.attackAction !== undefined) entry.attackAction = item.attackAction;
                 return entry;
             });
             flatMetadata['inv-data'] = JSON.stringify(cleanedInv);

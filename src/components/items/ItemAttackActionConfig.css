@@ -102,3 +102,31 @@
     border-radius: 4px;
 }
 
+.item-attack-action-config__dual-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.item-attack-action-config__or-label {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--text-muted, #9ca3af);
+    line-height: 1;
+}
+
+.item-attack-action-config__tags-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 4px;
+    border-top: 1px dashed var(--panel-alt, #374151);
+}
+
+.item-attack-action-config__tags-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+

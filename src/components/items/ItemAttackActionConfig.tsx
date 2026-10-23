@@ -2,8 +2,11 @@ import { useState } from 'react';
 import type { ItemAttackAction } from '../../store/entityTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { Swords, ChevronDown, ChevronUp } from 'lucide-react';
+import { Swords, ChevronDown, ChevronUp, Tag } from 'lucide-react';
 import { NumberSpinner } from '../ui/NumberSpinner';
+import { TagPillList } from '../ui/TagPillList';
+import { extractMoveTags } from '../modals/items/tagBuilder/tagBuilderLogic';
+import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import './ItemAttackActionConfig.css';
 
 const DEFAULT_TYPES = [
@@ -25,6 +28,8 @@ export function ItemAttackActionConfig({
 }: ItemAttackActionConfigProps) {
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
     const [isExpanded, setIsExpanded] = useState(() => Boolean(attackAction));
+    const [showTagBuilder, setShowTagBuilder] = useState(false);
+    const [tagBuilderInitialTag, setTagBuilderInitialTag] = useState<string | undefined>(undefined);
 
     const isEnabled = Boolean(attackAction);
 
@@ -57,6 +62,8 @@ export function ItemAttackActionConfig({
             [key]: value
         });
     };
+
+    const moveTags = extractMoveTags(attackAction?.tags || '');
 
     return (
         <div className="item-attack-action-config">
@@ -143,69 +150,148 @@ export function ItemAttackActionConfig({
                     <div className="item-attack-action-config__row">
                         <div className="item-attack-action-config__field">
                             <span className="item-attack-action-config__label">Acc 1 (Stat)</span>
-                            <select
-                                className="item-attack-action-config__select"
-                                value={attackAction.acc1}
-                                disabled={!canEdit}
-                                onChange={(e) => updateField('acc1', e.target.value)}
-                            >
-                                {Object.values(CombatStat).map((s) => (
-                                    <option key={s} value={s}>{s.toUpperCase()}</option>
-                                ))}
-                                {Object.values(SocialStat).map((s) => (
-                                    <option key={s} value={s}>{s.toUpperCase()}</option>
-                                ))}
-                                <option value="will">WILL</option>
-                            </select>
+                            <div className="item-attack-action-config__dual-col">
+                                <select
+                                    className="item-attack-action-config__select"
+                                    value={attackAction.acc1}
+                                    disabled={!canEdit}
+                                    onChange={(e) => updateField('acc1', e.target.value)}
+                                >
+                                    {Object.values(CombatStat).map((s) => (
+                                        <option key={s} value={s}>{s.toUpperCase()}</option>
+                                    ))}
+                                    {Object.values(SocialStat).map((s) => (
+                                        <option key={s} value={s}>{s.toUpperCase()}</option>
+                                    ))}
+                                    <option value="will">WILL</option>
+                                </select>
+                                <span className="item-attack-action-config__or-label text-subtext">or</span>
+                                <select
+                                    className="item-attack-action-config__select"
+                                    value={attackAction.acc1Alt || ''}
+                                    disabled={!canEdit}
+                                    onChange={(e) => updateField('acc1Alt', e.target.value || undefined)}
+                                >
+                                    <option value="">-- None --</option>
+                                    {Object.values(CombatStat).map((s) => (
+                                        <option key={`alt1-${s}`} value={s}>{s.toUpperCase()}</option>
+                                    ))}
+                                    {Object.values(SocialStat).map((s) => (
+                                        <option key={`alt1-${s}`} value={s}>{s.toUpperCase()}</option>
+                                    ))}
+                                    <option value="will">WILL</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div className="item-attack-action-config__field">
                             <span className="item-attack-action-config__label">Acc 2 (Skill)</span>
-                            <select
-                                className="item-attack-action-config__select"
-                                value={attackAction.acc2 || 'none'}
-                                disabled={!canEdit}
-                                onChange={(e) => updateField('acc2', e.target.value === 'none' ? undefined : e.target.value)}
-                            >
-                                <option value="none">-- None --</option>
-                                {Object.values(Skill).map((s) => (
-                                    <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-                                ))}
-                            </select>
+                            <div className="item-attack-action-config__dual-col">
+                                <select
+                                    className="item-attack-action-config__select"
+                                    value={attackAction.acc2 || 'none'}
+                                    disabled={!canEdit}
+                                    onChange={(e) => updateField('acc2', e.target.value === 'none' ? undefined : e.target.value)}
+                                >
+                                    <option value="none">-- None --</option>
+                                    {Object.values(Skill).map((s) => (
+                                        <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                                    ))}
+                                </select>
+                                <span className="item-attack-action-config__or-label text-subtext">or</span>
+                                <select
+                                    className="item-attack-action-config__select"
+                                    value={attackAction.acc2Alt || ''}
+                                    disabled={!canEdit}
+                                    onChange={(e) => updateField('acc2Alt', e.target.value && e.target.value !== 'none' ? e.target.value : undefined)}
+                                >
+                                    <option value="">-- None --</option>
+                                    {Object.values(Skill).map((s) => (
+                                        <option key={`alt2-${s}`} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
 
                         <div className="item-attack-action-config__field">
                             <span className="item-attack-action-config__label">Damage 1</span>
-                            <select
-                                className="item-attack-action-config__select"
-                                value={attackAction.dmg1 || ''}
-                                disabled={!canEdit}
-                                onChange={(e) => updateField('dmg1', e.target.value || undefined)}
-                            >
-                                <option value="">-- None --</option>
-                                {Object.values(CombatStat).map((s) => (
-                                    <option key={s} value={s}>{s.toUpperCase()}</option>
-                                ))}
-                                {Object.values(SocialStat).map((s) => (
-                                    <option key={s} value={s}>{s.toUpperCase()}</option>
-                                ))}
-                            </select>
+                            <div className="item-attack-action-config__dual-col">
+                                <select
+                                    className="item-attack-action-config__select"
+                                    value={attackAction.dmg1 || ''}
+                                    disabled={!canEdit}
+                                    onChange={(e) => updateField('dmg1', e.target.value || undefined)}
+                                >
+                                    <option value="">-- None --</option>
+                                    {Object.values(CombatStat).map((s) => (
+                                        <option key={s} value={s}>{s.toUpperCase()}</option>
+                                    ))}
+                                    {Object.values(SocialStat).map((s) => (
+                                        <option key={s} value={s}>{s.toUpperCase()}</option>
+                                    ))}
+                                </select>
+                                <span className="item-attack-action-config__or-label text-subtext">or</span>
+                                <select
+                                    className="item-attack-action-config__select"
+                                    value={attackAction.dmg1Alt || ''}
+                                    disabled={!canEdit}
+                                    onChange={(e) => updateField('dmg1Alt', e.target.value || undefined)}
+                                >
+                                    <option value="">-- None --</option>
+                                    {Object.values(CombatStat).map((s) => (
+                                        <option key={`altdmg1-${s}`} value={s}>{s.toUpperCase()}</option>
+                                    ))}
+                                    {Object.values(SocialStat).map((s) => (
+                                        <option key={`altdmg1-${s}`} value={s}>{s.toUpperCase()}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="item-attack-action-config__row">
-                        <div className="item-attack-action-config__field" style={{ flex: 2 }}>
-                            <span className="item-attack-action-config__label">Tags</span>
-                            <input
-                                type="text"
-                                className="item-attack-action-config__input"
-                                placeholder="e.g. [High Critical], [Low Acc 1]"
-                                value={attackAction.tags || ''}
-                                disabled={!canEdit}
-                                onChange={(e) => updateField('tags', e.target.value || undefined)}
-                            />
+                    <div className="item-attack-action-config__tags-section">
+                        <div className="item-attack-action-config__tags-header">
+                            <span className="item-attack-action-config__label">Move Tags</span>
+                            {canEdit && (
+                                <button
+                                    type="button"
+                                    className="action-button action-button--dark text-subtext"
+                                    style={{ padding: '2px 8px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                    onClick={() => {
+                                        setTagBuilderInitialTag(undefined);
+                                        setShowTagBuilder(true);
+                                    }}
+                                >
+                                    <Tag size={12} /> Add Tags
+                                </button>
+                            )}
                         </div>
+                        <TagPillList
+                            tags={moveTags}
+                            onEditTag={(tagStr) => {
+                                setTagBuilderInitialTag(tagStr);
+                                setShowTagBuilder(true);
+                            }}
+                            onDeleteTag={(rawTag) => {
+                                const currentTags = attackAction.tags || '';
+                                const updated = currentTags
+                                    .replace(rawTag, '')
+                                    .replace(/\s+/g, ' ')
+                                    .replace(/\s*\.\s*\./g, '.')
+                                    .trim();
+                                updateField('tags', updated || undefined);
+                            }}
+                            onAddTag={() => {
+                                setTagBuilderInitialTag(undefined);
+                                setShowTagBuilder(true);
+                            }}
+                            emptyText="No tags configured"
+                            addLabel="Add Tags"
+                            showAddButton={false}
+                        />
+                    </div>
 
+                    <div className="item-attack-action-config__row">
                         <div className="item-attack-action-config__field" style={{ maxWidth: '95px' }}>
                             <span className="item-attack-action-config__label">Chance Dice</span>
                             <NumberSpinner
@@ -231,6 +317,22 @@ export function ItemAttackActionConfig({
                         </div>
                     </div>
                 </div>
+            )}
+
+            {showTagBuilder && attackAction && (
+                <TagBuilderModal
+                    targetType="move"
+                    targetName="Item Move Action"
+                    initialTag={tagBuilderInitialTag}
+                    initialTagsText={attackAction.tags || ''}
+                    onSaveTagsText={(newTags) => {
+                        updateField('tags', newTags || undefined);
+                    }}
+                    onClose={() => {
+                        setShowTagBuilder(false);
+                        setTagBuilderInitialTag(undefined);
+                    }}
+                />
             )}
         </div>
     );

@@ -10,7 +10,8 @@ import type {
     CustomInfo,
     Badge,
     TransformationType,
-    Rank
+    Rank,
+    ItemAttackAction
 } from '../../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { getKnownAbility } from '../../data/abilities/knownAbilities';
@@ -241,9 +242,18 @@ function parseInventory(meta: Record<string, unknown>): InventoryItem[] {
                 boostLevel: typeof i.boostLevel === 'number' && !isNaN(i.boostLevel) ? i.boostLevel : undefined,
                 charges: typeof i.charges === 'number' && !isNaN(i.charges) ? i.charges : undefined,
                 maxCharges: typeof i.maxCharges === 'number' && !isNaN(i.maxCharges) ? i.maxCharges : undefined,
+                destroyOnDepletion: typeof i.destroyOnDepletion === 'boolean' ? i.destroyOnDepletion : undefined,
                 healHp: typeof i.healHp === 'number' && !isNaN(i.healHp) ? i.healHp : undefined,
                 healWill: typeof i.healWill === 'number' && !isNaN(i.healWill) ? i.healWill : undefined,
-                cures: Array.isArray(i.cures) ? (i.cures as string[]) : undefined
+                cures: Array.isArray(i.cures) ? (i.cures as string[]) : undefined,
+                permanentStatBoost: (i.permanentStatBoost as InventoryItem['permanentStatBoost']) || undefined,
+                statBuff: (i.statBuff as InventoryItem['statBuff']) || undefined,
+                statDebuff: (i.statDebuff as InventoryItem['statDebuff']) || undefined,
+                gainTempHp: typeof i.gainTempHp === 'number' && !isNaN(i.gainTempHp) ? i.gainTempHp : undefined,
+                gainTempWill: typeof i.gainTempWill === 'number' && !isNaN(i.gainTempWill) ? i.gainTempWill : undefined,
+                dungeonPassive: typeof i.dungeonPassive === 'string' ? i.dungeonPassive : undefined,
+                inflictsStatus: Array.isArray(i.inflictsStatus) ? (i.inflictsStatus as string[]) : undefined,
+                attackAction: (i.attackAction as ItemAttackAction) || undefined
             };
         });
     } catch (e) {

@@ -11,9 +11,12 @@ export type TagTargetType =
     | 'passive';
 
 export interface TagBuilderModalProps {
-    targetId: string;
+    targetId?: string;
     targetType: TagTargetType;
     initialTag?: string;
+    initialTagsText?: string;
+    onSaveTagsText?: (newTags: string) => void;
+    targetName?: string;
     onClose: () => void;
 }
 

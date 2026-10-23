@@ -11,8 +11,9 @@ import {
 import { ItemTargetPromptModal } from './ItemTargetPromptModal';
 import { ItemStatChoiceModal } from './ItemStatChoiceModal';
 import { NumberSpinner } from '../../ui/NumberSpinner';
-import { RotateCcw, Sparkles, ChevronDown, ChevronUp, Heart, Zap, ShieldAlert } from 'lucide-react';
+import { RotateCcw, Sparkles, ChevronDown, ChevronUp, Heart, Zap, ShieldAlert, Swords } from 'lucide-react';
 import { ItemAttackActionConfig } from '../../items/ItemAttackActionConfig';
+import { resolveItemAttackAction, executeItemAttackRoll } from '../../../utils/items/itemAttackRoller';
 
 interface ItemChargesControlProps {
     item: InventoryItem;
@@ -23,6 +24,8 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
     const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
     const useInventoryItem = useCharacterStore((state) => state.useInventoryItem);
     const roomCustomStatuses = useCharacterStore((state) => state.roomCustomStatuses);
+    const roomCustomItems = useCharacterStore((state) => state.roomCustomItems);
+    const attackAction = resolveItemAttackAction(item, roomCustomItems);
     const [targetCandidates, setTargetCandidates] = useState<ItemTargetCandidate[] | null>(null);
     const [statChoicePrompt, setStatChoicePrompt] = useState<{
         item: InventoryItem;
@@ -129,20 +132,37 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
                     />
                     <span className="text-label">Has Charges</span>
                 </label>
-                <button
-                    type="button"
-                    className="action-button action-button--theme item-charges-control__use-btn text-theme-header"
-                    onClick={handleUse}
-                    disabled={isChargesActive ? effective.charges <= 0 : (item.qty ?? 0) <= 0}
-                    title={
-                        isChargesActive
-                            ? `Use 1 charge (${effective.charges}/${effective.maxCharges})`
-                            : 'Use 1 item from bag'
-                    }
-                >
-                    <Sparkles size={13} />
-                    <span>Use Item</span>
-                </button>
+                {attackAction ? (
+                    <button
+                        type="button"
+                        className="action-button action-button--theme item-charges-control__use-btn text-theme-header"
+                        onClick={() => executeItemAttackRoll(item, attackAction)}
+                        disabled={isChargesActive ? effective.charges <= 0 : (item.qty ?? 0) <= 0}
+                        title={
+                            isChargesActive
+                                ? `Attack / Throw (${effective.charges}/${effective.maxCharges} charges)`
+                                : 'Attack / Throw item'
+                        }
+                    >
+                        <Swords size={13} />
+                        <span>Attack / Roll</span>
+                    </button>
+                ) : (
+                    <button
+                        type="button"
+                        className="action-button action-button--theme item-charges-control__use-btn text-theme-header"
+                        onClick={handleUse}
+                        disabled={isChargesActive ? effective.charges <= 0 : (item.qty ?? 0) <= 0}
+                        title={
+                            isChargesActive
+                                ? `Use 1 charge (${effective.charges}/${effective.maxCharges})`
+                                : 'Use 1 item from bag'
+                        }
+                    >
+                        <Sparkles size={13} />
+                        <span>Use Item</span>
+                    </button>
+                )}
             </div>
 
             {isChargesActive && (

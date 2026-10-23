@@ -230,6 +230,7 @@ export interface InventorySlice {
         attackAction?: ItemAttackAction;
     }) => void;
     updateInventoryItem: <K extends keyof InventoryItem>(id: string, field: K, value: InventoryItem[K]) => void;
+    updateInventoryItemMultiple: (id: string, updates: Partial<InventoryItem>) => void;
     removeInventoryItem: (id: string) => void;
     moveUpInventoryItem: (id: string) => void;
     moveDownInventoryItem: (id: string) => void;

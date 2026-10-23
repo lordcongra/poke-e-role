@@ -112,6 +112,12 @@ export function calculateStatTotal(
     factorTags?: string[]
 ): number {
     if (!statKey) return 0;
+    if (statKey.includes('/')) {
+        const parts = statKey.split('/').map((s) => s.trim()).filter(Boolean);
+        if (parts.length > 0) {
+            return Math.max(0, ...parts.map((p) => calculateStatTotal(p, state, itemBuffs, factorTags)));
+        }
+    }
     const normalizedStat = ATTRIBUTE_MAPPING[statKey] || statKey.toLowerCase().trim();
     if (!normalizedStat || normalizedStat === 'none') return 0;
     if (normalizedStat === 'will') return state.will.willMax;
@@ -166,6 +172,12 @@ export function calculateStatTotal(
 
 export function calculateSkillTotal(skillKey: string, state: CharacterState, itemBuffs: CombatBonuses): number {
     if (!skillKey || skillKey === 'none') return 0;
+    if (skillKey.includes('/')) {
+        const parts = skillKey.split('/').map((s) => s.trim()).filter(Boolean);
+        if (parts.length > 0) {
+            return Math.max(0, ...parts.map((p) => calculateSkillTotal(p, state, itemBuffs)));
+        }
+    }
 
     if (Object.values(Skill).includes(skillKey as Skill)) {
         const skillData = state.skills[skillKey as Skill];

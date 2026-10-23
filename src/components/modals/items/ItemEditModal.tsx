@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { imageManager, autoCropTransparency } from '../../../utils/graphics/imageManager';
 import { lookupItemDetails } from '../../../utils/common/itemLookupUtils';
+import { applyLookupResultToItem } from '../../../utils/items/inventoryItemOps';
 import { KNOWN_ITEMS } from '../../../data/constants';
 import { setItemArt, getItemArt, useItemArt } from '../../../utils/graphics/itemArtCatalog';
 import { TagBuilderModal } from './TagBuilderModal';
@@ -34,6 +35,8 @@ interface ItemEditModalProps {
 export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
     const item = useCharacterStore((state) => state.inventory.find((i) => i.id === itemId));
     const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
+    const updateInventoryItemMultiple = useCharacterStore((state) => state.updateInventoryItemMultiple);
+    const roomCustomItems = useCharacterStore((state) => state.roomCustomItems);
     const removeInventoryItem = useCharacterStore((state) => state.removeInventoryItem);
     const moveUpInventoryItem = useCharacterStore((state) => state.moveUpInventoryItem);
     const moveDownInventoryItem = useCharacterStore((state) => state.moveDownInventoryItem);
@@ -201,46 +204,12 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
         try {
             const result = await lookupItemDetails(query);
             if (result) {
-                if (result.name && result.name !== item.name) {
-                    updateInventoryItem(item.id, 'name', result.name);
-                    setLocalName(result.name);
-                }
-
-                if (result.description) {
-                    if (forceOverwrite || !item.desc.trim()) {
-                        updateInventoryItem(item.id, 'desc', result.description);
+                const updates = applyLookupResultToItem(item, result, forceOverwrite);
+                if (Object.keys(updates).length > 0) {
+                    updateInventoryItemMultiple(item.id, updates);
+                    if (updates.name) {
+                        setLocalName(updates.name);
                     }
-                }
-
-                if (result.tags) {
-                    updateInventoryItem(item.id, 'tags', result.tags);
-                }
-
-                if (/\[.*?\]/.test(item.desc)) {
-                    const cleaned = item.desc
-                        .replace(/\[.*?\]/g, '')
-                        .replace(/\n\s*\n+/g, '\n')
-                        .trim();
-                    updateInventoryItem(item.id, 'desc', cleaned);
-                }
-
-                const targetImg = result.imageUrl || getItemArt(result.name) || getItemArt(query);
-                if (targetImg && (!item.imageUrl || item.imageUrl === 'none')) {
-                    updateInventoryItem(item.id, 'imageUrl', targetImg);
-                }
-
-                if (result.charges !== undefined) {
-                    updateInventoryItem(item.id, 'charges', result.charges);
-                    updateInventoryItem(item.id, 'maxCharges', result.maxCharges);
-                }
-                if (result.healHp !== undefined) {
-                    updateInventoryItem(item.id, 'healHp', result.healHp);
-                }
-                if (result.healWill !== undefined) {
-                    updateInventoryItem(item.id, 'healWill', result.healWill);
-                }
-                if (result.cures !== undefined) {
-                    updateInventoryItem(item.id, 'cures', result.cures);
                 }
             }
         } catch (e) {
@@ -258,9 +227,14 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
             setItemArt(val.trim(), item.imageUrl);
         }
 
-        // Instant auto-pull if exact match with known item or catalog
+        // Instant auto-pull if exact match with known item, room custom item, or catalog
         const trimmedLower = val.trim().toLowerCase();
-        if (KNOWN_ITEMS.some((k) => k.name.toLowerCase() === trimmedLower) || Boolean(getItemArt(val))) {
+        const customItems = roomCustomItems || [];
+        if (
+            KNOWN_ITEMS.some((k) => k.name.toLowerCase() === trimmedLower) ||
+            customItems.some((c) => c.name.toLowerCase() === trimmedLower) ||
+            Boolean(getItemArt(val))
+        ) {
             handleApplyItemLookup(val, false);
         }
     };

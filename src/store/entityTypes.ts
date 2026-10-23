@@ -26,8 +26,11 @@ export interface ItemAttackAction {
     type: string;
     power: number;
     acc1: string;
+    acc1Alt?: string;
     acc2?: string;
+    acc2Alt?: string;
     dmg1?: string;
+    dmg1Alt?: string;
     dmg2?: string;
     tags?: string;
     chanceDice?: number;
@@ -297,6 +300,7 @@ export interface CustomItem {
     id: string;
     name: string;
     description: string;
+    tags?: string;
     pocket?: string;
     category?: string;
     subCategory?: string;
