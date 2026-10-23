@@ -97,6 +97,54 @@ export function getBaseItemEffect(name: string): ItemEffectDefinition | undefine
 }
 
 /**
+ * Detects whether a status item is a 1st, 2nd, or 3rd degree burn.
+ */
+export function getTargetBurnDegree(status: StatusItem): 1 | 2 | 3 | null {
+    const raw = (status.name === 'Custom...' && status.customName ? status.customName : status.name).trim().toLowerCase();
+    if (raw === '3rd degree burn' || raw.includes('3rd degree burn')) return 3;
+    if (raw === '2nd degree burn' || raw.includes('2nd degree burn')) return 2;
+    if (raw === '1st degree burn' || raw.includes('1st degree burn') || raw === 'burn') return 1;
+    return null;
+}
+
+/**
+ * Handles burn degree upgrading and infliction onto active statuses.
+ */
+export function applyBurnStacking(
+    statuses: StatusItem[],
+    inflictLower: string,
+    inflictedNames: string[]
+): StatusItem[] {
+    const burnIdx = statuses.findIndex((s) => getTargetBurnDegree(s) !== null);
+    const currentDegree = burnIdx !== -1 ? getTargetBurnDegree(statuses[burnIdx]) : null;
+
+    let targetDegree: 1 | 2 | 3 | null = null;
+    if (inflictLower === '1st degree burn' || inflictLower === 'burn') {
+        targetDegree = currentDegree === 1 ? 2 : currentDegree === 2 ? 3 : currentDegree === 3 ? null : 1;
+    } else if (inflictLower === '2nd degree burn') {
+        targetDegree = currentDegree === 1 || currentDegree === 2 ? 3 : currentDegree === 3 ? null : 2;
+    } else if (inflictLower === '3rd degree burn') {
+        targetDegree = 3;
+    }
+
+    if (!targetDegree) return statuses;
+
+    const burnName = targetDegree === 1 ? '1st Degree Burn' : targetDegree === 2 ? '2nd Degree Burn' : '3rd Degree Burn';
+    if (burnIdx !== -1) {
+        if (currentDegree !== targetDegree) {
+            statuses[burnIdx] = { ...statuses[burnIdx], name: burnName, customName: '' };
+            inflictedNames.push(burnName);
+        }
+        return statuses;
+    }
+
+    const filtered = statuses.filter((s) => s.name !== 'Healthy');
+    filtered.push({ id: crypto.randomUUID(), name: burnName, customName: '', rounds: 0 });
+    inflictedNames.push(burnName);
+    return filtered;
+}
+
+/**
  * Checks whether an active status matches a given cure keyword or status name.
  */
 export function statusMatchesCure(status: StatusItem, cure: string, customStatuses: CustomStatus[] = []): boolean {
@@ -288,20 +336,33 @@ export function applyItemUsageEffects(
         for (const inflict of inflictsList) {
             const clean = inflict.trim();
             if (!clean) continue;
-            const alreadyHas = nextStatuses.some(
-                (s) =>
-                    s.name.toLowerCase() === clean.toLowerCase() ||
-                    (s.customName && s.customName.toLowerCase() === clean.toLowerCase())
-            );
-            if (!alreadyHas) {
-                nextStatuses = nextStatuses.filter((s) => s.name !== 'Healthy');
-                nextStatuses.push({
-                    id: crypto.randomUUID(),
-                    name: clean,
-                    customName: '',
-                    rounds: 0
-                });
-                inflictedStatusNames.push(clean);
+            const lower = clean.toLowerCase();
+
+            // Burn Stacking Logic
+            if (
+                lower === '1st degree burn' ||
+                lower === 'burn' ||
+                lower === '2nd degree burn' ||
+                lower === '3rd degree burn'
+            ) {
+                nextStatuses = applyBurnStacking(nextStatuses, lower, inflictedStatusNames);
+            } else {
+                // Non-burn statuses continue standard deduplicated infliction
+                const alreadyHas = nextStatuses.some(
+                    (s) =>
+                        s.name.toLowerCase() === clean.toLowerCase() ||
+                        (s.customName && s.customName.toLowerCase() === clean.toLowerCase())
+                );
+                if (!alreadyHas) {
+                    nextStatuses = nextStatuses.filter((s) => s.name !== 'Healthy');
+                    nextStatuses.push({
+                        id: crypto.randomUUID(),
+                        name: clean,
+                        customName: '',
+                        rounds: 0
+                    });
+                    inflictedStatusNames.push(clean);
+                }
             }
         }
     }

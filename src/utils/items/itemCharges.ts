@@ -35,6 +35,24 @@ export const CORE_CURABLE_STATUSES = [
 ] as const;
 
 /**
+ * Standard inflictables core statuses in Pokérole for item usage effects.
+ */
+export const CORE_INFLICTABLE_STATUSES = [
+    '1st Degree Burn',
+    '2nd Degree Burn',
+    '3rd Degree Burn',
+    'Poison',
+    'Badly Poisoned',
+    'Paralysis',
+    'Sleep',
+    'Frozen Solid',
+    'Confusion',
+    'In Love',
+    'Disable',
+    'Flinch'
+] as const;
+
+/**
  * Looks up default multi-use charges for a base item by name.
  */
 export function getBaseItemCharges(name: string): number | undefined {

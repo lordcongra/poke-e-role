@@ -29,7 +29,7 @@ mockWindow.top = mockWindow;
 const { flattenStateToMetadata } = await import('../src/utils/sync/flattenStateToMetadata');
 const { hydrateStateFromMetadata } = await import('../src/utils/sync/stateMapper');
 const { applyRoomUpdatesToMeta, mapRoomSettings } = await import('../src/utils/sync/roomSettingsMeta');
-const { BASE_ITEM_CHARGES, getBaseItemCharges, getItemEffectiveCharges, consumeChargeFromInventory } =
+const { BASE_ITEM_CHARGES, getBaseItemCharges, getItemEffectiveCharges, consumeChargeFromInventory, CORE_INFLICTABLE_STATUSES } =
     await import('../src/utils/items/itemCharges');
 const { BASE_ITEM_EFFECTS, getBaseItemEffect, applyItemUsageEffects, statusMatchesCure, isLegacyBottleCapacity } =
     await import('../src/utils/items/itemUsageEffects');
@@ -1229,6 +1229,91 @@ runTest('itemUsageEffects: isLegacyBottleCapacity accurately detects legacy bott
     assert.equal(isLegacyBottleCapacity({ name: 'Super Potion', healHp: 1, maxCharges: 4 }), false);
     assert.equal(isLegacyBottleCapacity({ name: 'Sitrus Berry', healHp: 3 }), false);
     assert.equal(isLegacyBottleCapacity({ name: 'Custom Drink', healHp: 4 }), false);
+});
+
+runTest('itemUsageEffects: applyItemUsageEffects handles 1st, 2nd, and 3rd degree burn stacking and infliction', () => {
+    const health = { hpCurr: 5, hpMax: 5, hpBase: 5, temporaryHitPoints: 0, temporaryHitPointsMax: 0 };
+    const will = { willCurr: 4, willMax: 4, willBase: 4, temporaryWill: 0, temporaryWillMax: 0 };
+
+    // 1. Target with no burn inflicted with 1st Degree Burn
+    const res1 = applyItemUsageEffects(
+        { id: 'b1', name: 'Flame Powder', qty: 1, desc: '', inflictsStatus: ['1st Degree Burn'] },
+        health,
+        will,
+        [{ id: 'h1', name: 'Healthy', customName: '', rounds: 0 }]
+    );
+    assert.deepEqual(res1.inflictedStatusNames, ['1st Degree Burn']);
+    assert.equal(res1.nextStatuses.length, 1);
+    assert.equal(res1.nextStatuses[0].name, '1st Degree Burn');
+
+    // 2. Target with 1st Degree Burn inflicted with 'Burn' -> upgrades to 2nd Degree Burn
+    const res2 = applyItemUsageEffects(
+        { id: 'b2', name: 'Burner', qty: 1, desc: '', inflictsStatus: ['Burn'] },
+        health,
+        will,
+        res1.nextStatuses
+    );
+    assert.deepEqual(res2.inflictedStatusNames, ['2nd Degree Burn']);
+    assert.equal(res2.nextStatuses.length, 1);
+    assert.equal(res2.nextStatuses[0].name, '2nd Degree Burn');
+
+    // 3. Target with 2nd Degree Burn inflicted with 1st Degree Burn -> upgrades to 3rd Degree Burn
+    const res3 = applyItemUsageEffects(
+        { id: 'b3', name: 'Sparks', qty: 1, desc: '', inflictsStatus: ['1st Degree Burn'] },
+        health,
+        will,
+        res2.nextStatuses
+    );
+    assert.deepEqual(res3.inflictedStatusNames, ['3rd Degree Burn']);
+    assert.equal(res3.nextStatuses.length, 1);
+    assert.equal(res3.nextStatuses[0].name, '3rd Degree Burn');
+
+    // 4. Target with 3rd Degree Burn inflicted with 1st Degree Burn -> preserved, no changes
+    const res4 = applyItemUsageEffects(
+        { id: 'b4', name: 'Sparks', qty: 1, desc: '', inflictsStatus: ['1st Degree Burn'] },
+        health,
+        will,
+        res3.nextStatuses
+    );
+    assert.deepEqual(res4.inflictedStatusNames, []);
+    assert.equal(res4.nextStatuses.length, 1);
+    assert.equal(res4.nextStatuses[0].name, '3rd Degree Burn');
+
+    // 5. Target with 1st Degree Burn inflicted with 2nd Degree Burn -> upgrades to 3rd Degree Burn
+    const res5 = applyItemUsageEffects(
+        { id: 'b5', name: 'Heavy Burner', qty: 1, desc: '', inflictsStatus: ['2nd Degree Burn'] },
+        health,
+        will,
+        [{ id: 'b1-status', name: '1st Degree Burn', customName: '', rounds: 0 }]
+    );
+    assert.deepEqual(res5.inflictedStatusNames, ['3rd Degree Burn']);
+    assert.equal(res5.nextStatuses[0].name, '3rd Degree Burn');
+
+    // 6. Target with no burn inflicted with 2nd Degree Burn -> inflicts 2nd Degree Burn
+    const res6 = applyItemUsageEffects(
+        { id: 'b6', name: 'Heavy Burner', qty: 1, desc: '', inflictsStatus: ['2nd Degree Burn'] },
+        health,
+        will,
+        [{ id: 'h1', name: 'Healthy', customName: '', rounds: 0 }]
+    );
+    assert.deepEqual(res6.inflictedStatusNames, ['2nd Degree Burn']);
+    assert.equal(res6.nextStatuses[0].name, '2nd Degree Burn');
+
+    // 7. Target inflicted with 3rd Degree Burn
+    const res7 = applyItemUsageEffects(
+        { id: 'b7', name: 'Inferno', qty: 1, desc: '', inflictsStatus: ['3rd Degree Burn'] },
+        health,
+        will,
+        [{ id: 'h1', name: 'Healthy', customName: '', rounds: 0 }]
+    );
+    assert.deepEqual(res7.inflictedStatusNames, ['3rd Degree Burn']);
+    assert.equal(res7.nextStatuses[0].name, '3rd Degree Burn');
+
+    // 8. Verify CORE_INFLICTABLE_STATUSES has all 12 items
+    assert.equal(CORE_INFLICTABLE_STATUSES.length, 12);
+    assert.ok(CORE_INFLICTABLE_STATUSES.includes('1st Degree Burn'));
+    assert.ok(CORE_INFLICTABLE_STATUSES.includes('2nd Degree Burn'));
+    assert.ok(CORE_INFLICTABLE_STATUSES.includes('3rd Degree Burn'));
 });
 
 runTest(

@@ -126,8 +126,69 @@
 
 .homebrew-item-effects__fields-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 8px;
+}
+
+.homebrew-item-effects__charges-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 10px;
+    background: var(--panel-alt);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.homebrew-item-effects__columns-grid {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(260px, 1.2fr);
+    gap: 10px;
+}
+
+@media (max-width: 640px) {
+    .homebrew-item-effects__columns-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.homebrew-item-effects__stats-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.homebrew-item-effects__recovery-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.homebrew-item-effects__recovery-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.homebrew-item-effects__group-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+.homebrew-item-effects__recovery-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .homebrew-item-effects__field {
@@ -137,10 +198,12 @@
 }
 
 .homebrew-item-effects__field--inline {
+    display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    gap: 6px;
+    gap: 8px;
+    min-width: 0;
 }
 
 .homebrew-item-effects__field--inline .homebrew-item-effects__field-label {
@@ -174,7 +237,6 @@
 
 .homebrew-item-effects .number-spinner {
     height: 26px;
-    border: 1px solid var(--border);
 }
 
 .homebrew-item-effects__cures-section {
@@ -283,4 +345,57 @@
 
 .homebrew-card__textarea--large:focus {
     min-height: 80px;
+}
+
+.homebrew-item-effects__tooltip-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: color-mix(in srgb, var(--dark, #000) 65%, transparent);
+    z-index: 1500;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+}
+
+.homebrew-item-effects__tooltip-modal {
+    background: var(--panel-bg);
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    padding: 18px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--dark) 60%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.homebrew-item-effects__tooltip-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.homebrew-item-effects__tooltip-divider {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 0;
+}
+
+.homebrew-item-effects__tooltip-text {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--text-main);
+}
+
+.homebrew-item-effects__tooltip-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
 }

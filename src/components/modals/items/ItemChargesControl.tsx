@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import type { InventoryItem } from '../../../store/entityTypes';
 import { getItemEffectiveCharges, CORE_CURABLE_STATUSES } from '../../../utils/items/itemCharges';
-import { getBaseItemEffect, isLegacyBottleCapacity, hasItemUsageEffect } from '../../../utils/items/itemUsageEffects';
+import { isLegacyBottleCapacity, hasItemUsageEffect } from '../../../utils/items/itemUsageEffects';
 import {
     getTrainerItemTargets,
     applyItemToPokemonTarget,
@@ -33,11 +33,8 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
     } | null>(null);
 
     const effective = getItemEffectiveCharges(item);
-    const baseEffect = getBaseItemEffect(item.name || '');
     const isLegacyBottle = isLegacyBottleCapacity(item);
     const displayHealHp = isLegacyBottle ? 1 : item.healHp;
-    const hpPlaceholder = baseEffect?.healHp !== undefined ? String(baseEffect.healHp) : '0';
-    const willPlaceholder = baseEffect?.healWill !== undefined ? String(baseEffect.healWill) : '0';
 
     const isChargesActive =
         typeof item.charges === 'number' || typeof item.maxCharges === 'number' || effective.hasCharges;
@@ -62,10 +59,7 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
         updateInventoryItem(item.id, 'cures', updated.length > 0 ? updated : undefined);
     };
 
-    const handleNumEffect = (field: 'healHp' | 'healWill', raw: string) => {
-        const val = raw.trim();
-        updateInventoryItem(item.id, field, val === '' ? undefined : Math.max(0, parseInt(val, 10) || 0));
-    };
+
 
     const allPills = [
         ...CORE_CURABLE_STATUSES,
@@ -230,34 +224,30 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
             {showEffects && (
                 <div className="item-charges-control__effects-panel">
                     <div className="item-charges-control__healing-row">
-                        <label className="item-charges-control__field">
+                        <div className="item-charges-control__field">
                             <span className="item-charges-control__field-title text-subtext">
                                 <Heart size={12} style={{ color: 'var(--semantic-danger)' }} /> Heal HP:
                             </span>
-                            <input
-                                type="number"
+                            <NumberSpinner
+                                compact
                                 min={0}
                                 max={99}
-                                className="item-charges-control__num-input text-subtext"
-                                value={displayHealHp ?? ''}
-                                placeholder={hpPlaceholder}
-                                onChange={(e) => handleNumEffect('healHp', e.target.value)}
+                                value={displayHealHp ?? 0}
+                                onChange={(val) => updateInventoryItem(item.id, 'healHp', val <= 0 ? undefined : val)}
                             />
-                        </label>
-                        <label className="item-charges-control__field">
+                        </div>
+                        <div className="item-charges-control__field">
                             <span className="item-charges-control__field-title text-subtext">
                                 <Zap size={12} style={{ color: 'var(--primary)' }} /> Heal Will:
                             </span>
-                            <input
-                                type="number"
+                            <NumberSpinner
+                                compact
                                 min={0}
                                 max={99}
-                                className="item-charges-control__num-input text-subtext"
-                                value={item.healWill ?? ''}
-                                placeholder={willPlaceholder}
-                                onChange={(e) => handleNumEffect('healWill', e.target.value)}
+                                value={item.healWill ?? 0}
+                                onChange={(val) => updateInventoryItem(item.id, 'healWill', val <= 0 ? undefined : val)}
                             />
-                        </label>
+                        </div>
                     </div>
 
                     <div className="item-charges-control__cures-group">
