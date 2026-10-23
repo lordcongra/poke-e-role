@@ -309,10 +309,15 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }:
                         disabled={!canEdit}
                         className="homebrew-card__textarea homebrew-card__textarea--large text-subtext"
                     />
-                    {extractItemTags({ name: item.name, description: item.description, tags: item.tags }).length > 0 && (
+                    {extractItemTags({ name: item.name, description: item.description, tags: item.tags }).length >
+                        0 && (
                         <div style={{ marginTop: '6px' }}>
                             <TagPillList
-                                tags={extractItemTags({ name: item.name, description: item.description, tags: item.tags })}
+                                tags={extractItemTags({
+                                    name: item.name,
+                                    description: item.description,
+                                    tags: item.tags
+                                })}
                                 onEditTag={(tagStr) => {
                                     setTagBuilderInitialTag(tagStr);
                                     setShowTagBuilder(true);
@@ -345,7 +350,13 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }:
                             <button
                                 type="button"
                                 className="action-button action-button--dark text-theme-header"
-                                style={{ fontSize: '0.75rem', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                style={{
+                                    fontSize: '0.75rem',
+                                    padding: '3px 8px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                }}
                                 onClick={() => {
                                     setTagBuilderInitialTag(undefined);
                                     setShowTagBuilder(true);

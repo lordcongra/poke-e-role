@@ -38,6 +38,7 @@ const { getTrainerItemTargets, applyItemToPokemonTarget } = await import('../src
 const { METADATA_ID } = await import('../src/hooks/owlbearSync/owlbearSyncConstants');
 const { getAccessoryIdentityKey, sanitizeAttachmentBundles, hasAttachmentDiff, reconcileTokenAttachmentsOnScene } =
     await import('../src/utils/pc/pcAttachmentOps');
+const { buildEphemeralMoveFromItem, resolveItemMoveStats } = await import('../src/utils/items/itemAttackRoller');
 
 /**
  * Automated Verification Suite for Token Metadata & Serialization Invariants.
@@ -1758,35 +1759,38 @@ await runTest(
     }
 );
 
-await runTest(
-    'inventory: isItemUsable suppresses quick use button when attackAction exists',
-    async () => {
-        const { isItemUsable } = await import('../src/utils/items/itemUsageEffects');
-        const itemWithAttack = {
-            id: 'item-1',
-            qty: 1,
-            name: 'Flame Orb',
-            desc: 'Throws a fire orb',
-            charges: 3,
-            maxCharges: 3,
-            attackAction: {
-                acc1: 'Special',
-                acc2: 'Special',
-                type: 'Fire',
-                category: 'Special' as const,
-                power: 1
-            }
-        };
+await runTest('inventory: isItemUsable suppresses quick use button when attackAction exists', async () => {
+    const { isItemUsable } = await import('../src/utils/items/itemUsageEffects');
+    const itemWithAttack = {
+        id: 'item-1',
+        qty: 1,
+        name: 'Flame Orb',
+        desc: 'Throws a fire orb',
+        charges: 3,
+        maxCharges: 3,
+        attackAction: {
+            acc1: 'Special',
+            acc2: 'Special',
+            type: 'Fire',
+            category: 'Special' as const,
+            power: 1
+        }
+    };
 
-        // Suppressed when item.attackAction exists
-        assert.equal(isItemUsable(itemWithAttack), false);
-        // Suppressed when hasAttackAction boolean flag is explicitly passed
-        assert.equal(isItemUsable({ id: 'item-2', qty: 1, name: 'Stone', desc: '', charges: 3, maxCharges: 3 }, true), false);
+    // Suppressed when item.attackAction exists
+    assert.equal(isItemUsable(itemWithAttack), false);
+    // Suppressed when hasAttackAction boolean flag is explicitly passed
+    assert.equal(
+        isItemUsable({ id: 'item-2', qty: 1, name: 'Stone', desc: '', charges: 3, maxCharges: 3 }, true),
+        false
+    );
 
-        // Allowed when regular consumable item with charges has no attackAction
-        assert.equal(isItemUsable({ id: 'item-3', qty: 1, name: 'Potion', desc: 'Heals 1 HP', charges: 3, maxCharges: 3 }), true);
-    }
-);
+    // Allowed when regular consumable item with charges has no attackAction
+    assert.equal(
+        isItemUsable({ id: 'item-3', qty: 1, name: 'Potion', desc: 'Heals 1 HP', charges: 3, maxCharges: 3 }),
+        true
+    );
+});
 
 await runTest(
     'inventory: applyLookupResultToItem maps all fields including destroyOnDepletion and attackAction',
@@ -1836,6 +1840,103 @@ await runTest(
         assert.equal(updates.healWill, 1);
         assert.equal(updates.gainTempHp, 4);
         assert.equal(updates.dungeonPassive, 'Dungeon light');
+    }
+);
+
+await runTest(
+    'itemAttackRoller: dual-scale resolution respects higher stat and explicit player selection',
+    async () => {
+        const testState = createTestCharacterState({
+            stats: {
+                str: { base: 2, rank: 0, buff: 0, debuff: 0 },
+                dex: { base: 5, rank: 0, buff: 0, debuff: 0 },
+                vit: { base: 2, rank: 0, buff: 0, debuff: 0 },
+                spe: { base: 3, rank: 0, buff: 0, debuff: 0 },
+                ins: { base: 1, rank: 0, buff: 0, debuff: 0 }
+            },
+            skills: {
+                brawl: { base: 1, buff: 0, customName: '' },
+                channel: { base: 4, buff: 0, customName: '' },
+                clash: { base: 0, buff: 0, customName: '' },
+                evasion: { base: 0, buff: 0, customName: '' },
+                alert: { base: 0, buff: 0, customName: '' },
+                athletic: { base: 0, buff: 0, customName: '' },
+                nature: { base: 0, buff: 0, customName: '' },
+                stealth: { base: 0, buff: 0, customName: '' },
+                charm: { base: 0, buff: 0, customName: '' },
+                etiquette: { base: 0, buff: 0, customName: '' },
+                intimidate: { base: 0, buff: 0, customName: '' },
+                perform: { base: 0, buff: 0, customName: '' },
+                crafts: { base: 0, buff: 0, customName: '' },
+                lore: { base: 0, buff: 0, customName: '' },
+                medicine: { base: 0, buff: 0, customName: '' },
+                magic: { base: 0, buff: 0, customName: '' }
+            }
+        });
+
+        const testItem = {
+            id: 'item-thrown-knife',
+            qty: 1,
+            name: 'Throwing Knife',
+            desc: '',
+            attackAction: {
+                category: 'Physical' as const,
+                type: 'Steel',
+                power: 2,
+                acc1: 'str',
+                acc1Alt: 'dex',
+                acc2: 'brawl',
+                acc2Alt: 'channel',
+                dmg1: 'str',
+                dmg1Alt: 'dex'
+            }
+        };
+
+        // 1. Without explicit selection: automatically resolves to higher stat (dex: 5 > str: 2, channel: 4 > brawl: 1)
+        const autoMove = buildEphemeralMoveFromItem(testItem, testItem.attackAction, testState);
+        assert.equal(autoMove.acc1, 'dex', 'Auto resolves acc1 to higher stat (dex)');
+        assert.equal(autoMove.acc2, 'channel', 'Auto resolves acc2 to higher skill (channel)');
+        assert.equal(autoMove.dmg1, 'dex', 'Auto resolves dmg1 to higher stat (dex)');
+        assert.ok(
+            autoMove.desc?.includes('[Dual Scale: DEX (Strength Alt), Channel (Brawl Alt), DEX (Strength Alt)]'),
+            'Includes dual scale notes in desc'
+        );
+
+        // 2. With explicit selection: respects player choice of str/brawl even if lower
+        const itemWithChoice = {
+            ...testItem,
+            attackAction: {
+                ...testItem.attackAction,
+                selectedAcc1: 'str',
+                selectedAcc2: 'brawl',
+                selectedDmg1: 'str'
+            }
+        };
+        const explicitMove = buildEphemeralMoveFromItem(itemWithChoice, itemWithChoice.attackAction, testState);
+        assert.equal(explicitMove.acc1, 'str', 'Respects explicit choice of str for acc1');
+        assert.equal(explicitMove.acc2, 'brawl', 'Respects explicit choice of brawl for acc2');
+        assert.equal(explicitMove.dmg1, 'str', 'Respects explicit choice of str for dmg1');
+        assert.ok(
+            explicitMove.desc?.includes('[Dual Scale: STR (Dexterity Alt), Brawl (Channel Alt), STR (Dexterity Alt)]'),
+            'Includes updated active dual scale note reflecting chosen stat'
+        );
+
+        // 3. Round-trip serialization preserves selected dual-scale preferences in inv-data
+        const stateWithChosen = createTestCharacterState({
+            inventory: [itemWithChoice]
+        });
+        const flatMeta = flattenStateToMetadata(stateWithChosen);
+        const parsedInv = JSON.parse(String(flatMeta['inv-data']));
+        assert.equal(parsedInv[0].attackAction.selectedAcc1, 'str');
+        assert.equal(parsedInv[0].attackAction.selectedAcc2, 'brawl');
+        assert.equal(parsedInv[0].attackAction.selectedDmg1, 'str');
+
+        const hydrated = hydrateStateFromMetadata(flatMeta, stateWithChosen);
+        const hydratedInv = hydrated.inventory;
+        assert.ok(hydratedInv, 'Hydrated inventory must exist');
+        assert.equal(hydratedInv[0].attackAction?.selectedAcc1, 'str');
+        assert.equal(hydratedInv[0].attackAction?.selectedAcc2, 'brawl');
+        assert.equal(hydratedInv[0].attackAction?.selectedDmg1, 'str');
     }
 );
 

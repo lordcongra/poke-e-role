@@ -188,11 +188,7 @@ export const InventoryCard = memo(function InventoryCard({
                         onChange={(value: number) => updateInventoryItem(item.id, 'qty', value)}
                         min={0}
                     />
-                    <ItemChargeBadge
-                        item={item}
-                        effectiveCharges={effectiveCharges}
-                        mode="compact"
-                    />
+                    <ItemChargeBadge item={item} effectiveCharges={effectiveCharges} mode="compact" />
                 </div>
 
                 <div className="inventory-card__header-actions">

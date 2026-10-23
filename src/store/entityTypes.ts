@@ -35,6 +35,9 @@ export interface ItemAttackAction {
     tags?: string;
     chanceDice?: number;
     chanceEffect?: string;
+    selectedAcc1?: string;
+    selectedAcc2?: string;
+    selectedDmg1?: string;
 }
 
 export interface MoveData {

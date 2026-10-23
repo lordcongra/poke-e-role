@@ -653,7 +653,9 @@ export async function rollDicePlus(
  * - Dispatches local update events
  * - Rolls dice via rollDicePlus with rollType 'chance'
  */
-export async function executeChanceRoll(roll: import('../../hooks/owlbearSync/owlbearSyncConstants').RollSyncData): Promise<void> {
+export async function executeChanceRoll(
+    roll: import('../../hooks/owlbearSync/owlbearSyncConstants').RollSyncData
+): Promise<void> {
     if (!roll.chanceDice || roll.chanceDice <= 0) return;
     const charName = roll.characterName || roll.player || 'Someone';
     const effectLabel = roll.chanceEffect ? ` for ${roll.chanceEffect}` : '';
@@ -662,8 +664,9 @@ export async function executeChanceRoll(roll: import('../../hooks/owlbearSync/ow
     try {
         const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
         if (Array.isArray(storedLog)) {
-            const updatedLog = storedLog.map((r: import('../../hooks/owlbearSync/owlbearSyncConstants').RollSyncData) =>
-                r.id === roll.id ? { ...r, chanceRolled: true } : r
+            const updatedLog = storedLog.map(
+                (r: import('../../hooks/owlbearSync/owlbearSyncConstants').RollSyncData) =>
+                    r.id === roll.id ? { ...r, chanceRolled: true } : r
             );
             localStorage.setItem('pkr_roll_log', JSON.stringify(updatedLog));
             window.dispatchEvent(new Event('pkr-roll-log-update'));
@@ -673,12 +676,7 @@ export async function executeChanceRoll(roll: import('../../hooks/owlbearSync/ow
         console.warn('[executeChanceRoll] Failed to update chanceRolled in roll log:', e);
     }
 
-    await rollDicePlus(
-        `${roll.chanceDice}d6>5`,
-        label,
-        'chance',
-        roll.chanceEffect || ''
-    );
+    await rollDicePlus(`${roll.chanceDice}d6>5`, label, 'chance', roll.chanceEffect || '');
 }
 
 // Export alias for cleaner naming while maintaining backward compatibility with all callers

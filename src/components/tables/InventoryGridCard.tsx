@@ -176,7 +176,7 @@ export const InventoryGridCard = memo(function InventoryGridCard({
                     <ItemChargeBadge
                         item={item}
                         effectiveCharges={effectiveCharges}
-                        mode="visual"
+                        mode={size === 'sm' && effectiveCharges.maxCharges > 3 ? 'compact' : 'visual'}
                     />
                 </div>
             )}

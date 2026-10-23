@@ -195,10 +195,7 @@ export function applyUsageToState(
  * Drains 1 charge from an item (respecting destroyOnDepletion retention),
  * or decrements quantity by 1 if the item has no charge bar.
  */
-export function drainInventoryItemCharge(
-    inventory: InventoryItem[],
-    itemId: string
-): InventoryItem[] {
+export function drainInventoryItemCharge(inventory: InventoryItem[], itemId: string): InventoryItem[] {
     const item = inventory.find((i) => i.id === itemId);
     if (!item) return inventory;
 
@@ -295,4 +292,3 @@ export function applyLookupResultToItem(
 
     return updates;
 }
-

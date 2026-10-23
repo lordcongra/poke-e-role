@@ -10,6 +10,7 @@ import {
     parseCombatTags,
     getAbilityText
 } from '../../../utils/combat/combatUtils';
+import { resolveItemAttackAction, buildEphemeralMoveFromItem } from '../../../utils/items/itemAttackRoller';
 import './DualScaleModal.css';
 
 const ATTRIBUTE_LABELS: Record<string, { short: string; full: string }> = {
@@ -43,27 +44,38 @@ function DualScaleDialog({ pendingDualScale, resolveDualScale, onClose }: DualSc
     const inventory = useCharacterStore((state) => state.inventory);
     const passives = useCharacterStore((state) => state.passives);
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
+    const roomCustomItems = useCharacterStore((state) => state.roomCustomItems);
     const ability = useCharacterStore((state) => state.identity.ability);
     const extraCategories = useCharacterStore((state) => state.extraCategories);
     const moves = useCharacterStore((state) => state.moves);
 
     const move: MoveData = useMemo(() => {
-        return (
-            moves.find((m) => m.id === pendingDualScale.moveId) || {
-                id: pendingDualScale.moveId,
-                name: pendingDualScale.moveName,
-                active: true,
-                type: 'Normal',
-                category: 'Physical' as const,
-                acc1: 'str',
-                acc2: 'brawl',
-                dmg1: 'str',
-                power: 0,
-                desc: '',
-                marker: ''
+        const found = moves.find((m) => m.id === pendingDualScale.moveId);
+        if (found) return found;
+        const cleanItemId = pendingDualScale.moveId.startsWith('item-')
+            ? pendingDualScale.moveId.slice(5)
+            : pendingDualScale.moveId;
+        const invItem = inventory.find((i) => i.id === cleanItemId || i.id === pendingDualScale.moveId);
+        if (invItem) {
+            const action = resolveItemAttackAction(invItem, roomCustomItems);
+            if (action) {
+                return buildEphemeralMoveFromItem(invItem, action, fullState);
             }
-        );
-    }, [moves, pendingDualScale.moveId, pendingDualScale.moveName]);
+        }
+        return {
+            id: pendingDualScale.moveId,
+            name: pendingDualScale.moveName,
+            active: true,
+            type: 'Normal',
+            category: 'Physical' as const,
+            acc1: 'str',
+            acc2: 'brawl',
+            dmg1: 'str',
+            power: 0,
+            desc: '',
+            marker: ''
+        };
+    }, [moves, inventory, roomCustomItems, fullState, pendingDualScale.moveId, pendingDualScale.moveName]);
 
     const abilityText = getAbilityText(ability, customAbilities);
     const itemBuffs = useMemo(

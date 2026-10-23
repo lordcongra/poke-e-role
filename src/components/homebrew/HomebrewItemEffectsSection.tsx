@@ -116,8 +116,7 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
         );
     const allStatusPills: string[] = [...CORE_CURABLE_STATUSES, ...activeCustomNames];
 
-    const isVitOrInsBoost =
-        item.permanentStatBoost?.stat === 'Vitality' || item.permanentStatBoost?.stat === 'Insight';
+    const isVitOrInsBoost = item.permanentStatBoost?.stat === 'Vitality' || item.permanentStatBoost?.stat === 'Insight';
 
     return (
         <div className="homebrew-item-effects">
@@ -141,7 +140,7 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
                 <div className="homebrew-item-effects__body">
                     {/* Charges & Depletion */}
                     <div className="homebrew-item-effects__fields-grid">
-                        <div className="homebrew-item-effects__field">
+                        <div className="homebrew-item-effects__field homebrew-item-effects__field--inline">
                             <span className="homebrew-item-effects__field-label text-subtext">
                                 <Battery size={12} /> Default Charges
                             </span>
@@ -163,7 +162,7 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
                             />
                         </div>
 
-                        <div className="homebrew-item-effects__field">
+                        <div className="homebrew-item-effects__field homebrew-item-effects__field--inline">
                             <span className="homebrew-item-effects__field-label text-subtext">
                                 <Heart size={12} style={{ color: 'var(--semantic-danger)' }} /> Heal HP
                             </span>
@@ -177,7 +176,7 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
                             />
                         </div>
 
-                        <div className="homebrew-item-effects__field">
+                        <div className="homebrew-item-effects__field homebrew-item-effects__field--inline">
                             <span className="homebrew-item-effects__field-label text-subtext">
                                 <Zap size={12} style={{ color: 'var(--primary)' }} /> Heal Will
                             </span>
@@ -191,7 +190,7 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
                             />
                         </div>
 
-                        <div className="homebrew-item-effects__field">
+                        <div className="homebrew-item-effects__field homebrew-item-effects__field--inline">
                             <span className="homebrew-item-effects__field-label text-subtext">
                                 <ShieldPlus size={12} style={{ color: 'var(--secondary)' }} /> Gain Temp HP
                             </span>
@@ -205,7 +204,7 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
                             />
                         </div>
 
-                        <div className="homebrew-item-effects__field">
+                        <div className="homebrew-item-effects__field homebrew-item-effects__field--inline">
                             <span className="homebrew-item-effects__field-label text-subtext">
                                 <ShieldPlus size={12} style={{ color: 'var(--primary)' }} /> Gain Temp Will
                             </span>
@@ -215,7 +214,9 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
                                 max={99}
                                 compact
                                 disabled={!canEdit}
-                                onChange={(val) => updateCustomItem(item.id, 'gainTempWill', val <= 0 ? undefined : val)}
+                                onChange={(val) =>
+                                    updateCustomItem(item.id, 'gainTempWill', val <= 0 ? undefined : val)
+                                }
                             />
                         </div>
                     </div>
@@ -309,7 +310,10 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
                                     disabled={!canEdit || !item.statBuff}
                                     onChange={(val) => {
                                         if (!item.statBuff) return;
-                                        updateCustomItem(item.id, 'statBuff', { ...item.statBuff, value: Math.max(1, val) });
+                                        updateCustomItem(item.id, 'statBuff', {
+                                            ...item.statBuff,
+                                            value: Math.max(1, val)
+                                        });
                                     }}
                                 />
                             </div>
@@ -341,7 +345,10 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
                                     disabled={!canEdit || !item.statDebuff}
                                     onChange={(val) => {
                                         if (!item.statDebuff) return;
-                                        updateCustomItem(item.id, 'statDebuff', { ...item.statDebuff, value: Math.max(1, val) });
+                                        updateCustomItem(item.id, 'statDebuff', {
+                                            ...item.statDebuff,
+                                            value: Math.max(1, val)
+                                        });
                                     }}
                                 />
                             </div>

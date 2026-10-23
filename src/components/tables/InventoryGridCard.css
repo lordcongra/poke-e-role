@@ -263,6 +263,25 @@
     padding-top: 2px;
 }
 
+.inventory-grid-card--sm .item-charges-badge--pips {
+    padding: 1px 4px;
+    gap: 3px;
+}
+
+.inventory-grid-card--sm .item-charges-badge__pip {
+    width: 4px;
+    height: 4px;
+}
+
+.inventory-grid-card--sm .item-charges-badge__pip-row {
+    gap: 2px;
+}
+
+.inventory-grid-card .item-charge-badge-container {
+    overflow: hidden;
+    max-width: 100%;
+}
+
 /* Medium (Balanced) */
 .inventory-grid-card--md {
     min-height: 104px;

@@ -12,25 +12,50 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
 
     resolveDualScale: (moveId, acc1, acc2, dmg1, category) =>
         set((state) => {
-            const newMoves = state.moves.map((m) => {
-                if (m.id === moveId) {
-                    return {
-                        ...m,
-                        ...(acc1 ? { acc1 } : {}),
-                        ...(acc2 ? { acc2 } : {}),
-                        ...(dmg1 ? { dmg1 } : {}),
-                        ...(category ? { category } : {}),
-                        dualScaleSelected: true
-                    };
+            const hasMove = state.moves.some((m) => m.id === moveId);
+            if (hasMove) {
+                const newMoves = state.moves.map((m) => {
+                    if (m.id === moveId) {
+                        return {
+                            ...m,
+                            ...(acc1 ? { acc1 } : {}),
+                            ...(acc2 ? { acc2 } : {}),
+                            ...(dmg1 ? { dmg1 } : {}),
+                            ...(category ? { category } : {}),
+                            dualScaleSelected: true
+                        };
+                    }
+                    return m;
+                });
+                try {
+                    saveToOwlbear({ 'moves-data': JSON.stringify(newMoves) });
+                } catch (e) {
+                    console.warn('[MovesSlice] Failed to save resolved dual scale to Owlbear.', e);
                 }
-                return m;
-            });
-            try {
-                saveToOwlbear({ 'moves-data': JSON.stringify(newMoves) });
-            } catch (e) {
-                console.warn('[MovesSlice] Failed to save resolved dual scale to Owlbear.', e);
+                return { moves: newMoves, pendingDualScale: null };
             }
-            return { moves: newMoves, pendingDualScale: null };
+
+            const cleanItemId = moveId.startsWith('item-') ? moveId.slice(5) : moveId;
+            const targetItem = state.inventory.find((i) => i.id === cleanItemId || i.id === moveId);
+            if (targetItem && targetItem.attackAction) {
+                const updatedAction = {
+                    ...targetItem.attackAction,
+                    ...(acc1 ? { selectedAcc1: acc1 } : {}),
+                    ...(acc2 ? { selectedAcc2: acc2 } : {}),
+                    ...(dmg1 ? { selectedDmg1: dmg1 } : {})
+                };
+                const newInventory = state.inventory.map((i) =>
+                    i.id === targetItem.id ? { ...i, attackAction: updatedAction } : i
+                );
+                try {
+                    saveToOwlbear({ 'inv-data': JSON.stringify(newInventory) });
+                } catch (e) {
+                    console.warn('[MovesSlice] Failed to save resolved item dual scale to Owlbear.', e);
+                }
+                return { inventory: newInventory, pendingDualScale: null };
+            }
+
+            return { pendingDualScale: null };
         }),
 
     addMove: () =>

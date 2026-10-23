@@ -27,14 +27,20 @@ const STAT_CHOICES: StatOption[] = [
 
 export function ItemStatChoiceModal({ item, onSelectStat, onClose }: ItemStatChoiceModalProps) {
     const knownArt = useItemArt(item.name);
-    const [selectedStat, setSelectedStat] = useState<'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight'>('Strength');
+    const [selectedStat, setSelectedStat] = useState<'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight'>(
+        'Strength'
+    );
 
     const boostValue = item.permanentStatBoost?.value ?? 1;
     const isRestricted = selectedStat === 'Vitality' || selectedStat === 'Insight';
 
     return (
         <div className="item-target-modal__overlay" onClick={onClose}>
-            <div className="item-target-modal__content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+            <div
+                className="item-target-modal__content"
+                onClick={(e) => e.stopPropagation()}
+                style={{ maxWidth: '440px' }}
+            >
                 <div className="item-target-modal__header">
                     <div className="item-target-modal__item-info">
                         <div className="item-target-modal__item-icon-wrap">
@@ -83,9 +89,7 @@ export function ItemStatChoiceModal({ item, onSelectStat, onClose }: ItemStatCho
                                     justifyContent: 'space-between',
                                     padding: '10px 14px',
                                     borderRadius: '8px',
-                                    border: isSelected
-                                        ? `2px solid var(--primary)`
-                                        : '1px solid var(--border)',
+                                    border: isSelected ? `2px solid var(--primary)` : '1px solid var(--border)',
                                     background: isSelected
                                         ? 'color-mix(in srgb, var(--primary) 15%, var(--panel-alt))'
                                         : 'var(--panel-alt)',
@@ -133,7 +137,10 @@ export function ItemStatChoiceModal({ item, onSelectStat, onClose }: ItemStatCho
                             lineHeight: 1.35
                         }}
                     >
-                        <AlertTriangle size={14} style={{ color: 'var(--semantic-danger)', flexShrink: 0, marginTop: '2px' }} />
+                        <AlertTriangle
+                            size={14}
+                            style={{ color: 'var(--semantic-danger)', flexShrink: 0, marginTop: '2px' }}
+                        />
                         <span>
                             <strong>RAW Rulebook Note:</strong> Vitality and Insight are not normally eligible for item
                             boosts in official Pokérole rules, but are allowed here for homebrew flexibility.
@@ -141,7 +148,10 @@ export function ItemStatChoiceModal({ item, onSelectStat, onClose }: ItemStatCho
                     </div>
                 )}
 
-                <div className="item-target-modal__actions" style={{ marginTop: '12px', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <div
+                    className="item-target-modal__actions"
+                    style={{ marginTop: '12px', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}
+                >
                     <button
                         type="button"
                         className="action-button action-button--dark text-theme-header"

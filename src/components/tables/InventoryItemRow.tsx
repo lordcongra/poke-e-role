@@ -212,11 +212,7 @@ export function InventoryItemRow({
                         onKeyDown={handleNameKeyDown}
                         placeholder="Item Name"
                     />
-                    <ItemChargeBadge
-                        item={item}
-                        effectiveCharges={effectiveCharges}
-                        mode="compact"
-                    />
+                    <ItemChargeBadge item={item} effectiveCharges={effectiveCharges} mode="compact" />
                     {canUse && (
                         <button
                             type="button"
@@ -330,15 +326,28 @@ export function InventoryItemRow({
                                     setTagBuilderData({ id: item.id, type: 'item', initialTag: tagStr })
                                 }
                                 onDeleteTag={(rawTag, tagIndex) => {
-                                    const currentTags = item.tags !== undefined ? item.tags : (item.desc.match(/\[[^\]]+\]/g) || []).join(' ');
+                                    const currentTags =
+                                        item.tags !== undefined
+                                            ? item.tags
+                                            : (item.desc.match(/\[[^\]]+\]/g) || []).join(' ');
                                     let count = 0;
-                                    const updated = (typeof tagIndex === 'number'
-                                        ? currentTags.replace(/\[[^\]]+\]/g, (m) => count++ === tagIndex ? '' : m)
-                                        : currentTags.replace(rawTag, '')
-                                    ).replace(/\s+/g, ' ').trim();
+                                    const updated = (
+                                        typeof tagIndex === 'number'
+                                            ? currentTags.replace(/\[[^\]]+\]/g, (m) => (count++ === tagIndex ? '' : m))
+                                            : currentTags.replace(rawTag, '')
+                                    )
+                                        .replace(/\s+/g, ' ')
+                                        .trim();
                                     updateInventoryItem(item.id, 'tags', updated);
                                     if (item.desc.includes(rawTag)) {
-                                        updateInventoryItem(item.id, 'desc', item.desc.replace(rawTag, '').replace(/\n\s*\n+/g, '\n').trim());
+                                        updateInventoryItem(
+                                            item.id,
+                                            'desc',
+                                            item.desc
+                                                .replace(rawTag, '')
+                                                .replace(/\n\s*\n+/g, '\n')
+                                                .trim()
+                                        );
                                     }
                                 }}
                                 showAddButton={false}

@@ -63,6 +63,18 @@
     min-width: 90px;
 }
 
+.item-attack-action-config__field--inline {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    min-width: auto;
+}
+
+.item-attack-action-config__field--inline .item-attack-action-config__label {
+    white-space: nowrap;
+}
+
 .item-attack-action-config__label {
     font-size: 0.75rem;
     color: var(--text-muted, #9ca3af);
@@ -129,4 +141,3 @@
     align-items: center;
     justify-content: space-between;
 }
-

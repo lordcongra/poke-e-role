@@ -218,9 +218,7 @@ export function InventoryTable() {
                         <div className="inventory-table__empty-state">
                             <Package size={32} style={{ opacity: 0.5 }} />
                             <span className="text-subtext">
-                                {inventory.length === 0
-                                    ? 'No items in your bag yet.'
-                                    : 'No items match this category.'}
+                                {inventory.length === 0 ? 'No items in your bag yet.' : 'No items match this category.'}
                             </span>
                         </div>
                     ) : (

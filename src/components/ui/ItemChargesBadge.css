@@ -109,7 +109,11 @@
    🚨 DEPLETED CHARGES STATE (0 / X)
    ========================================= */
 .item-charges-badge--depleted {
-    background: color-mix(in srgb, var(--semantic-danger, #ef4444) 15%, var(--panel-alt, rgba(255, 255, 255, 0.08))) !important;
+    background: color-mix(
+        in srgb,
+        var(--semantic-danger, #ef4444) 15%,
+        var(--panel-alt, rgba(255, 255, 255, 0.08))
+    ) !important;
     border-color: var(--semantic-danger, #ef4444) !important;
     color: var(--semantic-danger, #ef4444) !important;
 }

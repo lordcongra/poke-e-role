@@ -149,6 +149,24 @@ export function HomebrewItems() {
                         onChange={(event) => setSearchQuery(event.target.value)}
                         className="homebrew-list__search-input"
                     />
+                    <button
+                        type="button"
+                        onClick={handleExport}
+                        className="action-button action-button--dark action-button--xs"
+                        title="Export Items JSON"
+                    >
+                        <Save size={13} /> Export
+                    </button>
+                    {canEdit && (
+                        <button
+                            type="button"
+                            onClick={() => fileReference.current?.click()}
+                            className="action-button action-button--dark action-button--xs"
+                            title="Import Items JSON"
+                        >
+                            <FolderOpen size={13} /> Import
+                        </button>
+                    )}
                     {canEdit && (
                         <button
                             onClick={() => {
@@ -267,28 +285,15 @@ export function HomebrewItems() {
                 )}
             </div>
 
-            <div className="homebrew-list__footer">
-                <button onClick={handleExport} className="action-button action-button--dark homebrew-list__footer-btn">
-                    <Save size={16} /> Export Items
-                </button>
-                {canEdit && (
-                    <>
-                        <button
-                            onClick={() => fileReference.current?.click()}
-                            className="action-button action-button--dark homebrew-list__footer-btn"
-                        >
-                            <FolderOpen size={16} /> Import Items
-                        </button>
-                        <input
-                            type="file"
-                            ref={fileReference}
-                            onChange={handleImport}
-                            className="homebrew-file-input"
-                            accept=".json"
-                        />
-                    </>
-                )}
-            </div>
+            {canEdit && (
+                <input
+                    type="file"
+                    ref={fileReference}
+                    onChange={handleImport}
+                    className="homebrew-file-input"
+                    accept=".json"
+                />
+            )}
 
             {importData && (
                 <div className="homebrew-import__overlay">

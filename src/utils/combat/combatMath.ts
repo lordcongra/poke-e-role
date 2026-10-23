@@ -23,8 +23,8 @@ export const ATTRIBUTE_MAPPING: Record<string, string> = {
     Will: 'will'
 };
 
-export function getAbilityText(abilityName: string, customAbilities: CustomAbility[]): string {
-    if (!abilityName) return '';
+export function getAbilityText(abilityName: string, customAbilities?: CustomAbility[]): string {
+    if (!abilityName || !customAbilities) return '';
     const cleanName = abilityName
         .replace(/\s*\(HA\)$/i, '')
         .trim()
@@ -113,7 +113,10 @@ export function calculateStatTotal(
 ): number {
     if (!statKey) return 0;
     if (statKey.includes('/')) {
-        const parts = statKey.split('/').map((s) => s.trim()).filter(Boolean);
+        const parts = statKey
+            .split('/')
+            .map((s) => s.trim())
+            .filter(Boolean);
         if (parts.length > 0) {
             return Math.max(0, ...parts.map((p) => calculateStatTotal(p, state, itemBuffs, factorTags)));
         }
@@ -173,7 +176,10 @@ export function calculateStatTotal(
 export function calculateSkillTotal(skillKey: string, state: CharacterState, itemBuffs: CombatBonuses): number {
     if (!skillKey || skillKey === 'none') return 0;
     if (skillKey.includes('/')) {
-        const parts = skillKey.split('/').map((s) => s.trim()).filter(Boolean);
+        const parts = skillKey
+            .split('/')
+            .map((s) => s.trim())
+            .filter(Boolean);
         if (parts.length > 0) {
             return Math.max(0, ...parts.map((p) => calculateSkillTotal(p, state, itemBuffs)));
         }

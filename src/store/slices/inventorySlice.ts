@@ -220,9 +220,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
 
     updateInventoryItemMultiple: (id, updates) =>
         set((state) => {
-            const newInventory = state.inventory.map((item) =>
-                item.id === id ? { ...item, ...updates } : item
-            );
+            const newInventory = state.inventory.map((item) => (item.id === id ? { ...item, ...updates } : item));
             const updatesToSave: Record<string, unknown> = { 'inv-data': JSON.stringify(newInventory) };
             const { health, will } = syncHealthWill(state, newInventory, updatesToSave);
             try {

@@ -292,6 +292,11 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
         tags.push(`CANNOT BE EVADED`);
     }
 
+    const dualScaleMatch = (move.desc || '').match(/\[\s*(Dual Scale:[^\]]+)\]/i);
+    if (dualScaleMatch && !tags.includes(dualScaleMatch[1])) {
+        tags.push(dualScaleMatch[1]);
+    }
+
     const pureItems = itemBuffs.accItemNames.filter((name) => !itemBuffs.accPassiveNames?.includes(name));
     if (pureItems.length > 0) {
         const uniqueItems = Array.from(new Set(pureItems));
@@ -480,6 +485,11 @@ export async function executeDamageRoll(
         )
     ) {
         tags.push(`RECOIL: Roll success as user dmg ignoring def`);
+    }
+
+    const dualScaleMatch = (move.desc || '').match(/\[\s*(Dual Scale:[^\]]+)\]/i);
+    if (dualScaleMatch && !tags.includes(dualScaleMatch[1])) {
+        tags.push(dualScaleMatch[1]);
     }
 
     if (!override.active || override.type !== 'flat') {

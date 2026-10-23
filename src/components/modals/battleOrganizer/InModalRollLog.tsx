@@ -483,9 +483,18 @@ export function InModalRollLog({
                                             <button
                                                 type="button"
                                                 className="in-modal-roll-log__choice-btn in-modal-roll-log__choice-btn--yes"
-                                                style={{ width: '100%', justifyContent: 'center', gap: '5px', padding: '4px 8px' }}
+                                                style={{
+                                                    width: '100%',
+                                                    justifyContent: 'center',
+                                                    gap: '5px',
+                                                    padding: '4px 8px'
+                                                }}
                                                 disabled={r.chanceRolled}
-                                                onClick={() => executeChanceRoll(r as import('../../../hooks/owlbearSync/owlbearSyncConstants').RollSyncData)}
+                                                onClick={() =>
+                                                    executeChanceRoll(
+                                                        r as import('../../../hooks/owlbearSync/owlbearSyncConstants').RollSyncData
+                                                    )
+                                                }
                                                 title={
                                                     r.chanceRolled
                                                         ? 'Chance dice already rolled for this action'
@@ -498,7 +507,8 @@ export function InModalRollLog({
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <Sparkles size={11} /> Roll Chance Dice ({r.chanceDice}d6, Need 6)
+                                                        <Sparkles size={11} /> Roll Chance Dice ({r.chanceDice}d6, Need
+                                                        6)
                                                     </>
                                                 )}
                                             </button>

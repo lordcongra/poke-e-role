@@ -10,9 +10,24 @@ import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import './ItemAttackActionConfig.css';
 
 const DEFAULT_TYPES = [
-    'Normal', 'Fire', 'Water', 'Grass', 'Electric', 'Ice',
-    'Fighting', 'Poison', 'Ground', 'Flying', 'Psychic', 'Bug',
-    'Rock', 'Ghost', 'Dragon', 'Steel', 'Dark', 'Fairy'
+    'Normal',
+    'Fire',
+    'Water',
+    'Grass',
+    'Electric',
+    'Ice',
+    'Fighting',
+    'Poison',
+    'Ground',
+    'Flying',
+    'Psychic',
+    'Bug',
+    'Rock',
+    'Ghost',
+    'Dragon',
+    'Steel',
+    'Dark',
+    'Fairy'
 ];
 
 interface ItemAttackActionConfigProps {
@@ -21,11 +36,7 @@ interface ItemAttackActionConfigProps {
     canEdit?: boolean;
 }
 
-export function ItemAttackActionConfig({
-    attackAction,
-    onChange,
-    canEdit = true
-}: ItemAttackActionConfigProps) {
+export function ItemAttackActionConfig({ attackAction, onChange, canEdit = true }: ItemAttackActionConfigProps) {
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
     const [isExpanded, setIsExpanded] = useState(() => Boolean(attackAction));
     const [showTagBuilder, setShowTagBuilder] = useState(false);
@@ -67,10 +78,7 @@ export function ItemAttackActionConfig({
 
     return (
         <div className="item-attack-action-config">
-            <div
-                className="item-attack-action-config__header"
-                onClick={() => setIsExpanded(!isExpanded)}
-            >
+            <div className="item-attack-action-config__header" onClick={() => setIsExpanded(!isExpanded)}>
                 <div className="item-attack-action-config__header-left">
                     <Swords size={15} style={{ color: isEnabled ? 'var(--primary, #3b82f6)' : 'var(--text-muted)' }} />
                     <span className="text-label" style={{ color: 'var(--text-main)' }}>
@@ -112,7 +120,9 @@ export function ItemAttackActionConfig({
                                 className="item-attack-action-config__select"
                                 value={attackAction.category}
                                 disabled={!canEdit}
-                                onChange={(e) => updateField('category', e.target.value as 'Physical' | 'Special' | 'Status')}
+                                onChange={(e) =>
+                                    updateField('category', e.target.value as 'Physical' | 'Special' | 'Status')
+                                }
                             >
                                 <option value="Physical">Physical</option>
                                 <option value="Special">Special</option>
@@ -129,12 +139,14 @@ export function ItemAttackActionConfig({
                                 onChange={(e) => updateField('type', e.target.value)}
                             >
                                 {allTypes.map((t) => (
-                                    <option key={t} value={t}>{t}</option>
+                                    <option key={t} value={t}>
+                                        {t}
+                                    </option>
                                 ))}
                             </select>
                         </div>
 
-                        <div className="item-attack-action-config__field" style={{ maxWidth: '95px' }}>
+                        <div className="item-attack-action-config__field item-attack-action-config__field--inline">
                             <span className="item-attack-action-config__label">Power</span>
                             <NumberSpinner
                                 value={attackAction.power}
@@ -158,10 +170,14 @@ export function ItemAttackActionConfig({
                                     onChange={(e) => updateField('acc1', e.target.value)}
                                 >
                                     {Object.values(CombatStat).map((s) => (
-                                        <option key={s} value={s}>{s.toUpperCase()}</option>
+                                        <option key={s} value={s}>
+                                            {s.toUpperCase()}
+                                        </option>
                                     ))}
                                     {Object.values(SocialStat).map((s) => (
-                                        <option key={s} value={s}>{s.toUpperCase()}</option>
+                                        <option key={s} value={s}>
+                                            {s.toUpperCase()}
+                                        </option>
                                     ))}
                                     <option value="will">WILL</option>
                                 </select>
@@ -174,10 +190,14 @@ export function ItemAttackActionConfig({
                                 >
                                     <option value="">-- None --</option>
                                     {Object.values(CombatStat).map((s) => (
-                                        <option key={`alt1-${s}`} value={s}>{s.toUpperCase()}</option>
+                                        <option key={`alt1-${s}`} value={s}>
+                                            {s.toUpperCase()}
+                                        </option>
                                     ))}
                                     {Object.values(SocialStat).map((s) => (
-                                        <option key={`alt1-${s}`} value={s}>{s.toUpperCase()}</option>
+                                        <option key={`alt1-${s}`} value={s}>
+                                            {s.toUpperCase()}
+                                        </option>
                                     ))}
                                     <option value="will">WILL</option>
                                 </select>
@@ -191,11 +211,15 @@ export function ItemAttackActionConfig({
                                     className="item-attack-action-config__select"
                                     value={attackAction.acc2 || 'none'}
                                     disabled={!canEdit}
-                                    onChange={(e) => updateField('acc2', e.target.value === 'none' ? undefined : e.target.value)}
+                                    onChange={(e) =>
+                                        updateField('acc2', e.target.value === 'none' ? undefined : e.target.value)
+                                    }
                                 >
                                     <option value="none">-- None --</option>
                                     {Object.values(Skill).map((s) => (
-                                        <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                                        <option key={s} value={s}>
+                                            {s.charAt(0).toUpperCase() + s.slice(1)}
+                                        </option>
                                     ))}
                                 </select>
                                 <span className="item-attack-action-config__or-label text-subtext">or</span>
@@ -203,11 +227,18 @@ export function ItemAttackActionConfig({
                                     className="item-attack-action-config__select"
                                     value={attackAction.acc2Alt || ''}
                                     disabled={!canEdit}
-                                    onChange={(e) => updateField('acc2Alt', e.target.value && e.target.value !== 'none' ? e.target.value : undefined)}
+                                    onChange={(e) =>
+                                        updateField(
+                                            'acc2Alt',
+                                            e.target.value && e.target.value !== 'none' ? e.target.value : undefined
+                                        )
+                                    }
                                 >
                                     <option value="">-- None --</option>
                                     {Object.values(Skill).map((s) => (
-                                        <option key={`alt2-${s}`} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                                        <option key={`alt2-${s}`} value={s}>
+                                            {s.charAt(0).toUpperCase() + s.slice(1)}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -224,10 +255,14 @@ export function ItemAttackActionConfig({
                                 >
                                     <option value="">-- None --</option>
                                     {Object.values(CombatStat).map((s) => (
-                                        <option key={s} value={s}>{s.toUpperCase()}</option>
+                                        <option key={s} value={s}>
+                                            {s.toUpperCase()}
+                                        </option>
                                     ))}
                                     {Object.values(SocialStat).map((s) => (
-                                        <option key={s} value={s}>{s.toUpperCase()}</option>
+                                        <option key={s} value={s}>
+                                            {s.toUpperCase()}
+                                        </option>
                                     ))}
                                 </select>
                                 <span className="item-attack-action-config__or-label text-subtext">or</span>
@@ -239,10 +274,14 @@ export function ItemAttackActionConfig({
                                 >
                                     <option value="">-- None --</option>
                                     {Object.values(CombatStat).map((s) => (
-                                        <option key={`altdmg1-${s}`} value={s}>{s.toUpperCase()}</option>
+                                        <option key={`altdmg1-${s}`} value={s}>
+                                            {s.toUpperCase()}
+                                        </option>
                                     ))}
                                     {Object.values(SocialStat).map((s) => (
-                                        <option key={`altdmg1-${s}`} value={s}>{s.toUpperCase()}</option>
+                                        <option key={`altdmg1-${s}`} value={s}>
+                                            {s.toUpperCase()}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -256,7 +295,13 @@ export function ItemAttackActionConfig({
                                 <button
                                     type="button"
                                     className="action-button action-button--dark text-subtext"
-                                    style={{ padding: '2px 8px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                    style={{
+                                        padding: '2px 8px',
+                                        fontSize: '0.75rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                    }}
                                     onClick={() => {
                                         setTagBuilderInitialTag(undefined);
                                         setShowTagBuilder(true);
@@ -292,7 +337,7 @@ export function ItemAttackActionConfig({
                     </div>
 
                     <div className="item-attack-action-config__row">
-                        <div className="item-attack-action-config__field" style={{ maxWidth: '95px' }}>
+                        <div className="item-attack-action-config__field item-attack-action-config__field--inline">
                             <span className="item-attack-action-config__label">Chance Dice</span>
                             <NumberSpinner
                                 value={attackAction.chanceDice ?? 0}

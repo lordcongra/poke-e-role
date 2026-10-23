@@ -29,7 +29,12 @@ import {
     PRESETS,
     getDefaultTargetForCategory
 } from './tagBuilder/tagBuilderConstants';
-import { buildTagString, generateExplanation, parseTagStringToConfig, extractMoveTags } from './tagBuilder/tagBuilderLogic';
+import {
+    buildTagString,
+    generateExplanation,
+    parseTagStringToConfig,
+    extractMoveTags
+} from './tagBuilder/tagBuilderLogic';
 import { searchEffects, type SearchResultItem } from './tagBuilder/tagBuilderSearch';
 import { TagBuilderConfigSection } from './tagBuilder/TagBuilderConfigSection';
 import { TagBuilderPreview } from './tagBuilder/TagBuilderPreview';
@@ -54,7 +59,7 @@ export function TagBuilderModal({
 
     const targetName =
         explicitTargetName || (isControlled ? (isMove ? 'Move Action' : 'Item') : storeTarget.targetName);
-    const currentRawText = isControlled ? initialTagsText ?? '' : storeTarget.currentRawText;
+    const currentRawText = isControlled ? (initialTagsText ?? '') : storeTarget.currentRawText;
 
     const existingTags = isControlled
         ? isMove
