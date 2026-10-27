@@ -86,6 +86,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (id.customFormImages !== undefined)
                 flatMetadata['custom-form-images'] = JSON.stringify(id.customFormImages);
             if (id.badges !== undefined) flatMetadata['badges-data'] = JSON.stringify(id.badges);
+            if (id.pokedex !== undefined) flatMetadata['pokedex-data'] = JSON.stringify(id.pokedex);
 
             if (id.terastallizeAffinity !== undefined) flatMetadata['terastallize-affinity'] = id.terastallizeAffinity;
             flatMetadata['terastallize-bonus-active'] = Boolean(id.terastallizeBonusActive);

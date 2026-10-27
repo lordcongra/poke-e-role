@@ -44,7 +44,8 @@ export function isTrackedBackupChange(updates: Record<string, unknown>, existing
         'hp-base',
         'will-base',
         'rank',
-        'identity-rank'
+        'identity-rank',
+        'pokedex-data'
     ]);
 
     const combatStats = Object.values(CombatStat);

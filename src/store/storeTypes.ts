@@ -29,7 +29,9 @@ import type {
     PendingDemoRoll,
     CharacterHealth,
     CharacterWill,
-    CustomType as BaseCustomType
+    CustomType as BaseCustomType,
+    TrainerPokedexData,
+    TrainerPokedexEntry
 } from './entityTypes';
 
 export * from './entityTypes';
@@ -559,9 +561,18 @@ export interface IdentitySlice {
         height: string;
         weight: string;
         dexDescription: string;
+
+        // Trainer Pokédex
+        pokedex: TrainerPokedexData;
     };
 
     setIdentity: <K extends keyof IdentitySlice['identity']>(field: K, value: IdentitySlice['identity'][K]) => void;
+    setPokedexEntry: (name: string, entry: Partial<TrainerPokedexEntry> | null) => void;
+    addPokedexEntry: (name: string, entry?: Partial<TrainerPokedexEntry>) => void;
+    removePokedexEntry: (name: string) => void;
+    togglePokedexSeen: (name: string) => void;
+    togglePokedexCaught: (name: string) => void;
+    togglePokedexShiny: (name: string) => void;
     applyRoomSettings: (settings: Partial<RoomSettings>) => void;
     updateRoomSetting: <K extends keyof RoomSettings>(field: K, value: RoomSettings[K]) => void;
     setSceneScale: (scale: number | null) => void;

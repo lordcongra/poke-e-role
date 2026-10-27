@@ -27,6 +27,7 @@ import { MovesTable } from '../../tables/MovesTable';
 import { InventoryTable } from '../../tables/InventoryTable';
 import { TrackerSection } from '../../board/TrackerSection';
 import { TrainerBadges } from '../../board/TrainerBadges';
+import { TrainerPokedex } from '../../board/TrainerPokedex';
 import { DemoRollModal } from '../combat/DemoRollModal';
 import { InModalRollLog } from './InModalRollLog';
 import { X, ChevronLeft, ChevronRight, User, Loader2, Lock, AlertCircle } from 'lucide-react';
@@ -442,6 +443,7 @@ export function CombatantSheetModal({
                                     <CoreTable />
                                     <SocialTable />
                                     {mode !== 'Pokémon' && <TrainerBadges />}
+                                    {mode !== 'Pokémon' && <TrainerPokedex />}
                                 </div>
 
                                 <div className="sheet-container__column">

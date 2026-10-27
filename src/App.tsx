@@ -13,6 +13,7 @@ import { MovesTable } from './components/tables/MovesTable';
 import { InventoryTable } from './components/tables/InventoryTable';
 import { TrackerSection } from './components/board/TrackerSection';
 import { TrainerBadges } from './components/board/TrainerBadges';
+import { TrainerPokedex } from './components/board/TrainerPokedex';
 import { PrintSheet } from './components/print/PrintSheet';
 import { DemoRollModal } from './components/modals/combat/DemoRollModal';
 import { GlobalToolbar } from './components/ui/GlobalToolbar';
@@ -90,6 +91,7 @@ function App() {
                         <CoreTable />
                         <SocialTable />
                         {mode !== 'Pokémon' && <TrainerBadges />}
+                        {mode !== 'Pokémon' && <TrainerPokedex />}
                     </div>
 
                     <div className="sheet-container__column">

@@ -12,7 +12,8 @@ import type {
     TransformationType,
     Rank,
     ItemAttackAction,
-    ActiveCombatBoost
+    ActiveCombatBoost,
+    TrainerPokedexData
 } from '../../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { getKnownAbility } from '../../data/abilities/knownAbilities';
@@ -349,6 +350,29 @@ function parseBadges(meta: Record<string, unknown>): Badge[] {
     }
 }
 
+function parsePokedex(meta: Record<string, unknown>): TrainerPokedexData {
+    try {
+        const rawPokedex = meta['pokedex-data'] ? JSON.parse(String(meta['pokedex-data'])) : {};
+        if (typeof rawPokedex !== 'object' || rawPokedex === null || Array.isArray(rawPokedex)) return {};
+
+        const result: TrainerPokedexData = {};
+        for (const [key, val] of Object.entries(rawPokedex)) {
+            if (val && typeof val === 'object') {
+                const entry = val as Record<string, unknown>;
+                result[key] = {
+                    seen: Boolean(entry.seen),
+                    caught: Boolean(entry.caught),
+                    shiny: Boolean(entry.shiny)
+                };
+            }
+        }
+        return result;
+    } catch (e) {
+        console.warn('[StateMapper] Failed to parse pokedex from metadata:', e);
+        return {};
+    }
+}
+
 function parseHealth(meta: Record<string, unknown>) {
     return {
         hpCurr: meta['hp-curr'] !== undefined ? Number(meta['hp-curr']) : 5,
@@ -441,7 +465,12 @@ function parseTrackers(meta: Record<string, unknown>) {
     };
 }
 
-function parseIdentity(meta: Record<string, unknown>, state: CharacterState, parsedBadges: Badge[]) {
+function parseIdentity(
+    meta: Record<string, unknown>,
+    state: CharacterState,
+    parsedBadges: Badge[],
+    parsedPokedex?: TrainerPokedexData
+) {
     const abilityListStr = String(meta['ability-list'] || '');
     const loadedAbilities = abilityListStr ? abilityListStr.split(',') : [];
 
@@ -615,6 +644,9 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
             meta['custom-form-first-hit-dmg'] === true || meta['custom-form-first-hit-dmg'] === 'true',
 
         badges: parsedBadges,
+        pokedex:
+            parsedPokedex ??
+            (meta['pokedex-data'] !== undefined ? parsePokedex(meta) : (state.identity?.pokedex ?? {})),
 
         showTrackers: meta['show-trackers'] !== false && meta['show-trackers'] !== 'false',
         settingHpBar: meta['setting-hp-bar'] !== false && meta['setting-hp-bar'] !== 'false',
@@ -676,13 +708,14 @@ export function hydrateStateFromMetadata(
     const parsedEffects = parseEffects(meta);
     const parsedCustomInfo = parseCustomInfo(meta);
     const parsedBadges = parseBadges(meta);
+    const parsedPokedex = meta['pokedex-data'] !== undefined ? parsePokedex(meta) : (state.identity?.pokedex ?? {});
 
     const newStats = parseStats(meta, state);
     const newSocials = parseSocials(meta, state);
     const newSkills = parseSkills(meta, state);
     const newHealth = parseHealth(meta);
     const newWill = parseWill(meta);
-    const newIdentity = parseIdentity(meta, state, parsedBadges);
+    const newIdentity = parseIdentity(meta, state, parsedBadges, parsedPokedex);
     const newDerived = parseDerived(meta);
     const newExtras = parseExtras(meta);
     const newTrackers = parseTrackers(meta);

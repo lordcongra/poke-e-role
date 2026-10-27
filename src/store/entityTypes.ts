@@ -441,3 +441,11 @@ export interface PendingDemoRoll {
     flatMod: number;
     resolve: (diceArray: number[] | null) => void;
 }
+
+export interface TrainerPokedexEntry {
+    seen: boolean;
+    caught?: boolean;
+    shiny?: boolean;
+}
+
+export type TrainerPokedexData = Record<string, TrainerPokedexEntry>;

@@ -46,6 +46,7 @@ const { METADATA_ID } = await import('../src/hooks/owlbearSync/owlbearSyncConsta
 const { getAccessoryIdentityKey, sanitizeAttachmentBundles, hasAttachmentDiff, reconcileTokenAttachmentsOnScene } =
     await import('../src/utils/pc/pcAttachmentOps');
 const { buildEphemeralMoveFromItem, resolveItemMoveStats } = await import('../src/utils/items/itemAttackRoller');
+const { isTrackedBackupChange } = await import('../src/utils/sync/storageAdapter');
 
 /**
  * Automated Verification Suite for Token Metadata & Serialization Invariants.
@@ -129,6 +130,7 @@ function createTestCharacterState(overrides: DeepPartial<CharacterState> = {}): 
             customFormConfig: null,
             customFormImages: {},
             badges: [],
+            pokedex: {},
             terastallizeAffinity: '',
             terastallizeBonusActive: false,
             megaImageUrl: '',
@@ -2132,6 +2134,32 @@ await runTest('combatBoost: symmetrical serialization, hydration, and item effec
         partialState.trackers?.activeCombatBoost,
         usage.combatBoost,
         'partialState arms trackers.activeCombatBoost'
+    );
+});
+
+await runTest('trainerPokedex: serialization, hydration, and storageAdapter tracking', async () => {
+    const mockState = createTestCharacterState({
+        identity: {
+            mode: 'Trainer',
+            pokedex: {
+                Pikachu: { seen: true, caught: true, shiny: false },
+                Charizard: { seen: true, caught: false, shiny: true }
+            }
+        } as any
+    });
+
+    // 1. Serialization
+    const meta = flattenStateToMetadata(mockState);
+    assert.equal(meta['pokedex-data'], JSON.stringify(mockState.identity.pokedex), 'Serializes pokedex-data correctly');
+
+    // 2. Hydration
+    const hydrated = hydrateStateFromMetadata(meta, createTestCharacterState());
+    assert.deepEqual(hydrated.identity?.pokedex, mockState.identity.pokedex, 'Hydrates pokedex-data accurately');
+
+    // 3. StorageAdapter change tracking
+    assert.ok(
+        isTrackedBackupChange({ 'pokedex-data': meta['pokedex-data'] }),
+        'isTrackedBackupChange flags pokedex-data updates'
     );
 });
 

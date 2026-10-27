@@ -2,6 +2,7 @@ import { Check, Copy, Link2, Megaphone, ChevronDown, ChevronUp, Sparkles, Zap, L
 import type { PokemonLookupEntry, PokemonApiResponse } from '../../../utils/api/apiTypes';
 import type { CustomPokemon } from '../../../store/storeTypes';
 import { groupMovesByRank, getPokemonStatLimits } from './pokemonLookupUtils';
+import { parseHeight, parseWeight } from '../../../utils/common/macroHelpers';
 
 export interface PokemonLookupCardProps {
     pokemon: PokemonLookupEntry;
@@ -14,6 +15,7 @@ export interface PokemonLookupCardProps {
     appliedAbility: string;
     appliedMove: string;
     moveRank: string;
+    trainerControls?: React.ReactNode;
     onToggleExpand: (name: string) => void;
     onCopyDiscord: (pokemon: PokemonLookupEntry) => void;
     onCopyCardLink: (name: string) => void;
@@ -33,6 +35,7 @@ export function PokemonLookupCard({
     appliedAbility,
     appliedMove,
     moveRank,
+    trainerControls,
     onToggleExpand,
     onCopyDiscord,
     onCopyCardLink,
@@ -78,6 +81,7 @@ export function PokemonLookupCard({
                 </div>
 
                 <div className="gm-pokemon-lookup__card-actions">
+                    {trainerControls}
                     <button
                         type="button"
                         className="action-button action-button--dark"
@@ -263,6 +267,36 @@ export function PokemonLookupCard({
                                             </span>
                                         </span>
                                     </div>
+                                </div>
+                            )}
+
+                            {/* Physical Measurements & Category if fullData available */}
+                            {fullData && (fullData.DexCategory || fullData.Height || fullData.Weight) && (
+                                <div className="gm-pokemon-lookup__drawer-meta">
+                                    {fullData.DexCategory && (
+                                        <div className="gm-pokemon-lookup__meta-item">
+                                            <span className="text-label">Category:</span>
+                                            <span className="text-subtext" style={{ color: 'var(--text-main)' }}>
+                                                {fullData.DexCategory}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {fullData.Height && (
+                                        <div className="gm-pokemon-lookup__meta-item">
+                                            <span className="text-label">Height:</span>
+                                            <span className="text-subtext" style={{ color: 'var(--text-main)' }}>
+                                                {parseHeight(fullData.Height)}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {fullData.Weight && (
+                                        <div className="gm-pokemon-lookup__meta-item">
+                                            <span className="text-label">Weight:</span>
+                                            <span className="text-subtext" style={{ color: 'var(--text-main)' }}>
+                                                {parseWeight(fullData.Weight)}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 

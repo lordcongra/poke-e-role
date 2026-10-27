@@ -1,0 +1,198 @@
+.quick-add-modal__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.65);
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    animation: quickAddFadeIn 0.15s ease-out;
+}
+
+@keyframes quickAddFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.quick-add-modal__content {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-width: 360px;
+    width: 100%;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: quickAddPopIn 0.15s ease-out;
+}
+
+@keyframes quickAddPopIn {
+    from {
+        transform: scale(0.96);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.quick-add-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel-alt);
+}
+
+.quick-add-modal__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.quick-add-modal__close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.quick-add-modal__close-btn:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.quick-add-modal__form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+}
+
+.quick-add-modal__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.quick-add-modal__input {
+    width: 100%;
+    height: 36px;
+    padding: 6px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+}
+
+.quick-add-modal__input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.quick-add-modal__status-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.quick-add-modal__status-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    transition: all 0.15s ease;
+}
+
+.quick-add-modal__status-btn:hover {
+    color: var(--text-main);
+    border-color: var(--text-muted);
+}
+
+.quick-add-modal__status-btn.is-active.is-seen {
+    background: rgba(96, 165, 250, 0.18);
+    border-color: #60a5fa;
+    color: #93c5fd;
+}
+
+.quick-add-modal__status-btn.is-active.is-caught {
+    background: rgba(74, 222, 128, 0.18);
+    border-color: #4ade80;
+    color: #86efac;
+}
+
+.quick-add-modal__checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+}
+
+.quick-add-modal__checkbox-label input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #facc15;
+}
+
+.quick-add-modal__checkbox-label:hover {
+    color: var(--text-main);
+}
+
+.quick-add-modal__checkbox-label.is-shiny-active {
+    color: #fde047;
+}
+
+.quick-add-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.quick-add-modal__btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+}

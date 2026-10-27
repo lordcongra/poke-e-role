@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { CharacterState, IdentitySlice, Rank } from '../storeTypes';
+import type { CharacterState, IdentitySlice, Rank, TrainerPokedexData, TrainerPokedexEntry } from '../storeTypes';
 import {
     saveToOwlbear,
     getIsRemoteSyncActive,
@@ -387,7 +387,8 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         dexCategory: '',
         height: '',
         weight: '',
-        dexDescription: ''
+        dexDescription: '',
+        pokedex: {}
     },
 
     setTokenData: (tokenId, role) => set({ tokenId, role: isStandaloneMode ? 'GM' : role }),
@@ -698,6 +699,8 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                     updatesToSave['custom-form-images'] = JSON.stringify(value);
                 } else if (field === 'badges') {
                     updatesToSave['badges-data'] = JSON.stringify(value);
+                } else if (field === 'pokedex') {
+                    updatesToSave['pokedex-data'] = JSON.stringify(value);
                 }
 
                 try {
@@ -787,5 +790,158 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 identity: { ...state.identity, learnset: parseLearnset(data.Moves) }
             }),
             false
-        )
+        ),
+
+    setPokedexEntry: (name, entry: Partial<TrainerPokedexEntry> | null) =>
+        set((state) => {
+            const nextPokedex: TrainerPokedexData = { ...(state.identity.pokedex || {}) };
+            if (entry === null) {
+                delete nextPokedex[name];
+            } else {
+                const current = nextPokedex[name] || { seen: false };
+                const merged = { ...current, ...entry };
+                if (merged.caught) {
+                    merged.seen = true;
+                }
+                if (!merged.seen && !merged.caught && !merged.shiny) {
+                    delete nextPokedex[name];
+                } else {
+                    nextPokedex[name] = merged;
+                }
+            }
+            if (!getIsRemoteSyncActive()) {
+                try {
+                    saveToOwlbear({ 'pokedex-data': JSON.stringify(nextPokedex) });
+                } catch (error) {
+                    console.error('[IdentitySlice] Failed to save pokedex update to Owlbear.', error);
+                }
+            }
+            return {
+                identity: { ...state.identity, pokedex: nextPokedex }
+            };
+        }),
+
+    addPokedexEntry: (name, entry) =>
+        set((state) => {
+            const cleanName = name.trim();
+            if (!cleanName) return state;
+            const nextPokedex: TrainerPokedexData = { ...(state.identity.pokedex || {}) };
+            const current = nextPokedex[cleanName] || { caught: false, shiny: false };
+            nextPokedex[cleanName] = {
+                caught: false,
+                shiny: false,
+                ...current,
+                seen: true,
+                ...(entry || {})
+            };
+            if (!getIsRemoteSyncActive()) {
+                try {
+                    saveToOwlbear({ 'pokedex-data': JSON.stringify(nextPokedex) });
+                } catch (error) {
+                    console.error('[IdentitySlice] Failed to save pokedex update to Owlbear.', error);
+                }
+            }
+            return {
+                identity: { ...state.identity, pokedex: nextPokedex }
+            };
+        }),
+
+    removePokedexEntry: (name) =>
+        set((state) => {
+            const cleanName = name.trim();
+            const nextPokedex: TrainerPokedexData = { ...(state.identity.pokedex || {}) };
+            delete nextPokedex[cleanName];
+            delete nextPokedex[name];
+            if (!getIsRemoteSyncActive()) {
+                try {
+                    saveToOwlbear({ 'pokedex-data': JSON.stringify(nextPokedex) });
+                } catch (error) {
+                    console.error('[IdentitySlice] Failed to save pokedex update to Owlbear.', error);
+                }
+            }
+            return {
+                identity: { ...state.identity, pokedex: nextPokedex }
+            };
+        }),
+
+    togglePokedexSeen: (name) =>
+        set((state) => {
+            const nextPokedex: TrainerPokedexData = { ...(state.identity.pokedex || {}) };
+            const current = nextPokedex[name];
+            const nextSeen = !current?.seen;
+            if (nextSeen) {
+                nextPokedex[name] = { ...(current || {}), seen: true };
+            } else {
+                const updated = { ...(current || {}), seen: false, caught: false };
+                if (!updated.shiny) {
+                    delete nextPokedex[name];
+                } else {
+                    nextPokedex[name] = updated;
+                }
+            }
+            if (!getIsRemoteSyncActive()) {
+                try {
+                    saveToOwlbear({ 'pokedex-data': JSON.stringify(nextPokedex) });
+                } catch (error) {
+                    console.error('[IdentitySlice] Failed to save pokedex update to Owlbear.', error);
+                }
+            }
+            return {
+                identity: { ...state.identity, pokedex: nextPokedex }
+            };
+        }),
+
+    togglePokedexCaught: (name) =>
+        set((state) => {
+            const nextPokedex: TrainerPokedexData = { ...(state.identity.pokedex || {}) };
+            const current = nextPokedex[name];
+            const nextCaught = !current?.caught;
+            if (nextCaught) {
+                nextPokedex[name] = { ...(current || {}), seen: true, caught: true };
+            } else {
+                const updated = { ...(current || { seen: true }), caught: false };
+                if (!updated.seen && !updated.shiny) {
+                    delete nextPokedex[name];
+                } else {
+                    nextPokedex[name] = updated;
+                }
+            }
+            if (!getIsRemoteSyncActive()) {
+                try {
+                    saveToOwlbear({ 'pokedex-data': JSON.stringify(nextPokedex) });
+                } catch (error) {
+                    console.error('[IdentitySlice] Failed to save pokedex update to Owlbear.', error);
+                }
+            }
+            return {
+                identity: { ...state.identity, pokedex: nextPokedex }
+            };
+        }),
+
+    togglePokedexShiny: (name) =>
+        set((state) => {
+            const nextPokedex: TrainerPokedexData = { ...(state.identity.pokedex || {}) };
+            const current = nextPokedex[name];
+            const nextShiny = !current?.shiny;
+            if (nextShiny) {
+                nextPokedex[name] = { ...(current || {}), seen: true, shiny: true };
+            } else {
+                const updated = { ...(current || { seen: false }), shiny: false };
+                if (!updated.seen && !updated.caught) {
+                    delete nextPokedex[name];
+                } else {
+                    nextPokedex[name] = updated;
+                }
+            }
+            if (!getIsRemoteSyncActive()) {
+                try {
+                    saveToOwlbear({ 'pokedex-data': JSON.stringify(nextPokedex) });
+                } catch (error) {
+                    console.error('[IdentitySlice] Failed to save pokedex update to Owlbear.', error);
+                }
+            }
+            return {
+                identity: { ...state.identity, pokedex: nextPokedex }
+            };
+        })
 });

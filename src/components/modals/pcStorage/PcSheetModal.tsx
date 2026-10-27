@@ -15,6 +15,7 @@ import { MovesTable } from '../../tables/MovesTable';
 import { InventoryTable } from '../../tables/InventoryTable';
 import { TrackerSection } from '../../board/TrackerSection';
 import { TrainerBadges } from '../../board/TrainerBadges';
+import { TrainerPokedex } from '../../board/TrainerPokedex';
 import { DemoRollModal } from '../combat/DemoRollModal';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { usePcSheetSync } from './usePcSheetSync';
@@ -177,6 +178,7 @@ export const PcSheetModal: React.FC<PcSheetModalProps> = ({
                                     <CoreTable />
                                     <SocialTable />
                                     {mode !== 'Pokémon' && <TrainerBadges />}
+                                    {mode !== 'Pokémon' && <TrainerPokedex />}
                                 </div>
 
                                 <div className="sheet-container__column">

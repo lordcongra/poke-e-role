@@ -59,7 +59,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 ### 🎒 Item Moves, Rechargeable Charges & Bag Filters
 
-- **Thrown Items & Learnset Item Moves:** Equipped combat items and thrown projectiles (such as Geo Pebbles, Corsola Twigs, Gravelerocks, and Iron Spikes) can now be used as attacks directly from your Learnset! An expandable *Item Moves* drawer displays available consumable and held item attacks alongside your moves, with 1-click rolling for both Accuracy and Damage.
+- **Thrown Items & Learnset Item Moves:** Equipped combat items and thrown projectiles (such as Geo Pebbles, Corsola Twigs, Gravelerocks, and Iron Spikes) can now be used as attacks directly from your Learnset! An expandable _Item Moves_ drawer displays available consumable and held item attacks alongside your moves, with 1-click rolling for both Accuracy and Damage.
 - **Dual-Stat Weapon Scaling:** Thrown weapons and items with versatile stat scaling (such as Strength or Dexterity) automatically compare your attributes and recommend your highest stat, with 1-click switching in the attack configuration popover.
 - **Item Charges & Rechargeable Consumables:** Multi-use item charges are fully supported across all inventories! Applicable official consumables automatically populate with standard charges. Items also support a "Do Not Consume at 0 Charges" option for rechargeable tools, wonder orbs, and mystical artifacts.
 - **Inventory Search & Category Filters:** Rapidly search items by name or filter by category (Medicine, Berries, Held Items, Thrown Weapons, Battle Items, Key Items) with the built-in inventory filter bar.

@@ -135,6 +135,38 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
         date: 'October 2026',
         highlights: [
             {
+                id: 'trainer-pokedex',
+                version: '3.7.4',
+                title: 'Trainer Pokédex & Catch Progress',
+                icon: BookOpen,
+                badge: 'Trainer Feature',
+                summary:
+                    "Track your Pokémon journey directly within your Trainer sheet! Log seen and caught Pokémon, mark shiny encounters, view progress counters, and browse your collection with an integrated Pokédex viewer.",
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>In-Sheet Trainer Pokédex:</strong> Trainer character sheets now include a dedicated
+                            Pokédex section, giving every trainer a personal log to track the Pokémon they encounter and catch
+                            throughout their adventures.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Seen, Caught & Shiny Tracking:</strong> Easily mark species as Seen or Caught with quick
+                            toggle buttons, and mark special Shiny Pokémon to celebrate rare encounters.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Journey Counters & Quick Add:</strong> Header badges display total Seen, Caught, and Shiny
+                            counts at a glance. Use the quick-add tool to quickly register new Pokémon by name in seconds
+                            without leaving your sheet.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Full Pokédex Modal & Inspections:</strong> Open the expanded Pokédex browser to search by
+                            name or Pokédex number, filter by status or elemental type, and inspect complete species profiles
+                            with moves, abilities, and stats.
+                        </p>
+                    </div>
+                )
+            },
+            {
                 id: 'item-charges',
                 version: '3.7.4',
                 title: 'Item Moves, Rechargeable Charges & Bag Filters',
@@ -291,6 +323,47 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
             }
         ],
         changes: [
+            <strong
+                key="trainer-pokedex-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <BookOpen size={16} /> Trainer Pokédex & Journey Tracking
+            </strong>,
+            <ul
+                key="trainer-pokedex-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>In-Sheet Trainer Pokédex:</strong> Trainer sheets now feature an integrated, collapsible
+                    Pokédex section so players can track their journey and catalog Pokémon directly on their sheet.
+                </li>
+                <li>
+                    <strong>Seen, Caught & Shiny Status:</strong> Manage your progress with 1-click toggles to mark Pokémon
+                    as Seen or Caught, plus a dedicated Shiny marker for rare encounters.
+                </li>
+                <li>
+                    <strong>Live Progress Counters:</strong> Summary badges at the top of the Pokédex section track your
+                    total Seen, Caught, and Shiny counts in real time.
+                </li>
+                <li>
+                    <strong>Quick Add Tool:</strong> Quickly search and register newly discovered Pokémon directly from the
+                    section header without interrupting gameplay.
+                </li>
+                <li>
+                    <strong>Full Pokédex Browser & Lookup:</strong> Open the full Pokédex modal to filter your registered
+                    species by status (Seen, Caught, Shiny) or type, search by name or number, and inspect full Pokémon
+                    details, stats, and moves.
+                </li>
+            </ul>,
             <strong
                 key="item-moves-title"
                 className="text-title-primary"
@@ -859,30 +932,6 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
         version: '3.6.5',
         date: 'September 2026',
         highlights: [
-            {
-                id: 'gm-screen-rules-maneuvers',
-                version: '3.6.5',
-                title: 'GM Screen: Rules & Maneuvers',
-                icon: BookOpen,
-                badge: 'GM Screen',
-                summary: 'Move clarifications, attribute benchmarks, trainer combat rules, switching, and core maneuvers.',
-                details: (
-                    <div>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Move Clarifications & Benchmarks:</strong> Added official Corebook rule clarifications for nuanced moves (Encore, Fling item damage table, Nature/Secret Power environmental matrix, Natural Gift berry flavor typing, Snatch theft rules, Substitute Decoy protections, and Unown Hidden Power) alongside Strength (lifting capacity, 40–1500 lbs) and Dexterity (speed, 6–99 mph) narrative benchmark tables with Athletics scaling and pain penalty adjustments.
-                        </p>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Trainer Action Economy & Positioning:</strong> Added comprehensive rules for Trainer Area vs. In the Fray positioning, initiative rolls (<code>1d6 + Dexterity + Alert</code>), command action counts, and the 5 Actions per Round limit.
-                        </p>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Tactical Switching & Maneuvers:</strong> Documented mid-round switching disorientation lockouts and optimal round-end swaps. Clarified human combat limitations (humans can Evade, but cannot Clash). Added a dedicated Maneuvers deck with quick-reference cards and broadcast triggers for all core maneuvers.
-                        </p>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Streamlined Categories:</strong> Reorganized GM Screen tabs into unified <strong>Status & Environment</strong> and <strong>Catching & Progression</strong> tabs for a cleaner, faster browsing experience.
-                        </p>
-                    </div>
-                )
-            },
             {
                 id: 'upgraded-tag-builder',
                 version: '3.6.5',
