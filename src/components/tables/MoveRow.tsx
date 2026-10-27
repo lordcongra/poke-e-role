@@ -94,7 +94,10 @@ export const MoveRow = memo(function MoveRow({
 
         const clean = value.toLowerCase();
         const baseClean = clean.split(' (')[0].trim();
-        const isMatch = (name: string) => { const n = name.toLowerCase(); return n === clean || n === baseClean; };
+        const isMatch = (name: string) => {
+            const n = name.toLowerCase();
+            return n === clean || n === baseClean;
+        };
         if (ALL_MOVES.some(isMatch) || roomCustomMoves.some((m) => isMatch(m.name))) {
             const data = await fetchMoveData(value);
             if (data) applyMoveData(move.id, data as Record<string, unknown>);

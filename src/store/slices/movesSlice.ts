@@ -228,7 +228,10 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                         catOpts = ['Physical', 'Special', 'Status'];
                     }
 
-                    const acc1Opts = mapAttrOptions(String(data.Accuracy1 !== undefined ? data.Accuracy1 : 'none'), 'none');
+                    const acc1Opts = mapAttrOptions(
+                        String(data.Accuracy1 !== undefined ? data.Accuracy1 : 'none'),
+                        'none'
+                    );
                     const acc2Opts = mapSkillOptions(String(data.Accuracy2 || 'none'));
 
                     // Combine Damage1 and Damage2 to capture both "Strength/Dexterity" and Damage1: Strength, Damage2: Dexterity

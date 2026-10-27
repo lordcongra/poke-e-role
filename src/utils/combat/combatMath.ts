@@ -51,7 +51,14 @@ export function getPainPenalty(
     }
 
     const mappedAttr = (ATTRIBUTE_MAPPING[attribute] || attribute || '').toLowerCase().trim();
-    if (!mappedAttr || mappedAttr === 'none' || mappedAttr === 'vit' || mappedAttr === 'vitality' || mappedAttr === 'will') return 0;
+    if (
+        !mappedAttr ||
+        mappedAttr === 'none' ||
+        mappedAttr === 'vit' ||
+        mappedAttr === 'vitality' ||
+        mappedAttr === 'will'
+    )
+        return 0;
 
     const currentHealth = Number(state.health.hpCurr) || 0;
     const maxHealth = Math.max(1, Number(state.health.hpMax) || 1);

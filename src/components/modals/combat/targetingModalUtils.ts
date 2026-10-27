@@ -346,15 +346,15 @@ export function calculateTargetDefAndFactors(
 
             if (hasReflect && isPhysicalMove) {
                 targetDef += 1;
-                factors.push('Reflect (-1 Dmg)');
+                factors.push('Reflect (+1 Def)');
             }
             if (hasLightScreen && !isPhysicalMove) {
                 targetDef += 1;
-                factors.push('Light Screen (-1 Dmg)');
+                factors.push('Light Screen (+1 Sp.Def)');
             }
             if (hasAuroraVeil) {
                 targetDef += 1;
-                factors.push('Aurora Veil (-1 Dmg)');
+                factors.push('Aurora Veil (+1 Def/Sp.Def)');
             }
         }
     }

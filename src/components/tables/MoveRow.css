@@ -13,13 +13,20 @@
 }
 
 .move-row__accuracy-text {
-    min-width: 1em;
+    display: inline-block;
+    flex: 0 0 38px;
+    width: 38px;
     text-align: right;
+    margin-right: 4px;
     font-size: 0.85rem;
 }
 
 .move-row__roll-btn {
     padding: 2px 4px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .move-row__name-container {
@@ -75,8 +82,11 @@
 }
 
 .move-row__damage-text {
-    min-width: 1em;
+    display: inline-block;
+    flex: 0 0 46px;
+    width: 46px;
     text-align: right;
+    margin-right: 4px;
     font-size: 0.85rem;
 }
 
