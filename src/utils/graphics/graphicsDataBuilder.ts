@@ -38,7 +38,9 @@ export interface GraphicsData {
     gmWillText: boolean;
     showDef: boolean;
     gmDef: boolean;
-    showEco: boolean;
+    showActions: boolean;
+    showEvade: boolean;
+    showClash: boolean;
     gmEco: boolean;
     colorAct: string;
     colorEva: string;
@@ -94,26 +96,41 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
         evadeUsed: state.trackers.evade,
         clashUsed: state.trackers.clash,
         showHpBar:
-            state.identity.settingHpBar ?? (meta['setting-hp-bar'] !== false && meta['setting-hp-bar'] !== 'false'),
+            !state.identity.roomHideHpBar &&
+            (state.identity.settingHpBar ?? (meta['setting-hp-bar'] !== false && meta['setting-hp-bar'] !== 'false')),
         gmHpBar: state.identity.gmHpBar ?? (meta['gm-hp-bar'] === true || meta['gm-hp-bar'] === 'true'),
         showHpText:
-            state.identity.settingHpText ?? (meta['setting-hp-text'] !== false && meta['setting-hp-text'] !== 'false'),
+            !state.identity.roomHideHpText &&
+            (state.identity.settingHpText ??
+                (meta['setting-hp-text'] !== false && meta['setting-hp-text'] !== 'false')),
         gmHpText: state.identity.gmHpText ?? (meta['gm-hp-text'] === true || meta['gm-hp-text'] === 'true'),
         showWillBar:
-            state.identity.settingWillBar ??
-            (meta['setting-will-bar'] !== false && meta['setting-will-bar'] !== 'false'),
+            !state.identity.roomHideWillBar &&
+            (state.identity.settingWillBar ??
+                (meta['setting-will-bar'] !== false && meta['setting-will-bar'] !== 'false')),
         gmWillBar: state.identity.gmWillBar ?? (meta['gm-will-bar'] === true || meta['gm-will-bar'] === 'true'),
         showWillText:
-            state.identity.settingWillText ??
-            (meta['setting-will-text'] !== false && meta['setting-will-text'] !== 'false'),
+            !state.identity.roomHideWillText &&
+            (state.identity.settingWillText ??
+                (meta['setting-will-text'] !== false && meta['setting-will-text'] !== 'false')),
         gmWillText: state.identity.gmWillText ?? (meta['gm-will-text'] === true || meta['gm-will-text'] === 'true'),
         showDef:
-            state.identity.settingDefBadge ??
-            (meta['setting-def-badge'] !== false && meta['setting-def-badge'] !== 'false'),
+            !state.identity.roomHideDef &&
+            (state.identity.settingDefBadge ??
+                (meta['setting-def-badge'] !== false && meta['setting-def-badge'] !== 'false')),
         gmDef: state.identity.gmDefBadge ?? (meta['gm-def-badge'] === true || meta['gm-def-badge'] === 'true'),
-        showEco:
-            state.identity.settingEcoBadge ??
-            (meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false'),
+        showActions:
+            !state.identity.roomHideActions &&
+            (state.identity.settingEcoBadge ??
+                (meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false')),
+        showEvade:
+            !state.identity.roomHideEvade &&
+            (state.identity.settingEcoBadge ??
+                (meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false')),
+        showClash:
+            !state.identity.roomHideClash &&
+            (state.identity.settingEcoBadge ??
+                (meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false')),
         gmEco: state.identity.gmEcoBadge ?? (meta['gm-eco-badge'] === true || meta['gm-eco-badge'] === 'true'),
         colorAct: String(state.identity.colorAct || meta['color-act'] || DEFAULT_COLOR_ACT),
         colorEva: String(state.identity.colorEva || meta['color-eva'] || DEFAULT_COLOR_EVA),
@@ -210,17 +227,21 @@ export function buildGraphicsFromMeta(
         actions: Number(meta['actions-used']) || 0,
         evadeUsed: meta['evasions-used'] === true || meta['evasions-used'] === 'true',
         clashUsed: meta['clashes-used'] === true || meta['clashes-used'] === 'true',
-        showHpBar: meta['setting-hp-bar'] !== false && meta['setting-hp-bar'] !== 'false',
+        showHpBar: !id.roomHideHpBar && meta['setting-hp-bar'] !== false && meta['setting-hp-bar'] !== 'false',
         gmHpBar: meta['gm-hp-bar'] === true || meta['gm-hp-bar'] === 'true',
-        showHpText: meta['setting-hp-text'] !== false && meta['setting-hp-text'] !== 'false',
+        showHpText: !id.roomHideHpText && meta['setting-hp-text'] !== false && meta['setting-hp-text'] !== 'false',
         gmHpText: meta['gm-hp-text'] === true || meta['gm-hp-text'] === 'true',
-        showWillBar: meta['setting-will-bar'] !== false && meta['setting-will-bar'] !== 'false',
+        showWillBar: !id.roomHideWillBar && meta['setting-will-bar'] !== false && meta['setting-will-bar'] !== 'false',
         gmWillBar: meta['gm-will-bar'] === true || meta['gm-will-bar'] === 'true',
-        showWillText: meta['setting-will-text'] !== false && meta['setting-will-text'] !== 'false',
+        showWillText:
+            !id.roomHideWillText && meta['setting-will-text'] !== false && meta['setting-will-text'] !== 'false',
         gmWillText: meta['gm-will-text'] === true || meta['gm-will-text'] === 'true',
-        showDef: meta['setting-def-badge'] !== false && meta['setting-def-badge'] !== 'false',
+        showDef: !id.roomHideDef && meta['setting-def-badge'] !== false && meta['setting-def-badge'] !== 'false',
         gmDef: meta['gm-def-badge'] === true || meta['gm-def-badge'] === 'true',
-        showEco: meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
+        showActions:
+            !id.roomHideActions && meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
+        showEvade: !id.roomHideEvade && meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
+        showClash: !id.roomHideClash && meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
         gmEco: meta['gm-eco-badge'] === true || meta['gm-eco-badge'] === 'true',
         colorAct: String(meta['color-act'] || DEFAULT_COLOR_ACT),
         colorEva: String(meta['color-eva'] || DEFAULT_COLOR_EVA),

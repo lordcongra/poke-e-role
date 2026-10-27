@@ -154,11 +154,7 @@ export function QuickAddPokemonModal({ isOpen, onClose, lookupData: externalLook
                     </div>
 
                     <label className={`quick-add-modal__checkbox-label ${isShiny ? 'is-shiny-active' : ''}`}>
-                        <input
-                            type="checkbox"
-                            checked={isShiny}
-                            onChange={(e) => setIsShiny(e.target.checked)}
-                        />
+                        <input type="checkbox" checked={isShiny} onChange={(e) => setIsShiny(e.target.checked)} />
                         <Sparkles size={14} /> Shiny Discovery
                     </label>
 

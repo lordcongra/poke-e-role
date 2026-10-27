@@ -352,7 +352,7 @@ export function buildGraphicDefinitions(
         };
     }
 
-    if (data.showEco) {
+    if (data.showActions || data.showEvade || data.showClash) {
         const badgeCenterY = baseY + 18 * scale;
         const isVisible = (!data.gmEco || role === 'GM') && isTokenVisible;
 
@@ -367,6 +367,7 @@ export function buildGraphicDefinitions(
         const badges = [
             {
                 id: 'badge-act',
+                show: data.showActions,
                 value: data.actions,
                 color: data.colorAct,
                 centerX: baseActionX + data.actOffsetX * scale,
@@ -374,6 +375,7 @@ export function buildGraphicDefinitions(
             },
             {
                 id: 'badge-eva',
+                show: data.showEvade,
                 value: data.evadeUsed ? '✓' : '◯',
                 color: data.colorEva,
                 centerX: baseEvadeX + data.evaOffsetX * scale,
@@ -381,6 +383,7 @@ export function buildGraphicDefinitions(
             },
             {
                 id: 'badge-cla',
+                show: data.showClash,
                 value: data.clashUsed ? '✓' : '◯',
                 color: data.colorCla,
                 centerX: baseClashX + data.claOffsetX * scale,
@@ -389,6 +392,8 @@ export function buildGraphicDefinitions(
         ];
 
         badges.forEach((badge) => {
+            if (!badge.show) return;
+
             const boxX = badge.centerX - badgeWidth / 2;
             const boxY = badge.centerY - badgeHeight / 2;
 

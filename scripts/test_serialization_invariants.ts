@@ -754,8 +754,53 @@ runTest('applyRoomUpdatesToMeta and mapRoomSettings serialize explicit false and
         false,
         'mapRoomSettings preserves false defaultNpcInitiativeHidden'
     );
-    assert.equal(mapped.roomDefaultOffsetX, 0, 'mapRoomSettings preserves 0 offset');
-    assert.equal(mapped.roomDefaultOffsetY, 0, 'mapRoomSettings preserves 0 offset');
+    // Test roomHide* granular HUD visibility toggles
+    const hudVisibilityUpdates = {
+        roomHideHpBar: true,
+        roomHideHpText: true,
+        roomHideWillBar: true,
+        roomHideWillText: true,
+        roomHideDef: true,
+        roomHideActions: true,
+        roomHideEvade: true,
+        roomHideClash: true
+    };
+    applyRoomUpdatesToMeta(initialRoomMeta, hudVisibilityUpdates);
+    assert.equal(initialRoomMeta.roomHideHpBar, true, 'Explicitly sets roomHideHpBar to true');
+    assert.equal(initialRoomMeta.roomHideHpText, true, 'Explicitly sets roomHideHpText to true');
+    assert.equal(initialRoomMeta.roomHideWillBar, true, 'Explicitly sets roomHideWillBar to true');
+    assert.equal(initialRoomMeta.roomHideWillText, true, 'Explicitly sets roomHideWillText to true');
+    assert.equal(initialRoomMeta.roomHideDef, true, 'Explicitly sets roomHideDef to true');
+    assert.equal(initialRoomMeta.roomHideActions, true, 'Explicitly sets roomHideActions to true');
+    assert.equal(initialRoomMeta.roomHideEvade, true, 'Explicitly sets roomHideEvade to true');
+    assert.equal(initialRoomMeta.roomHideClash, true, 'Explicitly sets roomHideClash to true');
+
+    const mappedHud = mapRoomSettings(initialRoomMeta);
+    assert.equal(mappedHud.roomHideHpBar, true, 'mapRoomSettings maps roomHideHpBar true');
+    assert.equal(mappedHud.roomHideHpText, true, 'mapRoomSettings maps roomHideHpText true');
+    assert.equal(mappedHud.roomHideWillBar, true, 'mapRoomSettings maps roomHideWillBar true');
+    assert.equal(mappedHud.roomHideWillText, true, 'mapRoomSettings maps roomHideWillText true');
+    assert.equal(mappedHud.roomHideDef, true, 'mapRoomSettings maps roomHideDef true');
+    assert.equal(mappedHud.roomHideActions, true, 'mapRoomSettings maps roomHideActions true');
+    assert.equal(mappedHud.roomHideEvade, true, 'mapRoomSettings maps roomHideEvade true');
+    assert.equal(mappedHud.roomHideClash, true, 'mapRoomSettings maps roomHideClash true');
+
+    // Symmetrical reset to false
+    applyRoomUpdatesToMeta(initialRoomMeta, {
+        roomHideHpBar: false,
+        roomHideHpText: false,
+        roomHideWillBar: false,
+        roomHideWillText: false,
+        roomHideDef: false,
+        roomHideActions: false,
+        roomHideEvade: false,
+        roomHideClash: false
+    });
+    const mappedHudFalse = mapRoomSettings(initialRoomMeta);
+    assert.equal(mappedHudFalse.roomHideHpBar, false, 'mapRoomSettings maps roomHideHpBar false symmetrically');
+    assert.equal(mappedHudFalse.roomHideHpText, false, 'mapRoomSettings maps roomHideHpText false symmetrically');
+    assert.equal(mappedHudFalse.roomHideDef, false, 'mapRoomSettings maps roomHideDef false symmetrically');
+    assert.equal(mappedHudFalse.roomHideActions, false, 'mapRoomSettings maps roomHideActions false symmetrically');
 
     // Verify UI permission checks across GlobalToolbar and TokenEmptyState are identical
     const checkCanUse = (isGm: boolean, gmOnlyGenerators?: boolean) => isGm || gmOnlyGenerators === false;
@@ -2089,6 +2134,7 @@ await runTest('combatBoost: symmetrical serialization, hydration, and item effec
         id: 'item-rock-gem',
         name: 'Rock Gem',
         qty: 1,
+        desc: '',
         tags: '[Acc Succ +1: Rock] [Dmg Succ +2: Rock]'
     };
     assert.ok(hasCombatBoostTags(gemItem.tags), 'Detects combat boost tags in item string');

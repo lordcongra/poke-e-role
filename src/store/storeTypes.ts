@@ -508,6 +508,14 @@ export interface IdentitySlice {
         gmDemoMode: boolean;
         activeRoomCampaignName?: string;
         activeRoomCampaignId?: string;
+        roomHideHpBar?: boolean;
+        roomHideHpText?: boolean;
+        roomHideWillBar?: boolean;
+        roomHideWillText?: boolean;
+        roomHideDef?: boolean;
+        roomHideActions?: boolean;
+        roomHideEvade?: boolean;
+        roomHideClash?: boolean;
 
         // Initiative HUD User Settings
         initiativeTrackerPreset: string;
@@ -605,6 +613,14 @@ export interface RoomSettings {
     roomDefaultOffsetY?: number;
     activeRoomCampaignName?: string;
     activeRoomCampaignId?: string;
+    roomHideHpBar?: boolean;
+    roomHideHpText?: boolean;
+    roomHideWillBar?: boolean;
+    roomHideWillText?: boolean;
+    roomHideDef?: boolean;
+    roomHideActions?: boolean;
+    roomHideEvade?: boolean;
+    roomHideClash?: boolean;
 }
 
 export type SheetMode = 'Pokémon' | 'Trainer' | 'Trainer (Special)';

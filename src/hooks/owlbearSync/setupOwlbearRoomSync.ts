@@ -36,6 +36,16 @@ export async function setupOwlbearRoomSync(
     let lastSyncedRoomOffsetX = useCharacterStore.getState().identity.roomDefaultOffsetX ?? 0;
     let lastSyncedRoomOffsetY = useCharacterStore.getState().identity.roomDefaultOffsetY ?? 0;
     let lastSyncedGmOnlyTrackers = useCharacterStore.getState().identity.gmOnlyTrackers ?? false;
+    let lastSyncedVisibilityFlags = {
+        roomHideHpBar: false,
+        roomHideHpText: false,
+        roomHideWillBar: false,
+        roomHideWillText: false,
+        roomHideDef: false,
+        roomHideActions: false,
+        roomHideEvade: false,
+        roomHideClash: false
+    };
     let lastSyncedSceneScale = useCharacterStore.getState().identity.sceneDefaultScale;
     let lastSyncedSceneOffsetX = useCharacterStore.getState().identity.sceneDefaultOffsetX;
     let lastSyncedSceneOffsetY = useCharacterStore.getState().identity.sceneDefaultOffsetY;
@@ -147,6 +157,16 @@ export async function setupOwlbearRoomSync(
             if (mapped.gmOnlyTrackers !== undefined) {
                 lastSyncedGmOnlyTrackers = mapped.gmOnlyTrackers;
             }
+            lastSyncedVisibilityFlags = {
+                roomHideHpBar: Boolean(mapped.roomHideHpBar),
+                roomHideHpText: Boolean(mapped.roomHideHpText),
+                roomHideWillBar: Boolean(mapped.roomHideWillBar),
+                roomHideWillText: Boolean(mapped.roomHideWillText),
+                roomHideDef: Boolean(mapped.roomHideDef),
+                roomHideActions: Boolean(mapped.roomHideActions),
+                roomHideEvade: Boolean(mapped.roomHideEvade),
+                roomHideClash: Boolean(mapped.roomHideClash)
+            };
         } else if (role === 'GM') {
             const initialRoomSettings: Record<string, unknown> = {
                 ruleset: 'vg-vit-hp',
@@ -257,6 +277,32 @@ export async function setupOwlbearRoomSync(
                             console.warn('[SyncEngine] Error re-rendering tokens on gmOnlyTrackers change:', err)
                         );
                     }
+                }
+
+                const hasVisibilityChanged =
+                    Boolean(data.roomHideHpBar) !== lastSyncedVisibilityFlags.roomHideHpBar ||
+                    Boolean(data.roomHideHpText) !== lastSyncedVisibilityFlags.roomHideHpText ||
+                    Boolean(data.roomHideWillBar) !== lastSyncedVisibilityFlags.roomHideWillBar ||
+                    Boolean(data.roomHideWillText) !== lastSyncedVisibilityFlags.roomHideWillText ||
+                    Boolean(data.roomHideDef) !== lastSyncedVisibilityFlags.roomHideDef ||
+                    Boolean(data.roomHideActions) !== lastSyncedVisibilityFlags.roomHideActions ||
+                    Boolean(data.roomHideEvade) !== lastSyncedVisibilityFlags.roomHideEvade ||
+                    Boolean(data.roomHideClash) !== lastSyncedVisibilityFlags.roomHideClash;
+
+                if (hasVisibilityChanged) {
+                    lastSyncedVisibilityFlags = {
+                        roomHideHpBar: Boolean(data.roomHideHpBar),
+                        roomHideHpText: Boolean(data.roomHideHpText),
+                        roomHideWillBar: Boolean(data.roomHideWillBar),
+                        roomHideWillText: Boolean(data.roomHideWillText),
+                        roomHideDef: Boolean(data.roomHideDef),
+                        roomHideActions: Boolean(data.roomHideActions),
+                        roomHideEvade: Boolean(data.roomHideEvade),
+                        roomHideClash: Boolean(data.roomHideClash)
+                    };
+                    onTokensNeedRender(true).catch((err) =>
+                        console.warn('[SyncEngine] Error re-rendering tokens on room visibility change:', err)
+                    );
                 }
 
                 let roomOffsetsChanged = false;

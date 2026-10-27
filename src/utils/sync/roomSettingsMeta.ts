@@ -25,6 +25,14 @@ export function applyRoomUpdatesToMeta(
         else if (k === 'roomDefaultScale') roomMeta.roomDefaultScale = Number(v);
         else if (k === 'roomDefaultOffsetX') roomMeta.roomDefaultOffsetX = Number(v);
         else if (k === 'roomDefaultOffsetY') roomMeta.roomDefaultOffsetY = Number(v);
+        else if (k === 'roomHideHpBar') roomMeta.roomHideHpBar = Boolean(v);
+        else if (k === 'roomHideHpText') roomMeta.roomHideHpText = Boolean(v);
+        else if (k === 'roomHideWillBar') roomMeta.roomHideWillBar = Boolean(v);
+        else if (k === 'roomHideWillText') roomMeta.roomHideWillText = Boolean(v);
+        else if (k === 'roomHideDef') roomMeta.roomHideDef = Boolean(v);
+        else if (k === 'roomHideActions') roomMeta.roomHideActions = Boolean(v);
+        else if (k === 'roomHideEvade') roomMeta.roomHideEvade = Boolean(v);
+        else if (k === 'roomHideClash') roomMeta.roomHideClash = Boolean(v);
         else if (k === 'activeRoomCampaignName') roomMeta.activeRoomCampaignName = v;
         else if (k === 'activeRoomCampaignId') roomMeta.activeRoomCampaignId = v;
         else roomMeta[k] = v;
@@ -60,6 +68,14 @@ export function mapRoomSettings(sData: Record<string, unknown>) {
         roomDefaultOffsetY: sData.roomDefaultOffsetY !== undefined ? Number(sData.roomDefaultOffsetY) : undefined,
         activeRoomCampaignName:
             sData.activeRoomCampaignName !== undefined ? String(sData.activeRoomCampaignName) : undefined,
-        activeRoomCampaignId: sData.activeRoomCampaignId !== undefined ? String(sData.activeRoomCampaignId) : undefined
+        activeRoomCampaignId: sData.activeRoomCampaignId !== undefined ? String(sData.activeRoomCampaignId) : undefined,
+        roomHideHpBar: sData.roomHideHpBar !== undefined ? Boolean(sData.roomHideHpBar) : undefined,
+        roomHideHpText: sData.roomHideHpText !== undefined ? Boolean(sData.roomHideHpText) : undefined,
+        roomHideWillBar: sData.roomHideWillBar !== undefined ? Boolean(sData.roomHideWillBar) : undefined,
+        roomHideWillText: sData.roomHideWillText !== undefined ? Boolean(sData.roomHideWillText) : undefined,
+        roomHideDef: sData.roomHideDef !== undefined ? Boolean(sData.roomHideDef) : undefined,
+        roomHideActions: sData.roomHideActions !== undefined ? Boolean(sData.roomHideActions) : undefined,
+        roomHideEvade: sData.roomHideEvade !== undefined ? Boolean(sData.roomHideEvade) : undefined,
+        roomHideClash: sData.roomHideClash !== undefined ? Boolean(sData.roomHideClash) : undefined
     };
 }

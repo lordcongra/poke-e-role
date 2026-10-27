@@ -82,13 +82,22 @@ export function TrainerPokedex() {
     const headerElements = (
         <div className="trainer-pokedex__header-elements">
             <div className="trainer-pokedex__header-counters">
-                <span className="trainer-pokedex__counter-pill trainer-pokedex__counter-pill--seen" title="Seen Pokémon">
+                <span
+                    className="trainer-pokedex__counter-pill trainer-pokedex__counter-pill--seen"
+                    title="Seen Pokémon"
+                >
                     Seen: {totals.seen}
                 </span>
-                <span className="trainer-pokedex__counter-pill trainer-pokedex__counter-pill--caught" title="Caught Pokémon">
+                <span
+                    className="trainer-pokedex__counter-pill trainer-pokedex__counter-pill--caught"
+                    title="Caught Pokémon"
+                >
                     Caught: {totals.caught}
                 </span>
-                <span className="trainer-pokedex__counter-pill trainer-pokedex__counter-pill--shiny" title="Shiny Pokémon">
+                <span
+                    className="trainer-pokedex__counter-pill trainer-pokedex__counter-pill--shiny"
+                    title="Shiny Pokémon"
+                >
                     Shiny: {totals.shiny}
                 </span>
             </div>

@@ -40,7 +40,15 @@ const EXCLUDED_FROM_TOKEN_SAVE = new Set([
     'roomDefaultOffsetY',
     'sceneDefaultScale',
     'sceneDefaultOffsetX',
-    'sceneDefaultOffsetY'
+    'sceneDefaultOffsetY',
+    'roomHideHpBar',
+    'roomHideHpText',
+    'roomHideWillBar',
+    'roomHideWillText',
+    'roomHideDef',
+    'roomHideActions',
+    'roomHideEvade',
+    'roomHideClash'
 ]);
 
 const OBR_KEY_MAP: Record<string, string> = {
@@ -304,6 +312,14 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         gmDemoMode: false,
         activeRoomCampaignName: undefined,
         activeRoomCampaignId: undefined,
+        roomHideHpBar: false,
+        roomHideHpText: false,
+        roomHideWillBar: false,
+        roomHideWillText: false,
+        roomHideDef: false,
+        roomHideActions: false,
+        roomHideEvade: false,
+        roomHideClash: false,
 
         // Apply Local Settings
         initiativeTrackerPreset: initialInitSettings.preset,

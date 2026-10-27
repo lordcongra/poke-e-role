@@ -3,6 +3,7 @@ import { TooltipIcon } from '../../../ui/TooltipIcon';
 import { NumberSpinner } from '../../../ui/NumberSpinner';
 import { isStandaloneMode } from '../../../../utils/sync/storageAdapter';
 import { useRulesTokenHudOps } from './useRulesTokenHudOps';
+import { RulesTokenHudVisibility } from './RulesTokenHudVisibility';
 
 interface RulesSectionTokenHudProps {
     onOpenInfo: (info: { title: string; content: string }) => void;
@@ -17,30 +18,11 @@ export function RulesSectionTokenHud({ onOpenInfo }: RulesSectionTokenHudProps) 
 
     return (
         <>
-            <div>
-                <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
-                    Token Trackers Visibility{' '}
-                    <TooltipIcon
-                        onClick={() =>
-                            onOpenInfo({
-                                title: 'Token Trackers Visibility',
-                                content:
-                                    'Controls whether token HUD trackers (HP, Will, Defenses, Actions) are visible to players across the entire room. When set to "GM Only", all token HUDs are hidden from players and only visible to the GM. Default is "Everyone" (which respects each token\'s individual visibility settings).'
-                            })
-                        }
-                    />
-                </label>
-                <select
-                    className="identity-grid__select rules-modal__select text-subtext"
-                    style={{ color: 'var(--text-main)' }}
-                    value={ops.gmOnlyTrackers ? 'GM Only' : 'Everyone'}
-                    onWheel={(e) => e.currentTarget.blur()}
-                    onChange={(e) => ops.handleTrackersVisibilityChange(e.target.value === 'GM Only', e)}
-                >
-                    <option value="Everyone">Everyone (Respect Token Settings)</option>
-                    <option value="GM Only">GM Only (Hide All From Players)</option>
-                </select>
-            </div>
+            <RulesTokenHudVisibility
+                onOpenInfo={onOpenInfo}
+                gmOnlyTrackers={ops.gmOnlyTrackers}
+                onTrackersVisibilityChange={ops.handleTrackersVisibilityChange}
+            />
 
             <div>
                 <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
