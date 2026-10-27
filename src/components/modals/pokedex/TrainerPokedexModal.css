@@ -27,6 +27,8 @@
     flex-direction: column;
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
     overflow: hidden;
+    min-height: 0;
+    overscroll-behavior: contain;
 }
 
 /* Header & Progress Banner */
@@ -37,6 +39,7 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    flex-shrink: 0;
 }
 
 .trainer-pokedex-header__top {
@@ -107,11 +110,9 @@
 .trainer-pokedex-header__stat-label--seen {
     color: #60a5fa;
 }
-
 .trainer-pokedex-header__stat-label--caught {
     color: #4ade80;
 }
-
 .trainer-pokedex-header__stat-label--shiny {
     color: #facc15;
 }
@@ -138,7 +139,6 @@
 .trainer-pokedex-header__progress-fill--seen {
     background: linear-gradient(90deg, #3b82f6, #60a5fa);
 }
-
 .trainer-pokedex-header__progress-fill--caught {
     background: linear-gradient(90deg, #16a34a, #4ade80);
 }
@@ -166,6 +166,7 @@
     flex: 1;
     display: flex;
     align-items: center;
+    min-width: 0;
 }
 
 .trainer-pokedex-header__register-icon {
@@ -177,6 +178,7 @@
 
 .trainer-pokedex-header__register-input {
     width: 100%;
+    min-width: 0;
     height: 34px;
     padding: 4px 10px 4px 30px;
     background: var(--input-bg, var(--panel-bg));
@@ -195,6 +197,7 @@
 
 .trainer-pokedex-header__register-btn {
     height: 34px;
+    min-height: unset;
     padding: 0 14px;
     display: flex;
     align-items: center;
@@ -202,6 +205,10 @@
     white-space: nowrap;
     flex-shrink: 0;
     font-weight: 600;
+}
+
+.trainer-pokedex-header__register-btn-text--mobile {
+    display: none;
 }
 
 /* Filters & Search Row */
@@ -300,10 +307,22 @@
     color: #fff !important;
 }
 
+.trainer-pokedex-header__reset-btn {
+    height: 32px;
+    min-height: unset;
+    padding: 0 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* Body / List Container */
 .trainer-pokedex-modal__body {
-    flex: 1;
+    flex: 1 1 0%;
     overflow-y: auto;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     padding: 16px;
     display: flex;
     flex-direction: column;
@@ -328,6 +347,12 @@
 }
 
 /* Trainer Controls on PokemonLookupCard */
+.trainer-pokedex-modal__body .gm-pokemon-lookup__card-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 6px;
+}
+
 .trainer-pokedex-card-controls {
     display: flex;
     gap: 4px;
@@ -360,13 +385,11 @@
     border-color: #3b82f6;
     color: #93c5fd;
 }
-
 .trainer-pokedex-toggle-btn--caught-active {
     background: rgba(34, 197, 94, 0.18);
     border-color: #22c55e;
     color: #86efac;
 }
-
 .trainer-pokedex-toggle-btn--shiny-active {
     background: rgba(234, 179, 8, 0.18);
     border-color: #eab308;
@@ -384,13 +407,102 @@
 }
 
 @media (max-width: 768px) {
+    .trainer-pokedex-modal__overlay {
+        padding: 0;
+    }
+    .trainer-pokedex-modal__container {
+        width: 100vw;
+        max-width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+        border: none;
+    }
+    .trainer-pokedex-header {
+        padding: 8px 10px;
+        gap: 6px;
+    }
     .trainer-pokedex-header__progress-grid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 6px;
+    }
+    .trainer-pokedex-header__stat-card {
+        padding: 5px 8px;
+        font-size: 0.75rem;
+        gap: 3px;
+    }
+    .trainer-pokedex-header__stat-info {
+        font-size: 0.75rem;
+    }
+    .trainer-pokedex-header__progress-track {
+        height: 4px;
     }
     .trainer-pokedex-header__shiny-card {
-        grid-column: span 2;
+        padding: 4px 8px;
+        min-width: auto;
+    }
+    .trainer-pokedex-header__register-form {
+        padding: 3px 6px;
+        gap: 6px;
+    }
+    .trainer-pokedex-header__register-input {
+        height: 28px;
+        font-size: 0.85rem;
+    }
+    .trainer-pokedex-header__register-btn {
+        height: 28px;
+        min-height: 28px;
+        padding: 0 10px;
+        font-size: 0.8rem;
+    }
+    .trainer-pokedex-header__register-btn-text {
+        display: none;
+    }
+    .trainer-pokedex-header__register-btn-text--mobile {
+        display: inline;
+    }
+    .trainer-pokedex-header__filters-row {
+        gap: 6px;
+    }
+    .trainer-pokedex-header__search-wrap {
+        min-width: 100%;
+        flex: 1 1 100%;
+    }
+    .trainer-pokedex-header__search-input,
+    .trainer-pokedex-header__type-select {
+        height: 28px;
+        font-size: 0.82rem;
+    }
+    .trainer-pokedex-header__type-select {
+        flex: 1;
+        min-width: 0;
+    }
+    .trainer-pokedex-header__reset-btn {
+        order: 3;
+        height: 28px;
+        min-height: 28px;
+        padding: 0 8px;
+        flex-shrink: 0;
+    }
+    .trainer-pokedex-header__status-tabs {
+        order: 4;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 2px;
+    }
+    .trainer-pokedex-modal__body {
+        padding: 10px 12px;
+        gap: 10px;
     }
     .trainer-pokedex-card-controls {
         flex-wrap: wrap;
+        gap: 4px;
+        margin-right: 0;
+    }
+    .trainer-pokedex-toggle-btn {
+        padding: 3px 6px;
+        font-size: 0.7rem;
     }
 }

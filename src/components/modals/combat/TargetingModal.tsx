@@ -34,7 +34,8 @@ interface TargetingModalProps {
         effectiveness: number,
         reduction: number,
         override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number },
-        fieldFactors?: string[]
+        fieldFactors?: string[],
+        fieldReduction?: number
     ) => void;
     onMultiRoll?: (
         baseDmg: number,
@@ -51,6 +52,7 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
 
     const [selectedTargetId, setSelectedTargetId] = useState<string>('manual');
     const [reduction, setReduction] = useState(0);
+    const [fieldReduction, setFieldReduction] = useState(0);
     const [effectiveness, setEffectiveness] = useState<number>(0);
     const [appliedFieldFactors, setAppliedFieldFactors] = useState<string[]>([]);
     const [multiTargets, setMultiTargets] = useState<MultiTargetRowData[]>([]);
@@ -117,11 +119,12 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
         setSelectedTargetId(val);
         if (val === 'manual') {
             setAppliedFieldFactors([]);
+            setFieldReduction(0);
             return;
         }
         const sel = targets.find((t) => t.id === val);
         if (sel) {
-            const { targetDef, factors, forceNeutralFlying } = calculateTargetDefAndFactors(
+            const { targetDef, flatReduction, factors, forceNeutralFlying } = calculateTargetDefAndFactors(
                 sel,
                 isPhysicalMove,
                 activeBattlefield
@@ -132,6 +135,7 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
                     : calculateDefaultEffectiveness(move.type, sel.types);
             if (forceNeutralFlying && eff > 0) eff = 0;
             setReduction(targetDef);
+            setFieldReduction(flatReduction);
             setEffectiveness(eff);
             setAppliedFieldFactors(factors);
         }
@@ -183,7 +187,7 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
             value: overrideValue
         };
         if (mode === 'single') {
-            onRoll(baseDamage, isCrit, effectiveness, reduction, override, appliedFieldFactors);
+            onRoll(baseDamage, isCrit, effectiveness, reduction, override, appliedFieldFactors, fieldReduction);
         } else {
             const selections: MultiTargetSelection[] = multiTargets
                 .filter((r) => r.selected)
@@ -191,6 +195,7 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
                     id: r.id,
                     name: r.name,
                     def: r.def,
+                    flatReduction: r.flatReduction || 0,
                     effectiveness: r.effectiveness,
                     isEvaded: r.isEvaded,
                     isPlayerSide: r.isPlayerSide,
@@ -199,7 +204,7 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
             if (onMultiRoll) {
                 onMultiRoll(baseDamage, isCrit, selections, override, appliedFieldFactors);
             } else {
-                onRoll(baseDamage, isCrit, effectiveness, reduction, override, appliedFieldFactors);
+                onRoll(baseDamage, isCrit, effectiveness, reduction, override, appliedFieldFactors, fieldReduction);
             }
         }
         onClose();

@@ -58,6 +58,7 @@ export function MultiTargetSection({
         id: t.id,
         name: t.name,
         def: override.active && override.type === 'dice-ignore' ? 0 : t.def,
+        flatReduction: t.flatReduction,
         effectiveness: t.effectiveness,
         isEvaded: t.isEvaded,
         isPlayerSide: t.isPlayerSide,
@@ -170,6 +171,19 @@ export function MultiTargetSection({
                                             >
                                                 {target.isPlayerSide ? 'Ally' : 'Foe'}
                                             </span>
+                                            {Boolean(target.flatReduction && target.flatReduction > 0) && (
+                                                <span
+                                                    className="targeting-modal__side-tag"
+                                                    style={{
+                                                        background: 'rgba(0, 188, 212, 0.15)',
+                                                        color: '#00bcd4',
+                                                        border: '1px solid rgba(0, 188, 212, 0.4)'
+                                                    }}
+                                                    title={`Force Field (-${target.flatReduction} Damage)`}
+                                                >
+                                                    -{target.flatReduction} Dmg
+                                                </span>
+                                            )}
                                         </div>
                                     </td>
 

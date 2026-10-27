@@ -301,8 +301,10 @@ export async function executeMultiTargetDamageRoll(
     if (override.active && override.type === 'flat') {
         for (const target of activeTargets) {
             const effMod = target.effectiveness;
-            const finalDamage = Math.max(0, override.value + effMod);
+            const targetFlatRed = target.flatReduction || 0;
+            const finalDamage = Math.max(0, override.value + effMod - targetFlatRed);
             const effStr = effMod > 0 ? ` (+${effMod} SE)` : effMod < 0 ? ` (${effMod} NVE)` : '';
+            const redStr = targetFlatRed > 0 ? ` (-${targetFlatRed} Force Field)` : '';
 
             const targetTags = [...tags];
             if (effMod > 0) {
@@ -313,7 +315,7 @@ export async function executeMultiTargetDamageRoll(
             const finalTags = targetTags.length > 0 ? ` [ ${targetTags.join(' | ')} ]` : '';
             const title = `${privacyTag}${nickname} rolled ${move.name || 'Damage'} vs ${target.name}${finalTags}`;
 
-            const message = `Direct Damage Override: ${override.value} Flat Dmg${effStr} = ${finalDamage} Total Damage`;
+            const message = `Direct Damage Override: ${override.value} Flat Dmg${effStr}${redStr} = ${finalDamage} Total Damage`;
 
             await emitRollLogEntry({
                 title,
@@ -463,11 +465,12 @@ export async function executeMultiTargetDamageRoll(
                 seNegated = true;
             }
 
+            const targetFlatRed = target.flatReduction || 0;
             const baseDmg = (effectiveSucc > 0 ? effectiveSucc : 1) + attackerFlatMod;
-            const finalDamage = Math.max(0, baseDmg + effMod);
+            const finalDamage = Math.max(0, baseDmg + effMod - targetFlatRed);
             const effStr =
                 effMod > 0 ? ` (+${effMod} SE)` : effMod < 0 ? ` (${effMod} NVE)` : seNegated ? ' [SE Negated]' : '';
-            const dmgLine = `${baseDmg} Dmg${effStr} = ${finalDamage} Total Damage`;
+            const dmgLine = `${baseDmg} Dmg${effStr}${targetFlatRed > 0 ? ` (-${targetFlatRed} Force Field)` : ''} = ${finalDamage} Total Damage`;
 
             const footnotes: string[] = [];
             if (seNegated) {

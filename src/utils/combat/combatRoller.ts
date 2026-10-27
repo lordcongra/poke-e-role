@@ -432,7 +432,8 @@ export async function executeDamageRoll(
     effectiveness: number,
     reduction: number,
     override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number },
-    fieldFactors?: string[]
+    fieldFactors?: string[],
+    flatReduction: number = 0
 ) {
     const nickname = state.identity.nickname || state.identity.species || 'Someone';
     const abilityString = (state.identity.ability || '').toLowerCase();
@@ -449,6 +450,10 @@ export async function executeDamageRoll(
     if (fieldFactors && fieldFactors.length > 0) {
         const normalizedFactors = fieldFactors.map((f) => f.replace('-1 Dmg', '-1 Damage'));
         tags.push(`Factors: ${normalizedFactors.join(', ')}`);
+    }
+
+    if (flatReduction > 0) {
+        finalFlatMod -= flatReduction;
     }
 
     // Deal with Overrides

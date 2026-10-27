@@ -73,7 +73,7 @@ export function SingleTargetSection({
                             fontWeight: 600
                         }}
                     >
-                        Active Force Field Reduction: {appliedFieldFactors.join(', ')}
+                        Active Force Field: {appliedFieldFactors.join(', ')}
                     </div>
                 )}
                 {isPoolDepleted && (

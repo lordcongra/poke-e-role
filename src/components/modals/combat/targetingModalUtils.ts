@@ -86,6 +86,7 @@ export interface MultiTargetSelection {
     id: string;
     name: string;
     def: number;
+    flatReduction?: number;
     effectiveness: number;
     isEvaded: boolean;
     isPlayerSide: boolean;
@@ -97,6 +98,7 @@ export interface MultiTargetRowData {
     name: string;
     selected: boolean;
     def: number;
+    flatReduction?: number;
     effectiveness: number;
     isEvaded: boolean;
     isPlayerSide: boolean;
@@ -113,13 +115,14 @@ export function initializeMultiTargetRows(
     maxTargets: number
 ): MultiTargetRowData[] {
     const rows: MultiTargetRowData[] = targets.map((t) => {
-        const { targetDef } = calculateTargetDefAndFactors(t, isPhysicalMove, activeBattlefield);
+        const { targetDef, flatReduction } = calculateTargetDefAndFactors(t, isPhysicalMove, activeBattlefield);
         const isTera = activeTransformation === 'Terastallize' && t.isTera;
         return {
             id: t.id,
             name: t.name,
             selected: false,
             def: targetDef,
+            flatReduction: flatReduction || 0,
             effectiveness: isTera ? 1 : calculateDefaultEffectiveness(moveType, t.types),
             isEvaded: false,
             isPlayerSide: t.isPlayerSide,
@@ -302,8 +305,9 @@ export function calculateTargetDefAndFactors(
     target: TargetOption,
     isPhysicalMove: boolean,
     activeBattlefield?: BattlefieldData | null
-): { targetDef: number; factors: string[]; forceNeutralFlying: boolean } {
+): { targetDef: number; flatReduction: number; factors: string[]; forceNeutralFlying: boolean } {
     let targetDef = target.def;
+    let flatReduction = 0;
     const factors: string[] = [];
     let forceNeutralFlying = false;
 
@@ -345,19 +349,21 @@ export function calculateTargetDefAndFactors(
             const hasAuroraVeil = activeFields.some((ff) => ff.name.toLowerCase().includes('aurora veil'));
 
             if (hasReflect && isPhysicalMove) {
-                targetDef += 1;
-                factors.push('Reflect (+1 Def)');
+                flatReduction += 1;
+                factors.push('Reflect (-1 Damage)');
             }
             if (hasLightScreen && !isPhysicalMove) {
-                targetDef += 1;
-                factors.push('Light Screen (+1 Sp.Def)');
+                flatReduction += 1;
+                factors.push('Light Screen (-1 Damage)');
             }
             if (hasAuroraVeil) {
-                targetDef += 1;
-                factors.push('Aurora Veil (+1 Def/Sp.Def)');
+                flatReduction += 1;
+                factors.push('Aurora Veil (-1 Damage)');
             }
         }
     }
 
-    return { targetDef, factors, forceNeutralFlying };
+    return { targetDef, flatReduction, factors, forceNeutralFlying };
 }
+
+export const initializeMultiTargets = initializeMultiTargetRows;

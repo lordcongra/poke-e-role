@@ -168,7 +168,7 @@ export const FORCE_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         color: '#E91E63',
         icon: 'Shield',
         initials: 'RF',
-        effects: ['-1 Damage from Physical Moves (Defense +1 for all allies)', 'Protects user and allies for 4 rounds'],
+        effects: ['-1 Damage from Physical Moves for all allies', 'Protects user and allies for 4 rounds'],
         defaultRounds: 4
     },
     {
@@ -179,10 +179,7 @@ export const FORCE_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
         color: '#9C27B0',
         icon: 'Shield',
         initials: 'LS',
-        effects: [
-            '-1 Damage from Special Moves (Sp. Defense +1 for all allies)',
-            'Protects user and allies for 4 rounds'
-        ],
+        effects: ['-1 Damage from Special Moves for all allies', 'Protects user and allies for 4 rounds'],
         defaultRounds: 4
     },
     {

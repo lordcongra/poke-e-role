@@ -143,7 +143,9 @@ export function TrainerPokedexHeader({
                     className="action-button action-button--theme trainer-pokedex-header__register-btn"
                     disabled={!registerName.trim()}
                 >
-                    <Plus size={14} /> Register Entry
+                    <Plus size={14} />
+                    <span className="trainer-pokedex-header__register-btn-text">Register Entry</span>
+                    <span className="trainer-pokedex-header__register-btn-text--mobile">Add</span>
                 </button>
             </form>
 
@@ -236,10 +238,9 @@ export function TrainerPokedexHeader({
                 {/* Reset Filters Button */}
                 <button
                     type="button"
-                    className="action-button action-button--dark"
+                    className="action-button action-button--dark trainer-pokedex-header__reset-btn"
                     onClick={onResetFilters}
                     title="Reset all filters"
-                    style={{ height: '32px', padding: '0 8px' }}
                 >
                     <RotateCcw size={14} />
                 </button>
