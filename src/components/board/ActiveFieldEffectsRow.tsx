@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import {
     getFieldEffectInfo,
@@ -7,6 +8,8 @@ import {
     type FieldEffectInfo
 } from '../../utils/combat/fieldEffectsData';
 import './ActiveFieldEffectsRow.css';
+
+const COLLAPSED_LIMIT = 2;
 
 interface FieldRowItem {
     id: string;
@@ -19,6 +22,7 @@ interface FieldRowItem {
 export function ActiveFieldEffectsRow() {
     const activeBattlefield = useCharacterStore((state) => state.activeBattlefield);
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [isExpanded, setIsExpanded] = useState(false);
 
     if (!activeBattlefield) return null;
 
@@ -37,10 +41,14 @@ export function ActiveFieldEffectsRow() {
 
     if (items.length === 0) return null;
 
+    const shouldShowToggle = items.length > COLLAPSED_LIMIT;
+    const visibleItems = isExpanded || !shouldShowToggle ? items : items.slice(0, COLLAPSED_LIMIT);
+    const hiddenCount = items.length - COLLAPSED_LIMIT;
+
     return (
         <div className="sheet-field-effects-row">
             <div className="sheet-field-effects-list">
-                {items.map((item) => {
+                {visibleItems.map((item) => {
                     const isSelected = selectedId === item.id;
                     const color = item.info.color;
 
@@ -95,6 +103,28 @@ export function ActiveFieldEffectsRow() {
                         </div>
                     );
                 })}
+
+                {shouldShowToggle && (
+                    <button
+                        type="button"
+                        className={`sheet-field-expand-btn ${isExpanded ? 'is-expanded' : ''}`}
+                        onClick={() => setIsExpanded((prev) => !prev)}
+                        title={isExpanded ? 'Collapse field effects' : `Show ${hiddenCount} more active effects`}
+                        aria-label={isExpanded ? 'Collapse field effects' : `Show ${hiddenCount} more active effects`}
+                    >
+                        {isExpanded ? (
+                            <>
+                                <ChevronUp size={13} />
+                                <span className="sheet-field-expand-count">Less</span>
+                            </>
+                        ) : (
+                            <>
+                                <ChevronDown size={13} />
+                                <span className="sheet-field-expand-count">+{hiddenCount}</span>
+                            </>
+                        )}
+                    </button>
+                )}
             </div>
         </div>
     );

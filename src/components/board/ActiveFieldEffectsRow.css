@@ -1,6 +1,5 @@
 .sheet-field-effects-row {
-    margin-bottom: 8px;
-    padding-bottom: 8px;
+    padding-bottom: 4px;
     border-bottom: 1px dashed color-mix(in srgb, var(--primary) 30%, transparent);
     width: 100%;
 }
@@ -135,4 +134,44 @@
 .sheet-field-card__effect-item {
     line-height: 1.35;
     color: var(--text-main);
+}
+
+.sheet-field-expand-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 3px 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.2;
+    border-radius: 6px;
+    border: 1px dashed color-mix(in srgb, var(--primary) 40%, transparent);
+    background: var(--panel-bg);
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+}
+
+.sheet-field-expand-btn:hover {
+    color: var(--text-main);
+    border-color: var(--primary);
+    border-style: solid;
+    background: var(--row-odd);
+    transform: translateY(-1px);
+}
+
+.sheet-field-expand-btn.is-expanded {
+    background: var(--row-even);
+    border-style: solid;
+    border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+    color: var(--primary);
+}
+
+.sheet-field-expand-count {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
 }

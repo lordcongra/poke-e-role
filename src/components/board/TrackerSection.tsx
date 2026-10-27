@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { CombatStat, SocialStat, Skill } from '../../types/enums';
+import { CombatStat, Skill } from '../../types/enums';
 import {
     rollGeneric,
     parseCombatTags,
@@ -18,8 +18,9 @@ import { TooltipIcon } from '../ui/TooltipIcon';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { TakeChancesModal } from '../modals/combat/TakeChancesModal';
 import { ClashModal } from '../modals/combat/ClashModal';
+import { ManeuversModal } from '../modals/combat/ManeuversModal';
 import { RestModal } from '../modals/combat/RestModal';
-import { Dices, RotateCcw, Tent, XCircle } from 'lucide-react';
+import { Dices, RotateCcw, Swords, Tent, XCircle } from 'lucide-react';
 import { AbilityTrackerControl } from '../abilities/AbilityTrackerControl';
 import { getAbilityBenefitSummary } from '../../data/abilities/knownAbilities';
 import { ActiveFieldEffectsRow } from './ActiveFieldEffectsRow';
@@ -90,7 +91,7 @@ export function TrackerSection() {
         }
     };
 
-    const [maneuver, setManeuver] = useState('none');
+    const [showManeuversModal, setShowManeuversModal] = useState(false);
     const [showClashModal, setShowClashModal] = useState(false);
     const [showRestModal, setShowRestModal] = useState(false);
     const [chancesModalOpen, setChancesModalOpen] = useState(false);
@@ -258,86 +259,6 @@ export function TrackerSection() {
         const evadeTotal = calculateSkillTotal(Skill.EVASION, state, itemBuffs);
 
         rollGeneric('Evasion', dexTotal + evadeTotal, 'dex', true, false, true, true);
-    };
-
-    const rollManeuver = () => {
-        if (maneuver === 'none') return;
-
-        const state = useCharacterStore.getState();
-        const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-        const itemBuffs = parseCombatTags(
-            state.inventory,
-            state.extraCategories,
-            undefined,
-            abilityText,
-            state.passives
-        );
-
-        if (maneuver === 'ambush')
-            rollGeneric(
-                'Ambush',
-                calculateStatTotal(CombatStat.DEX, state, itemBuffs) +
-                    calculateSkillTotal(Skill.STEALTH, state, itemBuffs),
-                'dex',
-                false,
-                false,
-                true,
-                true
-            );
-        else if (maneuver === 'cover')
-            rollGeneric(
-                'Cover an Ally',
-                calculateStatTotal('will', state, itemBuffs),
-                'will',
-                false,
-                false,
-                true,
-                false
-            );
-        else if (maneuver === 'grapple')
-            rollGeneric(
-                'Grapple',
-                calculateStatTotal(CombatStat.STR, state, itemBuffs) +
-                    calculateSkillTotal(Skill.BRAWL, state, itemBuffs),
-                'str',
-                false,
-                false,
-                true,
-                true
-            );
-        else if (maneuver === 'run')
-            rollGeneric(
-                'Run Away',
-                calculateStatTotal(CombatStat.DEX, state, itemBuffs) +
-                    calculateSkillTotal(Skill.ATHLETIC, state, itemBuffs),
-                'dex',
-                false,
-                false,
-                true,
-                true
-            );
-        else if (maneuver === 'stabilize')
-            rollGeneric(
-                'Stabilize Ally',
-                calculateStatTotal(SocialStat.CLE, state, itemBuffs) +
-                    calculateSkillTotal(Skill.MEDICINE, state, itemBuffs),
-                'cle',
-                false,
-                false,
-                true,
-                true
-            );
-        else if (maneuver === 'struggle')
-            rollGeneric(
-                'Struggle (Accuracy)',
-                calculateStatTotal(CombatStat.DEX, state, itemBuffs) +
-                    calculateSkillTotal(Skill.BRAWL, state, itemBuffs),
-                'dex',
-                false,
-                false,
-                true,
-                true
-            );
     };
 
     const currentState = useCharacterStore.getState();
@@ -565,28 +486,13 @@ export function TrackerSection() {
                     </div>
 
                     <div className="tracker-section__row-space-between">
-                        <div className="tracker-section__maneuver-subrow">
-                            <select
-                                value={maneuver}
-                                onChange={(event) => setManeuver(event.target.value)}
-                                className="tracker-section__maneuver-select text-label"
-                            >
-                                <option value="none">-- Maneuver --</option>
-                                <option value="ambush">Ambush (Dex+Stl)</option>
-                                <option value="cover">Cover Ally (Will)</option>
-                                <option value="grapple">Grapple (Str+Bwl)</option>
-                                <option value="run">Run (Dex+Ath)</option>
-                                <option value="stabilize">Stabilize (Cle+Med)</option>
-                                <option value="struggle">Struggle (Accuracy)</option>
-                            </select>
-                            <button
-                                type="button"
-                                onClick={rollManeuver}
-                                className="action-button action-button--dark tracker-section__maneuver-btn"
-                            >
-                                <Dices size={16} />
-                            </button>
-                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowManeuversModal(true)}
+                            className="action-button action-button--dark tracker-section__maneuvers-btn"
+                        >
+                            <Swords size={14} style={{ marginRight: '4px' }} /> Maneuvers
+                        </button>
 
                         <div className="tracker-section__first-hit-group">
                             <span className="tracker-section__first-hit-label text-label">
@@ -715,6 +621,7 @@ export function TrackerSection() {
             {chancesModalOpen && <TakeChancesModal onClose={() => setChancesModalOpen(false)} />}
             {showClashModal && <ClashModal onClose={() => setShowClashModal(false)} />}
             {showRestModal && <RestModal onClose={() => setShowRestModal(false)} />}
+            {showManeuversModal && <ManeuversModal onClose={() => setShowManeuversModal(false)} />}
 
             {pendingTriggers && (
                 <RoundEndTriggerModal
