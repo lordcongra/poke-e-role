@@ -1,4 +1,4 @@
-# Pokerole 3.0 Sheet v3.7.3 (Standalone PWA & Owlbear Rodeo Extension)
+# Pokerole 3.0 Sheet v3.7.4 (Standalone PWA & Owlbear Rodeo Extension)
 
 A highly automated, modular character sheet and GM Toolkit for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings).
 
@@ -57,12 +57,14 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 ## 🌟 Features
 
-### 🎒 Item Charges, Automated Healing & Trainer PC Sync
+### 🎒 Item Moves, Rechargeable Charges & Bag Filters
 
-- **Item Charges & Auto-Populating Consumables:** Multi-use item charges are now a core feature across all inventories! Applicable official consumables (such as Potions, Super/Hyper Potions, Remedies, Energy Roots, and drinks) automatically auto-populate with their standard charges, featuring visual charge pips on inventory cards and list rows that count down with each use.
-- **Automated Medicine & Item Effects:** Using Potions, Ethers, and status restoratives opens a target selector for party members or allies, automatically restoring HP, recovering Will points, and cleansing status ailments.
+- **Thrown Items & Learnset Item Moves:** Equipped combat items and thrown projectiles (such as Geo Pebbles, Corsola Twigs, Gravelerocks, and Iron Spikes) can now be used as attacks directly from your Learnset! An expandable *Item Moves* drawer displays available consumable and held item attacks alongside your moves, with 1-click rolling for both Accuracy and Damage.
+- **Dual-Stat Weapon Scaling:** Thrown weapons and items with versatile stat scaling (such as Strength or Dexterity) automatically compare your attributes and recommend your highest stat, with 1-click switching in the attack configuration popover.
+- **Item Charges & Rechargeable Consumables:** Multi-use item charges are fully supported across all inventories! Applicable official consumables automatically populate with standard charges. Items also support a "Do Not Consume at 0 Charges" option for rechargeable tools, wonder orbs, and mystical artifacts.
+- **Inventory Search & Category Filters:** Rapidly search items by name or filter by category (Medicine, Berries, Held Items, Thrown Weapons, Battle Items, Key Items) with the built-in inventory filter bar.
 - **Trainer to Pokémon PC Sync:** When playing as a Trainer, using an item on any Pokémon in your belt party automatically synchronizes their restored health and cleared status ailments directly to that Pokémon's stored sheet in PC Storage and active tokens on the map.
-- **Homebrew & Custom Item Integration:** Craft custom items in the Homebrew Workshop or customize them in the Item Editor with custom maximum charges, HP/Will restoration values, and specific status condition cures.
+- **Homebrew Workshop Tags & Auto-Categorization:** Craft custom items in the Homebrew Workshop with custom charges, recovery values, status condition cures, guaranteed flat damage/accuracy success tags, and automated sub-category sorting.
 
 ### 💾 Pokémon PC Storage & Adventure Vaults
 
@@ -238,6 +240,6 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 To install this extension into your Owlbear Rodeo room, copy the Manifest URL below and paste it into your Owlbear Rodeo extension manager:
 
-`https://lordcongra.github.io/poke-e-role/manifest.json?v=3.7.3`
+`https://lordcongra.github.io/poke-e-role/manifest.json?v=3.7.4`
 
 _(Note: If the sheet updates, you can force Owlbear to fetch the newest version by bumping the version tag at the end of the URL!)_

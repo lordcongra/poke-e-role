@@ -29,7 +29,7 @@ import {
     Target
 } from 'lucide-react';
 
-export const CURRENT_VERSION = '3.7.3';
+export const CURRENT_VERSION = '3.7.4';
 
 export interface ChangelogHighlight {
     id: string;
@@ -131,12 +131,50 @@ export function getChangelogDiff(lastSeenVersion: string | null): ChangelogDiffR
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
-        version: '3.7.3',
+        version: '3.7.4',
         date: 'October 2026',
         highlights: [
             {
+                id: 'item-charges',
+                version: '3.7.4',
+                title: 'Item Moves, Rechargeable Charges & Bag Filters',
+                icon: Package,
+                badge: 'Items & Inventory',
+                summary:
+                    'Turn equipped items and thrown weapons into rollable attacks directly from your Learnset! Features rechargeable non-depleting charges, dual-stat attack scaling, inventory search and category filters, and powerful new Homebrew Workshop tags.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Thrown Items & Learnset Item Moves:</strong> Equipped combat items and thrown projectiles
+                            (such as Geo Pebbles, Corsola Twigs, Gravelerocks, and Iron Spikes) can now be used as attacks by making them in the Homebrew Workshop! An expandable <em>Item Moves</em> drawer displays available consumable and held item
+                            attacks alongside your moves, with 1-click rolling for both Accuracy and Damage.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Rechargeable Charges & Non-Depleting Items:</strong> Multi-use items now include a toggle to
+                            prevent auto-deletion when reaching zero charges. Perfect for rechargeable tools, wonder orbs, mystical
+                            artifacts, and camp equipment that can be refilled rather than discarded.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Dual-Stat Attack Scaling:</strong> Thrown weapons and combat items with versatile stat scaling
+                            (such as Strength or Dexterity) automatically compare your attributes and recommend your highest stat,
+                            with full control to switch stats prior to rolling.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Inventory Search & Category Filter Bar:</strong> Easily organize and navigate crowded bags with a
+                            brand new inventory filter bar! Instantly filter by category (Medicine, Berries, Held Items, Thrown Weapons,
+                            Battle Items, and Key Items) or use the search bar to find items in real time.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Homebrew Workshop Tags & Sub-Categories:</strong> Craft richer custom items with new mechanical
+                            tags for guaranteed flat damage and accuracy successes (like Type Gems), customizable combat stat boosts,
+                            and automated sub-category sorting in the Homebrew Workshop.
+                        </p>
+                    </div>
+                )
+            },
+            {
                 id: 'multi-target-damage',
-                version: '3.7.3',
+                version: '3.7.4',
                 title: 'Multi-Target Damage & Area Attacks',
                 icon: Target,
                 badge: 'Combat & Moves',
@@ -168,37 +206,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 )
             },
             {
-                id: 'item-charges',
-                version: '3.7.3',
-                title: 'Item Charges & Auto-Populated Consumables',
-                icon: Package,
-                badge: 'Items & Inventory',
-                summary:
-                    'Item charges are now supported across the sheet and auto-populate on applicable consumables! Standard multi-use items like Potions, Remedies, and drinks automatically gain their official charges, track uses with visual pips, and sync party item healing directly to PC Storage.',
-                details: (
-                    <div>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Item Charges & Auto-Populating Consumables:</strong> Item charges have been added as an optional checkbox to all item entries! Pre-existing Pokérole items (such as Potions,
-                            Super/Hyper Potions, Remedies, Energy Roots, and drinks like MooMoo Milk or Fresh Water) now
-                            automatically auto-populate with their RAW multi-use charges, displaying interactive charge
-                            pips or numbers on inventory cards and list rows that count down with each use.
-                        </p>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Trainer & Pokémon PC Storage Sync:</strong> When playing as a Trainer, using an item on
-                            any Pokémon in your party automatically synchronizes their updated health, Will, and cleared
-                            status conditions directly into PC Storage and onto active map tokens.
-                        </p>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Custom Charges & Homebrew Integration:</strong> Full charge and effect customization in
-                            the Item Editor and Homebrew Workshop, allowing you to easily configure max charges, recovery
-                            values, and cured ailments on custom items.
-                        </p>
-                    </div>
-                )
-            },
-            {
                 id: 'pokemon-pc-storage',
-                version: '3.7.3',
+                version: '3.7.4',
                 title: 'Pokémon PC Storage & Adventure Vaults',
                 icon: HardDrive,
                 badge: 'Major System',
@@ -251,7 +260,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
             },
             {
                 id: 'battlefield-effects',
-                version: '3.7.3',
+                version: '3.7.4',
                 title: 'Battlefield Effects & Tracker Sync',
                 icon: Swords,
                 badge: 'Combat & Arena',
@@ -281,6 +290,65 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 )
             }
         ],
+        changes: [
+            <strong
+                key="item-moves-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Package size={16} /> Thrown Items, Learnset Item Moves & Rechargeable Charges
+            </strong>,
+            <ul
+                key="item-moves-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Learnset Item Moves Drawer:</strong> Equipped combat items and thrown projectiles (like Geo
+                    Pebbles, Corsola Twigs, and Gravelerocks) now appear in an expandable &quot;Item Moves&quot; drawer
+                    directly within the Moves tab, allowing you to roll attacks without navigating away from combat.
+                </li>
+                <li>
+                    <strong>Dual-Stat Weapon Scaling:</strong> Thrown weapons and items that scale off either Strength or
+                    Dexterity automatically compare your attributes and select the higher stat, while allowing 1-click
+                    switching in the attack configuration popover.
+                </li>
+                <li>
+                    <strong>Rechargeable Charges & Non-Depleting Items:</strong> Added a &quot;Do Not Consume at 0
+                    Charges&quot; option for multi-use items so they remain in your inventory when depleted rather than being
+                    automatically discarded.
+                </li>
+                <li>
+                    <strong>Inventory Search & Category Filters:</strong> Added a quick search bar and category filter pills
+                    (All, Medicine, Berries, Held, Thrown, Battle, Key Items) to the inventory table and card views for
+                    effortless bag management.
+                </li>
+                <li>
+                    <strong>Automatic Success Tags & Type Gems:</strong> Expanded the Tag Builder with new mechanical tags
+                    for guaranteed flat damage successes and accuracy successes, perfectly supporting Type Gems and
+                    guaranteed-hit effects.
+                </li>
+                <li>
+                    <strong>1-Click Roll Log Chance Dice:</strong> Moves and items with secondary chance triggers now display
+                    a convenient 1-click button in the chat roll log to quickly roll chance dice.
+                </li>
+                <li>
+                    <strong>Homebrew Workshop Categorization:</strong> Custom homebrew items are now automatically organized
+                    into clean, collapsible sub-categories for faster browsing and editing.
+                </li>
+            </ul>
+        ]
+    },
+    {
+        version: '3.7.3',
+        date: 'October 2026',
         changes: [
             <strong
                 key="multi-target-title"
