@@ -235,7 +235,10 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             if (newStatuses.length === 0)
                 newStatuses.push({ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 });
 
-            const newMoves = state.moves.map((m) => ({ ...m, active: false }));
+            const newMoves = state.moves.map((m) => {
+                const base = m.mimicBackup ? { ...m.mimicBackup } : { ...m };
+                return { ...base, active: false };
+            });
 
             let targetHpMax = state.health.hpMax;
             let targetWillMax = state.will.willMax;

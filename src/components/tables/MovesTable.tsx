@@ -23,8 +23,11 @@ import { MovesTableModifiers } from './MovesTableModifiers';
 import { MovesTableLearnset } from './MovesTableLearnset';
 import { ItemMovesDrawer } from './learnset/ItemMovesDrawer';
 import { DualScaleModal } from '../modals/combat/DualScaleModal';
+import { MetronomeModal } from '../modals/combat/MetronomeModal';
+import { CopyMoveModal } from '../modals/combat/CopyMoveModal';
+import { isMetronomeMove, isCopyMove } from '../../utils/combat/copyMoveUtils';
 import { TooltipIcon } from '../ui/TooltipIcon';
-import { Plus, AlertTriangle, Trash2, XCircle, Check } from 'lucide-react';
+import { Plus, AlertTriangle, Trash2, XCircle, Check, Sparkles, RotateCcw } from 'lucide-react';
 import './MovesTable.css';
 
 export function MovesTable() {
@@ -32,6 +35,7 @@ export function MovesTable() {
     const moves = useCharacterStore((state) => state.moves);
     const addMove = useCharacterStore((state) => state.addMove);
     const removeMove = useCharacterStore((state) => state.removeMove);
+    const revertAllMimicMoves = useCharacterStore((state) => state.revertAllMimicMoves);
     const trackers = useCharacterStore((state) => state.trackers);
     const updateTracker = useCharacterStore((state) => state.updateTracker);
     const learnset = useCharacterStore((state) => state.identity.learnset);
@@ -57,11 +61,24 @@ export function MovesTable() {
     const passives = useCharacterStore((state) => state.passives);
 
     const [targetingMove, setTargetingMove] = useState<MoveData | null>(null);
+    const [metronomeModalMove, setMetronomeModalMove] = useState<MoveData | null>(null);
+    const [copyModalData, setCopyModalData] = useState<{
+        move: MoveData;
+        initialAction?: 'accuracy' | 'damage';
+    } | null>(null);
     const [deleteMoveId, setDeleteMoveId] = useState<string | null>(null);
     const [moveList, setMoveList] = useState<string[]>([]);
 
     const [showModifiersModal, setShowModifiersModal] = useState(false);
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; description: string } | null>(null);
+
+    const handleCopyMoveClick = (move: MoveData, initialAction: 'accuracy' | 'damage' = 'damage') => {
+        setCopyModalData({ move, initialAction });
+    };
+
+    const handleMetronomeClick = (move: MoveData) => {
+        setMetronomeModalMove(move);
+    };
 
     useEffect(() => {
         loadLocalDataset().then(() => setMoveList([...ALL_MOVES]));
@@ -76,6 +93,16 @@ export function MovesTable() {
     const maxMoves = 3 + insightTotal;
 
     const handleTargetClick = (move: MoveData) => {
+        if (isMetronomeMove(move)) {
+            setMetronomeModalMove(move);
+            return;
+        }
+
+        if (isCopyMove(move)) {
+            setCopyModalData({ move, initialAction: 'damage' });
+            return;
+        }
+
         if (move.category === 'Status') {
             alert(`${move.name || 'This'} is a Support move (No Damage).`);
             return;
@@ -186,6 +213,41 @@ export function MovesTable() {
             </datalist>
 
             <CollapsingSection title="MOVES" headerElements={headerElements}>
+                {moves.some((m) => !!m.mimicBackup) && (
+                    <div
+                        className="moves-table__mimic-banner"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '8px 12px',
+                            background: 'rgba(245, 158, 11, 0.12)',
+                            border: '1px solid rgba(245, 158, 11, 0.35)',
+                            borderRadius: '6px',
+                            marginBottom: '8px',
+                            fontSize: '0.85rem',
+                            color: 'var(--text-main)',
+                            gap: '8px',
+                            flexWrap: 'wrap'
+                        }}
+                    >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Sparkles size={16} style={{ color: '#f59e0b', flexShrink: 0 }} />
+                            <span>
+                                One or more move slots are replaced by <strong>Mimic</strong> (lasts for current Scene).
+                            </span>
+                        </span>
+                        <button
+                            type="button"
+                            onClick={revertAllMimicMoves}
+                            className="action-button action-button--dark text-theme-header"
+                            style={{ fontSize: '0.75rem', padding: '4px 10px', gap: '5px' }}
+                            title="Revert all mimicked moves back to Mimic"
+                        >
+                            <RotateCcw size={13} /> End Scene &amp; Revert Mimic
+                        </button>
+                    </div>
+                )}
                 <div className="desktop-only-flex table-responsive-wrapper">
                     <table className="data-table moves-table__table">
                         <thead>
@@ -229,6 +291,8 @@ export function MovesTable() {
                                     extraCategories={extraCategories}
                                     onTarget={handleTargetClick}
                                     onDelete={setDeleteMoveId}
+                                    onCopyMove={handleCopyMoveClick}
+                                    onMetronome={handleMetronomeClick}
                                 />
                             ))}
                         </tbody>
@@ -244,6 +308,8 @@ export function MovesTable() {
                             extraCategories={extraCategories}
                             onTarget={handleTargetClick}
                             onDelete={setDeleteMoveId}
+                            onCopyMove={handleCopyMoveClick}
+                            onMetronome={handleMetronomeClick}
                         />
                     ))}
                 </div>
@@ -342,6 +408,23 @@ export function MovesTable() {
             )}
 
             <DualScaleModal />
+
+            {metronomeModalMove && (
+                <MetronomeModal
+                    metronomeMove={metronomeModalMove}
+                    onClose={() => setMetronomeModalMove(null)}
+                    onRollDamage={(resolved) => setTargetingMove(resolved)}
+                />
+            )}
+
+            {copyModalData && (
+                <CopyMoveModal
+                    copyMove={copyModalData.move}
+                    initialAction={copyModalData.initialAction}
+                    onClose={() => setCopyModalData(null)}
+                    onRollDamage={(resolved) => setTargetingMove(resolved)}
+                />
+            )}
         </div>
     );
 }

@@ -130,11 +130,11 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
             return { moves: newMoves };
         }),
 
-    applyMoveData: (id, data) =>
+    applyMoveData: (id, data, mimicBackup) =>
         set((state) => {
             if (!data) return state;
 
-            const mapAttrOptions = (val: string) => {
+            const mapAttrOptions = (val: string, defaultOpt = 'none') => {
                 const rawParts = (val || '')
                     .split(/[/,]|(?:\s+or\s+)/i)
                     .map((v) => v.trim())
@@ -153,11 +153,12 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                     else if (clean.includes('bea')) matched = 'bea';
                     else if (clean.includes('cut')) matched = 'cut';
                     else if (clean.includes('cle')) matched = 'cle';
+                    else if (clean === 'none' || clean.includes('sameas') || clean === '-') matched = 'none';
                     if (matched && !options.includes(matched)) {
                         options.push(matched);
                     }
                 }
-                return options.length > 0 ? options : [''];
+                return options.length > 0 ? options : [defaultOpt];
             };
 
             const mapSkillOptions = (val: string) => {
@@ -227,14 +228,14 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                         catOpts = ['Physical', 'Special', 'Status'];
                     }
 
-                    const acc1Opts = mapAttrOptions(String(data.Accuracy1 || 'str'));
+                    const acc1Opts = mapAttrOptions(String(data.Accuracy1 !== undefined ? data.Accuracy1 : 'none'), 'none');
                     const acc2Opts = mapSkillOptions(String(data.Accuracy2 || 'none'));
 
                     // Combine Damage1 and Damage2 to capture both "Strength/Dexterity" and Damage1: Strength, Damage2: Dexterity
                     const rawDamageCandidate = [data.Damage1, data.Damage2]
                         .filter((d) => d && d !== 'None' && String(d).trim() !== '')
                         .join('/');
-                    const dmg1Opts = mapAttrOptions(rawDamageCandidate);
+                    const dmg1Opts = mapAttrOptions(rawDamageCandidate, '');
 
                     const isNameUnchanged =
                         !m.name ||
@@ -289,15 +290,23 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                         return `${d1} + ${d2}`;
                     };
 
-                    const rawAcc1 = formatStatName(String(data.Accuracy1 || 'STR'));
-                    const rawAcc2 = formatStatName(String(data.Accuracy2 || 'None'));
+                    const rawAcc1 = formatStatName(String(data.Accuracy1 !== undefined ? data.Accuracy1 : 'None'));
+                    const rawAcc2 = formatStatName(String(data.Accuracy2 !== undefined ? data.Accuracy2 : 'None'));
                     const rawDmgDesc = formatDamageDesc(
                         data.Damage1 !== undefined ? String(data.Damage1) : undefined,
                         data.Damage2 !== undefined ? String(data.Damage2) : undefined
                     );
 
+                    const isAcc1None = !rawAcc1 || rawAcc1.toLowerCase() === 'none';
+                    const isAcc2None = !rawAcc2 || rawAcc2.toLowerCase() === 'none';
                     const accString =
-                        rawAcc2.toLowerCase() === 'none' ? `Accuracy: ${rawAcc1}` : `Accuracy: ${rawAcc1} + ${rawAcc2}`;
+                        isAcc1None && isAcc2None
+                            ? 'Accuracy: None'
+                            : isAcc2None
+                              ? `Accuracy: ${rawAcc1}`
+                              : isAcc1None
+                                ? `Accuracy: ${rawAcc2}`
+                                : `Accuracy: ${rawAcc1} + ${rawAcc2}`;
                     const dmgString = cat === 'Status' ? '' : `Damage: ${rawDmgDesc}`;
 
                     const rawDesc = String(data.Effect || data.Description || m.desc || '');
@@ -314,13 +323,14 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                         name: String(data.Name || m.name),
                         type: String(data.Type || 'Normal'),
                         category: isResolvedDualScale ? m.category : cat,
-                        acc1: isResolvedDualScale ? m.acc1 : acc1Opts[0] || 'str',
+                        acc1: isResolvedDualScale ? m.acc1 : acc1Opts[0] || 'none',
                         acc2: isResolvedDualScale ? m.acc2 : acc2Opts[0] || 'none',
-                        dmg1: isResolvedDualScale ? m.dmg1 : dmg1Opts[0] || '',
+                        dmg1: isResolvedDualScale ? m.dmg1 : dmg1Opts[0] === 'none' ? '' : dmg1Opts[0] || '',
                         power: data.Power !== undefined && data.Power !== '' ? Number(data.Power) : m.power,
                         desc: finalDesc,
                         marker: m.marker || '',
-                        dualScaleSelected: isResolvedDualScale
+                        dualScaleSelected: isResolvedDualScale,
+                        ...(mimicBackup ? { mimicBackup } : {})
                     };
                 }
                 return m;
@@ -337,6 +347,33 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                 pendingDualScale:
                     newPendingDualScale || (state.pendingDualScale?.moveId === id ? null : state.pendingDualScale)
             };
+        }),
+
+    revertMimicMove: (id) =>
+        set((state) => {
+            const newMoves = state.moves.map((m) => {
+                if (m.id === id && m.mimicBackup) {
+                    return { ...m.mimicBackup };
+                }
+                return m;
+            });
+            try {
+                saveToOwlbear({ 'moves-data': JSON.stringify(newMoves) });
+            } catch (e) {
+                console.warn('[MovesSlice] Failed to save reverted move to Owlbear.', e);
+            }
+            return { moves: newMoves };
+        }),
+
+    revertAllMimicMoves: () =>
+        set((state) => {
+            const newMoves = state.moves.map((m) => (m.mimicBackup ? { ...m.mimicBackup } : m));
+            try {
+                saveToOwlbear({ 'moves-data': JSON.stringify(newMoves) });
+            } catch (e) {
+                console.warn('[MovesSlice] Failed to save reverted moves to Owlbear.', e);
+            }
+            return { moves: newMoves };
         }),
 
     addSkillCheck: () =>

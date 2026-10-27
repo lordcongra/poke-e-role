@@ -7,6 +7,7 @@ import { TagBuilderModal } from '../items/TagBuilderModal';
 import { TagPillList } from '../../ui/TagPillList';
 import { extractMoveTags } from '../items/tagBuilder/tagBuilderLogic';
 import { broadcastInfo } from '../../../utils/combat/diceRoller';
+import { isCopyMove } from '../../../utils/combat/copyMoveUtils';
 import './MoveEditModal.css';
 
 interface MoveEditModalProps {
@@ -59,7 +60,20 @@ export function MoveEditModal({ moveId, onClose }: MoveEditModalProps) {
               ? 'Variable'
               : `Power ${move.power}`;
 
-    const accStr = `${(move.acc1 || 'STR').toUpperCase()} + ${(move.acc2 === 'none' ? 'None' : move.acc2 || 'Brawl').toUpperCase()}`;
+    const isCopyAcc =
+        isCopyMove(move) &&
+        (move.acc1 === 'SameAsCopiedMove' || move.acc1 === 'none' || move.name.trim().toLowerCase() === 'copycat');
+    const acc1Label = move.acc1 === 'none' || !move.acc1 ? 'NONE' : move.acc1.toUpperCase();
+    const acc2Label = move.acc2 === 'none' || !move.acc2 ? 'NONE' : (move.acc2 || 'Brawl').toUpperCase();
+    const accStr = isCopyAcc
+        ? 'COPY'
+        : acc1Label === 'NONE' && acc2Label === 'NONE'
+          ? 'NONE'
+          : acc2Label === 'NONE'
+            ? acc1Label
+            : acc1Label === 'NONE'
+              ? acc2Label
+              : `${acc1Label} + ${acc2Label}`;
     const dmgStr =
         move.category === 'Status' ? '-' : `${move.dmg1 ? move.dmg1.toUpperCase() + ' + ' : ''}${move.power}`;
     return (

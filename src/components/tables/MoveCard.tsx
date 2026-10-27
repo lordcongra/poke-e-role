@@ -25,8 +25,10 @@ import {
     AlertTriangle,
     XCircle,
     Trash2,
-    PiggyBank
+    PiggyBank,
+    RotateCcw
 } from 'lucide-react';
+import { isMetronomeMove, isCopyMove } from '../../utils/combat/copyMoveUtils';
 import './MoveCard.css';
 
 interface MoveCardProps {
@@ -35,13 +37,24 @@ interface MoveCardProps {
     extraCategories: ExtraCategory[];
     onTarget: (moveData: MoveData) => void;
     onDelete: (id: string) => void;
+    onCopyMove?: (move: MoveData, initialAction?: 'accuracy' | 'damage') => void;
+    onMetronome?: (move: MoveData) => void;
 }
 
-export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, onTarget, onDelete }: MoveCardProps) {
+export const MoveCard = memo(function MoveCard({
+    move,
+    skills,
+    extraCategories,
+    onTarget,
+    onDelete,
+    onCopyMove,
+    onMetronome
+}: MoveCardProps) {
     const updateMove = useCharacterStore((state) => state.updateMove);
     const moveUpMove = useCharacterStore((state) => state.moveUpMove);
     const moveDownMove = useCharacterStore((state) => state.moveDownMove);
     const applyMoveData = useCharacterStore((state) => state.applyMoveData);
+    const revertMimicMove = useCharacterStore((state) => state.revertMimicMove);
     const roomCustomMoves = useCharacterStore((state) => state.roomCustomMoves);
 
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
@@ -81,16 +94,8 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
 
         const clean = value.toLowerCase();
         const baseClean = clean.split(' (')[0].trim();
-        const matchesAllMoves = ALL_MOVES.some((m) => {
-            const mClean = m.toLowerCase();
-            return mClean === clean || mClean === baseClean;
-        });
-        const matchesCustom = roomCustomMoves.some((m) => {
-            const mClean = m.name.toLowerCase();
-            return mClean === clean || mClean === baseClean;
-        });
-
-        if (matchesAllMoves || matchesCustom) {
+        const isMatch = (name: string) => { const n = name.toLowerCase(); return n === clean || n === baseClean; };
+        if (ALL_MOVES.some(isMatch) || roomCustomMoves.some((m) => isMatch(m.name))) {
             const data = await fetchMoveData(value);
             if (data) applyMoveData(move.id, data as Record<string, unknown>);
         }
@@ -104,15 +109,14 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
 
     const inventory = useCharacterStore((state) => state.inventory);
     const passives = useCharacterStore((state) => state.passives);
+    const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
+    const ability = useCharacterStore((state) => state.identity.ability);
     useCharacterStore((state) => state.will);
     useCharacterStore((state) => state.stats);
     useCharacterStore((state) => state.socials);
     useCharacterStore((state) => state.identity.rank);
-    const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
-    const ability = useCharacterStore((state) => state.identity.ability);
     useCharacterStore((state) => state.identity.abilityActive);
     useCharacterStore((state) => state.identity.abilityTags);
-
     useCharacterStore((state) => state.health.hpCurr);
     useCharacterStore((state) => state.health.hpMax);
     useCharacterStore((state) => state.identity.type1);
@@ -121,7 +125,6 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
     useCharacterStore((state) => state.identity.terastallizeAffinity);
     useCharacterStore((state) => state.identity.terastallizeBonusActive);
     useCharacterStore((state) => state.statuses);
-
     useCharacterStore((state) => state.trackers.firstHitDmg);
     useCharacterStore((state) => state.trackers.firstHitAcc);
     useCharacterStore((state) => state.activeBattlefield);
@@ -149,14 +152,33 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
         fullState
     );
     const baseDamage = isStatusOrNoDamage ? 0 : calculateTotalDamage(move, fullState, itemBuffs);
-    const damageTotal = isStatusOrNoDamage ? '-' : baseDamage + bankedDiceForThisMove;
+    const damageTotal = isMetronomeMove(move)
+        ? 'Varies'
+        : isCopyMove(move)
+          ? 'Copy'
+          : isStatusOrNoDamage
+            ? '-'
+            : baseDamage + bankedDiceForThisMove;
+    const isCopyAcc =
+        isCopyMove(move) &&
+        (move.acc1 === 'SameAsCopiedMove' || move.acc1 === 'none' || move.name.trim().toLowerCase() === 'copycat');
+    const isNoAcc = (move.acc1 === 'none' || !move.acc1) && (move.acc2 === 'none' || !move.acc2);
+    const accuracyDisplay = isCopyAcc ? 'Copy' : isNoAcc ? '-' : accuracyTotal;
 
     const handleAccuracyClick = () => {
+        if (isMetronomeMove(move)) return onMetronome?.(move);
+        if (isCopyMove(move)) return onCopyMove?.(move, 'accuracy');
         if (totalBanked > 0) {
             setBankModalOpen(true);
         } else {
             rollAccuracy(move, useCharacterStore.getState());
         }
+    };
+
+    const handleDamageClick = () => {
+        if (isMetronomeMove(move)) return onMetronome?.(move);
+        if (isCopyMove(move)) return onCopyMove?.(move, 'damage');
+        onTarget(move);
     };
 
     const confirmWipeBank = () => {
@@ -185,7 +207,7 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                         className="move-card__accuracy-text text-value-highlight"
                         style={{ color: 'var(--text-main)' }}
                     >
-                        {accuracyTotal}
+                        {accuracyDisplay}
                     </span>
                     <button
                         type="button"
@@ -204,6 +226,17 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                     >
                         <Tag size={14} />
                     </button>
+                    {move.mimicBackup && (
+                        <button
+                            type="button"
+                            onClick={() => revertMimicMove(move.id)}
+                            className="action-button action-button--dark move-card__edit-btn"
+                            style={{ color: 'var(--semantic-warning, #f59e0b)' }}
+                            title={`Revert Mimic (Scene Reset): Returns slot to ${move.mimicBackup.name || 'Mimic'}`}
+                        >
+                            <RotateCcw size={14} />
+                        </button>
+                    )}
                     <select
                         value={move.marker || ''}
                         onChange={(event) => updateMove(move.id, 'marker', event.target.value)}
@@ -266,11 +299,12 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                             ACC:
                         </span>
                         <select
-                            value={move.acc1}
+                            value={move.acc1 || 'none'}
                             onChange={(event) => updateMove(move.id, 'acc1', event.target.value)}
                             className="move-card__stat-select text-label"
                             style={{ color: 'var(--text-main)' }}
                         >
+                            <option value="none">-- None --</option>
                             {Object.values(CombatStat).map((statistic) => (
                                 <option key={statistic} value={statistic}>
                                     {statistic.toUpperCase()}
@@ -355,7 +389,7 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                         </span>
                         <button
                             type="button"
-                            onClick={() => onTarget(move)}
+                            onClick={handleDamageClick}
                             className="action-button action-button--red move-card__damage-btn text-theme-header"
                             title="Roll Damage"
                         >

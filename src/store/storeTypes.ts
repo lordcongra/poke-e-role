@@ -191,7 +191,9 @@ export interface MovesSlice {
     removeMove: (id: string) => void;
     moveUpMove: (id: string) => void;
     moveDownMove: (id: string) => void;
-    applyMoveData: (id: string, data: Record<string, unknown>) => void;
+    applyMoveData: (id: string, data: Record<string, unknown>, mimicBackup?: MoveData) => void;
+    revertMimicMove: (id: string) => void;
+    revertAllMimicMoves: () => void;
     addSkillCheck: () => void;
     updateSkillCheck: <K extends keyof SkillCheck>(id: string, field: K, value: SkillCheck[K]) => void;
     removeSkillCheck: (id: string) => void;

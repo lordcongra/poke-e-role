@@ -6,3 +6,5 @@ export { ManeuversModal } from './ManeuversModal';
 export { RestModal } from './RestModal';
 export { TakeChancesModal } from './TakeChancesModal';
 export { TargetingModal } from './TargetingModal';
+export { MetronomeModal } from './MetronomeModal';
+export { CopyMoveModal } from './CopyMoveModal';

@@ -175,11 +175,12 @@ export function HomebrewMoveCard({
                         <span className="text-label">Accuracy:</span>
                         <div className="homebrew-move__dual-col">
                             <select
-                                value={move.acc1}
+                                value={move.acc1 || 'none'}
                                 onChange={(event) => canEdit && updateCustomMove(move.id, 'acc1', event.target.value)}
                                 disabled={!canEdit}
                                 className="homebrew-move__stat-select text-label"
                             >
+                                <option value="none">-- None --</option>
                                 {Object.values(CombatStat).map((stat) => (
                                     <option key={stat} value={stat}>
                                         {stat.toUpperCase()}

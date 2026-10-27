@@ -224,6 +224,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
                 if (m.desc && m.desc.trim() !== '') item.desc = m.desc;
                 if (m.marker && m.marker.trim() !== '') item.marker = m.marker;
                 if (m.dualScaleSelected !== undefined) item.dualScaleSelected = m.dualScaleSelected;
+                if (m.mimicBackup) item.mimicBackup = m.mimicBackup;
                 return item;
             });
             flatMetadata['moves-data'] = JSON.stringify(cleanedMoves);

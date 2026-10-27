@@ -54,6 +54,7 @@ export interface MoveData {
     marker?: string;
     dualScaleSelected?: boolean;
     attackAction?: ItemAttackAction;
+    mimicBackup?: MoveData;
 }
 
 export interface CharacterHealth {

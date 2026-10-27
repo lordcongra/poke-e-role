@@ -42,6 +42,7 @@ const mapAttr = (val: string): string => {
         if (v.includes('bea')) return 'bea';
         if (v.includes('cut')) return 'cut';
         if (v.includes('cle')) return 'cle';
+        if (v === 'none' || v.includes('sameas') || v === '-') return 'none';
     }
     return '';
 };
@@ -145,12 +146,13 @@ function parseMoves(meta: Record<string, unknown>, parsedExtraCats: ExtraCategor
                 name: String(m.name || m.Name || ''),
                 type: String(m.type || m.Type || 'Normal'),
                 category: cat as 'Physical' | 'Special' | 'Status',
-                acc1: mapAttr(String(m.acc1 || m.Accuracy1 || 'str')) || 'str',
+                acc1: mapAttr(String(m.acc1 !== undefined ? m.acc1 : m.Accuracy1 || 'none')) || 'none',
                 acc2: mapSkill(String(m.acc2 || m.Accuracy2 || 'none'), parsedExtraCats),
                 dmg1: mapAttr(rawDmgCandidate),
                 power: Number(m.power !== undefined ? m.power : m.Power || 0),
                 desc: String(m.desc || m.Description || m.Effect || ''),
                 marker: String(m.marker || m.Marker || ''),
+                ...(m.mimicBackup ? { mimicBackup: m.mimicBackup as MoveData } : {}),
                 ...(m.dualScaleSelected !== undefined
                     ? { dualScaleSelected: m.dualScaleSelected === true || m.dualScaleSelected === 'true' }
                     : {})

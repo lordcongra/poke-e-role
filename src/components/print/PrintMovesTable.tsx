@@ -1,4 +1,5 @@
 import type { MoveData, PrintConfig } from '../../store/storeTypes';
+import { isCopyMove } from '../../utils/combat/copyMoveUtils';
 
 interface PrintMovesTableProps {
     moves: MoveData[];
@@ -44,11 +45,22 @@ export function PrintMovesTable({ moves, config }: PrintMovesTableProps) {
                               const dualAccMatch = move.desc?.match(/Accuracy:\s*([^\n[]+)/i);
                               const dualDmgMatch = move.desc?.match(/Damage:\s*([^\n[]+)/i);
 
+                              const acc1Clean = (move.acc1 || '').toLowerCase();
+                              const acc2Clean = (move.acc2 || '').toLowerCase();
+                              const isCopyAcc =
+                                  isCopyMove(move) &&
+                                  (acc1Clean === 'sameascopiedmove' ||
+                                      acc1Clean === 'none' ||
+                                      move.name.trim().toLowerCase() === 'copycat');
                               const accString = dualAccMatch
                                   ? dualAccMatch[1].trim()
-                                  : (move.acc2 || '').toLowerCase() === 'none'
-                                    ? (move.acc1 || '').toUpperCase()
-                                    : `${(move.acc1 || '').toUpperCase()} + ${(move.acc2 || '').charAt(0).toUpperCase() + (move.acc2 || '').slice(1)}`;
+                                  : isCopyAcc
+                                    ? 'Copy'
+                                    : (acc1Clean === 'none' || !acc1Clean) && (acc2Clean === 'none' || !acc2Clean)
+                                      ? '-'
+                                      : acc2Clean === 'none' || !acc2Clean
+                                        ? (move.acc1 || '').toUpperCase()
+                                        : `${(move.acc1 || '').toUpperCase()} + ${(move.acc2 || '').charAt(0).toUpperCase() + (move.acc2 || '').slice(1)}`;
                               const dmgString = dualDmgMatch ? dualDmgMatch[1].trim() : (move.dmg1 || '').toUpperCase();
 
                               let cleanDesc = move.desc || '';

@@ -1,0 +1,308 @@
+/* MetronomeModal.css */
+
+.metronome-modal__overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: color-mix(in srgb, var(--dark, #0b0c10) 75%, transparent);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    animation: metronomeFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.metronome-modal__content {
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: var(--panel-bg, #1a1c23);
+    border: 2px solid var(--primary, #3b82f6);
+    border-radius: 12px;
+    box-shadow:
+        0 18px 48px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(255, 255, 255, 0.08);
+    color: var(--text-main, #f0f0f0);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: metronomeSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.metronome-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+    padding-bottom: 12px;
+}
+
+.metronome-modal__title {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.metronome-modal__close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted, #aaa);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        background 0.15s,
+        color 0.15s;
+}
+
+.metronome-modal__close-btn:hover {
+    background: var(--panel-alt, rgba(255, 255, 255, 0.08));
+    color: var(--text-main, #fff);
+}
+
+.metronome-modal__desc {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: var(--text-muted, #aaa);
+    font-style: italic;
+    background: var(--panel-alt, rgba(255, 255, 255, 0.03));
+    padding: 8px 12px;
+    border-radius: 6px;
+    border-left: 3px solid var(--primary, #3b82f6);
+}
+
+.metronome-modal__steps-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+@media (max-width: 500px) {
+    .metronome-modal__steps-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.metronome-modal__step-card {
+    background: var(--panel-alt, rgba(255, 255, 255, 0.04));
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.metronome-modal__step-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.metronome-modal__die-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--primary, #3b82f6);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.metronome-modal__step-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.metronome-modal__segmented-control {
+    display: flex;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+    border-radius: 6px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.metronome-modal__segmented-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 6px 8px;
+    color: var(--text-muted, #aaa);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.metronome-modal__segmented-btn--active {
+    background: var(--primary, #3b82f6);
+    color: #fff;
+    font-weight: bold;
+}
+
+.metronome-modal__roll-both-btn {
+    width: 100%;
+    margin-top: 4px;
+}
+
+.metronome-modal__discretion-section {
+    background: var(--panel-alt, rgba(255, 255, 255, 0.04));
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.metronome-modal__discretion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.metronome-modal__candidate-count {
+    font-size: 0.8rem;
+    color: var(--text-muted, #aaa);
+}
+
+.metronome-modal__discretion-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+@media (max-width: 500px) {
+    .metronome-modal__discretion-controls {
+        flex-direction: column;
+    }
+}
+
+.metronome-modal__search-input {
+    flex: 1;
+    min-width: 0;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text-main, #fff);
+    font-size: 0.85rem;
+}
+
+.metronome-modal__search-input:focus {
+    border-color: var(--primary, #3b82f6);
+    outline: none;
+}
+
+.metronome-modal__preview-card {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--primary, #3b82f6);
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.metronome-modal__preview-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.metronome-modal__preview-name {
+    font-size: 1.05rem;
+    font-weight: bold;
+    color: var(--text-main, #fff);
+}
+
+.metronome-modal__preview-badges {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.metronome-modal__type-pill {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.metronome-modal__cat-pill {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--panel-alt, rgba(255, 255, 255, 0.1));
+    color: var(--text-main, #fff);
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
+}
+
+.metronome-modal__stats-row {
+    display: flex;
+    gap: 16px;
+    font-size: 0.85rem;
+    color: var(--text-muted, #aaa);
+}
+
+.metronome-modal__preview-desc {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--text-main, #ccc);
+    margin: 0;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.metronome-modal__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    border-top: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+    padding-top: 12px;
+}
+
+@keyframes metronomeFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes metronomeSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
