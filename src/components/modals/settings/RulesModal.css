@@ -276,6 +276,14 @@
     border-radius: 4px;
 }
 
+.rules-modal__hud-scope-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
+}
+
 .rules-modal__hud-visibility-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);

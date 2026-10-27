@@ -14,6 +14,7 @@ export const DEFAULT_COLOR_CLA = '#dfad43';
 
 export interface GraphicsData {
     showTrackers: boolean;
+    ignoreRoomHudRules?: boolean;
     hasSpeciesOrTrainer: boolean;
     hpCurr: number;
     hpMax: number;
@@ -68,6 +69,21 @@ export interface GraphicsData {
     claOffsetY: number;
 }
 
+export function shouldHideHudElement(
+    roomHideFlag: boolean | undefined,
+    tokenIgnoreRoom: boolean | undefined,
+    enemiesOnly: boolean | undefined,
+    playersOnly: boolean | undefined,
+    isNpc: boolean | undefined,
+    role: 'PLAYER' | 'GM'
+): boolean {
+    if (!roomHideFlag) return false;
+    if (tokenIgnoreRoom) return false;
+    if (enemiesOnly && !isNpc) return false;
+    if (playersOnly && role === 'GM') return false;
+    return true;
+}
+
 export function buildGraphicsFromState(meta: Record<string, unknown>, state: CharacterState): GraphicsData {
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
     const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
@@ -75,9 +91,83 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
     const defTotal = calculateDefTotal(state, invMods);
     const sdefTotal = calculateSDefTotal(state, invMods);
 
+    const tokenIgnoreRoom =
+        state.identity.ignoreRoomHudRules ??
+        (meta['ignore-room-hud-rules'] === true || meta['ignore-room-hud-rules'] === 'true');
+    const isNpc = state.identity.isNPC ?? (meta['is-npc'] === true || meta['is-npc'] === 'true');
+    const enemiesOnly = state.identity.roomHideHudEnemiesOnly;
+    const playersOnly = state.identity.roomHideHudPlayersOnly;
+    const role = state.role ?? 'PLAYER';
+
+    const hideHpBar = shouldHideHudElement(
+        state.identity.roomHideHpBar,
+        tokenIgnoreRoom,
+        enemiesOnly,
+        playersOnly,
+        isNpc,
+        role
+    );
+    const hideHpText = shouldHideHudElement(
+        state.identity.roomHideHpText,
+        tokenIgnoreRoom,
+        enemiesOnly,
+        playersOnly,
+        isNpc,
+        role
+    );
+    const hideWillBar = shouldHideHudElement(
+        state.identity.roomHideWillBar,
+        tokenIgnoreRoom,
+        enemiesOnly,
+        playersOnly,
+        isNpc,
+        role
+    );
+    const hideWillText = shouldHideHudElement(
+        state.identity.roomHideWillText,
+        tokenIgnoreRoom,
+        enemiesOnly,
+        playersOnly,
+        isNpc,
+        role
+    );
+    const hideDef = shouldHideHudElement(
+        state.identity.roomHideDef,
+        tokenIgnoreRoom,
+        enemiesOnly,
+        playersOnly,
+        isNpc,
+        role
+    );
+    const hideActions = shouldHideHudElement(
+        state.identity.roomHideActions,
+        tokenIgnoreRoom,
+        enemiesOnly,
+        playersOnly,
+        isNpc,
+        role
+    );
+    const hideEvade = shouldHideHudElement(
+        state.identity.roomHideEvade,
+        tokenIgnoreRoom,
+        enemiesOnly,
+        playersOnly,
+        isNpc,
+        role
+    );
+    const hideClash = shouldHideHudElement(
+        state.identity.roomHideClash,
+        tokenIgnoreRoom,
+        enemiesOnly,
+        playersOnly,
+        isNpc,
+        role
+    );
+
     return {
         showTrackers:
             state.identity.showTrackers ?? (meta['show-trackers'] !== false && meta['show-trackers'] !== 'false'),
+        ignoreRoomHudRules: tokenIgnoreRoom,
         hasSpeciesOrTrainer:
             state.identity.species.trim() !== '' ||
             state.identity.nickname.trim() !== '' ||
@@ -96,39 +186,39 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
         evadeUsed: state.trackers.evade,
         clashUsed: state.trackers.clash,
         showHpBar:
-            !state.identity.roomHideHpBar &&
+            !hideHpBar &&
             (state.identity.settingHpBar ?? (meta['setting-hp-bar'] !== false && meta['setting-hp-bar'] !== 'false')),
         gmHpBar: state.identity.gmHpBar ?? (meta['gm-hp-bar'] === true || meta['gm-hp-bar'] === 'true'),
         showHpText:
-            !state.identity.roomHideHpText &&
+            !hideHpText &&
             (state.identity.settingHpText ??
                 (meta['setting-hp-text'] !== false && meta['setting-hp-text'] !== 'false')),
         gmHpText: state.identity.gmHpText ?? (meta['gm-hp-text'] === true || meta['gm-hp-text'] === 'true'),
         showWillBar:
-            !state.identity.roomHideWillBar &&
+            !hideWillBar &&
             (state.identity.settingWillBar ??
                 (meta['setting-will-bar'] !== false && meta['setting-will-bar'] !== 'false')),
         gmWillBar: state.identity.gmWillBar ?? (meta['gm-will-bar'] === true || meta['gm-will-bar'] === 'true'),
         showWillText:
-            !state.identity.roomHideWillText &&
+            !hideWillText &&
             (state.identity.settingWillText ??
                 (meta['setting-will-text'] !== false && meta['setting-will-text'] !== 'false')),
         gmWillText: state.identity.gmWillText ?? (meta['gm-will-text'] === true || meta['gm-will-text'] === 'true'),
         showDef:
-            !state.identity.roomHideDef &&
+            !hideDef &&
             (state.identity.settingDefBadge ??
                 (meta['setting-def-badge'] !== false && meta['setting-def-badge'] !== 'false')),
         gmDef: state.identity.gmDefBadge ?? (meta['gm-def-badge'] === true || meta['gm-def-badge'] === 'true'),
         showActions:
-            !state.identity.roomHideActions &&
+            !hideActions &&
             (state.identity.settingEcoBadge ??
                 (meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false')),
         showEvade:
-            !state.identity.roomHideEvade &&
+            !hideEvade &&
             (state.identity.settingEcoBadge ??
                 (meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false')),
         showClash:
-            !state.identity.roomHideClash &&
+            !hideClash &&
             (state.identity.settingEcoBadge ??
                 (meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false')),
         gmEco: state.identity.gmEcoBadge ?? (meta['gm-eco-badge'] === true || meta['gm-eco-badge'] === 'true'),
@@ -175,6 +265,42 @@ export function buildGraphicsFromMeta(
     roomDefaultOffsetY?: number
 ): GraphicsData {
     const id = useCharacterStore.getState().identity;
+    const role = useCharacterStore.getState().role;
+    const tokenIgnoreRoom = meta['ignore-room-hud-rules'] === true || meta['ignore-room-hud-rules'] === 'true';
+    const isNpc = meta['is-npc'] === true || meta['is-npc'] === 'true';
+    const enemiesOnly = id.roomHideHudEnemiesOnly;
+    const playersOnly = id.roomHideHudPlayersOnly;
+
+    const hideHpBar = shouldHideHudElement(id.roomHideHpBar, tokenIgnoreRoom, enemiesOnly, playersOnly, isNpc, role);
+    const hideHpText = shouldHideHudElement(id.roomHideHpText, tokenIgnoreRoom, enemiesOnly, playersOnly, isNpc, role);
+    const hideWillBar = shouldHideHudElement(
+        id.roomHideWillBar,
+        tokenIgnoreRoom,
+        enemiesOnly,
+        playersOnly,
+        isNpc,
+        role
+    );
+    const hideWillText = shouldHideHudElement(
+        id.roomHideWillText,
+        tokenIgnoreRoom,
+        enemiesOnly,
+        playersOnly,
+        isNpc,
+        role
+    );
+    const hideDef = shouldHideHudElement(id.roomHideDef, tokenIgnoreRoom, enemiesOnly, playersOnly, isNpc, role);
+    const hideActions = shouldHideHudElement(
+        id.roomHideActions,
+        tokenIgnoreRoom,
+        enemiesOnly,
+        playersOnly,
+        isNpc,
+        role
+    );
+    const hideEvade = shouldHideHudElement(id.roomHideEvade, tokenIgnoreRoom, enemiesOnly, playersOnly, isNpc, role);
+    const hideClash = shouldHideHudElement(id.roomHideClash, tokenIgnoreRoom, enemiesOnly, playersOnly, isNpc, role);
+
     const defaultScale =
         roomDefaultScale !== undefined
             ? roomDefaultScale
@@ -197,6 +323,7 @@ export function buildGraphicsFromMeta(
 
     return {
         showTrackers: meta['show-trackers'] !== false && meta['show-trackers'] !== 'false',
+        ignoreRoomHudRules: tokenIgnoreRoom,
         hasSpeciesOrTrainer:
             String(meta['species'] || '').trim() !== '' ||
             String(meta['nickname'] || '').trim() !== '' ||
@@ -227,21 +354,19 @@ export function buildGraphicsFromMeta(
         actions: Number(meta['actions-used']) || 0,
         evadeUsed: meta['evasions-used'] === true || meta['evasions-used'] === 'true',
         clashUsed: meta['clashes-used'] === true || meta['clashes-used'] === 'true',
-        showHpBar: !id.roomHideHpBar && meta['setting-hp-bar'] !== false && meta['setting-hp-bar'] !== 'false',
+        showHpBar: !hideHpBar && meta['setting-hp-bar'] !== false && meta['setting-hp-bar'] !== 'false',
         gmHpBar: meta['gm-hp-bar'] === true || meta['gm-hp-bar'] === 'true',
-        showHpText: !id.roomHideHpText && meta['setting-hp-text'] !== false && meta['setting-hp-text'] !== 'false',
+        showHpText: !hideHpText && meta['setting-hp-text'] !== false && meta['setting-hp-text'] !== 'false',
         gmHpText: meta['gm-hp-text'] === true || meta['gm-hp-text'] === 'true',
-        showWillBar: !id.roomHideWillBar && meta['setting-will-bar'] !== false && meta['setting-will-bar'] !== 'false',
+        showWillBar: !hideWillBar && meta['setting-will-bar'] !== false && meta['setting-will-bar'] !== 'false',
         gmWillBar: meta['gm-will-bar'] === true || meta['gm-will-bar'] === 'true',
-        showWillText:
-            !id.roomHideWillText && meta['setting-will-text'] !== false && meta['setting-will-text'] !== 'false',
+        showWillText: !hideWillText && meta['setting-will-text'] !== false && meta['setting-will-text'] !== 'false',
         gmWillText: meta['gm-will-text'] === true || meta['gm-will-text'] === 'true',
-        showDef: !id.roomHideDef && meta['setting-def-badge'] !== false && meta['setting-def-badge'] !== 'false',
+        showDef: !hideDef && meta['setting-def-badge'] !== false && meta['setting-def-badge'] !== 'false',
         gmDef: meta['gm-def-badge'] === true || meta['gm-def-badge'] === 'true',
-        showActions:
-            !id.roomHideActions && meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
-        showEvade: !id.roomHideEvade && meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
-        showClash: !id.roomHideClash && meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
+        showActions: !hideActions && meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
+        showEvade: !hideEvade && meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
+        showClash: !hideClash && meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
         gmEco: meta['gm-eco-badge'] === true || meta['gm-eco-badge'] === 'true',
         colorAct: String(meta['color-act'] || DEFAULT_COLOR_ACT),
         colorEva: String(meta['color-eva'] || DEFAULT_COLOR_EVA),

@@ -119,6 +119,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             flatMetadata['gm-def-badge'] = Boolean(id.gmDefBadge);
             flatMetadata['setting-eco-badge'] = id.settingEcoBadge !== false;
             flatMetadata['gm-eco-badge'] = Boolean(id.gmEcoBadge);
+            flatMetadata['ignore-room-hud-rules'] = Boolean(id.ignoreRoomHudRules);
 
             if (id.colorAct !== undefined) flatMetadata['color-act'] = id.colorAct;
             if (id.colorEva !== undefined) flatMetadata['color-eva'] = id.colorEva;

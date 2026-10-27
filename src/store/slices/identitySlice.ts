@@ -48,7 +48,9 @@ const EXCLUDED_FROM_TOKEN_SAVE = new Set([
     'roomHideDef',
     'roomHideActions',
     'roomHideEvade',
-    'roomHideClash'
+    'roomHideClash',
+    'roomHideHudPlayersOnly',
+    'roomHideHudEnemiesOnly'
 ]);
 
 const OBR_KEY_MAP: Record<string, string> = {
@@ -59,6 +61,7 @@ const OBR_KEY_MAP: Record<string, string> = {
     abilityTags: 'ability-tags',
     previousNativeAbility: 'previous-native-ability',
     showTrackers: 'show-trackers',
+    ignoreRoomHudRules: 'ignore-room-hud-rules',
     isNPC: 'is-npc',
     rolls: 'rolls',
     gender: 'gender',
@@ -320,6 +323,9 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         roomHideActions: false,
         roomHideEvade: false,
         roomHideClash: false,
+        roomHideHudPlayersOnly: false,
+        roomHideHudEnemiesOnly: false,
+        ignoreRoomHudRules: false,
 
         // Apply Local Settings
         initiativeTrackerPreset: initialInitSettings.preset,

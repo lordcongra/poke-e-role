@@ -48,6 +48,8 @@ export function RulesTokenHudVisibility({
     const roomHideActions = useCharacterStore((state) => state.identity.roomHideActions ?? false);
     const roomHideEvade = useCharacterStore((state) => state.identity.roomHideEvade ?? false);
     const roomHideClash = useCharacterStore((state) => state.identity.roomHideClash ?? false);
+    const roomHideHudPlayersOnly = useCharacterStore((state) => state.identity.roomHideHudPlayersOnly ?? false);
+    const roomHideHudEnemiesOnly = useCharacterStore((state) => state.identity.roomHideHudEnemiesOnly ?? false);
     const updateRoomSetting = useCharacterStore((state) => state.updateRoomSetting);
 
     const hideStates: Record<HudElementToggle['key'], boolean> = {
@@ -62,6 +64,14 @@ export function RulesTokenHudVisibility({
     };
 
     const handleToggle = (key: HudElementToggle['key'], nextVal: boolean) => {
+        updateRoomSetting(key, nextVal);
+        if (!isStandaloneMode) {
+            flushRoomSettingsToOwlbear({ [key]: nextVal }).catch(() => {});
+        }
+        renderAllSceneTokens(true).catch(() => {});
+    };
+
+    const handleScopeToggle = (key: 'roomHideHudPlayersOnly' | 'roomHideHudEnemiesOnly', nextVal: boolean) => {
         updateRoomSetting(key, nextVal);
         if (!isStandaloneMode) {
             flushRoomSettingsToOwlbear({ [key]: nextVal }).catch(() => {});
@@ -104,12 +114,42 @@ export function RulesTokenHudVisibility({
                             onOpenInfo({
                                 title: 'Hide HUD Elements (Room-Wide)',
                                 content:
-                                    'Allows the GM to globally suppress specific token HUD elements across all tokens in the room regardless of individual token settings. Checking an element hides it from all tokens.'
+                                    'Allows the GM to globally suppress specific token HUD elements across tokens in the room. Scope toggles allow restricting suppression to Players Only (kept visible to GM) or Enemies/NPCs Only (leaving player tokens visible).'
                             })
                         }
                     />
                 </label>
                 <div className="rules-modal__hud-visibility-card">
+                    <div className="rules-modal__hud-scope-row">
+                        <label
+                            className="rules-modal__checkbox-label text-subtext"
+                            title="Only hide selected HUD elements from Players; keep them visible to the GM"
+                        >
+                            <input
+                                type="checkbox"
+                                checked={roomHideHudPlayersOnly}
+                                onChange={(e) => handleScopeToggle('roomHideHudPlayersOnly', e.target.checked)}
+                                style={{ cursor: 'pointer', accentColor: 'var(--primary)' }}
+                            />
+                            <span>
+                                <strong>Players Only</strong> (Visible to GM)
+                            </span>
+                        </label>
+                        <label
+                            className="rules-modal__checkbox-label text-subtext"
+                            title="Only hide selected HUD elements on Enemies / NPCs; leave player tokens unaffected"
+                        >
+                            <input
+                                type="checkbox"
+                                checked={roomHideHudEnemiesOnly}
+                                onChange={(e) => handleScopeToggle('roomHideHudEnemiesOnly', e.target.checked)}
+                                style={{ cursor: 'pointer', accentColor: 'var(--primary)' }}
+                            />
+                            <span>
+                                <strong>Enemies / NPCs Only</strong>
+                            </span>
+                        </label>
+                    </div>
                     <div className="rules-modal__hud-visibility-grid">
                         {HUD_ELEMENTS.map((item) => (
                             <label

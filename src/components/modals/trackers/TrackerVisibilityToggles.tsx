@@ -139,6 +139,32 @@ export function TrackerVisibilityToggles() {
                     </label>
                 )}
             </div>
+
+            {isGm && (
+                <>
+                    <hr className="tracker-settings__divider" />
+                    <div className="tracker-settings__toggle-row">
+                        <label
+                            className="tracker-settings__toggle-label text-label"
+                            title="If enabled, this token ignores all room-wide HUD suppression rules set in Room Rules."
+                        >
+                            <input
+                                type="checkbox"
+                                checked={identityStore.ignoreRoomHudRules ?? false}
+                                onChange={(event) => setIdentity('ignoreRoomHudRules', event.target.checked)}
+                            />{' '}
+                            Bypass Room HUD
+                        </label>
+                        <span
+                            className="tracker-settings__gm-label text-subtext"
+                            style={{ fontStyle: 'italic', opacity: 0.8 }}
+                            title="GM-only override allowing this token to bypass room HUD suppression rules"
+                        >
+                            (GM Override)
+                        </span>
+                    </div>
+                </>
+            )}
         </>
     );
 }

@@ -663,6 +663,7 @@ function parseIdentity(
         gmDefBadge: meta['gm-def-badge'] === true || meta['gm-def-badge'] === 'true',
         settingEcoBadge: meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
         gmEcoBadge: meta['gm-eco-badge'] === true || meta['gm-eco-badge'] === 'true',
+        ignoreRoomHudRules: meta['ignore-room-hud-rules'] === true || meta['ignore-room-hud-rules'] === 'true',
         colorAct: String(meta['color-act'] || '#4890fc'),
         colorEva: String(meta['color-eva'] || '#c387fc'),
         colorCla: String(meta['color-cla'] || '#dfad43'),

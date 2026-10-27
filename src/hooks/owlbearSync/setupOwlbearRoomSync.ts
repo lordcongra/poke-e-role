@@ -44,7 +44,9 @@ export async function setupOwlbearRoomSync(
         roomHideDef: false,
         roomHideActions: false,
         roomHideEvade: false,
-        roomHideClash: false
+        roomHideClash: false,
+        roomHideHudPlayersOnly: false,
+        roomHideHudEnemiesOnly: false
     };
     let lastSyncedSceneScale = useCharacterStore.getState().identity.sceneDefaultScale;
     let lastSyncedSceneOffsetX = useCharacterStore.getState().identity.sceneDefaultOffsetX;
@@ -165,7 +167,9 @@ export async function setupOwlbearRoomSync(
                 roomHideDef: Boolean(mapped.roomHideDef),
                 roomHideActions: Boolean(mapped.roomHideActions),
                 roomHideEvade: Boolean(mapped.roomHideEvade),
-                roomHideClash: Boolean(mapped.roomHideClash)
+                roomHideClash: Boolean(mapped.roomHideClash),
+                roomHideHudPlayersOnly: Boolean(mapped.roomHideHudPlayersOnly),
+                roomHideHudEnemiesOnly: Boolean(mapped.roomHideHudEnemiesOnly)
             };
         } else if (role === 'GM') {
             const initialRoomSettings: Record<string, unknown> = {
@@ -287,7 +291,9 @@ export async function setupOwlbearRoomSync(
                     Boolean(data.roomHideDef) !== lastSyncedVisibilityFlags.roomHideDef ||
                     Boolean(data.roomHideActions) !== lastSyncedVisibilityFlags.roomHideActions ||
                     Boolean(data.roomHideEvade) !== lastSyncedVisibilityFlags.roomHideEvade ||
-                    Boolean(data.roomHideClash) !== lastSyncedVisibilityFlags.roomHideClash;
+                    Boolean(data.roomHideClash) !== lastSyncedVisibilityFlags.roomHideClash ||
+                    Boolean(data.roomHideHudPlayersOnly) !== lastSyncedVisibilityFlags.roomHideHudPlayersOnly ||
+                    Boolean(data.roomHideHudEnemiesOnly) !== lastSyncedVisibilityFlags.roomHideHudEnemiesOnly;
 
                 if (hasVisibilityChanged) {
                     lastSyncedVisibilityFlags = {
@@ -298,7 +304,9 @@ export async function setupOwlbearRoomSync(
                         roomHideDef: Boolean(data.roomHideDef),
                         roomHideActions: Boolean(data.roomHideActions),
                         roomHideEvade: Boolean(data.roomHideEvade),
-                        roomHideClash: Boolean(data.roomHideClash)
+                        roomHideClash: Boolean(data.roomHideClash),
+                        roomHideHudPlayersOnly: Boolean(data.roomHideHudPlayersOnly),
+                        roomHideHudEnemiesOnly: Boolean(data.roomHideHudEnemiesOnly)
                     };
                     onTokensNeedRender(true).catch((err) =>
                         console.warn('[SyncEngine] Error re-rendering tokens on room visibility change:', err)

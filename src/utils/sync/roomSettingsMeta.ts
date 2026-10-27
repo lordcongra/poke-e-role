@@ -33,6 +33,8 @@ export function applyRoomUpdatesToMeta(
         else if (k === 'roomHideActions') roomMeta.roomHideActions = Boolean(v);
         else if (k === 'roomHideEvade') roomMeta.roomHideEvade = Boolean(v);
         else if (k === 'roomHideClash') roomMeta.roomHideClash = Boolean(v);
+        else if (k === 'roomHideHudPlayersOnly') roomMeta.roomHideHudPlayersOnly = Boolean(v);
+        else if (k === 'roomHideHudEnemiesOnly') roomMeta.roomHideHudEnemiesOnly = Boolean(v);
         else if (k === 'activeRoomCampaignName') roomMeta.activeRoomCampaignName = v;
         else if (k === 'activeRoomCampaignId') roomMeta.activeRoomCampaignId = v;
         else roomMeta[k] = v;
@@ -76,6 +78,10 @@ export function mapRoomSettings(sData: Record<string, unknown>) {
         roomHideDef: sData.roomHideDef !== undefined ? Boolean(sData.roomHideDef) : undefined,
         roomHideActions: sData.roomHideActions !== undefined ? Boolean(sData.roomHideActions) : undefined,
         roomHideEvade: sData.roomHideEvade !== undefined ? Boolean(sData.roomHideEvade) : undefined,
-        roomHideClash: sData.roomHideClash !== undefined ? Boolean(sData.roomHideClash) : undefined
+        roomHideClash: sData.roomHideClash !== undefined ? Boolean(sData.roomHideClash) : undefined,
+        roomHideHudPlayersOnly:
+            sData.roomHideHudPlayersOnly !== undefined ? Boolean(sData.roomHideHudPlayersOnly) : undefined,
+        roomHideHudEnemiesOnly:
+            sData.roomHideHudEnemiesOnly !== undefined ? Boolean(sData.roomHideHudEnemiesOnly) : undefined
     };
 }

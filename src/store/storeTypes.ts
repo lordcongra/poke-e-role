@@ -518,6 +518,9 @@ export interface IdentitySlice {
         roomHideActions?: boolean;
         roomHideEvade?: boolean;
         roomHideClash?: boolean;
+        roomHideHudPlayersOnly?: boolean;
+        roomHideHudEnemiesOnly?: boolean;
+        ignoreRoomHudRules?: boolean;
 
         // Initiative HUD User Settings
         initiativeTrackerPreset: string;
@@ -623,6 +626,8 @@ export interface RoomSettings {
     roomHideActions?: boolean;
     roomHideEvade?: boolean;
     roomHideClash?: boolean;
+    roomHideHudPlayersOnly?: boolean;
+    roomHideHudEnemiesOnly?: boolean;
 }
 
 export type SheetMode = 'Pokémon' | 'Trainer' | 'Trainer (Special)';
