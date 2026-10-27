@@ -177,7 +177,34 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     const rawPain = getPainPenalty(move.acc1, state);
     const pain = getPainPenalty(move.acc1, state, itemBuffs, move);
 
-    const genericSuccessModifier = state.trackers.globalSucc + statuses.confusionPenalty + pain;
+    const activeBoost = state.trackers.activeCombatBoost;
+    let boostAccSucc = 0;
+    let boostAccTag = '';
+    if (activeBoost) {
+        const moveType = (move.type || '').trim().toLowerCase();
+        const boostType = (activeBoost.type || '').trim().toLowerCase();
+        const isMatchingType = !boostType || boostType === moveType;
+
+        if (isMatchingType) {
+            boostAccSucc = activeBoost.accSucc || 0;
+            useCharacterStore.getState().setActiveCombatBoost({
+                ...activeBoost,
+                stage: 'pending_damage',
+                moveId: move.id
+            });
+            if (boostAccSucc > 0) {
+                boostAccTag = `Item: ${activeBoost.sourceName} (+${boostAccSucc} Acc Succ)`;
+            }
+        } else {
+            console.warn(
+                `[CombatRoller] Auto-flushing active combat boost (${activeBoost.sourceName}, ${activeBoost.type}) because rolled move (${move.name}, ${move.type}) did not match type requirement.`
+            );
+            useCharacterStore.getState().clearActiveCombatBoost();
+        }
+    }
+
+    const genericSuccessModifier =
+        state.trackers.globalSucc + statuses.confusionPenalty + pain + (itemBuffs.accSucc || 0) + boostAccSucc;
     const successModifier = genericSuccessModifier - moveLowAccuracy;
     const mathModifier =
         successModifier !== 0 ? (successModifier > 0 ? `+${successModifier}` : `${successModifier}`) : '';
@@ -217,6 +244,8 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
 
     const chancesUsed = state.trackers.chances;
     const tags: string[] = [];
+
+    if (boostAccTag) tags.push(boostAccTag);
 
     if (rankSkillBonus > 0) tags.push('Master/Champion Rank (+2 Dice)');
     if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}: ${pain} Succ`);
@@ -326,6 +355,31 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
         }
     }
 
+    const pureAccSuccItems = (itemBuffs.accSuccItemNames || []).filter(
+        (name) => !itemBuffs.accSuccPassiveNames?.includes(name)
+    );
+    for (const item of Array.from(new Set(pureAccSuccItems))) {
+        const tagStr = `Item: ${item}`;
+        if (!tags.includes(tagStr)) tags.push(tagStr);
+    }
+    for (const passive of Array.from(new Set(itemBuffs.accSuccPassiveNames || []))) {
+        const tagStr = `Passive: ${passive}`;
+        if (!tags.includes(tagStr)) tags.push(tagStr);
+    }
+    for (const ability of Array.from(new Set(itemBuffs.accSuccAbilityNames || []))) {
+        const tagStr = `Ability: ${ability}`;
+        if (!tags.includes(tagStr)) tags.push(tagStr);
+    }
+    if (
+        itemBuffs.accSucc !== 0 &&
+        pureAccSuccItems.length === 0 &&
+        (!itemBuffs.accSuccPassiveNames || itemBuffs.accSuccPassiveNames.length === 0) &&
+        (!itemBuffs.accSuccAbilityNames || itemBuffs.accSuccAbilityNames.length === 0)
+    ) {
+        const sign = itemBuffs.accSucc > 0 ? '+' : '';
+        tags.push(`Item: ${sign}${itemBuffs.accSucc} Acc Succ`);
+    }
+
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
 
     const rollType = isValidForBank ? 'acc_face' : 'roll';
@@ -414,6 +468,27 @@ export async function executeDamageRoll(
         }
     } else {
         finalFlatMod += effectiveness;
+    }
+
+    if (itemBuffs.dmgSucc !== 0 && (!override.active || override.type !== 'flat')) {
+        finalFlatMod += itemBuffs.dmgSucc;
+    }
+
+    const activeBoost = state.trackers.activeCombatBoost;
+    if (activeBoost) {
+        const moveType = (move.type || '').trim().toLowerCase();
+        const boostType = (activeBoost.type || '').trim().toLowerCase();
+        const isMatchingType = !boostType || boostType === moveType;
+        const isPendingForThisMove = activeBoost.stage === 'pending_damage' && activeBoost.moveId === move.id;
+        const isArmedAndMatching = activeBoost.stage === 'armed' && isMatchingType;
+
+        if (isPendingForThisMove || isArmedAndMatching) {
+            if (activeBoost.dmgSucc > 0 && (!override.active || override.type !== 'flat')) {
+                finalFlatMod += activeBoost.dmgSucc;
+                tags.push(`Item: ${activeBoost.sourceName} (+${activeBoost.dmgSucc} Dmg Succ)`);
+            }
+            useCharacterStore.getState().clearActiveCombatBoost();
+        }
     }
 
     let superEffectiveDamageBonus = 0;
@@ -605,6 +680,31 @@ export async function executeDamageRoll(
                 tags.push(tagStr);
             }
         }
+    }
+
+    const pureDmgSuccItems = (itemBuffs.dmgSuccItemNames || []).filter(
+        (name) => !itemBuffs.dmgSuccPassiveNames?.includes(name)
+    );
+    for (const item of Array.from(new Set(pureDmgSuccItems))) {
+        const tagStr = `Item: ${item}`;
+        if (!tags.includes(tagStr)) tags.push(tagStr);
+    }
+    for (const passive of Array.from(new Set(itemBuffs.dmgSuccPassiveNames || []))) {
+        const tagStr = `Passive: ${passive}`;
+        if (!tags.includes(tagStr)) tags.push(tagStr);
+    }
+    for (const ability of Array.from(new Set(itemBuffs.dmgSuccAbilityNames || []))) {
+        const tagStr = `Ability: ${ability}`;
+        if (!tags.includes(tagStr)) tags.push(tagStr);
+    }
+    if (
+        itemBuffs.dmgSucc !== 0 &&
+        pureDmgSuccItems.length === 0 &&
+        (!itemBuffs.dmgSuccPassiveNames || itemBuffs.dmgSuccPassiveNames.length === 0) &&
+        (!itemBuffs.dmgSuccAbilityNames || itemBuffs.dmgSuccAbilityNames.length === 0)
+    ) {
+        const sign = itemBuffs.dmgSucc > 0 ? '+' : '';
+        tags.push(`Item: ${sign}${itemBuffs.dmgSucc} Dmg Succ`);
     }
 
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';

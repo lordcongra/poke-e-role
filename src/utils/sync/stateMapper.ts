@@ -11,7 +11,8 @@ import type {
     Badge,
     TransformationType,
     Rank,
-    ItemAttackAction
+    ItemAttackAction,
+    ActiveCombatBoost
 } from '../../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { getKnownAbility } from '../../data/abilities/knownAbilities';
@@ -406,6 +407,21 @@ function parseTrackers(meta: Record<string, unknown>) {
         parsedBoostLevels = {};
     }
 
+    let parsedActiveCombatBoost: ActiveCombatBoost | null = null;
+    if (meta['active-combat-boost']) {
+        try {
+            const rawBoost =
+                typeof meta['active-combat-boost'] === 'string'
+                    ? JSON.parse(meta['active-combat-boost'])
+                    : meta['active-combat-boost'];
+            if (rawBoost && typeof rawBoost === 'object' && rawBoost.sourceName) {
+                parsedActiveCombatBoost = rawBoost as ActiveCombatBoost;
+            }
+        } catch {
+            parsedActiveCombatBoost = null;
+        }
+    }
+
     return {
         actions: Number(meta['actions-used']) || 0,
         evade: meta['evasions-used'] === true || meta['evasions-used'] === 'true',
@@ -420,7 +436,8 @@ function parseTrackers(meta: Record<string, unknown>) {
         firstHitAcc: meta['first-hit-acc-active'] === true || meta['first-hit-acc-active'] === 'true',
         firstHitDmg: meta['first-hit-dmg-active'] === true || meta['first-hit-dmg-active'] === 'true',
         bankedAccDice: parsedBankedAccDice,
-        boostLevels: parsedBoostLevels
+        boostLevels: parsedBoostLevels,
+        activeCombatBoost: parsedActiveCombatBoost
     };
 }
 

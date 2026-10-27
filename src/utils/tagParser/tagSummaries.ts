@@ -46,7 +46,7 @@ export function extractActiveEffectSummary(
             isMatch = true;
         } else if (rollType === 'acc') {
             if (
-                lower.includes('acc') ||
+                (lower.includes('acc') && !lower.includes('acc succ')) ||
                 lower.includes('accuracy') ||
                 lower.includes('high crit') ||
                 lower.includes('low acc') ||
@@ -59,7 +59,7 @@ export function extractActiveEffectSummary(
             }
         } else if (rollType === 'dmg') {
             if (
-                lower.includes('dmg') ||
+                (lower.includes('dmg') && !lower.includes('dmg succ')) ||
                 lower.includes('damage') ||
                 lower.includes('crit dmg') ||
                 lower.includes('temp hp') ||

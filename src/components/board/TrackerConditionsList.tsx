@@ -1,8 +1,11 @@
-interface ConditionItem {
+import { X } from 'lucide-react';
+
+export interface ConditionItem {
     id: string;
     label: string;
     bg: string;
     text: string;
+    onClear?: () => void;
 }
 
 interface TrackerConditionsListProps {
@@ -20,10 +23,24 @@ export function TrackerConditionsList({ conditions }: TrackerConditionsListProps
                     conditions.map((c) => (
                         <span
                             key={c.id}
-                            className="tracker-section__condition-pill"
+                            className={`tracker-section__condition-pill ${c.onClear ? 'tracker-section__condition-pill--interactive' : ''}`}
                             style={{ background: c.bg, color: c.text }}
                         >
-                            {c.label}
+                            <span>{c.label}</span>
+                            {c.onClear && (
+                                <button
+                                    type="button"
+                                    className="tracker-section__condition-clear-btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        c.onClear?.();
+                                    }}
+                                    title="Dismiss Boost"
+                                    aria-label="Dismiss Boost"
+                                >
+                                    <X size={12} />
+                                </button>
+                            )}
                         </span>
                     ))
                 )}

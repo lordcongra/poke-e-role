@@ -24,7 +24,7 @@ import { AbilityTrackerControl } from '../abilities/AbilityTrackerControl';
 import { getAbilityBenefitSummary } from '../../data/abilities/knownAbilities';
 import { ActiveFieldEffectsRow } from './ActiveFieldEffectsRow';
 import { TrackerBoostsList } from './TrackerBoostsList';
-import { TrackerConditionsList } from './TrackerConditionsList';
+import { TrackerConditionsList, type ConditionItem } from './TrackerConditionsList';
 import { RoundEndTriggerModal } from '../modals/character/RoundEndTriggerModal';
 import { findRoundEndTriggers, type RoundEndTrigger } from '../modals/character/roundEndTriggerUtils';
 import './TrackerSection.css';
@@ -33,6 +33,7 @@ export function TrackerSection() {
     const trackers = useCharacterStore((state) => state.trackers);
     const updateTracker = useCharacterStore((state) => state.updateTracker);
     const resetRound = useCharacterStore((state) => state.resetRound);
+    const clearActiveCombatBoost = useCharacterStore((state) => state.clearActiveCombatBoost);
 
     const abilityName = useCharacterStore((state) => state.identity.ability);
     const abilityActive = useCharacterStore((state) => state.identity.abilityActive ?? true);
@@ -351,7 +352,7 @@ export function TrackerSection() {
 
     const disableReactions = isMaxed || parsedGlobals.noReactions;
 
-    const conditions: Array<{ id: string; label: string; bg: string; text: string }> = [];
+    const conditions: ConditionItem[] = [];
 
     if (painEnabled) {
         const hpCurr = health.hpCurr;
@@ -461,6 +462,21 @@ export function TrackerSection() {
             });
         }
     });
+
+    if (trackers.activeCombatBoost) {
+        const boost = trackers.activeCombatBoost;
+        const label =
+            boost.stage === 'armed'
+                ? `💎 ${boost.sourceName}: +${boost.accSucc} Acc, +${boost.dmgSucc} Dmg`
+                : `💎 ${boost.sourceName}: +${boost.dmgSucc} Dmg Pending`;
+        conditions.push({
+            id: 'active-combat-boost',
+            label,
+            bg: '#8b5cf6',
+            text: '#ffffff',
+            onClear: clearActiveCombatBoost
+        });
+    }
 
     return (
         <CollapsingSection title="ROUND TRACKER" className="sheet-panel tracker-section">

@@ -203,6 +203,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
 
             flatMetadata['banked-acc-dice'] = JSON.stringify(tr.bankedAccDice || {});
             flatMetadata['boost-levels'] = JSON.stringify(tr.boostLevels || {});
+            flatMetadata['active-combat-boost'] = tr.activeCombatBoost ? JSON.stringify(tr.activeCombatBoost) : '';
         }
 
         // --- MOVES DATA (100% Fidelity: preserves custom power, scaling, tags, and descriptions) ---

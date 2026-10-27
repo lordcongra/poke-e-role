@@ -107,6 +107,45 @@ async function runCombatEngineTests() {
         `Got: ${parsedBuffs.highCritStacks}`
     );
 
+    // Test flat success tags [Acc Succ +X] and [Dmg Succ +X]
+    const gemItems: InventoryItem[] = [
+        {
+            id: 'item-gem',
+            name: 'Normal Gem',
+            desc: '[Acc Succ +1: Normal] [Dmg Succ +2: Normal]',
+            qty: 1,
+            active: true
+        },
+        {
+            id: 'item-rock-gem',
+            name: 'Rock Gem',
+            desc: '[Acc Succ +1: Rock] [Dmg Succ +2: Rock]',
+            qty: 1,
+            active: true
+        }
+    ];
+    const gemBuffs = parseCombatTags(gemItems, [], mockMove); // mockMove is Normal
+    assert(
+        gemBuffs.accSucc === 1,
+        'Tag System extracts [Acc Succ +1: Normal] matching move type',
+        `Got: ${gemBuffs.accSucc}`
+    );
+    assert(
+        gemBuffs.dmgSucc === 2,
+        'Tag System extracts [Dmg Succ +2: Normal] matching move type',
+        `Got: ${gemBuffs.dmgSucc}`
+    );
+    assert(
+        gemBuffs.accSuccItemNames.some((n) => n.includes('Normal Gem')),
+        'Normal Gem recorded in accSuccItemNames',
+        `Got: ${JSON.stringify(gemBuffs.accSuccItemNames)}`
+    );
+    assert(
+        gemBuffs.dmgSuccItemNames.some((n) => n.includes('Normal Gem')),
+        'Normal Gem recorded in dmgSuccItemNames',
+        `Got: ${JSON.stringify(gemBuffs.dmgSuccItemNames)}`
+    );
+
     // Test accuracy math integration with tag buffs
     const store = useCharacterStore.getState();
     store.loadFromOwlbear({});

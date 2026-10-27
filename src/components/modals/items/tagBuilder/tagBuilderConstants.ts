@@ -65,6 +65,9 @@ export const getTargetOptions = (category: string, extraCategories: ExtraCategor
         return [
             'Dmg',
             'Acc',
+            'Dmg Succ',
+            'Acc Succ',
+            'Type Gem',
             'Init',
             'Chance',
             'Crit Dmg',
@@ -218,6 +221,15 @@ export const PRESETS: Record<string, PresetConfig> = {
         condition: 'none',
         reqGroup: 'none',
         typeOption: ''
+    },
+    type_gem: {
+        category: 'combat',
+        target: 'Type Gem',
+        value: 1,
+        value2: 2,
+        reqGroup: 'type',
+        typeOption: 'Normal',
+        condition: 'none'
     }
 };
 

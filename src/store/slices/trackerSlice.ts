@@ -21,7 +21,8 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
         firstHitAcc: false,
         firstHitDmg: false,
         bankedAccDice: {},
-        boostLevels: {}
+        boostLevels: {},
+        activeCombatBoost: null
     },
 
     addStatus: () =>
@@ -110,10 +111,13 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             else if (field === 'firstHitDmg') obrKey = 'first-hit-dmg-active';
             else if (field === 'bankedAccDice') obrKey = 'banked-acc-dice';
             else if (field === 'boostLevels') obrKey = 'boost-levels';
+            else if (field === 'activeCombatBoost') obrKey = 'active-combat-boost';
 
             try {
                 if (field === 'bankedAccDice' || field === 'boostLevels') {
                     saveToOwlbear({ [obrKey]: JSON.stringify(value) });
+                } else if (field === 'activeCombatBoost') {
+                    saveToOwlbear({ [obrKey]: value ? JSON.stringify(value) : '' });
                 } else {
                     saveToOwlbear({ [obrKey]: value });
                 }
@@ -201,7 +205,8 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                     'temporary-will': newWill.temporaryWill,
                     'effects-data': JSON.stringify(newEffects),
                     'moves-data': JSON.stringify(newMoves),
-                    'banked-acc-dice': '{}'
+                    'banked-acc-dice': '{}',
+                    'active-combat-boost': ''
                 });
             } catch (e) {
                 console.warn('[TrackerSlice] Failed to save reset round state to Owlbear.', e);
@@ -217,7 +222,8 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                     clash: false,
                     chances: 0,
                     fate: 0,
-                    bankedAccDice: {}
+                    bankedAccDice: {},
+                    activeCombatBoost: null
                 },
                 effects: newEffects,
                 moves: newMoves
@@ -253,6 +259,7 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                 'first-hit-dmg-active': false,
                 'banked-acc-dice': '{}',
                 'boost-levels': '{}',
+                'active-combat-boost': '',
                 'effects-data': '[]',
                 'moves-data': JSON.stringify(newMoves),
                 'status-list': JSON.stringify(newStatuses)
@@ -340,7 +347,8 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                     firstHitAcc: false,
                     firstHitDmg: false,
                     bankedAccDice: {},
-                    boostLevels: {}
+                    boostLevels: {},
+                    activeCombatBoost: null
                 },
                 effects: [],
                 moves: newMoves,
@@ -350,5 +358,35 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
         }),
 
     activeBattlefield: null,
-    setActiveBattlefield: (battlefield) => set({ activeBattlefield: battlefield })
+    setActiveBattlefield: (battlefield) => set({ activeBattlefield: battlefield }),
+
+    setActiveCombatBoost: (boost) =>
+        set((state) => {
+            try {
+                saveToOwlbear({ 'active-combat-boost': boost ? JSON.stringify(boost) : '' });
+            } catch (e) {
+                console.warn('[TrackerSlice] Failed to save active combat boost to Owlbear.', e);
+            }
+            return {
+                trackers: {
+                    ...state.trackers,
+                    activeCombatBoost: boost
+                }
+            };
+        }),
+
+    clearActiveCombatBoost: () =>
+        set((state) => {
+            try {
+                saveToOwlbear({ 'active-combat-boost': '' });
+            } catch (e) {
+                console.warn('[TrackerSlice] Failed to clear active combat boost from Owlbear.', e);
+            }
+            return {
+                trackers: {
+                    ...state.trackers,
+                    activeCombatBoost: null
+                }
+            };
+        })
 });

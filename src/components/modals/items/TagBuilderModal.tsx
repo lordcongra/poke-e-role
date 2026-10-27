@@ -116,7 +116,7 @@ export function TagBuilderModal({
             category: isMove ? 'move_mechanics' : 'stat',
             target: isMove ? 'High Critical' : 'Str',
             value: 1,
-            value2: 6,
+            value2: 2,
             reqGroup: 'none',
             typeOption: '',
             condition: 'none',
@@ -138,6 +138,21 @@ export function TagBuilderModal({
 
     const updateConfig = <K extends keyof TagBuilderConfig>(key: K, val: TagBuilderConfig[K]) => {
         setConfig((prev) => ({ ...prev, [key]: val }));
+    };
+
+    const handleSelectTarget = (targetOpt: string) => {
+        if (targetOpt === 'Type Gem') {
+            setConfig((prev) => ({
+                ...prev,
+                target: 'Type Gem',
+                reqGroup: 'type',
+                typeOption: prev.typeOption || 'Normal',
+                value: 1,
+                value2: 2
+            }));
+        } else {
+            updateConfig('target', targetOpt);
+        }
     };
 
     // Double-confirmation safeguards for deletions
@@ -183,9 +198,14 @@ export function TagBuilderModal({
         if (preset) {
             setConfig((prev) => ({
                 ...prev,
-                ...preset,
-                value2: preset.value2 ?? prev.value2,
-                customMaxStacks: preset.customMaxStacks ?? prev.customMaxStacks
+                category: preset.category,
+                target: preset.target,
+                value: preset.value,
+                value2: preset.value2 ?? 2,
+                reqGroup: preset.reqGroup,
+                typeOption: preset.typeOption,
+                condition: preset.condition,
+                customMaxStacks: preset.customMaxStacks ?? 5
             }));
         }
     };
@@ -221,6 +241,18 @@ export function TagBuilderModal({
 
     const handleSelectSearchResult = (result: SearchResultItem) => {
         const defaults = getDefaultTargetForCategory(result.category);
+        if (result.target === 'Type Gem') {
+            setConfig((prev) => ({
+                ...prev,
+                category: result.category,
+                target: 'Type Gem',
+                reqGroup: 'type',
+                typeOption: prev.typeOption || 'Normal',
+                value: 1,
+                value2: 2
+            }));
+            return;
+        }
         setConfig((prev) => ({
             ...prev,
             category: result.category,
@@ -377,6 +409,13 @@ export function TagBuilderModal({
                         >
                             <Swords size={12} /> High Crit
                         </button>
+                        <button
+                            type="button"
+                            onClick={() => applyPreset('type_gem')}
+                            className="tag-builder__preset-btn"
+                        >
+                            <Sparkles size={12} /> Type Gem
+                        </button>
                     </div>
                 </div>
 
@@ -480,7 +519,7 @@ export function TagBuilderModal({
                                     <button
                                         key={opt}
                                         type="button"
-                                        onClick={() => updateConfig('target', opt)}
+                                        onClick={() => handleSelectTarget(opt)}
                                         className={`tag-builder__target-chip ${config.target === opt ? 'tag-builder__target-chip--active' : ''}`}
                                     >
                                         {opt}

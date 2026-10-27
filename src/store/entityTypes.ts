@@ -139,6 +139,15 @@ export interface Badge {
     imageUrl?: string;
 }
 
+export interface ActiveCombatBoost {
+    sourceName: string;
+    type?: string; // e.g. 'Rock' (optional type filter, case-insensitive)
+    accSucc: number; // e.g. 1
+    dmgSucc: number; // e.g. 2
+    stage: 'armed' | 'pending_damage';
+    moveId?: string;
+}
+
 export interface Trackers {
     actions: number;
     evade: boolean;
@@ -154,6 +163,7 @@ export interface Trackers {
     firstHitDmg: boolean;
     bankedAccDice: Record<string, number>;
     boostLevels?: Record<string, number>;
+    activeCombatBoost?: ActiveCombatBoost | null;
 }
 
 export interface ExtraSkill {

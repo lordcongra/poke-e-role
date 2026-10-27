@@ -6,6 +6,8 @@ export interface CombatBonuses {
     init: number;
     dmg: number;
     acc: number;
+    accSucc: number;
+    dmgSucc: number;
     chance: number;
     seDmg: number;
     critDmg: number;
@@ -31,12 +33,18 @@ export interface CombatBonuses {
     itemNames: string[];
     accItemNames: string[];
     dmgItemNames: string[];
+    accSuccItemNames: string[];
+    dmgSuccItemNames: string[];
     passiveNames: string[];
     accPassiveNames: string[];
     dmgPassiveNames: string[];
+    accSuccPassiveNames: string[];
+    dmgSuccPassiveNames: string[];
     abilityNames: string[];
     accAbilityNames: string[];
     dmgAbilityNames: string[];
+    accSuccAbilityNames: string[];
+    dmgSuccAbilityNames: string[];
     highCritItemNames: string[];
     highCritPassiveNames: string[];
     highCritAbilityNames: string[];

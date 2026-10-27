@@ -360,6 +360,125 @@ export function extractAccuracy(
     }
 }
 
+export function extractAccuracySuccesses(
+    description: string,
+    moveType: string,
+    move: MoveData | undefined,
+    bonuses: CombatBonuses,
+    triggers: TagTriggers,
+    isHalfHp: boolean,
+    boostLevel: number = 1,
+    maxBoost: number = 1,
+    sourceBoostActive?: boolean,
+    kind: 'item' | 'passive' | 'ability' | 'move' | 'form' | 'status' = 'item',
+    sourceName: string = ''
+) {
+    const accuracyMatches = description.matchAll(
+        /\[\s*acc\s+succ(?:ess(?:es)?)?\s*([+-]?\s*\d+)(?:\s*:\s*([^\]@]+))?(?:\s*@\s*([^\]]+))?\s*\]/gi
+    );
+    for (const match of accuracyMatches) {
+        if (!checkCondition(match[3], isHalfHp, sourceBoostActive)) continue;
+        const requirement = match[2]?.toLowerCase().trim();
+        const mult = getBoostMultiplier(match[3], boostLevel, maxBoost);
+        const val = safeParseInt(match[1]) * mult;
+
+        let applied = false;
+        if (!requirement || requirement === moveType) {
+            bonuses.accSucc += val;
+            triggers.accuracy = true;
+            applied = true;
+        } else if (move && requirement === 'physical' && move.category === 'Physical') {
+            bonuses.accSucc += val;
+            triggers.accuracy = true;
+            applied = true;
+        } else if (move && requirement === 'special' && move.category === 'Special') {
+            bonuses.accSucc += val;
+            triggers.accuracy = true;
+            applied = true;
+        } else if (move && (MOVE_MODIFIERS.includes(requirement) || matchesModifier(requirement, move))) {
+            if (matchesModifier(requirement, move)) {
+                bonuses.accSucc += val;
+                triggers.accuracy = true;
+                applied = true;
+            }
+        }
+
+        if (applied && val !== 0) {
+            const sign = val > 0 ? `+${val}` : `${val}`;
+            const cleanSource = (sourceName || '').trim();
+            const isGeneric = !cleanSource || ['item', 'passive', 'ability'].includes(cleanSource.toLowerCase());
+            const label = !isGeneric ? `${cleanSource} (${sign} Acc Succ)` : `${sign} Acc Succ`;
+            if (kind === 'item') bonuses.accSuccItemNames.push(label);
+            else if (kind === 'passive') bonuses.accSuccPassiveNames.push(label);
+            else if (kind === 'ability') bonuses.accSuccAbilityNames.push(label);
+        }
+    }
+}
+
+export function extractDamageSuccesses(
+    description: string,
+    moveType: string,
+    move: MoveData | undefined,
+    bonuses: CombatBonuses,
+    triggers: TagTriggers,
+    isHalfHp: boolean,
+    boostLevel: number = 1,
+    maxBoost: number = 1,
+    sourceBoostActive?: boolean,
+    kind: 'item' | 'passive' | 'ability' | 'move' | 'form' | 'status' = 'item',
+    sourceName: string = ''
+) {
+    const damageMatches = description.matchAll(
+        /\[\s*dmg\s+succ(?:ess(?:es)?)?\s*([+-]?\s*\d+)(?:\s*:\s*([^\]@]+))?(?:\s*@\s*([^\]]+))?\s*\]/gi
+    );
+    for (const match of damageMatches) {
+        if (!checkCondition(match[3], isHalfHp, sourceBoostActive)) continue;
+        const requirement = match[2]?.toLowerCase().trim();
+        const mult = getBoostMultiplier(match[3], boostLevel, maxBoost);
+        const val = safeParseInt(match[1]) * mult;
+
+        let applied = false;
+        if (!requirement || requirement === moveType) {
+            bonuses.dmgSucc += val;
+            triggers.damage = true;
+            applied = true;
+        } else if (requirement === 'stab') {
+            const state = useCharacterStore.getState();
+            const p1 = (state.identity.type1 || '').toLowerCase();
+            const p2 = (state.identity.type2 || '').toLowerCase();
+            if (moveType && (moveType === p1 || moveType === p2)) {
+                bonuses.dmgSucc += val;
+                triggers.damage = true;
+                applied = true;
+            }
+        } else if (move && requirement === 'physical' && move.category === 'Physical') {
+            bonuses.dmgSucc += val;
+            triggers.damage = true;
+            applied = true;
+        } else if (move && requirement === 'special' && move.category === 'Special') {
+            bonuses.dmgSucc += val;
+            triggers.damage = true;
+            applied = true;
+        } else if (move && (MOVE_MODIFIERS.includes(requirement) || matchesModifier(requirement, move))) {
+            if (matchesModifier(requirement, move)) {
+                bonuses.dmgSucc += val;
+                triggers.damage = true;
+                applied = true;
+            }
+        }
+
+        if (applied && val !== 0) {
+            const sign = val > 0 ? `+${val}` : `${val}`;
+            const cleanSource = (sourceName || '').trim();
+            const isGeneric = !cleanSource || ['item', 'passive', 'ability'].includes(cleanSource.toLowerCase());
+            const label = !isGeneric ? `${cleanSource} (${sign} Dmg Succ)` : `${sign} Dmg Succ`;
+            if (kind === 'item') bonuses.dmgSuccItemNames.push(label);
+            else if (kind === 'passive') bonuses.dmgSuccPassiveNames.push(label);
+            else if (kind === 'ability') bonuses.dmgSuccAbilityNames.push(label);
+        }
+    }
+}
+
 export function extractCritDamage(
     description: string,
     bonuses: CombatBonuses,

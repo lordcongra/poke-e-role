@@ -16,13 +16,8 @@ import { ItemStatChoiceModal } from '../modals/items/ItemStatChoiceModal';
 import { ItemDeleteConfirmModal } from './ItemDeleteConfirmModal';
 import { InventoryFilterBar, isItemInInventoryCategory, type InventoryCategoryFilter } from './InventoryFilterBar';
 import { InventoryHeaderActions } from './InventoryHeaderActions';
-import {
-    getTrainerItemTargets,
-    applyItemToPokemonTarget,
-    type ItemTargetCandidate
-} from '../../utils/items/itemTargeting';
-import type { InventoryItem } from '../../store/storeTypes';
-import { Plus, Package, Check } from 'lucide-react';
+import { useInventoryItemUsage } from './useInventoryItemUsage';
+import { Plus, Package, Check, Search } from 'lucide-react';
 import { PassivesTable } from './PassivesTable';
 import './InventoryTable.css';
 
@@ -33,60 +28,36 @@ export function InventoryTable() {
 
     const addInventoryItem = useCharacterStore((state) => state.addInventoryItem);
     const removeInventoryItem = useCharacterStore((state) => state.removeInventoryItem);
-    const useInventoryItem = useCharacterStore((state) => state.useInventoryItem);
 
-    const [targetPrompt, setTargetPrompt] = useState<{
-        item: InventoryItem;
-        candidates: ItemTargetCandidate[];
-    } | null>(null);
-
-    const [statChoicePrompt, setStatChoicePrompt] = useState<{
-        item: InventoryItem;
-        target?: ItemTargetCandidate;
-    } | null>(null);
+    const {
+        targetPrompt,
+        setTargetPrompt,
+        statChoicePrompt,
+        setStatChoicePrompt,
+        handleUseItem,
+        handleSelectTarget,
+        handleConfirmStatChoice
+    } = useInventoryItemUsage();
 
     const [selectedCategory, setSelectedCategory] = useState<InventoryCategoryFilter>('all');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showFilters, setShowFilters] = useState<boolean>(() => {
+        try {
+            const stored = localStorage.getItem('pkr_bag_show_filters');
+            return stored !== null ? stored === 'true' : true;
+        } catch {
+            return true;
+        }
+    });
 
-    const handleUseItem = (item: InventoryItem) => {
-        const store = useCharacterStore.getState();
-        const candidates = getTrainerItemTargets(store, item);
-        if (candidates.length > 1) {
-            setTargetPrompt({ item, candidates });
-        } else if (item.permanentStatBoost?.stat === 'PlayerChoice') {
-            setStatChoicePrompt({ item });
-        } else {
-            useInventoryItem(item.id);
-        }
-    };
-
-    const handleSelectTarget = async (target: ItemTargetCandidate) => {
-        if (!targetPrompt) return;
-        const { item } = targetPrompt;
-        setTargetPrompt(null);
-        if (item.permanentStatBoost?.stat === 'PlayerChoice') {
-            setStatChoicePrompt({ item, target });
-            return;
-        }
-        if (target.isTrainer) {
-            useInventoryItem(item.id);
-        } else {
-            const store = useCharacterStore.getState();
-            await applyItemToPokemonTarget(store, item, target);
-        }
-    };
-
-    const handleConfirmStatChoice = async (
-        chosenStat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight'
-    ) => {
-        if (!statChoicePrompt) return;
-        const { item, target } = statChoicePrompt;
-        setStatChoicePrompt(null);
-        if (!target || target.isTrainer) {
-            useInventoryItem(item.id, { chosenStat });
-        } else {
-            const store = useCharacterStore.getState();
-            await applyItemToPokemonTarget(store, item, target, { chosenStat });
-        }
+    const handleToggleFilters = () => {
+        setShowFilters((prev) => {
+            const next = !prev;
+            try {
+                localStorage.setItem('pkr_bag_show_filters', String(next));
+            } catch {}
+            return next;
+        });
     };
 
     const notes = useCharacterStore((state) => state.notes);
@@ -174,10 +145,19 @@ export function InventoryTable() {
         setFetchingItems((previous) => ({ ...previous, [id]: false }));
     };
 
-    const filteredInventory = useMemo(
-        () => inventory.filter((item) => isItemInInventoryCategory(item, selectedCategory, roomCustomItems)),
-        [inventory, selectedCategory, roomCustomItems]
-    );
+    const filteredInventory = useMemo(() => {
+        const query = searchQuery.trim().toLowerCase();
+        return inventory.filter((item) => {
+            if (!isItemInInventoryCategory(item, selectedCategory, roomCustomItems)) {
+                return false;
+            }
+            if (!query) return true;
+            const name = (item.name || '').toLowerCase();
+            const desc = (item.desc || '').toLowerCase();
+            const tags = (item.tags || '').toLowerCase();
+            return name.includes(query) || desc.includes(query) || tags.includes(query);
+        });
+    }, [inventory, selectedCategory, roomCustomItems, searchQuery]);
 
     return (
         <div className="inventory-table__container">
@@ -203,38 +183,61 @@ export function InventoryTable() {
                         pokedollars={pokedollars}
                         onSetTrainingPoints={setTrainingPoints}
                         onSetPokedollars={setPokedollars}
+                        showFilters={showFilters}
+                        onToggleFilters={handleToggleFilters}
+                        searchQuery={searchQuery}
+                        onSearchQueryChange={setSearchQuery}
                     />
                 }
             >
-                <InventoryFilterBar
-                    inventory={inventory}
-                    selectedCategory={selectedCategory}
-                    onSelectCategory={setSelectedCategory}
-                    customItems={roomCustomItems}
-                />
+                {showFilters && (
+                    <InventoryFilterBar
+                        inventory={inventory}
+                        selectedCategory={selectedCategory}
+                        onSelectCategory={setSelectedCategory}
+                        customItems={roomCustomItems}
+                    />
+                )}
 
-                {viewMode === 'card' ? (
-                    filteredInventory.length === 0 ? (
-                        <div className="inventory-table__empty-state">
-                            <Package size={32} style={{ opacity: 0.5 }} />
-                            <span className="text-subtext">
-                                {inventory.length === 0 ? 'No items in your bag yet.' : 'No items match this category.'}
-                            </span>
-                        </div>
-                    ) : (
-                        <div className={`inventory-table__grid-container inventory-table__grid-container--${cardSize}`}>
-                            {filteredInventory.map((item) => (
-                                <InventoryGridCard
-                                    key={item.id}
-                                    item={item}
-                                    size={cardSize}
-                                    onClick={() => setEditingItemId(item.id)}
-                                    onDelete={() => setDeleteItemId(item.id)}
-                                    onUseItem={handleUseItem}
-                                />
-                            ))}
-                        </div>
-                    )
+                {filteredInventory.length === 0 ? (
+                    <div className="inventory-table__empty-state">
+                        {searchQuery.trim() ? (
+                            <>
+                                <Search size={32} style={{ opacity: 0.5 }} />
+                                <span className="text-subtext">No items found matching "{searchQuery.trim()}".</span>
+                                <button
+                                    type="button"
+                                    className="action-button action-button--secondary text-subtext"
+                                    onClick={() => setSearchQuery('')}
+                                    style={{ marginTop: '4px', padding: '4px 12px', fontSize: '0.78rem' }}
+                                >
+                                    Clear Search
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Package size={32} style={{ opacity: 0.5 }} />
+                                <span className="text-subtext">
+                                    {inventory.length === 0
+                                        ? 'No items in your bag yet.'
+                                        : 'No items match this category.'}
+                                </span>
+                            </>
+                        )}
+                    </div>
+                ) : viewMode === 'card' ? (
+                    <div className={`inventory-table__grid-container inventory-table__grid-container--${cardSize}`}>
+                        {filteredInventory.map((item) => (
+                            <InventoryGridCard
+                                key={item.id}
+                                item={item}
+                                size={cardSize}
+                                onClick={() => setEditingItemId(item.id)}
+                                onDelete={() => setDeleteItemId(item.id)}
+                                onUseItem={handleUseItem}
+                            />
+                        ))}
+                    </div>
                 ) : (
                     <>
                         <div className="desktop-only-flex table-responsive-wrapper">

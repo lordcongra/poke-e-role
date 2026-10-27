@@ -8,13 +8,7 @@ import { TooltipIcon } from '../ui/TooltipIcon';
 import { HomebrewItemRecoverySection } from './HomebrewItemRecoverySection';
 import { HomebrewItemStatsSection } from './HomebrewItemStatsSection';
 import { HomebrewEffectsTooltipModal } from './HomebrewEffectsTooltipModal';
-import {
-    ChevronDown,
-    ChevronUp,
-    Battery,
-    ShieldAlert,
-    Skull
-} from 'lucide-react';
+import { ChevronDown, ChevronUp, Battery, ShieldAlert, Skull } from 'lucide-react';
 
 interface HomebrewItemEffectsSectionProps {
     item: CustomItem;
@@ -160,7 +154,6 @@ export function HomebrewItemEffectsSection({ item, canEdit }: HomebrewItemEffect
                             onOpenTooltip={(tip) => setActiveTooltip(tip)}
                         />
                     </div>
-
 
                     {/* Cures Statuses */}
                     <div className="homebrew-item-effects__cures-section">

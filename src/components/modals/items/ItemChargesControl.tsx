@@ -59,8 +59,6 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
         updateInventoryItem(item.id, 'cures', updated.length > 0 ? updated : undefined);
     };
 
-
-
     const allPills = [
         ...CORE_CURABLE_STATUSES,
         ...(roomCustomStatuses || [])

@@ -177,6 +177,15 @@ export function applyUsageToState(
         updatesToSave['passives-data'] = JSON.stringify(nextPassives);
     }
 
+    let nextTrackers = state.trackers;
+    if (usage.combatBoost) {
+        updatesToSave['active-combat-boost'] = JSON.stringify(usage.combatBoost);
+        nextTrackers = {
+            ...state.trackers,
+            activeCombatBoost: usage.combatBoost
+        };
+    }
+
     return {
         partialState: {
             inventory: nextInventory,
@@ -185,7 +194,8 @@ export function applyUsageToState(
             statuses: usage.nextStatuses,
             stats: nextStats,
             derived: nextDerived,
-            passives: nextPassives
+            passives: nextPassives,
+            trackers: nextTrackers
         },
         updatesToSave
     };

@@ -1,21 +1,18 @@
-import type { InventoryItem, StatusItem, CustomStatus, CharacterHealth, CharacterWill } from '../../store/entityTypes';
+import type {
+    InventoryItem,
+    StatusItem,
+    CustomStatus,
+    CharacterHealth,
+    CharacterWill,
+    ActiveCombatBoost
+} from '../../store/entityTypes';
 import { getItemEffectiveCharges, getBaseItemCharges } from './itemCharges';
+import { parseCombatBoostFromItem, hasCombatBoostTags } from './combatBoostParser';
 
-export interface ItemEffectDefinition {
-    healHp?: number;
-    healWill?: number;
-    cures?: string[];
-    permanentStatBoost?: {
-        stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
-        value: number;
-    };
-    statBuff?: { stat: string; value: number };
-    statDebuff?: { stat: string; value: number };
-    gainTempHp?: number;
-    gainTempWill?: number;
-    dungeonPassive?: string;
-    inflictsStatus?: string[];
-}
+import { type ItemEffectDefinition, BASE_ITEM_EFFECTS, getBaseItemEffect } from './baseItemEffects';
+
+export type { ItemEffectDefinition };
+export { BASE_ITEM_EFFECTS, getBaseItemEffect };
 
 export interface ItemUsageResult {
     nextHealth: CharacterHealth;
@@ -31,76 +28,17 @@ export interface ItemUsageResult {
     statBuff?: { stat: string; value: number };
     statDebuff?: { stat: string; value: number };
     dungeonPassive?: string;
+    combatBoost?: ActiveCombatBoost;
     summaryText: string;
-}
-
-/**
- * Registry of base Pokérole items with their default usage effects.
- */
-export const BASE_ITEM_EFFECTS: Record<string, ItemEffectDefinition> = {
-    // Multi-unit potions & drinks: heal 1 HP per charge used
-    Potion: { healHp: 1 },
-    'Super Potion': { healHp: 1 },
-    'Hyper Potion': { healHp: 1 },
-    Remedy: { healHp: 1 },
-    'Energy Root': { healHp: 1 },
-    'Fresh Water': { healHp: 1 },
-    'Soda Pop': { healHp: 1 },
-    Lemonade: { healHp: 1 },
-    'MooMoo Milk': { healHp: 1 },
-    'Berry Juice': { healHp: 1 },
-
-    // Flat heals
-    'Sitrus Berry': { healHp: 3 },
-    'Oran Berry': { healHp: 1 },
-    Chocolate: { healHp: 1 },
-    Honey: { healHp: 1 },
-
-    // Full heals & revives
-    'Max Potion': { healHp: 99 },
-    'Full Restore': { healHp: 99, cures: ['All Status'] },
-    'Revival Herb': { healHp: 99, cures: ['Fainted'] },
-    'Max Revive': { healHp: 99, cures: ['Fainted'] },
-    Revive: { healHp: 1, cures: ['Fainted'] },
-
-    // Status cures
-    'Burn Heal': { cures: ['Burn'] },
-    Antidote: { cures: ['Poison'] },
-    Awakening: { cures: ['Sleep'] },
-    'Paralyze Heal': { cures: ['Paralysis'] },
-    'Ice Heal': { cures: ['Frozen Solid'] },
-    'Baked Goods': { cures: ['Sleep', 'Poison', 'Frozen Solid', 'Paralysis'] },
-    'Full Heal': { cures: ['All Status'] },
-    'Lum Berry': { cures: ['All Status'] },
-
-    // Stat items & Rare Candy
-    'Rare Candy': { permanentStatBoost: { stat: 'PlayerChoice', value: 1 } },
-    Protein: { permanentStatBoost: { stat: 'Strength', value: 1 } },
-    Iron: { statBuff: { stat: 'Defense', value: 1 } },
-    Carbos: { permanentStatBoost: { stat: 'Dexterity', value: 1 } },
-    Calcium: { permanentStatBoost: { stat: 'Special', value: 1 } },
-    'HP Up': { permanentStatBoost: { stat: 'Vitality', value: 1 } }
-};
-
-/**
- * Looks up default item usage effects for a base item by name (case-insensitive).
- */
-export function getBaseItemEffect(name: string): ItemEffectDefinition | undefined {
-    if (!name) return undefined;
-    const trimmed = name.trim().toLowerCase();
-    for (const [key, val] of Object.entries(BASE_ITEM_EFFECTS)) {
-        if (key.toLowerCase() === trimmed) {
-            return val;
-        }
-    }
-    return undefined;
 }
 
 /**
  * Detects whether a status item is a 1st, 2nd, or 3rd degree burn.
  */
 export function getTargetBurnDegree(status: StatusItem): 1 | 2 | 3 | null {
-    const raw = (status.name === 'Custom...' && status.customName ? status.customName : status.name).trim().toLowerCase();
+    const raw = (status.name === 'Custom...' && status.customName ? status.customName : status.name)
+        .trim()
+        .toLowerCase();
     if (raw === '3rd degree burn' || raw.includes('3rd degree burn')) return 3;
     if (raw === '2nd degree burn' || raw.includes('2nd degree burn')) return 2;
     if (raw === '1st degree burn' || raw.includes('1st degree burn') || raw === 'burn') return 1;
@@ -129,7 +67,8 @@ export function applyBurnStacking(
 
     if (!targetDegree) return statuses;
 
-    const burnName = targetDegree === 1 ? '1st Degree Burn' : targetDegree === 2 ? '2nd Degree Burn' : '3rd Degree Burn';
+    const burnName =
+        targetDegree === 1 ? '1st Degree Burn' : targetDegree === 2 ? '2nd Degree Burn' : '3rd Degree Burn';
     if (burnIdx !== -1) {
         if (currentDegree !== targetDegree) {
             statuses[burnIdx] = { ...statuses[burnIdx], name: burnName, customName: '' };
@@ -243,6 +182,7 @@ export function applyItemUsageEffects(
     const statDebuff = item.statDebuff ?? baseEffect?.statDebuff;
     const rawPermanentBoost = item.permanentStatBoost ?? baseEffect?.permanentStatBoost;
     const dungeonPassive = item.dungeonPassive ?? baseEffect?.dungeonPassive;
+    const combatBoost = parseCombatBoostFromItem(item);
 
     // Resolve permanent stat boost with chosenStat if applicable
     let permanentStatBoost: { stat: string; value: number } | undefined;
@@ -414,6 +354,13 @@ export function applyItemUsageEffects(
     if (dungeonPassive) {
         summaryParts.push(`Granted passive: ${dungeonPassive}`);
     }
+    if (combatBoost) {
+        const typeLabel = combatBoost.type ? ` (${combatBoost.type})` : '';
+        const bonusParts: string[] = [];
+        if (combatBoost.accSucc > 0) bonusParts.push(`+${combatBoost.accSucc} Acc`);
+        if (combatBoost.dmgSucc > 0) bonusParts.push(`+${combatBoost.dmgSucc} Dmg`);
+        summaryParts.push(`Armed combat boost${typeLabel}: ${bonusParts.join(', ')}`);
+    }
 
     const summaryText = summaryParts.length > 0 ? summaryParts.join('. ') + '.' : 'No effect.';
 
@@ -431,6 +378,7 @@ export function applyItemUsageEffects(
         statBuff,
         statDebuff,
         dungeonPassive,
+        combatBoost,
         summaryText
     };
 }
@@ -450,6 +398,9 @@ export function hasItemUsageEffect(item: {
     gainTempWill?: number;
     dungeonPassive?: string;
     inflictsStatus?: string[];
+    tags?: string;
+    desc?: string;
+    description?: string;
 }): boolean {
     if (
         (item.healHp ?? 0) > 0 ||
@@ -463,6 +414,10 @@ export function hasItemUsageEffect(item: {
         Boolean(item.dungeonPassive) ||
         (item.inflictsStatus && item.inflictsStatus.length > 0)
     ) {
+        return true;
+    }
+    const combined = `${item.tags || ''} ${item.desc || ''} ${item.description || ''}`;
+    if (hasCombatBoostTags(combined)) {
         return true;
     }
     if (item.name && getBaseItemEffect(item.name) !== undefined) {

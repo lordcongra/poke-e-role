@@ -64,32 +64,39 @@ export function TagBuilderConfigSection({
                     <select
                         className="identity-grid__select tag-builder__select text-label"
                         style={{ color: 'var(--text-main)', flex: 1 }}
-                        value={reqGroup}
+                        value={target === 'Type Gem' && reqGroup === 'none' ? 'type' : reqGroup}
                         onChange={(e) => {
                             const grp = e.target.value as RequirementGroup;
                             onChangeConfig('reqGroup', grp);
-                            if (grp === 'type') onChangeConfig('typeOption', 'Fire');
+                            if (grp === 'type') onChangeConfig('typeOption', typeOption || 'Normal');
                             else if (grp === 'category') onChangeConfig('typeOption', 'Physical');
                             else if (grp === 'modifier') onChangeConfig('typeOption', 'Bite Move');
                             else if (grp === 'misc') onChangeConfig('typeOption', 'Super Effective');
                             else onChangeConfig('typeOption', '');
                         }}
                     >
-                        {category !== 'matchup' && <option value="none">-- All Moves (No Requirement) --</option>}
+                        {category !== 'matchup' && target !== 'Type Gem' && (
+                            <option value="none">-- All Moves (No Requirement) --</option>
+                        )}
                         <option value="type">By Pokémon Type</option>
                         <option value="modifier">By Move Keyword</option>
                         <option value="category">By Damage Category</option>
                         <option value="misc">Miscellaneous</option>
                     </select>
 
-                    {reqGroup !== 'none' && (
+                    {(reqGroup !== 'none' || target === 'Type Gem') && (
                         <select
                             className="identity-grid__select tag-builder__select text-label"
                             style={{ color: 'var(--text-main)', flex: 1 }}
-                            value={typeOption}
-                            onChange={(e) => onChangeConfig('typeOption', e.target.value)}
+                            value={target === 'Type Gem' && !typeOption ? 'Normal' : typeOption}
+                            onChange={(e) => {
+                                if (target === 'Type Gem' && reqGroup === 'none') {
+                                    onChangeConfig('reqGroup', 'type');
+                                }
+                                onChangeConfig('typeOption', e.target.value);
+                            }}
                         >
-                            {reqGroup === 'type' &&
+                            {(reqGroup === 'type' || (target === 'Type Gem' && reqGroup === 'none')) &&
                                 types.map((t) => (
                                     <option key={t} value={t}>
                                         {t}
@@ -121,7 +128,7 @@ export function TagBuilderConfigSection({
             {/* Value Input with Stepper buttons */}
             {showValueInput && (
                 <div className="tag-builder__row">
-                    <span className="tag-builder__row-label">Value:</span>
+                    <span className="tag-builder__row-label">{target === 'Type Gem' ? 'Acc Succ:' : 'Value:'}</span>
                     <NumberSpinner value={value} onChange={(val) => onChangeConfig('value', val)} min={-99} max={99} />
 
                     {target === 'Acc [X]s Add Dmg Limit [Y]' && (
@@ -133,6 +140,20 @@ export function TagBuilderConfigSection({
                                 value={value2}
                                 onChange={(val) => onChangeConfig('value2', val)}
                                 min={1}
+                                max={99}
+                            />
+                        </div>
+                    )}
+
+                    {target === 'Type Gem' && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '10px' }}>
+                            <span className="text-label" style={{ fontSize: '0.75rem' }}>
+                                Dmg Succ:
+                            </span>
+                            <NumberSpinner
+                                value={value2}
+                                onChange={(val) => onChangeConfig('value2', val)}
+                                min={-99}
                                 max={99}
                             />
                         </div>

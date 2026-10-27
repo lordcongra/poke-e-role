@@ -29,10 +29,17 @@ mockWindow.top = mockWindow;
 const { flattenStateToMetadata } = await import('../src/utils/sync/flattenStateToMetadata');
 const { hydrateStateFromMetadata } = await import('../src/utils/sync/stateMapper');
 const { applyRoomUpdatesToMeta, mapRoomSettings } = await import('../src/utils/sync/roomSettingsMeta');
-const { BASE_ITEM_CHARGES, getBaseItemCharges, getItemEffectiveCharges, consumeChargeFromInventory, CORE_INFLICTABLE_STATUSES } =
-    await import('../src/utils/items/itemCharges');
+const {
+    BASE_ITEM_CHARGES,
+    getBaseItemCharges,
+    getItemEffectiveCharges,
+    consumeChargeFromInventory,
+    CORE_INFLICTABLE_STATUSES
+} = await import('../src/utils/items/itemCharges');
 const { BASE_ITEM_EFFECTS, getBaseItemEffect, applyItemUsageEffects, statusMatchesCure, isLegacyBottleCapacity } =
     await import('../src/utils/items/itemUsageEffects');
+const { parseCombatBoostFromItem, hasCombatBoostTags } = await import('../src/utils/items/combatBoostParser');
+const { applyUsageToState } = await import('../src/utils/items/inventoryItemOps');
 const { createInventorySlice } = await import('../src/store/slices/inventorySlice');
 const { getTrainerItemTargets, applyItemToPokemonTarget } = await import('../src/utils/items/itemTargeting');
 const { METADATA_ID } = await import('../src/hooks/owlbearSync/owlbearSyncConstants');
@@ -2024,6 +2031,109 @@ await runTest(
         assert.equal(hydratedInv[0].attackAction?.selectedDmg1, 'str');
     }
 );
+
+await runTest('combatBoost: symmetrical serialization, hydration, and item effect arming', async () => {
+    // 1. Symmetrical serialization: empty string when null
+    const stateWithoutBoost = createTestCharacterState({
+        trackers: {
+            activeCombatBoost: null
+        } as any
+    });
+    const metaWithoutBoost = flattenStateToMetadata(stateWithoutBoost);
+    assert.equal(
+        metaWithoutBoost['active-combat-boost'],
+        '',
+        'Serializes active-combat-boost as empty string when null'
+    );
+
+    // 2. Serialization with active combat boost
+    const sampleBoost = {
+        sourceName: 'Rock Gem',
+        type: 'Rock',
+        accSucc: 1,
+        dmgSucc: 2,
+        stage: 'armed' as const
+    };
+    const stateWithBoost = createTestCharacterState({
+        trackers: {
+            activeCombatBoost: sampleBoost
+        } as any
+    });
+    const metaWithBoost = flattenStateToMetadata(stateWithBoost);
+    assert.equal(
+        metaWithBoost['active-combat-boost'],
+        JSON.stringify(sampleBoost),
+        'Serializes active-combat-boost as JSON string when present'
+    );
+
+    // 3. Hydration round-trip
+    const hydratedState = hydrateStateFromMetadata(metaWithBoost, stateWithoutBoost);
+    assert.deepEqual(
+        hydratedState.trackers?.activeCombatBoost,
+        sampleBoost,
+        'Hydrates activeCombatBoost object from metadata'
+    );
+
+    // Hydration with empty string returns null
+    const hydratedEmpty = hydrateStateFromMetadata(metaWithoutBoost, stateWithBoost);
+    assert.equal(
+        hydratedEmpty.trackers?.activeCombatBoost,
+        null,
+        'Hydrates activeCombatBoost as null when metadata is empty'
+    );
+
+    // 4. Combat boost detection from item tags
+    const gemItem = {
+        id: 'item-rock-gem',
+        name: 'Rock Gem',
+        qty: 1,
+        tags: '[Acc Succ +1: Rock] [Dmg Succ +2: Rock]'
+    };
+    assert.ok(hasCombatBoostTags(gemItem.tags), 'Detects combat boost tags in item string');
+    const parsedBoost = parseCombatBoostFromItem(gemItem);
+    assert.ok(parsedBoost, 'Parses boost from Rock Gem tags');
+    assert.equal(parsedBoost.sourceName, 'Rock Gem');
+    assert.equal(parsedBoost.type, 'Rock');
+    assert.equal(parsedBoost.accSucc, 1);
+    assert.equal(parsedBoost.dmgSucc, 2);
+    assert.equal(parsedBoost.stage, 'armed');
+
+    // 4b. De-duplication across tags, desc, and description
+    const duplicateTagItem = {
+        id: 'item-fire-gem',
+        name: 'Fire Gem',
+        tags: '[Acc Succ +1: Fire] [Dmg Succ +2: Fire]',
+        desc: 'Fire Gem: [Acc Succ +1: Fire] [Dmg Succ +2: Fire]',
+        description: 'Consumable gem: [Acc Succ +1: Fire] [Dmg Succ +2: Fire]'
+    };
+    const deduplicatedBoost = parseCombatBoostFromItem(duplicateTagItem);
+    assert.ok(deduplicatedBoost, 'Parses boost from multi-field item');
+    assert.equal(deduplicatedBoost.accSucc, 1, 'Does not duplicate accSucc across fields');
+    assert.equal(deduplicatedBoost.dmgSucc, 2, 'Does not duplicate dmgSucc across fields');
+    assert.equal(deduplicatedBoost.type, 'Fire', 'Detects type accurately');
+
+    // 5. Item usage effect detection and applyUsageToState
+    const usage = applyItemUsageEffects(
+        gemItem,
+        stateWithoutBoost.health,
+        stateWithoutBoost.will,
+        stateWithoutBoost.statuses
+    );
+    assert.ok(usage.combatBoost, 'applyItemUsageEffects returns combatBoost');
+    assert.equal(usage.combatBoost.sourceName, 'Rock Gem');
+
+    const { partialState, updatesToSave } = applyUsageToState(stateWithoutBoost, gemItem, usage, []);
+    assert.equal(
+        updatesToSave['active-combat-boost'],
+        JSON.stringify(usage.combatBoost),
+        'updatesToSave contains serialized active-combat-boost'
+    );
+    assert.deepEqual(
+        partialState.trackers?.activeCombatBoost,
+        usage.combatBoost,
+        'partialState arms trackers.activeCombatBoost'
+    );
+});
 
 console.log('\n=============================================');
 console.log(`Results: ${passedCount} passed, ${failedCount} failed`);

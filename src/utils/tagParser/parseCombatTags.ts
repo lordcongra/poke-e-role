@@ -16,7 +16,9 @@ import {
     extractFirstHit,
     extractTempHp,
     extractRoundEffects,
-    extractMechanics
+    extractMechanics,
+    extractAccuracySuccesses,
+    extractDamageSuccesses
 } from './tagExtractors';
 import { extractActiveEffectSummary } from './tagSummaries';
 
@@ -35,6 +37,8 @@ export function parseCombatTags(
         init: 0,
         dmg: 0,
         acc: 0,
+        accSucc: 0,
+        dmgSucc: 0,
         chance: 0,
         seDmg: 0,
         critDmg: 0,
@@ -60,12 +64,18 @@ export function parseCombatTags(
         itemNames: [],
         accItemNames: [],
         dmgItemNames: [],
+        accSuccItemNames: [],
+        dmgSuccItemNames: [],
         passiveNames: [],
         accPassiveNames: [],
         dmgPassiveNames: [],
+        accSuccPassiveNames: [],
+        dmgSuccPassiveNames: [],
         abilityNames: [],
         accAbilityNames: [],
         dmgAbilityNames: [],
+        accSuccAbilityNames: [],
+        dmgSuccAbilityNames: [],
         highCritItemNames: [],
         highCritPassiveNames: [],
         highCritAbilityNames: []
@@ -408,6 +418,32 @@ export function parseCombatTags(
         extractCritDamage(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive);
         extractLowAccuracy(description, moveType, move, bonuses, triggers, isHalfHp);
         extractAccuracy(description, moveType, move, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive);
+        extractAccuracySuccesses(
+            description,
+            moveType,
+            move,
+            bonuses,
+            triggers,
+            isHalfHp,
+            boostLevel,
+            maxBoost,
+            boostActive,
+            item.kind,
+            name
+        );
+        extractDamageSuccesses(
+            description,
+            moveType,
+            move,
+            bonuses,
+            triggers,
+            isHalfHp,
+            boostLevel,
+            maxBoost,
+            boostActive,
+            item.kind,
+            name
+        );
         extractFirstHit(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive);
         extractTempHp(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive);
         extractRoundEffects(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive);

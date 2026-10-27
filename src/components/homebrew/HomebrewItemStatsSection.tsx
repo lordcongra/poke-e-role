@@ -113,9 +113,8 @@ export function HomebrewItemStatsSection({ item, canEdit, onOpenTooltip }: Homeb
                     <div className="homebrew-item-effects__advisory">
                         <AlertTriangle size={14} className="homebrew-item-effects__advisory-icon" />
                         <span>
-                            <strong>RAW Rulebook Note:</strong> Vitality and Insight are not normally eligible
-                            for item boosts in official Pokérole rules, but are allowed here for homebrew
-                            flexibility.
+                            <strong>RAW Rulebook Note:</strong> Vitality and Insight are not normally eligible for item
+                            boosts in official Pokérole rules, but are allowed here for homebrew flexibility.
                         </span>
                     </div>
                 )}

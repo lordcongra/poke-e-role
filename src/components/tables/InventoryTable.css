@@ -181,6 +181,110 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
+/* Toolbar Buttons (Filter collapse, Search toggle) */
+.inventory-table__toolbar-btn {
+    width: 26px;
+    height: 22px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--panel-alt);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-left: 6px;
+    flex-shrink: 0;
+}
+
+.inventory-table__toolbar-btn:hover {
+    color: var(--text-main);
+    border-color: var(--primary);
+}
+
+.inventory-table__toolbar-btn--active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.inventory-table__toolbar-btn--active svg {
+    filter: var(--shadow-icon);
+}
+
+/* Search Container & Inline Input */
+.inventory-table__search-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 6px;
+}
+
+.inventory-table__search-container .inventory-table__toolbar-btn {
+    margin-left: 0;
+}
+
+.inventory-table__search-input-wrapper {
+    display: inline-flex;
+    align-items: center;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    height: 22px;
+    padding: 0 4px 0 6px;
+    gap: 4px;
+    box-sizing: border-box;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.inventory-table__search-input-wrapper:focus-within {
+    border-color: var(--primary);
+    background-color: var(--panel-alt);
+}
+
+.inventory-table__search-input {
+    width: 95px;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 0.75rem;
+    padding: 0;
+    line-height: 20px;
+}
+
+.inventory-table__search-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+.inventory-table__search-clear-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition:
+        color 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.inventory-table__search-clear-btn:hover {
+    color: var(--text-main);
+    background: color-mix(in srgb, var(--text-muted) 20%, transparent);
+}
+
 /* Card Grid Layout */
 .inventory-table__grid-container {
     display: grid;

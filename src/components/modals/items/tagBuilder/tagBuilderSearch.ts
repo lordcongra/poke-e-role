@@ -40,6 +40,9 @@ const TARGET_KEYWORDS: Record<string, string[]> = {
     // Combat
     Dmg: ['damage', 'attack', 'power', 'boost', 'hit', 'strike'],
     Acc: ['accuracy', 'aim', 'precision', 'hit rate', 'target'],
+    'Dmg Succ': ['damage successes', 'flat damage', 'guaranteed damage', 'gem', 'hit harder'],
+    'Acc Succ': ['accuracy successes', 'flat accuracy', 'guaranteed accuracy', 'gem', 'aim success'],
+    'Type Gem': ['gem', 'type gem', 'flat success', 'fire gem', 'water gem', 'boost move'],
     Init: ['initiative', 'speed', 'turn order', 'quick', 'first'],
     Chance: ['secondary effect', 'status chance', 'rate', 'percentage'],
     'Crit Dmg': ['critical damage', 'critical hit damage', 'crit'],

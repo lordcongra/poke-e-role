@@ -15,6 +15,7 @@ import type {
     CustomInfo,
     Badge,
     Trackers,
+    ActiveCombatBoost,
     ExtraSkill,
     ExtraCategory,
     TempBuild,
@@ -270,6 +271,8 @@ export interface TrackerSlice {
     longRest: (resetBuffs?: boolean) => void;
     activeBattlefield: BattlefieldData | null;
     setActiveBattlefield: (battlefield: BattlefieldData | null) => void;
+    setActiveCombatBoost: (boost: ActiveCombatBoost | null) => void;
+    clearActiveCombatBoost: () => void;
 }
 
 export interface HomebrewPayload {

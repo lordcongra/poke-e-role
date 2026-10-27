@@ -1,5 +1,6 @@
+import { useState, useRef, useEffect } from 'react';
 import { TooltipIcon } from '../ui/TooltipIcon';
-import { AlertTriangle, List, LayoutGrid } from 'lucide-react';
+import { AlertTriangle, List, LayoutGrid, ChevronUp, ChevronDown, Search, X } from 'lucide-react';
 
 interface InventoryHeaderActionsProps {
     viewMode: 'list' | 'card';
@@ -12,6 +13,10 @@ interface InventoryHeaderActionsProps {
     pokedollars: number;
     onSetTrainingPoints: (tp: number) => void;
     onSetPokedollars: (pd: number) => void;
+    showFilters: boolean;
+    onToggleFilters: () => void;
+    searchQuery: string;
+    onSearchQueryChange: (query: string) => void;
 }
 
 export function InventoryHeaderActions({
@@ -24,8 +29,39 @@ export function InventoryHeaderActions({
     trainingPoints,
     pokedollars,
     onSetTrainingPoints,
-    onSetPokedollars
+    onSetPokedollars,
+    showFilters,
+    onToggleFilters,
+    searchQuery,
+    onSearchQueryChange
 }: InventoryHeaderActionsProps) {
+    const [isSearchOpen, setIsSearchOpen] = useState(Boolean(searchQuery));
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (searchQuery && !isSearchOpen) {
+            setIsSearchOpen(true);
+        }
+    }, [searchQuery, isSearchOpen]);
+
+    const handleToggleSearch = () => {
+        if (isSearchOpen) {
+            if (searchQuery) {
+                onSearchQueryChange('');
+            }
+            setIsSearchOpen(false);
+        } else {
+            setIsSearchOpen(true);
+            setTimeout(() => {
+                searchInputRef.current?.focus();
+            }, 50);
+        }
+    };
+
+    const handleClearSearch = () => {
+        onSearchQueryChange('');
+        searchInputRef.current?.focus();
+    };
     return (
         <>
             <TooltipIcon onClick={onShowTagsGuide} />
@@ -70,6 +106,62 @@ export function InventoryHeaderActions({
                     ))}
                 </div>
             )}
+            <button
+                type="button"
+                className={`inventory-table__toolbar-btn ${
+                    showFilters ? 'inventory-table__toolbar-btn--active text-theme-header' : ''
+                }`}
+                onClick={onToggleFilters}
+                title={showFilters ? 'Hide Category Filters' : 'Show Category Filters'}
+                aria-label={showFilters ? 'Hide Category Filters' : 'Show Category Filters'}
+            >
+                {showFilters ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+            </button>
+            <div className="inventory-table__search-container">
+                <button
+                    type="button"
+                    className={`inventory-table__toolbar-btn ${
+                        isSearchOpen || searchQuery ? 'inventory-table__toolbar-btn--active text-theme-header' : ''
+                    }`}
+                    onClick={handleToggleSearch}
+                    title={isSearchOpen ? 'Close Search' : 'Search Items'}
+                    aria-label={isSearchOpen ? 'Close Search' : 'Search Items'}
+                >
+                    <Search size={13} />
+                </button>
+                {isSearchOpen && (
+                    <div className="inventory-table__search-input-wrapper">
+                        <input
+                            ref={searchInputRef}
+                            type="text"
+                            className="inventory-table__search-input text-subtext"
+                            placeholder="Search items..."
+                            value={searchQuery}
+                            onChange={(event) => onSearchQueryChange(event.target.value)}
+                            onKeyDown={(event) => {
+                                if (event.key === 'Escape') {
+                                    if (searchQuery) {
+                                        onSearchQueryChange('');
+                                    } else {
+                                        setIsSearchOpen(false);
+                                    }
+                                }
+                            }}
+                        />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                className="inventory-table__search-clear-btn"
+                                onClick={handleClearSearch}
+                                title="Clear Search"
+                                aria-label="Clear Search"
+                            >
+                                <X size={12} />
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
             {activeCount > 1 && (
                 <div
                     className="inventory-table__warning text-label"

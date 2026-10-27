@@ -276,6 +276,33 @@
         0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
+.tracker-section__condition-pill--interactive {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.tracker-section__condition-clear-btn {
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.8;
+    transition:
+        opacity 0.15s ease,
+        transform 0.15s ease;
+}
+
+.tracker-section__condition-clear-btn:hover {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
 /* Modals */
 .tracker-modal__overlay {
     position: fixed;

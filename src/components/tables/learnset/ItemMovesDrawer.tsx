@@ -10,10 +10,16 @@ import {
     resolveItemMoveStats,
     formatStatShort,
     formatStatFull,
-    isSameStatOrSkill,
     type ResolvedSlot
 } from '../../../utils/items/itemAttackRoller';
-import { ChevronDown, ChevronUp, Package, Swords, Target, Scale, X, Check } from 'lucide-react';
+import {
+    calculateBaseAccuracy,
+    calculateTotalDamage,
+    getAbilityText,
+    parseCombatTags
+} from '../../../utils/combat/combatUtils';
+import { ChevronDown, ChevronUp, Package, Swords, Target, Scale } from 'lucide-react';
+import { ItemMovesScalePopover } from './ItemMovesScalePopover';
 import './ItemMovesDrawer.css';
 
 interface ItemMovesDrawerProps {
@@ -24,11 +30,21 @@ export function ItemMovesDrawer({ onTarget }: ItemMovesDrawerProps) {
     const inventory = useCharacterStore((state) => state.inventory);
     const roomCustomItems = useCharacterStore((state) => state.roomCustomItems);
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
-    const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
-    const setPendingDualScale = useCharacterStore((state) => state.setPendingDualScale);
+    const passives = useCharacterStore((state) => state.passives);
+    const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
+    const ability = useCharacterStore((state) => state.identity.ability);
+    const extraCategories = useCharacterStore((state) => state.extraCategories);
+
+    // Keep UI synced when stats, socials, or skills change
+    useCharacterStore((state) => state.stats);
+    useCharacterStore((state) => state.socials);
+    useCharacterStore((state) => state.skills);
 
     const [isExpanded, setIsExpanded] = useState(true);
     const [openPopoverItemId, setOpenPopoverItemId] = useState<string | null>(null);
+
+    const fullState = useCharacterStore.getState();
+    const abilityText = getAbilityText(ability, customAbilities);
 
     const activeItemMoves = useMemo(() => {
         const matches: Array<{ item: InventoryItem; action: ItemAttackAction }> = [];
@@ -101,263 +117,149 @@ export function ItemMovesDrawer({ onTarget }: ItemMovesDrawerProps) {
                     {activeItemMoves.map(({ item, action }) => {
                         const effective = getItemEffectiveCharges(item);
                         const isDepleted = (effective.hasCharges && effective.charges <= 0) || (item.qty ?? 1) <= 0;
-                        const ephemeralMove = buildEphemeralMoveFromItem(item, action);
+                        const ephemeralMove = buildEphemeralMoveFromItem(item, action, fullState);
+                        const itemBuffs = parseCombatTags(
+                            inventory,
+                            extraCategories,
+                            ephemeralMove,
+                            abilityText,
+                            passives
+                        );
 
-                        const { acc1, acc2, dmg1 } = resolveItemMoveStats(action, item);
+                        const { acc1, acc2, dmg1 } = resolveItemMoveStats(action, item, fullState);
                         const hasDual = acc1.isDual || acc2.isDual || dmg1.isDual;
 
+                        const accuracyTotal = calculateBaseAccuracy(ephemeralMove, fullState, itemBuffs);
+                        const damageTotal =
+                            action.category === 'Status'
+                                ? '-'
+                                : calculateTotalDamage(ephemeralMove, fullState, itemBuffs);
+
                         return (
-                            <div key={item.id} className="item-moves-drawer__row">
-                                <div className="item-moves-drawer__move-info">
-                                    <span
-                                        className="item-moves-drawer__type-pill"
-                                        style={{ backgroundColor: getTypeColor(action.type) }}
-                                    >
-                                        {action.type}
-                                    </span>
-                                    <div className="item-moves-drawer__name-group">
+                            <div key={item.id} className="item-moves-drawer__card">
+                                {/* Tier 1: Header & Action Bar */}
+                                <div className="item-moves-drawer__card-header">
+                                    <div className="item-moves-drawer__meta-group">
+                                        <span
+                                            className="item-moves-drawer__type-pill"
+                                            style={{ backgroundColor: getTypeColor(action.type) }}
+                                        >
+                                            {action.type}
+                                        </span>
                                         <span className="item-moves-drawer__name">{item.name || 'Unnamed Item'}</span>
-                                        <div className="item-moves-drawer__stats">
-                                            <span className="item-moves-drawer__category">{action.category}</span>
-                                            <span>
-                                                Acc: {renderStatDisplay(acc1, 'STR')} +{' '}
-                                                {renderStatDisplay(acc2, 'NONE')}
+                                        <span className="item-moves-drawer__category-pill">{action.category}</span>
+                                        {effective.hasCharges && (
+                                            <span
+                                                className={`item-moves-drawer__charge-badge ${effective.charges <= 0 ? 'depleted' : ''}`}
+                                                title={`${effective.charges} of ${effective.maxCharges} charges remaining`}
+                                            >
+                                                {effective.charges}/{effective.maxCharges} Charges
                                             </span>
-                                            {action.category !== 'Status' && (
-                                                <span>
-                                                    Dmg:{' '}
-                                                    {dmg1.active ? (
-                                                        <>
-                                                            {renderStatDisplay(dmg1, 'STR')} + {action.power}
-                                                        </>
-                                                    ) : (
-                                                        `Pwr ${action.power}`
-                                                    )}
-                                                </span>
-                                            )}
-                                            {hasDual && (
-                                                <button
-                                                    type="button"
-                                                    className={`item-moves-drawer__scale-btn ${openPopoverItemId === item.id ? 'active' : ''}`}
-                                                    onClick={() =>
-                                                        setOpenPopoverItemId(
-                                                            openPopoverItemId === item.id ? null : item.id
-                                                        )
-                                                    }
-                                                    title="Select Scaling Stat Preference"
-                                                    aria-label={`Scale options for ${item.name}`}
-                                                >
-                                                    <Scale size={11} />
-                                                    <span>Scale</span>
-                                                </button>
-                                            )}
-                                            {action.chanceDice && action.chanceDice > 0 && (
-                                                <span style={{ color: '#facc15' }}>
-                                                    ★ {action.chanceDice} Chance ({action.chanceEffect || 'Effect'})
-                                                </span>
-                                            )}
-                                        </div>
+                                        )}
+                                        {!effective.hasCharges && (item.qty ?? 1) > 1 && (
+                                            <span
+                                                className="item-moves-drawer__charge-badge"
+                                                title={`${item.qty} remaining in bag`}
+                                            >
+                                                x{item.qty}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="item-moves-drawer__actions">
+                                        <button
+                                            type="button"
+                                            className="item-moves-drawer__btn item-moves-drawer__btn--attack"
+                                            disabled={isDepleted}
+                                            onClick={() => executeItemAttackRoll(item, action)}
+                                            title={
+                                                isDepleted
+                                                    ? 'Item depleted (0 charges or quantity remaining)'
+                                                    : `Roll Accuracy (${accuracyTotal} dice) for ${item.name}`
+                                            }
+                                        >
+                                            <Swords size={12} />
+                                            <span>Attack / Throw ({accuracyTotal})</span>
+                                        </button>
+
+                                        {onTarget && action.category !== 'Status' && (
+                                            <button
+                                                type="button"
+                                                className="item-moves-drawer__btn item-moves-drawer__btn--dmg"
+                                                disabled={isDepleted}
+                                                onClick={() => onTarget(ephemeralMove)}
+                                                title={`Open Targeting & Damage (${damageTotal} dice) for ${item.name}`}
+                                            >
+                                                <Target size={12} />
+                                                <span>Dmg ({damageTotal})</span>
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
 
-                                <div className="item-moves-drawer__actions">
-                                    {effective.hasCharges && (
-                                        <span
-                                            className="text-subtext"
-                                            style={{ fontSize: '0.75rem', marginRight: '4px' }}
-                                        >
-                                            {effective.charges}/{effective.maxCharges} Charges
+                                {/* Tier 2: Combat Details & Formulas Bar */}
+                                <div className="item-moves-drawer__card-body">
+                                    <div className="item-moves-drawer__stat-chip">
+                                        <span className="item-moves-drawer__chip-label">Acc:</span>
+                                        <strong className="item-moves-drawer__chip-val text-value-highlight">
+                                            {accuracyTotal}
+                                        </strong>
+                                        <span className="item-moves-drawer__chip-formula">
+                                            ({renderStatDisplay(acc1, 'STR')} + {renderStatDisplay(acc2, 'NONE')})
                                         </span>
-                                    )}
-                                    {!effective.hasCharges && (item.qty ?? 1) > 1 && (
-                                        <span
-                                            className="text-subtext"
-                                            style={{ fontSize: '0.75rem', marginRight: '4px' }}
-                                        >
-                                            x{item.qty}
-                                        </span>
+                                    </div>
+
+                                    {action.category !== 'Status' && (
+                                        <div className="item-moves-drawer__stat-chip">
+                                            <span className="item-moves-drawer__chip-label">Dmg:</span>
+                                            <strong
+                                                className="item-moves-drawer__chip-val text-value-highlight"
+                                                style={{ color: 'var(--primary)' }}
+                                            >
+                                                {damageTotal}
+                                            </strong>
+                                            <span className="item-moves-drawer__chip-formula">
+                                                ({renderStatDisplay(dmg1, 'STR')} + {action.power})
+                                            </span>
+                                        </div>
                                     )}
 
-                                    <button
-                                        type="button"
-                                        className="item-moves-drawer__btn item-moves-drawer__btn--attack"
-                                        disabled={isDepleted}
-                                        onClick={() => executeItemAttackRoll(item, action)}
-                                        title={
-                                            isDepleted
-                                                ? 'Item depleted (0 charges or quantity remaining)'
-                                                : `Roll Accuracy for ${item.name}`
-                                        }
-                                    >
-                                        <Swords size={12} />
-                                        <span>Attack / Throw</span>
-                                    </button>
-
-                                    {onTarget && action.category !== 'Status' && (
+                                    {hasDual && (
                                         <button
                                             type="button"
-                                            className="item-moves-drawer__btn item-moves-drawer__btn--dmg"
-                                            disabled={isDepleted}
-                                            onClick={() => onTarget(ephemeralMove)}
-                                            title={`Open Targeting & Damage for ${item.name}`}
+                                            className={`item-moves-drawer__scale-btn ${openPopoverItemId === item.id ? 'active' : ''}`}
+                                            onClick={() =>
+                                                setOpenPopoverItemId(openPopoverItemId === item.id ? null : item.id)
+                                            }
+                                            title="Select Scaling Stat Preference"
+                                            aria-label={`Scale options for ${item.name}`}
                                         >
-                                            <Target size={12} />
-                                            <span>Dmg</span>
+                                            <Scale size={11} />
+                                            <span>Scale</span>
                                         </button>
+                                    )}
+
+                                    {action.chanceDice && action.chanceDice > 0 && (
+                                        <div className="item-moves-drawer__chance-chip">
+                                            <span>★ {action.chanceDice} Chance</span>
+                                            <span className="item-moves-drawer__chance-desc">
+                                                ({action.chanceEffect || 'Effect'})
+                                            </span>
+                                        </div>
                                     )}
                                 </div>
 
                                 {openPopoverItemId === item.id && hasDual && (
-                                    <div className="item-moves-drawer__popover">
-                                        <div className="item-moves-drawer__popover-header">
-                                            <div className="item-moves-drawer__popover-title">
-                                                <Scale size={13} style={{ color: 'var(--primary, #3b82f6)' }} />
-                                                <span>Dual-Scale Preference</span>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                className="item-moves-drawer__popover-close"
-                                                onClick={() => setOpenPopoverItemId(null)}
-                                                aria-label="Close"
-                                            >
-                                                <X size={13} />
-                                            </button>
-                                        </div>
-
-                                        <div className="item-moves-drawer__popover-body">
-                                            {acc1.isDual && acc1.alt && (
-                                                <div className="item-moves-drawer__popover-section">
-                                                    <span className="item-moves-drawer__popover-label">
-                                                        Accuracy Stat:
-                                                    </span>
-                                                    <div className="item-moves-drawer__popover-buttons">
-                                                        {[action.acc1, action.acc1Alt!].map((opt) => {
-                                                            const isChosen = isSameStatOrSkill(acc1.active, opt);
-                                                            return (
-                                                                <button
-                                                                    key={`acc1-${opt}`}
-                                                                    type="button"
-                                                                    className={`item-moves-drawer__popover-opt-btn ${isChosen ? 'active' : ''}`}
-                                                                    onClick={() => {
-                                                                        const updated: ItemAttackAction = {
-                                                                            ...action,
-                                                                            selectedAcc1: opt
-                                                                        };
-                                                                        updateInventoryItem(
-                                                                            item.id,
-                                                                            'attackAction',
-                                                                            updated
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    {isChosen && <Check size={11} />}
-                                                                    <span>
-                                                                        {formatStatFull(opt)} ({formatStatShort(opt)})
-                                                                    </span>
-                                                                </button>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {acc2.isDual && acc2.alt && (
-                                                <div className="item-moves-drawer__popover-section">
-                                                    <span className="item-moves-drawer__popover-label">
-                                                        Accuracy Skill:
-                                                    </span>
-                                                    <div className="item-moves-drawer__popover-buttons">
-                                                        {[action.acc2 || 'none', action.acc2Alt!].map((opt) => {
-                                                            const isChosen = isSameStatOrSkill(acc2.active, opt);
-                                                            return (
-                                                                <button
-                                                                    key={`acc2-${opt}`}
-                                                                    type="button"
-                                                                    className={`item-moves-drawer__popover-opt-btn ${isChosen ? 'active' : ''}`}
-                                                                    onClick={() => {
-                                                                        const updated: ItemAttackAction = {
-                                                                            ...action,
-                                                                            selectedAcc2: opt
-                                                                        };
-                                                                        updateInventoryItem(
-                                                                            item.id,
-                                                                            'attackAction',
-                                                                            updated
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    {isChosen && <Check size={11} />}
-                                                                    <span>{formatStatFull(opt)}</span>
-                                                                </button>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {dmg1.isDual && dmg1.alt && action.category !== 'Status' && (
-                                                <div className="item-moves-drawer__popover-section">
-                                                    <span className="item-moves-drawer__popover-label">
-                                                        Damage Stat:
-                                                    </span>
-                                                    <div className="item-moves-drawer__popover-buttons">
-                                                        {[action.dmg1 || '', action.dmg1Alt!]
-                                                            .filter(Boolean)
-                                                            .map((opt) => {
-                                                                const isChosen = isSameStatOrSkill(dmg1.active, opt);
-                                                                return (
-                                                                    <button
-                                                                        key={`dmg1-${opt}`}
-                                                                        type="button"
-                                                                        className={`item-moves-drawer__popover-opt-btn ${isChosen ? 'active' : ''}`}
-                                                                        onClick={() => {
-                                                                            const updated: ItemAttackAction = {
-                                                                                ...action,
-                                                                                selectedDmg1: opt
-                                                                            };
-                                                                            updateInventoryItem(
-                                                                                item.id,
-                                                                                'attackAction',
-                                                                                updated
-                                                                            );
-                                                                        }}
-                                                                    >
-                                                                        {isChosen && <Check size={11} />}
-                                                                        <span>
-                                                                            {formatStatFull(opt)} (
-                                                                            {formatStatShort(opt)})
-                                                                        </span>
-                                                                    </button>
-                                                                );
-                                                            })}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            <button
-                                                type="button"
-                                                className="item-moves-drawer__full-dialog-btn"
-                                                onClick={() => {
-                                                    setPendingDualScale({
-                                                        moveId: `item-${item.id}`,
-                                                        moveName: item.name || 'Item Move',
-                                                        acc1Options: action.acc1Alt
-                                                            ? [action.acc1, action.acc1Alt]
-                                                            : undefined,
-                                                        acc2Options: action.acc2Alt
-                                                            ? [action.acc2 || 'none', action.acc2Alt]
-                                                            : undefined,
-                                                        dmg1Options: action.dmg1Alt
-                                                            ? [action.dmg1 || '', action.dmg1Alt]
-                                                            : undefined
-                                                    });
-                                                    setOpenPopoverItemId(null);
-                                                }}
-                                            >
-                                                Open Full Scaling Dialog...
-                                            </button>
-                                        </div>
-                                    </div>
+                                    <ItemMovesScalePopover
+                                        item={item}
+                                        action={action}
+                                        acc1={acc1}
+                                        acc2={acc2}
+                                        dmg1={dmg1}
+                                        fullState={fullState}
+                                        itemBuffs={itemBuffs}
+                                        onClose={() => setOpenPopoverItemId(null)}
+                                    />
                                 )}
                             </div>
                         );

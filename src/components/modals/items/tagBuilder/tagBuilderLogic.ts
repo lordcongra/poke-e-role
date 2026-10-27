@@ -19,6 +19,13 @@ export function buildTagString(config: TagBuilderConfig): string {
             const actualTarget = 'Low Acc';
             if (typeOption) tag = `[${actualTarget} ${sign}: ${typeOption}]`;
             else tag = `[${actualTarget} ${sign}]`;
+        } else if (target === 'Type Gem') {
+            const typeStr = typeOption || 'Normal';
+            const accVal = numValue !== 0 ? numValue : 1;
+            const dmgVal = numValue2 !== 0 ? numValue2 : 2;
+            const accSign = accVal >= 0 ? `+${accVal}` : `${accVal}`;
+            const dmgSign = dmgVal >= 0 ? `+${dmgVal}` : `${dmgVal}`;
+            tag = `[Acc Succ ${accSign}: ${typeStr}] [Dmg Succ ${dmgSign}: ${typeStr}]`;
         } else {
             if (typeOption) tag = `[${target} ${sign}: ${typeOption}]`;
             else tag = `[${target} ${sign}]`;
@@ -86,22 +93,24 @@ export function buildTagString(config: TagBuilderConfig): string {
     }
 
     if (tag && condition && condition !== 'none') {
+        let condStr = '';
         if (condition === 'half hp') {
-            tag = tag.replace(']', ' @ Half HP]');
+            condStr = ' @ Half HP';
         } else if (condition === 'boost') {
-            tag = tag.replace(']', ' @ Boost]');
+            condStr = ' @ Boost';
         } else if (condition === 'stacking_boost') {
-            tag = tag.replace(']', ' @ Stacking Boost]');
+            condStr = ' @ Stacking Boost';
         } else if (condition === 'custom_stacking_boost') {
             const stacks = Math.max(2, Number(customMaxStacks) || 5);
-            tag = tag.replace(']', ` @ Stacking Boost: ${stacks}]`);
+            condStr = ` @ Stacking Boost: ${stacks}`;
         } else {
             const formattedCond = condition
                 .split(' ')
                 .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
                 .join(' ');
-            tag = tag.replace(']', ` @ ${formattedCond}]`);
+            condStr = ` @ ${formattedCond}`;
         }
+        tag = tag.replace(/\]/g, `${condStr}]`);
     }
 
     return tag;
@@ -123,7 +132,18 @@ export function generateExplanation(config: TagBuilderConfig, builtTag: string):
         const reqStr = typeOption ? ` on ${typeOption} moves` : '';
         if (target === 'Dmg') base = `Adds ${signStr} damage dice${reqStr}`;
         else if (target === 'Acc') base = `Adds ${signStr} accuracy dice${reqStr}`;
-        else if (target === 'Init') base = `Modifies Initiative by ${signStr}`;
+        else if (target === 'Acc Succ')
+            base = `Adds ${signStr} flat success${Math.abs(num) === 1 ? '' : 'es'} to Accuracy${reqStr}`;
+        else if (target === 'Dmg Succ')
+            base = `Adds ${signStr} flat success${Math.abs(num) === 1 ? '' : 'es'} to Damage${reqStr}`;
+        else if (target === 'Type Gem') {
+            const typeStr = typeOption || 'specified type';
+            const val1 = num !== 0 ? num : 1;
+            const val2 = Number(value2) !== 0 ? Number(value2) : 2;
+            const s1 = val1 >= 0 ? `+${val1}` : `${val1}`;
+            const s2 = val2 >= 0 ? `+${val2}` : `${val2}`;
+            base = `Type Gem: Adds ${s1} flat success to Accuracy and ${s2} flat successes to Damage on ${typeStr} moves`;
+        } else if (target === 'Init') base = `Modifies Initiative by ${signStr}`;
         else if (target === 'Chance') base = `Adds ${signStr} extra Chance dice`;
         else if (target === 'Crit Dmg') base = `Adds ${signStr} damage dice on critical hits`;
         else if (target === 'Combo Dmg') base = `Adds ${signStr} damage dice to combo/successive moves`;
@@ -608,6 +628,46 @@ export function parseTagStringToConfig(tagStr: string, isMoveContext = false): P
             category: 'combat',
             target: targetNameMap[combatNamedMatch[1].toLowerCase()] || 'Crit Dmg',
             value: parseInt(combatNamedMatch[2], 10) || 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Type Gem composite: [Acc Succ +1: Type] [Dmg Succ +2: Type]
+    const typeGemMatch = clean.match(
+        /^acc\s+succ(?:ess(?:es)?)?\s*([+-]?\d+)(?::\s*([^@\]]+))?(?:\s*@\s*[^\]]+)?\]\s*\[\s*dmg\s+succ(?:ess(?:es)?)?\s*([+-]?\d+)(?::\s*([^@\]]+))?/i
+    );
+    if (typeGemMatch) {
+        const val1 = parseInt(typeGemMatch[1], 10) || 1;
+        const typeOpt = typeGemMatch[2]?.trim() || typeGemMatch[4]?.trim() || 'Normal';
+        const val2 = parseInt(typeGemMatch[3], 10) || 2;
+        return {
+            category: 'combat',
+            target: 'Type Gem',
+            value: val1,
+            value2: val2,
+            typeOption: typeOpt,
+            reqGroup: 'type',
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Acc Succ / Dmg Succ with optional type/requirement
+    const succMatch = clean.match(
+        /^(acc\s+succ(?:ess(?:es)?)?|dmg\s+succ(?:ess(?:es)?)?)\s*([+-]?\d+)(?::\s*([^@\]]+))?$/i
+    );
+    if (succMatch) {
+        const isAcc = succMatch[1].toLowerCase().startsWith('acc');
+        const target = isAcc ? 'Acc Succ' : 'Dmg Succ';
+        const val = parseInt(succMatch[2], 10) || 1;
+        const typeOpt = succMatch[3]?.trim() || '';
+        return {
+            category: 'combat',
+            target,
+            value: val,
+            typeOption: typeOpt,
+            reqGroup: typeOpt ? 'type' : 'none',
             condition,
             customMaxStacks
         };
