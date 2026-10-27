@@ -60,6 +60,7 @@ export function TrainerPokedexModal({ onClose, initialPokemonName }: TrainerPoke
         availablePokemonNames,
         handleToggleExpand,
         handleCopyDiscord,
+        handleDownloadMarkdown,
         handleBroadcast,
         handleCopyCardLink,
         handleOpenTooltip
@@ -267,6 +268,7 @@ export function TrainerPokedexModal({ onClose, initialPokemonName }: TrainerPoke
                                         trainerControls={trainerControls}
                                         onToggleExpand={handleToggleExpand}
                                         onCopyDiscord={handleCopyDiscord}
+                                        onDownloadMarkdown={handleDownloadMarkdown}
                                         onCopyCardLink={handleCopyCardLink}
                                         onBroadcast={handleBroadcast}
                                         onOpenTooltip={handleOpenTooltip}

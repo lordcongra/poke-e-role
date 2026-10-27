@@ -71,6 +71,7 @@ export function PokemonLookupTab({ initialPokemonName, initialMoveFilter, onSele
         handleResetFilters,
         handleToggleExpand,
         handleCopyDiscord,
+        handleDownloadMarkdown,
         handleBroadcast,
         handleCopyLookupLink,
         handleCopyCardLink,
@@ -183,6 +184,7 @@ export function PokemonLookupTab({ initialPokemonName, initialMoveFilter, onSele
                             moveRank={moveRank}
                             onToggleExpand={handleToggleExpand}
                             onCopyDiscord={handleCopyDiscord}
+                            onDownloadMarkdown={handleDownloadMarkdown}
                             onCopyCardLink={handleCopyCardLink}
                             onBroadcast={handleBroadcast}
                             onOpenTooltip={handleOpenTooltip}

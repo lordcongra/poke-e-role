@@ -1,4 +1,6 @@
 import type { MoveLookupEntry } from '../../../utils/api/apiTypes';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { fetchMoveData } from '../../../utils/api/api';
 
 export const BASIC_POWERS = ['1', '2', '3'];
 export const HIGH_POWERS = ['4', '5', '6', '7', '8', '10'];
@@ -108,6 +110,13 @@ export function buildMoveDiscordMarkdown(move: MoveLookupEntry): string {
     const accStr = formatAccuracy(move.accuracy1, move.accuracy2);
     const dmgStr = formatDamage(move.damage1, move.damage2, move.power);
 
+    const powerLabel =
+        move.category === 'Status' || String(move.power) === '0'
+            ? 'Support'
+            : String(move.power).toLowerCase().includes('var')
+              ? 'Variable'
+              : String(move.power);
+
     const activeAttrs = move.attributes
         ? Object.entries(move.attributes)
               .filter(([, val]) => Boolean(val))
@@ -117,15 +126,23 @@ export function buildMoveDiscordMarkdown(move: MoveLookupEntry): string {
         : [];
     const attrText = activeAttrs.length > 0 ? `\n> **Attributes:** ${activeAttrs.join(', ')}` : '';
 
-    return `## **${move.name}**
-> **Type:** ${move.type} | **Category:** ${move.category} | **Power:** ${move.power}
-> **Accuracy:** ${accStr} | **Damage:** ${dmgStr}
-> **Target:** ${move.target || 'None'}${attrText}
+    const lines: string[] = [
+        `## **${move.name}**`,
+        `> **Type:** ${move.type} | **Category:** ${move.category} | **Power:** ${powerLabel}`,
+        `> **Accuracy:** ${accStr} | **Damage:** ${dmgStr}`,
+        `> **Target:** ${move.target || 'None'}${attrText}`,
+        '',
+        '**Effect:**',
+        move.effect || 'No effect provided.'
+    ];
 
-**Effect:**
-${move.effect || 'No effect provided.'}
+    if (move.description) {
+        lines.push('', `*${move.description}*`);
+    }
 
-*${move.description || ''}*`;
+    lines.push('', '-# Powered by Pokérole Autosheet');
+
+    return lines.join('\n');
 }
 
 /**
@@ -148,4 +165,45 @@ export function buildMoveBroadcast(move: MoveLookupEntry): { title: string; desc
         title: `${move.name} (${move.type} / ${move.category})`,
         desc: `Power: ${move.power} | Acc: ${accStr} | Dmg: ${dmgStr} | Target: ${move.target || 'None'}${attrSnippet}\n${move.effect || move.description || ''}`
     };
+}
+
+/**
+ * Learns a move into the active character store's move slots.
+ */
+export async function learnMoveToStore(move: MoveLookupEntry): Promise<void> {
+    const store = useCharacterStore.getState();
+    const existingMoves = store.moves;
+
+    // Find an empty move slot or create a new slot
+    const emptySlot = existingMoves.find((m) => !m.name || m.name.trim() === '');
+    let targetId: string;
+
+    if (emptySlot) {
+        targetId = emptySlot.id;
+    } else {
+        store.addMove();
+        const updatedMoves = useCharacterStore.getState().moves;
+        targetId = updatedMoves[updatedMoves.length - 1].id;
+    }
+
+    // Fetch complete MoveApiResponse structure for applyMoveData
+    const fullData = await fetchMoveData(move.name);
+    if (fullData) {
+        store.applyMoveData(targetId, fullData as Record<string, unknown>);
+    } else {
+        store.applyMoveData(targetId, {
+            Name: move.name,
+            Type: move.type,
+            Category: move.category,
+            Power: move.power,
+            Accuracy1: move.accuracy1,
+            Accuracy2: move.accuracy2,
+            Damage1: move.damage1,
+            Damage2: move.damage2,
+            Target: move.target,
+            Effect: move.effect,
+            Description: move.description,
+            Attributes: move.attributes
+        });
+    }
 }

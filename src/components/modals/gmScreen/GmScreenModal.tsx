@@ -19,7 +19,8 @@ import {
     Sparkles,
     UserCheck,
     Zap,
-    Award
+    Award,
+    FileDown
 } from 'lucide-react';
 import { GM_CHEAT_ITEMS, type GmCheatItem } from '../../../data/gmScreenData';
 import { GmPokemonLookup } from './GmPokemonLookup';
@@ -28,6 +29,7 @@ import { GmScreenCreditsModal } from './GmScreenCreditsModal';
 import { broadcastGmCheatItem } from './gmScreenBroadcastUtils';
 import { filterAndScoreCheatItems, getCheatItemTabCounts } from './gmScreenFilterUtils';
 import { getBaseShareUrl } from '../../../utils/common/helper';
+import { downloadMarkdownFile } from '../../../utils/common/fileSystemHelpers';
 import { DiscordIcon } from '../../ui/DiscordIcon';
 import './GmScreenModal.css';
 
@@ -151,6 +153,11 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
         } catch (error) {
             console.error('[GmScreenModal] Failed to copy Discord markdown to clipboard:', error);
         }
+    };
+
+    const handleDownloadMarkdown = (item: GmCheatItem) => {
+        const filename = `${item.id.replace(/[^a-zA-Z0-9_-]/g, '_')}.md`;
+        downloadMarkdownFile(filename, item.discordMarkdown);
     };
 
     const handleCopyLink = async (item: GmCheatItem) => {
@@ -406,6 +413,14 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                                         <Copy size={13} /> Discord
                                                     </>
                                                 )}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="action-button action-button--dark gm-screen-modal__action-btn"
+                                                onClick={() => handleDownloadMarkdown(item)}
+                                                title="Download section summary as Markdown (.md) file"
+                                            >
+                                                <FileDown size={13} /> .md
                                             </button>
                                             <button
                                                 type="button"

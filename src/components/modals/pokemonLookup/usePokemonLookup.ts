@@ -9,6 +9,7 @@ import type { CustomPokemon } from '../../../store/storeTypes';
 import { fetchPokemonLookupIndex, fetchPokemonData } from '../../../utils/api/api';
 import { broadcastInfo } from '../../../utils/combat/diceRoller';
 import { getBaseShareUrl } from '../../../utils/common/helper';
+import { downloadMarkdownFile } from '../../../utils/common/fileSystemHelpers';
 import { filterPokemonLookup, buildPokemonDiscordMarkdown, buildPokemonBroadcast } from './pokemonLookupUtils';
 
 export function usePokemonLookup(initialPokemonName?: string, initialMoveFilter?: string) {
@@ -288,21 +289,25 @@ export function usePokemonLookup(initialPokemonName?: string, initialMoveFilter?
         }
     };
 
-    // Copy Discord
-    const handleCopyDiscord = async (pokemon: PokemonLookupEntry) => {
-        let fullData = fullDataCache[pokemon.name];
+    const getOrFetchFullData = async (pokemonName: string) => {
+        let fullData = fullDataCache[pokemonName];
         if (!fullData) {
             try {
-                const fetched = await fetchPokemonData(pokemon.name);
+                const fetched = await fetchPokemonData(pokemonName);
                 if (fetched) {
                     fullData = fetched;
-                    setFullDataCache((prev) => ({ ...prev, [pokemon.name]: fetched }));
+                    setFullDataCache((prev) => ({ ...prev, [pokemonName]: fetched }));
                 }
             } catch (err) {
-                console.error(`[usePokemonLookup] Failed to fetch full data for Discord copy of ${pokemon.name}:`, err);
+                console.error(`[usePokemonLookup] Failed to fetch full data for ${pokemonName}:`, err);
             }
         }
+        return fullData;
+    };
 
+    // Copy Discord
+    const handleCopyDiscord = async (pokemon: PokemonLookupEntry) => {
+        const fullData = await getOrFetchFullData(pokemon.name);
         const text = buildPokemonDiscordMarkdown(pokemon, fullData, appliedMove, moveRank);
 
         try {
@@ -314,21 +319,16 @@ export function usePokemonLookup(initialPokemonName?: string, initialMoveFilter?
         }
     };
 
+    // Download Markdown File
+    const handleDownloadMarkdown = async (pokemon: PokemonLookupEntry) => {
+        const fullData = await getOrFetchFullData(pokemon.name);
+        const text = buildPokemonDiscordMarkdown(pokemon, fullData, appliedMove, moveRank);
+        downloadMarkdownFile(`${pokemon.name}.md`, text);
+    };
+
     // Broadcast
     const handleBroadcast = async (pokemon: PokemonLookupEntry) => {
-        let fullData = fullDataCache[pokemon.name];
-        if (!fullData) {
-            try {
-                const fetched = await fetchPokemonData(pokemon.name);
-                if (fetched) {
-                    fullData = fetched;
-                    setFullDataCache((prev) => ({ ...prev, [pokemon.name]: fetched }));
-                }
-            } catch (err) {
-                console.error(`[usePokemonLookup] Failed to fetch full data for broadcast of ${pokemon.name}:`, err);
-            }
-        }
-
+        const fullData = await getOrFetchFullData(pokemon.name);
         const { title, desc } = buildPokemonBroadcast(pokemon, fullData, appliedMove, moveRank);
         await broadcastInfo(title, desc);
     };
@@ -429,6 +429,7 @@ export function usePokemonLookup(initialPokemonName?: string, initialMoveFilter?
         handleResetFilters,
         handleToggleExpand,
         handleCopyDiscord,
+        handleDownloadMarkdown,
         handleBroadcast,
         handleCopyLookupLink,
         handleCopyCardLink,

@@ -13,7 +13,8 @@ import {
     Loader2,
     AlertCircle,
     CheckCircle,
-    Bookmark
+    Bookmark,
+    FileDown
 } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { TYPE_COLORS } from '../../../data/constants';
@@ -21,12 +22,14 @@ import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import { fetchMoveLookupIndex, fetchMoveData } from '../../../utils/api/api';
 import type { MoveLookupEntry } from '../../../utils/api/apiTypes';
 import { broadcastInfo } from '../../../utils/combat/diceRoller';
+import { downloadMarkdownFile } from '../../../utils/common/fileSystemHelpers';
 import {
     formatAccuracy,
     formatDamage,
     formatAttributeName,
     buildMoveDiscordMarkdown,
-    buildMoveBroadcast
+    buildMoveBroadcast,
+    learnMoveToStore
 } from './moveLookupUtils';
 import './MoveDetailModal.css';
 
@@ -174,6 +177,12 @@ export function MoveDetailModal({ moveName, onClose }: MoveDetailModalProps) {
         }
     };
 
+    const handleDownloadMarkdown = () => {
+        if (!move) return;
+        const text = buildMoveDiscordMarkdown(move);
+        downloadMarkdownFile(`${move.name}.md`, text);
+    };
+
     const handleBroadcast = async () => {
         if (!move) return;
         try {
@@ -189,42 +198,7 @@ export function MoveDetailModal({ moveName, onClose }: MoveDetailModalProps) {
     const handleLearnMove = async () => {
         if (!move || isLearned) return;
         try {
-            const store = useCharacterStore.getState();
-            const existingMoves = store.moves;
-
-            // Find an empty move slot or create a new slot
-            const emptySlot = existingMoves.find((m) => !m.name || m.name.trim() === '');
-            let targetId: string;
-
-            if (emptySlot) {
-                targetId = emptySlot.id;
-            } else {
-                store.addMove();
-                const updatedMoves = useCharacterStore.getState().moves;
-                targetId = updatedMoves[updatedMoves.length - 1].id;
-            }
-
-            // Fetch complete MoveApiResponse structure for applyMoveData
-            const fullData = await fetchMoveData(move.name);
-            if (fullData) {
-                store.applyMoveData(targetId, fullData as Record<string, unknown>);
-            } else {
-                store.applyMoveData(targetId, {
-                    Name: move.name,
-                    Type: move.type,
-                    Category: move.category,
-                    Power: move.power,
-                    Accuracy1: move.accuracy1,
-                    Accuracy2: move.accuracy2,
-                    Damage1: move.damage1,
-                    Damage2: move.damage2,
-                    Target: move.target,
-                    Effect: move.effect,
-                    Description: move.description,
-                    Attributes: move.attributes
-                });
-            }
-
+            await learnMoveToStore(move);
             setIsAdded(true);
         } catch (err) {
             console.error('[MoveDetailModal] Failed to learn move:', err);
@@ -419,9 +393,19 @@ export function MoveDetailModal({ moveName, onClose }: MoveDetailModalProps) {
                                         </>
                                     ) : (
                                         <>
-                                            <Copy size={14} /> Discord
+                                            <Copy size={14} /> Discord Text
                                         </>
                                     )}
+                                </button>
+
+                                {/* Download Markdown */}
+                                <button
+                                    type="button"
+                                    className="action-button action-button--dark move-detail-modal__action-btn"
+                                    onClick={handleDownloadMarkdown}
+                                    title="Download move summary as Markdown (.md) file"
+                                >
+                                    <FileDown size={14} /> .md File
                                 </button>
 
                                 {/* Broadcast */}

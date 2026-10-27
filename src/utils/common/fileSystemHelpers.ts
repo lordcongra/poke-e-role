@@ -44,6 +44,15 @@ export const downloadJson = (data: unknown, filename: string): void => {
 };
 
 /**
+ * Triggers a download for a markdown (.md) text file.
+ */
+export function downloadMarkdownFile(filename: string, content: string): void {
+    const finalFilename = filename.endsWith('.md') ? filename : `${filename}.md`;
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    downloadBlob(blob, finalFilename);
+}
+
+/**
  * Handles generating and downloading a complete JSON representation
  * of the character token metadata or standalone state.
  */

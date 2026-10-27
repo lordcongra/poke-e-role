@@ -1,4 +1,4 @@
-import { Check, Copy, Link2, Megaphone, ChevronDown, ChevronUp, Sparkles, Zap, Loader2 } from 'lucide-react';
+import { Check, Copy, Link2, Megaphone, ChevronDown, ChevronUp, Sparkles, Zap, Loader2, FileDown } from 'lucide-react';
 import type { PokemonLookupEntry, PokemonApiResponse } from '../../../utils/api/apiTypes';
 import type { CustomPokemon } from '../../../store/storeTypes';
 import { groupMovesByRank, getPokemonStatLimits } from './pokemonLookupUtils';
@@ -18,6 +18,7 @@ export interface PokemonLookupCardProps {
     trainerControls?: React.ReactNode;
     onToggleExpand: (name: string) => void;
     onCopyDiscord: (pokemon: PokemonLookupEntry) => void;
+    onDownloadMarkdown?: (pokemon: PokemonLookupEntry) => void;
     onCopyCardLink: (name: string) => void;
     onBroadcast: (pokemon: PokemonLookupEntry) => void;
     onOpenTooltip: (title: string, desc: string) => void;
@@ -38,6 +39,7 @@ export function PokemonLookupCard({
     trainerControls,
     onToggleExpand,
     onCopyDiscord,
+    onDownloadMarkdown,
     onCopyCardLink,
     onBroadcast,
     onOpenTooltip,
@@ -98,6 +100,17 @@ export function PokemonLookupCard({
                             </>
                         )}
                     </button>
+
+                    {onDownloadMarkdown && (
+                        <button
+                            type="button"
+                            className="action-button action-button--dark"
+                            onClick={() => onDownloadMarkdown(p)}
+                            title="Download .md File"
+                        >
+                            <FileDown size={14} /> .md
+                        </button>
+                    )}
 
                     <button
                         type="button"

@@ -5,7 +5,7 @@ import type {
     TypeMatchMode
 } from '../../../utils/api/apiTypes';
 import type { CustomPokemon } from '../../../store/storeTypes';
-import { getLimit } from '../../../utils/common/macroHelpers';
+import { getLimit, parseHeight, parseWeight } from '../../../utils/common/macroHelpers';
 
 export const LEARN_RANKS = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master'];
 export const RANK_ORDER = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion', 'Other'];
@@ -173,18 +173,32 @@ export function buildPokemonDiscordMarkdown(
 ): string {
     const typesStr = pokemon.type2 ? `${pokemon.type1} / ${pokemon.type2}` : pokemon.type1;
     const standardAbilities = [pokemon.ability1, pokemon.ability2].filter(Boolean).join(', ') || 'None';
-    const haText = pokemon.hiddenAbility ? `\n> **Hidden Ability (Homebrew):** ${pokemon.hiddenAbility}` : '';
 
-    let statsStr = '';
-    if (fullData) {
-        const limits = getPokemonStatLimits(fullData);
-        statsStr = `\n> **Base Stats:** HP: ${fullData.BaseHP ?? 0} | Str: ${fullData.Strength ?? 0}/${limits.maxStrength} | Dex: ${fullData.Dexterity ?? 0}/${limits.maxDexterity} | Vit: ${fullData.Vitality ?? 0}/${limits.maxVitality} | Spe: ${fullData.Special ?? 0}/${limits.maxSpecial} | Ins: ${fullData.Insight ?? 0}/${limits.maxInsight}`;
+    const lines: string[] = [
+        `## **#${pokemon.dexId} ${pokemon.name}**`,
+        `> **Type:** ${typesStr}`,
+        `> **Abilities:** ${standardAbilities}`
+    ];
+
+    if (pokemon.hiddenAbility) {
+        lines.push(`> **Hidden Ability (Homebrew):** ${pokemon.hiddenAbility}`);
     }
 
-    const grouped = groupMovesByRank(pokemon.moves);
-    const movesText = grouped.map(({ rank, moves }) => `• **${rank}:** ${moves.join(', ')}`).join('\n');
+    if (fullData) {
+        const limits = getPokemonStatLimits(fullData);
+        lines.push(
+            `> **Base Stats:** HP: ${fullData.BaseHP ?? 0} | Str: ${fullData.Strength ?? 0}/${limits.maxStrength} | Dex: ${fullData.Dexterity ?? 0}/${limits.maxDexterity} | Vit: ${fullData.Vitality ?? 0}/${limits.maxVitality} | Spe: ${fullData.Special ?? 0}/${limits.maxSpecial} | Ins: ${fullData.Insight ?? 0}/${limits.maxInsight}`
+        );
 
-    let matchedMoveInfo = '';
+        const physicalInfo: string[] = [];
+        if (fullData.DexCategory) physicalInfo.push(`Category: ${fullData.DexCategory}`);
+        if (fullData.Height) physicalInfo.push(`Height: ${parseHeight(fullData.Height)}`);
+        if (fullData.Weight) physicalInfo.push(`Weight: ${parseWeight(fullData.Weight)}`);
+        if (physicalInfo.length > 0) {
+            lines.push(`> **Physical:** ${physicalInfo.join(' | ')}`);
+        }
+    }
+
     if (appliedMove || moveRank) {
         const matches = pokemon.moves.filter(([mName, mRank]) => {
             const nameMatches = !appliedMove || mName.toLowerCase().includes(appliedMove.toLowerCase());
@@ -192,16 +206,27 @@ export function buildPokemonDiscordMarkdown(
             return nameMatches && rankMatches;
         });
         if (matches.length > 0) {
-            matchedMoveInfo = `\n> **Matching Filter:** ${matches.map(([n, r]) => `${n} (${r})`).join(', ')}`;
+            lines.push(`> **Matching Filter:** ${matches.map(([n, r]) => `${n} (${r})`).join(', ')}`);
         }
     }
 
-    return `## **#${pokemon.dexId} ${pokemon.name}**
-> **Type:** ${typesStr}
-> **Abilities:** ${standardAbilities}${haText}${statsStr}${matchedMoveInfo}
+    if (fullData && fullData.DexDescription) {
+        lines.push(`> *"${fullData.DexDescription}"*`);
+    }
 
-**Move Learnset:**
-${movesText || '• None'}`;
+    lines.push('', '**Move Learnset:**');
+    const grouped = groupMovesByRank(pokemon.moves);
+    if (grouped.length > 0) {
+        grouped.forEach(({ rank, moves }) => {
+            lines.push(`• **${rank}:** ${moves.join(', ')}`);
+        });
+    } else {
+        lines.push('• None');
+    }
+
+    lines.push('', '-# Powered by Pokérole Autosheet');
+
+    return lines.join('\n');
 }
 
 export function buildPokemonBroadcast(
