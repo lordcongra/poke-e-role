@@ -416,6 +416,131 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     <strong>Homebrew Workshop Categorization:</strong> Custom homebrew items are now automatically organized
                     into clean, collapsible sub-categories for faster browsing and editing.
                 </li>
+            </ul>,
+            <strong
+                key="token-hud-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Sliders size={16} /> Granular Token HUD Visibility & Room Settings
+            </strong>,
+            <ul
+                key="token-hud-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Granular Token HUD Settings:</strong> GMs can now fine-tune exactly which HUD elements display
+                    above map tokens in Room Settings, including individual toggles for HP Bars, Will Bars, Status Badges,
+                    Combat Stages, and Nameplates.
+                </li>
+                <li>
+                    <strong>HUD Scope & Suppression Filters:</strong> Choose whether HUD elements hide globally, only on
+                    GM-controlled tokens, on NPCs, or on unselected tokens, making it easy to tailor map clarity and
+                    combat immersion for your game table.
+                </li>
+                <li>
+                    <strong>Personal Token HUD Toggles:</strong> Players and GMs can also customize HUD display preferences
+                    for their own active tokens via the tracker visibility options.
+                </li>
+            </ul>,
+            <strong
+                key="copy-moves-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Sparkles size={16} /> Copycat, Metronome & Copy Moves
+            </strong>,
+            <ul
+                key="copy-moves-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Interactive Metronome Wheel:</strong> Rolling Metronome now opens an animated picker that randomly
+                    selects any eligible move in the game database with quick filtering, full move detail previews, and
+                    1-click accuracy and damage rolling.
+                </li>
+                <li>
+                    <strong>Copycat & Move Mimicking:</strong> Moves like Copycat, Mimic, and Mirror Move now feature an
+                    interactive selector to choose from recently used attacks in the combat roll log or search the move
+                    catalog to roll borrowed moves on the fly.
+                </li>
+            </ul>,
+            <strong
+                key="maneuvers-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Swords size={16} /> Interactive Combat Maneuvers & Team Assists
+            </strong>,
+            <ul
+                key="maneuvers-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Dedicated Maneuvers Menu:</strong> Upgraded the maneuvers button in the round tracker to open a
+                    dedicated, interactive Maneuvers menu clearly laying out every standard combat maneuver (Disarm, Shove,
+                    Grapple, Feint, Trip, Guard, Aim, and more) with its action cost, requirements, and one-click dice rolling.
+                </li>
+                <li>
+                    <strong>Interactive Help Another Modal:</strong> Assisting a teammate now opens a dedicated helper tool
+                    to pick which ally you are aiding and search for the specific move or action they are using, instantly
+                    calculating and rolling the appropriate assist bonus dice.
+                </li>
+                <li>
+                    <strong>Defensive Screen Damage Reduction:</strong> Fixed Reflect, Light Screen, and Aurora Veil so they
+                    properly reduce incoming Physical and Special damage across both single-target and multi-target damage
+                    calculations.
+                </li>
+            </ul>,
+            <strong
+                key="discord-export-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Scroll size={16} /> Discord Markdown Exports & GM Screen Downloads
+            </strong>,
+            <ul
+                key="discord-export-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Discord-Ready Markdown (.md) Files:</strong> Added 1-click Markdown file export and copy buttons
+                    across the Pokédex, Pokémon Lookup, Move Lookup, and GM Screen. Exported summaries use rich Discord
+                    formatting (headers, stat blocks, and code boxes) so you can share Pokémon profiles, move sheets, and
+                    campaign notes directly in Discord chat channels.
+                </li>
             </ul>
         ]
     },
