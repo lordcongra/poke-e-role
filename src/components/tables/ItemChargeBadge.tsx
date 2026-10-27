@@ -37,7 +37,7 @@ export const ItemChargeBadge = memo(function ItemChargeBadge({
     return (
         <div
             className={`item-charge-badge-container ${className}`.trim()}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', maxWidth: '100%', overflow: 'hidden' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}
         >
             <ItemChargesBadge mode={mode} charges={effectiveCharges.charges} maxCharges={effectiveCharges.maxCharges} />
             {canRecharge && (

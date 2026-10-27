@@ -24,7 +24,8 @@
 }
 
 .inventory-table__header-cell-name {
-    width: 28%;
+    width: 30%;
+    min-width: 230px;
 }
 
 .inventory-table__header-cell-sort {
@@ -418,12 +419,17 @@
 
 .inventory-item__name-cell {
     padding: 3px 4px;
+    min-width: 230px;
 }
 
 .inventory-item__name-container {
     display: flex;
     align-items: center;
     gap: 4px;
+}
+
+.inventory-item__name-container .item-charge-badge-container {
+    flex-shrink: 0;
 }
 
 .inventory-item__thumb-btn {
@@ -473,6 +479,8 @@
     height: 26px;
     padding: 2px 6px;
     box-sizing: border-box;
+    flex: 1 1 0;
+    min-width: 60px;
 }
 
 .inventory-item__icon-btn {
