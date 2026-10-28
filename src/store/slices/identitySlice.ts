@@ -895,12 +895,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
             if (nextSeen) {
                 nextPokedex[targetKey] = { ...(current || {}), seen: true };
             } else {
-                const updated = { ...(current || {}), seen: false, caught: false };
-                if (!updated.shiny) {
-                    delete nextPokedex[targetKey];
-                } else {
-                    nextPokedex[targetKey] = updated;
-                }
+                nextPokedex[targetKey] = { ...(current || {}), seen: false, caught: false };
             }
             for (const k of Object.keys(nextPokedex)) {
                 if (k.trim().toLowerCase() === lower && k !== targetKey) {
@@ -932,12 +927,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
             if (nextCaught) {
                 nextPokedex[targetKey] = { ...(current || {}), seen: true, caught: true };
             } else {
-                const updated = { ...(current || { seen: true }), caught: false };
-                if (!updated.seen && !updated.shiny) {
-                    delete nextPokedex[targetKey];
-                } else {
-                    nextPokedex[targetKey] = updated;
-                }
+                nextPokedex[targetKey] = { ...(current || { seen: true }), caught: false };
             }
             for (const k of Object.keys(nextPokedex)) {
                 if (k.trim().toLowerCase() === lower && k !== targetKey) {
@@ -969,12 +959,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
             if (nextShiny) {
                 nextPokedex[targetKey] = { ...(current || {}), seen: true, shiny: true };
             } else {
-                const updated = { ...(current || { seen: false }), shiny: false };
-                if (!updated.seen && !updated.caught) {
-                    delete nextPokedex[targetKey];
-                } else {
-                    nextPokedex[targetKey] = updated;
-                }
+                nextPokedex[targetKey] = { ...(current || {}), shiny: false };
             }
             for (const k of Object.keys(nextPokedex)) {
                 if (k.trim().toLowerCase() === lower && k !== targetKey) {

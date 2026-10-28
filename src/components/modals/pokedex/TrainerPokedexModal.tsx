@@ -5,6 +5,7 @@ import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import { usePokemonLookup } from '../pokemonLookup/usePokemonLookup';
 import { PokemonLookupCard } from '../pokemonLookup/PokemonLookupCard';
 import { TrainerPokedexHeader, type PokedexStatusFilter } from './TrainerPokedexHeader';
+import { PokedexDeleteConfirmModal } from './PokedexDeleteConfirmModal';
 import {
     countPokedexTotals,
     getPokedexEntry,
@@ -33,6 +34,7 @@ export function TrainerPokedexModal({ onClose, initialPokemonName }: TrainerPoke
     const [searchInput, setSearchInput] = useState<string>(initialPokemonName || '');
     const [type1Filter, setType1Filter] = useState<string>('');
     const [type2Filter, setType2Filter] = useState<string>('');
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
     const allTypeColors: Record<string, string> = useMemo(() => {
         const visibleTypes = roomCustomTypes.filter((t) => isStandaloneMode || role === 'GM' || !t.gmOnly);
@@ -258,7 +260,7 @@ export function TrainerPokedexModal({ onClose, initialPokemonName }: TrainerPoke
                                         <button
                                             type="button"
                                             className="action-button action-button--red trainer-pokedex-toggle-btn--remove"
-                                            onClick={() => removePokedexEntry(p.name)}
+                                            onClick={() => setDeleteTarget(p.name)}
                                             title={`Remove ${p.name} from Pokédex`}
                                             aria-label={`Remove ${p.name} from Pokédex`}
                                         >
@@ -322,6 +324,17 @@ export function TrainerPokedexModal({ onClose, initialPokemonName }: TrainerPoke
                             </div>
                         </div>
                     </div>
+                )}
+
+                {deleteTarget && (
+                    <PokedexDeleteConfirmModal
+                        pokemonName={deleteTarget}
+                        onCancel={() => setDeleteTarget(null)}
+                        onConfirm={() => {
+                            removePokedexEntry(deleteTarget);
+                            setDeleteTarget(null);
+                        }}
+                    />
                 )}
             </div>
         </div>

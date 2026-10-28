@@ -1,7 +1,7 @@
 import type { PokemonLookupEntry } from '../../utils/api/apiTypes';
 import type { TrainerPokedexEntry } from '../../store/entityTypes';
 import { TYPE_COLORS } from '../../data/constants';
-import { Eye, Check, Sparkles, BookOpen, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, Check, Sparkles, BookOpen, Trash2 } from 'lucide-react';
 
 export interface TrainerPokedexRowProps {
     pokemon: PokemonLookupEntry;
@@ -9,6 +9,7 @@ export interface TrainerPokedexRowProps {
     customTypeColors?: Record<string, string>;
     onInspect: (name: string) => void;
     onToggleCaught?: (name: string) => void;
+    onToggleSeen?: (name: string) => void;
     onRemove?: (name: string) => void;
 }
 
@@ -18,6 +19,7 @@ export function TrainerPokedexRow({
     customTypeColors = {},
     onInspect,
     onToggleCaught,
+    onToggleSeen,
     onRemove
 }: TrainerPokedexRowProps) {
     const allColors = { ...TYPE_COLORS, ...customTypeColors };
@@ -63,7 +65,7 @@ export function TrainerPokedexRow({
                     >
                         <Check size={11} strokeWidth={3} />
                     </button>
-                ) : (
+                ) : entry.seen ? (
                     <button
                         type="button"
                         className="trainer-pokedex-row__chip trainer-pokedex-row__chip--seen trainer-pokedex-row__chip--btn"
@@ -72,6 +74,16 @@ export function TrainerPokedexRow({
                         aria-label={`Toggle caught status for ${p.name}. Currently Seen only.`}
                     >
                         <Eye size={11} />
+                    </button>
+                ) : (
+                    <button
+                        type="button"
+                        className="trainer-pokedex-row__chip trainer-pokedex-row__chip--unseen trainer-pokedex-row__chip--btn"
+                        onClick={() => onToggleSeen?.(p.name)}
+                        title="Unseen (click to mark as Seen)"
+                        aria-label={`Toggle seen status for ${p.name}. Currently Unseen.`}
+                    >
+                        <EyeOff size={11} />
                     </button>
                 )}
 

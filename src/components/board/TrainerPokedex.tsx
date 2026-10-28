@@ -4,6 +4,7 @@ import { CollapsingSection } from '../ui/CollapsingSection';
 import { TrainerPokedexRow } from './TrainerPokedexRow';
 import { TrainerPokedexModal } from '../modals/pokedex/TrainerPokedexModal';
 import { QuickAddPokemonModal } from '../modals/pokedex/QuickAddPokemonModal';
+import { PokedexDeleteConfirmModal } from '../modals/pokedex/PokedexDeleteConfirmModal';
 import { countPokedexTotals, getPokedexEntry, resolvePokedexEntryToLookup } from './trainerPokedexUtils';
 import { fetchPokemonLookupIndex } from '../../utils/api/api';
 import type { PokemonLookupEntry } from '../../utils/api/apiTypes';
@@ -13,6 +14,7 @@ import './TrainerPokedex.css';
 export function TrainerPokedex() {
     const pokedex = useCharacterStore((state) => state.identity.pokedex) || {};
     const removePokedexEntry = useCharacterStore((state) => state.removePokedexEntry);
+    const togglePokedexSeen = useCharacterStore((state) => state.togglePokedexSeen);
     const togglePokedexCaught = useCharacterStore((state) => state.togglePokedexCaught);
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes) || [];
 
@@ -21,6 +23,7 @@ export function TrainerPokedex() {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
     const [inspectedPokemon, setInspectedPokemon] = useState<string | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
     useEffect(() => {
         let isMounted = true;
@@ -158,7 +161,8 @@ export function TrainerPokedex() {
                                 customTypeColors={customTypeColorMap}
                                 onInspect={handleInspect}
                                 onToggleCaught={togglePokedexCaught}
-                                onRemove={removePokedexEntry}
+                                onToggleSeen={togglePokedexSeen}
+                                onRemove={(name) => setDeleteTarget(name)}
                             />
                         ))
                     )}
@@ -175,6 +179,17 @@ export function TrainerPokedex() {
 
             {isModalOpen && (
                 <TrainerPokedexModal onClose={handleCloseModal} initialPokemonName={inspectedPokemon || undefined} />
+            )}
+
+            {deleteTarget && (
+                <PokedexDeleteConfirmModal
+                    pokemonName={deleteTarget}
+                    onCancel={() => setDeleteTarget(null)}
+                    onConfirm={() => {
+                        removePokedexEntry(deleteTarget);
+                        setDeleteTarget(null);
+                    }}
+                />
             )}
         </>
     );

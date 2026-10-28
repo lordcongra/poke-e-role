@@ -176,6 +176,17 @@ button.trainer-pokedex-row__chip:hover,
     color: #93c5fd;
 }
 
+.trainer-pokedex-row__chip--unseen {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+}
+
+.trainer-pokedex-row__chip--unseen:hover {
+    color: var(--text-main);
+    border-color: rgba(96, 165, 250, 0.4);
+}
+
 .trainer-pokedex-row__chip--caught {
     background: rgba(74, 222, 128, 0.15);
     border: 1px solid rgba(74, 222, 128, 0.4);
@@ -211,4 +222,59 @@ button.trainer-pokedex-row__chip:hover,
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+}
+
+/* Pokédex Delete Confirm Modal */
+.pokedex-confirm-modal__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.pokedex-confirm-modal__content {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 6px;
+    max-width: 320px;
+    width: 90%;
+    border: 2px solid var(--semantic-danger);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
+    text-align: center;
+}
+
+.pokedex-confirm-modal__title {
+    margin-top: 0;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.pokedex-confirm-modal__text {
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.pokedex-confirm-modal__actions {
+    display: flex;
+    gap: 10px;
+}
+
+.pokedex-confirm-modal__btn {
+    flex: 1;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
