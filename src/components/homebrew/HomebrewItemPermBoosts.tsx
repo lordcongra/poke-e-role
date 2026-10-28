@@ -43,9 +43,7 @@ export function HomebrewItemPermBoosts({ item, canEdit, onOpenTooltip }: Homebre
 
     const handleMainSelectChange = (index: number, newStat: string, currentBoost: { stat: string; value: number }) => {
         if (newStat === 'PlayerChoice') {
-            const scope = currentBoost.stat.startsWith('PlayerChoice:')
-                ? currentBoost.stat
-                : 'PlayerChoice:core';
+            const scope = currentBoost.stat.startsWith('PlayerChoice:') ? currentBoost.stat : 'PlayerChoice:core';
             handleUpdatePermBoost(index, scope, currentBoost.value);
         } else {
             handleUpdatePermBoost(index, newStat, currentBoost.value);
@@ -99,8 +97,7 @@ export function HomebrewItemPermBoosts({ item, canEdit, onOpenTooltip }: Homebre
                     {permBoosts.map((boost, idx) => {
                         const isPlayerChoice = boost.stat.startsWith('PlayerChoice');
                         const mainSelectValue = isPlayerChoice ? 'PlayerChoice' : boost.stat;
-                        const currentScopeValue =
-                            boost.stat === 'PlayerChoice' ? 'PlayerChoice:core' : boost.stat;
+                        const currentScopeValue = boost.stat === 'PlayerChoice' ? 'PlayerChoice:core' : boost.stat;
 
                         return (
                             <div key={`perm-${idx}`} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>

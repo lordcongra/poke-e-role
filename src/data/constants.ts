@@ -1,6 +1,40 @@
 import type { Rank } from '../store/storeTypes';
+import { CombatStat, SocialStat } from '../types/enums';
 
 export const RANKS: Rank[] = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion'];
+
+export const CORE_STAT_COLORS: Record<CombatStat, string> = {
+    [CombatStat.STR]: '#E65100',
+    [CombatStat.DEX]: '#2E7D32',
+    [CombatStat.VIT]: '#C62828',
+    [CombatStat.SPE]: '#1565C0',
+    [CombatStat.INS]: '#6A1B9A'
+};
+
+export const SOCIAL_STAT_COLORS: Record<SocialStat, string> = {
+    [SocialStat.TOU]: '#F9E79F',
+    [SocialStat.COO]: '#F5CBA7',
+    [SocialStat.BEA]: '#AED6F1',
+    [SocialStat.CUT]: '#F5B7B1',
+    [SocialStat.CLE]: '#A9DFBF'
+};
+
+export const ATTRIBUTE_COLORS: Record<string, string> = {
+    Strength: CORE_STAT_COLORS[CombatStat.STR],
+    Dexterity: CORE_STAT_COLORS[CombatStat.DEX],
+    Vitality: CORE_STAT_COLORS[CombatStat.VIT],
+    Special: CORE_STAT_COLORS[CombatStat.SPE],
+    Insight: CORE_STAT_COLORS[CombatStat.INS],
+    Tough: SOCIAL_STAT_COLORS[SocialStat.TOU],
+    Cool: SOCIAL_STAT_COLORS[SocialStat.COO],
+    Beauty: SOCIAL_STAT_COLORS[SocialStat.BEA],
+    Cute: SOCIAL_STAT_COLORS[SocialStat.CUT],
+    Clever: SOCIAL_STAT_COLORS[SocialStat.CLE],
+    Defense: '#455A64',
+    'Special Defense': '#5E35B1',
+    'Max HP': '#4CAF50',
+    'Max Will': '#0288D1'
+};
 
 export const POKEMON_TYPES = [
     '',

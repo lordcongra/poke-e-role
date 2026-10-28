@@ -7,15 +7,8 @@ import { CollapsingSection } from '../ui/CollapsingSection';
 import { RotateCcw, Lock, Unlock } from 'lucide-react';
 import OBR from '@owlbear-rodeo/sdk';
 import { isStandaloneMode } from '../../utils/sync/storageAdapter';
+import { SOCIAL_STAT_COLORS } from '../../data/constants';
 import './SocialTable.css';
-
-const SOCIAL_COLORS = {
-    [SocialStat.TOU]: '#F9E79F',
-    [SocialStat.COO]: '#F5CBA7',
-    [SocialStat.BEA]: '#AED6F1',
-    [SocialStat.CUT]: '#F5B7B1',
-    [SocialStat.CLE]: '#A9DFBF'
-};
 
 const SOCIAL_LABELS = {
     [SocialStat.TOU]: 'TOUGH',
@@ -137,7 +130,7 @@ export function SocialTable() {
                                     <td>
                                         <div
                                             className="social-table__statistic-label text-theme-header"
-                                            style={{ background: SOCIAL_COLORS[statistic] }}
+                                            style={{ background: SOCIAL_STAT_COLORS[statistic] }}
                                         >
                                             {SOCIAL_LABELS[statistic]}
                                         </div>

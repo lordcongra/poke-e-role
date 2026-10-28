@@ -7,15 +7,8 @@ import { CollapsingSection } from '../ui/CollapsingSection';
 import { RotateCcw, Lock, Unlock } from 'lucide-react';
 import OBR from '@owlbear-rodeo/sdk';
 import { isStandaloneMode } from '../../utils/sync/storageAdapter';
+import { CORE_STAT_COLORS } from '../../data/constants';
 import './CoreTable.css';
-
-const STATISTIC_COLORS = {
-    [CombatStat.STR]: '#E65100',
-    [CombatStat.DEX]: '#2E7D32',
-    [CombatStat.VIT]: '#C62828',
-    [CombatStat.SPE]: '#1565C0',
-    [CombatStat.INS]: '#6A1B9A'
-};
 
 export function CoreTable() {
     const statistics = useCharacterStore((state) => state.stats);
@@ -136,7 +129,7 @@ export function CoreTable() {
                                     <td>
                                         <div
                                             className="core-table__statistic-label text-theme-header"
-                                            style={{ background: STATISTIC_COLORS[statistic] }}
+                                            style={{ background: CORE_STAT_COLORS[statistic] }}
                                         >
                                             {statistic.toUpperCase()}
                                         </div>

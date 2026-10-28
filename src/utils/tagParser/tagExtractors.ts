@@ -208,9 +208,7 @@ export function extractDefenses(
     maxBoost: number = 1,
     sourceBoostActive?: boolean
 ) {
-    const defenseMatches = description.matchAll(
-        /\[\s*(?:def|defense)\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi
-    );
+    const defenseMatches = description.matchAll(/\[\s*(?:def|defense)\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of defenseMatches) {
         if (!checkCondition(match[2], isHalfHp, sourceBoostActive)) continue;
         const mult = getBoostMultiplier(match[2], boostLevel, maxBoost);
@@ -228,9 +226,7 @@ export function extractDefenses(
         triggers.general = true;
     }
 
-    const hpMatches = description.matchAll(
-        /\[\s*(?:max\s+)?hp\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi
-    );
+    const hpMatches = description.matchAll(/\[\s*(?:max\s+)?hp\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of hpMatches) {
         if (!checkCondition(match[2], isHalfHp, sourceBoostActive)) continue;
         const mult = getBoostMultiplier(match[2], boostLevel, maxBoost);
@@ -238,9 +234,7 @@ export function extractDefenses(
         triggers.general = true;
     }
 
-    const willMatches = description.matchAll(
-        /\[\s*(?:max\s+)?will\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi
-    );
+    const willMatches = description.matchAll(/\[\s*(?:max\s+)?will\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of willMatches) {
         if (!checkCondition(match[2], isHalfHp, sourceBoostActive)) continue;
         const mult = getBoostMultiplier(match[2], boostLevel, maxBoost);
