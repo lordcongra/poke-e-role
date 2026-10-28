@@ -242,7 +242,17 @@ export async function applyItemToPokemonTarget(
                           ? 'spe-buff'
                           : sName === 'insight' || sName === 'ins'
                             ? 'ins-buff'
-                            : null;
+                            : sName === 'tough' || sName === 'tou'
+                              ? 'tou-buff'
+                              : sName === 'cool' || sName === 'coo'
+                                ? 'coo-buff'
+                                : sName === 'beauty' || sName === 'bea'
+                                  ? 'bea-buff'
+                                  : sName === 'cute' || sName === 'cut'
+                                    ? 'cut-buff'
+                                    : sName === 'clever' || sName === 'cle'
+                                      ? 'cle-buff'
+                                      : null;
         if (key) {
             const currentVal = Number(metaUpdates[key] ?? summary.fullMetadata?.[key]) || 0;
             metaUpdates[key] = currentVal + buff.value;
@@ -267,7 +277,17 @@ export async function applyItemToPokemonTarget(
                           ? 'spe-debuff'
                           : sName === 'insight' || sName === 'ins'
                             ? 'ins-debuff'
-                            : null;
+                            : sName === 'tough' || sName === 'tou'
+                              ? 'tou-debuff'
+                              : sName === 'cool' || sName === 'coo'
+                                ? 'coo-debuff'
+                                : sName === 'beauty' || sName === 'bea'
+                                  ? 'bea-debuff'
+                                  : sName === 'cute' || sName === 'cut'
+                                    ? 'cut-debuff'
+                                    : sName === 'clever' || sName === 'cle'
+                                      ? 'cle-debuff'
+                                      : null;
         if (key) {
             const currentVal = Number(metaUpdates[key] ?? summary.fullMetadata?.[key]) || 0;
             metaUpdates[key] = currentVal + debuff.value;

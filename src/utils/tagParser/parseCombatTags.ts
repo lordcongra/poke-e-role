@@ -34,6 +34,8 @@ export function parseCombatTags(
         skills: {},
         def: 0,
         spd: 0,
+        hp: 0,
+        will: 0,
         init: 0,
         dmg: 0,
         acc: 0,

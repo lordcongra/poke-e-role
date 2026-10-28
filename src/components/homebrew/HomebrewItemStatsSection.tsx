@@ -2,7 +2,8 @@ import type { CustomItem } from '../../store/entityTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { TooltipIcon } from '../ui/TooltipIcon';
-import { TrendingUp, TrendingDown, AlertTriangle, Scroll, Plus, Trash2 } from 'lucide-react';
+import { HomebrewItemPermBoosts } from './HomebrewItemPermBoosts';
+import { TrendingUp, TrendingDown, Scroll, Plus, Trash2 } from 'lucide-react';
 
 interface HomebrewItemStatsSectionProps {
     item: CustomItem;
@@ -10,58 +11,19 @@ interface HomebrewItemStatsSectionProps {
     onOpenTooltip: (tooltip: { title: string; content: string }) => void;
 }
 
-const STAT_OPTIONS = ['Strength', 'Dexterity', 'Vitality', 'Special', 'Insight', 'PlayerChoice'] as const;
-const COMBAT_AND_DERIVED_STATS = [
-    'Strength',
-    'Dexterity',
-    'Vitality',
-    'Special',
-    'Insight',
-    'Defense',
-    'Special Defense'
-] as const;
+const ENCOUNTER_STAT_OPTIONS = [
+    {
+        group: 'Combat & Derived',
+        options: ['Strength', 'Dexterity', 'Vitality', 'Special', 'Insight', 'Defense', 'Special Defense']
+    },
+    {
+        group: 'Social Attributes',
+        options: ['Tough', 'Cool', 'Beauty', 'Cute', 'Clever']
+    }
+];
 
 export function HomebrewItemStatsSection({ item, canEdit, onOpenTooltip }: HomebrewItemStatsSectionProps) {
     const updateCustomItem = useCharacterStore((state) => state.updateCustomItem);
-
-    // --- PERMANENT STAT BOOSTS ---
-    const permBoosts: Array<{
-        stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
-        value: number;
-    }> =
-        item.permanentStatBoosts && item.permanentStatBoosts.length > 0
-            ? item.permanentStatBoosts
-            : item.permanentStatBoost
-              ? [item.permanentStatBoost]
-              : [];
-
-    const handleAddPermBoost = () => {
-        if (!canEdit) return;
-        const updated = [...permBoosts, { stat: 'Strength' as const, value: 1 }];
-        updateCustomItem(item.id, 'permanentStatBoosts', updated);
-        updateCustomItem(item.id, 'permanentStatBoost', updated[0]);
-    };
-
-    const handleUpdatePermBoost = (index: number, stat: string, value: number) => {
-        if (!canEdit) return;
-        const updated = permBoosts.map((b, i) =>
-            i === index
-                ? {
-                      stat: stat as 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice',
-                      value
-                  }
-                : b
-        );
-        updateCustomItem(item.id, 'permanentStatBoosts', updated);
-        updateCustomItem(item.id, 'permanentStatBoost', updated[0]);
-    };
-
-    const handleRemovePermBoost = (index: number) => {
-        if (!canEdit) return;
-        const updated = permBoosts.filter((_, i) => i !== index);
-        updateCustomItem(item.id, 'permanentStatBoosts', updated.length > 0 ? updated : undefined);
-        updateCustomItem(item.id, 'permanentStatBoost', updated[0] || undefined);
-    };
 
     // --- ENCOUNTER BUFFS ---
     const buffs: Array<{ stat: string; value: number }> =
@@ -142,101 +104,10 @@ export function HomebrewItemStatsSection({ item, canEdit, onOpenTooltip }: Homeb
         updateCustomItem(item.id, 'dungeonPassive', updated[0] || undefined);
     };
 
-    const hasVitOrInsBoost = permBoosts.some((b) => b.stat === 'Vitality' || b.stat === 'Insight');
-
     return (
         <div className="homebrew-item-effects__stats-section">
             {/* Permanent Stat Boosts */}
-            <div className="homebrew-item-effects__field">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span className="homebrew-item-effects__field-label text-subtext">
-                        <TrendingUp size={12} style={{ color: 'var(--primary)' }} /> Permanent Stat Boosts
-                        <TooltipIcon
-                            onClick={() =>
-                                onOpenTooltip({
-                                    title: 'Permanent Stat Boost',
-                                    content:
-                                        'Simulates permanent vitamin or rare candy stat gains. When consumed or used on a character, permanently increases the chosen Attribute by the specified value. If Vitality or Insight are boosted, max HP or Will are recalculated automatically.'
-                                })
-                            }
-                        />
-                    </span>
-                    {canEdit && (
-                        <button
-                            type="button"
-                            className="action-button action-button--dark text-subtext"
-                            style={{
-                                padding: '2px 8px',
-                                fontSize: '0.75rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                            }}
-                            onClick={handleAddPermBoost}
-                        >
-                            <Plus size={12} /> Add Boost
-                        </button>
-                    )}
-                </div>
-
-                {permBoosts.length === 0 ? (
-                    <span
-                        className="text-subtext"
-                        style={{ fontStyle: 'italic', fontSize: '0.8rem', color: 'var(--text-muted)' }}
-                    >
-                        No permanent boosts configured
-                    </span>
-                ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        {permBoosts.map((boost, idx) => (
-                            <div key={`perm-${idx}`} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                                <select
-                                    className="homebrew-item-effects__select text-subtext"
-                                    style={{ flex: 1 }}
-                                    value={boost.stat}
-                                    disabled={!canEdit}
-                                    onChange={(e) => handleUpdatePermBoost(idx, e.target.value, boost.value)}
-                                >
-                                    {STAT_OPTIONS.map((opt) => (
-                                        <option key={opt} value={opt}>
-                                            {opt === 'PlayerChoice' ? 'Player Choice (Rare Candy)' : opt}
-                                        </option>
-                                    ))}
-                                </select>
-                                <NumberSpinner
-                                    value={boost.value}
-                                    min={1}
-                                    max={10}
-                                    compact
-                                    disabled={!canEdit}
-                                    onChange={(val) => handleUpdatePermBoost(idx, boost.stat, Math.max(1, val))}
-                                />
-                                {canEdit && (
-                                    <button
-                                        type="button"
-                                        className="action-button action-button--dark"
-                                        style={{ padding: '4px 6px' }}
-                                        onClick={() => handleRemovePermBoost(idx)}
-                                        title="Remove boost"
-                                    >
-                                        <Trash2 size={13} style={{ color: 'var(--semantic-danger)' }} />
-                                    </button>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {hasVitOrInsBoost && (
-                    <div className="homebrew-item-effects__advisory">
-                        <AlertTriangle size={14} className="homebrew-item-effects__advisory-icon" />
-                        <span>
-                            <strong>RAW Rulebook Note:</strong> Vitality and Insight are not normally eligible for item
-                            boosts in official Pokérole rules, but are allowed here for homebrew flexibility.
-                        </span>
-                    </div>
-                )}
-            </div>
+            <HomebrewItemPermBoosts item={item} canEdit={canEdit} onOpenTooltip={onOpenTooltip} />
 
             {/* Encounter Stat Buffs & Debuffs */}
             <div className="homebrew-item-effects__fields-grid">
@@ -281,10 +152,14 @@ export function HomebrewItemStatsSection({ item, canEdit, onOpenTooltip }: Homeb
                                         disabled={!canEdit}
                                         onChange={(e) => handleUpdateBuff(idx, e.target.value, buff.value)}
                                     >
-                                        {COMBAT_AND_DERIVED_STATS.map((s) => (
-                                            <option key={s} value={s}>
-                                                {s}
-                                            </option>
+                                        {ENCOUNTER_STAT_OPTIONS.map((grp) => (
+                                            <optgroup key={grp.group} label={grp.group}>
+                                                {grp.options.map((s) => (
+                                                    <option key={s} value={s}>
+                                                        {s}
+                                                    </option>
+                                                ))}
+                                            </optgroup>
                                         ))}
                                     </select>
                                     <NumberSpinner
@@ -356,10 +231,14 @@ export function HomebrewItemStatsSection({ item, canEdit, onOpenTooltip }: Homeb
                                         disabled={!canEdit}
                                         onChange={(e) => handleUpdateDebuff(idx, e.target.value, debuff.value)}
                                     >
-                                        {COMBAT_AND_DERIVED_STATS.map((s) => (
-                                            <option key={s} value={s}>
-                                                {s}
-                                            </option>
+                                        {ENCOUNTER_STAT_OPTIONS.map((grp) => (
+                                            <optgroup key={grp.group} label={grp.group}>
+                                                {grp.options.map((s) => (
+                                                    <option key={s} value={s}>
+                                                        {s}
+                                                    </option>
+                                                ))}
+                                            </optgroup>
                                         ))}
                                     </select>
                                     <NumberSpinner

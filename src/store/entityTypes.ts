@@ -107,11 +107,11 @@ export interface InventoryItem {
     healWill?: number;
     cures?: string[];
     permanentStatBoost?: {
-        stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
+        stat: string;
         value: number;
     };
     permanentStatBoosts?: Array<{
-        stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
+        stat: string;
         value: number;
     }>;
     statBuff?: { stat: string; value: number };
@@ -338,11 +338,11 @@ export interface CustomItem {
     healWill?: number;
     cures?: string[];
     permanentStatBoost?: {
-        stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
+        stat: string;
         value: number;
     };
     permanentStatBoosts?: Array<{
-        stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
+        stat: string;
         value: number;
     }>;
     statBuff?: { stat: string; value: number };

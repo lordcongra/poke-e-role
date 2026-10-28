@@ -3,6 +3,8 @@ export interface CombatBonuses {
     skills: Record<string, number>;
     def: number;
     spd: number;
+    hp: number;
+    will: number;
     init: number;
     dmg: number;
     acc: number;

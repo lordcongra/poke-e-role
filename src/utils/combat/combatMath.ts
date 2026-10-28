@@ -469,7 +469,7 @@ export function calculateMaxHp(state: CharacterState, itemBuffs?: CombatBonuses)
     if (state.identity.ruleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);
 
     const rankBonus = getRankBonusStats(state.identity.rank).hp;
-    const currentHp = state.health.hpBase + hpStat + rankBonus;
+    const currentHp = state.health.hpBase + hpStat + rankBonus + (invMods.hp || 0);
 
     // Stance Change / Shared Highest HP logic:
     // 1. If currently in a Custom Form with shareHighestHp enabled, compare with baseFormData
@@ -518,7 +518,7 @@ export function calculateMaxWill(state: CharacterState, itemBuffs?: CombatBonuse
     const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
 
     const rankBonus = getRankBonusStats(state.identity.rank).will;
-    const currentWill = state.will.willBase + insTotal + rankBonus;
+    const currentWill = state.will.willBase + insTotal + rankBonus + (invMods.will || 0);
 
     // Stance Change / Shared Highest Will logic:
     // 1. If currently in a Custom Form with shareHighestWill enabled, compare with baseFormData

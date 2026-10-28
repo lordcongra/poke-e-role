@@ -115,7 +115,7 @@ export interface ItemApiResponse {
     Image?: string;
     destroyOnDepletion?: boolean;
     permanentStatBoost?: {
-        stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
+        stat: string;
         value: number;
     };
     statBuff?: { stat: string; value: number };

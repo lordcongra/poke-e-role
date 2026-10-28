@@ -73,6 +73,10 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
             )
     ];
 
+    const hasPlayerChoice = (targetItem: InventoryItem) =>
+        Boolean(targetItem.permanentStatBoost?.stat?.startsWith('PlayerChoice')) ||
+        Boolean(targetItem.permanentStatBoosts?.some((b) => b.stat?.startsWith('PlayerChoice')));
+
     const handleUse = () => {
         if (onUseItem) {
             onUseItem(item);
@@ -82,7 +86,7 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
         const candidates = getTrainerItemTargets(store, item);
         if (candidates.length > 1) {
             setTargetCandidates(candidates);
-        } else if (item.permanentStatBoost?.stat === 'PlayerChoice') {
+        } else if (hasPlayerChoice(item)) {
             setStatChoicePrompt({ item });
         } else {
             useInventoryItem(item.id);
@@ -91,7 +95,7 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
 
     const handleSelectTarget = async (target: ItemTargetCandidate) => {
         setTargetCandidates(null);
-        if (item.permanentStatBoost?.stat === 'PlayerChoice') {
+        if (hasPlayerChoice(item)) {
             setStatChoicePrompt({ item, target });
             return;
         }
@@ -103,9 +107,7 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
         }
     };
 
-    const handleConfirmStatChoice = async (
-        chosenStat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight'
-    ) => {
+    const handleConfirmStatChoice = async (chosenStat: string) => {
         if (!statChoicePrompt) return;
         const { item: targetItem, target } = statChoicePrompt;
         setStatChoicePrompt(null);

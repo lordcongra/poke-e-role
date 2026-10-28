@@ -163,6 +163,24 @@ export function isLegacyBottleCapacity(item: { name?: string; healHp?: number; m
     );
 }
 
+export const CORE_STATS = ['Strength', 'Dexterity', 'Vitality', 'Special', 'Insight'];
+export const SOCIAL_STATS = ['Tough', 'Cool', 'Beauty', 'Cute', 'Clever'];
+
+export function expandStatBoost(stat: string, value: number): Array<{ stat: string; value: number }> {
+    const s = stat.trim();
+    const sLower = s.toLowerCase();
+    if (sLower === 'allcore' || sLower === 'all core' || sLower === 'all core attributes') {
+        return CORE_STATS.map((name) => ({ stat: name, value }));
+    }
+    if (sLower === 'allsocial' || sLower === 'all social' || sLower === 'all social attributes') {
+        return SOCIAL_STATS.map((name) => ({ stat: name, value }));
+    }
+    if (sLower === 'allattributes' || sLower === 'all attributes') {
+        return [...CORE_STATS, ...SOCIAL_STATS].map((name) => ({ stat: name, value }));
+    }
+    return [{ stat: s, value }];
+}
+
 /**
  * Pure function that calculates HP healing, Will restoration, and status cures
  * for an item usage event.
@@ -214,9 +232,13 @@ export function applyItemUsageEffects(
                 : [];
 
     for (const b of rawPermList) {
-        const resolvedStat =
-            b.stat === 'PlayerChoice' ? options?.chosenStat || 'Strength' : options?.chosenStat || b.stat;
-        resolvedPermBoosts.push({ stat: resolvedStat, value: b.value });
+        const isPlayerChoice =
+            b.stat === 'PlayerChoice' ||
+            b.stat.startsWith('PlayerChoice:') ||
+            b.stat.toLowerCase().startsWith('playerchoice') ||
+            b.stat.toLowerCase() === 'player choice';
+        const resolvedStat = isPlayerChoice ? options?.chosenStat || 'Strength' : b.stat;
+        resolvedPermBoosts.push(...expandStatBoost(resolvedStat, b.value));
     }
 
     const resolvedPassives: string[] = [];
@@ -258,11 +280,23 @@ export function applyItemUsageEffects(
         let stat = m[1].trim();
         const value = parseInt(m[2], 10);
         if (stat && !isNaN(value)) {
-            if (stat.toLowerCase() === 'playerchoice' || stat.toLowerCase() === 'player choice') {
+            const isPlayerChoice =
+                stat === 'PlayerChoice' ||
+                stat.startsWith('PlayerChoice:') ||
+                stat.toLowerCase().startsWith('playerchoice') ||
+                stat.toLowerCase() === 'player choice';
+            if (isPlayerChoice) {
                 stat = options?.chosenStat || 'Strength';
             }
-            if (!resolvedPermBoosts.some((p) => p.stat.toLowerCase() === stat.toLowerCase() && p.value === value)) {
-                resolvedPermBoosts.push({ stat, value });
+            const expanded = expandStatBoost(stat, value);
+            for (const itemBoost of expanded) {
+                if (
+                    !resolvedPermBoosts.some(
+                        (p) => p.stat.toLowerCase() === itemBoost.stat.toLowerCase() && p.value === itemBoost.value
+                    )
+                ) {
+                    resolvedPermBoosts.push(itemBoost);
+                }
             }
         }
     }

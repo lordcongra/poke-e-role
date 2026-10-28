@@ -6,32 +6,99 @@ import './ItemTargetPromptModal.css';
 
 interface ItemStatChoiceModalProps {
     item: InventoryItem;
-    onSelectStat: (stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight') => void;
+    onSelectStat: (stat: string) => void;
     onClose: () => void;
 }
 
 interface StatOption {
-    key: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight';
+    key: string;
     label: string;
     color: string;
     isRawRestricted?: boolean;
 }
 
-const STAT_CHOICES: StatOption[] = [
-    { key: 'Strength', label: 'Strength', color: '#E65100' },
-    { key: 'Dexterity', label: 'Dexterity', color: '#1565C0' },
-    { key: 'Vitality', label: 'Vitality', color: '#2E7D32', isRawRestricted: true },
-    { key: 'Special', label: 'Special', color: '#6A1B9A' },
-    { key: 'Insight', label: 'Insight', color: '#D84315', isRawRestricted: true }
-];
+const CATEGORY_DEFINITIONS: Record<string, { label: string; options: StatOption[] }> = {
+    core: {
+        label: 'Core',
+        options: [
+            { key: 'Strength', label: 'Strength', color: '#E65100' },
+            { key: 'Dexterity', label: 'Dexterity', color: '#1565C0' },
+            { key: 'Vitality', label: 'Vitality', color: '#2E7D32', isRawRestricted: true },
+            { key: 'Special', label: 'Special', color: '#6A1B9A' },
+            { key: 'Insight', label: 'Insight', color: '#D84315', isRawRestricted: true }
+        ]
+    },
+    social: {
+        label: 'Social',
+        options: [
+            { key: 'Tough', label: 'Tough', color: '#E65100' },
+            { key: 'Cool', label: 'Cool', color: '#1565C0' },
+            { key: 'Beauty', label: 'Beauty', color: '#2E7D32' },
+            { key: 'Cute', label: 'Cute', color: '#D81B60' },
+            { key: 'Clever', label: 'Clever', color: '#7B1FA2' }
+        ]
+    },
+    traits: {
+        label: 'Traits & Pools',
+        options: [
+            { key: 'Defense', label: 'Defense', color: '#455A64' },
+            { key: 'Special Defense', label: 'Special Defense', color: '#5E35B1' },
+            { key: 'Max HP', label: 'Max HP', color: '#C62828' },
+            { key: 'Max Will', label: 'Max Will', color: '#1565C0' }
+        ]
+    }
+};
+
+export function getStatChoiceScope(item: InventoryItem): string {
+    const rawStat =
+        item.permanentStatBoosts?.find((b) => b.stat?.startsWith('PlayerChoice'))?.stat ||
+        (item.permanentStatBoost?.stat?.startsWith('PlayerChoice') ? item.permanentStatBoost.stat : undefined) ||
+        'PlayerChoice:core';
+
+    if (rawStat.includes(':')) {
+        return rawStat.split(':')[1]?.toLowerCase() || 'core';
+    }
+    return 'core';
+}
+
+function getAllowedCategories(scope: string): string[] {
+    switch (scope) {
+        case 'social':
+            return ['social'];
+        case 'traits':
+            return ['traits'];
+        case 'core_social':
+            return ['core', 'social'];
+        case 'any':
+            return ['core', 'social', 'traits'];
+        case 'core':
+        default:
+            return ['core'];
+    }
+}
 
 export function ItemStatChoiceModal({ item, onSelectStat, onClose }: ItemStatChoiceModalProps) {
     const knownArt = useItemArt(item.name);
-    const [selectedStat, setSelectedStat] = useState<'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight'>(
-        'Strength'
-    );
+    const scope = getStatChoiceScope(item);
+    const allowedCategories = getAllowedCategories(scope);
 
-    const boostValue = item.permanentStatBoost?.value ?? 1;
+    const [activeTab, setActiveTab] = useState<string>(allowedCategories[0] || 'core');
+    const activeOptions = CATEGORY_DEFINITIONS[activeTab]?.options || CATEGORY_DEFINITIONS.core.options;
+    const [selectedStat, setSelectedStat] = useState<string>(activeOptions[0]?.key || 'Strength');
+
+    const boostEntry =
+        item.permanentStatBoosts?.find((b) => b.stat?.startsWith('PlayerChoice')) ||
+        item.permanentStatBoost;
+    const boostValue = boostEntry?.value ?? 1;
+
+    const handleTabChange = (catId: string) => {
+        setActiveTab(catId);
+        const newOptions = CATEGORY_DEFINITIONS[catId]?.options || [];
+        if (!newOptions.some((opt) => opt.key === selectedStat)) {
+            setSelectedStat(newOptions[0]?.key || 'Strength');
+        }
+    };
+
     const isRestricted = selectedStat === 'Vitality' || selectedStat === 'Insight';
 
     return (
@@ -75,8 +142,29 @@ export function ItemStatChoiceModal({ item, onSelectStat, onClose }: ItemStatCho
                     Select which attribute will be permanently boosted by {item.name}:
                 </div>
 
+                {allowedCategories.length > 1 && (
+                    <div style={{ display: 'flex', gap: '6px', margin: '8px 0 4px 0' }}>
+                        {allowedCategories.map((catId) => {
+                            const cat = CATEGORY_DEFINITIONS[catId];
+                            if (!cat) return null;
+                            const isTabActive = activeTab === catId;
+                            return (
+                                <button
+                                    key={catId}
+                                    type="button"
+                                    className={`action-button ${isTabActive ? 'action-button--theme' : 'action-button--dark'}`}
+                                    style={{ flex: 1, padding: '5px 8px', fontSize: '0.8rem' }}
+                                    onClick={() => handleTabChange(catId)}
+                                >
+                                    {cat.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: '8px 0' }}>
-                    {STAT_CHOICES.map((choice) => {
+                    {activeOptions.map((choice) => {
                         const isSelected = selectedStat === choice.key;
                         return (
                             <button

@@ -4,6 +4,7 @@ import type { ItemLookupResult } from '../common/itemLookupUtils';
 import { getItemEffectiveCharges, consumeChargeFromInventory } from './itemCharges';
 import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../combat/combatUtils';
 import { getItemArt } from '../graphics/itemArtCatalog';
+import { SocialStat } from '../../types/enums';
 
 /**
  * Recalculates HP and Will maximums based on inventory stat tags and updates the save payload.
@@ -71,6 +72,7 @@ export function applyUsageToState(
 
     // Stat Buff & Debuff
     let nextStats = state.stats;
+    let nextSocials = state.socials;
     let nextDerived = state.derived;
 
     const buffsToApply = usage.statBuffs || (usage.statBuff ? [usage.statBuff] : []);
@@ -95,6 +97,18 @@ export function applyUsageToState(
                           : sName === 'insight' || sName === 'ins'
                             ? 'ins'
                             : null;
+            const socialKey =
+                sName === 'tough' || sName === 'tou'
+                    ? 'tou'
+                    : sName === 'cool' || sName === 'coo'
+                      ? 'coo'
+                      : sName === 'beauty' || sName === 'bea'
+                        ? 'bea'
+                        : sName === 'cute' || sName === 'cut'
+                          ? 'cut'
+                          : sName === 'clever' || sName === 'cle'
+                            ? 'cle'
+                            : null;
             if (combatKey && nextStats[combatKey]) {
                 nextStats = {
                     ...nextStats,
@@ -104,6 +118,15 @@ export function applyUsageToState(
                     }
                 };
                 updatesToSave[`${combatKey}-buff`] = nextStats[combatKey].buff;
+            } else if (socialKey && nextSocials[socialKey as SocialStat]) {
+                nextSocials = {
+                    ...nextSocials,
+                    [socialKey]: {
+                        ...nextSocials[socialKey as SocialStat],
+                        buff: (nextSocials[socialKey as SocialStat].buff || 0) + buff.value
+                    }
+                };
+                updatesToSave[`${socialKey}-buff`] = nextSocials[socialKey as SocialStat].buff;
             }
         }
     }
@@ -130,6 +153,18 @@ export function applyUsageToState(
                           : sName === 'insight' || sName === 'ins'
                             ? 'ins'
                             : null;
+            const socialKey =
+                sName === 'tough' || sName === 'tou'
+                    ? 'tou'
+                    : sName === 'cool' || sName === 'coo'
+                      ? 'coo'
+                      : sName === 'beauty' || sName === 'bea'
+                        ? 'bea'
+                        : sName === 'cute' || sName === 'cut'
+                          ? 'cut'
+                          : sName === 'clever' || sName === 'cle'
+                            ? 'cle'
+                            : null;
             if (combatKey && nextStats[combatKey]) {
                 nextStats = {
                     ...nextStats,
@@ -139,6 +174,15 @@ export function applyUsageToState(
                     }
                 };
                 updatesToSave[`${combatKey}-debuff`] = nextStats[combatKey].debuff;
+            } else if (socialKey && nextSocials[socialKey as SocialStat]) {
+                nextSocials = {
+                    ...nextSocials,
+                    [socialKey]: {
+                        ...nextSocials[socialKey as SocialStat],
+                        debuff: (nextSocials[socialKey as SocialStat].debuff || 0) + debuff.value
+                    }
+                };
+                updatesToSave[`${socialKey}-debuff`] = nextSocials[socialKey as SocialStat].debuff;
             }
         }
     }
@@ -177,8 +221,41 @@ export function applyUsageToState(
         ];
     }
 
+    let finalHealth = usage.nextHealth;
+    let finalWill = usage.nextWill;
+
     if (passivesChanged) {
         updatesToSave['passives-data'] = JSON.stringify(nextPassives);
+
+        // Recalculate max HP & Will if passives granted permanent stat/health/will increases
+        const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+        const invMods = parseCombatTags(nextInventory, state.extraCategories, undefined, abilityText, nextPassives);
+        const fakeState = { ...state, inventory: nextInventory, passives: nextPassives };
+        const newHpMax = calculateMaxHp(fakeState, invMods);
+        const newWillMax = calculateMaxWill(fakeState, invMods);
+
+        if (newHpMax !== finalHealth.hpMax) {
+            const diff = newHpMax - finalHealth.hpMax;
+            finalHealth = {
+                ...finalHealth,
+                hpMax: newHpMax,
+                hpCurr: diff > 0 ? finalHealth.hpCurr + diff : Math.min(finalHealth.hpCurr, newHpMax)
+            };
+            updatesToSave['hp-curr'] = finalHealth.hpCurr;
+            updatesToSave['current-hp'] = finalHealth.hpCurr;
+            updatesToSave['hp-max-display'] = finalHealth.hpMax;
+        }
+
+        if (newWillMax !== finalWill.willMax) {
+            const diff = newWillMax - finalWill.willMax;
+            finalWill = {
+                ...finalWill,
+                willMax: newWillMax,
+                willCurr: diff > 0 ? finalWill.willCurr + diff : Math.min(finalWill.willCurr, newWillMax)
+            };
+            updatesToSave['will-curr'] = finalWill.willCurr;
+            updatesToSave['will-max-display'] = finalWill.willMax;
+        }
     }
 
     let nextTrackers = state.trackers;
@@ -193,10 +270,11 @@ export function applyUsageToState(
     return {
         partialState: {
             inventory: nextInventory,
-            health: usage.nextHealth,
-            will: usage.nextWill,
+            health: finalHealth,
+            will: finalWill,
             statuses: usage.nextStatuses,
             stats: nextStats,
+            socials: nextSocials,
             derived: nextDerived,
             passives: nextPassives,
             trackers: nextTrackers

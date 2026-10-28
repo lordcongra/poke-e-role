@@ -20,12 +20,16 @@ export function useInventoryItemUsage() {
         target?: ItemTargetCandidate;
     } | null>(null);
 
+    const hasPlayerChoice = (item: InventoryItem) =>
+        Boolean(item.permanentStatBoost?.stat?.startsWith('PlayerChoice')) ||
+        Boolean(item.permanentStatBoosts?.some((b) => b.stat?.startsWith('PlayerChoice')));
+
     const handleUseItem = (item: InventoryItem) => {
         const store = useCharacterStore.getState();
         const candidates = getTrainerItemTargets(store, item);
         if (candidates.length > 1) {
             setTargetPrompt({ item, candidates });
-        } else if (item.permanentStatBoost?.stat === 'PlayerChoice') {
+        } else if (hasPlayerChoice(item)) {
             setStatChoicePrompt({ item });
         } else {
             useInventoryItem(item.id);
@@ -36,7 +40,7 @@ export function useInventoryItemUsage() {
         if (!targetPrompt) return;
         const { item } = targetPrompt;
         setTargetPrompt(null);
-        if (item.permanentStatBoost?.stat === 'PlayerChoice') {
+        if (hasPlayerChoice(item)) {
             setStatChoicePrompt({ item, target });
             return;
         }
@@ -48,9 +52,7 @@ export function useInventoryItemUsage() {
         }
     };
 
-    const handleConfirmStatChoice = async (
-        chosenStat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight'
-    ) => {
+    const handleConfirmStatChoice = async (chosenStat: string) => {
         if (!statChoicePrompt) return;
         const { item, target } = statChoicePrompt;
         setStatChoicePrompt(null);

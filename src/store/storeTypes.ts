@@ -223,9 +223,13 @@ export interface InventorySlice {
         healWill?: number;
         cures?: string[];
         permanentStatBoost?: {
-            stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
+            stat: string;
             value: number;
         };
+        permanentStatBoosts?: Array<{
+            stat: string;
+            value: number;
+        }>;
         statBuff?: { stat: string; value: number };
         statDebuff?: { stat: string; value: number };
         gainTempHp?: number;
