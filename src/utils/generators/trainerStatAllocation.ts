@@ -221,6 +221,15 @@ export function allocatePrioritizedSkills(
         }
     }
 
+    if (rem > 0) {
+        for (const skill of Object.values(Skill)) {
+            while (rem > 0 && skillRanks[skill] < skillLimit) {
+                skillRanks[skill]++;
+                rem--;
+            }
+        }
+    }
+
     return skillRanks;
 }
 
@@ -237,13 +246,9 @@ export function allocateTrainerStats(
     const rankPts = getRankPoints(rank);
     const agePts = getAgePoints(age);
 
-    const baseCore = 4;
-    const baseSoc = 4;
-    const baseSkill = 9;
-
-    const remCore = baseCore + rankPts.core + agePts.core;
-    const remSoc = baseSoc + rankPts.social + agePts.social;
-    const remSkill = baseSkill + rankPts.skills;
+    const remCore = rankPts.core + agePts.core;
+    const remSoc = rankPts.social + agePts.social;
+    const remSkill = rankPts.skills;
     const skillLimit = rankPts.skillLimit;
 
     let attrPriority: string[] = isSpecial ? ['str', 'dex', 'vit', 'ins', 'spe'] : ['str', 'dex', 'vit', 'ins'];
@@ -275,7 +280,7 @@ export function allocateTrainerStats(
             socPriority = ['cle', 'coo', 'tou', 'cut', 'bea'];
             skillPriority = isSpecial
                 ? [Skill.CLASH, Skill.ALERT, Skill.LORE, Skill.EVASION, Skill.CHANNEL]
-                : [Skill.ALERT, Skill.LORE, Skill.EVASION, Skill.CHANNEL];
+                : [Skill.ALERT, Skill.LORE, Skill.EVASION, Skill.CHANNEL, Skill.CHARM];
             break;
         case 'balanced':
             attrPriority = isSpecial ? ['str', 'dex', 'vit', 'ins', 'spe'] : ['str', 'dex', 'vit', 'ins'];
@@ -325,8 +330,10 @@ export function buildTrainerTokenMetadata(
 
     const vitTotal = 1 + attr['vit'];
     const insTotal = 1 + attr['ins'];
-    const maxHp = 4 + vitTotal;
-    const maxWill = insTotal + 2;
+    const hpBase = 4;
+    const willBase = 3;
+    const maxHp = hpBase + vitTotal;
+    const maxWill = willBase + insTotal;
 
     const badges = assignBadges ? determineSuggestedBadges(rank) : [];
     const modeString = isSpecialTrainer ? 'Trainer (Special)' : 'Trainer';
@@ -344,10 +351,14 @@ export function buildTrainerTokenMetadata(
         'origin-biome': originBiomeId || 'none',
 
         // HP & Resources
-        'hp-max': maxHp,
+        'hp-base': hpBase,
         'hp-curr': maxHp,
-        'will-max': maxWill,
+        'hp-max': maxHp,
+        'hp-max-display': maxHp,
+        'will-base': willBase,
         'will-curr': maxWill,
+        'will-max': maxWill,
+        'will-max-display': maxWill,
 
         // Badges
         badges

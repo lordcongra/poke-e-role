@@ -251,8 +251,10 @@ export function TrainerPreviewModal({
         try {
             const vitTotal = 1 + (trainerAttr['vit'] || 0);
             const insTotal = 1 + (trainerAttr['ins'] || 0);
-            const maxHp = 4 + vitTotal;
-            const maxWill = insTotal + 2;
+            const hpBase = 4;
+            const willBase = 3;
+            const maxHp = hpBase + vitTotal;
+            const maxWill = willBase + insTotal;
 
             const updatedTrainerMetadata: Record<string, unknown> = {
                 ...result.trainerMetadata,
@@ -272,8 +274,14 @@ export function TrainerPreviewModal({
                 'cut-rank': trainerSoc['cut'] || 0,
                 'cle-rank': trainerSoc['cle'] || 0,
                 'skills-ranks': trainerSkills,
+                'hp-base': hpBase,
+                'hp-curr': maxHp,
                 'hp-max': maxHp,
-                'will-max': maxWill
+                'hp-max-display': maxHp,
+                'will-base': willBase,
+                'will-curr': maxWill,
+                'will-max': maxWill,
+                'will-max-display': maxWill
             };
 
             Object.entries(trainerSkills).forEach(([s, val]) => {

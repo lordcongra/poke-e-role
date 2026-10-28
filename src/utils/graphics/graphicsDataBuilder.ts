@@ -330,7 +330,7 @@ export function buildGraphicsFromMeta(
             String(meta['name'] || '').trim() !== '' ||
             String(meta['mode'] || 'Pokémon') !== 'Pokémon',
         hpCurr: Number(meta['hp-curr']) || 0,
-        hpMax: Number(meta['hp-max-display']) || 1,
+        hpMax: Number(meta['hp-max-display'] ?? meta['hp-max']) || 1,
         temporaryHitPoints:
             meta['temporary-hit-points'] != null && !isNaN(Number(meta['temporary-hit-points']))
                 ? Number(meta['temporary-hit-points'])
@@ -340,7 +340,7 @@ export function buildGraphicsFromMeta(
                 ? Number(meta['temporary-hit-points-max'])
                 : 0,
         willCurr: Number(meta['will-curr']) || 0,
-        willMax: Number(meta['will-max-display']) || 1,
+        willMax: Number(meta['will-max-display'] ?? meta['will-max']) || 1,
         temporaryWill:
             meta['temporary-will'] != null && !isNaN(Number(meta['temporary-will']))
                 ? Number(meta['temporary-will'])

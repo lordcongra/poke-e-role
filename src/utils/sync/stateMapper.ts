@@ -407,9 +407,10 @@ function parsePokedex(meta: Record<string, unknown>): TrainerPokedexData {
 }
 
 function parseHealth(meta: Record<string, unknown>) {
+    const rawMax = meta['hp-max-display'] ?? meta['hp-max'];
     return {
         hpCurr: meta['hp-curr'] !== undefined ? Number(meta['hp-curr']) : 5,
-        hpMax: meta['hp-max-display'] !== undefined ? Number(meta['hp-max-display']) : 5,
+        hpMax: rawMax !== undefined ? Number(rawMax) : 5,
         hpBase: meta['hp-base'] !== undefined ? Number(meta['hp-base']) : 4,
         temporaryHitPoints: meta['temporary-hit-points'] !== undefined ? Number(meta['temporary-hit-points']) : 0,
         temporaryHitPointsMax:
@@ -418,9 +419,10 @@ function parseHealth(meta: Record<string, unknown>) {
 }
 
 function parseWill(meta: Record<string, unknown>) {
+    const rawMax = meta['will-max-display'] ?? meta['will-max'];
     return {
         willCurr: meta['will-curr'] !== undefined ? Number(meta['will-curr']) : 4,
-        willMax: meta['will-max-display'] !== undefined ? Number(meta['will-max-display']) : 4,
+        willMax: rawMax !== undefined ? Number(rawMax) : 4,
         willBase: meta['will-base'] !== undefined ? Number(meta['will-base']) : 3,
         temporaryWill: meta['temporary-will'] !== undefined ? Number(meta['temporary-will']) : 0,
         temporaryWillMax: meta['temporary-will-max'] !== undefined ? Number(meta['temporary-will-max']) : 0
