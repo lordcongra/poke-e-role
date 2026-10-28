@@ -1,0 +1,112 @@
+/* AbilityLookup.css */
+
+.gm-ability-lookup-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+.gm-ability-lookup__card {
+    border-left: 3px solid var(--primary);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gm-ability-lookup__effect-box {
+    background: var(--panel-alt);
+    padding: 10px 12px;
+    border-radius: 6px;
+    border-left: 3px solid var(--primary);
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: var(--text-main);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.gm-ability-lookup__effect-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.gm-ability-lookup__effect-text {
+    line-height: 1.45;
+}
+
+.gm-ability-lookup__desc-box {
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--text-muted);
+    line-height: 1.4;
+    padding: 0 4px;
+}
+
+/* Drawer / Pokémon Holders Section */
+.gm-ability-lookup__holders-drawer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-color, rgba(255, 255, 255, 0.12));
+}
+
+.gm-ability-lookup__holders-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background: var(--bg);
+    transition: background 0.15s ease;
+}
+
+.gm-ability-lookup__holders-header:hover {
+    background: var(--panel-alt);
+}
+
+.gm-ability-lookup__holders-content {
+    padding: 6px 0;
+}
+
+.gm-ability-lookup__holders-pills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.gm-ability-lookup__poke-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    font-size: 0.78rem;
+    border-radius: 4px;
+    background: var(--bg);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.gm-ability-lookup__poke-pill:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.gm-ability-lookup__poke-pill-name {
+    font-weight: 600;
+}
+
+.gm-ability-lookup__poke-pill-slot {
+    font-size: 0.72rem;
+    opacity: 0.8;
+}
+

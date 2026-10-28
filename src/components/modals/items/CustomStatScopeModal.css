@@ -73,9 +73,8 @@
     flex-shrink: 0;
 }
 
-.custom-stat-scope-pill input[type="checkbox"] {
+.custom-stat-scope-pill input[type='checkbox'] {
     margin: 0;
     cursor: pointer;
     accent-color: var(--primary);
 }
-

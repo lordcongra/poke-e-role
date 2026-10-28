@@ -23,6 +23,7 @@ export interface PokemonLookupCardProps {
     onBroadcast: (pokemon: PokemonLookupEntry) => void;
     onOpenTooltip: (title: string, desc: string) => void;
     onSelectMove?: (moveName: string) => void;
+    onSelectAbility?: (abilityName: string) => void;
 }
 
 export function PokemonLookupCard({
@@ -43,7 +44,8 @@ export function PokemonLookupCard({
     onCopyCardLink,
     onBroadcast,
     onOpenTooltip,
-    onSelectMove
+    onSelectMove,
+    onSelectAbility
 }: PokemonLookupCardProps) {
     const limits = fullData ? getPokemonStatLimits(fullData) : null;
 
@@ -162,6 +164,9 @@ export function PokemonLookupCard({
                                     ? 'gm-pokemon-lookup__ability-badge--highlight'
                                     : ''
                             }`}
+                            style={onSelectAbility ? { cursor: 'pointer' } : undefined}
+                            onClick={onSelectAbility ? () => onSelectAbility(p.ability1) : undefined}
+                            title={onSelectAbility ? `View ${p.ability1} in Ability Lookup` : undefined}
                         >
                             {p.ability1}
                         </span>
@@ -173,6 +178,9 @@ export function PokemonLookupCard({
                                     ? 'gm-pokemon-lookup__ability-badge--highlight'
                                     : ''
                             }`}
+                            style={onSelectAbility ? { cursor: 'pointer' } : undefined}
+                            onClick={onSelectAbility ? () => onSelectAbility(p.ability2) : undefined}
+                            title={onSelectAbility ? `View ${p.ability2} in Ability Lookup` : undefined}
                         >
                             {p.ability2}
                         </span>
@@ -185,11 +193,20 @@ export function PokemonLookupCard({
                                     : ''
                             }`}
                             style={{ cursor: 'pointer' }}
-                            onClick={() =>
-                                onOpenTooltip(
-                                    `${p.hiddenAbility} (Hidden Ability - Homebrew)`,
-                                    'Hidden Abilities are community homebrew additions in this dataset and are not canon to official Pokerole rules. GM discretion is advised when using them.'
-                                )
+                            onClick={() => {
+                                if (onSelectAbility) {
+                                    onSelectAbility(p.hiddenAbility!);
+                                } else {
+                                    onOpenTooltip(
+                                        `${p.hiddenAbility} (Hidden Ability - Homebrew)`,
+                                        'Hidden Abilities are community homebrew additions in this dataset and are not canon to official Pokerole rules. GM discretion is advised when using them.'
+                                    );
+                                }
+                            }}
+                            title={
+                                onSelectAbility
+                                    ? `View ${p.hiddenAbility} in Ability Lookup`
+                                    : 'Hidden Ability - Homebrew'
                             }
                         >
                             <Sparkles size={11} /> {p.hiddenAbility}{' '}

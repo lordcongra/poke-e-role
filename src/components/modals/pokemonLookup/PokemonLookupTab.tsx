@@ -10,10 +10,18 @@ import { PokemonLookupCard } from './PokemonLookupCard';
 export interface PokemonLookupTabProps {
     initialPokemonName?: string;
     initialMoveFilter?: string;
+    initialAbilityFilter?: string;
     onSelectMove?: (moveName: string) => void;
+    onSelectAbility?: (abilityName: string) => void;
 }
 
-export function PokemonLookupTab({ initialPokemonName, initialMoveFilter, onSelectMove }: PokemonLookupTabProps) {
+export function PokemonLookupTab({
+    initialPokemonName,
+    initialMoveFilter,
+    initialAbilityFilter,
+    onSelectMove,
+    onSelectAbility
+}: PokemonLookupTabProps) {
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
     const role = useCharacterStore((state) => state.role);
 
@@ -76,7 +84,7 @@ export function PokemonLookupTab({ initialPokemonName, initialMoveFilter, onSele
         handleCopyLookupLink,
         handleCopyCardLink,
         handleOpenTooltip
-    } = usePokemonLookup(initialPokemonName, initialMoveFilter);
+    } = usePokemonLookup(initialPokemonName, initialMoveFilter, initialAbilityFilter);
 
     if (isLoading) {
         return (
@@ -189,6 +197,7 @@ export function PokemonLookupTab({ initialPokemonName, initialMoveFilter, onSele
                             onBroadcast={handleBroadcast}
                             onOpenTooltip={handleOpenTooltip}
                             onSelectMove={onSelectMove}
+                            onSelectAbility={onSelectAbility}
                         />
                     ))}
 

@@ -271,7 +271,9 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
                                 min={-99}
                                 max={99}
                                 value={item.healWill ?? 0}
-                                onChange={(val) => updateInventoryItem(item.id, 'healWill', val === 0 ? undefined : val)}
+                                onChange={(val) =>
+                                    updateInventoryItem(item.id, 'healWill', val === 0 ? undefined : val)
+                                }
                             />
                         </div>
                     </div>

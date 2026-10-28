@@ -89,4 +89,3 @@ export function getAllowedCategories(scope: string): string[] {
             return ['core'];
     }
 }
-

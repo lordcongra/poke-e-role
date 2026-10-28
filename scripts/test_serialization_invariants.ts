@@ -44,9 +44,7 @@ const {
     isLegacyBottleCapacity,
     hasItemUsageEffect
 } = await import('../src/utils/items/itemUsageEffects');
-const { getCustomStatWhitelist, getStatChoiceScope } = await import(
-    '../src/utils/items/itemStatChoice'
-);
+const { getCustomStatWhitelist, getStatChoiceScope } = await import('../src/utils/items/itemStatChoice');
 const { parseCombatBoostFromItem, hasCombatBoostTags } = await import('../src/utils/items/combatBoostParser');
 const { applyUsageToState } = await import('../src/utils/items/inventoryItemOps');
 const { createInventorySlice } = await import('../src/store/slices/inventorySlice');

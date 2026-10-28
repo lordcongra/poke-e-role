@@ -12,7 +12,11 @@ import { getBaseShareUrl } from '../../../utils/common/helper';
 import { downloadMarkdownFile } from '../../../utils/common/fileSystemHelpers';
 import { filterPokemonLookup, buildPokemonDiscordMarkdown, buildPokemonBroadcast } from './pokemonLookupUtils';
 
-export function usePokemonLookup(initialPokemonName?: string, initialMoveFilter?: string) {
+export function usePokemonLookup(
+    initialPokemonName?: string,
+    initialMoveFilter?: string,
+    initialAbilityFilter?: string
+) {
     // Data State
     const [lookupData, setLookupData] = useState<PokemonLookupEntry[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -20,12 +24,12 @@ export function usePokemonLookup(initialPokemonName?: string, initialMoveFilter?
 
     // Filter Draft Inputs
     const [nameInput, setNameInput] = useState<string>(initialPokemonName || '');
-    const [abilityInput, setAbilityInput] = useState<string>('');
+    const [abilityInput, setAbilityInput] = useState<string>(initialAbilityFilter || '');
     const [moveInput, setMoveInput] = useState<string>(initialMoveFilter || '');
 
     // Committed Text Search Parameters
     const [appliedName, setAppliedName] = useState<string>(initialPokemonName || '');
-    const [appliedAbility, setAppliedAbility] = useState<string>('');
+    const [appliedAbility, setAppliedAbility] = useState<string>(initialAbilityFilter || '');
     const [appliedMove, setAppliedMove] = useState<string>(initialMoveFilter || '');
 
     // Dropdown & Toggle Filters
@@ -148,6 +152,13 @@ export function usePokemonLookup(initialPokemonName?: string, initialMoveFilter?
             setAppliedMove(initialMoveFilter);
         }
     }, [initialMoveFilter]);
+
+    useEffect(() => {
+        if (initialAbilityFilter) {
+            setAbilityInput(initialAbilityFilter);
+            setAppliedAbility(initialAbilityFilter);
+        }
+    }, [initialAbilityFilter]);
 
     // Autocomplete datasets
     const availablePokemonNames = useMemo(() => {
