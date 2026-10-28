@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { MoveLookupEntry, PokemonLookupEntry } from '../../../utils/api/apiTypes';
-import { fetchMoveLookupIndex, fetchPokemonLookupIndex } from '../../../utils/api/api';
+import { fetchMoveLookupIndex, fetchPokemonLookupIndex, getCanonicalMoveName } from '../../../utils/api/api';
 import { broadcastInfo } from '../../../utils/combat/diceRoller';
 import { getBaseShareUrl } from '../../../utils/common/helper';
 import type { MoveCategoryFilter, LearnedByPokemon } from './moveLookupTypes';
@@ -93,7 +93,8 @@ export function useMoveLookup(initialMoveName?: string) {
         pokemonData.forEach((p) => {
             p.moves.forEach(([mName, rank]) => {
                 if (!mName) return;
-                const clean = mName.toLowerCase();
+                const canonicalName = getCanonicalMoveName(mName);
+                const clean = canonicalName.toLowerCase();
                 if (!map[clean]) map[clean] = [];
                 map[clean].push({
                     name: p.name,

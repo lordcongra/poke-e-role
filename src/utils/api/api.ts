@@ -48,6 +48,16 @@ export const MOVES_URLS: Record<string, string> = {};
 export const ITEMS_URLS: Record<string, string> = {};
 export const NATURES_URLS: Record<string, string> = {};
 
+export const MOVE_ALIASES: Record<string, string> = {
+    'vice grip': 'Vise Grip'
+};
+
+export function getCanonicalMoveName(name: string): string {
+    if (!name) return name;
+    const clean = name.trim().toLowerCase();
+    return MOVE_ALIASES[clean] || name;
+}
+
 export const ALL_SPECIES: string[] = [];
 export const ALL_ABILITIES: string[] = [];
 export const ALL_MOVES: string[] = [];
@@ -119,6 +129,14 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
                     Object.values(data.moves.highPower).forEach(populateMoves);
                 }
                 ALL_MOVES.sort();
+
+                // Register aliases so lookups under alternative spellings succeed
+                Object.entries(MOVE_ALIASES).forEach(([aliasLower, canonical]) => {
+                    const canonicalKey = canonical.toLowerCase();
+                    if (MOVES_URLS[canonicalKey]) {
+                        MOVES_URLS[aliasLower] = MOVES_URLS[canonicalKey];
+                    }
+                });
             }
 
             // Populate Items
@@ -263,12 +281,13 @@ export async function fetchAbilityData(abilityName: string): Promise<AbilityApiR
 
 export async function fetchMoveData(moveName: string): Promise<MoveApiResponse | null> {
     if (!moveName) return null;
-    const exactName = moveName.trim();
+    const canonicalMoveName = getCanonicalMoveName(moveName);
+    const exactName = canonicalMoveName.trim();
     const cleanExactName = exactName.toLowerCase();
 
     // We retain the fallback string splitting just in case players type "Hidden Power (Fire)"
     // when only "Hidden Power" exists in the DB.
-    const baseName = exactName.split(' (')[0].trim();
+    const baseName = getCanonicalMoveName(exactName.split(' (')[0].trim());
     const cleanBaseName = baseName.toLowerCase();
 
     // 1. Check Homebrew First

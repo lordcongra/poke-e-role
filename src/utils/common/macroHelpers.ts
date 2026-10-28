@@ -3,6 +3,7 @@ import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../combat/combatUtils';
 import { MAX_MOVES_DATA } from '../../data/maxMoves';
 import type { PokemonApiResponse } from '../api/apiTypes';
+import { getCanonicalMoveName } from '../api/api';
 import { MYTHICAL_POKEMON_NAMES, ULTRA_BEAST_NAMES, PARADOX_POKEMON_NAMES } from '../generators/pokemonFilterUtils';
 
 export const parseHeight = (dataHeight: unknown): string => {
@@ -27,12 +28,12 @@ export const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name:
     const result: Array<{ Learned: string; Name: string }> = [];
     if (Array.isArray(movesObj)) {
         movesObj.forEach((m) => {
-            if (typeof m === 'string') result.push({ Learned: 'Other', Name: m });
+            if (typeof m === 'string') result.push({ Learned: 'Other', Name: getCanonicalMoveName(m) });
             else if (typeof m === 'object' && m !== null) {
                 const mRec = m as Record<string, unknown>;
                 const rank = mRec.Learned || mRec.Learn || mRec.Level || mRec.Rank || 'Other';
                 const name = mRec.Name || mRec.Move || '';
-                if (name) result.push({ Learned: String(rank), Name: String(name) });
+                if (name) result.push({ Learned: String(rank), Name: getCanonicalMoveName(String(name)) });
             }
         });
     } else if (typeof movesObj === 'object' && movesObj !== null) {
@@ -45,7 +46,7 @@ export const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name:
                         const mRec = m as Record<string, unknown>;
                         name = String(mRec.Name || mRec.Move || '');
                     }
-                    if (name) result.push({ Learned: rank, Name: name });
+                    if (name) result.push({ Learned: rank, Name: getCanonicalMoveName(name) });
                 });
             }
         });

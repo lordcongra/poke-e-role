@@ -33,6 +33,10 @@ const datasetIndex = {
     items: {}
 };
 
+const MOVE_NAME_ERRATA = {
+    'Vice Grip': 'Vise Grip'
+};
+
 // Helper: Safely write JSON only if content has changed (avoids unnecessary disk I/O)
 function safeWriteJson(destPath, data, space = 4) {
     const content = space ? JSON.stringify(data, null, space) : JSON.stringify(data);
@@ -260,6 +264,18 @@ async function build() {
         try {
             const rawName = data.Name || data.name || fileName.replace('.json', '');
             const cleanName = rawName.toLowerCase();
+
+            // Normalize move names before constructing movesList and saving data.Moves
+            if (Array.isArray(data.Moves)) {
+                data.Moves.forEach((m) => {
+                    const mName = m.Name || m.name || '';
+                    if (MOVE_NAME_ERRATA[mName]) {
+                        if (m.Name !== undefined) m.Name = MOVE_NAME_ERRATA[mName];
+                        if (m.name !== undefined) m.name = MOVE_NAME_ERRATA[mName];
+                    }
+                });
+            }
+
             const destPath = path.join(POKEDEX_DIR, fileName);
             safeWriteJson(destPath, data);
 
@@ -269,9 +285,11 @@ async function build() {
             };
 
             const movesList = Array.isArray(data.Moves)
-                ? data.Moves.map((m) => [m.Name || m.name || '', m.Learned || m.learned || 'Starter']).filter(
-                      ([mName]) => Boolean(mName)
-                  )
+                ? data.Moves.map((m) => {
+                      const mName = m.Name || m.name || '';
+                      const canonical = MOVE_NAME_ERRATA[mName] || mName;
+                      return [canonical, m.Learned || m.learned || 'Starter'];
+                  }).filter(([mName]) => Boolean(mName))
                 : [];
 
             const evoInfo = getEvolutionInfo(data);

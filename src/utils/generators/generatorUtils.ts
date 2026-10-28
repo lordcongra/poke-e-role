@@ -5,7 +5,8 @@ import {
     MOVES_URLS,
     SPECIES_URLS,
     loadLocalDataset,
-    fetchPokemonLookupIndex
+    fetchPokemonLookupIndex,
+    getCanonicalMoveName
 } from '../api';
 import { getRankPoints } from '../../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
@@ -360,19 +361,20 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         includeOther = false
     ) => {
         const processMove = (moveName: string, moveRank: string) => {
+            const canonicalName = getCanonicalMoveName(moveName);
             const normalizedRank = moveRank.trim().charAt(0).toUpperCase() + moveRank.trim().slice(1).toLowerCase();
             const rIdx = RANK_HIERARCHY.indexOf(normalizedRank);
 
-            const cleanName = moveName.toLowerCase().trim();
+            const cleanName = canonicalName.toLowerCase().trim();
             const isCustomMove = state.roomCustomMoves.some((m) => m.name.toLowerCase() === cleanName);
             const moveExists = MOVES_URLS[cleanName] || isCustomMove;
 
-            if (moveName && cleanName !== 'splash' && moveExists) {
+            if (canonicalName && cleanName !== 'splash' && moveExists) {
                 const isWithinRank = rIdx !== -1 && rIdx <= maxRankIndex && rIdx > minRankIndex;
                 const isOther = rIdx === -1;
 
                 if (maxRankIndex === 99 || isWithinRank || (includeOther && isOther)) {
-                    targetArray.push(moveName);
+                    targetArray.push(canonicalName);
                 }
             }
         };

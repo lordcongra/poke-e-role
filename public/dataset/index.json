@@ -9025,15 +9025,15 @@
                     "weight": 50
                 },
                 {
-                    "name": "Vice Grip",
-                    "type": "Normal",
-                    "path": "/dataset/moves/basic/power_2/Vice Grip.json",
-                    "weight": 50
-                },
-                {
                     "name": "Vine Whip",
                     "type": "Grass",
                     "path": "/dataset/moves/basic/power_2/Vine Whip.json",
+                    "weight": 50
+                },
+                {
+                    "name": "Vise Grip",
+                    "type": "Normal",
+                    "path": "/dataset/moves/basic/power_2/Vise Grip.json",
                     "weight": 50
                 },
                 {
@@ -9828,12 +9828,6 @@
                     "name": "Razor Shell",
                     "type": "Water",
                     "path": "/dataset/moves/basic/power_3/Razor Shell.json",
-                    "weight": 20
-                },
-                {
-                    "name": "Razor Wind",
-                    "type": "Normal",
-                    "path": "/dataset/moves/basic/power_3/Razor Wind.json",
                     "weight": 20
                 },
                 {
@@ -10734,6 +10728,12 @@
                     "name": "Raging Fury",
                     "type": "Fire",
                     "path": "/dataset/moves/highPower/power_5/Raging Fury.json",
+                    "weight": 5
+                },
+                {
+                    "name": "Razor Wind",
+                    "type": "Normal",
+                    "path": "/dataset/moves/highPower/power_5/Razor Wind.json",
                     "weight": 5
                 },
                 {

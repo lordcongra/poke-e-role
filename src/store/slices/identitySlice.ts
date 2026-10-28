@@ -9,7 +9,7 @@ import {
     clearSceneOffsetsFromOwlbear
 } from '../../utils/sync/obr';
 import OBR from '@owlbear-rodeo/sdk';
-import { syncHealthAndWill } from '../../utils/common/macroHelpers';
+import { syncHealthAndWill, parseLearnset } from '../../utils/common/macroHelpers';
 
 import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { getKnownAbility } from '../../data/abilities/knownAbilities';
@@ -132,36 +132,6 @@ const OBR_KEY_MAP: Record<string, string> = {
     height: 'height',
     weight: 'weight',
     dexDescription: 'dex-description'
-};
-
-const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string }> => {
-    const result: Array<{ Learned: string; Name: string }> = [];
-    if (Array.isArray(movesObj)) {
-        movesObj.forEach((m) => {
-            if (typeof m === 'string') result.push({ Learned: 'Other', Name: m });
-            else if (typeof m === 'object' && m !== null) {
-                const mRec = m as Record<string, unknown>;
-                const rank = mRec.Learned || mRec.Learn || mRec.Level || mRec.Rank || 'Other';
-                const name = mRec.Name || mRec.Move || '';
-                if (name) result.push({ Learned: String(rank), Name: String(name) });
-            }
-        });
-    } else if (typeof movesObj === 'object' && movesObj !== null) {
-        Object.entries(movesObj).forEach(([rank, mList]) => {
-            if (Array.isArray(mList)) {
-                mList.forEach((m) => {
-                    let name = '';
-                    if (typeof m === 'string') name = m;
-                    else if (typeof m === 'object' && m !== null) {
-                        const mRec = m as Record<string, unknown>;
-                        name = String(mRec.Name || mRec.Move || '');
-                    }
-                    if (name) result.push({ Learned: rank, Name: name });
-                });
-            }
-        });
-    }
-    return result;
 };
 
 // Initialize per-player HUD preferences safely from localStorage
