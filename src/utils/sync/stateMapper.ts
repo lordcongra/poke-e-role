@@ -363,15 +363,40 @@ function parsePokedex(meta: Record<string, unknown>): TrainerPokedexData {
         const rawPokedex = meta['pokedex-data'] ? JSON.parse(String(meta['pokedex-data'])) : {};
         if (typeof rawPokedex !== 'object' || rawPokedex === null || Array.isArray(rawPokedex)) return {};
 
+        const lowerToKeyMap: Record<string, string> = {};
         const result: TrainerPokedexData = {};
-        for (const [key, val] of Object.entries(rawPokedex)) {
+        for (const [rawKey, val] of Object.entries(rawPokedex)) {
+            const cleanKey = rawKey.trim();
+            if (!cleanKey) continue;
+            const lower = cleanKey.toLowerCase();
+
             if (val && typeof val === 'object') {
                 const entry = val as Record<string, unknown>;
-                result[key] = {
-                    seen: Boolean(entry.seen),
-                    caught: Boolean(entry.caught),
-                    shiny: Boolean(entry.shiny)
-                };
+                const entrySeen = Boolean(entry.seen || entry.caught || entry.shiny);
+                const entryCaught = Boolean(entry.caught);
+                const entryShiny = Boolean(entry.shiny);
+
+                if (!lowerToKeyMap[lower]) {
+                    lowerToKeyMap[lower] = cleanKey;
+                    result[cleanKey] = {
+                        seen: entrySeen,
+                        caught: entryCaught,
+                        shiny: entryShiny
+                    };
+                } else {
+                    const existingKey = lowerToKeyMap[lower];
+                    let activeKey = existingKey;
+                    if (existingKey === lower && cleanKey !== lower) {
+                        delete result[existingKey];
+                        lowerToKeyMap[lower] = cleanKey;
+                        activeKey = cleanKey;
+                    }
+                    result[activeKey] = {
+                        seen: Boolean(result[activeKey]?.seen || entrySeen),
+                        caught: Boolean(result[activeKey]?.caught || entryCaught),
+                        shiny: Boolean(result[activeKey]?.shiny || entryShiny)
+                    };
+                }
             }
         }
         return result;

@@ -5,7 +5,12 @@ import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import { usePokemonLookup } from '../pokemonLookup/usePokemonLookup';
 import { PokemonLookupCard } from '../pokemonLookup/PokemonLookupCard';
 import { TrainerPokedexHeader, type PokedexStatusFilter } from './TrainerPokedexHeader';
-import { countPokedexTotals, resolvePokedexEntryToLookup } from '../../board/trainerPokedexUtils';
+import {
+    countPokedexTotals,
+    getPokedexEntry,
+    resolvePokedexEntryToLookup,
+    findCanonicalSpeciesName
+} from '../../board/trainerPokedexUtils';
 import { Eye, Check, Sparkles, Loader2, AlertCircle, Search, XCircle, Trash2, BookOpen } from 'lucide-react';
 import './TrainerPokedexModal.css';
 
@@ -76,14 +81,23 @@ export function TrainerPokedexModal({ onClose, initialPokemonName }: TrainerPoke
 
     // Only Pokémon registered by the trainer
     const registeredPokemon = useMemo(() => {
-        return Object.keys(pokedex)
-            .map((name) => resolvePokedexEntryToLookup(name, pokedex[name], lookupMap))
-            .sort((a, b) => {
-                const numA = parseInt(a.dexId, 10);
-                const numB = parseInt(b.dexId, 10);
-                if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB;
-                return a.name.localeCompare(b.name);
-            });
+        const seenLower = new Set<string>();
+        const list: ReturnType<typeof resolvePokedexEntryToLookup>[] = [];
+
+        for (const name of Object.keys(pokedex)) {
+            const lower = name.trim().toLowerCase();
+            if (!lower || seenLower.has(lower)) continue;
+            seenLower.add(lower);
+            const entry = getPokedexEntry(pokedex, name);
+            list.push(resolvePokedexEntryToLookup(name, entry, lookupMap));
+        }
+
+        return list.sort((a, b) => {
+            const numA = parseInt(a.dexId, 10);
+            const numB = parseInt(b.dexId, 10);
+            if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB;
+            return a.name.localeCompare(b.name);
+        });
     }, [pokedex, lookupMap]);
 
     // Search and filter within the registered Pokémon list
@@ -107,15 +121,15 @@ export function TrainerPokedexModal({ onClose, initialPokemonName }: TrainerPoke
 
         if (statusFilter !== 'all') {
             list = list.filter((p) => {
-                const entry = pokedex[p.name];
+                const entry = getPokedexEntry(pokedex, p.name);
                 if (statusFilter === 'seen') {
-                    return Boolean(entry && (entry.seen || entry.caught || entry.shiny));
+                    return Boolean(entry.seen || entry.caught || entry.shiny);
                 }
                 if (statusFilter === 'caught') {
-                    return Boolean(entry?.caught);
+                    return Boolean(entry.caught);
                 }
                 if (statusFilter === 'shiny') {
-                    return Boolean(entry?.shiny);
+                    return Boolean(entry.shiny);
                 }
                 return true;
             });
@@ -125,7 +139,8 @@ export function TrainerPokedexModal({ onClose, initialPokemonName }: TrainerPoke
     }, [registeredPokemon, searchInput, type1Filter, type2Filter, statusFilter, pokedex]);
 
     const handleRegisterPokemon = (name: string) => {
-        addPokedexEntry(name);
+        const canonical = findCanonicalSpeciesName(name, lookupData);
+        addPokedexEntry(canonical);
     };
 
     const handleResetAll = () => {
@@ -206,7 +221,7 @@ export function TrainerPokedexModal({ onClose, initialPokemonName }: TrainerPoke
                             </div>
 
                             {finalFilteredPokemon.slice(0, displayLimit).map((p) => {
-                                const entry = pokedex[p.name] || { seen: false, caught: false, shiny: false };
+                                const entry = getPokedexEntry(pokedex, p.name);
                                 const isSeen = Boolean(entry.seen || entry.caught || entry.shiny);
                                 const isCaught = Boolean(entry.caught);
                                 const isShiny = Boolean(entry.shiny);

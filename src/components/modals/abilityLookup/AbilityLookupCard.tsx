@@ -163,9 +163,7 @@ export function AbilityLookupCard({
                     <div className="gm-ability-lookup__holders-header">
                         <div className="flex-layout--row-center" style={{ gap: 8 }}>
                             <BookOpen size={14} color="var(--primary)" />
-                            <span className="text-label">
-                                Available to {pokemonHolders.length} Pokémon
-                            </span>
+                            <span className="text-label">Available to {pokemonHolders.length} Pokémon</span>
                             {onFilterPokemonByAbility && (
                                 <button
                                     type="button"

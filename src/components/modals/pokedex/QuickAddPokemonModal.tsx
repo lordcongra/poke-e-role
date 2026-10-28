@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { fetchPokemonLookupIndex } from '../../../utils/api/api';
 import type { PokemonLookupEntry } from '../../../utils/api/apiTypes';
+import { findCanonicalSpeciesName } from '../../board/trainerPokedexUtils';
 import { BookPlus, Eye, Check, Sparkles, Plus, X } from 'lucide-react';
 import './QuickAddPokemonModal.css';
 
@@ -70,7 +71,9 @@ export function QuickAddPokemonModal({ isOpen, onClose, lookupData: externalLook
         const clean = pokemonName.trim();
         if (!clean) return;
 
-        addPokedexEntry(clean, {
+        const canonicalName = findCanonicalSpeciesName(clean, availableLookup);
+
+        addPokedexEntry(canonicalName, {
             seen: true,
             caught: status === 'caught',
             shiny: isShiny

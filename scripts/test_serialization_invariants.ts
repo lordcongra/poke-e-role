@@ -54,6 +54,8 @@ const { getAccessoryIdentityKey, sanitizeAttachmentBundles, hasAttachmentDiff, r
     await import('../src/utils/pc/pcAttachmentOps');
 const { buildEphemeralMoveFromItem, resolveItemMoveStats } = await import('../src/utils/items/itemAttackRoller');
 const { isTrackedBackupChange } = await import('../src/utils/sync/storageAdapter');
+const { countPokedexTotals, getPokedexEntry, isPokemonRegistered, findCanonicalSpeciesName } =
+    await import('../src/components/board/trainerPokedexUtils');
 
 /**
  * Automated Verification Suite for Token Metadata & Serialization Invariants.
@@ -2249,6 +2251,41 @@ await runTest('trainerPokedex: serialization, hydration, and storageAdapter trac
         isTrackedBackupChange({ 'pokedex-data': meta['pokedex-data'] }),
         'isTrackedBackupChange flags pokedex-data updates'
     );
+
+    // 4. Case-insensitive auto-healing and deduplication during hydration
+    const corruptedMeta = {
+        ...meta,
+        'pokedex-data': JSON.stringify({
+            pikachu: { seen: true, caught: false, shiny: false },
+            Pikachu: { seen: true, caught: true, shiny: false },
+            CHARIZARD: { seen: false, caught: false, shiny: true }
+        })
+    };
+    const autoHealed = hydrateStateFromMetadata(corruptedMeta, createTestCharacterState());
+    const healedPokedex = autoHealed.identity?.pokedex || {};
+    assert.equal(Object.keys(healedPokedex).length, 2, 'Deduplicates mixed-casing entries to exactly 2');
+    assert.ok(healedPokedex.Pikachu, 'Canonical or title-cased key Pikachu is preserved');
+    assert.equal(healedPokedex.Pikachu.caught, true, 'Merged flags: caught is true from uppercase variant');
+    assert.equal(healedPokedex.Pikachu.seen, true, 'Merged flags: seen is true');
+
+    // 5. Utility functions case-insensitivity
+    const lookupList = [{ name: 'Pikachu' }, { name: 'Charizard' }];
+    assert.equal(findCanonicalSpeciesName('pikachu', lookupList), 'Pikachu');
+    assert.equal(findCanonicalSpeciesName('  CHARIZARD  ', lookupList), 'Charizard');
+    assert.equal(findCanonicalSpeciesName('CustomMon', lookupList), 'CustomMon');
+
+    const entry = getPokedexEntry(healedPokedex, 'pikachu');
+    assert.equal(entry.caught, true, 'getPokedexEntry matches lowercase name against TitleCase key');
+    assert.equal(isPokemonRegistered(healedPokedex, 'PIKACHU'), true, 'isPokemonRegistered is case-insensitive');
+
+    // 6. countPokedexTotals deduplication
+    const unmergedPokedex = {
+        pikachu: { seen: true, caught: false, shiny: false },
+        Pikachu: { seen: true, caught: true, shiny: false }
+    };
+    const totals = countPokedexTotals(unmergedPokedex);
+    assert.equal(totals.seen, 1, 'countPokedexTotals seen deduplicated to 1');
+    assert.equal(totals.caught, 1, 'countPokedexTotals caught deduplicated to 1');
 });
 
 await runTest('itemUsageEffects: negative HP and Will reduction with Temp pool absorption', async () => {

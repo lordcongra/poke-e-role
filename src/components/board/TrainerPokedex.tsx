@@ -54,14 +54,23 @@ export function TrainerPokedex() {
     }, [lookupData]);
 
     const registeredPokemon = useMemo(() => {
-        return Object.keys(pokedex)
-            .map((name) => resolvePokedexEntryToLookup(name, pokedex[name], lookupMap))
-            .sort((a, b) => {
-                const numA = parseInt(a.dexId, 10);
-                const numB = parseInt(b.dexId, 10);
-                if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB;
-                return a.name.localeCompare(b.name);
-            });
+        const seenLower = new Set<string>();
+        const list: ReturnType<typeof resolvePokedexEntryToLookup>[] = [];
+
+        for (const name of Object.keys(pokedex)) {
+            const lower = name.trim().toLowerCase();
+            if (!lower || seenLower.has(lower)) continue;
+            seenLower.add(lower);
+            const entry = getPokedexEntry(pokedex, name);
+            list.push(resolvePokedexEntryToLookup(name, entry, lookupMap));
+        }
+
+        return list.sort((a, b) => {
+            const numA = parseInt(a.dexId, 10);
+            const numB = parseInt(b.dexId, 10);
+            if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB;
+            return a.name.localeCompare(b.name);
+        });
     }, [pokedex, lookupMap]);
 
     const handleInspect = (name: string) => {

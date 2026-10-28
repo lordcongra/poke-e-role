@@ -786,19 +786,34 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
 
     setPokedexEntry: (name, entry: Partial<TrainerPokedexEntry> | null) =>
         set((state) => {
+            const cleanName = name.trim();
+            if (!cleanName) return state;
+            const lower = cleanName.toLowerCase();
             const nextPokedex: TrainerPokedexData = { ...(state.identity.pokedex || {}) };
+            const existingKey = Object.keys(nextPokedex).find((k) => k.trim().toLowerCase() === lower);
+            const targetKey = cleanName !== lower ? cleanName : existingKey || cleanName;
+
             if (entry === null) {
-                delete nextPokedex[name];
+                for (const k of Object.keys(nextPokedex)) {
+                    if (k.trim().toLowerCase() === lower) {
+                        delete nextPokedex[k];
+                    }
+                }
             } else {
-                const current = nextPokedex[name] || { seen: false };
+                const current = (existingKey ? nextPokedex[existingKey] : undefined) || { seen: false };
                 const merged = { ...current, ...entry };
                 if (merged.caught) {
                     merged.seen = true;
                 }
                 if (!merged.seen && !merged.caught && !merged.shiny) {
-                    delete nextPokedex[name];
+                    delete nextPokedex[targetKey];
                 } else {
-                    nextPokedex[name] = merged;
+                    nextPokedex[targetKey] = merged;
+                }
+                for (const k of Object.keys(nextPokedex)) {
+                    if (k.trim().toLowerCase() === lower && k !== targetKey) {
+                        delete nextPokedex[k];
+                    }
                 }
             }
             if (!getIsRemoteSyncActive()) {
@@ -817,15 +832,23 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         set((state) => {
             const cleanName = name.trim();
             if (!cleanName) return state;
+            const lower = cleanName.toLowerCase();
             const nextPokedex: TrainerPokedexData = { ...(state.identity.pokedex || {}) };
-            const current = nextPokedex[cleanName] || { caught: false, shiny: false };
-            nextPokedex[cleanName] = {
+            const existingKey = Object.keys(nextPokedex).find((k) => k.trim().toLowerCase() === lower);
+            const targetKey = cleanName !== lower ? cleanName : existingKey || cleanName;
+            const current = (existingKey ? nextPokedex[existingKey] : undefined) || { caught: false, shiny: false };
+            nextPokedex[targetKey] = {
                 caught: false,
                 shiny: false,
                 ...current,
                 seen: true,
                 ...(entry || {})
             };
+            for (const k of Object.keys(nextPokedex)) {
+                if (k.trim().toLowerCase() === lower && k !== targetKey) {
+                    delete nextPokedex[k];
+                }
+            }
             if (!getIsRemoteSyncActive()) {
                 try {
                     saveToOwlbear({ 'pokedex-data': JSON.stringify(nextPokedex) });
@@ -840,10 +863,13 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
 
     removePokedexEntry: (name) =>
         set((state) => {
-            const cleanName = name.trim();
+            const cleanLower = name.trim().toLowerCase();
             const nextPokedex: TrainerPokedexData = { ...(state.identity.pokedex || {}) };
-            delete nextPokedex[cleanName];
-            delete nextPokedex[name];
+            for (const k of Object.keys(nextPokedex)) {
+                if (k.trim().toLowerCase() === cleanLower) {
+                    delete nextPokedex[k];
+                }
+            }
             if (!getIsRemoteSyncActive()) {
                 try {
                     saveToOwlbear({ 'pokedex-data': JSON.stringify(nextPokedex) });
@@ -858,17 +884,27 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
 
     togglePokedexSeen: (name) =>
         set((state) => {
+            const cleanName = name.trim();
+            if (!cleanName) return state;
+            const lower = cleanName.toLowerCase();
             const nextPokedex: TrainerPokedexData = { ...(state.identity.pokedex || {}) };
-            const current = nextPokedex[name];
+            const existingKey = Object.keys(nextPokedex).find((k) => k.trim().toLowerCase() === lower);
+            const targetKey = cleanName !== lower ? cleanName : existingKey || cleanName;
+            const current = existingKey ? nextPokedex[existingKey] : nextPokedex[targetKey];
             const nextSeen = !current?.seen;
             if (nextSeen) {
-                nextPokedex[name] = { ...(current || {}), seen: true };
+                nextPokedex[targetKey] = { ...(current || {}), seen: true };
             } else {
                 const updated = { ...(current || {}), seen: false, caught: false };
                 if (!updated.shiny) {
-                    delete nextPokedex[name];
+                    delete nextPokedex[targetKey];
                 } else {
-                    nextPokedex[name] = updated;
+                    nextPokedex[targetKey] = updated;
+                }
+            }
+            for (const k of Object.keys(nextPokedex)) {
+                if (k.trim().toLowerCase() === lower && k !== targetKey) {
+                    delete nextPokedex[k];
                 }
             }
             if (!getIsRemoteSyncActive()) {
@@ -885,17 +921,27 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
 
     togglePokedexCaught: (name) =>
         set((state) => {
+            const cleanName = name.trim();
+            if (!cleanName) return state;
+            const lower = cleanName.toLowerCase();
             const nextPokedex: TrainerPokedexData = { ...(state.identity.pokedex || {}) };
-            const current = nextPokedex[name];
+            const existingKey = Object.keys(nextPokedex).find((k) => k.trim().toLowerCase() === lower);
+            const targetKey = cleanName !== lower ? cleanName : existingKey || cleanName;
+            const current = existingKey ? nextPokedex[existingKey] : nextPokedex[targetKey];
             const nextCaught = !current?.caught;
             if (nextCaught) {
-                nextPokedex[name] = { ...(current || {}), seen: true, caught: true };
+                nextPokedex[targetKey] = { ...(current || {}), seen: true, caught: true };
             } else {
                 const updated = { ...(current || { seen: true }), caught: false };
                 if (!updated.seen && !updated.shiny) {
-                    delete nextPokedex[name];
+                    delete nextPokedex[targetKey];
                 } else {
-                    nextPokedex[name] = updated;
+                    nextPokedex[targetKey] = updated;
+                }
+            }
+            for (const k of Object.keys(nextPokedex)) {
+                if (k.trim().toLowerCase() === lower && k !== targetKey) {
+                    delete nextPokedex[k];
                 }
             }
             if (!getIsRemoteSyncActive()) {
@@ -912,17 +958,27 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
 
     togglePokedexShiny: (name) =>
         set((state) => {
+            const cleanName = name.trim();
+            if (!cleanName) return state;
+            const lower = cleanName.toLowerCase();
             const nextPokedex: TrainerPokedexData = { ...(state.identity.pokedex || {}) };
-            const current = nextPokedex[name];
+            const existingKey = Object.keys(nextPokedex).find((k) => k.trim().toLowerCase() === lower);
+            const targetKey = cleanName !== lower ? cleanName : existingKey || cleanName;
+            const current = existingKey ? nextPokedex[existingKey] : nextPokedex[targetKey];
             const nextShiny = !current?.shiny;
             if (nextShiny) {
-                nextPokedex[name] = { ...(current || {}), seen: true, shiny: true };
+                nextPokedex[targetKey] = { ...(current || {}), seen: true, shiny: true };
             } else {
                 const updated = { ...(current || { seen: false }), shiny: false };
                 if (!updated.seen && !updated.caught) {
-                    delete nextPokedex[name];
+                    delete nextPokedex[targetKey];
                 } else {
-                    nextPokedex[name] = updated;
+                    nextPokedex[targetKey] = updated;
+                }
+            }
+            for (const k of Object.keys(nextPokedex)) {
+                if (k.trim().toLowerCase() === lower && k !== targetKey) {
+                    delete nextPokedex[k];
                 }
             }
             if (!getIsRemoteSyncActive()) {
