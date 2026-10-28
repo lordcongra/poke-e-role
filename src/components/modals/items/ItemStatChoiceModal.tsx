@@ -3,7 +3,6 @@ import type { InventoryItem } from '../../../store/storeTypes';
 import { useItemArt } from '../../../utils/graphics/itemArtCatalog';
 import { Sparkles, AlertTriangle, Check, XCircle } from 'lucide-react';
 import { ATTRIBUTE_COLORS } from '../../../data/constants';
-import { isColorTooBright } from '../../../utils/common/colorUtils';
 import './ItemTargetPromptModal.css';
 import './ItemStatChoiceModal.css';
 
@@ -178,11 +177,8 @@ export function ItemStatChoiceModal({ item, onSelectStat, onClose }: ItemStatCho
                                 >
                                     <div className="item-stat-choice-modal__card-left">
                                         <span
-                                            className="item-stat-choice-modal__stat-pill"
-                                            style={{
-                                                backgroundColor: choice.color,
-                                                color: isColorTooBright(choice.color) ? '#111827' : '#ffffff'
-                                            }}
+                                            className="item-stat-choice-modal__stat-pill text-theme-header"
+                                            style={{ backgroundColor: choice.color }}
                                         >
                                             {choice.label}
                                         </span>
