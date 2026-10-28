@@ -36,8 +36,17 @@ const {
     consumeChargeFromInventory,
     CORE_INFLICTABLE_STATUSES
 } = await import('../src/utils/items/itemCharges');
-const { BASE_ITEM_EFFECTS, getBaseItemEffect, applyItemUsageEffects, statusMatchesCure, isLegacyBottleCapacity } =
-    await import('../src/utils/items/itemUsageEffects');
+const {
+    BASE_ITEM_EFFECTS,
+    getBaseItemEffect,
+    applyItemUsageEffects,
+    statusMatchesCure,
+    isLegacyBottleCapacity,
+    hasItemUsageEffect
+} = await import('../src/utils/items/itemUsageEffects');
+const { getCustomStatWhitelist, getStatChoiceScope } = await import(
+    '../src/utils/items/itemStatChoice'
+);
 const { parseCombatBoostFromItem, hasCombatBoostTags } = await import('../src/utils/items/combatBoostParser');
 const { applyUsageToState } = await import('../src/utils/items/inventoryItemOps');
 const { createInventorySlice } = await import('../src/store/slices/inventorySlice');
@@ -2242,6 +2251,111 @@ await runTest('trainerPokedex: serialization, hydration, and storageAdapter trac
         isTrackedBackupChange({ 'pokedex-data': meta['pokedex-data'] }),
         'isTrackedBackupChange flags pokedex-data updates'
     );
+});
+
+await runTest('itemUsageEffects: negative HP and Will reduction with Temp pool absorption', async () => {
+    const health = {
+        hpCurr: 10,
+        hpMax: 10,
+        hpBase: 10,
+        currentHitPoints: 10,
+        maxHitPoints: 10,
+        temporaryHitPoints: 3,
+        temporaryHitPointsMax: 3
+    };
+    const will = {
+        willCurr: 5,
+        willMax: 5,
+        willBase: 5,
+        temporaryWill: 2,
+        temporaryWillMax: 2
+    };
+
+    // 1. Partial HP reduction absorbed completely by Temp HP
+    const absorbHpItem = { id: 'nh1', name: 'Curse Doll', qty: 1, desc: '', healHp: -2 };
+    const res1 = applyItemUsageEffects(absorbHpItem, health, will, []);
+    assert.equal(res1.nextHealth.temporaryHitPoints, 1, 'Drains 2 Temp HP');
+    assert.equal(res1.nextHealth.hpCurr, 10, 'Base HP remains untouched when absorbed by Temp HP');
+    assert.equal(res1.summaryText, 'No effect.');
+
+    // 2. HP reduction exceeding Temp HP spills over into Base HP
+    const spillHpItem = { id: 'nh2', name: 'Blood Chalice', qty: 1, desc: '', healHp: -5 };
+    const res2 = applyItemUsageEffects(spillHpItem, health, will, []);
+    assert.equal(res2.nextHealth.temporaryHitPoints, 0, 'Temp HP fully drained');
+    assert.equal(res2.nextHealth.hpCurr, 8, 'Remaining 2 damage reduces Base HP from 10 to 8');
+    assert.equal(res2.summaryText, 'Reduced 2 HP.');
+
+    // 3. HP reduction <= -99 sets both Temp HP and Base HP to 0
+    const killHpItem = { id: 'nh3', name: 'Guillotine Trap', qty: 1, desc: '', healHp: -99 };
+    const res3 = applyItemUsageEffects(killHpItem, health, will, []);
+    assert.equal(res3.nextHealth.temporaryHitPoints, 0, 'Temp HP set to 0 on <= -99');
+    assert.equal(res3.nextHealth.hpCurr, 0, 'Base HP set to 0 on <= -99');
+    assert.equal(res3.summaryText, 'Reduced 10 HP.');
+
+    // 4. Partial Will reduction absorbed completely by Temp Will
+    const absorbWillItem = { id: 'nw1', name: 'Draining Orb', qty: 1, desc: '', healWill: -1 };
+    const res4 = applyItemUsageEffects(absorbWillItem, health, will, []);
+    assert.equal(res4.nextWill.temporaryWill, 1, 'Drains 1 Temp Will');
+    assert.equal(res4.nextWill.willCurr, 5, 'Base Will remains untouched when absorbed by Temp Will');
+    assert.equal(res4.summaryText, 'No effect.');
+
+    // 5. Will reduction exceeding Temp Will spills over into Base Will
+    const spillWillItem = { id: 'nw2', name: 'Mind Flay Crystal', qty: 1, desc: '', healWill: -4 };
+    const res5 = applyItemUsageEffects(spillWillItem, health, will, []);
+    assert.equal(res5.nextWill.temporaryWill, 0, 'Temp Will fully drained');
+    assert.equal(res5.nextWill.willCurr, 3, 'Remaining 2 damage reduces Base Will from 5 to 3');
+    assert.equal(res5.summaryText, 'Reduced 2 Will.');
+
+    // 6. Will reduction <= -99 sets both Temp Will and Base Will to 0
+    const killWillItem = { id: 'nw3', name: 'Amnesia Draught', qty: 1, desc: '', healWill: -99 };
+    const res6 = applyItemUsageEffects(killWillItem, health, will, []);
+    assert.equal(res6.nextWill.temporaryWill, 0, 'Temp Will set to 0 on <= -99');
+    assert.equal(res6.nextWill.willCurr, 0, 'Base Will set to 0 on <= -99');
+    assert.equal(res6.summaryText, 'Reduced 5 Will.');
+
+    // 7. hasItemUsageEffect detects negative healHp and healWill
+    assert.ok(hasItemUsageEffect({ healHp: -1 }), 'hasItemUsageEffect returns true for negative healHp');
+    assert.ok(hasItemUsageEffect({ healWill: -1 }), 'hasItemUsageEffect returns true for negative healWill');
+    assert.ok(!hasItemUsageEffect({ healHp: 0, healWill: 0 }), 'hasItemUsageEffect returns false for 0');
+});
+
+await runTest('itemStatChoice: custom PlayerChoice stat whitelist parsing and resolution', async () => {
+    const customItem = {
+        id: 'pc-custom-1',
+        name: 'Training Manual',
+        qty: 1,
+        desc: '',
+        permanentStatBoost: { stat: 'PlayerChoice:custom:Strength,Beauty,Max HP', value: 2 }
+    };
+
+    // 1. getCustomStatWhitelist
+    const whitelist = getCustomStatWhitelist(customItem as any);
+    assert.deepEqual(whitelist, ['Strength', 'Beauty', 'Max HP'], 'Parses custom whitelist array accurately');
+
+    const nonCustomItem = {
+        id: 'pc-std-1',
+        name: 'Core Candy',
+        qty: 1,
+        desc: '',
+        permanentStatBoost: { stat: 'PlayerChoice:core', value: 1 }
+    };
+    assert.equal(getCustomStatWhitelist(nonCustomItem as any), null, 'Returns null for standard scopes');
+
+    // 2. getStatChoiceScope
+    assert.equal(getStatChoiceScope(customItem as any), 'custom', 'Identifies custom scope');
+    assert.equal(getStatChoiceScope(nonCustomItem as any), 'core', 'Identifies standard core scope');
+
+    // 3. applyItemUsageEffects with chosenStat
+    const health = { hpCurr: 10, hpMax: 10, hpBase: 10, temporaryHitPoints: 0, temporaryHitPointsMax: 0 };
+    const will = { willCurr: 5, willMax: 5, willBase: 5, temporaryWill: 0, temporaryWillMax: 0 };
+    const res = applyItemUsageEffects(customItem as any, health, will, [], [], { chosenStat: 'Beauty' });
+
+    assert.deepEqual(
+        res.permanentStatBoosts,
+        [{ stat: 'Beauty', value: 2 }],
+        'Applies permanent boost to player-chosen stat'
+    );
+    assert.equal(res.summaryText, '+2 Beauty (Permanent).', 'Formats summary text with chosen stat');
 });
 
 console.log('\n=============================================');

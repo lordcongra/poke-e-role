@@ -38,8 +38,18 @@ export function ItemTargetPromptModal({ item, candidates, onSelectTarget, onClos
     const cures = item.cures ?? baseEffect?.cures;
 
     const summaryParts: string[] = [];
-    if (healHp) summaryParts.push(`Heals ${healHp >= 99 ? 'all' : healHp} HP`);
-    if (healWill) summaryParts.push(`Restores ${healWill >= 99 ? 'all' : healWill} Will`);
+    if (healHp !== undefined && healHp !== 0) {
+        if (healHp >= 99) summaryParts.push('Heals all HP');
+        else if (healHp > 0) summaryParts.push(`Heals ${healHp} HP`);
+        else if (healHp <= -99) summaryParts.push('Reduces all HP');
+        else summaryParts.push(`Reduces ${Math.abs(healHp)} HP`);
+    }
+    if (healWill !== undefined && healWill !== 0) {
+        if (healWill >= 99) summaryParts.push('Restores all Will');
+        else if (healWill > 0) summaryParts.push(`Restores ${healWill} Will`);
+        else if (healWill <= -99) summaryParts.push('Reduces all Will');
+        else summaryParts.push(`Reduces ${Math.abs(healWill)} Will`);
+    }
     if (cures && cures.length > 0) summaryParts.push(`Cures ${cures.join(', ')}`);
     const effectSummary = summaryParts.length > 0 ? summaryParts.join(' • ') : 'Restorative item';
 

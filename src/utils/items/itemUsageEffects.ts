@@ -314,18 +314,6 @@ export function applyItemUsageEffects(
     const permanentStatBoost = resolvedPermBoosts[0];
     const dungeonPassive = resolvedPassives[0];
 
-    // --- HP HEALING ---
-    const currentHp = currentHealth.hpCurr ?? currentHealth.currentHitPoints ?? 0;
-    const maxHp = currentHealth.hpMax ?? currentHealth.maxHitPoints ?? 0;
-
-    let targetHp = currentHp;
-    if (healHpAmount >= 99) {
-        targetHp = maxHp;
-    } else if (healHpAmount > 0) {
-        targetHp = Math.min(maxHp, currentHp + healHpAmount);
-    }
-    const hpHealed = Math.max(0, targetHp - currentHp);
-
     // --- TEMP HP ---
     let tempHpGained = 0;
     let nextTempHp = currentHealth.temporaryHitPoints ?? 0;
@@ -335,6 +323,29 @@ export function applyItemUsageEffects(
         nextTempHp += tempHpGain;
         nextTempHpMax = Math.max(nextTempHpMax, nextTempHp);
     }
+
+    // --- HP HEALING & REDUCTION ---
+    const currentHp = currentHealth.hpCurr ?? currentHealth.currentHitPoints ?? 0;
+    const maxHp = currentHealth.hpMax ?? currentHealth.maxHitPoints ?? 0;
+
+    let targetHp = currentHp;
+    if (healHpAmount >= 99) {
+        targetHp = maxHp;
+    } else if (healHpAmount > 0) {
+        targetHp = Math.min(maxHp, currentHp + healHpAmount);
+    } else if (healHpAmount <= -99) {
+        nextTempHp = 0;
+        targetHp = 0;
+    } else if (healHpAmount < 0) {
+        let remainingDmg = Math.abs(healHpAmount);
+        if (nextTempHp > 0) {
+            const absorbed = Math.min(nextTempHp, remainingDmg);
+            nextTempHp -= absorbed;
+            remainingDmg -= absorbed;
+        }
+        targetHp = Math.max(0, currentHp - remainingDmg);
+    }
+    const hpHealed = Math.max(0, targetHp - currentHp);
 
     const nextHealth: CharacterHealth = {
         ...currentHealth,
@@ -346,18 +357,6 @@ export function applyItemUsageEffects(
         temporaryHitPointsMax: nextTempHpMax
     };
 
-    // --- WILL RESTORATION ---
-    const currentWillVal = currentWill.willCurr ?? 0;
-    const maxWill = currentWill.willMax ?? 0;
-
-    let targetWill = currentWillVal;
-    if (healWillAmount >= 99) {
-        targetWill = maxWill;
-    } else if (healWillAmount > 0) {
-        targetWill = Math.min(maxWill, currentWillVal + healWillAmount);
-    }
-    const willHealed = Math.max(0, targetWill - currentWillVal);
-
     // --- TEMP WILL ---
     let tempWillGained = 0;
     let nextTempWill = currentWill.temporaryWill ?? 0;
@@ -367,6 +366,29 @@ export function applyItemUsageEffects(
         nextTempWill += tempWillGain;
         nextTempWillMax = Math.max(nextTempWillMax, nextTempWill);
     }
+
+    // --- WILL RESTORATION & REDUCTION ---
+    const currentWillVal = currentWill.willCurr ?? 0;
+    const maxWill = currentWill.willMax ?? 0;
+
+    let targetWill = currentWillVal;
+    if (healWillAmount >= 99) {
+        targetWill = maxWill;
+    } else if (healWillAmount > 0) {
+        targetWill = Math.min(maxWill, currentWillVal + healWillAmount);
+    } else if (healWillAmount <= -99) {
+        nextTempWill = 0;
+        targetWill = 0;
+    } else if (healWillAmount < 0) {
+        let remainingWillDmg = Math.abs(healWillAmount);
+        if (nextTempWill > 0) {
+            const absorbed = Math.min(nextTempWill, remainingWillDmg);
+            nextTempWill -= absorbed;
+            remainingWillDmg -= absorbed;
+        }
+        targetWill = Math.max(0, currentWillVal - remainingWillDmg);
+    }
+    const willHealed = Math.max(0, targetWill - currentWillVal);
 
     const nextWill: CharacterWill = {
         ...currentWill,
@@ -446,9 +468,13 @@ export function applyItemUsageEffects(
     const summaryParts: string[] = [];
     if (hpHealed > 0) {
         summaryParts.push(`Healed ${hpHealed} HP`);
+    } else if (targetHp < currentHp) {
+        summaryParts.push(`Reduced ${currentHp - targetHp} HP`);
     }
     if (willHealed > 0) {
         summaryParts.push(`Restored ${willHealed} Will`);
+    } else if (targetWill < currentWillVal) {
+        summaryParts.push(`Reduced ${currentWillVal - targetWill} Will`);
     }
     if (tempHpGained > 0) {
         summaryParts.push(`Gained ${tempHpGained} Temp HP`);
@@ -531,8 +557,8 @@ export function hasItemUsageEffect(item: {
     description?: string;
 }): boolean {
     if (
-        (item.healHp ?? 0) > 0 ||
-        (item.healWill ?? 0) > 0 ||
+        (item.healHp ?? 0) !== 0 ||
+        (item.healWill ?? 0) !== 0 ||
         (item.cures && item.cures.length > 0) ||
         Boolean(item.permanentStatBoost) ||
         (Array.isArray(item.permanentStatBoosts) && item.permanentStatBoosts.length > 0) ||

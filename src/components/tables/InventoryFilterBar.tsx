@@ -40,16 +40,16 @@ export function isItemInInventoryCategory(
     if (category === 'medicine') {
         const customMatch = customItems.find((c) => c.name.trim().toLowerCase() === nameLower);
         if (
-            (item.healHp ?? 0) > 0 ||
-            (item.healWill ?? 0) > 0 ||
+            (item.healHp ?? 0) !== 0 ||
+            (item.healWill ?? 0) !== 0 ||
             (item.cures && item.cures.length > 0) ||
             (item.inflictsStatus && item.inflictsStatus.length > 0) ||
             (item.gainTempHp ?? 0) > 0 ||
             (item.gainTempWill ?? 0) > 0 ||
             Boolean(item.permanentStatBoost) ||
             (customMatch &&
-                ((customMatch.healHp ?? 0) > 0 ||
-                    (customMatch.healWill ?? 0) > 0 ||
+                ((customMatch.healHp ?? 0) !== 0 ||
+                    (customMatch.healWill ?? 0) !== 0 ||
                     (customMatch.cures && customMatch.cures.length > 0) ||
                     (customMatch.gainTempHp ?? 0) > 0 ||
                     (customMatch.gainTempWill ?? 0) > 0 ||
@@ -60,8 +60,8 @@ export function isItemInInventoryCategory(
         const baseEffect = getBaseItemEffect(item.name || '');
         if (
             baseEffect &&
-            ((baseEffect.healHp ?? 0) > 0 ||
-                (baseEffect.healWill ?? 0) > 0 ||
+            ((baseEffect.healHp ?? 0) !== 0 ||
+                (baseEffect.healWill ?? 0) !== 0 ||
                 (baseEffect.cures && baseEffect.cures.length > 0))
         ) {
             return true;

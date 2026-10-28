@@ -17,29 +17,29 @@ export function HomebrewItemRecoverySection({ item, canEdit, onChange }: Homebre
                 <div className="homebrew-item-effects__recovery-grid">
                     <div className="homebrew-item-effects__field homebrew-item-effects__field--inline">
                         <span className="homebrew-item-effects__field-label text-subtext">
-                            <Heart size={12} style={{ color: 'var(--semantic-danger)' }} /> Heal HP
+                            <Heart size={12} style={{ color: 'var(--semantic-danger)' }} /> Heal/Reduce HP
                         </span>
                         <NumberSpinner
                             value={item.healHp ?? 0}
-                            min={0}
+                            min={-99}
                             max={99}
                             compact
                             disabled={!canEdit}
-                            onChange={(val) => onChange('healHp', val <= 0 ? undefined : val)}
+                            onChange={(val) => onChange('healHp', val === 0 ? undefined : val)}
                         />
                     </div>
 
                     <div className="homebrew-item-effects__field homebrew-item-effects__field--inline">
                         <span className="homebrew-item-effects__field-label text-subtext">
-                            <Zap size={12} style={{ color: 'var(--primary)' }} /> Heal Will
+                            <Zap size={12} style={{ color: 'var(--primary)' }} /> Restore/Reduce Will
                         </span>
                         <NumberSpinner
                             value={item.healWill ?? 0}
-                            min={0}
+                            min={-99}
                             max={99}
                             compact
                             disabled={!canEdit}
-                            onChange={(val) => onChange('healWill', val <= 0 ? undefined : val)}
+                            onChange={(val) => onChange('healWill', val === 0 ? undefined : val)}
                         />
                     </div>
                 </div>

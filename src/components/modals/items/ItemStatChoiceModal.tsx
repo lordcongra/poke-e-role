@@ -2,9 +2,16 @@ import { useState } from 'react';
 import type { InventoryItem } from '../../../store/storeTypes';
 import { useItemArt } from '../../../utils/graphics/itemArtCatalog';
 import { Sparkles, AlertTriangle, Check, XCircle } from 'lucide-react';
-import { ATTRIBUTE_COLORS } from '../../../data/constants';
+import {
+    CATEGORY_DEFINITIONS,
+    getCustomStatWhitelist,
+    getStatChoiceScope,
+    getAllowedCategories
+} from '../../../utils/items/itemStatChoice';
 import './ItemTargetPromptModal.css';
 import './ItemStatChoiceModal.css';
+
+export { getCustomStatWhitelist, getStatChoiceScope };
 
 interface ItemStatChoiceModalProps {
     item: InventoryItem;
@@ -12,80 +19,38 @@ interface ItemStatChoiceModalProps {
     onClose: () => void;
 }
 
-interface StatOption {
-    key: string;
-    label: string;
-    color: string;
-    isRawRestricted?: boolean;
-}
-
-const CATEGORY_DEFINITIONS: Record<string, { label: string; options: StatOption[] }> = {
-    core: {
-        label: 'Core',
-        options: [
-            { key: 'Strength', label: 'Strength', color: ATTRIBUTE_COLORS.Strength },
-            { key: 'Dexterity', label: 'Dexterity', color: ATTRIBUTE_COLORS.Dexterity },
-            { key: 'Vitality', label: 'Vitality', color: ATTRIBUTE_COLORS.Vitality, isRawRestricted: true },
-            { key: 'Special', label: 'Special', color: ATTRIBUTE_COLORS.Special },
-            { key: 'Insight', label: 'Insight', color: ATTRIBUTE_COLORS.Insight, isRawRestricted: true }
-        ]
-    },
-    social: {
-        label: 'Social',
-        options: [
-            { key: 'Tough', label: 'Tough', color: ATTRIBUTE_COLORS.Tough },
-            { key: 'Cool', label: 'Cool', color: ATTRIBUTE_COLORS.Cool },
-            { key: 'Beauty', label: 'Beauty', color: ATTRIBUTE_COLORS.Beauty },
-            { key: 'Cute', label: 'Cute', color: ATTRIBUTE_COLORS.Cute },
-            { key: 'Clever', label: 'Clever', color: ATTRIBUTE_COLORS.Clever }
-        ]
-    },
-    traits: {
-        label: 'Traits & Pools',
-        options: [
-            { key: 'Defense', label: 'Defense', color: ATTRIBUTE_COLORS.Defense },
-            { key: 'Special Defense', label: 'Special Defense', color: ATTRIBUTE_COLORS['Special Defense'] },
-            { key: 'Max HP', label: 'Max HP', color: ATTRIBUTE_COLORS['Max HP'] },
-            { key: 'Max Will', label: 'Max Will', color: ATTRIBUTE_COLORS['Max Will'] }
-        ]
-    }
-};
-
-export function getStatChoiceScope(item: InventoryItem): string {
-    const rawStat =
-        item.permanentStatBoosts?.find((b) => b.stat?.startsWith('PlayerChoice'))?.stat ||
-        (item.permanentStatBoost?.stat?.startsWith('PlayerChoice') ? item.permanentStatBoost.stat : undefined) ||
-        'PlayerChoice:core';
-
-    if (rawStat.includes(':')) {
-        return rawStat.split(':')[1]?.toLowerCase() || 'core';
-    }
-    return 'core';
-}
-
-function getAllowedCategories(scope: string): string[] {
-    switch (scope) {
-        case 'social':
-            return ['social'];
-        case 'traits':
-            return ['traits'];
-        case 'core_social':
-            return ['core', 'social'];
-        case 'any':
-            return ['core', 'social', 'traits'];
-        case 'core':
-        default:
-            return ['core'];
-    }
-}
-
 export function ItemStatChoiceModal({ item, onSelectStat, onClose }: ItemStatChoiceModalProps) {
     const knownArt = useItemArt(item.name);
     const scope = getStatChoiceScope(item);
-    const allowedCategories = getAllowedCategories(scope);
+    const customWhitelist = getCustomStatWhitelist(item);
+    const isCustom = customWhitelist !== null;
 
-    const [activeTab, setActiveTab] = useState<string>(allowedCategories[0] || 'core');
-    const activeOptions = CATEGORY_DEFINITIONS[activeTab]?.options || CATEGORY_DEFINITIONS.core.options;
+    const effectiveDefinitions = isCustom
+        ? {
+              core: {
+                  ...CATEGORY_DEFINITIONS.core,
+                  options: CATEGORY_DEFINITIONS.core.options.filter((opt) => customWhitelist.includes(opt.key))
+              },
+              social: {
+                  ...CATEGORY_DEFINITIONS.social,
+                  options: CATEGORY_DEFINITIONS.social.options.filter((opt) => customWhitelist.includes(opt.key))
+              },
+              traits: {
+                  ...CATEGORY_DEFINITIONS.traits,
+                  options: CATEGORY_DEFINITIONS.traits.options.filter((opt) => customWhitelist.includes(opt.key))
+              }
+          }
+        : CATEGORY_DEFINITIONS;
+
+    const allowedCategories = isCustom
+        ? ['core', 'social', 'traits'].filter((catId) => effectiveDefinitions[catId].options.length > 0)
+        : getAllowedCategories(scope);
+
+    const fallbackCategory = allowedCategories[0] || 'core';
+    const [activeTab, setActiveTab] = useState<string>(fallbackCategory);
+
+    const effectiveTab = allowedCategories.includes(activeTab) ? activeTab : fallbackCategory;
+    const activeOptions = effectiveDefinitions[effectiveTab]?.options || effectiveDefinitions.core.options;
     const [selectedStat, setSelectedStat] = useState<string>(activeOptions[0]?.key || 'Strength');
 
     const boostEntry =
@@ -94,7 +59,7 @@ export function ItemStatChoiceModal({ item, onSelectStat, onClose }: ItemStatCho
 
     const handleTabChange = (catId: string) => {
         setActiveTab(catId);
-        const newOptions = CATEGORY_DEFINITIONS[catId]?.options || [];
+        const newOptions = effectiveDefinitions[catId]?.options || [];
         if (!newOptions.some((opt) => opt.key === selectedStat)) {
             setSelectedStat(newOptions[0]?.key || 'Strength');
         }
@@ -147,9 +112,9 @@ export function ItemStatChoiceModal({ item, onSelectStat, onClose }: ItemStatCho
                     {allowedCategories.length > 1 && (
                         <div className="item-stat-choice-modal__tabs">
                             {allowedCategories.map((catId) => {
-                                const cat = CATEGORY_DEFINITIONS[catId];
+                                const cat = effectiveDefinitions[catId];
                                 if (!cat) return null;
-                                const isTabActive = activeTab === catId;
+                                const isTabActive = effectiveTab === catId;
                                 return (
                                     <button
                                         key={catId}

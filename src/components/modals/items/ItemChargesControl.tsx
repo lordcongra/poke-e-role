@@ -252,26 +252,26 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
                     <div className="item-charges-control__healing-row">
                         <div className="item-charges-control__field">
                             <span className="item-charges-control__field-title text-subtext">
-                                <Heart size={12} style={{ color: 'var(--semantic-danger)' }} /> Heal HP:
+                                <Heart size={12} style={{ color: 'var(--semantic-danger)' }} /> Heal/Reduce HP:
                             </span>
                             <NumberSpinner
                                 compact
-                                min={0}
+                                min={-99}
                                 max={99}
                                 value={displayHealHp ?? 0}
-                                onChange={(val) => updateInventoryItem(item.id, 'healHp', val <= 0 ? undefined : val)}
+                                onChange={(val) => updateInventoryItem(item.id, 'healHp', val === 0 ? undefined : val)}
                             />
                         </div>
                         <div className="item-charges-control__field">
                             <span className="item-charges-control__field-title text-subtext">
-                                <Zap size={12} style={{ color: 'var(--primary)' }} /> Heal Will:
+                                <Zap size={12} style={{ color: 'var(--primary)' }} /> Restore/Reduce Will:
                             </span>
                             <NumberSpinner
                                 compact
-                                min={0}
+                                min={-99}
                                 max={99}
                                 value={item.healWill ?? 0}
-                                onChange={(val) => updateInventoryItem(item.id, 'healWill', val <= 0 ? undefined : val)}
+                                onChange={(val) => updateInventoryItem(item.id, 'healWill', val === 0 ? undefined : val)}
                             />
                         </div>
                     </div>

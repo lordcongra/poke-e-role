@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import type { CustomItem } from '../../store/entityTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { TooltipIcon } from '../ui/TooltipIcon';
-import { TrendingUp, AlertTriangle, Plus, Trash2 } from 'lucide-react';
+import { TrendingUp, AlertTriangle, Plus, Trash2, SlidersHorizontal } from 'lucide-react';
+import { CustomStatScopeModal } from '../modals/items/CustomStatScopeModal';
 
 interface HomebrewItemPermBoostsProps {
     item: CustomItem;
@@ -12,6 +14,7 @@ interface HomebrewItemPermBoostsProps {
 
 export function HomebrewItemPermBoosts({ item, canEdit, onOpenTooltip }: HomebrewItemPermBoostsProps) {
     const updateCustomItem = useCharacterStore((state) => state.updateCustomItem);
+    const [customModalConfig, setCustomModalConfig] = useState<{ index: number; stats: string[] } | null>(null);
 
     const permBoosts: Array<{ stat: string; value: number }> =
         item.permanentStatBoosts && item.permanentStatBoosts.length > 0
@@ -39,6 +42,36 @@ export function HomebrewItemPermBoosts({ item, canEdit, onOpenTooltip }: Homebre
         const updated = permBoosts.filter((_, i) => i !== index);
         updateCustomItem(item.id, 'permanentStatBoosts', updated.length > 0 ? updated : undefined);
         updateCustomItem(item.id, 'permanentStatBoost', updated[0] || undefined);
+    };
+
+    const openCustomScopeModal = (index: number, currentStatString: string) => {
+        let stats: string[] = [];
+        if (currentStatString.startsWith('PlayerChoice:custom:')) {
+            stats = currentStatString
+                .slice('PlayerChoice:custom:'.length)
+                .split(',')
+                .map((s) => s.trim())
+                .filter(Boolean);
+        }
+        setCustomModalConfig({ index, stats });
+    };
+
+    const handleSaveCustomWhitelist = (selectedStats: string[]) => {
+        if (!customModalConfig) return;
+        const { index } = customModalConfig;
+        const currentVal = permBoosts[index]?.value ?? 1;
+        handleUpdatePermBoost(index, `PlayerChoice:custom:${selectedStats.join(',')}`, currentVal);
+        setCustomModalConfig(null);
+    };
+
+    const handleScopeSelectChange = (index: number, newScope: string, currentValue: number) => {
+        if (newScope === 'PlayerChoice:custom') {
+            const defaultCustom = 'PlayerChoice:custom:Strength,Dexterity,Vitality,Special,Insight';
+            handleUpdatePermBoost(index, defaultCustom, currentValue);
+            openCustomScopeModal(index, defaultCustom);
+        } else {
+            handleUpdatePermBoost(index, newScope, currentValue);
+        }
     };
 
     const handleMainSelectChange = (index: number, newStat: string, currentBoost: { stat: string; value: number }) => {
@@ -96,8 +129,13 @@ export function HomebrewItemPermBoosts({ item, canEdit, onOpenTooltip }: Homebre
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {permBoosts.map((boost, idx) => {
                         const isPlayerChoice = boost.stat.startsWith('PlayerChoice');
+                        const isCustomScope = boost.stat.startsWith('PlayerChoice:custom');
                         const mainSelectValue = isPlayerChoice ? 'PlayerChoice' : boost.stat;
-                        const currentScopeValue = boost.stat === 'PlayerChoice' ? 'PlayerChoice:core' : boost.stat;
+                        const currentScopeValue = isCustomScope
+                            ? 'PlayerChoice:custom'
+                            : boost.stat === 'PlayerChoice'
+                              ? 'PlayerChoice:core'
+                              : boost.stat;
 
                         return (
                             <div key={`perm-${idx}`} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
@@ -144,14 +182,27 @@ export function HomebrewItemPermBoosts({ item, canEdit, onOpenTooltip }: Homebre
                                         style={{ flex: 1 }}
                                         value={currentScopeValue}
                                         disabled={!canEdit}
-                                        onChange={(e) => handleUpdatePermBoost(idx, e.target.value, boost.value)}
+                                        onChange={(e) => handleScopeSelectChange(idx, e.target.value, boost.value)}
                                     >
                                         <option value="PlayerChoice:core">Scope: Core Attributes</option>
                                         <option value="PlayerChoice:social">Scope: Social Attributes</option>
                                         <option value="PlayerChoice:traits">Scope: Traits &amp; Pools</option>
                                         <option value="PlayerChoice:core_social">Scope: Core &amp; Social</option>
                                         <option value="PlayerChoice:any">Scope: Any Stat</option>
+                                        <option value="PlayerChoice:custom">Scope: Custom...</option>
                                     </select>
+                                )}
+
+                                {isCustomScope && canEdit && (
+                                    <button
+                                        type="button"
+                                        className="action-button action-button--dark text-subtext"
+                                        style={{ padding: '4px 6px', display: 'flex', alignItems: 'center' }}
+                                        onClick={() => openCustomScopeModal(idx, boost.stat)}
+                                        title="Configure Custom Allowed Stats"
+                                    >
+                                        <SlidersHorizontal size={13} />
+                                    </button>
                                 )}
 
                                 <NumberSpinner
@@ -187,6 +238,14 @@ export function HomebrewItemPermBoosts({ item, canEdit, onOpenTooltip }: Homebre
                         boosts in official Pokérole rules, but are allowed here for homebrew flexibility.
                     </span>
                 </div>
+            )}
+
+            {customModalConfig && (
+                <CustomStatScopeModal
+                    initialSelectedStats={customModalConfig.stats}
+                    onSave={handleSaveCustomWhitelist}
+                    onClose={() => setCustomModalConfig(null)}
+                />
             )}
         </div>
     );
