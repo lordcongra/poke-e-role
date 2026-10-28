@@ -93,6 +93,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     const {
         myPlayerId,
         isActiveTokenLocked,
+        activeTokenItem,
         dismissBackupWarning,
         handleDismissWarning,
         desktopPartyLayout,
@@ -145,10 +146,16 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     );
     const trainerPokemonSummaries = filterTrainerPokemonSummaries(pcData.pokemonSummaries, activeRoster, campaign);
 
-    const otherLinkedTrainer = findOtherLinkedTrainer(campaign, trainer?.id, activeTokenId, identity);
+    const otherLinkedTrainer = findOtherLinkedTrainer(
+        campaign,
+        trainer?.id,
+        activeTokenId,
+        identity,
+        activeTokenItem || trainer?.savedTokenItem
+    );
     const canLinkActiveTrainer =
         (identity.mode === 'Trainer' || identity.mode === 'Trainer (Special)') &&
-        !otherLinkedTrainer &&
+        (isGm || !otherLinkedTrainer) &&
         (isGm || !isActiveTokenLocked);
 
     const {
@@ -414,7 +421,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         activeCharacterName={identity.nickname || identity.species}
                         activeCharacterAvatarUrl={identity.tokenImageUrl || undefined}
                         canLinkActiveTrainer={canLinkActiveTrainer}
-                        otherLinkedTrainerName={otherLinkedTrainer?.name}
+                        otherLinkedTrainerName={!isGm ? otherLinkedTrainer?.name : undefined}
                         onSelectSlot={handleSlotClick}
                         onEmptySlotClick={handleEmptySlotClick}
                         onContextMenu={handleOpenContextMenu}

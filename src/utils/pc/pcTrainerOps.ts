@@ -9,28 +9,9 @@ import { buildGraphicsFromMeta, renderTokenGraphics } from '../graphics/graphics
 import { markTokenAsRecentlySpawned } from './pcModalOps';
 import { isEntityLockedByGm } from './pcCandidateMatching';
 
-const VALID_RANKS = new Set(['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion']);
+import { VALID_RANKS, parseNumericMeta, buildTrainerSummary } from './pcTrainerSummaryOps';
 
-/**
- * Checks if the trainer's token is actively placed on the current scene.
- */
-function parseNumericMeta(
-    keys: string[],
-    sources: (Record<string, unknown> | null | undefined)[],
-    fallback: number
-): number {
-    for (const src of sources) {
-        if (!src) continue;
-        for (const k of keys) {
-            const val = src[k];
-            if (val !== undefined && val !== null && val !== '') {
-                const num = Number(val);
-                if (!isNaN(num)) return num;
-            }
-        }
-    }
-    return fallback;
-}
+export { buildTrainerSummary };
 
 /**
  * Checks if the trainer's token is actively placed on the current scene,
@@ -101,139 +82,6 @@ export function buildLinkedTrainer(
         fullMetadata: fullMeta,
         mapTokenId: store.tokenId || trainer.mapTokenId,
         isLinked: true
-    };
-}
-
-/**
- * Builds a PcPokemonSummary representation of a Trainer profile for sheet viewing.
- */
-export function buildTrainerSummary(
-    trainer: TrainerRoster
-): import('../../types/pcStorageTypes').PcPokemonSummary | null {
-    if (trainer.profileType === 'storage' || trainer.id.startsWith('__pmd_')) return null;
-    let localMeta: Record<string, unknown> | null = null;
-    if (typeof window !== 'undefined' && window.localStorage) {
-        try {
-            const raw = window.localStorage.getItem(`pkr_char_${trainer.id}`);
-            if (raw) localMeta = JSON.parse(raw);
-            if (!localMeta && trainer.savedTokenItem?.id) {
-                const rawTok = window.localStorage.getItem(`pkr_char_${trainer.savedTokenItem.id}`);
-                if (rawTok) localMeta = JSON.parse(rawTok);
-            }
-        } catch {}
-    }
-
-    const tokenMeta =
-        (trainer.savedTokenItem?.metadata?.[METADATA_ID] as Record<string, unknown>) ||
-        (trainer.savedTokenItem?.metadata?.['pokerole-pmd-extension/stats'] as Record<string, unknown>) ||
-        null;
-
-    const sources = [tokenMeta, localMeta, trainer.fullMetadata];
-
-    const store = useCharacterStore.getState();
-    const isStoreTrainer = store.identity.mode === 'Trainer' || (store.identity.rank as string) === 'Trainer';
-    const storeMatchesTrainer =
-        isStoreTrainer &&
-        (store.identity.nickname === trainer.name || store.identity.species === trainer.name || !trainer.name);
-
-    const hpCurr =
-        storeMatchesTrainer && store.health.hpCurr !== undefined
-            ? store.health.hpCurr
-            : parseNumericMeta(['hp-curr', 'hp', 'currentHp'], sources, 5);
-
-    const hpMax =
-        storeMatchesTrainer && store.health.hpMax !== undefined
-            ? store.health.hpMax
-            : parseNumericMeta(['hp-max-display', 'hpMax', 'maxHp'], sources, 5);
-
-    const willCurr =
-        storeMatchesTrainer && store.will.willCurr !== undefined
-            ? store.will.willCurr
-            : parseNumericMeta(['will-curr', 'will', 'currentWill'], sources, 4);
-
-    const willMax =
-        storeMatchesTrainer && store.will.willMax !== undefined
-            ? store.will.willMax
-            : parseNumericMeta(['will-max-display', 'willMax', 'maxWill'], sources, 4);
-
-    const trainerType1 =
-        (tokenMeta?.type1 as string) || (localMeta?.type1 as string) || (trainer.fullMetadata?.type1 as string) || '';
-    const trainerType2 =
-        (tokenMeta?.type2 as string) || (localMeta?.type2 as string) || (trainer.fullMetadata?.type2 as string);
-    const resolvedAvatar =
-        (tokenMeta?.['token-image-url'] as string) ||
-        (localMeta?.['token-image-url'] as string) ||
-        (localMeta?.tokenImageUrl as string) ||
-        (trainer.fullMetadata?.['token-image-url'] as string) ||
-        trainer.avatarUrl;
-    const primaryOverride =
-        ((tokenMeta?.['theme-primary-override'] || tokenMeta?.themePrimaryOverride) as string) ||
-        ((localMeta?.['theme-primary-override'] || localMeta?.themePrimaryOverride) as string) ||
-        ((trainer.fullMetadata?.['theme-primary-override'] || trainer.fullMetadata?.themePrimaryOverride) as string) ||
-        (storeMatchesTrainer ? store.identity.themePrimaryOverride : '') ||
-        '';
-    const secondaryOverride =
-        ((tokenMeta?.['theme-secondary-override'] || tokenMeta?.themeSecondaryOverride) as string) ||
-        ((localMeta?.['theme-secondary-override'] || localMeta?.themeSecondaryOverride) as string) ||
-        ((trainer.fullMetadata?.['theme-secondary-override'] ||
-            trainer.fullMetadata?.themeSecondaryOverride) as string) ||
-        (storeMatchesTrainer ? store.identity.themeSecondaryOverride : '') ||
-        '';
-
-    const rawRank =
-        (tokenMeta?.rank as string) ||
-        (localMeta?.rank as string) ||
-        (trainer.fullMetadata?.['rank'] as string) ||
-        (trainer.fullMetadata?.rank as string) ||
-        (storeMatchesTrainer ? store.identity.rank : 'Starter');
-    const trainerRank: import('../../store/entityTypes').Rank =
-        typeof rawRank === 'string' && VALID_RANKS.has(rawRank)
-            ? (rawRank as import('../../store/entityTypes').Rank)
-            : 'Starter';
-    const trainerSpecies = (localMeta?.species as string) || (trainer.fullMetadata?.species as string) || trainer.name;
-    const trainerMode = (localMeta?.mode as string) || (trainer.fullMetadata?.mode as string) || 'Trainer';
-
-    return {
-        entityId: trainer.id,
-        name: trainer.name,
-        species: trainerSpecies,
-        rank: trainerRank,
-        type1: trainerType1,
-        type2: trainerType2,
-        hp: hpCurr,
-        maxHp: hpMax,
-        will: willCurr,
-        maxWill: willMax,
-        tokenImageUrl: resolvedAvatar,
-        isOnMap: Boolean(trainer.mapTokenId),
-        mapTokenId: trainer.mapTokenId,
-        savedTokenItem: trainer.savedTokenItem,
-        fullMetadata: {
-            ...(trainer.fullMetadata || {}),
-            ...(localMeta || {}),
-            name: trainer.name,
-            nickname: trainer.name,
-            species: trainerSpecies,
-            mode: trainerMode,
-            rank: trainerRank,
-            'str-base': localMeta?.['str-base'] ?? trainer.fullMetadata?.['str-base'] ?? 1,
-            'dex-base': localMeta?.['dex-base'] ?? trainer.fullMetadata?.['dex-base'] ?? 1,
-            'vit-base': localMeta?.['vit-base'] ?? trainer.fullMetadata?.['vit-base'] ?? 1,
-            'ins-base': localMeta?.['ins-base'] ?? trainer.fullMetadata?.['ins-base'] ?? 1,
-            'spe-base': localMeta?.['spe-base'] ?? trainer.fullMetadata?.['spe-base'] ?? 1,
-            type1: trainerType1,
-            type2: trainerType2 || '',
-            'token-image-url': trainer.avatarUrl,
-            'hp-curr': hpCurr,
-            'hp-max-display': hpMax,
-            'will-curr': willCurr,
-            'will-max-display': willMax,
-            'theme-primary-override': primaryOverride,
-            'theme-secondary-override': secondaryOverride,
-            themePrimaryOverride: primaryOverride,
-            themeSecondaryOverride: secondaryOverride
-        },
-        lastModified: 0
     };
 }
 
@@ -360,7 +208,9 @@ export async function spawnTrainerToMap(
             trainerItem.metadata['pokerole-pmd-extension/claimed-by'] = {
                 playerId: myId,
                 playerName: myName,
-                trainerName: trainer.name
+                trainerId: (trainer as { id?: string }).id,
+                trainerName: trainer.name,
+                isTrainer: true
             };
         } catch {}
 
@@ -391,6 +241,7 @@ export async function executeLinkActiveTrainer(params: {
         nickname?: string;
         species?: string;
         tokenImageUrl?: string | null;
+        mode?: string;
     };
     role?: 'PLAYER' | 'GM';
     saveTrainerProfile: (t: TrainerRoster) => void;
@@ -398,28 +249,13 @@ export async function executeLinkActiveTrainer(params: {
     const { trainer, campaign, canLinkActiveTrainer, identity, role, saveTrainerProfile } = params;
     if (!trainer || !campaign) return;
 
-    if (!canLinkActiveTrainer) {
-        const store = useCharacterStore.getState();
-        const activeTokenId = store.tokenId;
-        const activeTrainerName = (identity.nickname || identity.species || '').trim();
-        const otherTrainer = Object.values(campaign.trainers).find(
-            (t) =>
-                t.id !== trainer.id &&
-                ((activeTokenId && (t.mapTokenId === activeTokenId || t.savedTokenItem?.id === activeTokenId)) ||
-                    (t.isLinked && activeTrainerName && t.name.toLowerCase() === activeTrainerName.toLowerCase()))
-        );
+    const isTrainerMode = identity.mode === 'Trainer' || identity.mode === 'Trainer (Special)';
+    if (!isTrainerMode) {
         if (OBR.isAvailable) {
-            if (otherTrainer) {
-                OBR.notification.show(
-                    `Cannot link: This token is already linked to Trainer "${otherTrainer.name}".`,
-                    'WARNING'
-                );
-            } else {
-                OBR.notification.show(
-                    'Only tokens set to Trainer or Trainer (Special) mode can be linked to the belt.',
-                    'WARNING'
-                );
-            }
+            OBR.notification.show(
+                'Only tokens set to Trainer or Trainer (Special) mode can be linked to the belt.',
+                'WARNING'
+            );
         }
         return;
     }
@@ -434,6 +270,15 @@ export async function executeLinkActiveTrainer(params: {
         } catch {}
     }
 
+    let myId: string | undefined;
+    let myName: string | undefined;
+    if (OBR.isAvailable) {
+        try {
+            myId = await OBR.player.getId();
+            myName = await OBR.player.getName();
+        } catch {}
+    }
+
     if (role !== 'GM') {
         if (isEntityLockedByGm(savedItem) || isEntityLockedByGm(trainer)) {
             if (OBR.isAvailable) {
@@ -444,13 +289,74 @@ export async function executeLinkActiveTrainer(params: {
             }
             return;
         }
-        const myId = OBR.isAvailable ? await OBR.player.getId().catch(() => undefined) : undefined;
-        const claim = savedItem?.metadata?.['pokerole-pmd-extension/claimed-by'] as { playerId?: string } | undefined;
+
+        const claim = savedItem?.metadata?.['pokerole-pmd-extension/claimed-by'] as
+            | { playerId?: string; playerName?: string; trainerId?: string; trainerName?: string; isTrainer?: boolean }
+            | undefined;
+
         if (claim?.playerId && myId && claim.playerId !== myId) {
             if (OBR.isAvailable) {
                 OBR.notification.show('Cannot link: This trainer token belongs to another player.', 'WARNING');
             }
             return;
+        }
+
+        if (claim?.isTrainer && claim.trainerId && claim.trainerId !== trainer.id) {
+            if (OBR.isAvailable) {
+                OBR.notification.show(
+                    `Cannot link: This token is already claimed by Trainer "${claim.trainerName || 'another trainer'}".`,
+                    'WARNING'
+                );
+            }
+            return;
+        }
+
+        if (!canLinkActiveTrainer) {
+            const activeTokenId = store.tokenId;
+            const activeTrainerName = (identity.nickname || identity.species || '').trim();
+            const otherTrainer = Object.values(campaign.trainers).find(
+                (t) =>
+                    t.id !== trainer.id &&
+                    ((activeTokenId && (t.mapTokenId === activeTokenId || t.savedTokenItem?.id === activeTokenId)) ||
+                        (t.isLinked && activeTrainerName && t.name.toLowerCase() === activeTrainerName.toLowerCase()))
+            );
+            if (OBR.isAvailable) {
+                if (otherTrainer) {
+                    OBR.notification.show(
+                        `Cannot link: This token is already linked to Trainer "${otherTrainer.name}".`,
+                        'WARNING'
+                    );
+                } else {
+                    OBR.notification.show('Cannot link this token.', 'WARNING');
+                }
+            }
+            return;
+        }
+    }
+
+    const claimData = {
+        playerId: myId || '',
+        playerName: myName || '',
+        trainerId: trainer.id,
+        trainerName,
+        isTrainer: true
+    };
+
+    if (OBR.isAvailable && store.tokenId) {
+        try {
+            await OBR.scene.items.updateItems([store.tokenId], (items) => {
+                for (const item of items) {
+                    item.metadata['pokerole-pmd-extension/claimed-by'] = claimData;
+                }
+            });
+            if (savedItem) {
+                savedItem.metadata = {
+                    ...savedItem.metadata,
+                    ['pokerole-pmd-extension/claimed-by']: claimData
+                };
+            }
+        } catch (e) {
+            console.warn('[pcTrainerOps] Failed to stamp claim on linked trainer token:', e);
         }
     }
 

@@ -186,8 +186,24 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
 
     const handleUnlinkTrainer = async () => {
         if (!trainer || !campaign) return;
-        const targetMapTokenId = trainer.mapTokenId;
-        saveTrainerProfile({ ...trainer, isLinked: false, avatarUrl: undefined, mapTokenId: undefined });
+        const store = useCharacterStore.getState();
+        const targetMapTokenId =
+            trainer.mapTokenId || (isTrainerLinked ? store.tokenId : undefined) || trainer.savedTokenItem?.id;
+
+        let cleanedSavedItem = trainer.savedTokenItem;
+        if (cleanedSavedItem?.metadata?.['pokerole-pmd-extension/claimed-by']) {
+            const nextMeta = { ...cleanedSavedItem.metadata };
+            delete nextMeta['pokerole-pmd-extension/claimed-by'];
+            cleanedSavedItem = { ...cleanedSavedItem, metadata: nextMeta };
+        }
+
+        saveTrainerProfile({
+            ...trainer,
+            isLinked: false,
+            avatarUrl: undefined,
+            mapTokenId: undefined,
+            savedTokenItem: cleanedSavedItem
+        });
 
         if (targetMapTokenId && OBR.isAvailable) {
             try {

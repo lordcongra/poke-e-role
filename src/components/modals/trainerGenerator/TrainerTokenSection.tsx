@@ -14,8 +14,8 @@ export interface TrainerTokenSectionProps {
     setAutoMatchSceneImages: (val: boolean) => void;
     destination: 'new' | 'overwrite';
     setDestination: (dest: 'new' | 'overwrite') => void;
-    generateTeam: boolean;
-    teamSize: number;
+    generateTeam?: boolean;
+    teamSize?: number;
     privacyDefaults: boolean;
     setPrivacyDefaults: (val: boolean) => void;
     privateNpcLock: boolean;
@@ -36,8 +36,6 @@ export const TrainerTokenSection: React.FC<TrainerTokenSectionProps> = ({
     setAutoMatchSceneImages,
     destination,
     setDestination,
-    generateTeam,
-    teamSize,
     privacyDefaults,
     setPrivacyDefaults,
     privateNpcLock,
@@ -210,17 +208,15 @@ export const TrainerTokenSection: React.FC<TrainerTokenSectionProps> = ({
                             />
                             <span>{isStandaloneMode ? 'Create New Sheet (Nested Team)' : 'Spawn New Token(s)'}</span>
                         </label>
-                        {(!generateTeam || teamSize === 0) && (
-                            <label className="trainer-gen-modal__checkbox-label">
-                                <input
-                                    type="radio"
-                                    name="destination"
-                                    checked={destination === 'overwrite'}
-                                    onChange={() => setDestination('overwrite')}
-                                />
-                                <span>{isStandaloneMode ? 'Overwrite Active Sheet' : 'Overwrite Selected Token'}</span>
-                            </label>
-                        )}
+                        <label className="trainer-gen-modal__checkbox-label">
+                            <input
+                                type="radio"
+                                name="destination"
+                                checked={destination === 'overwrite'}
+                                onChange={() => setDestination('overwrite')}
+                            />
+                            <span>{isStandaloneMode ? 'Overwrite Active Sheet' : 'Overwrite Selected Token'}</span>
+                        </label>
                     </div>
                 </div>
             </div>

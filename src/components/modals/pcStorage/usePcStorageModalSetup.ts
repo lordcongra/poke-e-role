@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import OBR from '@owlbear-rodeo/sdk';
+import OBR, { type Item } from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import type { PcStorageData } from '../../../types/pcStorageTypes';
 import { sanitizePcData, savePcStorage } from '../../../utils/pc/pcStorageAdapter';
@@ -16,6 +16,7 @@ export function usePcStorageModalSetup(
     const [myPlayerId, setMyPlayerId] = useState<string | undefined>();
     const [currentRole, setCurrentRole] = useState<'PLAYER' | 'GM' | undefined>(role);
     const [isActiveTokenLocked, setIsActiveTokenLocked] = useState(false);
+    const [activeTokenItem, setActiveTokenItem] = useState<Item | null>(null);
     const [dismissBackupWarning, setDismissBackupWarning] = useState(
         () => typeof localStorage !== 'undefined' && localStorage.getItem('pkr_pc_backup_warn_dismissed_v2') === 'true'
     );
@@ -83,20 +84,27 @@ export function usePcStorageModalSetup(
 
     const effectiveIsGm = role === 'GM' || currentRole === 'GM' || isStandaloneMode;
 
-    // Token lock check
+    // Token lock & scene item check
     useEffect(() => {
-        if (!OBR.isAvailable || effectiveIsGm) {
+        if (!OBR.isAvailable) {
             setIsActiveTokenLocked(false);
+            setActiveTokenItem(null);
             return;
         }
         if (activeTokenId) {
             OBR.scene.items
                 .getItems([activeTokenId])
                 .then((items) => {
-                    setIsActiveTokenLocked(items[0] ? isEntityLockedByGm(items[0]) : false);
+                    const item = items[0] || null;
+                    setActiveTokenItem(item);
+                    setIsActiveTokenLocked(!effectiveIsGm && item ? isEntityLockedByGm(item) : false);
                 })
-                .catch(() => setIsActiveTokenLocked(false));
+                .catch(() => {
+                    setActiveTokenItem(null);
+                    setIsActiveTokenLocked(false);
+                });
         } else {
+            setActiveTokenItem(null);
             setIsActiveTokenLocked(false);
         }
     }, [activeTokenId, effectiveIsGm]);
@@ -116,6 +124,7 @@ export function usePcStorageModalSetup(
     return {
         myPlayerId,
         isActiveTokenLocked,
+        activeTokenItem,
         dismissBackupWarning,
         handleDismissWarning,
         desktopPartyLayout,

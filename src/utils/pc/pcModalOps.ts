@@ -1,5 +1,5 @@
 import OBR, { buildImage, isImage, type Item } from '@owlbear-rodeo/sdk';
-import type { PcPokemonSummary, PcBox, TrainerRoster } from '../../types/pcStorageTypes';
+import type { PcPokemonSummary, TrainerRoster } from '../../types/pcStorageTypes';
 import { METADATA_ID } from '../sync/obr';
 import { rehomeTokenSubtree, chunkItems } from './rehomeEngine';
 import {
@@ -442,55 +442,39 @@ export function buildActiveCharacterSummary(
     };
 }
 
-export function filterTrainerPokemonSummaries(
-    summaries: Record<string, PcPokemonSummary>,
-    trainer?: { id: string; party: (string | null)[]; boxes?: PcBox[] },
-    campaign?: { id?: string; boxes: PcBox[]; teamParty?: (string | null)[] }
-): PcPokemonSummary[] {
-    if (trainer) {
-        const partyEntityIds = new Set(trainer.party?.filter(Boolean) || []);
-        const trainerBoxEntityIds = new Set<string>();
-        for (const b of trainer.boxes || []) {
-            for (const s of b.slots || []) {
-                if (s) trainerBoxEntityIds.add(s);
-            }
-        }
-        return Object.values(summaries).filter((p) => {
-            if (!p) return false;
-            if (partyEntityIds.has(p.entityId)) return false;
-            if (p.trainerId && p.trainerId === trainer.id) return true;
-            if (trainerBoxEntityIds.has(p.entityId)) return true;
-            return false;
-        });
-    }
-
-    // PMD / No-Trainer Mode: Strictly use campaign teamParty and campaign boxes
-    const teamPartyIds = new Set(campaign?.teamParty?.filter(Boolean) || []);
-    const campaignBoxEntityIds = new Set<string>();
-    for (const b of campaign?.boxes || []) {
-        for (const s of b.slots || []) {
-            if (s) campaignBoxEntityIds.add(s);
-        }
-    }
-    return Object.values(summaries).filter((p) => {
-        if (!p) return false;
-        if (teamPartyIds.has(p.entityId)) return false;
-        if (campaignBoxEntityIds.has(p.entityId)) return true;
-        if (!p.trainerId && campaign?.id && p.campaignId === campaign.id) return true;
-        return false;
-    });
-}
+import { filterTrainerPokemonSummaries } from './pcSummaryFilterOps';
+export { filterTrainerPokemonSummaries };
 
 export function findOtherLinkedTrainer(
     campaign: { trainers?: Record<string, TrainerRoster> } | undefined,
     currentTrainerId: string | undefined,
     activeTokenId: string | null,
-    identity: { mode?: string; nickname?: string; species?: string; trainerId?: string }
-): TrainerRoster | undefined {
+    identity: { mode?: string; nickname?: string; species?: string; trainerId?: string },
+    activeTokenItem?: Item | null
+): TrainerRoster | { id: string; name: string } | undefined {
     const isTrainerMode = identity.mode === 'Trainer' || identity.mode === 'Trainer (Special)';
-    if (!isTrainerMode || !currentTrainerId || !campaign?.trainers) return undefined;
+    if (!isTrainerMode || !currentTrainerId) return undefined;
+
+    // 1. Inspect the scene token's claimed-by metadata for conflicting isTrainer claims
+    if (activeTokenItem?.metadata) {
+        const claim = activeTokenItem.metadata['pokerole-pmd-extension/claimed-by'] as
+            | { playerId?: string; playerName?: string; trainerId?: string; trainerName?: string; isTrainer?: boolean }
+            | undefined;
+        if (claim?.isTrainer && claim.trainerId && claim.trainerId !== currentTrainerId) {
+            if (campaign?.trainers?.[claim.trainerId]) {
+                return campaign.trainers[claim.trainerId];
+            }
+            return {
+                id: claim.trainerId,
+                name: claim.trainerName || 'Another Trainer'
+            } as TrainerRoster;
+        }
+    }
+
+    if (!campaign?.trainers) return undefined;
     const activeTrainerName = (identity.nickname || identity.species || '').trim().toLowerCase();
 
+    // 2. Check local campaign roster
     return Object.values(campaign.trainers).find((t) => {
         if (t.id === currentTrainerId) return false;
         if (activeTokenId && (t.mapTokenId === activeTokenId || t.savedTokenItem?.id === activeTokenId)) return true;

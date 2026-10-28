@@ -1,4 +1,4 @@
-import OBR, { buildImage, isImage, type Item } from '@owlbear-rodeo/sdk';
+import OBR, { buildImage, type Item } from '@owlbear-rodeo/sdk';
 import { METADATA_ID, setActiveTokenId } from '../sync/obr';
 import { isStandaloneMode, storageAdapter } from '../sync/storageAdapter';
 import { useCharacterStore } from '../../store/useCharacterStore';
@@ -6,120 +6,21 @@ import { buildGraphicsFromMeta, renderTokenGraphics } from '../graphics/graphics
 import type { GeneratedTrainerResult } from './trainerGeneratorLogic';
 import type { Rank } from '../../store/storeTypes';
 import type { PcPokemonSummary, TrainerRoster, PcStorageData } from '../../types/pcStorageTypes';
+import {
+    calculateFormationOffsets,
+    getAbsolutePokeballUrl,
+    sanitizeImageUrl,
+    findMatchingSceneImage,
+    resolveImageDimensions
+} from './tokenSpawnerUtils';
 
-export function calculateFormationOffsets(count: number, spacing: number): Array<{ dx: number; dy: number }> {
-    switch (count) {
-        case 1:
-            return [{ dx: spacing, dy: 0 }];
-        case 2:
-            return [
-                { dx: -spacing, dy: 0 },
-                { dx: spacing, dy: 0 }
-            ];
-        case 3:
-            return [
-                { dx: -spacing, dy: spacing },
-                { dx: 0, dy: spacing },
-                { dx: spacing, dy: spacing }
-            ];
-        case 4:
-            return [
-                { dx: -spacing, dy: spacing },
-                { dx: spacing, dy: spacing },
-                { dx: -spacing, dy: spacing * 2 },
-                { dx: spacing, dy: spacing * 2 }
-            ];
-        case 5:
-            return [
-                { dx: -spacing, dy: spacing },
-                { dx: 0, dy: spacing },
-                { dx: spacing, dy: spacing },
-                { dx: -spacing * 0.75, dy: spacing * 2 },
-                { dx: spacing * 0.75, dy: spacing * 2 }
-            ];
-        case 6:
-            return [
-                { dx: -spacing, dy: spacing },
-                { dx: 0, dy: spacing },
-                { dx: spacing, dy: spacing },
-                { dx: -spacing, dy: spacing * 2 },
-                { dx: 0, dy: spacing * 2 },
-                { dx: spacing, dy: spacing * 2 }
-            ];
-        default:
-            return [];
-    }
-}
-
-export function getAbsolutePokeballUrl(): string {
-    const base = import.meta.env.BASE_URL || '/';
-    const cleanBase = base.endsWith('/') ? base : `${base}/`;
-    const relative = `${cleanBase}pokeball-token.svg`;
-    try {
-        return new URL(relative, window.location.href).href;
-    } catch {
-        return relative;
-    }
-}
-
-export function sanitizeImageUrl(url?: string | null): string {
-    if (!url || typeof url !== 'string') return getAbsolutePokeballUrl();
-    const trimmed = url.trim();
-    if (trimmed.startsWith('file:') || trimmed.startsWith('file:///')) {
-        return getAbsolutePokeballUrl();
-    }
-    return trimmed;
-}
-
-export function findMatchingSceneImage(
-    targetName: string,
-    sceneItems: Item[]
-): { url: string; width: number; height: number } | null {
-    if (!targetName) return null;
-    const cleanTarget = targetName.trim().toLowerCase();
-
-    for (const item of sceneItems) {
-        if (!isImage(item)) continue;
-        const image = item.image;
-        if (!image?.url || image.url.includes('pokeball')) continue;
-
-        const itemName = (item.name || '').trim().toLowerCase();
-        const meta = (item.metadata[METADATA_ID] as Record<string, unknown> | undefined) || {};
-        const metaSpecies = ((meta.species as string) || '').trim().toLowerCase();
-        const metaNickname = ((meta.nickname as string) || '').trim().toLowerCase();
-
-        const matches =
-            itemName === cleanTarget ||
-            metaSpecies === cleanTarget ||
-            metaNickname === cleanTarget ||
-            itemName.startsWith(`${cleanTarget} `) ||
-            itemName.startsWith(`${cleanTarget}-`) ||
-            itemName.startsWith(`${cleanTarget} (`) ||
-            metaSpecies.startsWith(`${cleanTarget} `) ||
-            metaNickname.startsWith(`${cleanTarget} `);
-
-        if (matches) {
-            return {
-                url: image.url,
-                width: image.width || 300,
-                height: image.height || 300
-            };
-        }
-    }
-    return null;
-}
-
-export async function resolveImageDimensions(url: string): Promise<{ width: number; height: number }> {
-    if (url && url.includes('pokeball')) {
-        return { width: 300, height: 300 };
-    }
-    return new Promise((resolve) => {
-        const img = new window.Image();
-        img.onload = () => resolve({ width: img.naturalWidth || 300, height: img.naturalHeight || 300 });
-        img.onerror = () => resolve({ width: 300, height: 300 });
-        img.src = url;
-    });
-}
+export {
+    calculateFormationOffsets,
+    getAbsolutePokeballUrl,
+    sanitizeImageUrl,
+    findMatchingSceneImage,
+    resolveImageDimensions
+};
 
 export interface TrainerSpawnImageOptions {
     imageMode: 'default' | 'prompt_each' | 'fallback_pokeball';
@@ -145,24 +46,38 @@ export async function spawnTrainerAndTeam(
                 result.trainerMetadata['token-image-url'] = imageOptions.defaultImageUrl;
             }
 
-            if (destination === 'overwrite' && result.teamMembers.length === 0) {
+            let trainerId = store.tokenId;
+            if (destination === 'overwrite' && trainerId) {
+                await storageAdapter.saveCharacter(
+                    trainerId,
+                    {
+                        ...result.trainerMetadata,
+                        parentId: null
+                    },
+                    METADATA_ID
+                );
                 store.loadFromOwlbear({
                     ...result.trainerMetadata,
                     parentId: null
                 });
-                return;
+            } else {
+                trainerId = await storageAdapter.createLocalCharacter(result.trainerName, null);
+                await storageAdapter.saveCharacter(
+                    trainerId,
+                    {
+                        ...result.trainerMetadata,
+                        parentId: null
+                    },
+                    METADATA_ID
+                );
             }
 
-            // 1. Create new Trainer sheet
-            const trainerId = await storageAdapter.createLocalCharacter(result.trainerName, null);
-            await storageAdapter.saveCharacter(
-                trainerId,
-                {
-                    ...result.trainerMetadata,
-                    parentId: null
-                },
-                METADATA_ID
-            );
+            if (destination === 'overwrite' && result.teamMembers.length === 0) {
+                if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new Event('pkr-local-data-changed'));
+                }
+                return;
+            }
 
             let pokemonParentId = trainerId;
             let beltFolderId: string | null = null;
@@ -267,7 +182,7 @@ export async function spawnTrainerAndTeam(
                 }
             }
 
-            // Switch to the newly created Trainer
+            // Switch to the Trainer
             setActiveTokenId(trainerId);
             store.setTokenData(trainerId, 'GM');
             store.loadFromOwlbear({
@@ -288,32 +203,8 @@ export async function spawnTrainerAndTeam(
     // --- OWLBEAR RODEO MODE ---
     if (!OBR.isAvailable) return;
     try {
-        if (destination === 'overwrite' && store.tokenId) {
-            await OBR.scene.items.updateItems([store.tokenId], (items) => {
-                for (const item of items) {
-                    item.metadata[METADATA_ID] = result.trainerMetadata;
-                }
-            });
-            store.loadFromOwlbear(result.trainerMetadata);
-            const updatedItems = await OBR.scene.items.getItems([store.tokenId]);
-            if (updatedItems.length > 0) {
-                const meta = (updatedItems[0].metadata[METADATA_ID] as Record<string, unknown>) || {};
-                const gData = buildGraphicsFromMeta(meta);
-                await renderTokenGraphics(updatedItems[0], gData, store.role || 'PLAYER', true);
-            }
-            if (OBR.isAvailable) {
-                OBR.notification.show(`Overwrote active token with ${result.trainerName}!`, 'SUCCESS');
-            }
-            return;
-        }
-
-        const vpWidth = await OBR.viewport.getWidth();
-        const vpHeight = await OBR.viewport.getHeight();
-        const centerPos = await OBR.viewport.inverseTransformPoint({
-            x: vpWidth / 2,
-            y: vpHeight / 2
-        });
-
+        const playerId = await OBR.player.getId().catch(() => '');
+        const playerName = await OBR.player.getName().catch(() => '');
         const gridSpacing = 200; // Offset spacing between tokens in the formation
 
         let sceneItems: Item[] = [];
@@ -377,32 +268,95 @@ export async function spawnTrainerAndTeam(
             };
         }
 
-        // 1. Build Trainer Token
-        const trainerImg = await resolveTokenImage(result.trainerName, result.trainerMetadata.species as string);
-        result.trainerMetadata['token-image-url'] = trainerImg.url;
+        let centerPos = { x: 0, y: 0 };
+        let trainerItem: Item | null = null;
+        const targetTokenId = store.tokenId;
 
-        const trainerImageContent = {
-            url: trainerImg.url,
-            mime: trainerImg.url.endsWith('.svg') ? 'image/svg+xml' : 'image/png',
-            width: trainerImg.width,
-            height: trainerImg.height
-        };
-        const trainerGrid = {
-            dpi: trainerImg.width,
-            offset: {
-                x: trainerImg.width / 2,
-                y: trainerImg.height / 2
+        if (destination === 'overwrite' && targetTokenId) {
+            const updatedItems = await OBR.scene.items.getItems([targetTokenId]);
+            if (updatedItems.length > 0) {
+                const targetItem = updatedItems[0];
+                centerPos = targetItem.position;
+                const trainerId = (result.trainerMetadata.entityId as string) || targetTokenId;
+                const claim = {
+                    playerId,
+                    playerName,
+                    trainerId,
+                    trainerName: result.trainerName,
+                    isTrainer: true
+                };
+
+                await OBR.scene.items.updateItems([targetTokenId], (items) => {
+                    for (const item of items) {
+                        item.metadata[METADATA_ID] = result.trainerMetadata;
+                        item.metadata['pokerole-pmd-extension/claimed-by'] = claim;
+                    }
+                });
+                store.loadFromOwlbear(result.trainerMetadata);
+
+                const refreshedItems = await OBR.scene.items.getItems([targetTokenId]);
+                if (refreshedItems.length > 0) {
+                    const meta = (refreshedItems[0].metadata[METADATA_ID] as Record<string, unknown>) || {};
+                    const gData = buildGraphicsFromMeta(meta);
+                    await renderTokenGraphics(refreshedItems[0], gData, store.role || 'PLAYER', true);
+                }
+
+                if (result.teamMembers.length === 0) {
+                    OBR.notification.show(`Overwrote active token with ${result.trainerName}!`, 'SUCCESS');
+                    return;
+                }
+            } else {
+                const vpWidth = await OBR.viewport.getWidth();
+                const vpHeight = await OBR.viewport.getHeight();
+                centerPos = await OBR.viewport.inverseTransformPoint({
+                    x: vpWidth / 2,
+                    y: vpHeight / 2
+                });
             }
-        };
+        } else {
+            const vpWidth = await OBR.viewport.getWidth();
+            const vpHeight = await OBR.viewport.getHeight();
+            centerPos = await OBR.viewport.inverseTransformPoint({
+                x: vpWidth / 2,
+                y: vpHeight / 2
+            });
 
-        const trainerItem = buildImage(trainerImageContent, trainerGrid)
-            .name(result.trainerName)
-            .position(centerPos)
-            .layer('CHARACTER')
-            .metadata({
-                [METADATA_ID]: result.trainerMetadata
-            })
-            .build();
+            // 1. Build Trainer Token
+            const trainerImg = await resolveTokenImage(result.trainerName, result.trainerMetadata.species as string);
+            result.trainerMetadata['token-image-url'] = trainerImg.url;
+
+            const trainerImageContent = {
+                url: trainerImg.url,
+                mime: trainerImg.url.endsWith('.svg') ? 'image/svg+xml' : 'image/png',
+                width: trainerImg.width,
+                height: trainerImg.height
+            };
+            const trainerGrid = {
+                dpi: trainerImg.width,
+                offset: {
+                    x: trainerImg.width / 2,
+                    y: trainerImg.height / 2
+                }
+            };
+
+            trainerItem = buildImage(trainerImageContent, trainerGrid)
+                .name(result.trainerName)
+                .position(centerPos)
+                .layer('CHARACTER')
+                .metadata({
+                    [METADATA_ID]: result.trainerMetadata
+                })
+                .build();
+
+            const trainerId = (result.trainerMetadata.entityId as string) || trainerItem.id;
+            trainerItem.metadata['pokerole-pmd-extension/claimed-by'] = {
+                playerId,
+                playerName,
+                trainerId,
+                trainerName: result.trainerName,
+                isTrainer: true
+            };
+        }
 
         // 2. Build Pokémon Tokens in Formation
         const offsets = calculateFormationOffsets(result.teamMembers.length, gridSpacing);
@@ -445,28 +399,43 @@ export async function spawnTrainerAndTeam(
             pokemonItems.push(pokeItem);
         }
 
-        const allItems = [trainerItem, ...pokemonItems];
+        if (destination === 'overwrite' && targetTokenId) {
+            if (pokemonItems.length > 0) {
+                await OBR.scene.items.addItems(pokemonItems);
+                for (const item of pokemonItems) {
+                    const meta = (item.metadata[METADATA_ID] as Record<string, unknown>) || {};
+                    const gData = buildGraphicsFromMeta(meta);
+                    await renderTokenGraphics(item, gData, store.role || 'PLAYER', true);
+                }
+            }
+            if (OBR.isAvailable) {
+                const countText = pokemonItems.length > 0 ? ` & spawned ${pokemonItems.length} Pokémon` : '';
+                OBR.notification.show(`Overwrote active token with ${result.trainerName}${countText}!`, 'SUCCESS');
+            }
+        } else if (trainerItem) {
+            const allItems = [trainerItem, ...pokemonItems];
 
-        // Batch add all tokens to OBR scene
-        await OBR.scene.items.addItems(allItems);
+            // Batch add all tokens to OBR scene
+            await OBR.scene.items.addItems(allItems);
 
-        // Select and activate Trainer token
-        setActiveTokenId(trainerItem.id);
-        store.setTokenData(trainerItem.id, store.role || 'PLAYER');
-        store.setIdentity('tokenImageUrl', trainerImg.url);
-        store.loadFromOwlbear(result.trainerMetadata);
-        await OBR.player.select([trainerItem.id]);
+            // Select and activate Trainer token
+            setActiveTokenId(trainerItem.id);
+            store.setTokenData(trainerItem.id, store.role || 'PLAYER');
+            store.setIdentity('tokenImageUrl', (result.trainerMetadata['token-image-url'] as string) || fallbackUrl);
+            store.loadFromOwlbear(result.trainerMetadata);
+            await OBR.player.select([trainerItem.id]);
 
-        // Render tracker graphics for each token
-        for (const item of allItems) {
-            const meta = (item.metadata[METADATA_ID] as Record<string, unknown>) || {};
-            const gData = buildGraphicsFromMeta(meta);
-            await renderTokenGraphics(item, gData, store.role || 'PLAYER', true);
-        }
+            // Render tracker graphics for each token
+            for (const item of allItems) {
+                const meta = (item.metadata[METADATA_ID] as Record<string, unknown>) || {};
+                const gData = buildGraphicsFromMeta(meta);
+                await renderTokenGraphics(item, gData, store.role || 'PLAYER', true);
+            }
 
-        if (OBR.isAvailable) {
-            const countText = pokemonItems.length > 0 ? ` & ${pokemonItems.length} Pokémon` : '';
-            OBR.notification.show(`Spawned ${result.trainerName}${countText}!`, 'SUCCESS');
+            if (OBR.isAvailable) {
+                const countText = pokemonItems.length > 0 ? ` & ${pokemonItems.length} Pokémon` : '';
+                OBR.notification.show(`Spawned ${result.trainerName}${countText}!`, 'SUCCESS');
+            }
         }
     } catch (err) {
         console.error('[trainerTokenSpawner] Failed to spawn tokens in OBR:', err);
