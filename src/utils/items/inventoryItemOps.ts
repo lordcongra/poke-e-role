@@ -73,13 +73,14 @@ export function applyUsageToState(
     let nextStats = state.stats;
     let nextDerived = state.derived;
 
-    if (usage.statBuff) {
-        const sName = usage.statBuff.stat.trim().toLowerCase();
+    const buffsToApply = usage.statBuffs || (usage.statBuff ? [usage.statBuff] : []);
+    for (const buff of buffsToApply) {
+        const sName = buff.stat.trim().toLowerCase();
         if (sName === 'defense' || sName === 'def') {
-            nextDerived = { ...nextDerived, defBuff: (nextDerived.defBuff || 0) + usage.statBuff.value };
+            nextDerived = { ...nextDerived, defBuff: (nextDerived.defBuff || 0) + buff.value };
             updatesToSave['def-buff'] = nextDerived.defBuff;
         } else if (sName === 'special defense' || sName === 'sdef' || sName === 'spdef') {
-            nextDerived = { ...nextDerived, sdefBuff: (nextDerived.sdefBuff || 0) + usage.statBuff.value };
+            nextDerived = { ...nextDerived, sdefBuff: (nextDerived.sdefBuff || 0) + buff.value };
             updatesToSave['spd-buff'] = nextDerived.sdefBuff;
         } else {
             const combatKey =
@@ -99,7 +100,7 @@ export function applyUsageToState(
                     ...nextStats,
                     [combatKey]: {
                         ...nextStats[combatKey],
-                        buff: (nextStats[combatKey].buff || 0) + usage.statBuff.value
+                        buff: (nextStats[combatKey].buff || 0) + buff.value
                     }
                 };
                 updatesToSave[`${combatKey}-buff`] = nextStats[combatKey].buff;
@@ -107,13 +108,14 @@ export function applyUsageToState(
         }
     }
 
-    if (usage.statDebuff) {
-        const sName = usage.statDebuff.stat.trim().toLowerCase();
+    const debuffsToApply = usage.statDebuffs || (usage.statDebuff ? [usage.statDebuff] : []);
+    for (const debuff of debuffsToApply) {
+        const sName = debuff.stat.trim().toLowerCase();
         if (sName === 'defense' || sName === 'def') {
-            nextDerived = { ...nextDerived, defDebuff: (nextDerived.defDebuff || 0) + usage.statDebuff.value };
+            nextDerived = { ...nextDerived, defDebuff: (nextDerived.defDebuff || 0) + debuff.value };
             updatesToSave['def-debuff'] = nextDerived.defDebuff;
         } else if (sName === 'special defense' || sName === 'sdef' || sName === 'spdef') {
-            nextDerived = { ...nextDerived, sdefDebuff: (nextDerived.sdefDebuff || 0) + usage.statDebuff.value };
+            nextDerived = { ...nextDerived, sdefDebuff: (nextDerived.sdefDebuff || 0) + debuff.value };
             updatesToSave['spd-debuff'] = nextDerived.sdefDebuff;
         } else {
             const combatKey =
@@ -133,7 +135,7 @@ export function applyUsageToState(
                     ...nextStats,
                     [combatKey]: {
                         ...nextStats[combatKey],
-                        debuff: (nextStats[combatKey].debuff || 0) + usage.statDebuff.value
+                        debuff: (nextStats[combatKey].debuff || 0) + debuff.value
                     }
                 };
                 updatesToSave[`${combatKey}-debuff`] = nextStats[combatKey].debuff;
@@ -145,28 +147,30 @@ export function applyUsageToState(
     let nextPassives = state.passives;
     let passivesChanged = false;
 
-    if (usage.permanentStatBoost) {
+    const permBoostsToApply = usage.permanentStatBoosts || (usage.permanentStatBoost ? [usage.permanentStatBoost] : []);
+    for (const boost of permBoostsToApply) {
         passivesChanged = true;
         nextPassives = [
             ...nextPassives,
             {
                 id: crypto.randomUUID(),
-                name: `${item.name} (${usage.permanentStatBoost.stat})`,
-                desc: `[${usage.permanentStatBoost.stat} +${usage.permanentStatBoost.value}]`,
+                name: `${item.name} (${boost.stat})`,
+                desc: `[${boost.stat} +${boost.value}]`,
                 active: true,
                 showInConditions: true
             }
         ];
     }
 
-    if (usage.dungeonPassive) {
+    const passivesToApply = usage.dungeonPassives || (usage.dungeonPassive ? [usage.dungeonPassive] : []);
+    for (const p of passivesToApply) {
         passivesChanged = true;
         nextPassives = [
             ...nextPassives,
             {
                 id: crypto.randomUUID(),
                 name: item.name,
-                desc: usage.dungeonPassive,
+                desc: p,
                 active: true,
                 showInConditions: true
             }

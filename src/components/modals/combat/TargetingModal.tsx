@@ -57,10 +57,25 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
     const [appliedFieldFactors, setAppliedFieldFactors] = useState<string[]>([]);
     const [multiTargets, setMultiTargets] = useState<MultiTargetRowData[]>([]);
 
-    const [isCrit, setIsCrit] = useState(false);
     const [targets, setTargets] = useState<TargetOption[]>([]);
-    const [overrideType, setOverrideType] = useState<'none' | 'dice' | 'flat' | 'dice-ignore'>('none');
-    const [overrideValue, setOverrideValue] = useState<number>(0);
+    const [isCrit, setIsCrit] = useState(false);
+    const descAndTags = `${move.desc || ''} ${move.marker || ''} ${move.attackAction?.tags || ''}`;
+    const hasIgnoreDefense = Boolean(
+        move.attackAction?.ignoreDefense || /\[ignores?\s*def(?:ense)?\]/i.test(descAndTags)
+    );
+    const poolMatch = descAndTags.match(/\[damage\s*pool\s*(\d+)\]/i);
+    const poolValue = poolMatch
+        ? parseInt(poolMatch[1], 10)
+        : move.attackAction?.damageMode === 'flat-dice'
+          ? move.attackAction.power
+          : baseDamage;
+    const shouldPrepopulateOverride =
+        hasIgnoreDefense || Boolean(poolMatch) || move.attackAction?.damageMode === 'flat-dice';
+
+    const [overrideType, setOverrideType] = useState<'none' | 'dice' | 'flat' | 'dice-ignore'>(() =>
+        shouldPrepopulateOverride ? 'dice-ignore' : 'none'
+    );
+    const [overrideValue, setOverrideValue] = useState<number>(() => (shouldPrepopulateOverride ? poolValue : 0));
     const [modalConfig, setModalConfig] = useState<{ title: string; content: string } | null>(null);
 
     const rank = useCharacterStore((s) => s.identity.rank);

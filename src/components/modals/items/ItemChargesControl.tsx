@@ -13,7 +13,11 @@ import { ItemStatChoiceModal } from './ItemStatChoiceModal';
 import { NumberSpinner } from '../../ui/NumberSpinner';
 import { RotateCcw, Sparkles, ChevronDown, ChevronUp, Heart, Zap, ShieldAlert, Swords } from 'lucide-react';
 import { ItemAttackActionConfig } from '../../items/ItemAttackActionConfig';
-import { resolveItemAttackAction, executeItemAttackRoll } from '../../../utils/items/itemAttackRoller';
+import {
+    resolveItemAttackAction,
+    executeItemAttackRoll,
+    executeItemDamageRoll
+} from '../../../utils/items/itemAttackRoller';
 
 interface ItemChargesControlProps {
     item: InventoryItem;
@@ -125,20 +129,42 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
                     <span className="text-label">Has Charges</span>
                 </label>
                 {attackAction ? (
-                    <button
-                        type="button"
-                        className="action-button action-button--theme item-charges-control__use-btn text-theme-header"
-                        onClick={() => executeItemAttackRoll(item, attackAction)}
-                        disabled={isChargesActive ? effective.charges <= 0 : (item.qty ?? 0) <= 0}
-                        title={
-                            isChargesActive
-                                ? `Attack / Throw (${effective.charges}/${effective.maxCharges} charges)`
-                                : 'Attack / Throw item'
-                        }
-                    >
-                        <Swords size={13} />
-                        <span>Attack / Roll</span>
-                    </button>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        {attackAction.acc1 !== 'none' && Boolean(attackAction.acc1) && (
+                            <button
+                                type="button"
+                                className="action-button action-button--theme item-charges-control__use-btn text-theme-header"
+                                onClick={() => executeItemAttackRoll(item, attackAction)}
+                                disabled={isChargesActive ? effective.charges <= 0 : (item.qty ?? 0) <= 0}
+                                title={
+                                    isChargesActive
+                                        ? `Attack / Throw (${effective.charges}/${effective.maxCharges} charges)`
+                                        : 'Attack / Throw item'
+                                }
+                            >
+                                <Swords size={13} />
+                                <span>Attack / Roll</span>
+                            </button>
+                        )}
+                        {(attackAction.acc1 === 'none' ||
+                            !attackAction.acc1 ||
+                            attackAction.damageMode === 'flat-dice') && (
+                            <button
+                                type="button"
+                                className="action-button action-button--theme item-charges-control__use-btn text-theme-header"
+                                onClick={() => executeItemDamageRoll(item, attackAction)}
+                                disabled={isChargesActive ? effective.charges <= 0 : (item.qty ?? 0) <= 0}
+                                title={
+                                    isChargesActive
+                                        ? `Roll Damage (${effective.charges}/${effective.maxCharges} charges)`
+                                        : 'Roll item damage directly'
+                                }
+                            >
+                                <Swords size={13} />
+                                <span>Roll Damage</span>
+                            </button>
+                        )}
+                    </div>
                 ) : (
                     <button
                         type="button"

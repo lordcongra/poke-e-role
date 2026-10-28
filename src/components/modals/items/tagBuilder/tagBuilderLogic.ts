@@ -47,9 +47,21 @@ export function buildTagString(config: TagBuilderConfig): string {
         else if (target === 'Gain Temp HP') tag = `[Gain Temp HP ${Math.abs(numValue)}]`;
         else if (target === 'Temp HP on Hit') tag = `[Temp HP +${Math.abs(numValue)} on Hit]`;
         else if (target === 'Temp HP % Dmg') tag = `[Temp HP ${Math.abs(numValue)}% Dmg]`;
-        else if (target === 'Acc [X]s Add Dmg Limit [Y]')
-            tag = `[Acc ${Math.abs(numValue)}s Add Dmg Dice Limit ${Math.abs(numValue2)}]`;
-        else tag = `[${target}]`;
+        else if (target === 'Encounter Buff') {
+            const statName = typeOption || 'Strength';
+            tag = `[Buff: ${statName} ${sign}]`;
+        } else if (target === 'Encounter Debuff') {
+            const statName = typeOption || 'Defense';
+            const debuffVal = Math.abs(numValue) || 1;
+            tag = `[Debuff: ${statName} -${debuffVal}]`;
+        } else if (target === 'Permanent Boost') {
+            const statName = typeOption || 'Strength';
+            tag = `[Permanent: ${statName} ${sign}]`;
+        } else if (target === 'Damage Pool') {
+            tag = `[Damage Pool ${Math.abs(numValue) || 1}]`;
+        } else if (target === 'Ignores Defense') {
+            tag = `[Ignores Defense]`;
+        } else tag = `[${target}]`;
     } else if (category === 'turn_based') {
         if (!target) return '';
         if (target === 'Deal Damage End of Round') tag = `[Deal ${Math.abs(numValue)} Damage at End of Round]`;
@@ -69,8 +81,9 @@ export function buildTagString(config: TagBuilderConfig): string {
         else if (target === 'Low Accuracy') tag = `[Low Accuracy ${Math.abs(numValue)}]`;
         else if (target === 'Never Miss') tag = `[Never Miss]`;
         else if (target === 'Recoil') tag = `[Recoil]`;
-        else if (target === 'Successive Actions') tag = `[Successive Actions]`;
         else if (target === 'Set Damage') tag = `[Set Damage ${Math.abs(numValue)}]`;
+        else if (target === 'Damage Pool') tag = `[Damage Pool ${Math.abs(numValue) || 1}]`;
+        else if (target === 'Ignores Defense') tag = `[Ignores Defense]`;
         else if (target === 'Powder') tag = `[Powder]`;
         else tag = `[${target}]`;
     } else if (category === 'battlefield') {
@@ -172,6 +185,16 @@ export function generateExplanation(config: TagBuilderConfig, builtTag: string):
         else if (target === 'Temp HP % Dmg') base = `Converts ${Math.abs(num)}% of damage dealt into Temp HP`;
         else if (target === 'Acc [X]s Add Dmg Limit [Y]')
             base = `Each accuracy die rolling ${value} adds +1 damage die (up to +${value2} dice max)`;
+        else if (target === 'Encounter Buff')
+            base = `Encounter Buff: increases ${typeOption || 'specified stat'} by ${signStr} during combat encounters`;
+        else if (target === 'Encounter Debuff')
+            base = `Encounter Debuff: reduces ${typeOption || 'specified stat'} by -${Math.abs(num) || 1} during combat encounters`;
+        else if (target === 'Permanent Boost')
+            base = `Permanent Stat Boost: permanently increases ${typeOption || 'specified stat'} by ${signStr}`;
+        else if (target === 'Damage Pool')
+            base = `Sets a flat damage dice pool of ${Math.abs(num) || 1} dice (does not scale with stats)`;
+        else if (target === 'Ignores Defense')
+            base = `Attack ignores the target's Defense and Special Defense reductions`;
         else base = `Applies ${target} mechanic`;
     } else if (category === 'turn_based') {
         if (target === 'Deal Damage End of Round') base = `Deals ${Math.abs(num)} damage to target at end of round`;
@@ -184,7 +207,11 @@ export function generateExplanation(config: TagBuilderConfig, builtTag: string):
     } else if (category === 'status') {
         base = `Inflicts or tracks ${target} status condition`;
     } else if (category === 'move_mechanics') {
-        base = `Move mechanic: ${target}`;
+        if (target === 'Damage Pool')
+            base = `Sets a flat damage dice pool of ${Math.abs(num) || 1} dice (does not scale with stats)`;
+        else if (target === 'Ignores Defense')
+            base = `Attack ignores the target's Defense and Special Defense reductions`;
+        else base = `Move mechanic: ${target}`;
     } else if (category === 'battlefield') {
         const name = typeOption.trim() || target;
         const durText = num === -1 ? 'for the whole scene' : `for ${num || 4} round${(num || 4) === 1 ? '' : 's'}`;
@@ -425,6 +452,71 @@ export function parseTagStringToConfig(tagStr: string, isMoveContext = false): P
             category: 'move_mechanics',
             target: 'Set Damage',
             value: parseInt(setDmgMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Damage Pool X
+    const dmgPoolMatch = clean.match(/^damage\s*pool\s*(\d+)$/i);
+    if (dmgPoolMatch) {
+        return {
+            category: isMoveContext ? 'move_mechanics' : 'mechanic',
+            target: 'Damage Pool',
+            value: parseInt(dmgPoolMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Ignores Defense
+    if (/^ignores?\s*def(?:ense)?$/i.test(clean)) {
+        return {
+            category: isMoveContext ? 'move_mechanics' : 'mechanic',
+            target: 'Ignores Defense',
+            value: 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Buff: <stat> +X
+    const buffMatch = clean.match(/^buff:\s*([^+\d\]]+?)\s*\+?(\d+)$/i);
+    if (buffMatch) {
+        return {
+            category: 'mechanic',
+            target: 'Encounter Buff',
+            typeOption: buffMatch[1].trim(),
+            value: parseInt(buffMatch[2], 10) || 1,
+            reqGroup: 'none',
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Debuff: <stat> -X
+    const debuffMatch = clean.match(/^debuff:\s*([^-\d\]]+?)\s*-?(\d+)$/i);
+    if (debuffMatch) {
+        return {
+            category: 'mechanic',
+            target: 'Encounter Debuff',
+            typeOption: debuffMatch[1].trim(),
+            value: parseInt(debuffMatch[2], 10) || 1,
+            reqGroup: 'none',
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Permanent: <stat> +X
+    const permMatch = clean.match(/^permanent:\s*([^+\d\]]+?)\s*\+?(\d+)$/i);
+    if (permMatch) {
+        return {
+            category: 'mechanic',
+            target: 'Permanent Boost',
+            typeOption: permMatch[1].trim(),
+            value: parseInt(permMatch[2], 10) || 1,
+            reqGroup: 'none',
             condition,
             customMaxStacks
         };

@@ -224,8 +224,9 @@ export async function applyItemToPokemonTarget(
     }
 
     // Stat Buff & Debuff
-    if (usage.statBuff) {
-        const sName = usage.statBuff.stat.trim().toLowerCase();
+    const buffsToApply = usage.statBuffs || (usage.statBuff ? [usage.statBuff] : []);
+    for (const buff of buffsToApply) {
+        const sName = buff.stat.trim().toLowerCase();
         const key =
             sName === 'defense' || sName === 'def'
                 ? 'def-buff'
@@ -243,12 +244,14 @@ export async function applyItemToPokemonTarget(
                             ? 'ins-buff'
                             : null;
         if (key) {
-            metaUpdates[key] = (Number(summary.fullMetadata?.[key]) || 0) + usage.statBuff.value;
+            const currentVal = Number(metaUpdates[key] ?? summary.fullMetadata?.[key]) || 0;
+            metaUpdates[key] = currentVal + buff.value;
         }
     }
 
-    if (usage.statDebuff) {
-        const sName = usage.statDebuff.stat.trim().toLowerCase();
+    const debuffsToApply = usage.statDebuffs || (usage.statDebuff ? [usage.statDebuff] : []);
+    for (const debuff of debuffsToApply) {
+        const sName = debuff.stat.trim().toLowerCase();
         const key =
             sName === 'defense' || sName === 'def'
                 ? 'def-debuff'
@@ -266,7 +269,8 @@ export async function applyItemToPokemonTarget(
                             ? 'ins-debuff'
                             : null;
         if (key) {
-            metaUpdates[key] = (Number(summary.fullMetadata?.[key]) || 0) + usage.statDebuff.value;
+            const currentVal = Number(metaUpdates[key] ?? summary.fullMetadata?.[key]) || 0;
+            metaUpdates[key] = currentVal + debuff.value;
         }
     }
 
@@ -281,23 +285,25 @@ export async function applyItemToPokemonTarget(
     }
 
     let passivesChanged = false;
-    if (usage.permanentStatBoost) {
+    const permBoostsToApply = usage.permanentStatBoosts || (usage.permanentStatBoost ? [usage.permanentStatBoost] : []);
+    for (const boost of permBoostsToApply) {
         passivesChanged = true;
         passivesList.push({
             id: crypto.randomUUID(),
-            name: `${item.name} (${usage.permanentStatBoost.stat})`,
-            desc: `[${usage.permanentStatBoost.stat} +${usage.permanentStatBoost.value}]`,
+            name: `${item.name} (${boost.stat})`,
+            desc: `[${boost.stat} +${boost.value}]`,
             active: true,
             showInConditions: true
         });
     }
 
-    if (usage.dungeonPassive) {
+    const passivesToApply = usage.dungeonPassives || (usage.dungeonPassive ? [usage.dungeonPassive] : []);
+    for (const p of passivesToApply) {
         passivesChanged = true;
         passivesList.push({
             id: crypto.randomUUID(),
             name: item.name,
-            desc: usage.dungeonPassive,
+            desc: p,
             active: true,
             showInConditions: true
         });

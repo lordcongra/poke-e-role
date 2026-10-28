@@ -48,6 +48,16 @@ export interface CategoryTabItem {
 
 const formatEnum = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
+export const STAT_ATTRIBUTES = [
+    'Strength',
+    'Dexterity',
+    'Vitality',
+    'Special',
+    'Insight',
+    'Defense',
+    'Special Defense'
+];
+
 export const getTargetOptions = (category: string, extraCategories: ExtraCategory[]): string[] => {
     if (category === 'stat') {
         return [
@@ -90,7 +100,12 @@ export const getTargetOptions = (category: string, extraCategories: ExtraCategor
             'Gain Temp HP',
             'Temp HP on Hit',
             'Temp HP % Dmg',
-            'Acc [X]s Add Dmg Limit [Y]'
+            'Acc [X]s Add Dmg Limit [Y]',
+            'Encounter Buff',
+            'Encounter Debuff',
+            'Permanent Boost',
+            'Damage Pool',
+            'Ignores Defense'
         ];
     }
     if (category === 'turn_based') {
@@ -128,6 +143,8 @@ export const getTargetOptions = (category: string, extraCategories: ExtraCategor
             'Recoil',
             'Successive Actions',
             'Set Damage',
+            'Damage Pool',
+            'Ignores Defense',
             'Powder',
             'Fist Move',
             'Bite Move',
@@ -151,7 +168,8 @@ export const showTypeSelect = (category: string, target: string): boolean => {
         (category === 'combat' &&
             !['Init', 'Chance', 'Crit Dmg', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'].includes(target)) ||
         (category === 'matchup' && target !== 'Remove Immunities') ||
-        (category === 'mechanic' && target === 'Ignore Pain')
+        (category === 'mechanic' &&
+            ['Ignore Pain', 'Encounter Buff', 'Encounter Debuff', 'Permanent Boost'].includes(target))
     );
 };
 
@@ -166,10 +184,14 @@ export const showValueInput = (category: string, target: string): boolean => {
                 'Gain Temp HP',
                 'Temp HP on Hit',
                 'Temp HP % Dmg',
-                'Acc [X]s Add Dmg Limit [Y]'
+                'Acc [X]s Add Dmg Limit [Y]',
+                'Encounter Buff',
+                'Encounter Debuff',
+                'Permanent Boost',
+                'Damage Pool'
             ].includes(target)) ||
         (category === 'turn_based' && target !== 'No Reactions') ||
-        (category === 'move_mechanics' && ['Low Accuracy', 'Set Damage'].includes(target))
+        (category === 'move_mechanics' && ['Low Accuracy', 'Set Damage', 'Damage Pool'].includes(target))
     );
 };
 

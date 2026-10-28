@@ -1,9 +1,15 @@
 import type { InventoryItem, MoveData, ItemAttackAction } from '../../store/entityTypes';
 import type { CharacterState } from '../../store/storeTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { rollAccuracy } from '../combat/combatRoller';
+import { rollAccuracy, executeDamageRoll } from '../combat/combatRoller';
 import { getItemEffectiveCharges } from './itemCharges';
-import { calculateStatTotal, calculateSkillTotal, ATTRIBUTE_MAPPING, getAbilityText } from '../combat/combatMath';
+import {
+    calculateStatTotal,
+    calculateSkillTotal,
+    calculateBaseDamage,
+    ATTRIBUTE_MAPPING,
+    getAbilityText
+} from '../combat/combatMath';
 import { parseCombatTags, type CombatBonuses } from '../tagParser/index';
 import { CombatStat, SocialStat } from '../../types/enums';
 
@@ -242,16 +248,90 @@ export function buildEphemeralMoveFromItem(
 }
 
 /**
+ * Directly executes a damage roll for an item move action (e.g. flat dice items like Blast Seed,
+ * or items with acc1 === 'none'), bypassing accuracy checks, and consumes 1 charge.
+ */
+export async function executeItemDamageRoll(item: InventoryItem, action: ItemAttackAction): Promise<void> {
+    const store = useCharacterStore.getState();
+    const effective = getItemEffectiveCharges(item);
+    const isDepleted = (effective.hasCharges && effective.charges <= 0) || (item.qty ?? 1) <= 0;
+    if (isDepleted) return;
+
+    const ephemeralMove = buildEphemeralMoveFromItem(item, action, store);
+    const descAndTags = `${ephemeralMove.desc || ''} ${action.tags || ''}`;
+    const poolMatch = descAndTags.match(/\[damage\s*pool\s*(\d+)\]/i);
+    const hasIgnoreDef = Boolean(action.ignoreDefense || /\[ignores?\s*def(?:ense)?\]/i.test(descAndTags));
+
+    const isFlatDice = action.damageMode === 'flat-dice' || Boolean(poolMatch);
+    const isSetDamage = action.damageMode === 'set-damage' || /\[set damage\s*(\d+)\]/i.test(descAndTags);
+
+    let override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number } = {
+        active: false,
+        type: 'dice',
+        value: 0
+    };
+
+    if (isFlatDice) {
+        const poolVal = poolMatch ? parseInt(poolMatch[1], 10) : action.power;
+        override = {
+            active: true,
+            type: hasIgnoreDef ? 'dice-ignore' : 'dice',
+            value: poolVal
+        };
+    } else if (isSetDamage) {
+        const setMatch = descAndTags.match(/\[set damage\s*(\d+)\]/i);
+        const setVal = setMatch ? parseInt(setMatch[1], 10) : action.power;
+        override = {
+            active: true,
+            type: 'flat',
+            value: setVal
+        };
+    } else if (hasIgnoreDef) {
+        override = {
+            active: true,
+            type: 'dice-ignore',
+            value: action.power
+        };
+    }
+
+    const itemBuffs = parseCombatTags(store.inventory, store.extraCategories, ephemeralMove);
+    const baseDamage = isFlatDice
+        ? poolMatch
+            ? parseInt(poolMatch[1], 10)
+            : action.power
+        : calculateBaseDamage(ephemeralMove, store, itemBuffs);
+
+    await executeDamageRoll(
+        ephemeralMove,
+        store,
+        baseDamage,
+        false, // isCritical
+        0, // effectiveness
+        0, // reduction
+        override,
+        undefined,
+        0
+    );
+
+    store.consumeItemCharge(item.id);
+}
+
+/**
  * Executes an attack roll for a consumable/held item:
  * 1. Verifies charges/quantity availability
- * 2. Triggers rollAccuracy() with ephemeral MoveData
- * 3. Consumes 1 charge (or decrements qty)
+ * 2. If acc1 === 'none', delegates directly to executeItemDamageRoll()
+ * 3. Otherwise triggers rollAccuracy() with ephemeral MoveData and consumes 1 charge
  */
 export async function executeItemAttackRoll(item: InventoryItem, action: ItemAttackAction): Promise<void> {
     const store = useCharacterStore.getState();
     const effective = getItemEffectiveCharges(item);
     const isDepleted = (effective.hasCharges && effective.charges <= 0) || (item.qty ?? 1) <= 0;
     if (isDepleted) return;
+
+    if (action.acc1 === 'none' || !action.acc1) {
+        await executeItemDamageRoll(item, action);
+        return;
+    }
 
     const ephemeralMove = buildEphemeralMoveFromItem(item, action, store);
 

@@ -251,11 +251,17 @@ function parseInventory(meta: Record<string, unknown>): InventoryItem[] {
                 healWill: typeof i.healWill === 'number' && !isNaN(i.healWill) ? i.healWill : undefined,
                 cures: Array.isArray(i.cures) ? (i.cures as string[]) : undefined,
                 permanentStatBoost: (i.permanentStatBoost as InventoryItem['permanentStatBoost']) || undefined,
+                permanentStatBoosts: Array.isArray(i.permanentStatBoosts)
+                    ? (i.permanentStatBoosts as InventoryItem['permanentStatBoosts'])
+                    : undefined,
                 statBuff: (i.statBuff as InventoryItem['statBuff']) || undefined,
+                statBuffs: Array.isArray(i.statBuffs) ? (i.statBuffs as InventoryItem['statBuffs']) : undefined,
                 statDebuff: (i.statDebuff as InventoryItem['statDebuff']) || undefined,
+                statDebuffs: Array.isArray(i.statDebuffs) ? (i.statDebuffs as InventoryItem['statDebuffs']) : undefined,
                 gainTempHp: typeof i.gainTempHp === 'number' && !isNaN(i.gainTempHp) ? i.gainTempHp : undefined,
                 gainTempWill: typeof i.gainTempWill === 'number' && !isNaN(i.gainTempWill) ? i.gainTempWill : undefined,
                 dungeonPassive: typeof i.dungeonPassive === 'string' ? i.dungeonPassive : undefined,
+                dungeonPassives: Array.isArray(i.dungeonPassives) ? (i.dungeonPassives as string[]) : undefined,
                 inflictsStatus: Array.isArray(i.inflictsStatus) ? (i.inflictsStatus as string[]) : undefined,
                 attackAction: (i.attackAction as ItemAttackAction) || undefined
             };

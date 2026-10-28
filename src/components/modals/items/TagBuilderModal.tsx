@@ -150,6 +150,38 @@ export function TagBuilderModal({
                 value: 1,
                 value2: 2
             }));
+        } else if (targetOpt === 'Encounter Buff' || targetOpt === 'Permanent Boost') {
+            setConfig((prev) => ({
+                ...prev,
+                target: targetOpt,
+                reqGroup: 'none',
+                typeOption: prev.typeOption || 'Strength',
+                value: 1
+            }));
+        } else if (targetOpt === 'Encounter Debuff') {
+            setConfig((prev) => ({
+                ...prev,
+                target: targetOpt,
+                reqGroup: 'none',
+                typeOption: prev.typeOption || 'Defense',
+                value: 1
+            }));
+        } else if (targetOpt === 'Damage Pool') {
+            setConfig((prev) => ({
+                ...prev,
+                target: targetOpt,
+                reqGroup: 'none',
+                typeOption: '',
+                value: prev.value > 0 ? prev.value : 5
+            }));
+        } else if (targetOpt === 'Ignores Defense') {
+            setConfig((prev) => ({
+                ...prev,
+                target: targetOpt,
+                reqGroup: 'none',
+                typeOption: '',
+                value: 1
+            }));
         } else {
             updateConfig('target', targetOpt);
         }

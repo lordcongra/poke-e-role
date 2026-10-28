@@ -25,9 +25,13 @@ export interface ItemUsageResult {
     curedStatusNames: string[];
     inflictedStatusNames: string[];
     permanentStatBoost?: { stat: string; value: number };
+    permanentStatBoosts?: Array<{ stat: string; value: number }>;
     statBuff?: { stat: string; value: number };
+    statBuffs?: Array<{ stat: string; value: number }>;
     statDebuff?: { stat: string; value: number };
+    statDebuffs?: Array<{ stat: string; value: number }>;
     dungeonPassive?: string;
+    dungeonPassives?: string[];
     combatBoost?: ActiveCombatBoost;
     summaryText: string;
 }
@@ -178,21 +182,103 @@ export function applyItemUsageEffects(
     const tempHpGain = item.gainTempHp ?? baseEffect?.gainTempHp ?? 0;
     const tempWillGain = item.gainTempWill ?? baseEffect?.gainTempWill ?? 0;
     const inflictsList = item.inflictsStatus ?? baseEffect?.inflictsStatus ?? [];
-    const statBuff = item.statBuff ?? baseEffect?.statBuff;
-    const statDebuff = item.statDebuff ?? baseEffect?.statDebuff;
-    const rawPermanentBoost = item.permanentStatBoost ?? baseEffect?.permanentStatBoost;
-    const dungeonPassive = item.dungeonPassive ?? baseEffect?.dungeonPassive;
     const combatBoost = parseCombatBoostFromItem(item);
 
-    // Resolve permanent stat boost with chosenStat if applicable
-    let permanentStatBoost: { stat: string; value: number } | undefined;
-    if (rawPermanentBoost) {
-        const resolvedStat =
-            rawPermanentBoost.stat === 'PlayerChoice'
-                ? options?.chosenStat || 'Strength'
-                : options?.chosenStat || rawPermanentBoost.stat;
-        permanentStatBoost = { stat: resolvedStat, value: rawPermanentBoost.value };
+    // --- RESOLVE MULTIPLE BUFFS / DEBUFFS / PERMANENT BOOSTS / PASSIVES ---
+    const resolvedBuffs: Array<{ stat: string; value: number }> = [];
+    if (Array.isArray(item.statBuffs) && item.statBuffs.length > 0) {
+        resolvedBuffs.push(...item.statBuffs);
+    } else if (item.statBuff) {
+        resolvedBuffs.push(item.statBuff);
+    } else if (baseEffect?.statBuff) {
+        resolvedBuffs.push(baseEffect.statBuff);
     }
+
+    const resolvedDebuffs: Array<{ stat: string; value: number }> = [];
+    if (Array.isArray(item.statDebuffs) && item.statDebuffs.length > 0) {
+        resolvedDebuffs.push(...item.statDebuffs);
+    } else if (item.statDebuff) {
+        resolvedDebuffs.push(item.statDebuff);
+    } else if (baseEffect?.statDebuff) {
+        resolvedDebuffs.push(baseEffect.statDebuff);
+    }
+
+    const resolvedPermBoosts: Array<{ stat: string; value: number }> = [];
+    const rawPermList =
+        Array.isArray(item.permanentStatBoosts) && item.permanentStatBoosts.length > 0
+            ? item.permanentStatBoosts
+            : item.permanentStatBoost
+              ? [item.permanentStatBoost]
+              : baseEffect?.permanentStatBoost
+                ? [baseEffect.permanentStatBoost]
+                : [];
+
+    for (const b of rawPermList) {
+        const resolvedStat =
+            b.stat === 'PlayerChoice' ? options?.chosenStat || 'Strength' : options?.chosenStat || b.stat;
+        resolvedPermBoosts.push({ stat: resolvedStat, value: b.value });
+    }
+
+    const resolvedPassives: string[] = [];
+    if (Array.isArray(item.dungeonPassives) && item.dungeonPassives.length > 0) {
+        resolvedPassives.push(...item.dungeonPassives);
+    } else if (item.dungeonPassive) {
+        resolvedPassives.push(item.dungeonPassive);
+    } else if (baseEffect?.dungeonPassive) {
+        resolvedPassives.push(baseEffect.dungeonPassive);
+    }
+
+    // Extract bracketed tags: [Buff: <stat> +X], [Debuff: <stat> -X], [Permanent: <stat> +X], [Grant Passive: <text>]
+    const fullText = `${item.tags || ''} ${item.desc || ''} ${(item as unknown as { description?: string }).description || ''}`;
+
+    const buffMatches = fullText.matchAll(/\[Buff:\s*([^+\d\]]+?)\s*\+?(\d+)\]/gi);
+    for (const m of buffMatches) {
+        const stat = m[1].trim();
+        const value = parseInt(m[2], 10);
+        if (stat && !isNaN(value)) {
+            if (!resolvedBuffs.some((b) => b.stat.toLowerCase() === stat.toLowerCase() && b.value === value)) {
+                resolvedBuffs.push({ stat, value });
+            }
+        }
+    }
+
+    const debuffMatches = fullText.matchAll(/\[Debuff:\s*([^-\d\]]+?)\s*-?(\d+)\]/gi);
+    for (const m of debuffMatches) {
+        const stat = m[1].trim();
+        const value = parseInt(m[2], 10);
+        if (stat && !isNaN(value)) {
+            if (!resolvedDebuffs.some((d) => d.stat.toLowerCase() === stat.toLowerCase() && d.value === value)) {
+                resolvedDebuffs.push({ stat, value });
+            }
+        }
+    }
+
+    const permMatches = fullText.matchAll(/\[Permanent:\s*([^+\d\]]+?)\s*\+?(\d+)\]/gi);
+    for (const m of permMatches) {
+        let stat = m[1].trim();
+        const value = parseInt(m[2], 10);
+        if (stat && !isNaN(value)) {
+            if (stat.toLowerCase() === 'playerchoice' || stat.toLowerCase() === 'player choice') {
+                stat = options?.chosenStat || 'Strength';
+            }
+            if (!resolvedPermBoosts.some((p) => p.stat.toLowerCase() === stat.toLowerCase() && p.value === value)) {
+                resolvedPermBoosts.push({ stat, value });
+            }
+        }
+    }
+
+    const grantMatches = fullText.matchAll(/\[Grant Passive:\s*([^\]]+)\]/gi);
+    for (const m of grantMatches) {
+        const text = m[1].trim();
+        if (text && !resolvedPassives.some((p) => p.toLowerCase() === text.toLowerCase())) {
+            resolvedPassives.push(text);
+        }
+    }
+
+    const statBuff = resolvedBuffs[0];
+    const statDebuff = resolvedDebuffs[0];
+    const permanentStatBoost = resolvedPermBoosts[0];
+    const dungeonPassive = resolvedPassives[0];
 
     // --- HP HEALING ---
     const currentHp = currentHealth.hpCurr ?? currentHealth.currentHitPoints ?? 0;
@@ -342,17 +428,17 @@ export function applyItemUsageEffects(
     if (inflictedStatusNames.length > 0) {
         summaryParts.push(`Inflicted ${inflictedStatusNames.join(', ')}`);
     }
-    if (statBuff) {
-        summaryParts.push(`+${statBuff.value} ${statBuff.stat}`);
+    for (const b of resolvedBuffs) {
+        summaryParts.push(`+${b.value} ${b.stat}`);
     }
-    if (statDebuff) {
-        summaryParts.push(`-${statDebuff.value} ${statDebuff.stat}`);
+    for (const d of resolvedDebuffs) {
+        summaryParts.push(`-${d.value} ${d.stat}`);
     }
-    if (permanentStatBoost) {
-        summaryParts.push(`+${permanentStatBoost.value} ${permanentStatBoost.stat} (Permanent)`);
+    for (const p of resolvedPermBoosts) {
+        summaryParts.push(`+${p.value} ${p.stat} (Permanent)`);
     }
-    if (dungeonPassive) {
-        summaryParts.push(`Granted passive: ${dungeonPassive}`);
+    for (const g of resolvedPassives) {
+        summaryParts.push(`Granted passive: ${g}`);
     }
     if (combatBoost) {
         const typeLabel = combatBoost.type ? ` (${combatBoost.type})` : '';
@@ -375,9 +461,13 @@ export function applyItemUsageEffects(
         curedStatusNames,
         inflictedStatusNames,
         permanentStatBoost,
+        permanentStatBoosts: resolvedPermBoosts,
         statBuff,
+        statBuffs: resolvedBuffs,
         statDebuff,
+        statDebuffs: resolvedDebuffs,
         dungeonPassive,
+        dungeonPassives: resolvedPassives,
         combatBoost,
         summaryText
     };
@@ -392,11 +482,15 @@ export function hasItemUsageEffect(item: {
     healWill?: number;
     cures?: string[];
     permanentStatBoost?: unknown;
+    permanentStatBoosts?: unknown[];
     statBuff?: unknown;
+    statBuffs?: unknown[];
     statDebuff?: unknown;
+    statDebuffs?: unknown[];
     gainTempHp?: number;
     gainTempWill?: number;
     dungeonPassive?: string;
+    dungeonPassives?: string[];
     inflictsStatus?: string[];
     tags?: string;
     desc?: string;
@@ -407,17 +501,27 @@ export function hasItemUsageEffect(item: {
         (item.healWill ?? 0) > 0 ||
         (item.cures && item.cures.length > 0) ||
         Boolean(item.permanentStatBoost) ||
+        (Array.isArray(item.permanentStatBoosts) && item.permanentStatBoosts.length > 0) ||
         Boolean(item.statBuff) ||
+        (Array.isArray(item.statBuffs) && item.statBuffs.length > 0) ||
         Boolean(item.statDebuff) ||
+        (Array.isArray(item.statDebuffs) && item.statDebuffs.length > 0) ||
         (item.gainTempHp ?? 0) > 0 ||
         (item.gainTempWill ?? 0) > 0 ||
         Boolean(item.dungeonPassive) ||
+        (Array.isArray(item.dungeonPassives) && item.dungeonPassives.length > 0) ||
         (item.inflictsStatus && item.inflictsStatus.length > 0)
     ) {
         return true;
     }
     const combined = `${item.tags || ''} ${item.desc || ''} ${item.description || ''}`;
-    if (hasCombatBoostTags(combined)) {
+    if (
+        hasCombatBoostTags(combined) ||
+        /\[Buff:\s*[^\]]+\]/i.test(combined) ||
+        /\[Debuff:\s*[^\]]+\]/i.test(combined) ||
+        /\[Permanent:\s*[^\]]+\]/i.test(combined) ||
+        /\[Grant Passive:\s*[^\]]+\]/i.test(combined)
+    ) {
         return true;
     }
     if (item.name && getBaseItemEffect(item.name) !== undefined) {

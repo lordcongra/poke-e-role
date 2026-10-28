@@ -7,28 +7,8 @@ import { NumberSpinner } from '../ui/NumberSpinner';
 import { TagPillList } from '../ui/TagPillList';
 import { extractMoveTags } from '../modals/items/tagBuilder/tagBuilderLogic';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
+import { DEFAULT_TYPES, updateDamageModeTags } from './itemAttackConstants';
 import './ItemAttackActionConfig.css';
-
-const DEFAULT_TYPES = [
-    'Normal',
-    'Fire',
-    'Water',
-    'Grass',
-    'Electric',
-    'Ice',
-    'Fighting',
-    'Poison',
-    'Ground',
-    'Flying',
-    'Psychic',
-    'Bug',
-    'Rock',
-    'Ghost',
-    'Dragon',
-    'Steel',
-    'Dark',
-    'Fairy'
-];
 
 interface ItemAttackActionConfigProps {
     attackAction?: ItemAttackAction;
@@ -120,9 +100,24 @@ export function ItemAttackActionConfig({ attackAction, onChange, canEdit = true 
                                 className="item-attack-action-config__select"
                                 value={attackAction.category}
                                 disabled={!canEdit}
-                                onChange={(e) =>
-                                    updateField('category', e.target.value as 'Physical' | 'Special' | 'Status')
-                                }
+                                onChange={(e) => {
+                                    const nextCat = e.target.value as 'Physical' | 'Special' | 'Status';
+                                    if (nextCat === 'Status') {
+                                        const nextTags = updateDamageModeTags(attackAction.tags, undefined, 0, false);
+                                        onChange({
+                                            ...attackAction,
+                                            category: nextCat,
+                                            power: 0,
+                                            dmg1: undefined,
+                                            dmg1Alt: undefined,
+                                            damageMode: 'scaling',
+                                            ignoreDefense: false,
+                                            tags: nextTags || undefined
+                                        });
+                                    } else {
+                                        updateField('category', nextCat);
+                                    }
+                                }}
                             >
                                 <option value="Physical">Physical</option>
                                 <option value="Special">Special</option>
@@ -146,18 +141,106 @@ export function ItemAttackActionConfig({ attackAction, onChange, canEdit = true 
                             </select>
                         </div>
 
-                        <div className="item-attack-action-config__field item-attack-action-config__field--inline">
-                            <span className="item-attack-action-config__label">Power</span>
-                            <NumberSpinner
-                                value={attackAction.power}
-                                min={0}
-                                max={99}
-                                compact
-                                disabled={!canEdit}
-                                onChange={(val) => updateField('power', Math.max(0, val))}
-                            />
-                        </div>
+                        {attackAction.category !== 'Status' && (
+                            <div className="item-attack-action-config__field item-attack-action-config__field--inline">
+                                <span className="item-attack-action-config__label">
+                                    {attackAction.damageMode === 'flat-dice' ? 'Dice Pool' : 'Power'}
+                                </span>
+                                <NumberSpinner
+                                    value={attackAction.power}
+                                    min={0}
+                                    max={99}
+                                    compact
+                                    disabled={!canEdit}
+                                    onChange={(val) => {
+                                        const nextPower = Math.max(0, val);
+                                        if (attackAction.damageMode === 'flat-dice') {
+                                            const nextTags = updateDamageModeTags(
+                                                attackAction.tags,
+                                                'flat-dice',
+                                                nextPower,
+                                                Boolean(attackAction.ignoreDefense)
+                                            );
+                                            onChange({
+                                                ...attackAction,
+                                                power: nextPower,
+                                                tags: nextTags || undefined
+                                            });
+                                        } else {
+                                            updateField('power', nextPower);
+                                        }
+                                    }}
+                                />
+                            </div>
+                        )}
                     </div>
+
+                    {attackAction.category !== 'Status' && (
+                        <div className="item-attack-action-config__row">
+                            <div className="item-attack-action-config__field">
+                                <span className="item-attack-action-config__label">Damage Mode</span>
+                                <select
+                                    className="item-attack-action-config__select"
+                                    value={attackAction.damageMode || 'scaling'}
+                                    disabled={!canEdit}
+                                    onChange={(e) => {
+                                        const newMode = e.target.value as 'scaling' | 'flat-dice' | 'set-damage';
+                                        const nextIgnore =
+                                            newMode === 'flat-dice' ? true : Boolean(attackAction.ignoreDefense);
+                                        const nextTags = updateDamageModeTags(
+                                            attackAction.tags,
+                                            newMode,
+                                            attackAction.power,
+                                            nextIgnore
+                                        );
+                                        onChange({
+                                            ...attackAction,
+                                            damageMode: newMode,
+                                            ignoreDefense: nextIgnore,
+                                            dmg1: newMode === 'flat-dice' ? undefined : attackAction.dmg1,
+                                            dmg1Alt: newMode === 'flat-dice' ? undefined : attackAction.dmg1Alt,
+                                            tags: nextTags || undefined
+                                        });
+                                    }}
+                                >
+                                    <option value="scaling">Standard (Stat Scaling)</option>
+                                    <option value="flat-dice">Flat Dice Pool (e.g. Blast Seed)</option>
+                                    <option value="set-damage">Set Damage (True Damage)</option>
+                                </select>
+                            </div>
+
+                            <div
+                                className="item-attack-action-config__field item-attack-action-config__field--inline"
+                                style={{ marginTop: '16px' }}
+                            >
+                                <label
+                                    className="item-attack-action-config__enable-toggle text-subtext"
+                                    style={{ cursor: canEdit ? 'pointer' : 'default' }}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={Boolean(attackAction.ignoreDefense)}
+                                        disabled={!canEdit}
+                                        onChange={(e) => {
+                                            const nextIgnore = e.target.checked;
+                                            const nextTags = updateDamageModeTags(
+                                                attackAction.tags,
+                                                attackAction.damageMode,
+                                                attackAction.power,
+                                                nextIgnore
+                                            );
+                                            onChange({
+                                                ...attackAction,
+                                                ignoreDefense: nextIgnore,
+                                                tags: nextTags || undefined
+                                            });
+                                        }}
+                                    />
+                                    <span style={{ color: 'var(--text-main)' }}>Ignores Defenses</span>
+                                </label>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="item-attack-action-config__row">
                         <div className="item-attack-action-config__field">
@@ -169,6 +252,7 @@ export function ItemAttackActionConfig({ attackAction, onChange, canEdit = true 
                                     disabled={!canEdit}
                                     onChange={(e) => updateField('acc1', e.target.value)}
                                 >
+                                    <option value="none">-- None (Auto-Hit / Direct) --</option>
                                     {Object.values(CombatStat).map((s) => (
                                         <option key={s} value={s}>
                                             {s.toUpperCase()}
@@ -244,48 +328,50 @@ export function ItemAttackActionConfig({ attackAction, onChange, canEdit = true 
                             </div>
                         </div>
 
-                        <div className="item-attack-action-config__field">
-                            <span className="item-attack-action-config__label">Damage 1</span>
-                            <div className="item-attack-action-config__dual-col">
-                                <select
-                                    className="item-attack-action-config__select"
-                                    value={attackAction.dmg1 || ''}
-                                    disabled={!canEdit}
-                                    onChange={(e) => updateField('dmg1', e.target.value || undefined)}
-                                >
-                                    <option value="">-- None --</option>
-                                    {Object.values(CombatStat).map((s) => (
-                                        <option key={s} value={s}>
-                                            {s.toUpperCase()}
-                                        </option>
-                                    ))}
-                                    {Object.values(SocialStat).map((s) => (
-                                        <option key={s} value={s}>
-                                            {s.toUpperCase()}
-                                        </option>
-                                    ))}
-                                </select>
-                                <span className="item-attack-action-config__or-label text-subtext">or</span>
-                                <select
-                                    className="item-attack-action-config__select"
-                                    value={attackAction.dmg1Alt || ''}
-                                    disabled={!canEdit}
-                                    onChange={(e) => updateField('dmg1Alt', e.target.value || undefined)}
-                                >
-                                    <option value="">-- None --</option>
-                                    {Object.values(CombatStat).map((s) => (
-                                        <option key={`altdmg1-${s}`} value={s}>
-                                            {s.toUpperCase()}
-                                        </option>
-                                    ))}
-                                    {Object.values(SocialStat).map((s) => (
-                                        <option key={`altdmg1-${s}`} value={s}>
-                                            {s.toUpperCase()}
-                                        </option>
-                                    ))}
-                                </select>
+                        {attackAction.category !== 'Status' && attackAction.damageMode !== 'flat-dice' && (
+                            <div className="item-attack-action-config__field">
+                                <span className="item-attack-action-config__label">Damage 1</span>
+                                <div className="item-attack-action-config__dual-col">
+                                    <select
+                                        className="item-attack-action-config__select"
+                                        value={attackAction.dmg1 || ''}
+                                        disabled={!canEdit}
+                                        onChange={(e) => updateField('dmg1', e.target.value || undefined)}
+                                    >
+                                        <option value="">-- None --</option>
+                                        {Object.values(CombatStat).map((s) => (
+                                            <option key={s} value={s}>
+                                                {s.toUpperCase()}
+                                            </option>
+                                        ))}
+                                        {Object.values(SocialStat).map((s) => (
+                                            <option key={s} value={s}>
+                                                {s.toUpperCase()}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <span className="item-attack-action-config__or-label text-subtext">or</span>
+                                    <select
+                                        className="item-attack-action-config__select"
+                                        value={attackAction.dmg1Alt || ''}
+                                        disabled={!canEdit}
+                                        onChange={(e) => updateField('dmg1Alt', e.target.value || undefined)}
+                                    >
+                                        <option value="">-- None --</option>
+                                        {Object.values(CombatStat).map((s) => (
+                                            <option key={`altdmg1-${s}`} value={s}>
+                                                {s.toUpperCase()}
+                                            </option>
+                                        ))}
+                                        {Object.values(SocialStat).map((s) => (
+                                            <option key={`altdmg1-${s}`} value={s}>
+                                                {s.toUpperCase()}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
 
                     <div className="item-attack-action-config__tags-section">

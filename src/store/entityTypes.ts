@@ -38,6 +38,8 @@ export interface ItemAttackAction {
     selectedAcc1?: string;
     selectedAcc2?: string;
     selectedDmg1?: string;
+    damageMode?: 'scaling' | 'flat-dice' | 'set-damage';
+    ignoreDefense?: boolean;
 }
 
 export interface MoveData {
@@ -108,11 +110,18 @@ export interface InventoryItem {
         stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
         value: number;
     };
+    permanentStatBoosts?: Array<{
+        stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
+        value: number;
+    }>;
     statBuff?: { stat: string; value: number };
+    statBuffs?: Array<{ stat: string; value: number }>;
     statDebuff?: { stat: string; value: number };
+    statDebuffs?: Array<{ stat: string; value: number }>;
     gainTempHp?: number;
     gainTempWill?: number;
     dungeonPassive?: string;
+    dungeonPassives?: string[];
     inflictsStatus?: string[];
     attackAction?: ItemAttackAction;
 }
@@ -332,11 +341,18 @@ export interface CustomItem {
         stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
         value: number;
     };
+    permanentStatBoosts?: Array<{
+        stat: 'Strength' | 'Dexterity' | 'Vitality' | 'Special' | 'Insight' | 'PlayerChoice';
+        value: number;
+    }>;
     statBuff?: { stat: string; value: number };
+    statBuffs?: Array<{ stat: string; value: number }>;
     statDebuff?: { stat: string; value: number };
+    statDebuffs?: Array<{ stat: string; value: number }>;
     gainTempHp?: number;
     gainTempWill?: number;
     dungeonPassive?: string;
+    dungeonPassives?: string[];
     inflictsStatus?: string[];
     attackAction?: ItemAttackAction;
 }

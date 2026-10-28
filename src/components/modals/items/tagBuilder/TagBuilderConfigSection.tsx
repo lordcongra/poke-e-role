@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { NumberSpinner } from '../../../ui/NumberSpinner';
 import type { TagBuilderConfig, RequirementGroup } from './tagBuilderTypes';
-import { CATEGORIES, MISC, MODIFIERS } from './tagBuilderConstants';
+import { CATEGORIES, MISC, MODIFIERS, STAT_ATTRIBUTES } from './tagBuilderConstants';
 import { useCharacterStore } from '../../../../store/useCharacterStore';
 
 const CANONICAL_BATTLEFIELD_CONDITIONS = [
@@ -60,67 +60,90 @@ export function TagBuilderConfigSection({
             {/* Requirement Filter (Type, Keyword, etc.) */}
             {showTypeSelect && (
                 <div className="tag-builder__row">
-                    <span className="tag-builder__row-label">Move Filter:</span>
-                    <select
-                        className="identity-grid__select tag-builder__select text-label"
-                        style={{ color: 'var(--text-main)', flex: 1 }}
-                        value={target === 'Type Gem' && reqGroup === 'none' ? 'type' : reqGroup}
-                        onChange={(e) => {
-                            const grp = e.target.value as RequirementGroup;
-                            onChangeConfig('reqGroup', grp);
-                            if (grp === 'type') onChangeConfig('typeOption', typeOption || 'Normal');
-                            else if (grp === 'category') onChangeConfig('typeOption', 'Physical');
-                            else if (grp === 'modifier') onChangeConfig('typeOption', 'Bite Move');
-                            else if (grp === 'misc') onChangeConfig('typeOption', 'Super Effective');
-                            else onChangeConfig('typeOption', '');
-                        }}
-                    >
-                        {category !== 'matchup' && target !== 'Type Gem' && (
-                            <option value="none">-- All Moves (No Requirement) --</option>
-                        )}
-                        <option value="type">By Pokémon Type</option>
-                        <option value="modifier">By Move Keyword</option>
-                        <option value="category">By Damage Category</option>
-                        <option value="misc">Miscellaneous</option>
-                    </select>
+                    {target === 'Encounter Buff' || target === 'Encounter Debuff' || target === 'Permanent Boost' ? (
+                        <>
+                            <span className="tag-builder__row-label">Attribute:</span>
+                            <select
+                                className="identity-grid__select tag-builder__select text-label"
+                                style={{ color: 'var(--text-main)', flex: 1 }}
+                                value={typeOption || (target === 'Encounter Debuff' ? 'Defense' : 'Strength')}
+                                onChange={(e) => onChangeConfig('typeOption', e.target.value)}
+                            >
+                                {STAT_ATTRIBUTES.map((s) => (
+                                    <option key={s} value={s}>
+                                        {s}
+                                    </option>
+                                ))}
+                                {target === 'Permanent Boost' && (
+                                    <option value="PlayerChoice">Player Choice (Rare Candy)</option>
+                                )}
+                            </select>
+                        </>
+                    ) : (
+                        <>
+                            <span className="tag-builder__row-label">Move Filter:</span>
+                            <select
+                                className="identity-grid__select tag-builder__select text-label"
+                                style={{ color: 'var(--text-main)', flex: 1 }}
+                                value={target === 'Type Gem' && reqGroup === 'none' ? 'type' : reqGroup}
+                                onChange={(e) => {
+                                    const grp = e.target.value as RequirementGroup;
+                                    onChangeConfig('reqGroup', grp);
+                                    if (grp === 'type') onChangeConfig('typeOption', typeOption || 'Normal');
+                                    else if (grp === 'category') onChangeConfig('typeOption', 'Physical');
+                                    else if (grp === 'modifier') onChangeConfig('typeOption', 'Bite Move');
+                                    else if (grp === 'misc') onChangeConfig('typeOption', 'Super Effective');
+                                    else onChangeConfig('typeOption', '');
+                                }}
+                            >
+                                {category !== 'matchup' && target !== 'Type Gem' && (
+                                    <option value="none">-- All Moves (No Requirement) --</option>
+                                )}
+                                <option value="type">By Pokémon Type</option>
+                                <option value="modifier">By Move Keyword</option>
+                                <option value="category">By Damage Category</option>
+                                <option value="misc">Miscellaneous</option>
+                            </select>
 
-                    {(reqGroup !== 'none' || target === 'Type Gem') && (
-                        <select
-                            className="identity-grid__select tag-builder__select text-label"
-                            style={{ color: 'var(--text-main)', flex: 1 }}
-                            value={target === 'Type Gem' && !typeOption ? 'Normal' : typeOption}
-                            onChange={(e) => {
-                                if (target === 'Type Gem' && reqGroup === 'none') {
-                                    onChangeConfig('reqGroup', 'type');
-                                }
-                                onChangeConfig('typeOption', e.target.value);
-                            }}
-                        >
-                            {(reqGroup === 'type' || (target === 'Type Gem' && reqGroup === 'none')) &&
-                                types.map((t) => (
-                                    <option key={t} value={t}>
-                                        {t}
-                                    </option>
-                                ))}
-                            {reqGroup === 'modifier' &&
-                                MODIFIERS.map((t) => (
-                                    <option key={t} value={t}>
-                                        {t}
-                                    </option>
-                                ))}
-                            {reqGroup === 'category' &&
-                                CATEGORIES.map((t) => (
-                                    <option key={t} value={t}>
-                                        {t}
-                                    </option>
-                                ))}
-                            {reqGroup === 'misc' &&
-                                MISC.map((t) => (
-                                    <option key={t} value={t}>
-                                        {t}
-                                    </option>
-                                ))}
-                        </select>
+                            {(reqGroup !== 'none' || target === 'Type Gem') && (
+                                <select
+                                    className="identity-grid__select tag-builder__select text-label"
+                                    style={{ color: 'var(--text-main)', flex: 1 }}
+                                    value={target === 'Type Gem' && !typeOption ? 'Normal' : typeOption}
+                                    onChange={(e) => {
+                                        if (target === 'Type Gem' && reqGroup === 'none') {
+                                            onChangeConfig('reqGroup', 'type');
+                                        }
+                                        onChangeConfig('typeOption', e.target.value);
+                                    }}
+                                >
+                                    {(reqGroup === 'type' || (target === 'Type Gem' && reqGroup === 'none')) &&
+                                        types.map((t) => (
+                                            <option key={t} value={t}>
+                                                {t}
+                                            </option>
+                                        ))}
+                                    {reqGroup === 'modifier' &&
+                                        MODIFIERS.map((t) => (
+                                            <option key={t} value={t}>
+                                                {t}
+                                            </option>
+                                        ))}
+                                    {reqGroup === 'category' &&
+                                        CATEGORIES.map((t) => (
+                                            <option key={t} value={t}>
+                                                {t}
+                                            </option>
+                                        ))}
+                                    {reqGroup === 'misc' &&
+                                        MISC.map((t) => (
+                                            <option key={t} value={t}>
+                                                {t}
+                                            </option>
+                                        ))}
+                                </select>
+                            )}
+                        </>
                     )}
                 </div>
             )}
