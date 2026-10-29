@@ -9,6 +9,11 @@ import { PcGuideModal } from './PcGuideModal';
 import { PcSlotContextMenu } from './PcSlotContextMenu';
 import { GmClaimOverrideModal } from './GmClaimOverrideModal';
 import { PcTrainerTokenSpawnModal } from './PcTrainerTokenSpawnModal';
+import {
+    PersistentTokensWarningModal,
+    PERSISTENCE_NEVER_SHOW_KEY,
+    PERSISTENCE_SESSION_DISMISS_PREFIX
+} from '../persistence/PersistentTokensWarningModal';
 import type { GmClaimConflict } from '../../../utils/pc/pcClaimOverrideOps';
 import { isEntityLockedByGm } from '../../../utils/pc/pcCandidateMatching';
 import type {
@@ -141,6 +146,19 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
     onSpawnTrainerToken,
     onStartMoveMode
 }) => {
+    const [showPcPersistenceNotice, setShowPcPersistenceNotice] = React.useState(false);
+
+    React.useEffect(() => {
+        if (isStandaloneMode || role !== 'GM') return;
+        try {
+            const neverShow = localStorage.getItem(PERSISTENCE_NEVER_SHOW_KEY);
+            const sessionDismiss = sessionStorage.getItem(`${PERSISTENCE_SESSION_DISMISS_PREFIX}pc`);
+            if (neverShow !== 'true' && sessionDismiss !== 'true') {
+                setShowPcPersistenceNotice(true);
+            }
+        } catch {}
+    }, [role]);
+
     return (
         <>
             {/* Cloud Export Modal with Asset Library Folder Info */}
@@ -302,6 +320,13 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
                     onSpawnToken={onSpawnTrainerToken}
                 />
             )}
+
+            {/* Third-Party Persistent Tokens Extension Incompatibility Warning Modal */}
+            <PersistentTokensWarningModal
+                isOpen={showPcPersistenceNotice}
+                onClose={() => setShowPcPersistenceNotice(false)}
+                contextScope="pc"
+            />
         </>
     );
 };

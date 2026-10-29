@@ -25,6 +25,11 @@ import { Lock } from 'lucide-react';
 import { TokenEmptyState } from './components/ui/TokenEmptyState';
 import { initSettingsBackupSync } from './utils/sync/userPreferences';
 import { dismissPlacementTool } from './utils/pc/pcPlacementInteraction';
+import {
+    PersistentTokensWarningModal,
+    PERSISTENCE_NEVER_SHOW_KEY,
+    PERSISTENCE_SESSION_DISMISS_PREFIX
+} from './components/modals/persistence/PersistentTokensWarningModal';
 import './App.css';
 import './style.css';
 
@@ -45,6 +50,18 @@ function App() {
 
     const initLayout = useCharacterStore((state) => state.identity.initiativeTrackerLayout) || 'vertical';
     const [showStandaloneTracker, setShowStandaloneTracker] = useState(false);
+    const [showInitialPersistenceNotice, setShowInitialPersistenceNotice] = useState(false);
+
+    useEffect(() => {
+        if (isStandaloneMode || role !== 'GM') return;
+        try {
+            const neverShow = localStorage.getItem(PERSISTENCE_NEVER_SHOW_KEY);
+            const sessionDismiss = sessionStorage.getItem(`${PERSISTENCE_SESSION_DISMISS_PREFIX}initial`);
+            if (neverShow !== 'true' && sessionDismiss !== 'true') {
+                setShowInitialPersistenceNotice(true);
+            }
+        } catch {}
+    }, [role]);
 
     useEffect(() => {
         const handleToggle = () => setShowStandaloneTracker((prev) => !prev);
@@ -114,6 +131,11 @@ function App() {
 
                 <DemoRollModal />
                 {isPrinting && <PrintSheet />}
+                <PersistentTokensWarningModal
+                    isOpen={showInitialPersistenceNotice}
+                    onClose={() => setShowInitialPersistenceNotice(false)}
+                    contextScope="initial"
+                />
             </>
         );
     }
