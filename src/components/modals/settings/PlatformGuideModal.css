@@ -217,10 +217,12 @@
     font-size: 0.78rem;
     color: var(--text-main);
     word-break: break-all;
+    min-width: 0;
 }
 
 .platform-guide-modal__code-text {
     flex: 1;
+    min-width: 0;
     overflow-x: auto;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -234,9 +236,18 @@
     font-size: 0.75rem;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 5px;
     cursor: pointer;
     border-radius: 4px;
+    white-space: nowrap;
+    height: 28px;
+    box-sizing: border-box;
+}
+
+.platform-guide-modal__copy-btn--icon {
+    width: 28px;
+    padding: 0;
 }
 
 /* Numbered Steps */
@@ -264,6 +275,7 @@
     background: var(--panel-bg);
     border: 1px solid var(--border);
     border-radius: 4px;
+    overflow: hidden;
 }
 
 .platform-guide-modal__plugin-header {
@@ -271,12 +283,25 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
+    flex-wrap: wrap;
+    min-width: 0;
 }
 
 .platform-guide-modal__plugin-title {
     font-size: 0.84rem;
     font-weight: 600;
     color: var(--text-main);
+    flex: 1 1 180px;
+    min-width: 0;
+    word-break: break-word;
+}
+
+.platform-guide-modal__plugin-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    margin-left: auto;
 }
 
 .platform-guide-modal__plugin-desc {
@@ -308,4 +333,59 @@
 .platform-guide-modal__version {
     font-size: 0.78rem;
     color: var(--text-muted);
+}
+
+/* 🔥 MOBILE & NARROW VIEWPORT RESPONSIVE FIXES (Screens <= 768px) 🔥 */
+@media (max-width: 768px) {
+    .platform-guide-modal__overlay {
+        padding: 8px;
+    }
+
+    .platform-guide-modal__header {
+        padding: 10px 12px;
+    }
+
+    .platform-guide-modal__title {
+        font-size: 0.92rem;
+    }
+
+    .platform-guide-modal__tabs {
+        padding: 6px 10px;
+        gap: 6px;
+    }
+
+    .platform-guide-modal__tab {
+        padding: 6px 8px;
+        font-size: 0.78rem;
+        text-align: center;
+    }
+
+    .platform-guide-modal__body {
+        padding: 10px 10px;
+        gap: 10px;
+        overflow-x: hidden;
+    }
+
+    .platform-guide-modal__card {
+        padding: 10px 10px;
+    }
+
+    .platform-guide-modal__compat-banner {
+        padding: 10px 10px;
+        gap: 8px;
+    }
+
+    .platform-guide-modal__plugin-title {
+        font-size: 0.82rem;
+        flex: 1 1 100%;
+    }
+
+    .platform-guide-modal__plugin-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .platform-guide-modal__footer {
+        padding: 8px 12px;
+    }
 }

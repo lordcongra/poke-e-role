@@ -462,8 +462,10 @@ export function GlobalToolbar() {
                         rel="noopener noreferrer"
                         className="global-toolbar__btn--discord-header action-button"
                         title="Join the Pokérole Discord (Find the 3.0 Corebook in #pokerole-corebook)"
+                        aria-label="Discord"
                     >
-                        <DiscordIcon size={14} color="#5865F2" /> Discord
+                        <DiscordIcon size={14} color="#5865F2" />
+                        <span className="global-toolbar__header-btn-text">Discord</span>
                     </a>
 
                     <button
@@ -471,8 +473,10 @@ export function GlobalToolbar() {
                         className="global-toolbar__btn--bug-header action-button"
                         onClick={() => setActiveModal('bug-report')}
                         title="Report a bug or send feedback directly to Congra"
+                        aria-label="Report Bug"
                     >
-                        <Bug size={14} color="var(--primary)" /> Report Bug
+                        <Bug size={14} color="var(--primary)" />
+                        <span className="global-toolbar__header-btn-text">Report Bug</span>
                     </button>
 
                     <button
@@ -484,16 +488,16 @@ export function GlobalToolbar() {
                                 ? 'Owlbear Rodeo Extension Setup Guide'
                                 : 'Standalone Offline App & PWA Guide'
                         }
+                        aria-label={isStandaloneMode ? 'Owlbear Guide' : 'Standalone App'}
                     >
                         {isStandaloneMode ? (
-                            <>
-                                <Share2 size={14} color="var(--primary)" /> Owlbear Guide
-                            </>
+                            <Share2 size={14} color="var(--primary)" />
                         ) : (
-                            <>
-                                <Laptop size={14} color="var(--primary)" /> Standalone App
-                            </>
+                            <Laptop size={14} color="var(--primary)" />
                         )}
+                        <span className="global-toolbar__header-btn-text">
+                            {isStandaloneMode ? 'Owlbear Guide' : 'Standalone App'}
+                        </span>
                     </button>
 
                     {activeTokenId && (
@@ -508,8 +512,12 @@ export function GlobalToolbar() {
                                     ? 'Close sheet and return to file browser'
                                     : 'Deselect active token and close sheet'
                             }
+                            aria-label={isStandaloneMode ? 'Back to Menu' : 'Deselect Token'}
                         >
-                            <ArrowLeft size={16} /> {isStandaloneMode ? 'Back to Menu' : 'Deselect Token'}
+                            <ArrowLeft size={16} />
+                            <span className="global-toolbar__header-btn-text">
+                                {isStandaloneMode ? 'Back to Menu' : 'Deselect Token'}
+                            </span>
                         </button>
                     )}
                 </div>

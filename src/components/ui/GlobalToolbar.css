@@ -30,6 +30,7 @@
 .global-toolbar__header-title {
     display: flex;
     align-items: center;
+    white-space: nowrap;
 }
 
 .global-toolbar__header--open {
@@ -81,6 +82,9 @@
     align-items: center;
     gap: 6px;
     text-decoration: none;
+    white-space: nowrap;
+    height: 28px;
+    box-sizing: border-box;
 }
 
 .global-toolbar__btn--discord-header:hover {
@@ -103,6 +107,9 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
+    height: 28px;
+    box-sizing: border-box;
 }
 
 .global-toolbar__btn--bug-header:hover {
@@ -125,6 +132,9 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
+    height: 28px;
+    box-sizing: border-box;
 }
 
 .global-toolbar__btn--guide-header:hover {
@@ -144,6 +154,12 @@
     cursor: pointer;
     transition: filter 0.2s ease;
     text-transform: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    height: 28px;
+    box-sizing: border-box;
 }
 
 .global-toolbar__btn--back-header:hover {
@@ -402,9 +418,34 @@
         flex-direction: column;
     }
 
+    .global-toolbar__header {
+        padding: 8px 8px;
+    }
+
     .global-toolbar__header-title {
         font-size: 0.78rem;
         letter-spacing: -0.01em;
+        white-space: nowrap;
+    }
+
+    .global-toolbar__header-actions {
+        gap: 6px;
+    }
+
+    .global-toolbar__header-btn-text {
+        display: none;
+    }
+
+    .global-toolbar__btn--discord-header,
+    .global-toolbar__btn--bug-header,
+    .global-toolbar__btn--guide-header,
+    .global-toolbar__btn--back-header {
+        width: 30px;
+        height: 28px;
+        padding: 0;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
     }
 
     .global-toolbar__content {

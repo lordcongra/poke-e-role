@@ -87,21 +87,23 @@ export const PlatformGuideOwlbearTab: React.FC<PlatformGuideOwlbearTabProps> = (
                         <span className="platform-guide-modal__plugin-title">
                             Custom Action Rolls (CAR) - 3D Dice Engine
                         </span>
-                        <button
-                            type="button"
-                            className="action-button action-button--theme platform-guide-modal__copy-btn"
-                            onClick={() => onCopy(CAR_MANIFEST_URL)}
-                        >
-                            {copiedUrl === CAR_MANIFEST_URL ? (
-                                <>
-                                    <Check size={14} /> Copied!
-                                </>
-                            ) : (
-                                <>
-                                    <Copy size={14} /> Copy Manifest
-                                </>
-                            )}
-                        </button>
+                        <div className="platform-guide-modal__plugin-actions">
+                            <button
+                                type="button"
+                                className="action-button action-button--theme platform-guide-modal__copy-btn"
+                                onClick={() => onCopy(CAR_MANIFEST_URL)}
+                            >
+                                {copiedUrl === CAR_MANIFEST_URL ? (
+                                    <>
+                                        <Check size={14} /> Copied!
+                                    </>
+                                ) : (
+                                    <>
+                                        <Copy size={14} /> Copy Manifest
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
                     <p className="platform-guide-modal__plugin-desc">
                         Spawns interactive 3D dice on the canvas with custom Pokérole roll logs and exploding dice
@@ -112,21 +114,23 @@ export const PlatformGuideOwlbearTab: React.FC<PlatformGuideOwlbearTabProps> = (
                 <div className="platform-guide-modal__plugin-item">
                     <div className="platform-guide-modal__plugin-header">
                         <span className="platform-guide-modal__plugin-title">Bag It! - Visual Tabletop Inventory</span>
-                        <button
-                            type="button"
-                            className="action-button action-button--theme platform-guide-modal__copy-btn"
-                            onClick={() => onCopy(BAG_IT_MANIFEST_URL)}
-                        >
-                            {copiedUrl === BAG_IT_MANIFEST_URL ? (
-                                <>
-                                    <Check size={14} /> Copied!
-                                </>
-                            ) : (
-                                <>
-                                    <Copy size={14} /> Copy Manifest
-                                </>
-                            )}
-                        </button>
+                        <div className="platform-guide-modal__plugin-actions">
+                            <button
+                                type="button"
+                                className="action-button action-button--theme platform-guide-modal__copy-btn"
+                                onClick={() => onCopy(BAG_IT_MANIFEST_URL)}
+                            >
+                                {copiedUrl === BAG_IT_MANIFEST_URL ? (
+                                    <>
+                                        <Check size={14} /> Copied!
+                                    </>
+                                ) : (
+                                    <>
+                                        <Copy size={14} /> Copy Manifest
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
                     <p className="platform-guide-modal__plugin-desc">
                         A visual tabletop inventory system for placing, sorting, and trading physical items, bags, and
@@ -136,7 +140,7 @@ export const PlatformGuideOwlbearTab: React.FC<PlatformGuideOwlbearTabProps> = (
                 <div className="platform-guide-modal__plugin-item">
                     <div className="platform-guide-modal__plugin-header">
                         <span className="platform-guide-modal__plugin-title">Embers - Spell & Attack Animations</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div className="platform-guide-modal__plugin-actions">
                             <button
                                 type="button"
                                 className="action-button action-button--theme platform-guide-modal__copy-btn"
@@ -156,7 +160,7 @@ export const PlatformGuideOwlbearTab: React.FC<PlatformGuideOwlbearTabProps> = (
                                 href={EMBERS_URL}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="action-button action-button--theme platform-guide-modal__copy-btn"
+                                className="action-button action-button--theme platform-guide-modal__copy-btn platform-guide-modal__copy-btn--icon"
                                 title="Open Embers Extension in Owlbear Store"
                                 aria-label="Open Embers Extension in Owlbear Store"
                                 style={{ textDecoration: 'none' }}
