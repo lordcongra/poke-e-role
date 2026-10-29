@@ -5,3 +5,4 @@ export { RulesModal } from './RulesModal';
 export { ThemeSettingsModal } from './ThemeSettingsModal';
 export { PromptModal } from './PromptModal';
 export { BugReportModal } from './BugReportModal';
+export { PlatformGuideModal } from './PlatformGuideModal';

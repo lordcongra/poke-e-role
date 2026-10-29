@@ -13,7 +13,7 @@ _A massive thank you to the creator of the **Owl Trackers** extension. Their inc
 Don't want to use a VTT? You can now use the Pokerole Sheet completely standalone!
 
 - **Play Anywhere:** Visit the live site on your phone, tablet, or desktop browser.
-- **Installable PWA:** Click "Add to Home Screen" (or the install icon in your URL bar) to download the app natively to your device.
+- **Installable PWA:** Click "Add to Home Screen" (or the install icon in your URL bar) to download the app natively to your device. _(Note: Desktop Firefox requires a PWA extension to install natively, though the Firefox mobile app supports installation out of the box!)_
 - **100% Offline Capable:** The built-in database caches locally. Once installed, you can generate Pokémon, manage sheets, and roll dice without an internet connection!
 - **Local Directory:** Standalone mode features a brand new sidebar to organize your characters into folders, allowing GMs to easily build and manage complex encounters.
 
@@ -36,7 +36,6 @@ If you are using this as an Owlbear Rodeo extension, we recommend installing the
 
 While these extensions do not tie directly into the character sheet, they are highly recommended for running immersive Pokerole campaigns on Owlbear Rodeo:
 
-- **[Persistent Tokens](https://extensions.owlbear.rodeo/persistent-tokens):** Makes your tokens and their character sheets persist between scenes! Extremely helpful so you don't have to constantly export and import JSONs when switching maps.
 - **[Bag It!](https://bag-it-extension.narcolepticdracu.com/manifest.json):** Provides a real, visual inventory system for players to store, move, and trade items directly on the tabletop.
 - **[Embers](https://extensions.owlbear.rodeo/embers):** An amazing tool for setting up visual spell and attack effects on the map.
     > **Pro Tip:** Want a head start on your move animations? Reach out to **`@congra`** in the [Pokérole Discord](https://discord.gg/B9VcfYwWCJ) to get a copy of his custom Embers spell effects JSON!

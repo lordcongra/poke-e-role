@@ -1,0 +1,311 @@
+.platform-guide-modal__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: color-mix(in srgb, var(--dark) 65%, transparent);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    animation: guide-modal-fade 0.15s ease-out;
+}
+
+@keyframes guide-modal-fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.platform-guide-modal__content {
+    background: var(--panel-bg);
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    width: 100%;
+    max-width: 680px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 32px color-mix(in srgb, var(--dark) 40%, transparent);
+    overflow: hidden;
+}
+
+.platform-guide-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--primary) 8%, var(--panel-bg));
+}
+
+.platform-guide-modal__title {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.platform-guide-modal__badge {
+    font-size: 0.72rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.platform-guide-modal__close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition:
+        color 0.15s,
+        background-color 0.15s;
+}
+
+.platform-guide-modal__close-btn:hover {
+    color: var(--text-main);
+    background: color-mix(in srgb, var(--dark) 10%, transparent);
+}
+
+.platform-guide-modal__tabs {
+    display: flex;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--panel-alt);
+    border-bottom: 1px solid var(--border);
+}
+
+.platform-guide-modal__tab {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--panel-bg);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.platform-guide-modal__tab:hover {
+    color: var(--text-main);
+    border-color: var(--primary);
+}
+
+.platform-guide-modal__tab--active {
+    background: color-mix(in srgb, var(--primary) 15%, var(--panel-bg));
+    border-color: var(--primary);
+    color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary);
+}
+
+.platform-guide-modal__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Cross-Compatibility Banner */
+.platform-guide-modal__compat-banner {
+    display: flex;
+    gap: 12px;
+    padding: 12px 14px;
+    background: color-mix(in srgb, var(--primary) 8%, var(--panel-alt));
+    border: 1px solid var(--primary);
+    border-radius: 6px;
+}
+
+.platform-guide-modal__compat-icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.platform-guide-modal__compat-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--text-main);
+    line-height: 1.4;
+}
+
+.platform-guide-modal__compat-title {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.platform-guide-modal__compat-list {
+    margin: 4px 0 0 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.platform-guide-modal__compat-list li strong {
+    color: var(--text-main);
+}
+
+/* Content Cards */
+.platform-guide-modal__card {
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.platform-guide-modal__card-title {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.platform-guide-modal__card-desc {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+/* Monospace Code Boxes with Copy Button */
+.platform-guide-modal__code-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: var(--text-main);
+    word-break: break-all;
+}
+
+.platform-guide-modal__code-text {
+    flex: 1;
+    overflow-x: auto;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.platform-guide-modal__copy-btn {
+    flex-shrink: 0;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+/* Numbered Steps */
+.platform-guide-modal__step-list {
+    margin: 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--text-main);
+    line-height: 1.45;
+}
+
+.platform-guide-modal__step-list li strong {
+    color: var(--primary);
+}
+
+/* Companion Plugins */
+.platform-guide-modal__plugin-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 10px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+}
+
+.platform-guide-modal__plugin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.platform-guide-modal__plugin-title {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.platform-guide-modal__plugin-desc {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Launch Action Card */
+.platform-guide-modal__launch-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+/* Footer */
+.platform-guide-modal__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    background: color-mix(in srgb, var(--primary) 4%, var(--panel-bg));
+}
+
+.platform-guide-modal__version {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}

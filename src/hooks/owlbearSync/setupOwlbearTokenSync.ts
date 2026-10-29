@@ -145,7 +145,7 @@ export async function setupOwlbearTokenSync(params: {
         // Initial render for currently loaded items (non-destructive to avoid flickering)
         await renderAllTokens(false);
 
-        // Follow-up render to catch late-arriving persistent tokens (from Persistent Tokens extension)
+        // Follow-up render to catch late-arriving tokens on scene ready
         if (sceneFollowupTimeout) clearTimeout(sceneFollowupTimeout);
         sceneFollowupTimeout = setTimeout(async () => {
             if (!isMounted()) return;

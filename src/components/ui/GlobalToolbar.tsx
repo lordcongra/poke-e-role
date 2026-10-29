@@ -12,24 +12,9 @@ import { exportCharacterData, parseImportedFile } from '../../utils/common/fileS
 import type { CharacterState } from '../../store/storeTypes';
 
 // Modals
-import { HomebrewModal } from '../homebrew/HomebrewModal';
-import { RulesModal } from '../modals/settings/RulesModal';
-import { ItemGeneratorModal } from '../modals/itemGenerator';
-import { ChangelogModal } from '../modals/settings/ChangelogModal';
-import { InitiativeSettingsModal } from '../modals/trackers/InitiativeSettingsModal';
-import { GeneratorModal } from '../modals/pokemonGenerator';
-import { PrintSettingsModal } from '../modals/settings/PrintSettingsModal';
-import { ThemeSettingsModal } from '../modals/settings/ThemeSettingsModal';
-import { AccessibilityModal } from '../modals/settings/AccessibilityModal';
-import { GmScreenModal } from '../modals/gmScreen/GmScreenModal';
-import { BattleOrganizerModal } from '../modals/battleOrganizer/BattleOrganizerModal';
-import { BattleOrganizerSettingsModal } from '../modals/battleOrganizer/BattleOrganizerSettingsModal';
-import { getBattleOrganizerSettings } from '../modals/battleOrganizer/battleOrganizerSettingsHelper';
-import { PrintBattleOrganizer } from '../print/PrintBattleOrganizer';
-import { TrainerGeneratorModal } from '../modals/trainerGenerator';
-import { BugReportModal } from '../modals/settings';
-import { PcStorageModal } from '../modals/pcStorage/PcStorageModal';
+import { ToolbarModals, type ActiveModal } from './ToolbarModals';
 import { ToolbarImportModals } from './ToolbarImportModals';
+import { getBattleOrganizerSettings } from '../modals/battleOrganizer/battleOrganizerSettingsHelper';
 import { DiscordIcon } from './DiscordIcon';
 
 // Icons
@@ -54,27 +39,11 @@ import {
     Save,
     Upload,
     Bug,
-    HardDrive
+    HardDrive,
+    Share2,
+    Laptop
 } from 'lucide-react';
 import './GlobalToolbar.css';
-
-type ActiveModal =
-    | 'homebrew'
-    | 'rules'
-    | 'loot'
-    | 'changelog'
-    | 'init'
-    | 'generator'
-    | 'trainer-generator'
-    | 'print'
-    | 'theme'
-    | 'accessibility'
-    | 'gm-screen'
-    | 'battle-organizer'
-    | 'battle-organizer-settings'
-    | 'bug-report'
-    | 'pc'
-    | null;
 
 export function GlobalToolbar() {
     const isObrReady = useObrReady();
@@ -506,6 +475,27 @@ export function GlobalToolbar() {
                         <Bug size={14} color="var(--primary)" /> Report Bug
                     </button>
 
+                    <button
+                        type="button"
+                        className="global-toolbar__btn--guide-header action-button"
+                        onClick={() => setActiveModal('platform-guide')}
+                        title={
+                            isStandaloneMode
+                                ? 'Owlbear Rodeo Extension Setup Guide'
+                                : 'Standalone Offline App & PWA Guide'
+                        }
+                    >
+                        {isStandaloneMode ? (
+                            <>
+                                <Share2 size={14} color="var(--primary)" /> Owlbear Guide
+                            </>
+                        ) : (
+                            <>
+                                <Laptop size={14} color="var(--primary)" /> Standalone App
+                            </>
+                        )}
+                    </button>
+
                     {activeTokenId && (
                         <button
                             type="button"
@@ -738,38 +728,16 @@ export function GlobalToolbar() {
                 onCloseMasterBackup={() => setShowMasterBackupModal(false)}
             />
 
-            {/* Conditionally Rendered Modals */}
-            {activeModal === 'homebrew' && <HomebrewModal onClose={() => setActiveModal(null)} />}
-            {activeModal === 'rules' && <RulesModal onClose={() => setActiveModal(null)} />}
-            {activeModal === 'loot' && <ItemGeneratorModal onClose={() => setActiveModal(null)} />}
-            {activeModal === 'generator' && <GeneratorModal onClose={() => setActiveModal(null)} />}
-            {activeModal === 'trainer-generator' && <TrainerGeneratorModal onClose={() => setActiveModal(null)} />}
-            {activeModal === 'changelog' && <ChangelogModal onClose={handleCloseChangelog} />}
-            {activeModal === 'init' && <InitiativeSettingsModal onClose={() => setActiveModal(null)} />}
-            {activeModal === 'print' && <PrintSettingsModal onClose={() => setActiveModal(null)} />}
-            {activeModal === 'theme' && <ThemeSettingsModal onClose={() => setActiveModal(null)} />}
-            {activeModal === 'accessibility' && <AccessibilityModal onClose={() => setActiveModal(null)} />}
-            {activeModal === 'gm-screen' && <GmScreenModal onClose={() => setActiveModal(null)} />}
-            {activeModal === 'battle-organizer-settings' && (
-                <BattleOrganizerSettingsModal onClose={() => setActiveModal(null)} />
-            )}
-            {activeModal === 'battle-organizer' && (
-                <BattleOrganizerModal
-                    onClose={() => setActiveModal(null)}
-                    onPrint={() => setIsPrintingBattleOrganizer(true)}
-                />
-            )}
-            {activeModal === 'bug-report' && <BugReportModal onClose={() => setActiveModal(null)} />}
-            {activeModal === 'pc' && (
-                <PcStorageModal
-                    onClose={() => {
-                        setActiveModal(null);
-                        closePcModal();
-                    }}
-                />
-            )}
-
-            {isPrintingBattleOrganizer && <PrintBattleOrganizer onDone={() => setIsPrintingBattleOrganizer(false)} />}
+            {/* Toolbar Modals */}
+            <ToolbarModals
+                activeModal={activeModal}
+                onClose={() => setActiveModal(null)}
+                onCloseChangelog={handleCloseChangelog}
+                onClosePcModal={closePcModal}
+                onPrintBattleOrganizer={() => setIsPrintingBattleOrganizer(true)}
+                isPrintingBattleOrganizer={isPrintingBattleOrganizer}
+                onDonePrintingBattleOrganizer={() => setIsPrintingBattleOrganizer(false)}
+            />
         </div>
     );
 }
