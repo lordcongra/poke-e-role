@@ -228,13 +228,6 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 ---
 
-## 💬 Community & Pokérole 3.0 Corebook
-
-- **Join the Pokérole Discord:** **[https://discord.gg/B9VcfYwWCJ](https://discord.gg/B9VcfYwWCJ)** — Connect with players and Game Masters, find games, ask system and rules questions, share homebrew, and follow sheet updates.
-- **Official 3.0 Corebook PDF:** Head to the **`#pokerole-corebook`** channel on the Pokérole Discord to download the latest official 3.0 Corebook PDF!
-
----
-
 ## 🛠️ VTT Installation
 
 To install this extension into your Owlbear Rodeo room, copy the Manifest URL below and paste it into your Owlbear Rodeo extension manager:
