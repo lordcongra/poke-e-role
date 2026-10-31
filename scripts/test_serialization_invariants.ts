@@ -56,6 +56,7 @@ const { buildEphemeralMoveFromItem, resolveItemMoveStats } = await import('../sr
 const { isTrackedBackupChange } = await import('../src/utils/sync/storageAdapter');
 const { countPokedexTotals, getPokedexEntry, isPokemonRegistered, findCanonicalSpeciesName } =
     await import('../src/components/board/trainerPokedexUtils');
+const { resolvePokeballUrl, POKEBALL_PRESETS } = await import('../src/utils/graphics/pokeballConstants');
 
 /**
  * Automated Verification Suite for Token Metadata & Serialization Invariants.
@@ -2249,8 +2250,8 @@ await runTest('trainerPokedex: serialization, hydration, and storageAdapter trac
         identity: {
             mode: 'Trainer',
             pokedex: {
-                Pikachu: { seen: true, caught: true, shiny: false },
-                Charizard: { seen: true, caught: false, shiny: true }
+                Pikachu: { seen: true, caught: true, shiny: false, ball: 'ultra' },
+                Charizard: { seen: true, caught: false, shiny: true, ball: 'master' }
             }
         } as any
     });
@@ -2261,7 +2262,7 @@ await runTest('trainerPokedex: serialization, hydration, and storageAdapter trac
 
     // 2. Hydration
     const hydrated = hydrateStateFromMetadata(meta, createTestCharacterState());
-    assert.deepEqual(hydrated.identity?.pokedex, mockState.identity.pokedex, 'Hydrates pokedex-data accurately');
+    assert.deepEqual(hydrated.identity?.pokedex, mockState.identity.pokedex, 'Hydrates pokedex-data accurately including ball');
 
     // 3. StorageAdapter change tracking
     assert.ok(
@@ -2274,8 +2275,8 @@ await runTest('trainerPokedex: serialization, hydration, and storageAdapter trac
         ...meta,
         'pokedex-data': JSON.stringify({
             pikachu: { seen: true, caught: false, shiny: false },
-            Pikachu: { seen: true, caught: true, shiny: false },
-            CHARIZARD: { seen: false, caught: false, shiny: true }
+            Pikachu: { seen: true, caught: true, shiny: false, ball: 'dive' },
+            CHARIZARD: { seen: false, caught: false, shiny: true, ball: 'https://example.com/custom-ball.png' }
         })
     };
     const autoHealed = hydrateStateFromMetadata(corruptedMeta, createTestCharacterState());
@@ -2284,8 +2285,19 @@ await runTest('trainerPokedex: serialization, hydration, and storageAdapter trac
     assert.ok(healedPokedex.Pikachu, 'Canonical or title-cased key Pikachu is preserved');
     assert.equal(healedPokedex.Pikachu.caught, true, 'Merged flags: caught is true from uppercase variant');
     assert.equal(healedPokedex.Pikachu.seen, true, 'Merged flags: seen is true');
+    assert.equal(healedPokedex.Pikachu.ball, 'dive', 'Preserves ball through case-deduplication');
+    assert.equal(
+        healedPokedex.CHARIZARD?.ball,
+        'https://example.com/custom-ball.png',
+        'Preserves custom web ball url'
+    );
+    assert.equal(
+        getPokedexEntry(healedPokedex, 'charizard').ball,
+        'https://example.com/custom-ball.png',
+        'getPokedexEntry retrieves custom ball case-insensitively'
+    );
 
-    // 5. Utility functions case-insensitivity
+    // 5. Utility functions case-insensitivity & ball retrieval
     const lookupList = [{ name: 'Pikachu' }, { name: 'Charizard' }];
     assert.equal(findCanonicalSpeciesName('pikachu', lookupList), 'Pikachu');
     assert.equal(findCanonicalSpeciesName('  CHARIZARD  ', lookupList), 'Charizard');
@@ -2293,16 +2305,25 @@ await runTest('trainerPokedex: serialization, hydration, and storageAdapter trac
 
     const entry = getPokedexEntry(healedPokedex, 'pikachu');
     assert.equal(entry.caught, true, 'getPokedexEntry matches lowercase name against TitleCase key');
+    assert.equal(entry.ball, 'dive', 'getPokedexEntry retains ball');
     assert.equal(isPokemonRegistered(healedPokedex, 'PIKACHU'), true, 'isPokemonRegistered is case-insensitive');
 
     // 6. countPokedexTotals deduplication
     const unmergedPokedex = {
         pikachu: { seen: true, caught: false, shiny: false },
-        Pikachu: { seen: true, caught: true, shiny: false }
+        Pikachu: { seen: true, caught: true, shiny: false, ball: 'luxury' }
     };
     const totals = countPokedexTotals(unmergedPokedex);
     assert.equal(totals.seen, 1, 'countPokedexTotals seen deduplicated to 1');
     assert.equal(totals.caught, 1, 'countPokedexTotals caught deduplicated to 1');
+
+    // 7. Pokéball presets & pure resolver
+    assert.equal(POKEBALL_PRESETS.length, 16, 'Contains all 16 Pokéball presets');
+    assert.equal(resolvePokeballUrl('great'), '/pokeballs/great.svg', 'Resolves preset id');
+    assert.equal(resolvePokeballUrl('GREAT.SVG'), '/pokeballs/great.svg', 'Case-insensitive preset resolver with extension');
+    assert.equal(resolvePokeballUrl('https://example.com/ball.png'), 'https://example.com/ball.png', 'Preserves web URL');
+    assert.equal(resolvePokeballUrl('local-img:12345'), 'local-img:12345', 'Preserves IndexedDB image key');
+    assert.equal(resolvePokeballUrl(''), '/pokeballs/poke.svg', 'Defaults to standard Poké Ball when empty');
 });
 
 await runTest('itemUsageEffects: negative HP and Will reduction with Temp pool absorption', async () => {

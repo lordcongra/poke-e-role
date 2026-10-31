@@ -5,6 +5,7 @@ import { TrainerPokedexRow } from './TrainerPokedexRow';
 import { TrainerPokedexModal } from '../modals/pokedex/TrainerPokedexModal';
 import { QuickAddPokemonModal } from '../modals/pokedex/QuickAddPokemonModal';
 import { PokedexDeleteConfirmModal } from '../modals/pokedex/PokedexDeleteConfirmModal';
+import { PokeballPickerModal } from '../modals/pokedex/PokeballPickerModal';
 import { countPokedexTotals, getPokedexEntry, resolvePokedexEntryToLookup } from './trainerPokedexUtils';
 import { fetchPokemonLookupIndex } from '../../utils/api/api';
 import type { PokemonLookupEntry } from '../../utils/api/apiTypes';
@@ -16,6 +17,7 @@ export function TrainerPokedex() {
     const removePokedexEntry = useCharacterStore((state) => state.removePokedexEntry);
     const togglePokedexSeen = useCharacterStore((state) => state.togglePokedexSeen);
     const togglePokedexCaught = useCharacterStore((state) => state.togglePokedexCaught);
+    const setPokedexBall = useCharacterStore((state) => state.setPokedexBall);
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes) || [];
 
     const [lookupData, setLookupData] = useState<PokemonLookupEntry[]>([]);
@@ -24,6 +26,7 @@ export function TrainerPokedex() {
     const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
     const [inspectedPokemon, setInspectedPokemon] = useState<string | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+    const [ballPickerTarget, setBallPickerTarget] = useState<string | null>(null);
 
     useEffect(() => {
         let isMounted = true;
@@ -162,6 +165,7 @@ export function TrainerPokedex() {
                                 onInspect={handleInspect}
                                 onToggleCaught={togglePokedexCaught}
                                 onToggleSeen={togglePokedexSeen}
+                                onSelectBall={(name) => setBallPickerTarget(name)}
                                 onRemove={(name) => setDeleteTarget(name)}
                             />
                         ))
@@ -179,6 +183,18 @@ export function TrainerPokedex() {
 
             {isModalOpen && (
                 <TrainerPokedexModal onClose={handleCloseModal} initialPokemonName={inspectedPokemon || undefined} />
+            )}
+
+            {ballPickerTarget && (
+                <PokeballPickerModal
+                    isOpen={Boolean(ballPickerTarget)}
+                    pokemonName={ballPickerTarget}
+                    currentBall={getPokedexEntry(pokedex, ballPickerTarget).ball}
+                    onClose={() => setBallPickerTarget(null)}
+                    onSelectBall={(ball) => {
+                        setPokedexBall(ballPickerTarget, ball);
+                    }}
+                />
             )}
 
             {deleteTarget && (

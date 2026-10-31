@@ -6,6 +6,8 @@ import { usePokemonLookup } from '../pokemonLookup/usePokemonLookup';
 import { PokemonLookupCard } from '../pokemonLookup/PokemonLookupCard';
 import { TrainerPokedexHeader, type PokedexStatusFilter } from './TrainerPokedexHeader';
 import { PokedexDeleteConfirmModal } from './PokedexDeleteConfirmModal';
+import { PokeballPickerModal } from './PokeballPickerModal';
+import { TrainerPokedexBallIcon } from './TrainerPokedexBallIcon';
 import {
     countPokedexTotals,
     getPokedexEntry,
@@ -27,6 +29,7 @@ export function TrainerPokedexModal({ onClose, initialPokemonName }: TrainerPoke
     const togglePokedexSeen = useCharacterStore((state) => state.togglePokedexSeen);
     const togglePokedexCaught = useCharacterStore((state) => state.togglePokedexCaught);
     const togglePokedexShiny = useCharacterStore((state) => state.togglePokedexShiny);
+    const setPokedexBall = useCharacterStore((state) => state.setPokedexBall);
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes) || [];
     const role = useCharacterStore((state) => state.role);
 
@@ -35,6 +38,7 @@ export function TrainerPokedexModal({ onClose, initialPokemonName }: TrainerPoke
     const [type1Filter, setType1Filter] = useState<string>('');
     const [type2Filter, setType2Filter] = useState<string>('');
     const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+    const [ballPickerTarget, setBallPickerTarget] = useState<string | null>(null);
 
     const allTypeColors: Record<string, string> = useMemo(() => {
         const visibleTypes = roomCustomTypes.filter((t) => isStandaloneMode || role === 'GM' || !t.gmOnly);
@@ -248,6 +252,17 @@ export function TrainerPokedexModal({ onClose, initialPokemonName }: TrainerPoke
                                             <Check size={12} strokeWidth={3} /> {isCaught ? 'Caught' : 'Catch'}
                                         </button>
 
+                                        {isCaught && (
+                                            <button
+                                                type="button"
+                                                className="trainer-pokedex-toggle-btn trainer-pokedex-toggle-btn--ball"
+                                                onClick={() => setBallPickerTarget(p.name)}
+                                                title="Change Pokéball"
+                                            >
+                                                <TrainerPokedexBallIcon ball={entry.ball} size={13} /> Ball
+                                            </button>
+                                        )}
+
                                         <button
                                             type="button"
                                             className={`trainer-pokedex-toggle-btn ${isShiny ? 'trainer-pokedex-toggle-btn--shiny-active' : ''}`}
@@ -333,6 +348,18 @@ export function TrainerPokedexModal({ onClose, initialPokemonName }: TrainerPoke
                         onConfirm={() => {
                             removePokedexEntry(deleteTarget);
                             setDeleteTarget(null);
+                        }}
+                    />
+                )}
+
+                {ballPickerTarget && (
+                    <PokeballPickerModal
+                        isOpen={Boolean(ballPickerTarget)}
+                        pokemonName={ballPickerTarget}
+                        currentBall={getPokedexEntry(pokedex, ballPickerTarget).ball}
+                        onClose={() => setBallPickerTarget(null)}
+                        onSelectBall={(ball) => {
+                            setPokedexBall(ballPickerTarget, ball);
                         }}
                     />
                 )}

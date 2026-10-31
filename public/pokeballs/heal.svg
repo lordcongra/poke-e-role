@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <clipPath id="heal-clip">
+      <circle cx="150" cy="150" r="136" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#heal-clip)">
+    <!-- Upper dome rose pink -->
+    <rect x="0" y="0" width="300" height="150" fill="#E89BB9" />
+    <!-- Lower hemisphere soft warm tan / cream -->
+    <rect x="0" y="150" width="300" height="150" fill="#D8CA9E" />
+
+    <!-- Pink downward triangular / petal accent extending into bottom hemisphere -->
+    <path d="M 115 150 C 130 185 145 220 150 225 C 155 220 170 185 185 150 Z" fill="#E89BB9" />
+
+    <!-- Two tan-ish curved swoosh blobs flanking the upper dome -->
+    <!-- Left tan swoosh blob -->
+    <path d="M 75 25 C 110 30 120 70 100 115 C 85 145 55 145 45 130 C 40 100 55 50 75 25 Z" fill="#F3E89F" />
+
+    <!-- Right tan swoosh blob -->
+    <path d="M 225 25 C 190 30 180 70 200 115 C 215 145 245 145 255 130 C 260 100 245 50 225 25 Z" fill="#F3E89F" />
+
+    <!-- Soft yellow/cream highlight blob at crown -->
+    <ellipse cx="150" cy="35" rx="35" ry="16" fill="#F3E89F" opacity="0.65" />
+
+    <!-- Vibrant sky blue center dividing line -->
+    <rect x="0" y="142" width="300" height="16" fill="#46A0DE" />
+  </g>
+
+  <!-- Outer sphere boundary border -->
+  <circle cx="150" cy="150" r="136" fill="none" stroke="#222224" stroke-width="14" />
+
+  <!-- Center button: Sky blue outer bezel & periwinkle core -->
+  <circle cx="150" cy="150" r="42" fill="#46A0DE" />
+  <circle cx="150" cy="150" r="28" fill="#6A78A8" />
+  <circle cx="150" cy="150" r="18" fill="#546394" />
+  <circle cx="150" cy="150" r="10" fill="none" stroke="#6A78A8" stroke-width="3" />
+</svg>

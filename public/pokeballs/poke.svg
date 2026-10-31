@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <clipPath id="poke-clip">
+      <circle cx="150" cy="150" r="136" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#poke-clip)">
+    <rect x="0" y="0" width="300" height="150" fill="#EE1515" />
+    <rect x="0" y="150" width="300" height="150" fill="#F6F6F6" />
+    <rect x="0" y="142" width="300" height="16" fill="#222224" />
+  </g>
+  <circle cx="150" cy="150" r="136" fill="none" stroke="#222224" stroke-width="14" />
+  <circle cx="150" cy="150" r="40" fill="#222224" />
+  <circle cx="150" cy="150" r="26" fill="#FFFFFF" />
+  <circle cx="150" cy="150" r="16" fill="none" stroke="#222224" stroke-width="4" />
+</svg>
+

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <clipPath id="dive-clip">
+      <circle cx="150" cy="150" r="136" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#dive-clip)">
+    <!-- Base pale aqua ocean blue body -->
+    <rect x="0" y="0" width="300" height="300" fill="#60B3EB" />
+
+    <!-- Slightly darker mid-dome wavy wash -->
+    <path d="M -10 100 C 40 80, 90 118, 145 92 C 195 70, 245 105, 310 82 L 310 142 L -10 142 Z" fill="#3D92D9" opacity="0.4" />
+
+    <!-- Wiggly white wave wash along the top -->
+    <path d="M -10 0 L -10 82 C 25 72, 45 98, 80 82 C 115 65, 135 96, 175 78 C 210 62, 235 94, 275 70 C 295 58, 305 40, 310 25 L 310 0 Z" fill="#FFFFFF" />
+
+    <!-- Blue crown spot / half-oval at the very top -->
+    <ellipse cx="145" cy="22" rx="30" ry="18" fill="#60B3EB" />
+
+    <!-- Bottom darker blue ocean wave squiggles -->
+    <path d="M -10 215 C 35 198, 75 236, 125 210 C 175 185, 215 230, 265 204 C 288 192, 300 200, 310 210 L 310 310 L -10 310 Z" fill="#1C6BB8" />
+    <path d="M -10 250 C 45 238, 85 264, 145 242 C 205 220, 245 258, 310 238 L 310 310 L -10 310 Z" fill="#135293" opacity="0.35" />
+
+    <!-- Horizontal dividing equator band -->
+    <rect x="0" y="142" width="300" height="16" fill="#222224" />
+  </g>
+
+  <!-- Outer sphere boundary border -->
+  <circle cx="150" cy="150" r="136" fill="none" stroke="#222224" stroke-width="14" />
+
+  <!-- Center button -->
+  <circle cx="150" cy="150" r="40" fill="#222224" />
+  <circle cx="150" cy="150" r="26" fill="#FFFFFF" />
+  <circle cx="150" cy="150" r="16" fill="none" stroke="#222224" stroke-width="4" />
+</svg>

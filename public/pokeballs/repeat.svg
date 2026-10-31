@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <clipPath id="repeat-clip">
+      <circle cx="150" cy="150" r="136" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#repeat-clip)">
+    <!-- Top dome vibrant orange-red -->
+    <rect x="0" y="0" width="300" height="150" fill="#EA3923" />
+    <!-- Bottom hemisphere pale lavender-white -->
+    <rect x="0" y="150" width="300" height="150" fill="#EAE8F2" />
+
+    <!-- Yellow connected figure-8 badge -->
+    <!-- Lower yellow ring directly above the equator -->
+    <circle cx="150" cy="106" r="48" fill="#FFE63B" />
+    <!-- Upper yellow ring towards top crown -->
+    <circle cx="150" cy="46" r="34" fill="#FFE63B" />
+    <!-- Yellow waist bridging both rings -->
+    <path d="M 118 102 C 128 75 132 58 135 46 L 165 46 C 168 58 172 75 182 102 Z" fill="#FFE63B" />
+
+    <!-- Inner dark charcoal/black circular centers -->
+    <circle cx="150" cy="106" r="26" fill="#2E3033" />
+    <circle cx="150" cy="46" r="17" fill="#2E3033" />
+
+    <!-- Horizontal equator dividing band -->
+    <rect x="0" y="142" width="300" height="16" fill="#222224" />
+  </g>
+
+  <!-- Outer sphere boundary border -->
+  <circle cx="150" cy="150" r="136" fill="none" stroke="#222224" stroke-width="14" />
+
+  <!-- Center button -->
+  <circle cx="150" cy="150" r="40" fill="#222224" />
+  <circle cx="150" cy="150" r="26" fill="#FFFFFF" />
+  <circle cx="150" cy="150" r="16" fill="none" stroke="#222224" stroke-width="4" />
+</svg>

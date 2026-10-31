@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <clipPath id="luxury-clip">
+      <circle cx="150" cy="150" r="136" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#luxury-clip)">
+    <!-- Obsidian black sphere body -->
+    <rect x="0" y="0" width="300" height="300" fill="#2E2C2F" />
+
+    <!-- Top Crown Striped Collar stretching edge-to-edge across the dome -->
+    <!-- Lower gold band with sheen -->
+    <path d="M -10 98 Q 150 60 310 98" fill="none" stroke="#D97706" stroke-width="8" />
+    <path d="M -10 98 Q 150 60 310 98" fill="none" stroke="#FDE68A" stroke-width="8" stroke-dasharray="18 30" />
+
+    <!-- Center vibrant red stripe -->
+    <path d="M -10 86 Q 150 48 310 86" fill="none" stroke="#DC2626" stroke-width="16" />
+
+    <!-- Upper gold band with sheen -->
+    <path d="M -10 74 Q 150 36 310 74" fill="none" stroke="#D97706" stroke-width="8" />
+    <path d="M -10 74 Q 150 36 310 74" fill="none" stroke="#FDE68A" stroke-width="8" stroke-dasharray="16 28" />
+
+    <!-- White outer casing of equator band and button hub -->
+    <rect x="0" y="134" width="300" height="32" fill="#F4F2F7" />
+    <circle cx="150" cy="150" r="50" fill="#F4F2F7" />
+
+    <!-- Rich gold inner band -->
+    <rect x="0" y="142" width="300" height="16" fill="#D97706" />
+    <!-- Gold sheen accents on band -->
+    <rect x="30" y="142" width="25" height="16" fill="#FDE68A" />
+    <rect x="245" y="142" width="25" height="16" fill="#FDE68A" />
+  </g>
+
+  <!-- Outer sphere boundary border -->
+  <circle cx="150" cy="150" r="136" fill="none" stroke="#222224" stroke-width="14" />
+
+  <!-- Luxury Ball gold button assembly -->
+  <circle cx="150" cy="150" r="40" fill="#D97706" />
+  <circle cx="150" cy="150" r="38" fill="none" stroke="#FDE68A" stroke-width="3" stroke-dasharray="35 30" />
+  <circle cx="150" cy="150" r="28" fill="#451A03" />
+  <circle cx="150" cy="150" r="22" fill="#F59E0B" />
+  <circle cx="147" cy="147" r="14" fill="#FDE68A" opacity="0.6" />
+  <circle cx="150" cy="150" r="22" fill="none" stroke="#B45309" stroke-width="3" />
+</svg>

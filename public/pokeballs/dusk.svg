@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <clipPath id="dusk-clip">
+      <circle cx="150" cy="150" r="136" />
+    </clipPath>
+  </defs>
+  <!-- Background hemisphere & circular green patterns clipped to sphere -->
+  <g clip-path="url(#dusk-clip)">
+    <!-- Dark charcoal base body -->
+    <rect x="0" y="0" width="300" height="300" fill="#383636" />
+
+    <!-- Top green circle -->
+    <ellipse cx="150" cy="46" rx="54" ry="34" fill="#2BA33C" />
+    <ellipse cx="150" cy="46" rx="42" ry="24" fill="#80C836" />
+
+    <!-- Bottom green circle -->
+    <ellipse cx="150" cy="254" rx="54" ry="34" fill="#2BA33C" />
+    <ellipse cx="150" cy="254" rx="42" ry="24" fill="#80C836" />
+
+    <!-- Left green circle -->
+    <ellipse cx="26" cy="150" rx="40" ry="72" fill="#2BA33C" />
+    <ellipse cx="26" cy="150" rx="28" ry="58" fill="#88CF3D" />
+
+    <!-- Right green circle -->
+    <ellipse cx="274" cy="150" rx="40" ry="72" fill="#2BA33C" />
+    <ellipse cx="274" cy="150" rx="28" ry="58" fill="#88CF3D" />
+
+    <!-- Center green circle / oval behind button -->
+    <ellipse cx="150" cy="150" rx="64" ry="76" fill="#2BA33C" />
+    <ellipse cx="150" cy="150" rx="50" ry="62" fill="#8ED441" />
+
+    <!-- Red equator dividing band -->
+    <rect x="0" y="142" width="300" height="16" fill="#B32025" />
+
+    <!-- Orange center band accents leading to button -->
+    <rect x="85" y="142" width="130" height="16" fill="#EA6A1B" />
+  </g>
+
+  <!-- Outer sphere boundary border -->
+  <circle cx="150" cy="150" r="136" fill="none" stroke="#222224" stroke-width="14" />
+
+  <!-- Dusk Ball button housing & concentric rings -->
+  <circle cx="150" cy="150" r="42" fill="#EA6A1B" />
+  <circle cx="150" cy="150" r="28" fill="#222224" />
+  <circle cx="150" cy="150" r="20" fill="#EA6A1B" />
+  <circle cx="150" cy="150" r="10" fill="#222224" />
+  <circle cx="150" cy="150" r="4" fill="#EA6A1B" />
+</svg>

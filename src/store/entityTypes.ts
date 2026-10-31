@@ -463,6 +463,7 @@ export interface TrainerPokedexEntry {
     seen: boolean;
     caught?: boolean;
     shiny?: boolean;
+    ball?: string;
 }
 
 export type TrainerPokedexData = Record<string, TrainerPokedexEntry>;

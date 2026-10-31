@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <clipPath id="net-clip">
+      <circle cx="150" cy="150" r="136" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#net-clip)">
+    <!-- Top dome cyan/teal base -->
+    <rect x="0" y="0" width="300" height="150" fill="#0288A6" />
+    <!-- Bottom hemisphere pale lavender-white -->
+    <rect x="0" y="150" width="300" height="150" fill="#ECEAF4" />
+
+    <!-- Diagonal net cross-hatching straps -->
+    <!-- Top-left to bottom-right curved straps -->
+    <path d="M 50 14 C 110 50 180 90 270 120" fill="none" stroke="#222629" stroke-width="18" stroke-linecap="round" />
+    <path d="M 10 70 C 60 100 120 130 190 148" fill="none" stroke="#222629" stroke-width="18" stroke-linecap="round" />
+    <path d="M 120 10 C 180 35 240 65 295 90" fill="none" stroke="#222629" stroke-width="16" stroke-linecap="round" />
+
+    <!-- Top-right to bottom-left curved straps -->
+    <path d="M 250 14 C 190 50 120 90 30 120" fill="none" stroke="#222629" stroke-width="18" stroke-linecap="round" />
+    <path d="M 290 70 C 240 100 180 130 110 148" fill="none" stroke="#222629" stroke-width="18" stroke-linecap="round" />
+    <path d="M 180 10 C 120 35 60 65 5 90" fill="none" stroke="#222629" stroke-width="16" stroke-linecap="round" />
+
+    <!-- Horizontal equator dividing band -->
+    <rect x="0" y="142" width="300" height="16" fill="#222224" />
+  </g>
+
+  <!-- Outer sphere boundary border -->
+  <circle cx="150" cy="150" r="136" fill="none" stroke="#222224" stroke-width="14" />
+
+  <!-- Center button -->
+  <circle cx="150" cy="150" r="40" fill="#222224" />
+  <circle cx="150" cy="150" r="26" fill="#FFFFFF" />
+  <circle cx="150" cy="150" r="16" fill="none" stroke="#222224" stroke-width="4" />
+</svg>

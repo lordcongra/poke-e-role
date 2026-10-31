@@ -396,6 +396,17 @@
     color: #fde047;
 }
 
+.trainer-pokedex-toggle-btn--ball {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--text-main);
+}
+
+.trainer-pokedex-toggle-btn--ball:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--primary);
+}
+
 .trainer-pokedex-toggle-btn--remove {
     padding: 4px 6px;
     color: var(--semantic-danger, #ef4444);

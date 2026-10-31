@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <clipPath id="master-clip">
+      <circle cx="150" cy="150" r="136" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#master-clip)">
+    <!-- Rich purple upper dome -->
+    <rect x="0" y="0" width="300" height="150" fill="#6A1B9A" />
+    <!-- Pale lavender-white lower hemisphere -->
+    <rect x="0" y="150" width="300" height="150" fill="#ECEAF2" />
+
+    <!-- Pink side lobes cutting off at the outer edges -->
+    <!-- Left lobe -->
+    <circle cx="56" cy="74" r="48" fill="#D81B60" />
+    <ellipse cx="64" cy="62" rx="16" ry="12" fill="#F48FB1" />
+
+    <!-- Right lobe -->
+    <circle cx="244" cy="74" r="48" fill="#D81B60" />
+    <ellipse cx="236" cy="62" rx="16" ry="12" fill="#F48FB1" />
+
+    <!-- Subtle darker purple shadow spot at crown -->
+    <circle cx="150" cy="40" r="20" fill="#4A148C" opacity="0.4" />
+
+    <!-- Master Ball white M logo with breathing room -->
+    <path d="M 124 106 L 132 55 L 150 78 L 168 55 L 176 106 L 163 106 L 157 74 L 150 84 L 143 74 L 137 106 Z" fill="#FFFFFF" />
+
+    <!-- Horizontal equator dividing band -->
+    <rect x="0" y="142" width="300" height="16" fill="#222224" />
+  </g>
+
+  <!-- Outer sphere boundary border -->
+  <circle cx="150" cy="150" r="136" fill="none" stroke="#222224" stroke-width="14" />
+
+  <!-- Center button -->
+  <circle cx="150" cy="150" r="40" fill="#222224" />
+  <circle cx="150" cy="150" r="26" fill="#FFFFFF" />
+  <circle cx="150" cy="150" r="16" fill="none" stroke="#222224" stroke-width="4" />
+</svg>

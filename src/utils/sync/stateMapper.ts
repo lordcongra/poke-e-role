@@ -375,13 +375,15 @@ function parsePokedex(meta: Record<string, unknown>): TrainerPokedexData {
                 const entrySeen = Boolean(entry.seen || entry.caught || entry.shiny);
                 const entryCaught = Boolean(entry.caught);
                 const entryShiny = Boolean(entry.shiny);
+                const entryBall = typeof entry.ball === 'string' && entry.ball.trim() ? entry.ball.trim() : undefined;
 
                 if (!lowerToKeyMap[lower]) {
                     lowerToKeyMap[lower] = cleanKey;
                     result[cleanKey] = {
                         seen: entrySeen,
                         caught: entryCaught,
-                        shiny: entryShiny
+                        shiny: entryShiny,
+                        ...(entryBall ? { ball: entryBall } : {})
                     };
                 } else {
                     const existingKey = lowerToKeyMap[lower];
@@ -391,10 +393,12 @@ function parsePokedex(meta: Record<string, unknown>): TrainerPokedexData {
                         lowerToKeyMap[lower] = cleanKey;
                         activeKey = cleanKey;
                     }
+                    const mergedBall = entryBall || result[activeKey]?.ball;
                     result[activeKey] = {
                         seen: Boolean(result[activeKey]?.seen || entrySeen),
                         caught: Boolean(result[activeKey]?.caught || entryCaught),
-                        shiny: Boolean(result[activeKey]?.shiny || entryShiny)
+                        shiny: Boolean(result[activeKey]?.shiny || entryShiny),
+                        ...(mergedBall ? { ball: mergedBall } : {})
                     };
                 }
             }

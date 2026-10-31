@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <clipPath id="quick-clip">
+      <circle cx="150" cy="150" r="136" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#quick-clip)">
+    <!-- Electric blue sphere base -->
+    <rect x="0" y="0" width="300" height="300" fill="#2E82DE" />
+
+    <!-- Yellow "X" cross pattern with 4 diagonal arms -->
+    <!-- Top-Left & Bottom-Right diagonal ribbon -->
+    <polygon points="35,10 95,5 265,290 205,295" fill="#FFE633" />
+    <polygon points="70,7 95,5 265,290 240,292" fill="#D9B818" opacity="0.45" />
+
+    <!-- Top-Right & Bottom-Left diagonal ribbon -->
+    <polygon points="265,10 205,5 35,290 95,295" fill="#FFE633" />
+    <polygon points="230,7 205,5 35,290 60,292" fill="#D9B818" opacity="0.45" />
+
+    <!-- Center chevron/diamond hub expanding the X at the core -->
+    <polygon points="150,90 205,150 150,210 95,150" fill="#FFE633" />
+
+    <!-- Horizontal equator dividing band -->
+    <rect x="0" y="142" width="300" height="16" fill="#222224" />
+  </g>
+
+  <!-- Outer sphere boundary border -->
+  <circle cx="150" cy="150" r="136" fill="none" stroke="#222224" stroke-width="14" />
+
+  <!-- Center button -->
+  <circle cx="150" cy="150" r="40" fill="#222224" />
+  <circle cx="150" cy="150" r="26" fill="#FFFFFF" />
+  <circle cx="150" cy="150" r="16" fill="none" stroke="#222224" stroke-width="4" />
+</svg>

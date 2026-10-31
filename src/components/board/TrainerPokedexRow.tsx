@@ -1,6 +1,7 @@
 import type { PokemonLookupEntry } from '../../utils/api/apiTypes';
 import type { TrainerPokedexEntry } from '../../store/entityTypes';
 import { TYPE_COLORS } from '../../data/constants';
+import { TrainerPokedexBallIcon } from '../modals/pokedex/TrainerPokedexBallIcon';
 import { Eye, EyeOff, Check, Sparkles, BookOpen, Trash2 } from 'lucide-react';
 
 export interface TrainerPokedexRowProps {
@@ -10,6 +11,7 @@ export interface TrainerPokedexRowProps {
     onInspect: (name: string) => void;
     onToggleCaught?: (name: string) => void;
     onToggleSeen?: (name: string) => void;
+    onSelectBall?: (name: string) => void;
     onRemove?: (name: string) => void;
 }
 
@@ -20,6 +22,7 @@ export function TrainerPokedexRow({
     onInspect,
     onToggleCaught,
     onToggleSeen,
+    onSelectBall,
     onRemove
 }: TrainerPokedexRowProps) {
     const allColors = { ...TYPE_COLORS, ...customTypeColors };
@@ -56,15 +59,32 @@ export function TrainerPokedexRow({
 
             <div className="trainer-pokedex-row__status-chips">
                 {entry.caught ? (
-                    <button
-                        type="button"
-                        className="trainer-pokedex-row__chip trainer-pokedex-row__chip--caught trainer-pokedex-row__chip--btn"
-                        onClick={() => onToggleCaught?.(p.name)}
-                        title="Caught (click to mark as Seen only)"
-                        aria-label={`Toggle caught status for ${p.name}. Currently Caught.`}
-                    >
-                        <Check size={11} strokeWidth={3} />
-                    </button>
+                    <>
+                        <button
+                            type="button"
+                            className="trainer-pokedex-row__chip trainer-pokedex-row__chip--caught trainer-pokedex-row__chip--btn"
+                            onClick={() => onToggleCaught?.(p.name)}
+                            title="Caught (click to mark as Seen only)"
+                            aria-label={`Toggle caught status for ${p.name}. Currently Caught.`}
+                        >
+                            <Check size={11} strokeWidth={3} />
+                        </button>
+                        {onSelectBall && (
+                            <button
+                                type="button"
+                                className="trainer-pokedex-row__chip trainer-pokedex-row__chip--ball trainer-pokedex-row__chip--btn"
+                                onClick={() => onSelectBall(p.name)}
+                                title="Pokéball (click to change)"
+                                aria-label={`Change Pokéball for ${p.name}`}
+                            >
+                                <TrainerPokedexBallIcon
+                                    ball={entry.ball}
+                                    size={14}
+                                    className="trainer-pokedex-row__ball-icon"
+                                />
+                            </button>
+                        )}
+                    </>
                 ) : entry.seen ? (
                     <button
                         type="button"

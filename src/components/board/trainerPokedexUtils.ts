@@ -25,12 +25,16 @@ export function countPokedexTotals(pokedex: TrainerPokedexData = {}): PokedexTot
             merged[norm] = {
                 seen: Boolean(entry.seen || entry.caught || entry.shiny),
                 caught: Boolean(entry.caught),
-                shiny: Boolean(entry.shiny)
+                shiny: Boolean(entry.shiny),
+                ...(entry.ball ? { ball: entry.ball } : {})
             };
         } else {
             merged[norm].seen = Boolean(merged[norm].seen || entry.seen || entry.caught || entry.shiny);
             merged[norm].caught = Boolean(merged[norm].caught || entry.caught);
             merged[norm].shiny = Boolean(merged[norm].shiny || entry.shiny);
+            if (entry.ball) {
+                merged[norm].ball = entry.ball;
+            }
         }
     }
 
@@ -55,7 +59,8 @@ export function getPokedexEntry(pokedex: TrainerPokedexData = {}, name: string):
     return {
         seen: Boolean(entry.seen || entry.caught || entry.shiny),
         caught: Boolean(entry.caught),
-        shiny: Boolean(entry.shiny)
+        shiny: Boolean(entry.shiny),
+        ...(entry.ball ? { ball: entry.ball } : {})
     };
 }
 

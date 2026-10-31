@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <clipPath id="nest-clip">
+      <circle cx="150" cy="150" r="136" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#nest-clip)">
+    <!-- Base lime green upper dome -->
+    <rect x="0" y="0" width="300" height="150" fill="#60BD29" />
+    <!-- Bottom pale lavender-white hemisphere -->
+    <rect x="0" y="150" width="300" height="150" fill="#ECEAF4" />
+
+    <!-- Swooshy light brown / khaki-tan curved bands -->
+    <!-- Top crown swoosh -->
+    <path d="M 60 40 Q 150 15 230 48 Q 160 30 70 52 Z" fill="#C4BD6E" />
+
+    <!-- Upper-mid sweeping swoosh -->
+    <path d="M 25 75 Q 130 40 275 80 C 230 102 140 75 30 92 Z" fill="#C4BD6E" />
+
+    <!-- Lower-mid sweeping swoosh -->
+    <path d="M 15 110 Q 140 85 285 115 C 250 135 150 115 20 132 Z" fill="#C4BD6E" />
+
+    <!-- Subtle darker olive accent ribbons along the swooshes -->
+    <path d="M 25 75 Q 130 40 275 80 C 255 86 160 52 35 78 Z" fill="#9FA245" opacity="0.6" />
+    <path d="M 15 110 Q 140 85 285 115 C 265 121 170 96 28 114 Z" fill="#9FA245" opacity="0.6" />
+
+    <!-- Horizontal dividing band -->
+    <rect x="0" y="142" width="300" height="16" fill="#222224" />
+  </g>
+
+  <!-- Outer sphere boundary border -->
+  <circle cx="150" cy="150" r="136" fill="none" stroke="#222224" stroke-width="14" />
+
+  <!-- Center button -->
+  <circle cx="150" cy="150" r="40" fill="#222224" />
+  <circle cx="150" cy="150" r="26" fill="#FFFFFF" />
+  <circle cx="150" cy="150" r="16" fill="none" stroke="#222224" stroke-width="4" />
+</svg>

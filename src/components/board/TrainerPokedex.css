@@ -199,6 +199,19 @@ button.trainer-pokedex-row__chip:hover,
     color: #fde047;
 }
 
+.trainer-pokedex-row__chip--ball {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
+    padding: 1px 3px;
+}
+
+.trainer-pokedex-row__ball-icon {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+    display: block;
+}
+
 .trainer-pokedex-row__actions {
     display: flex;
     gap: 3px;

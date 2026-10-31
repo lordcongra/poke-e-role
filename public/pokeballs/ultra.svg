@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <clipPath id="ultra-clip">
+      <circle cx="150" cy="150" r="136" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#ultra-clip)">
+    <rect x="0" y="0" width="300" height="150" fill="#202022" />
+    <rect x="0" y="150" width="300" height="150" fill="#F6F6F6" />
+    <!-- Yellow bands forming the Ultra Ball 'H' pattern -->
+    <path d="M 65 142 L 95 142 L 105 50 C 120 40 135 38 150 38 C 165 38 180 40 195 50 L 205 142 L 235 142 L 220 35 C 195 22 170 18 150 18 C 130 18 105 22 80 35 Z" fill="#F7C924" />
+    <rect x="0" y="142" width="300" height="16" fill="#141416" />
+  </g>
+  <circle cx="150" cy="150" r="136" fill="none" stroke="#222224" stroke-width="14" />
+  <circle cx="150" cy="150" r="40" fill="#222224" />
+  <circle cx="150" cy="150" r="26" fill="#FFFFFF" />
+  <circle cx="150" cy="150" r="16" fill="none" stroke="#222224" stroke-width="4" />
+</svg>
+

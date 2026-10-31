@@ -592,6 +592,7 @@ export interface IdentitySlice {
     togglePokedexSeen: (name: string) => void;
     togglePokedexCaught: (name: string) => void;
     togglePokedexShiny: (name: string) => void;
+    setPokedexBall: (name: string, ball: string | undefined) => void;
     applyRoomSettings: (settings: Partial<RoomSettings>) => void;
     updateRoomSetting: <K extends keyof RoomSettings>(field: K, value: RoomSettings[K]) => void;
     setIsInitiativeActive: (active: boolean) => void;

@@ -1046,5 +1046,44 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
             return {
                 identity: { ...state.identity, pokedex: nextPokedex }
             };
+        }),
+
+    setPokedexBall: (name, ball) =>
+        set((state) => {
+            const cleanName = name.trim();
+            if (!cleanName) return state;
+            const lower = cleanName.toLowerCase();
+            const nextPokedex: TrainerPokedexData = { ...(state.identity.pokedex || {}) };
+            const existingKey = Object.keys(nextPokedex).find((k) => k.trim().toLowerCase() === lower);
+            const targetKey = cleanName !== lower ? cleanName : existingKey || cleanName;
+            const current = existingKey ? nextPokedex[existingKey] : nextPokedex[targetKey];
+            const cleanBall = ball?.trim();
+
+            const updated: TrainerPokedexEntry = {
+                ...(current || {}),
+                seen: true,
+                caught: true,
+                ...(cleanBall ? { ball: cleanBall } : {})
+            };
+            if (!cleanBall) {
+                delete updated.ball;
+            }
+            nextPokedex[targetKey] = updated;
+
+            for (const k of Object.keys(nextPokedex)) {
+                if (k.trim().toLowerCase() === lower && k !== targetKey) {
+                    delete nextPokedex[k];
+                }
+            }
+            if (!getIsRemoteSyncActive()) {
+                try {
+                    saveToOwlbear({ 'pokedex-data': JSON.stringify(nextPokedex) });
+                } catch (error) {
+                    console.error('[IdentitySlice] Failed to save pokedex update to Owlbear.', error);
+                }
+            }
+            return {
+                identity: { ...state.identity, pokedex: nextPokedex }
+            };
         })
 });

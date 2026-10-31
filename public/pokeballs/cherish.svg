@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <clipPath id="cherish-clip">
+      <circle cx="150" cy="150" r="136" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#cherish-clip)">
+    <rect x="0" y="0" width="300" height="300" fill="#DC2626" />
+    <!-- Black side indents / wing accents -->
+    <path d="M 20 130 L 90 130 C 100 130 110 135 110 142 L 110 158 C 110 165 100 170 90 170 L 20 170 Z" fill="#1C1917" />
+    <path d="M 280 130 L 210 130 C 200 130 190 135 190 142 L 190 158 C 190 165 200 170 210 170 L 280 170 Z" fill="#1C1917" />
+    <rect x="0" y="142" width="300" height="16" fill="#1C1917" />
+  </g>
+  <circle cx="150" cy="150" r="136" fill="none" stroke="#7F1D1D" stroke-width="14" />
+  <circle cx="150" cy="150" r="40" fill="#1C1917" />
+  <circle cx="150" cy="150" r="26" fill="#FFFFFF" />
+  <circle cx="150" cy="150" r="16" fill="none" stroke="#DC2626" stroke-width="4" />
+</svg>
+

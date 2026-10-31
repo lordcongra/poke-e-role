@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <clipPath id="timer-clip">
+      <circle cx="150" cy="150" r="136" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#timer-clip)">
+    <!-- Base silver-white body -->
+    <rect x="0" y="0" width="300" height="300" fill="#ECEAF2" />
+
+    <!-- Dark charcoal / black upper crown & collar arch spanning to top edge -->
+    <path d="M -10 -10 L 310 -10 L 310 65 C 255 88 195 70 150 70 C 105 70 45 88 -10 65 Z" fill="#2E3033" />
+
+    <!-- Red side patches / wedges along the outer perimeter -->
+    <path d="M 0 55 C 38 65 52 100 48 142 L 0 142 Z" fill="#E53935" />
+    <path d="M 300 55 C 262 65 248 100 252 142 L 300 142 Z" fill="#E53935" />
+
+    <!-- Red crest dash along the top ridge with dark border -->
+    <!-- Dark outer housing -->
+    <path d="M 126 10 C 126 36 128 56 134 68 C 140 76 160 76 166 68 C 172 56 174 36 174 10 Z" fill="#2E3033" />
+    <!-- Red inner crest -->
+    <path d="M 131 12 C 131 36 133 53 137 63 C 142 69 158 69 163 63 C 167 53 169 36 169 12 Z" fill="#E53935" />
+
+    <!-- Horizontal equator dividing band -->
+    <rect x="0" y="142" width="300" height="16" fill="#222224" />
+  </g>
+
+  <!-- Outer sphere boundary border -->
+  <circle cx="150" cy="150" r="136" fill="none" stroke="#222224" stroke-width="14" />
+
+  <!-- Center button -->
+  <circle cx="150" cy="150" r="40" fill="#222224" />
+  <circle cx="150" cy="150" r="26" fill="#FFFFFF" />
+  <circle cx="150" cy="150" r="16" fill="none" stroke="#222224" stroke-width="4" />
+</svg>
