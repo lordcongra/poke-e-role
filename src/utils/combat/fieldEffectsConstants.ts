@@ -243,6 +243,20 @@ export const FORCE_FIELD_CONDITIONS_DATA: FieldEffectInfo[] = [
             'Whole Scene Duration'
         ],
         defaultRounds: -1
+    },
+    {
+        id: 'forcefield-flower-gift',
+        name: 'Flower Gift',
+        category: 'forceField',
+        badge: 'Ability Aura',
+        color: '#db2777',
+        icon: 'Flower2',
+        initials: 'FG',
+        effects: [
+            '+2 Strength and +2 Special Defense while Sunny Weather is active',
+            'Affects user and all allies in range'
+        ],
+        defaultRounds: -1
     }
 ];
 
@@ -333,6 +347,7 @@ export const MOVE_FIELD_EFFECT_MAP: MoveFieldEffectDefinition[] = [
     { moveName: 'Safeguard', effectName: 'Safeguard', category: 'forceField', rounds: 4 },
     { moveName: 'Mist', effectName: 'Mist', category: 'forceField', rounds: 4 },
     { moveName: 'Lucky Chant', effectName: 'Lucky Chant', category: 'forceField', rounds: -1 },
+    { moveName: 'Flower Gift', effectName: 'Flower Gift', category: 'forceField', rounds: -1 },
     { moveName: 'Stealth Rock', effectName: 'Stealth Rock', category: 'entryHazard', rounds: -1 },
     { moveName: 'Spikes', effectName: 'Spikes', category: 'entryHazard', rounds: -1 },
     { moveName: 'Toxic Spikes', effectName: 'Toxic Spikes', category: 'entryHazard', rounds: -1 },
@@ -358,6 +373,7 @@ export const FIELD_EFFECT_INITIALS_MAP: Record<string, string> = {
     typhoon: 'TP',
     'strong winds': 'WI',
     fog: 'FG',
+    'flower gift': 'FG',
     tailwind: 'TW',
     'electric terrain': 'ET',
     'grassy terrain': 'GT',

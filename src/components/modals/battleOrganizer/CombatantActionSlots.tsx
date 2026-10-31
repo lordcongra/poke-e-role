@@ -22,9 +22,9 @@ export const CombatantActionSlots: React.FC<CombatantActionSlotsProps> = ({
     return (
         <td className="bo-cell bo-cell--actions">
             <div className="bo-actions-grid">
-                {actions.map((act, actIdx) => {
-                    const isSuccess = act.status === 'success';
-                    const isFailed = act.status === 'failed';
+                {(actions || []).map((act, actIdx) => {
+                    const isSuccess = act?.status === 'success';
+                    const isFailed = act?.status === 'failed';
 
                     return (
                         <div
@@ -34,7 +34,7 @@ export const CombatantActionSlots: React.FC<CombatantActionSlotsProps> = ({
                             <input
                                 type="text"
                                 className="bo-action-text-input text-subtext"
-                                value={act.text}
+                                value={act?.text || ''}
                                 onChange={(e) => onActionTextChange(actIdx, e.target.value)}
                                 placeholder="Move / Act"
                                 title={`Action ${actIdx + 1} Description / Move`}

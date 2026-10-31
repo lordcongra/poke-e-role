@@ -30,6 +30,13 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
         summary: 'Boosts Defense when entering battle.',
         benefitDisplay: '+2 DEF'
     },
+    'Flower Gift': {
+        name: 'Flower Gift',
+        tags: '[Str +2 @ Sun] [SpD +2 @ Sun]',
+        autoActive: true,
+        summary: 'While Sunny Weather is active, increases Strength and Sp. Defense by 2 for the user and allies in range.',
+        benefitDisplay: '+2 STR & +2 Sp.Def (Sun)'
+    },
 
     // --- Passives: Roll Modifiers & Criticals ---
     'Compound Eyes': {

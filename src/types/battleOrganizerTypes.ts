@@ -61,6 +61,9 @@ export interface CombatantRowData {
     tempHp?: number;
     tempWill?: number;
     activeTransformation?: string;
+    ability?: string;
+    abilityActive?: boolean;
+    species?: string;
     isNPC?: boolean;
     hidden?: boolean;
     gmHpBar?: boolean;

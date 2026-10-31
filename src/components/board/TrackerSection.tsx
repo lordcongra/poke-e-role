@@ -23,6 +23,7 @@ import { RestModal } from '../modals/combat/RestModal';
 import { Dices, RotateCcw, Swords, Tent, XCircle } from 'lucide-react';
 import { AbilityTrackerControl } from '../abilities/AbilityTrackerControl';
 import { getAbilityBenefitSummary } from '../../data/abilities/knownAbilities';
+import { resolveCharacterSide, isFlowerGiftActiveForSide } from '../../utils/combat/combatantSideUtils';
 import { ActiveFieldEffectsRow } from './ActiveFieldEffectsRow';
 import { TrackerBoostsList } from './TrackerBoostsList';
 import { TrackerConditionsList, type ConditionItem } from './TrackerConditionsList';
@@ -60,6 +61,7 @@ export function TrackerSection() {
     const customStatuses = useCharacterStore((state) => state.roomCustomStatuses);
     const passives = useCharacterStore((state) => state.passives);
     const inventory = useCharacterStore((state) => state.inventory);
+    const activeBattlefield = useCharacterStore((state) => state.activeBattlefield);
 
     // Detect active boost sources across passives and inventory items
     const boostSources = getActiveBoostSources(passives, inventory, trackers.boostLevels || {});
@@ -396,6 +398,16 @@ export function TrackerSection() {
             bg: '#8b5cf6',
             text: '#ffffff',
             onClear: clearActiveCombatBoost
+        });
+    }
+
+    const characterSide = resolveCharacterSide(currentState);
+    if (isFlowerGiftActiveForSide(characterSide, activeBattlefield, abilityName, abilityActive)) {
+        conditions.push({
+            id: 'flower-gift-aura',
+            label: 'Flower Gift (+2 STR, +2 Sp.Def)',
+            bg: '#db2777',
+            text: '#ffffff'
         });
     }
 

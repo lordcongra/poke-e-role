@@ -7,6 +7,7 @@ import { calculateTargetDefensesFromMeta } from '../../../utils/combat/combatUti
 import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { extractIsNpc } from '../../../utils/combat/initiativeHelpers';
 import { getEffectsByCategory } from '../../../utils/combat/fieldEffectsData';
+import { isFlowerGiftActiveForSide } from '../../../utils/combat/combatantSideUtils';
 
 export const RANK_TARGET_LIMITS: Record<string, number> = {
     Starter: 1,
@@ -190,6 +191,8 @@ export interface TargetOption {
     isTera: boolean;
     isPlayerSide: boolean;
     types: string[];
+    ability?: string;
+    abilityActive?: boolean;
 }
 
 export function extractTargetTypesAndTera(
@@ -236,8 +239,15 @@ export async function loadAvailableTargets(isPhysicalMove: boolean): Promise<Tar
                             isPlayerSide = !extractIsNpc(meta);
                         }
 
+                        let ability: string | undefined = undefined;
+                        let abilityActive: boolean | undefined = undefined;
+
                         if (matchingChar && matchingChar.metadata) {
                             const meta = matchingChar.metadata as Record<string, unknown>;
+                            const stateObj = (meta.state || meta) as Record<string, unknown>;
+                            const identityObj = (stateObj?.identity || meta.identity || {}) as Record<string, unknown>;
+                            ability = String(identityObj.ability || meta.ability || '');
+                            abilityActive = meta['ability-active'] !== undefined ? Boolean(meta['ability-active']) : identityObj.abilityActive !== false;
                             name = String(meta.nickname || meta.species || c.name || 'Unknown');
                             const extracted = extractTargetTypesAndTera(meta);
                             isTera = extracted.isTera;
@@ -253,7 +263,9 @@ export async function loadAvailableTargets(isPhysicalMove: boolean): Promise<Tar
                             def: targetDef,
                             isTera,
                             isPlayerSide,
-                            types
+                            types,
+                            ability,
+                            abilityActive
                         });
                     });
                 }
@@ -275,8 +287,25 @@ export async function loadAvailableTargets(isPhysicalMove: boolean): Promise<Tar
                     const { def, spd } = calculateTargetDefensesFromMeta(meta);
                     const targetDef = isPhysicalMove ? def : spd;
                     const isPlayerSide = !extractIsNpc(item.metadata);
+                    const stateObj = (meta.state || meta) as Record<string, unknown>;
+                    const identityObj = (stateObj?.identity || meta.identity || {}) as Record<string, unknown>;
+                    const ability = String(identityObj.ability || meta.ability || item.metadata.ability || '');
+                    const abilityActive = meta['ability-active'] !== undefined 
+                        ? Boolean(meta['ability-active']) 
+                        : item.metadata['ability-active'] !== undefined 
+                            ? Boolean(item.metadata['ability-active']) 
+                            : identityObj.abilityActive !== false;
 
-                    availableTargets.push({ id: item.id, name, def: targetDef, isTera, isPlayerSide, types });
+                    availableTargets.push({
+                        id: item.id,
+                        name,
+                        def: targetDef,
+                        isTera,
+                        isPlayerSide,
+                        types,
+                        ability,
+                        abilityActive
+                    });
                 }
             });
         } catch (error) {
@@ -334,6 +363,14 @@ export function calculateTargetDefAndFactors(
         if (isStrongWinds && target.types.includes('flying')) {
             forceNeutralFlying = true;
             factors.push('Strong Winds (Neutral SE damage to Flying)');
+        }
+
+        if (!isPhysicalMove) {
+            const defenderSide = target.isPlayerSide ? 'player' : 'foe';
+            if (isFlowerGiftActiveForSide(defenderSide, activeBattlefield)) {
+                targetDef += 2;
+                factors.push('Flower Gift (+2 Sp.Def)');
+            }
         }
 
         const targetSide = target.isPlayerSide ? activeBattlefield.playerSide : activeBattlefield.foeSide;

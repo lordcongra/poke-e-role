@@ -36,7 +36,7 @@ export function BattleRoundNav({
                 <div className="bo-round-tabs">
                     {rounds.map((r, idx) => (
                         <button
-                            key={r.id}
+                            key={r.id || idx}
                             type="button"
                             className={`bo-round-tab ${idx === activeRoundIndex ? 'bo-round-tab--active' : ''}`}
                             onClick={() => onSelectRound(idx)}

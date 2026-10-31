@@ -15,7 +15,7 @@ export interface BattlefieldSidePanelProps {
     onUpdateSide: <K extends keyof BattlefieldSideData>(key: K, value: BattlefieldSideData[K]) => void;
 }
 
-const SUPPORTED_SIDE_MOVES = new Set(['reflect', 'light screen', 'aurora veil', 'tailwind']);
+const SUPPORTED_SIDE_MOVES = new Set(['reflect', 'light screen', 'aurora veil', 'tailwind', 'flower gift']);
 
 export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: BattlefieldSidePanelProps) {
     const roomCustomMoves = useCharacterStore((state) => state.roomCustomMoves);
@@ -132,17 +132,19 @@ export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: Ba
     const getForceFieldSuggestions = (query: string): AutocompleteSuggestion[] => {
         const clean = query.trim().toLowerCase();
         const customFieldMoves = roomCustomMoves.filter((m) => m.battlefieldCategory === 'forceField');
+        const standardDefaults: AutocompleteSuggestion[] = [
+            { name: 'Reflect', rounds: 4, supported: true },
+            { name: 'Light Screen', rounds: 4, supported: true },
+            { name: 'Aurora Veil', rounds: 4, supported: true },
+            { name: 'Tailwind', rounds: 4, supported: true },
+            { name: 'Flower Gift', rounds: -1, supported: true },
+            { name: 'Safeguard', rounds: 4, supported: false },
+            { name: 'Mist', rounds: 4, supported: false },
+            { name: 'Lucky Chant', rounds: -1, supported: false }
+        ];
+
         if (!clean) {
-            const defaults: AutocompleteSuggestion[] = [
-                { name: 'Reflect', rounds: 4, supported: true },
-                { name: 'Light Screen', rounds: 4, supported: true },
-                { name: 'Aurora Veil', rounds: 4, supported: true },
-                { name: 'Tailwind', rounds: 4, supported: true },
-                { name: 'Safeguard', rounds: 4, supported: false },
-                { name: 'Mist', rounds: 4, supported: false },
-                { name: 'Lucky Chant', rounds: -1, supported: false }
-            ];
-            const defaultNames = new Set(defaults.map((d) => d.name.toLowerCase()));
+            const defaultNames = new Set(standardDefaults.map((d) => d.name.toLowerCase()));
             const customDefaults: AutocompleteSuggestion[] = customFieldMoves
                 .filter((m) => !defaultNames.has(m.name.toLowerCase()))
                 .map((m) => ({
@@ -150,33 +152,41 @@ export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: Ba
                     rounds: 4,
                     supported: SUPPORTED_SIDE_MOVES.has(m.name.toLowerCase())
                 }));
-            return [...defaults, ...customDefaults];
+            return [...standardDefaults, ...customDefaults];
         }
 
+        const matchedDefaults = standardDefaults.filter((d) => d.name.toLowerCase().includes(clean));
+        const matchedDefaultNames = new Set(matchedDefaults.map((d) => d.name.toLowerCase()));
+
         const matchedCustom: AutocompleteSuggestion[] = customFieldMoves
-            .filter((m) => m.name.toLowerCase().includes(clean))
+            .filter((m) => m.name.toLowerCase().includes(clean) && !matchedDefaultNames.has(m.name.toLowerCase()))
             .map((m) => {
                 const isLuckyChant = m.name.toLowerCase() === 'lucky chant';
+                const isFlowerGift = m.name.toLowerCase() === 'flower gift';
                 return {
                     name: m.name,
-                    rounds: isLuckyChant ? -1 : 4,
+                    rounds: isLuckyChant || isFlowerGift ? -1 : 4,
                     supported: SUPPORTED_SIDE_MOVES.has(m.name.toLowerCase())
                 };
             });
-        const customNames = new Set(matchedCustom.map((c) => c.name.toLowerCase()));
+        const customNames = new Set([
+            ...matchedDefaultNames,
+            ...matchedCustom.map((c) => c.name.toLowerCase())
+        ]);
 
         const matchedMoves = allMoves
             .filter((m) => m.name.toLowerCase().includes(clean) && !customNames.has(m.name.toLowerCase()))
             .slice(0, 15)
             .map((m) => {
                 const isLuckyChant = m.name.toLowerCase() === 'lucky chant';
+                const isFlowerGift = m.name.toLowerCase() === 'flower gift';
                 return {
                     name: m.name,
-                    rounds: isLuckyChant ? -1 : 4,
+                    rounds: isLuckyChant || isFlowerGift ? -1 : 4,
                     supported: SUPPORTED_SIDE_MOVES.has(m.name.toLowerCase())
                 };
             });
-        return [...matchedCustom, ...matchedMoves];
+        return [...matchedDefaults, ...matchedCustom, ...matchedMoves];
     };
 
     const getHazardSuggestions = (query: string): AutocompleteSuggestion[] => {

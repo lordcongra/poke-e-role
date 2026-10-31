@@ -112,7 +112,18 @@ export function useBattleOrganizerTokenWatch({
                                 matchingItem.metadata
                             );
 
-                            const fingerprint = `${matchingItem.id}|${hpCurr}|${hpMax}|${willCurr}|${willMax}|${tempHp}|${tempWill}|${statusText}|${statusFainted}|${activeTransformation}|${resolvedName}|${resolvedImg}|${isNPC}|${gmHpBar}|${gmHpText}|${gmWillBar}|${gmWillText}`;
+                            const stateObj = (meta.state || meta) as Record<string, unknown>;
+                            const identityObj = (stateObj?.identity || meta.identity || {}) as Record<string, unknown>;
+                            const metaAbility = String(identityObj.ability || meta.ability || matchingItem.metadata?.ability || '');
+                            const metaAbilityActive =
+                                meta['ability-active'] !== undefined
+                                    ? Boolean(meta['ability-active'])
+                                    : matchingItem.metadata?.['ability-active'] !== undefined
+                                        ? Boolean(matchingItem.metadata['ability-active'])
+                                        : identityObj.abilityActive !== false;
+                            const metaSpecies = String(identityObj.species || meta.species || matchingItem.metadata?.species || '');
+
+                            const fingerprint = `${matchingItem.id}|${hpCurr}|${hpMax}|${willCurr}|${willMax}|${tempHp}|${tempWill}|${statusText}|${statusFainted}|${activeTransformation}|${resolvedName}|${resolvedImg}|${isNPC}|${gmHpBar}|${gmHpText}|${gmWillBar}|${gmWillText}|${metaAbility}|${metaAbilityActive}|${metaSpecies}`;
                             const lastFingerprint = lastTokenFingerprintsRef.current.get(matchingItem.id);
                             if (
                                 !isReboundToken &&
@@ -129,7 +140,10 @@ export function useBattleOrganizerTokenWatch({
                                 combatant.gmHpBar === gmHpBar &&
                                 combatant.gmHpText === gmHpText &&
                                 combatant.gmWillBar === gmWillBar &&
-                                combatant.gmWillText === gmWillText
+                                combatant.gmWillText === gmWillText &&
+                                combatant.ability === metaAbility &&
+                                combatant.abilityActive === metaAbilityActive &&
+                                combatant.species === metaSpecies
                             ) {
                                 return combatant;
                             }
@@ -226,6 +240,24 @@ export function useBattleOrganizerTokenWatch({
                                 updated = true;
                             }
 
+                            let nextAbility = combatant.ability;
+                            if (metaAbility && metaAbility !== combatant.ability) {
+                                nextAbility = metaAbility;
+                                updated = true;
+                            }
+
+                            let nextAbilityActive = combatant.abilityActive;
+                            if (metaAbilityActive !== combatant.abilityActive) {
+                                nextAbilityActive = metaAbilityActive;
+                                updated = true;
+                            }
+
+                            let nextSpecies = combatant.species;
+                            if (metaSpecies && metaSpecies !== combatant.species) {
+                                nextSpecies = metaSpecies;
+                                updated = true;
+                            }
+
                             if (updated || (!combatant.tokenId && matchingItem.id)) {
                                 hasChanges = true;
                                 changesFound = true;
@@ -242,6 +274,9 @@ export function useBattleOrganizerTokenWatch({
                                     tempHp,
                                     tempWill,
                                     activeTransformation: nextTrans,
+                                    ability: nextAbility,
+                                    abilityActive: nextAbilityActive,
+                                    species: nextSpecies,
                                     tokenId: matchingItem.id,
                                     entityId: resolved.entityId || combatant.entityId,
                                     evadeUsed: nextEvade,
@@ -345,7 +380,19 @@ export function useBattleOrganizerTokenWatch({
                 currState.identity.gmHpText !== prevState.identity.gmHpText ||
                 currState.identity.gmWillBar !== prevState.identity.gmWillBar ||
                 currState.identity.gmWillText !== prevState.identity.gmWillText;
-            if (statusChanged || hpChanged || willChanged || evadeChanged || clashChanged || gmPrivacyChanged) {
+            const abilityChanged =
+                currState.identity.ability !== prevState.identity.ability ||
+                currState.identity.abilityActive !== prevState.identity.abilityActive ||
+                currState.identity.species !== prevState.identity.species;
+            if (
+                statusChanged ||
+                hpChanged ||
+                willChanged ||
+                evadeChanged ||
+                clashChanged ||
+                gmPrivacyChanged ||
+                abilityChanged
+            ) {
                 const targetTokenId = currState.tokenId;
                 const charName = (currState.identity.nickname || currState.identity.species || '').toLowerCase().trim();
                 if (targetTokenId || charName) {
@@ -444,6 +491,22 @@ export function useBattleOrganizerTokenWatch({
                                 updated = true;
                             }
 
+                            let nextAbility = targetCombatant.ability;
+                            let nextAbilityActive = targetCombatant.abilityActive;
+                            let nextSpecies = targetCombatant.species;
+                            if (currState.identity.ability !== targetCombatant.ability) {
+                                nextAbility = currState.identity.ability;
+                                updated = true;
+                            }
+                            if (currState.identity.abilityActive !== targetCombatant.abilityActive) {
+                                nextAbilityActive = currState.identity.abilityActive;
+                                updated = true;
+                            }
+                            if (currState.identity.species !== targetCombatant.species) {
+                                nextSpecies = currState.identity.species;
+                                updated = true;
+                            }
+
                             if (!updated) return prev;
 
                             const newCombatants = currentRound.combatants.map((c) =>
@@ -458,6 +521,9 @@ export function useBattleOrganizerTokenWatch({
                                           willMax: nextWillMax,
                                           evadeUsed: nextEvade,
                                           clashUsed: nextClash,
+                                          ability: nextAbility,
+                                          abilityActive: nextAbilityActive,
+                                          species: nextSpecies,
                                           gmHpBar: nextGmHpBar,
                                           gmHpText: nextGmHpText,
                                           gmWillBar: nextGmWillBar,

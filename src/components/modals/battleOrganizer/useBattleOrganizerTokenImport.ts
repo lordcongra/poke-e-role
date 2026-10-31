@@ -98,6 +98,15 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
 
                             const { gmHpBar, gmHpText, gmWillBar, gmWillText } = parseTokenPrivacyFlags(meta);
 
+                            const stateObj = (meta.state || meta) as Record<string, unknown>;
+                            const identityObj = (stateObj?.identity || meta.identity || {}) as Record<string, unknown>;
+                            const ability = String(identityObj.ability || meta.ability || '');
+                            const abilityActive =
+                                meta['ability-active'] !== undefined
+                                    ? Boolean(meta['ability-active'])
+                                    : identityObj.abilityActive !== false;
+                            const species = String(identityObj.species || meta.species || '');
+
                             combatantRows.push({
                                 id: crypto.randomUUID(),
                                 tokenId: charId,
@@ -122,6 +131,9 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                                 tempHp,
                                 tempWill,
                                 activeTransformation,
+                                ability,
+                                abilityActive,
+                                species,
                                 isNPC,
                                 hidden: isHidden,
                                 gmHpBar,
@@ -198,6 +210,17 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
 
                         const { gmHpBar, gmHpText, gmWillBar, gmWillText } = parseTokenPrivacyFlags(statsMeta, meta);
 
+                        const stateObj = (statsMeta.state || statsMeta) as Record<string, unknown>;
+                        const identityObj = (stateObj?.identity || statsMeta.identity || {}) as Record<string, unknown>;
+                        const ability = String(identityObj.ability || statsMeta.ability || meta.ability || '');
+                        const abilityActive =
+                            statsMeta['ability-active'] !== undefined
+                                ? Boolean(statsMeta['ability-active'])
+                                : meta['ability-active'] !== undefined
+                                    ? Boolean(meta['ability-active'])
+                                    : identityObj.abilityActive !== false;
+                        const species = String(identityObj.species || statsMeta.species || meta.species || '');
+
                         combatantRows.push({
                             id: crypto.randomUUID(),
                             tokenId: item.id,
@@ -220,6 +243,9 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                             tempHp,
                             tempWill,
                             activeTransformation,
+                            ability,
+                            abilityActive,
+                            species,
                             isNPC,
                             hidden: isHidden,
                             gmHpBar,

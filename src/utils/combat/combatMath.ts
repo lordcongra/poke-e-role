@@ -4,10 +4,10 @@ import { parseCombatTags, type CombatBonuses } from '../tagParser/index';
 import { checkCondition } from '../tagParser/conditionChecker';
 import { getEffectsByCategory, getAllActiveFieldEffects } from './fieldEffectsData';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { resolveCharacterSide } from './combatantSideUtils';
+import { resolveCharacterSide, isFlowerGiftActiveForSide } from './combatantSideUtils';
 
 // PROXY EXPORT: Prevents app crashes if a file is still directly importing from combatMath!
-export { parseCombatTags };
+export { parseCombatTags, resolveCharacterSide, isFlowerGiftActiveForSide };
 
 export const ATTRIBUTE_MAPPING: Record<string, string> = {
     Strength: 'str',
@@ -162,6 +162,23 @@ export function calculateStatTotal(
                 total += 2;
                 if (factorTags) {
                     factorTags.push('Tailwind (+2 Dexterity)');
+                }
+            }
+        }
+
+        if (normalizedStat === CombatStat.STR && state.activeBattlefield) {
+            const sideName = resolveCharacterSide(state);
+            if (
+                isFlowerGiftActiveForSide(
+                    sideName,
+                    state.activeBattlefield,
+                    state.identity.ability,
+                    state.identity.abilityActive
+                )
+            ) {
+                total += 2;
+                if (factorTags) {
+                    factorTags.push('Flower Gift (+2 Strength)');
                 }
             }
         }
@@ -606,9 +623,30 @@ export function calculateSDefTotal(state: CharacterState, itemBuffs?: CombatBonu
         }
     }
 
+    let flowerGiftBonus = 0;
+    if (state.activeBattlefield) {
+        const sideName = resolveCharacterSide(state);
+        if (
+            isFlowerGiftActiveForSide(
+                sideName,
+                state.activeBattlefield,
+                state.identity.ability,
+                state.identity.abilityActive
+            )
+        ) {
+            flowerGiftBonus = 2;
+        }
+    }
+
     return Math.max(
         1,
-        sdefBase + state.derived.sdefBuff - state.derived.sdefDebuff + invMods.spd + rankBonus + weatherBonus
+        sdefBase +
+            state.derived.sdefBuff -
+            state.derived.sdefDebuff +
+            invMods.spd +
+            rankBonus +
+            weatherBonus +
+            flowerGiftBonus
     );
 }
 
