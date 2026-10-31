@@ -169,10 +169,7 @@ export function BattlefieldSidePanel({ side, title, sideData, onUpdateSide }: Ba
                     supported: SUPPORTED_SIDE_MOVES.has(m.name.toLowerCase())
                 };
             });
-        const customNames = new Set([
-            ...matchedDefaultNames,
-            ...matchedCustom.map((c) => c.name.toLowerCase())
-        ]);
+        const customNames = new Set([...matchedDefaultNames, ...matchedCustom.map((c) => c.name.toLowerCase())]);
 
         const matchedMoves = allMoves
             .filter((m) => m.name.toLowerCase().includes(clean) && !customNames.has(m.name.toLowerCase()))

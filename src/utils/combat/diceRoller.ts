@@ -418,7 +418,7 @@ export async function rollDicePlus(
         // Detect critical failure:
         const neededSuccMatch = label.match(/Need (\d+) Succ/i);
         const neededSucc = neededSuccMatch ? parseInt(neededSuccMatch[1], 10) : null;
-        const isCritFail = Boolean(neededSucc !== null && neededSucc >= 3 && finalSuccesses <= (neededSucc - 3));
+        const isCritFail = Boolean(neededSucc !== null && neededSucc >= 3 && finalSuccesses <= neededSucc - 3);
 
         // Safely wipe emojis strictly from the start in case they were appended
         const cleanLabel = label.replace(/^(?:🎲|💥|🩹|🍀|🎯|🛡️|❄️|🛡|❄)\s*/u, '').trim();

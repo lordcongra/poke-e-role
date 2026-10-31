@@ -303,7 +303,10 @@ export async function setupOwlbearRoomSync(
                     if (incomingReq !== lastSyncedRoomTrackersRequireInitiative) {
                         lastSyncedRoomTrackersRequireInitiative = incomingReq;
                         onTokensNeedRender(true).catch((err) =>
-                            console.warn('[SyncEngine] Error re-rendering tokens on roomTrackersRequireInitiative change:', err)
+                            console.warn(
+                                '[SyncEngine] Error re-rendering tokens on roomTrackersRequireInitiative change:',
+                                err
+                            )
                         );
                     }
                 }

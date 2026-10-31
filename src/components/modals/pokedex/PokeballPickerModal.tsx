@@ -2,11 +2,7 @@ import { useState, useRef, useMemo } from 'react';
 import OBR, { type ImageDownload } from '@owlbear-rodeo/sdk';
 import { imageManager, autoCropTransparency } from '../../../utils/graphics/imageManager';
 import { useResolvedImageUrl } from '../../../utils/graphics/useResolvedImageUrl';
-import {
-    POKEBALL_PRESETS,
-    resolvePokeballUrl,
-    DEFAULT_POKEBALL_ID
-} from '../../../utils/graphics/pokeballConstants';
+import { POKEBALL_PRESETS, resolvePokeballUrl, DEFAULT_POKEBALL_ID } from '../../../utils/graphics/pokeballConstants';
 import { Upload, Globe, Image as ImageIcon, Trash2, Info, X } from 'lucide-react';
 import './PokeballPickerModal.css';
 
@@ -120,9 +116,7 @@ export function PokeballPickerModal({
         <div className="pokeball-picker-modal__overlay" onClick={onClose}>
             <div className="pokeball-picker-modal__content" onClick={(e) => e.stopPropagation()}>
                 <div className="pokeball-picker-modal__header">
-                    <h3 className="pokeball-picker-modal__title text-title-primary">
-                        Pokéball: {pokemonName}
-                    </h3>
+                    <h3 className="pokeball-picker-modal__title text-title-primary">Pokéball: {pokemonName}</h3>
                     <button
                         type="button"
                         className="pokeball-picker-modal__close-btn"
@@ -149,7 +143,9 @@ export function PokeballPickerModal({
                                 {activePreset ? activePreset.name : 'Custom Pokéball Artwork'}
                             </span>
                             <span className="text-subtext" style={{ fontSize: '0.75rem' }}>
-                                {currentBall ? `Type: ${activePreset ? 'Preset' : 'Custom Image'}` : 'Standard Poké Ball'}
+                                {currentBall
+                                    ? `Type: ${activePreset ? 'Preset' : 'Custom Image'}`
+                                    : 'Standard Poké Ball'}
                             </span>
                         </div>
                     </div>
@@ -178,9 +174,7 @@ export function PokeballPickerModal({
                                             className="pokeball-picker-modal__preset-icon"
                                             loading="lazy"
                                         />
-                                        <span className="pokeball-picker-modal__preset-label">
-                                            {preset.name}
-                                        </span>
+                                        <span className="pokeball-picker-modal__preset-label">{preset.name}</span>
                                     </button>
                                 );
                             })}
@@ -255,7 +249,8 @@ export function PokeballPickerModal({
                     <div className="pokeball-picker-modal__notice">
                         <Info size={14} />
                         <span>
-                            Presets, Owlbear Library assets, and Web URLs are visible to all players in the room. Local device uploads are stored in your browser.
+                            Presets, Owlbear Library assets, and Web URLs are visible to all players in the room. Local
+                            device uploads are stored in your browser.
                         </span>
                     </div>
                 </div>
@@ -270,11 +265,7 @@ export function PokeballPickerModal({
                         <Trash2 size={14} /> Revert to Default
                     </button>
 
-                    <button
-                        type="button"
-                        className="action-button action-button--dark"
-                        onClick={onClose}
-                    >
+                    <button type="button" className="action-button action-button--dark" onClick={onClose}>
                         Close
                     </button>
                 </div>
@@ -282,4 +273,3 @@ export function PokeballPickerModal({
         </div>
     );
 }
-

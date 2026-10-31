@@ -42,4 +42,3 @@ export function PokedexDeleteConfirmModal({ pokemonName, onCancel, onConfirm }: 
         </div>
     );
 }
-

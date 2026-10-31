@@ -1,5 +1,12 @@
 import type { StateCreator } from 'zustand';
-import type { CharacterState, IdentitySlice, Rank, RoomSettings, TrainerPokedexData, TrainerPokedexEntry } from '../storeTypes';
+import type {
+    CharacterState,
+    IdentitySlice,
+    Rank,
+    RoomSettings,
+    TrainerPokedexData,
+    TrainerPokedexEntry
+} from '../storeTypes';
 import {
     saveToOwlbear,
     getIsRemoteSyncActive,

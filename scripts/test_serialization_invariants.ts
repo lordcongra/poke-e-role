@@ -2262,7 +2262,11 @@ await runTest('trainerPokedex: serialization, hydration, and storageAdapter trac
 
     // 2. Hydration
     const hydrated = hydrateStateFromMetadata(meta, createTestCharacterState());
-    assert.deepEqual(hydrated.identity?.pokedex, mockState.identity.pokedex, 'Hydrates pokedex-data accurately including ball');
+    assert.deepEqual(
+        hydrated.identity?.pokedex,
+        mockState.identity.pokedex,
+        'Hydrates pokedex-data accurately including ball'
+    );
 
     // 3. StorageAdapter change tracking
     assert.ok(
@@ -2286,11 +2290,7 @@ await runTest('trainerPokedex: serialization, hydration, and storageAdapter trac
     assert.equal(healedPokedex.Pikachu.caught, true, 'Merged flags: caught is true from uppercase variant');
     assert.equal(healedPokedex.Pikachu.seen, true, 'Merged flags: seen is true');
     assert.equal(healedPokedex.Pikachu.ball, 'dive', 'Preserves ball through case-deduplication');
-    assert.equal(
-        healedPokedex.CHARIZARD?.ball,
-        'https://example.com/custom-ball.png',
-        'Preserves custom web ball url'
-    );
+    assert.equal(healedPokedex.CHARIZARD?.ball, 'https://example.com/custom-ball.png', 'Preserves custom web ball url');
     assert.equal(
         getPokedexEntry(healedPokedex, 'charizard').ball,
         'https://example.com/custom-ball.png',
@@ -2320,8 +2320,16 @@ await runTest('trainerPokedex: serialization, hydration, and storageAdapter trac
     // 7. Pokéball presets & pure resolver
     assert.equal(POKEBALL_PRESETS.length, 16, 'Contains all 16 Pokéball presets');
     assert.equal(resolvePokeballUrl('great'), '/pokeballs/great.svg', 'Resolves preset id');
-    assert.equal(resolvePokeballUrl('GREAT.SVG'), '/pokeballs/great.svg', 'Case-insensitive preset resolver with extension');
-    assert.equal(resolvePokeballUrl('https://example.com/ball.png'), 'https://example.com/ball.png', 'Preserves web URL');
+    assert.equal(
+        resolvePokeballUrl('GREAT.SVG'),
+        '/pokeballs/great.svg',
+        'Case-insensitive preset resolver with extension'
+    );
+    assert.equal(
+        resolvePokeballUrl('https://example.com/ball.png'),
+        'https://example.com/ball.png',
+        'Preserves web URL'
+    );
     assert.equal(resolvePokeballUrl('local-img:12345'), 'local-img:12345', 'Preserves IndexedDB image key');
     assert.equal(resolvePokeballUrl(''), '/pokeballs/poke.svg', 'Defaults to standard Poké Ball when empty');
 });

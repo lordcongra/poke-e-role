@@ -85,8 +85,6 @@ export function mapRoomSettings(sData: Record<string, unknown>) {
         roomHideHudEnemiesOnly:
             sData.roomHideHudEnemiesOnly !== undefined ? Boolean(sData.roomHideHudEnemiesOnly) : undefined,
         roomTrackersRequireInitiative:
-            sData.roomTrackersRequireInitiative !== undefined
-                ? Boolean(sData.roomTrackersRequireInitiative)
-                : undefined
+            sData.roomTrackersRequireInitiative !== undefined ? Boolean(sData.roomTrackersRequireInitiative) : undefined
     };
 }

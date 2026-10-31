@@ -72,4 +72,3 @@ export function resolvePokeballUrl(ballIdOrUrl?: string): string {
 
     return defaultUrl;
 }
-

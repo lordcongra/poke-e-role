@@ -82,13 +82,11 @@ export function isFlowerGiftActiveForSide(
     if (side) {
         const inForceFields = side.forceFields?.some(
             (ff) =>
-                ff?.name?.toLowerCase().includes('flower gift') &&
-                (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                ff?.name?.toLowerCase().includes('flower gift') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
         );
         const inExtraForceFields = side.extraForceFields?.some(
             (ff) =>
-                ff?.name?.toLowerCase().includes('flower gift') &&
-                (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                ff?.name?.toLowerCase().includes('flower gift') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
         );
         const inOther = Boolean(side.other && side.other.toLowerCase().includes('flower gift'));
         const inExtraOther = Boolean(side.extraOther?.some((o) => o?.toLowerCase().includes('flower gift')));
@@ -127,4 +125,3 @@ export function isFlowerGiftActiveForSide(
 
     return false;
 }
-

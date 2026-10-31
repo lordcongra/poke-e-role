@@ -145,7 +145,7 @@
     border-color: var(--primary);
 }
 
-.maneuvers-modal__action-counter-toggle input[type="checkbox"] {
+.maneuvers-modal__action-counter-toggle input[type='checkbox'] {
     cursor: pointer;
     accent-color: var(--primary);
     margin: 0;

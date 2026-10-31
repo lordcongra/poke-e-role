@@ -427,14 +427,10 @@ export function InModalRollLog({
 
                             const { cleanLabel, coreTags, factorTags } = parseRollLabel(r.label);
                             const isCrit = Boolean(
-                                r.isCrit ||
-                                /critical hit/i.test(r.result) ||
-                                /CRITICAL HIT/i.test(r.label)
+                                r.isCrit || /critical hit/i.test(r.result) || /CRITICAL HIT/i.test(r.label)
                             );
                             const isCritFail = Boolean(
-                                r.isCritFail ||
-                                /critical failure/i.test(r.result) ||
-                                /CRITICAL FAILURE/i.test(r.label)
+                                r.isCritFail || /critical failure/i.test(r.result) || /CRITICAL FAILURE/i.test(r.label)
                             );
 
                             return (

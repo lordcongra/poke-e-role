@@ -40,7 +40,10 @@ function testFormationGeometry() {
     console.log('Test 1: Verifying team formation offsets around trainer center...');
     const offsets3 = calculateFormationOffsets(3, 200);
     assert.strictEqual(offsets3.length, 3, 'Should have 3 offsets for 3 team members');
-    assert.ok(offsets3.some((o: { dx: number; dy: number }) => o.dx !== 0 || o.dy !== 0), 'Offsets should spread around center');
+    assert.ok(
+        offsets3.some((o: { dx: number; dy: number }) => o.dx !== 0 || o.dy !== 0),
+        'Offsets should spread around center'
+    );
     console.log('  ✓ PASS: calculateFormationOffsets correctly arranges Pokémon around trainer');
 }
 
@@ -152,7 +155,11 @@ function testConflictDetection() {
         { mode: 'Trainer', nickname: 'Gary Oak' },
         pokemonToken
     );
-    assert.strictEqual(nonTrainerConflict, undefined, 'Non-trainer claim (isTrainer=false) does not trigger trainer collision');
+    assert.strictEqual(
+        nonTrainerConflict,
+        undefined,
+        'Non-trainer claim (isTrainer=false) does not trigger trainer collision'
+    );
     console.log('  ✓ PASS: isTrainer: false does not collide with trainer claims');
 }
 
@@ -219,7 +226,7 @@ async function testLinkingAndGmOverrides() {
         saveTrainerProfile
     });
 
-    assert.strictEqual(savedProfile, null, 'Non-GM player MUST NOT be allowed to link another trainer\'s claimed token');
+    assert.strictEqual(savedProfile, null, "Non-GM player MUST NOT be allowed to link another trainer's claimed token");
     console.log('  ✓ PASS: Non-GM player blocked from linking token claimed by another trainer');
 
     // 3b: Non-GM player cannot link token belonging to another player
@@ -290,7 +297,11 @@ async function testLinkingAndGmOverrides() {
         saveTrainerProfile
     });
 
-    assert.strictEqual(savedProfile, null, 'Non-GM player MUST NOT be allowed to link token owned by another player ID');
+    assert.strictEqual(
+        savedProfile,
+        null,
+        'Non-GM player MUST NOT be allowed to link token owned by another player ID'
+    );
     console.log('  ✓ PASS: Non-GM player blocked from linking token belonging to another player ID');
 
     // 3c: GM Role Overrides and Successfully Claims
@@ -487,12 +498,16 @@ async function testTrainerSpawnerOverwriteTeam() {
     await spawnTrainerAndTeam(mockResult as any, 'overwrite');
 
     // 1. Verify target token metadata was updated with Brock's metadata
-    const characterData = updatedTokenMeta ? (updatedTokenMeta['pokerole-extension/stats'] as unknown as Record<string, unknown>) : null;
+    const characterData = updatedTokenMeta
+        ? (updatedTokenMeta['pokerole-extension/stats'] as unknown as Record<string, unknown>)
+        : null;
     assert.ok(characterData, 'Target token character data should be present');
     assert.strictEqual(characterData.nickname, 'Brock', 'Target token nickname should be overwritten with Brock');
 
     // 2. Verify claimed-by metadata was stamped with isTrainer: true
-    const claim = updatedTokenMeta ? (updatedTokenMeta['pokerole-pmd-extension/claimed-by'] as unknown as Record<string, unknown>) : null;
+    const claim = updatedTokenMeta
+        ? (updatedTokenMeta['pokerole-pmd-extension/claimed-by'] as unknown as Record<string, unknown>)
+        : null;
     assert.ok(claim, 'Target token should be stamped with claimed-by metadata');
     assert.strictEqual(claim.isTrainer, true, 'claimed-by should have isTrainer: true');
     assert.strictEqual(claim.trainerId, 'trainer-brock', 'claimed-by should have trainerId: trainer-brock');
@@ -504,8 +519,16 @@ async function testTrainerSpawnerOverwriteTeam() {
     assert.strictEqual(addedItems.length, 2, '2 team members should have been spawned on scene');
     assert.strictEqual(addedItems[0].name, 'Geodude', 'First team member should be Geodude');
     assert.strictEqual(addedItems[1].name, 'Onix', 'Second team member should be Onix');
-    assert.notStrictEqual(addedItems[0].position.x, 500, 'Geodude should be placed with formation offset relative to trainer (500, 500)');
-    assert.notStrictEqual(addedItems[1].position.x, 500, 'Onix should be placed with formation offset relative to trainer (500, 500)');
+    assert.notStrictEqual(
+        addedItems[0].position.x,
+        500,
+        'Geodude should be placed with formation offset relative to trainer (500, 500)'
+    );
+    assert.notStrictEqual(
+        addedItems[1].position.x,
+        500,
+        'Onix should be placed with formation offset relative to trainer (500, 500)'
+    );
     console.log('  ✓ PASS: Pokémon team members spawned in formation around trainer center position');
 
     // Restore OBR mocks

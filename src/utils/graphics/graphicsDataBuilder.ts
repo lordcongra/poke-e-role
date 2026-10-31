@@ -384,8 +384,7 @@ export function buildGraphicsFromMeta(
         roomDefaultOffsetY: defaultOffsetY,
         gmOnlyTrackers: Boolean(id.gmOnlyTrackers),
         roomTrackersRequireInitiative: Boolean(id.roomTrackersRequireInitiative),
-        isInitiativeActive:
-            isInitiativeActive !== undefined ? isInitiativeActive : Boolean(id.isInitiativeActive),
+        isInitiativeActive: isInitiativeActive !== undefined ? isInitiativeActive : Boolean(id.isInitiativeActive),
         xOffset: Number(meta['x-offset']) || 0,
         yOffset: Number(meta['y-offset']) || 0,
         hpOffsetX: Number(meta['hp-offset-x']) || 0,

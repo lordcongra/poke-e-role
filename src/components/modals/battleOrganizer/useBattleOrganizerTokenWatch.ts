@@ -61,7 +61,8 @@ export function useBattleOrganizerTokenWatch({
 
                 if (candidateItems.length === 0) return false;
 
-                let standaloneInitMap: Map<string, { total: number; baseInit: number; tiebreaker: number }> | null = null;
+                let standaloneInitMap: Map<string, { total: number; baseInit: number; tiebreaker: number }> | null =
+                    null;
                 if (isStandaloneMode) {
                     try {
                         const raw = localStorage.getItem('pkr_standalone_init_list');
@@ -149,7 +150,10 @@ export function useBattleOrganizerTokenWatch({
                                     const itemBase =
                                         typeof initMeta.base === 'number'
                                             ? initMeta.base
-                                            : calculateBaseInitFromCharacterData(matchingItem.metadata, useCharacterStore.getState());
+                                            : calculateBaseInitFromCharacterData(
+                                                  matchingItem.metadata,
+                                                  useCharacterStore.getState()
+                                              );
                                     const tie = typeof initMeta.tiebreaker === 'number' ? initMeta.tiebreaker : 0;
                                     tokenInitDisplay = formatInitiativeDisplay(integerTotal, itemBase, tie);
                                     tokenBaseInit = itemBase;
@@ -171,14 +175,18 @@ export function useBattleOrganizerTokenWatch({
 
                             const stateObj = (meta.state || meta) as Record<string, unknown>;
                             const identityObj = (stateObj?.identity || meta.identity || {}) as Record<string, unknown>;
-                            const metaAbility = String(identityObj.ability || meta.ability || matchingItem.metadata?.ability || '');
+                            const metaAbility = String(
+                                identityObj.ability || meta.ability || matchingItem.metadata?.ability || ''
+                            );
                             const metaAbilityActive =
                                 meta['ability-active'] !== undefined
                                     ? Boolean(meta['ability-active'])
                                     : matchingItem.metadata?.['ability-active'] !== undefined
-                                        ? Boolean(matchingItem.metadata['ability-active'])
-                                        : identityObj.abilityActive !== false;
-                            const metaSpecies = String(identityObj.species || meta.species || matchingItem.metadata?.species || '');
+                                      ? Boolean(matchingItem.metadata['ability-active'])
+                                      : identityObj.abilityActive !== false;
+                            const metaSpecies = String(
+                                identityObj.species || meta.species || matchingItem.metadata?.species || ''
+                            );
 
                             const fingerprint = `${matchingItem.id}|${hpCurr}|${hpMax}|${willCurr}|${willMax}|${tempHp}|${tempWill}|${statusText}|${statusFainted}|${activeTransformation}|${resolvedName}|${resolvedImg}|${isNPC}|${gmHpBar}|${gmHpText}|${gmWillBar}|${gmWillText}|${metaAbility}|${metaAbilityActive}|${metaSpecies}|${tokenInitDisplay ?? ''}|${tokenBaseInit ?? ''}`;
                             const lastFingerprint = lastTokenFingerprintsRef.current.get(matchingItem.id);

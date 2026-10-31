@@ -114,4 +114,3 @@ export async function resolveImageDimensions(url: string): Promise<{ width: numb
         img.src = url;
     });
 }
-

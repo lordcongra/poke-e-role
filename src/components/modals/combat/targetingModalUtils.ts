@@ -247,7 +247,10 @@ export async function loadAvailableTargets(isPhysicalMove: boolean): Promise<Tar
                             const stateObj = (meta.state || meta) as Record<string, unknown>;
                             const identityObj = (stateObj?.identity || meta.identity || {}) as Record<string, unknown>;
                             ability = String(identityObj.ability || meta.ability || '');
-                            abilityActive = meta['ability-active'] !== undefined ? Boolean(meta['ability-active']) : identityObj.abilityActive !== false;
+                            abilityActive =
+                                meta['ability-active'] !== undefined
+                                    ? Boolean(meta['ability-active'])
+                                    : identityObj.abilityActive !== false;
                             name = String(meta.nickname || meta.species || c.name || 'Unknown');
                             const extracted = extractTargetTypesAndTera(meta);
                             isTera = extracted.isTera;
@@ -290,11 +293,12 @@ export async function loadAvailableTargets(isPhysicalMove: boolean): Promise<Tar
                     const stateObj = (meta.state || meta) as Record<string, unknown>;
                     const identityObj = (stateObj?.identity || meta.identity || {}) as Record<string, unknown>;
                     const ability = String(identityObj.ability || meta.ability || item.metadata.ability || '');
-                    const abilityActive = meta['ability-active'] !== undefined 
-                        ? Boolean(meta['ability-active']) 
-                        : item.metadata['ability-active'] !== undefined 
-                            ? Boolean(item.metadata['ability-active']) 
-                            : identityObj.abilityActive !== false;
+                    const abilityActive =
+                        meta['ability-active'] !== undefined
+                            ? Boolean(meta['ability-active'])
+                            : item.metadata['ability-active'] !== undefined
+                              ? Boolean(item.metadata['ability-active'])
+                              : identityObj.abilityActive !== false;
 
                     availableTargets.push({
                         id: item.id,

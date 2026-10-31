@@ -151,7 +151,9 @@
     display: flex;
     flex-direction: column;
     gap: calc(6px * var(--roll-log-font-scale, 1));
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
 }
 
 .in-modal-roll-log__entry--crit {

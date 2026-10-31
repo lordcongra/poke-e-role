@@ -29,7 +29,7 @@ import {
     Target
 } from 'lucide-react';
 
-export const CURRENT_VERSION = '3.7.4';
+export const CURRENT_VERSION = '3.7.5';
 
 export interface ChangelogHighlight {
     id: string;
@@ -130,6 +130,64 @@ export function getChangelogDiff(lastSeenVersion: string | null): ChangelogDiffR
 }
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
+    {
+        version: '3.7.5',
+        date: 'October 2026',
+        changes: [
+            <strong
+                key="pokedex-pokeballs-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <BookOpen size={16} /> Pokédex Pokéball Art & Custom Images
+            </strong>,
+            <ul
+                key="pokedex-pokeballs-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Pokéball Selection for Caught Pokémon:</strong> You can now choose which Pokéball was
+                    used to catch each Pokémon in your Trainer Pokédex! Select from a wide variety of common Pokéballs
+                    (including Great Balls, Ultra Balls, Master Balls, Luxury Balls, Dive Balls, and more) or upload your
+                    own custom image for any homebrew balls or if you just don't like the default art style (these were made to look good at small size).
+                </li>
+            </ul>,
+            <strong
+                key="combat-hud-auto-hide-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Sliders size={16} /> Initiative-Linked Combat HUD Visibility
+            </strong>,
+            <ul
+                key="combat-hud-auto-hide-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Initiative-Linked HUD Elements:</strong> Added a toggle to Room Rules to only display Owlbear Rodeo map
+                    token HUD elements (HP, Will, action counters, clash, evade, and defenses) while the Initiative Tracker
+                    is actively running. This keeps tabletop maps clean and immersive during roleplay moments without
+                    requiring GMs to manually toggle settings on and off between encounters.
+                </li>
+            </ul>
+        ]
+    },
     {
         version: '3.7.4',
         date: 'October 2026',

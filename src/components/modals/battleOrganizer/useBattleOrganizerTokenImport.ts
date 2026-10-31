@@ -219,8 +219,8 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                             statsMeta['ability-active'] !== undefined
                                 ? Boolean(statsMeta['ability-active'])
                                 : meta['ability-active'] !== undefined
-                                    ? Boolean(meta['ability-active'])
-                                    : identityObj.abilityActive !== false;
+                                  ? Boolean(meta['ability-active'])
+                                  : identityObj.abilityActive !== false;
                         const species = String(identityObj.species || statsMeta.species || meta.species || '');
 
                         combatantRows.push({

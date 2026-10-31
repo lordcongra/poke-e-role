@@ -53,7 +53,9 @@
     justify-content: center;
     padding: 4px;
     border-radius: 4px;
-    transition: color 0.15s ease, background 0.15s ease;
+    transition:
+        color 0.15s ease,
+        background 0.15s ease;
 }
 
 .pokeball-picker-modal__close-btn:hover {
@@ -247,4 +249,3 @@
     background: var(--panel-alt);
     gap: 10px;
 }
-

@@ -15,9 +15,14 @@ export function TrainerPokedexBallIcon({ ball, size = 13, className }: TrainerPo
         <img
             src={resolvedUrl}
             alt="Pokéball"
-            style={{ width: size, height: size, objectFit: 'contain', display: 'inline-block', verticalAlign: 'middle' }}
+            style={{
+                width: size,
+                height: size,
+                objectFit: 'contain',
+                display: 'inline-block',
+                verticalAlign: 'middle'
+            }}
             className={className}
         />
     );
 }
-

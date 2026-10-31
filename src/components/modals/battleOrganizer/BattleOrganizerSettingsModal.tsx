@@ -169,7 +169,8 @@ export function BattleOrganizerSettingsModal({ onClose }: BattleOrganizerSetting
                         <div className="bo-settings__card-info">
                             <span className="bo-settings__card-title text-label">Show Critical Marks</span>
                             <span className="bo-settings__card-desc text-subtext">
-                                Display visual outlines and icons for Critical Hits (Sparkles) and Critical Failures (Alert Triangle) in the action slots.
+                                Display visual outlines and icons for Critical Hits (Sparkles) and Critical Failures
+                                (Alert Triangle) in the action slots.
                             </span>
                         </div>
                     </label>
