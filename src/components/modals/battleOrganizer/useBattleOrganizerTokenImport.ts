@@ -74,7 +74,7 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                                 matchingChar?.metadata || initItem,
                                 globalStore
                             );
-                            let initScore = String(baseInitVal);
+                            let initScore = '0';
                             if (
                                 typeof initItem.total === 'number' &&
                                 typeof initItem.d6 === 'number' &&
@@ -257,6 +257,12 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                 }
 
                 if (combatantRows.length > 0) {
+                    combatantRows.sort((a, b) => {
+                        const valA = parseFloat(a.initiative) || 0;
+                        const valB = parseFloat(b.initiative) || 0;
+                        return valB - valA;
+                    });
+
                     let newlyAddedCount = 0;
                     let targetCombatantsToReset: CombatantRowData[] = combatantRows;
 
@@ -290,7 +296,11 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
 
                             targetCombatantsToReset = newCombatants;
                             newlyAddedCount = newCombatants.length;
-                            const mergedCombatants = [...currentRound.combatants, ...newCombatants];
+                            const mergedCombatants = [...currentRound.combatants, ...newCombatants].sort((a, b) => {
+                                const valA = parseFloat(a.initiative) || 0;
+                                const valB = parseFloat(b.initiative) || 0;
+                                return valB - valA;
+                            });
 
                             const updatedRound: BattleRoundData = {
                                 ...currentRound,

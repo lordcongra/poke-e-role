@@ -109,7 +109,8 @@ export function useInitiativeEngine() {
             newImage !== activeCombatant.image ||
             newName !== activeCombatant.name
         ) {
-            const newTotal = activeCombatant.d6 > 0 ? activeCombatant.d6 + newBase : newBase;
+            const newTotal =
+                activeCombatant.d6 > 0 ? activeCombatant.d6 + newBase : activeCombatant.total === 0 ? 0 : newBase;
             const next = combatants.map((c) =>
                 c.id === activeTokenId
                     ? { ...c, name: newName, baseInit: newBase, total: newTotal, image: newImage }
@@ -203,7 +204,7 @@ export function useInitiativeEngine() {
                                         ? d6Value + baseInitiative
                                         : typeof item.total === 'number'
                                           ? item.total
-                                          : baseInitiative;
+                                          : 0;
 
                                 return {
                                     id: charId || crypto.randomUUID(),
@@ -383,11 +384,7 @@ export function useInitiativeEngine() {
                             ? meta.base
                             : calculateBaseInitFromCharacterData(item.metadata, useCharacterStore.getState());
 
-                    let integerTotal = Math.floor(val);
-                    // If legacy token value was 0 or just a decimal fraction (e.g. 0.111), fallback to base
-                    if (integerTotal < dynamicBaseInit && integerTotal === 0) {
-                        integerTotal = dynamicBaseInit;
-                    }
+                    const integerTotal = Math.floor(val);
 
                     const tie = typeof meta?.tiebreaker === 'number' ? meta.tiebreaker : 0;
                     const rawD6 = integerTotal > dynamicBaseInit ? integerTotal - dynamicBaseInit : 0;
@@ -723,7 +720,7 @@ export function useInitiativeEngine() {
                     image: char.image,
                     d6: 0,
                     baseInit: baseInit,
-                    total: baseInit,
+                    total: 0,
                     tiebreaker: 0,
                     hidden: shouldHide,
                     isNPC: isNpc
@@ -745,7 +742,6 @@ export function useInitiativeEngine() {
         try {
             const store = useCharacterStore.getState();
             const dynamicBaseInit = calculateBaseInitFromCharacterData(item.metadata, store);
-            const encodedValue = calculateEncodedInitiative(dynamicBaseInit, dynamicBaseInit, 0);
 
             await OBR.scene.items.updateItems([item.id], (items) => {
                 for (const i of items) {
@@ -759,7 +755,7 @@ export function useInitiativeEngine() {
                         (i.metadata['pokerole-pmd-extension/initiative'] as Record<string, unknown> | undefined) || {};
                     i.metadata['pokerole-pmd-extension/initiative'] = {
                         ...existing,
-                        value: encodedValue,
+                        value: 0,
                         base: dynamicBaseInit,
                         tiebreaker: 0,
                         hidden: shouldHide ? true : existing.hidden === true ? true : false

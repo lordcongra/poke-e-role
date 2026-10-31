@@ -22,7 +22,7 @@ export interface StoredCharacterData extends Partial<CharacterState> {
 }
 
 export function formatInitiativeDisplay(total: number, baseInit: number, tiebreaker: number = 0): string {
-    if (total === 0 && baseInit === 0) return '0';
+    if (total === 0) return '0';
     if (tiebreaker > 0) {
         return `${total}.${baseInit}${tiebreaker}`;
     }
@@ -33,7 +33,7 @@ export function formatInitiativeDisplay(total: number, baseInit: number, tiebrea
 }
 
 export function calculateEncodedInitiative(total: number, baseInit: number, tiebreaker: number = 0): number {
-    if (total === 0 && baseInit === 0) return 0;
+    if (total === 0) return 0;
     const decimalValue = total + baseInit / 100 + tiebreaker / 10000;
     return parseFloat(decimalValue.toFixed(4));
 }
