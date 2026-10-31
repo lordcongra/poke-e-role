@@ -524,6 +524,8 @@ export interface IdentitySlice {
         roomHideClash?: boolean;
         roomHideHudPlayersOnly?: boolean;
         roomHideHudEnemiesOnly?: boolean;
+        roomTrackersRequireInitiative?: boolean;
+        isInitiativeActive?: boolean;
         ignoreRoomHudRules?: boolean;
 
         // Initiative HUD User Settings
@@ -592,6 +594,7 @@ export interface IdentitySlice {
     togglePokedexShiny: (name: string) => void;
     applyRoomSettings: (settings: Partial<RoomSettings>) => void;
     updateRoomSetting: <K extends keyof RoomSettings>(field: K, value: RoomSettings[K]) => void;
+    setIsInitiativeActive: (active: boolean) => void;
     setSceneScale: (scale: number | null) => void;
     updateSceneScale: (scale: number | null) => void;
     setSceneOffsets: (x: number | null, y: number | null) => void;
@@ -632,6 +635,7 @@ export interface RoomSettings {
     roomHideClash?: boolean;
     roomHideHudPlayersOnly?: boolean;
     roomHideHudEnemiesOnly?: boolean;
+    roomTrackersRequireInitiative?: boolean;
 }
 
 export type SheetMode = 'Pokémon' | 'Trainer' | 'Trainer (Special)';

@@ -15,6 +15,7 @@ import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import {
     ROOM_META_ID,
     BATTLEFIELD_META_ID,
+    INITIATIVE_ACTIVE_META_KEY,
     mapRoomSettings,
     showDicePlusRetirementNotice
 } from './owlbearSyncConstants';
@@ -36,6 +37,9 @@ export async function setupOwlbearRoomSync(
     let lastSyncedRoomOffsetX = useCharacterStore.getState().identity.roomDefaultOffsetX ?? 0;
     let lastSyncedRoomOffsetY = useCharacterStore.getState().identity.roomDefaultOffsetY ?? 0;
     let lastSyncedGmOnlyTrackers = useCharacterStore.getState().identity.gmOnlyTrackers ?? false;
+    let lastSyncedRoomTrackersRequireInitiative =
+        useCharacterStore.getState().identity.roomTrackersRequireInitiative ?? false;
+    let lastSyncedInitiativeActive = useCharacterStore.getState().identity.isInitiativeActive ?? false;
     let lastSyncedVisibilityFlags = {
         roomHideHpBar: false,
         roomHideHpText: false,
@@ -131,7 +135,8 @@ export async function setupOwlbearRoomSync(
                     gmOnlyPullEnemies: true,
                     defaultNpcInitiativeHidden: true,
                     pmdSkills: false,
-                    gmDemoMode: false
+                    gmDemoMode: false,
+                    roomTrackersRequireInitiative: false
                 };
 
                 for (const [key, defaultVal] of Object.entries(defaultPermissions)) {
@@ -158,6 +163,9 @@ export async function setupOwlbearRoomSync(
             }
             if (mapped.gmOnlyTrackers !== undefined) {
                 lastSyncedGmOnlyTrackers = mapped.gmOnlyTrackers;
+            }
+            if (mapped.roomTrackersRequireInitiative !== undefined) {
+                lastSyncedRoomTrackersRequireInitiative = mapped.roomTrackersRequireInitiative;
             }
             lastSyncedVisibilityFlags = {
                 roomHideHpBar: Boolean(mapped.roomHideHpBar),
@@ -186,7 +194,8 @@ export async function setupOwlbearRoomSync(
                 gmOnlyPullEnemies: true,
                 defaultNpcInitiativeHidden: true,
                 pmdSkills: false,
-                gmDemoMode: false
+                gmDemoMode: false,
+                roomTrackersRequireInitiative: false
             };
             OBR.room
                 .setMetadata({ [ROOM_META_ID]: initialRoomSettings })
@@ -217,6 +226,12 @@ export async function setupOwlbearRoomSync(
             store.setSceneOffsets(incomingOffsetX, incomingOffsetY);
             lastSyncedSceneOffsetX = incomingOffsetX;
             lastSyncedSceneOffsetY = incomingOffsetY;
+        }
+
+        if (sceneMetaResult && INITIATIVE_ACTIVE_META_KEY in sceneMetaResult) {
+            const isInitActive = Boolean(sceneMetaResult[INITIATIVE_ACTIVE_META_KEY]);
+            store.setIsInitiativeActive(isInitActive);
+            lastSyncedInitiativeActive = isInitActive;
         }
 
         if (sceneMetaResult && BATTLEFIELD_META_ID in sceneMetaResult) {
@@ -279,6 +294,16 @@ export async function setupOwlbearRoomSync(
                         lastSyncedGmOnlyTrackers = incomingGmTrackers;
                         onTokensNeedRender(true).catch((err) =>
                             console.warn('[SyncEngine] Error re-rendering tokens on gmOnlyTrackers change:', err)
+                        );
+                    }
+                }
+
+                if (data.roomTrackersRequireInitiative !== undefined) {
+                    const incomingReq = Boolean(data.roomTrackersRequireInitiative);
+                    if (incomingReq !== lastSyncedRoomTrackersRequireInitiative) {
+                        lastSyncedRoomTrackersRequireInitiative = incomingReq;
+                        onTokensNeedRender(true).catch((err) =>
+                            console.warn('[SyncEngine] Error re-rendering tokens on roomTrackersRequireInitiative change:', err)
                         );
                     }
                 }
@@ -387,6 +412,15 @@ export async function setupOwlbearRoomSync(
             lastSyncedSceneOffsetX = incomingOffsetX;
             lastSyncedSceneOffsetY = incomingOffsetY;
 
+            if (INITIATIVE_ACTIVE_META_KEY in sceneMeta) {
+                const incomingActive = Boolean(sceneMeta[INITIATIVE_ACTIVE_META_KEY]);
+                store.setIsInitiativeActive(incomingActive);
+                lastSyncedInitiativeActive = incomingActive;
+            } else {
+                store.setIsInitiativeActive(false);
+                lastSyncedInitiativeActive = false;
+            }
+
             if (BATTLEFIELD_META_ID in sceneMeta) {
                 const rawBattlefield = sceneMeta[BATTLEFIELD_META_ID] as BattlefieldData | undefined;
                 if (rawBattlefield && typeof rawBattlefield === 'object') {
@@ -438,6 +472,19 @@ export async function setupOwlbearRoomSync(
                 );
             }
 
+            if (INITIATIVE_ACTIVE_META_KEY in meta) {
+                const incomingActive = Boolean(meta[INITIATIVE_ACTIVE_META_KEY]);
+                if (incomingActive !== lastSyncedInitiativeActive) {
+                    lastSyncedInitiativeActive = incomingActive;
+                    useCharacterStore.getState().setIsInitiativeActive(incomingActive);
+                    if (useCharacterStore.getState().identity.roomTrackersRequireInitiative) {
+                        onTokensNeedRender(true).catch((err) =>
+                            console.warn('[SyncEngine] Error re-rendering tokens on initiative active change:', err)
+                        );
+                    }
+                }
+            }
+
             if (BATTLEFIELD_META_ID in meta) {
                 const rawBattlefield = meta[BATTLEFIELD_META_ID] as BattlefieldData | undefined;
                 if (rawBattlefield && typeof rawBattlefield === 'object') {
@@ -479,9 +526,11 @@ export async function setupOwlbearRoomSync(
         useCharacterStore.getState().setSceneScale(null);
         useCharacterStore.getState().setSceneOffsets(null, null);
         useCharacterStore.getState().setActiveBattlefield(null);
+        useCharacterStore.getState().setIsInitiativeActive(false);
         lastSyncedSceneScale = null;
         lastSyncedSceneOffsetX = null;
         lastSyncedSceneOffsetY = null;
+        lastSyncedInitiativeActive = false;
     };
 
     return { syncSceneSettings, resetSceneSyncState, unsubs };

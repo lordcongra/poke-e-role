@@ -35,6 +35,7 @@ export function applyRoomUpdatesToMeta(
         else if (k === 'roomHideClash') roomMeta.roomHideClash = Boolean(v);
         else if (k === 'roomHideHudPlayersOnly') roomMeta.roomHideHudPlayersOnly = Boolean(v);
         else if (k === 'roomHideHudEnemiesOnly') roomMeta.roomHideHudEnemiesOnly = Boolean(v);
+        else if (k === 'roomTrackersRequireInitiative') roomMeta.roomTrackersRequireInitiative = Boolean(v);
         else if (k === 'activeRoomCampaignName') roomMeta.activeRoomCampaignName = v;
         else if (k === 'activeRoomCampaignId') roomMeta.activeRoomCampaignId = v;
         else roomMeta[k] = v;
@@ -82,6 +83,10 @@ export function mapRoomSettings(sData: Record<string, unknown>) {
         roomHideHudPlayersOnly:
             sData.roomHideHudPlayersOnly !== undefined ? Boolean(sData.roomHideHudPlayersOnly) : undefined,
         roomHideHudEnemiesOnly:
-            sData.roomHideHudEnemiesOnly !== undefined ? Boolean(sData.roomHideHudEnemiesOnly) : undefined
+            sData.roomHideHudEnemiesOnly !== undefined ? Boolean(sData.roomHideHudEnemiesOnly) : undefined,
+        roomTrackersRequireInitiative:
+            sData.roomTrackersRequireInitiative !== undefined
+                ? Boolean(sData.roomTrackersRequireInitiative)
+                : undefined
     };
 }

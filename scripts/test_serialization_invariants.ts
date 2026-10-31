@@ -456,7 +456,7 @@ runTest('Explicitly serializes boolean false for trackers and toggles', () => {
 
     const hydrated = hydrateStateFromMetadata(metaTrue, stateTrue);
     assert.equal(
-        hydrated.identity.ignoreRoomHudRules,
+        hydrated.identity?.ignoreRoomHudRules,
         true,
         'hydrateStateFromMetadata hydrates ignoreRoomHudRules true'
     );
@@ -791,7 +791,8 @@ runTest('applyRoomUpdatesToMeta and mapRoomSettings serialize explicit false and
         roomHideEvade: true,
         roomHideClash: true,
         roomHideHudPlayersOnly: true,
-        roomHideHudEnemiesOnly: true
+        roomHideHudEnemiesOnly: true,
+        roomTrackersRequireInitiative: true
     };
     applyRoomUpdatesToMeta(initialRoomMeta, hudVisibilityUpdates);
     assert.equal(initialRoomMeta.roomHideHpBar, true, 'Explicitly sets roomHideHpBar to true');
@@ -804,6 +805,11 @@ runTest('applyRoomUpdatesToMeta and mapRoomSettings serialize explicit false and
     assert.equal(initialRoomMeta.roomHideClash, true, 'Explicitly sets roomHideClash to true');
     assert.equal(initialRoomMeta.roomHideHudPlayersOnly, true, 'Explicitly sets roomHideHudPlayersOnly to true');
     assert.equal(initialRoomMeta.roomHideHudEnemiesOnly, true, 'Explicitly sets roomHideHudEnemiesOnly to true');
+    assert.equal(
+        initialRoomMeta.roomTrackersRequireInitiative,
+        true,
+        'Explicitly sets roomTrackersRequireInitiative to true'
+    );
 
     const mappedHud = mapRoomSettings(initialRoomMeta);
     assert.equal(mappedHud.roomHideHpBar, true, 'mapRoomSettings maps roomHideHpBar true');
@@ -816,6 +822,11 @@ runTest('applyRoomUpdatesToMeta and mapRoomSettings serialize explicit false and
     assert.equal(mappedHud.roomHideClash, true, 'mapRoomSettings maps roomHideClash true');
     assert.equal(mappedHud.roomHideHudPlayersOnly, true, 'mapRoomSettings maps roomHideHudPlayersOnly true');
     assert.equal(mappedHud.roomHideHudEnemiesOnly, true, 'mapRoomSettings maps roomHideHudEnemiesOnly true');
+    assert.equal(
+        mappedHud.roomTrackersRequireInitiative,
+        true,
+        'mapRoomSettings maps roomTrackersRequireInitiative true'
+    );
 
     // Symmetrical reset to false
     applyRoomUpdatesToMeta(initialRoomMeta, {
@@ -828,7 +839,8 @@ runTest('applyRoomUpdatesToMeta and mapRoomSettings serialize explicit false and
         roomHideEvade: false,
         roomHideClash: false,
         roomHideHudPlayersOnly: false,
-        roomHideHudEnemiesOnly: false
+        roomHideHudEnemiesOnly: false,
+        roomTrackersRequireInitiative: false
     });
     const mappedHudFalse = mapRoomSettings(initialRoomMeta);
     assert.equal(mappedHudFalse.roomHideHpBar, false, 'mapRoomSettings maps roomHideHpBar false symmetrically');
@@ -844,6 +856,11 @@ runTest('applyRoomUpdatesToMeta and mapRoomSettings serialize explicit false and
         mappedHudFalse.roomHideHudEnemiesOnly,
         false,
         'mapRoomSettings maps roomHideHudEnemiesOnly false symmetrically'
+    );
+    assert.equal(
+        mappedHudFalse.roomTrackersRequireInitiative,
+        false,
+        'mapRoomSettings maps roomTrackersRequireInitiative false symmetrically'
     );
 
     // Verify UI permission checks across GlobalToolbar and TokenEmptyState are identical

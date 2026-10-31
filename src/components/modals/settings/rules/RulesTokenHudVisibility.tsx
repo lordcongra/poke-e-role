@@ -4,6 +4,7 @@ import { useCharacterStore } from '../../../../store/useCharacterStore';
 import { isStandaloneMode } from '../../../../utils/sync/storageAdapter';
 import { flushRoomSettingsToOwlbear } from '../../../../utils/sync/obr';
 import { renderAllSceneTokens } from '../../../../utils/graphics/graphicsRenderer';
+import { handleRoomSelectChange } from './rulesModalUtils';
 
 interface RulesTokenHudVisibilityProps {
     onOpenInfo: (info: { title: string; content: string }) => void;
@@ -50,6 +51,9 @@ export function RulesTokenHudVisibility({
     const roomHideClash = useCharacterStore((state) => state.identity.roomHideClash ?? false);
     const roomHideHudPlayersOnly = useCharacterStore((state) => state.identity.roomHideHudPlayersOnly ?? false);
     const roomHideHudEnemiesOnly = useCharacterStore((state) => state.identity.roomHideHudEnemiesOnly ?? false);
+    const roomTrackersRequireInitiative = useCharacterStore(
+        (state) => state.identity.roomTrackersRequireInitiative ?? false
+    );
     const updateRoomSetting = useCharacterStore((state) => state.updateRoomSetting);
 
     const hideStates: Record<HudElementToggle['key'], boolean> = {
@@ -103,6 +107,39 @@ export function RulesTokenHudVisibility({
                 >
                     <option value="Everyone">Everyone (Respect Token Settings)</option>
                     <option value="GM Only">GM Only (Hide All From Players)</option>
+                </select>
+            </div>
+
+            <div>
+                <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
+                    Trackers Require Initiative{' '}
+                    <TooltipIcon
+                        onClick={() =>
+                            onOpenInfo({
+                                title: 'Trackers Require Initiative',
+                                content:
+                                    'When enabled, token HUD trackers are only displayed while the Initiative Tracker is open. When closed, all map trackers are hidden for out-of-combat exploration. Still respects GM Only and individual privacy rules.'
+                            })
+                        }
+                    />
+                </label>
+                <select
+                    className="identity-grid__select rules-modal__select text-subtext"
+                    style={{ color: 'var(--text-main)' }}
+                    value={roomTrackersRequireInitiative ? 'Enabled' : 'Disabled'}
+                    onWheel={(e) => e.currentTarget.blur()}
+                    onChange={(e) => {
+                        handleRoomSelectChange(
+                            'roomTrackersRequireInitiative',
+                            e.target.value === 'Enabled',
+                            e,
+                            updateRoomSetting
+                        );
+                        renderAllSceneTokens(true).catch(() => {});
+                    }}
+                >
+                    <option value="Disabled">Disabled (Always Visible)</option>
+                    <option value="Enabled">Enabled (Only While Initiative Open)</option>
                 </select>
             </div>
 

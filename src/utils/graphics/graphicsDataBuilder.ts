@@ -53,6 +53,8 @@ export interface GraphicsData {
     roomDefaultOffsetX?: number;
     roomDefaultOffsetY?: number;
     gmOnlyTrackers?: boolean;
+    roomTrackersRequireInitiative?: boolean;
+    isInitiativeActive?: boolean;
     xOffset: number;
     yOffset: number;
     hpOffsetX: number;
@@ -241,6 +243,8 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
                 ? state.identity.sceneDefaultOffsetY
                 : (state.identity.roomDefaultOffsetY ?? 0),
         gmOnlyTrackers: Boolean(state.identity.gmOnlyTrackers),
+        roomTrackersRequireInitiative: Boolean(state.identity.roomTrackersRequireInitiative),
+        isInitiativeActive: Boolean(state.identity.isInitiativeActive),
         xOffset: state.identity.xOffset || 0,
         yOffset: state.identity.yOffset || 0,
         hpOffsetX: state.identity.hpOffsetX || 0,
@@ -262,7 +266,8 @@ export function buildGraphicsFromMeta(
     meta: Record<string, unknown>,
     roomDefaultScale?: number,
     roomDefaultOffsetX?: number,
-    roomDefaultOffsetY?: number
+    roomDefaultOffsetY?: number,
+    isInitiativeActive?: boolean
 ): GraphicsData {
     const id = useCharacterStore.getState().identity;
     const role = useCharacterStore.getState().role;
@@ -378,6 +383,9 @@ export function buildGraphicsFromMeta(
         roomDefaultOffsetX: defaultOffsetX,
         roomDefaultOffsetY: defaultOffsetY,
         gmOnlyTrackers: Boolean(id.gmOnlyTrackers),
+        roomTrackersRequireInitiative: Boolean(id.roomTrackersRequireInitiative),
+        isInitiativeActive:
+            isInitiativeActive !== undefined ? isInitiativeActive : Boolean(id.isInitiativeActive),
         xOffset: Number(meta['x-offset']) || 0,
         yOffset: Number(meta['y-offset']) || 0,
         hpOffsetX: Number(meta['hp-offset-x']) || 0,

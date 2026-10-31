@@ -1,10 +1,21 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
 import { isStandaloneMode } from '../utils/sync/storageAdapter';
+import { INITIATIVE_ACTIVE_META_KEY } from './owlbearSync/owlbearSyncConstants';
 
 export function useInitiativePopover(isObrReady: boolean) {
-    const identity = useCharacterStore((state) => state.identity);
+    const preset = useCharacterStore((state) => state.identity.initiativeTrackerPreset);
+    const offsetX = useCharacterStore((state) => state.identity.initiativeTrackerOffsetX);
+    const offsetY = useCharacterStore((state) => state.identity.initiativeTrackerOffsetY);
+    const layout = useCharacterStore((state) => state.identity.initiativeTrackerLayout);
+    const shape = useCharacterStore((state) => state.identity.initiativeTrackerAvatarShape);
+    const maxW = useCharacterStore((state) => state.identity.initiativeTrackerMaxWidth);
+    const maxH = useCharacterStore((state) => state.identity.initiativeTrackerMaxHeight);
+
+    const isOpenRef = useRef(false);
+    const isTogglingRef = useRef(false);
+    const isInitialMountRef = useRef(true);
 
     const openTracker = useCallback(async () => {
         const isReady = isObrReady || Boolean(OBR.isAvailable && OBR.isReady);
@@ -18,7 +29,7 @@ export function useInitiativePopover(isObrReady: boolean) {
         }
 
         try {
-            const identityStore = identity || {};
+            const identityStore = useCharacterStore.getState().identity || {};
             const {
                 initiativeTrackerPreset,
                 initiativeTrackerOffsetX,
@@ -124,26 +135,60 @@ export function useInitiativePopover(isObrReady: boolean) {
                 anchorPosition: anchorPosition,
                 transformOrigin: transformOrigin
             });
+
+            isOpenRef.current = true;
+
+            const currentRole = useCharacterStore.getState().role;
+            if (currentRole === 'GM' && OBR.isAvailable) {
+                OBR.scene.setMetadata({ [INITIATIVE_ACTIVE_META_KEY]: true }).catch((err) => {
+                    console.warn('[useInitiativePopover] Failed to set initiative active meta:', err);
+                });
+            }
         } catch (e) {
             console.error('[useInitiativePopover] Failed to open OBR popover:', e);
         }
-    }, [isObrReady, identity]);
+    }, [isObrReady]);
 
     useEffect(() => {
         if (!isObrReady || !OBR.isAvailable || isStandaloneMode) return;
 
+        // On initial mount only, check if the tracker popover was already active from a previous session
+        if (isInitialMountRef.current) {
+            isInitialMountRef.current = false;
+            const timeout = setTimeout(() => {
+                if (isTogglingRef.current) return;
+                const unsub = OBR.broadcast.onMessage('pkr-init-pong', () => {
+                    unsub();
+                    isOpenRef.current = true;
+                    openTracker().catch((e) => {
+                        console.error('[useInitiativePopover] openTracker failed on initial ping:', e);
+                    });
+                });
+                OBR.broadcast.sendMessage('pkr-init-ping-check', {}, { destination: 'LOCAL' }).catch(() => {});
+                setTimeout(() => unsub(), 100);
+            }, 300);
+            return () => clearTimeout(timeout);
+        }
+
+        // On subsequent settings changes (preset, offsets, layout, shape, dimensions):
+        // Only re-anchor/update the popover IF IT WAS ALREADY OPEN. Never pop open a closed tracker!
+        if (!isOpenRef.current || isTogglingRef.current) return;
+
         const timeout = setTimeout(() => {
+            if (!isOpenRef.current || isTogglingRef.current) return;
             const unsub = OBR.broadcast.onMessage('pkr-init-pong', () => {
                 unsub();
+                if (!isOpenRef.current || isTogglingRef.current) return;
                 openTracker().catch((e) => {
-                    console.error('[useInitiativePopover] openTracker failed on initial ping:', e);
+                    console.error('[useInitiativePopover] openTracker failed on settings update:', e);
                 });
             });
             OBR.broadcast.sendMessage('pkr-init-ping-check', {}, { destination: 'LOCAL' }).catch(() => {});
             setTimeout(() => unsub(), 100);
-        }, 300);
+        }, 150);
+
         return () => clearTimeout(timeout);
-    }, [isObrReady, openTracker]);
+    }, [isObrReady, preset, offsetX, offsetY, layout, shape, maxW, maxH, openTracker]);
 
     const handleInitiativeToggle = async () => {
         if (isStandaloneMode) {
@@ -161,13 +206,26 @@ export function useInitiativePopover(isObrReady: boolean) {
             return;
         }
 
+        if (isTogglingRef.current) return;
+        isTogglingRef.current = true;
+
         let handled = false;
         const unsub = OBR.broadcast.onMessage('pkr-init-pong', () => {
             handled = true;
             unsub();
+            isOpenRef.current = false;
             OBR.popover.close('pkr-initiative-tracker').catch((e) => {
                 console.warn('[useInitiativePopover] Failed to close OBR popover:', e);
             });
+            const currentRole = useCharacterStore.getState().role;
+            if (currentRole === 'GM' && OBR.isAvailable) {
+                OBR.scene.setMetadata({ [INITIATIVE_ACTIVE_META_KEY]: false }).catch((err) => {
+                    console.warn('[useInitiativePopover] Failed to set initiative inactive meta:', err);
+                });
+            }
+            setTimeout(() => {
+                isTogglingRef.current = false;
+            }, 350);
         });
 
         try {
@@ -179,9 +237,18 @@ export function useInitiativePopover(isObrReady: boolean) {
         setTimeout(() => {
             unsub();
             if (!handled) {
-                openTracker().catch((e) => {
-                    console.error('[useInitiativePopover] openTracker failed on toggle:', e);
-                });
+                openTracker()
+                    .then(() => {
+                        isOpenRef.current = true;
+                    })
+                    .catch((e) => {
+                        console.error('[useInitiativePopover] openTracker failed on toggle:', e);
+                    })
+                    .finally(() => {
+                        setTimeout(() => {
+                            isTogglingRef.current = false;
+                        }, 200);
+                    });
             }
         }, 200);
     };

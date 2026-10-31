@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { CharacterState, IdentitySlice, Rank, TrainerPokedexData, TrainerPokedexEntry } from '../storeTypes';
+import type { CharacterState, IdentitySlice, Rank, RoomSettings, TrainerPokedexData, TrainerPokedexEntry } from '../storeTypes';
 import {
     saveToOwlbear,
     getIsRemoteSyncActive,
@@ -50,8 +50,43 @@ const EXCLUDED_FROM_TOKEN_SAVE = new Set([
     'roomHideEvade',
     'roomHideClash',
     'roomHideHudPlayersOnly',
-    'roomHideHudEnemiesOnly'
+    'roomHideHudEnemiesOnly',
+    'roomTrackersRequireInitiative',
+    'isInitiativeActive'
 ]);
+
+export const ROOM_SETTINGS_KEYS: Array<keyof RoomSettings> = [
+    'ruleset',
+    'pain',
+    'diceEngine',
+    'homebrewAccess',
+    'gmOnlyLootGen',
+    'gmOnlyGenerators',
+    'gmOnlyMatchups',
+    'gmOnlyDamageOverride',
+    'gmOnlyTrackers',
+    'gmOnlyAttributeLock',
+    'gmOnlyPullEnemies',
+    'defaultNpcInitiativeHidden',
+    'pmdSkills',
+    'gmDemoMode',
+    'roomDefaultScale',
+    'roomDefaultOffsetX',
+    'roomDefaultOffsetY',
+    'activeRoomCampaignName',
+    'activeRoomCampaignId',
+    'roomHideHpBar',
+    'roomHideHpText',
+    'roomHideWillBar',
+    'roomHideWillText',
+    'roomHideDef',
+    'roomHideActions',
+    'roomHideEvade',
+    'roomHideClash',
+    'roomHideHudPlayersOnly',
+    'roomHideHudEnemiesOnly',
+    'roomTrackersRequireInitiative'
+];
 
 const OBR_KEY_MAP: Record<string, string> = {
     entityId: 'entityId',
@@ -305,6 +340,8 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         roomHideClash: false,
         roomHideHudPlayersOnly: false,
         roomHideHudEnemiesOnly: false,
+        roomTrackersRequireInitiative: false,
+        isInitiativeActive: false,
         ignoreRoomHudRules: false,
 
         // Apply Local Settings
@@ -484,6 +521,15 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         if (OBR.isAvailable && !isStandaloneMode) {
             saveRoomSettingsToOwlbear({ [field]: value });
         }
+    },
+
+    setIsInitiativeActive: (active) => {
+        set((state) => ({
+            identity: {
+                ...state.identity,
+                isInitiativeActive: active
+            }
+        }));
     },
 
     setSceneScale: (scale) => {

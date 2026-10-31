@@ -59,7 +59,12 @@ export async function renderTokenGraphics(
                 (item) => item.attachedTo === tokenId && item.metadata[GRAPHICS_META_ID] !== undefined
             );
 
-            if (!data.showTrackers || !data.hasSpeciesOrTrainer || (data.gmOnlyTrackers && role !== 'GM')) {
+            if (
+                !data.showTrackers ||
+                !data.hasSpeciesOrTrainer ||
+                (data.gmOnlyTrackers && role !== 'GM') ||
+                (data.roomTrackersRequireInitiative && !data.isInitiativeActive)
+            ) {
                 if (localAttached.length > 0) {
                     await OBR.scene.local.deleteItems(localAttached.map((item) => item.id));
                 }
