@@ -2,14 +2,22 @@ import { useCallback, useEffect } from 'react';
 import OBR, { type Image, type Item } from '@owlbear-rodeo/sdk';
 import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { extractTokenImage, extractCharacterName, extractIsNpc } from '../../../utils/combat/initiativeHelpers';
+import {
+    extractTokenImage,
+    extractCharacterName,
+    extractIsNpc,
+    calculateBaseInitFromCharacterData,
+    formatInitiativeDisplay
+} from '../../../utils/combat/initiativeHelpers';
+import { assignInitiative } from '../../../utils/combat/diceRoller';
 import { getBattleOrganizerSettings } from './battleOrganizerSettingsHelper';
 import type { BattleOrganizerState, BattleRoundData } from '../../../types/battleOrganizerTypes';
 import {
     parseStatusesFromMetadata,
     parseHealthAndWillFromMetadata,
     parseTokenPrivacyFlags,
-    resolveCombatantLiveTokenSync
+    resolveCombatantLiveTokenSync,
+    parseCombatantInitiativeHierarchy
 } from './battleOrganizerUtils';
 
 export interface UseBattleOrganizerTokenWatchProps {
@@ -53,6 +61,30 @@ export function useBattleOrganizerTokenWatch({
 
                 if (candidateItems.length === 0) return false;
 
+                let standaloneInitMap: Map<string, { total: number; baseInit: number; tiebreaker: number }> | null = null;
+                if (isStandaloneMode) {
+                    try {
+                        const raw = localStorage.getItem('pkr_standalone_init_list');
+                        if (raw) {
+                            const list = JSON.parse(raw);
+                            if (Array.isArray(list)) {
+                                standaloneInitMap = new Map();
+                                for (const entry of list) {
+                                    if (entry && entry.id) {
+                                        standaloneInitMap.set(String(entry.id), {
+                                            total: typeof entry.total === 'number' ? entry.total : 0,
+                                            baseInit: typeof entry.baseInit === 'number' ? entry.baseInit : 0,
+                                            tiebreaker: typeof entry.tiebreaker === 'number' ? entry.tiebreaker : 0
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('[BattleOrganizerTokenWatch] Failed to parse pkr_standalone_init_list:', e);
+                    }
+                }
+
                 updateState(
                     (prev) => {
                         const currentRound = prev.rounds[prev.activeRoundIndex];
@@ -71,18 +103,12 @@ export function useBattleOrganizerTokenWatch({
                                     matchingItem.metadata['pokerole-pmd-extension/initiative'] === undefined &&
                                     combatant.initiative
                                 ) {
-                                    const initNum = parseFloat(combatant.initiative) || 0;
-                                    const baseInit = combatant.baseInit ?? 0;
-                                    OBR.scene.items
-                                        .updateItems([matchingItem.id], (items) => {
-                                            for (const it of items) {
-                                                it.metadata['pokerole-pmd-extension/initiative'] = {
-                                                    value: initNum,
-                                                    base: baseInit
-                                                };
-                                            }
-                                        })
-                                        .catch(() => {});
+                                    const { total, baseInit: parsedBase } = parseCombatantInitiativeHierarchy(
+                                        combatant.initiative,
+                                        combatant.baseInit
+                                    );
+                                    const effectiveBase = combatant.baseInit ?? parsedBase;
+                                    assignInitiative(matchingItem.id, total, effectiveBase).catch(() => {});
                                 }
                             }
 
@@ -98,6 +124,37 @@ export function useBattleOrganizerTokenWatch({
                                 matchingItem.metadata['pokerole-pmd-extension/stats'] ||
                                 matchingItem.metadata) as Record<string, unknown>;
                             if (!meta) return combatant;
+
+                            let tokenInitDisplay: string | undefined = undefined;
+                            let tokenBaseInit: number | undefined = undefined;
+
+                            if (isStandaloneMode) {
+                                const standaloneInit = standaloneInitMap?.get(matchingItem.id);
+                                if (standaloneInit) {
+                                    tokenInitDisplay = formatInitiativeDisplay(
+                                        standaloneInit.total,
+                                        standaloneInit.baseInit,
+                                        standaloneInit.tiebreaker
+                                    );
+                                    tokenBaseInit = standaloneInit.baseInit;
+                                }
+                            } else {
+                                const initMeta = matchingItem.metadata?.['pokerole-pmd-extension/initiative'] as
+                                    | { value?: number; base?: number; tiebreaker?: number }
+                                    | undefined;
+                                if (initMeta && typeof initMeta.value !== 'number') {
+                                    // initiative not set
+                                } else if (initMeta && typeof initMeta.value === 'number') {
+                                    const integerTotal = Math.floor(initMeta.value);
+                                    const itemBase =
+                                        typeof initMeta.base === 'number'
+                                            ? initMeta.base
+                                            : calculateBaseInitFromCharacterData(matchingItem.metadata, useCharacterStore.getState());
+                                    const tie = typeof initMeta.tiebreaker === 'number' ? initMeta.tiebreaker : 0;
+                                    tokenInitDisplay = formatInitiativeDisplay(integerTotal, itemBase, tie);
+                                    tokenBaseInit = itemBase;
+                                }
+                            }
 
                             const resolvedName = extractCharacterName(meta, matchingItem.name);
                             const imgItem = matchingItem as Image;
@@ -123,7 +180,7 @@ export function useBattleOrganizerTokenWatch({
                                         : identityObj.abilityActive !== false;
                             const metaSpecies = String(identityObj.species || meta.species || matchingItem.metadata?.species || '');
 
-                            const fingerprint = `${matchingItem.id}|${hpCurr}|${hpMax}|${willCurr}|${willMax}|${tempHp}|${tempWill}|${statusText}|${statusFainted}|${activeTransformation}|${resolvedName}|${resolvedImg}|${isNPC}|${gmHpBar}|${gmHpText}|${gmWillBar}|${gmWillText}|${metaAbility}|${metaAbilityActive}|${metaSpecies}`;
+                            const fingerprint = `${matchingItem.id}|${hpCurr}|${hpMax}|${willCurr}|${willMax}|${tempHp}|${tempWill}|${statusText}|${statusFainted}|${activeTransformation}|${resolvedName}|${resolvedImg}|${isNPC}|${gmHpBar}|${gmHpText}|${gmWillBar}|${gmWillText}|${metaAbility}|${metaAbilityActive}|${metaSpecies}|${tokenInitDisplay ?? ''}|${tokenBaseInit ?? ''}`;
                             const lastFingerprint = lastTokenFingerprintsRef.current.get(matchingItem.id);
                             if (
                                 !isReboundToken &&
@@ -143,13 +200,30 @@ export function useBattleOrganizerTokenWatch({
                                 combatant.gmWillText === gmWillText &&
                                 combatant.ability === metaAbility &&
                                 combatant.abilityActive === metaAbilityActive &&
-                                combatant.species === metaSpecies
+                                combatant.species === metaSpecies &&
+                                (tokenInitDisplay === undefined ||
+                                    (combatant.initiative === tokenInitDisplay &&
+                                        (tokenBaseInit === undefined || combatant.baseInit === tokenBaseInit)))
                             ) {
                                 return combatant;
                             }
                             lastTokenFingerprintsRef.current.set(matchingItem.id, fingerprint);
 
                             let updated = isReboundToken;
+
+                            let nextInitiative = combatant.initiative;
+                            let nextBaseInit = combatant.baseInit;
+                            if (
+                                tokenInitDisplay !== undefined &&
+                                (combatant.initiative !== tokenInitDisplay ||
+                                    (tokenBaseInit !== undefined && combatant.baseInit !== tokenBaseInit))
+                            ) {
+                                nextInitiative = tokenInitDisplay;
+                                if (tokenBaseInit !== undefined) {
+                                    nextBaseInit = tokenBaseInit;
+                                }
+                                updated = true;
+                            }
 
                             let nextName = combatant.name;
                             if (resolvedName && resolvedName !== combatant.name && resolvedName !== matchingItem.name) {
@@ -263,6 +337,8 @@ export function useBattleOrganizerTokenWatch({
                                 changesFound = true;
                                 return {
                                     ...combatant,
+                                    initiative: nextInitiative,
+                                    baseInit: nextBaseInit,
                                     name: nextName,
                                     image: nextImage,
                                     status: nextStatus,
@@ -363,6 +439,7 @@ export function useBattleOrganizerTokenWatch({
         const handleLocalChange = () => triggerRefresh(100);
         window.addEventListener('pkr-local-data-changed', handleLocalChange);
         window.addEventListener('storage', handleLocalChange);
+        window.addEventListener('pkr-standalone-init-update', handleLocalChange);
 
         // 3. In-memory useCharacterStore changes (when user edits a sheet in the same window)
         const unsubStore = useCharacterStore.subscribe((currState, prevState) => {
@@ -563,6 +640,7 @@ export function useBattleOrganizerTokenWatch({
             if (unsubObr) unsubObr();
             window.removeEventListener('pkr-local-data-changed', handleLocalChange);
             window.removeEventListener('storage', handleLocalChange);
+            window.removeEventListener('pkr-standalone-init-update', handleLocalChange);
             unsubStore();
         };
     }, [refreshTokenStats, updateState]);

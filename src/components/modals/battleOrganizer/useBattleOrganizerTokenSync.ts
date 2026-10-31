@@ -3,9 +3,14 @@ import OBR from '@owlbear-rodeo/sdk';
 import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { extractCharacterName } from '../../../utils/combat/initiativeHelpers';
+import { assignInitiative } from '../../../utils/combat/diceRoller';
 import type { StatusItem } from '../../../store/storeTypes';
 import type { BattleOrganizerState, BattleRoundData, CombatantRowData } from '../../../types/battleOrganizerTypes';
-import { mapStatusTextToStatusItems, resolveCombatantTokenId } from './battleOrganizerUtils';
+import {
+    mapStatusTextToStatusItems,
+    resolveCombatantTokenId,
+    parseCombatantInitiativeHierarchy
+} from './battleOrganizerUtils';
 
 export interface UseBattleOrganizerTokenSyncProps {
     state: BattleOrganizerState;
@@ -177,6 +182,7 @@ export function useBattleOrganizerTokenSync({
                 syncEvade?: boolean;
                 syncClash?: boolean;
                 syncActions?: boolean;
+                syncInitiative?: boolean;
             }
         ) => {
             try {
@@ -201,6 +207,24 @@ export function useBattleOrganizerTokenSync({
                     }
                 }
                 if (!targetTokenId) return;
+
+                if (syncOptions.syncInitiative) {
+                    try {
+                        const { total, baseInit: parsedBase } = parseCombatantInitiativeHierarchy(
+                            combatant.initiative,
+                            combatant.baseInit
+                        );
+                        const effectiveBase =
+                            combatant.baseInit !== undefined && combatant.baseInit > 0
+                                ? combatant.baseInit
+                                : parsedBase > 0
+                                  ? parsedBase
+                                  : 1;
+                        await assignInitiative(targetTokenId, total, effectiveBase);
+                    } catch (err) {
+                        console.warn('[useBattleOrganizerTokenSync] Failed to sync initiative to token:', err);
+                    }
+                }
 
                 const updates: Record<string, unknown> = {};
                 let statusItems: StatusItem[] | undefined = undefined;

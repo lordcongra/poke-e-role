@@ -70,16 +70,16 @@ export function addRollLogEntry(
     });
 }
 
-export async function assignInitiative(tokenId: string, rollTotal: number, baseInit: number) {
+export async function assignInitiative(tokenId: string, rollTotal: number, baseInit: number): Promise<number> {
     const state = useCharacterStore.getState();
     const rawD6 = Math.max(1, rollTotal - baseInit);
 
     if (isStandaloneMode) {
         try {
             const listString = localStorage.getItem('pkr_standalone_init_list');
-            if (!listString) return;
+            if (!listString) return 0;
             const parsedList: StandaloneCombatant[] = JSON.parse(listString);
-            if (!Array.isArray(parsedList)) return;
+            if (!Array.isArray(parsedList)) return 0;
 
             // Check for true stalemates (identical Total AND identical Base Initiative)
             let assignedTiebreaker = 0;
@@ -132,7 +132,7 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
                     state.identity.tokenImageUrl || '',
                     rollerName
                 );
-                return;
+                return assignedTiebreaker;
             }
 
             const updated = parsedList.map((combatant) =>
@@ -152,13 +152,14 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
             const sorted = sortCombatants(updated);
             localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
             window.dispatchEvent(new Event('pkr-standalone-init-update'));
+            return 0;
         } catch (error) {
             console.error('[DiceRoller] Standalone Init Error:', error);
+            return 0;
         }
-        return;
     }
 
-    if (!OBR.isAvailable) return;
+    if (!OBR.isAvailable) return 0;
     try {
         const items = await OBR.scene.items.getItems();
         const characterItems = items.filter((item) => item.layer === 'CHARACTER');
@@ -263,8 +264,10 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
                 };
             }
         });
+        return assignedTiebreaker;
     } catch (error) {
         console.error('[DiceRoller] Failed to assign Initiative to token:', error);
+        return 0;
     }
 }
 

@@ -339,7 +339,7 @@ export function CombatantRow({
                     <input
                         type="text"
                         className="bo-input bo-input--init text-value-highlight"
-                        value={combatant.initiative}
+                        value={combatant.initiative ?? ''}
                         onChange={(e) => handleFieldChange('initiative', e.target.value)}
                         placeholder="Init"
                         title="Initiative Score"
@@ -414,7 +414,7 @@ export function CombatantRow({
                         <input
                             type="text"
                             className="bo-input bo-input--name text-label"
-                            value={combatant.name}
+                            value={combatant.name ?? ''}
                             onChange={(e) => handleFieldChange('name', e.target.value)}
                             placeholder="Combatant Name"
                             title="Combatant Name"
@@ -430,7 +430,7 @@ export function CombatantRow({
                 <input
                     type="text"
                     className="bo-input bo-input--item text-label"
-                    value={combatant.heldItem}
+                    value={combatant.heldItem ?? ''}
                     onChange={(e) => handleFieldChange('heldItem', e.target.value)}
                     placeholder="Held Item..."
                     title="Equipped / Held Items from Combat, Social, or Hand slots"

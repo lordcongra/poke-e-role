@@ -3,6 +3,7 @@ import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAda
 import { getEffectsByCategory } from '../../../utils/combat/fieldEffectsData';
 import { getKnownAbility } from '../../../data/abilities/knownAbilities';
 import type { CombatantRowData, BattlefieldData } from '../../../types/battleOrganizerTypes';
+import { compareCombatantsByInitiative } from './battleOrganizerUtils';
 
 export interface CombatantCharacterData {
     types: string[];
@@ -125,12 +126,8 @@ export function resolveCombatantRoundTriggers(
         return n.includes('snow') || n.includes('hail');
     });
 
-    // Sort combatants in initiative order (descending)
-    const sorted = [...combatants].sort((a, b) => {
-        const initA = parseFloat(a.initiative) || 0;
-        const initB = parseFloat(b.initiative) || 0;
-        return initB - initA;
-    });
+    // Sort combatants in initiative order (descending hierarchy: total, base, tiebreaker)
+    const sorted = [...combatants].sort(compareCombatantsByInitiative);
 
     return sorted.map((c) => {
         const charInfo = charDataMap.get(c.name.toLowerCase().trim()) ||

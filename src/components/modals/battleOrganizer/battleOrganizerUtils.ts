@@ -287,6 +287,63 @@ export const createDefaultCombatant = (name = '', image = '', isPlayer = true): 
     activeTransformation: 'None'
 });
 
+export function parseCombatantInitiativeHierarchy(
+    initiativeStr: string,
+    baseInitFallback?: number
+): {
+    total: number;
+    baseInit: number;
+    tiebreaker: number;
+} {
+    if (!initiativeStr || initiativeStr === '0') {
+        return { total: 0, baseInit: baseInitFallback ?? 0, tiebreaker: 0 };
+    }
+
+    const parts = initiativeStr.split('.');
+    const total = parseInt(parts[0], 10) || 0;
+
+    let base = typeof baseInitFallback === 'number' ? baseInitFallback : 0;
+    let tiebreaker = 0;
+
+    if (parts.length > 1 && parts[1]) {
+        const dec = parts[1];
+        if (base > 0) {
+            const baseStr = String(base);
+            if (dec.startsWith(baseStr)) {
+                const remainder = dec.slice(baseStr.length);
+                if (remainder) {
+                    tiebreaker = parseInt(remainder, 10) || 0;
+                }
+            } else {
+                const parsedFloat = parseFloat(`0.${dec}`);
+                const baseCandidate = Math.floor(parsedFloat * 100);
+                if (baseCandidate > 0) {
+                    base = baseCandidate;
+                    tiebreaker = Math.round((parsedFloat * 100 - baseCandidate) * 100);
+                }
+            }
+        } else {
+            const num = parseInt(dec, 10) || 0;
+            base = num;
+        }
+    }
+
+    return { total, baseInit: base, tiebreaker };
+}
+
+export function compareCombatantsByInitiative(a: CombatantRowData, b: CombatantRowData): number {
+    const aHierarchy = parseCombatantInitiativeHierarchy(a.initiative, a.baseInit);
+    const bHierarchy = parseCombatantInitiativeHierarchy(b.initiative, b.baseInit);
+
+    if (bHierarchy.total !== aHierarchy.total) {
+        return bHierarchy.total - aHierarchy.total;
+    }
+    if (bHierarchy.baseInit !== aHierarchy.baseInit) {
+        return bHierarchy.baseInit - aHierarchy.baseInit;
+    }
+    return bHierarchy.tiebreaker - aHierarchy.tiebreaker;
+}
+
 export const createDefaultBattlefield = (): BattlefieldData => ({
     location: '',
     weather: { name: '', remainingRounds: 0 },

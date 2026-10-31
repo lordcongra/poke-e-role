@@ -6,7 +6,8 @@ import {
     extractTokenImage,
     extractCharacterName,
     calculateBaseInitFromCharacterData,
-    extractIsNpc
+    extractIsNpc,
+    formatInitiativeDisplay
 } from '../../../utils/combat/initiativeHelpers';
 import { extractEntityId } from '../../../hooks/owlbearSync/setupOwlbearTokenSync';
 import type { BattleOrganizerState, BattleRoundData, CombatantRowData } from '../../../types/battleOrganizerTypes';
@@ -15,7 +16,8 @@ import {
     parseHealthAndWillFromMetadata,
     parseHeldItemsFromMetadata,
     parseTokenPrivacyFlags,
-    createDefaultActions
+    createDefaultActions,
+    compareCombatantsByInitiative
 } from './battleOrganizerUtils';
 
 export interface UseBattleOrganizerTokenImportProps {
@@ -70,20 +72,17 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                             }
 
                             const globalStore = useCharacterStore.getState();
-                            const baseInitVal = calculateBaseInitFromCharacterData(
+                            const calculatedBase = calculateBaseInitFromCharacterData(
                                 matchingChar?.metadata || initItem,
                                 globalStore
                             );
-                            let initScore = '0';
-                            if (
-                                typeof initItem.total === 'number' &&
-                                typeof initItem.d6 === 'number' &&
-                                initItem.d6 > 0
-                            ) {
-                                initScore = String(initItem.total);
-                            } else if (typeof initItem.total === 'number' && initItem.total > 0) {
-                                initScore = String(initItem.total);
-                            }
+                            const effectiveBase =
+                                typeof initItem.baseInit === 'number' && initItem.baseInit > 0
+                                    ? initItem.baseInit
+                                    : calculatedBase;
+                            const integerTotal = typeof initItem.total === 'number' ? initItem.total : 0;
+                            const tiebreaker = typeof initItem.tiebreaker === 'number' ? initItem.tiebreaker : 0;
+                            const initScore = formatInitiativeDisplay(integerTotal, effectiveBase, tiebreaker);
 
                             const displayName = extractCharacterName(
                                 (matchingChar?.metadata || initItem) as Record<string, unknown>,
@@ -112,7 +111,7 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                                 tokenId: charId,
                                 entityId: (matchingChar?.metadata?.entityId as string) || charId,
                                 initiative: initScore,
-                                baseInit: baseInitVal,
+                                baseInit: effectiveBase,
                                 name: displayName,
                                 image: matchingChar?.metadata?.tokenImageUrl
                                     ? String(matchingChar.metadata.tokenImageUrl)
@@ -196,11 +195,14 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                         const initMeta = meta['pokerole-pmd-extension/initiative'] as
                             | { value?: number; base?: number; tiebreaker?: number; hidden?: boolean }
                             | undefined;
-                        const initVal = initMeta?.value ?? 0;
+                        const initVal = typeof initMeta?.value === 'number' ? initMeta.value : 0;
                         const baseInit =
-                            initMeta?.base !== undefined
+                            typeof initMeta?.base === 'number'
                                 ? initMeta.base
                                 : calculateBaseInitFromCharacterData(meta, useCharacterStore.getState());
+                        const integerTotal = Math.floor(initVal);
+                        const tiebreaker = typeof initMeta?.tiebreaker === 'number' ? initMeta.tiebreaker : 0;
+                        const initScore = formatInitiativeDisplay(integerTotal, baseInit, tiebreaker);
 
                         const charName = extractCharacterName(statsMeta, item.name);
                         const tokenImage = imgItem.image?.url || extractTokenImage(statsMeta) || '';
@@ -225,7 +227,7 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                             id: crypto.randomUUID(),
                             tokenId: item.id,
                             entityId: extractEntityId(item),
-                            initiative: String(initVal),
+                            initiative: initScore,
                             baseInit,
                             name: charName,
                             image: tokenImage,
@@ -257,11 +259,7 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                 }
 
                 if (combatantRows.length > 0) {
-                    combatantRows.sort((a, b) => {
-                        const valA = parseFloat(a.initiative) || 0;
-                        const valB = parseFloat(b.initiative) || 0;
-                        return valB - valA;
-                    });
+                    combatantRows.sort(compareCombatantsByInitiative);
 
                     let newlyAddedCount = 0;
                     let targetCombatantsToReset: CombatantRowData[] = combatantRows;
@@ -296,11 +294,9 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
 
                             targetCombatantsToReset = newCombatants;
                             newlyAddedCount = newCombatants.length;
-                            const mergedCombatants = [...currentRound.combatants, ...newCombatants].sort((a, b) => {
-                                const valA = parseFloat(a.initiative) || 0;
-                                const valB = parseFloat(b.initiative) || 0;
-                                return valB - valA;
-                            });
+                            const mergedCombatants = [...currentRound.combatants, ...newCombatants].sort(
+                                compareCombatantsByInitiative
+                            );
 
                             const updatedRound: BattleRoundData = {
                                 ...currentRound,

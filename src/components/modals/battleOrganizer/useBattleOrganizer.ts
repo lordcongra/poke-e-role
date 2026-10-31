@@ -6,9 +6,10 @@ import { setActiveTokenId } from '../../../utils/sync/obr';
 import {
     extractTokenImage,
     extractCharacterName,
-    calculateBaseInitFromCharacterData
+    calculateBaseInitFromCharacterData,
+    formatInitiativeDisplay
 } from '../../../utils/combat/initiativeHelpers';
-import { addRollLogEntry } from '../../../utils/combat/diceRoller';
+import { addRollLogEntry, assignInitiative } from '../../../utils/combat/diceRoller';
 import type { BattleOrganizerState, BattleRoundData, CombatantRowData } from '../../../types/battleOrganizerTypes';
 import {
     STORAGE_KEY,
@@ -23,6 +24,7 @@ import {
     createDefaultActionSlot,
     createDefaultActions,
     createDefaultCombatant,
+    compareCombatantsByInitiative,
     createDefaultBattlefield,
     sanitizeBattlefield,
     createDefaultState
@@ -182,15 +184,25 @@ export function useBattleOrganizer() {
                 const evadeChanged = prevCombatant.evadeUsed !== updated.evadeUsed;
                 const clashChanged = prevCombatant.clashUsed !== updated.clashUsed;
                 const actionsChanged = JSON.stringify(prevCombatant.actions) !== JSON.stringify(updated.actions);
+                const initiativeChanged = prevCombatant.initiative !== updated.initiative;
 
-                if (statusChanged || hpChanged || willChanged || evadeChanged || clashChanged || actionsChanged) {
+                if (
+                    statusChanged ||
+                    hpChanged ||
+                    willChanged ||
+                    evadeChanged ||
+                    clashChanged ||
+                    actionsChanged ||
+                    initiativeChanged
+                ) {
                     syncCombatantToToken(updated, {
                         syncStatus: statusChanged,
                         syncHp: hpChanged,
                         syncWill: willChanged,
                         syncEvade: evadeChanged,
                         syncClash: clashChanged,
-                        syncActions: actionsChanged
+                        syncActions: actionsChanged,
+                        syncInitiative: initiativeChanged
                     });
                 }
             }
@@ -219,9 +231,10 @@ export function useBattleOrganizer() {
             let tokenBaseInit: number | null = null;
             const currentRound = state.rounds[state.activeRoundIndex];
             const target = currentRound?.combatants.find((c) => c.id === combatantId);
+            if (!target) return;
 
-            if (target?.tokenId) {
-                const globalStore = useCharacterStore.getState();
+            const globalStore = useCharacterStore.getState();
+            if (target.tokenId) {
                 if (isStandaloneMode) {
                     try {
                         const localChars = await storageAdapter.getLocalCharacters();
@@ -244,52 +257,51 @@ export function useBattleOrganizer() {
                 }
             }
 
+            const base =
+                tokenBaseInit !== null
+                    ? tokenBaseInit
+                    : target.baseInit !== undefined && target.baseInit > 0
+                      ? target.baseInit
+                      : 1;
+
+            const roll = Math.floor(Math.random() * 6) + 1;
+            const total = base + roll;
+
+            let tiebreaker = 0;
+            if (target.tokenId) {
+                tiebreaker = await assignInitiative(target.tokenId, total, base);
+            }
+
+            const formattedInit = formatInitiativeDisplay(total, base, tiebreaker);
+            const tiebreakerNote = tiebreaker > 0 ? ` (Tiebreaker: [${tiebreaker}])` : '';
+
+            addRollLogEntry(
+                `${target.name} rolled Initiative!`,
+                `Total: ${total} (Base: ${base} + Roll: ${roll})${tiebreakerNote}`,
+                target.image || '',
+                target.name,
+                target.name,
+                target.tokenId,
+                'init'
+            );
+
             updateState((prev) => {
                 const currentRound = prev.rounds[prev.activeRoundIndex];
                 if (!currentRound) return prev;
 
                 const updatedCombatants = currentRound.combatants.map((c) => {
                     if (c.id === combatantId) {
-                        const roll = Math.floor(Math.random() * 6) + 1;
-                        let base =
-                            tokenBaseInit !== null
-                                ? tokenBaseInit
-                                : c.baseInit !== undefined && c.baseInit > 0
-                                  ? c.baseInit
-                                  : 0;
-                        if (base === 0) {
-                            const parsed = parseInt(c.initiative, 10);
-                            if (!isNaN(parsed) && parsed > 0 && parsed <= 12) {
-                                base = parsed;
-                            } else {
-                                base = 1;
-                            }
-                        }
-                        const total = base + roll;
-                        addRollLogEntry(
-                            `${c.name} rolled Initiative!`,
-                            `Total: ${total} (Base: ${base} + Roll: ${roll})`,
-                            c.image || '',
-                            c.name,
-                            c.name,
-                            c.tokenId,
-                            'init'
-                        );
                         return {
                             ...c,
                             baseInit: base,
-                            initiative: String(total)
+                            initiative: formattedInit
                         };
                     }
                     return c;
                 });
 
-                // Auto-sort combatants descending by initiative
-                const sortedCombatants = [...updatedCombatants].sort((a, b) => {
-                    const valA = parseFloat(a.initiative) || 0;
-                    const valB = parseFloat(b.initiative) || 0;
-                    return valB - valA;
-                });
+                // Auto-sort combatants descending by initiative hierarchy
+                const sortedCombatants = [...updatedCombatants].sort(compareCombatantsByInitiative);
 
                 const updatedRound: BattleRoundData = {
                     ...currentRound,
@@ -308,11 +320,7 @@ export function useBattleOrganizer() {
             const currentRound = prev.rounds[prev.activeRoundIndex];
             if (!currentRound) return prev;
 
-            const sortedCombatants = [...currentRound.combatants].sort((a, b) => {
-                const valA = parseFloat(a.initiative) || 0;
-                const valB = parseFloat(b.initiative) || 0;
-                return valB - valA;
-            });
+            const sortedCombatants = [...currentRound.combatants].sort(compareCombatantsByInitiative);
 
             const updatedRound: BattleRoundData = {
                 ...currentRound,
