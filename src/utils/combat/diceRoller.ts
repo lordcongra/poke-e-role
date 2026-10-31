@@ -101,7 +101,7 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
                             baseInit: baseInit,
                             total: rollTotal,
                             tiebreaker: assignedTiebreaker,
-                            hidden: shouldHideStandalone ? true : combatant.hidden === true ? true : false,
+                            hidden: combatant.hidden !== undefined ? combatant.hidden : shouldHideStandalone,
                             isNPC: combatant.isNPC !== undefined ? combatant.isNPC : isStandaloneNpc
                         };
                     }
@@ -143,7 +143,7 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
                           baseInit: baseInit,
                           total: rollTotal,
                           tiebreaker: 0,
-                          hidden: shouldHideStandalone ? true : combatant.hidden === true ? true : false,
+                          hidden: combatant.hidden !== undefined ? combatant.hidden : shouldHideStandalone,
                           isNPC: combatant.isNPC !== undefined ? combatant.isNPC : isStandaloneNpc
                       }
                     : combatant
@@ -253,14 +253,15 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
 
         await OBR.scene.items.updateItems([tokenId], (itemsToUpdate) => {
             for (const item of itemsToUpdate) {
-                const existing =
-                    (item.metadata['pokerole-pmd-extension/initiative'] as Record<string, unknown> | undefined) || {};
+                const existing = item.metadata['pokerole-pmd-extension/initiative'] as
+                    | Record<string, unknown>
+                    | undefined;
                 item.metadata['pokerole-pmd-extension/initiative'] = {
-                    ...existing,
+                    ...(existing || {}),
                     value: encodedValue,
                     base: baseInit,
                     tiebreaker: assignedTiebreaker,
-                    hidden: shouldHide ? true : existing.hidden === true ? true : false
+                    hidden: existing && existing.hidden !== undefined ? Boolean(existing.hidden) : shouldHide
                 };
             }
         });

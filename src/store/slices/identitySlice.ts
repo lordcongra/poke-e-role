@@ -276,7 +276,17 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         gmOnlyTrackers: false,
         gmOnlyAttributeLock: true,
         gmOnlyPullEnemies: true,
-        defaultNpcInitiativeHidden: true,
+        defaultNpcInitiativeHidden: (() => {
+            try {
+                return typeof localStorage !== 'undefined'
+                    ? localStorage.getItem('pkr_room_default_npc_init_hidden') === 'false'
+                        ? false
+                        : true
+                    : true;
+            } catch {
+                return true;
+            }
+        })(),
         pmdSkills: typeof localStorage !== 'undefined' ? localStorage.getItem('pkr_room_pmd_skills') !== 'false' : true,
         coreLocked: true,
         socialLocked: true,
@@ -413,6 +423,13 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 /* ignore storage errors */
             }
         }
+        if (settings.defaultNpcInitiativeHidden !== undefined && typeof localStorage !== 'undefined') {
+            try {
+                localStorage.setItem('pkr_room_default_npc_init_hidden', String(settings.defaultNpcInitiativeHidden));
+            } catch {
+                /* ignore storage errors */
+            }
+        }
         const cleanSettings: Record<string, unknown> = {};
         for (const [k, v] of Object.entries(settings)) {
             if (v !== undefined) {
@@ -446,6 +463,13 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         if (field === 'pmdSkills' && typeof localStorage !== 'undefined') {
             try {
                 localStorage.setItem('pkr_room_pmd_skills', String(value));
+            } catch {
+                /* ignore storage errors */
+            }
+        }
+        if (field === 'defaultNpcInitiativeHidden' && typeof localStorage !== 'undefined') {
+            try {
+                localStorage.setItem('pkr_room_default_npc_init_hidden', String(value));
             } catch {
                 /* ignore storage errors */
             }

@@ -14,7 +14,8 @@ import {
     extractIsNpc
 } from '../../utils/combat/initiativeHelpers';
 import { extractEntityId } from '../../hooks/owlbearSync/setupOwlbearTokenSync';
-import { BATTLEFIELD_META_ID } from '../../hooks/owlbearSync/owlbearSyncConstants';
+import { BATTLEFIELD_META_ID, ROOM_META_ID } from '../../hooks/owlbearSync/owlbearSyncConstants';
+import { mapRoomSettings } from '../../utils/sync/roomSettingsMeta';
 import type { BattlefieldData } from '../../types/battleOrganizerTypes';
 import type { Combatant } from '../../utils/combat/initiativeHelpers';
 import { useInitiativeThemeSync } from './useInitiativeThemeSync';
@@ -339,6 +340,24 @@ export function useInitiativeEngine() {
             const unsubMeta = OBR.scene.onMetadataChange(handleMetadataChange);
             unsubs.push(unsubMeta);
 
+            OBR.room
+                .getMetadata()
+                .then((meta) => {
+                    if (ROOM_META_ID in meta) {
+                        const data = meta[ROOM_META_ID] as Record<string, unknown>;
+                        useCharacterStore.getState().applyRoomSettings(mapRoomSettings(data));
+                    }
+                })
+                .catch((err) => console.warn('[InitiativeEngine] Failed to read room metadata:', err));
+
+            const unsubRoomMeta = OBR.room.onMetadataChange((meta) => {
+                if (ROOM_META_ID in meta) {
+                    const data = meta[ROOM_META_ID] as Record<string, unknown>;
+                    useCharacterStore.getState().applyRoomSettings(mapRoomSettings(data));
+                }
+            });
+            unsubs.push(unsubRoomMeta);
+
             const mapItemsToCombatants = (items: Item[]) => {
                 const initItems = items.filter(
                     (item) =>
@@ -573,7 +592,14 @@ export function useInitiativeEngine() {
                     for (const item of itemsToUpdate) {
                         const updateData = updatesMap[item.id];
                         if (updateData) {
-                            item.metadata['pokerole-pmd-extension/initiative'] = updateData;
+                            const existing =
+                                (item.metadata['pokerole-pmd-extension/initiative'] as
+                                    | Record<string, unknown>
+                                    | undefined) || {};
+                            item.metadata['pokerole-pmd-extension/initiative'] = {
+                                ...existing,
+                                ...updateData
+                            };
                         }
                     }
                 }
@@ -758,7 +784,7 @@ export function useInitiativeEngine() {
                         value: 0,
                         base: dynamicBaseInit,
                         tiebreaker: 0,
-                        hidden: shouldHide ? true : existing.hidden === true ? true : false
+                        hidden: shouldHide
                     };
                 }
             });
