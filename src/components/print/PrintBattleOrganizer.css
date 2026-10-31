@@ -506,6 +506,16 @@
         background: #ffffff !important;
     }
 
+    .print-bo-action-box--crit-hit {
+        border: 1.5pt solid #d97706 !important;
+        background: #fffbeb !important;
+    }
+
+    .print-bo-action-box--crit-fail {
+        border: 1.5pt dashed #dc2626 !important;
+        background: #fef2f2 !important;
+    }
+
     .print-bo-action-text {
         font-size: 7.5pt !important;
         text-align: center !important;

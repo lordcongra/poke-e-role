@@ -60,6 +60,13 @@ export function BattleOrganizerSettingsModal({ onClose }: BattleOrganizerSetting
         setSettings(updated);
     };
 
+    const handleToggleCriticalMarks = () => {
+        const updated = saveBattleOrganizerSettings({
+            showCriticalMarks: settings.showCriticalMarks !== false ? false : true
+        });
+        setSettings(updated);
+    };
+
     const handleToggleFullScreen = () => {
         const updated = saveBattleOrganizerSettings({ fullScreen: !settings.fullScreen });
         setSettings(updated);
@@ -147,6 +154,22 @@ export function BattleOrganizerSettingsModal({ onClose }: BattleOrganizerSetting
                             <span className="bo-settings__card-desc text-subtext">
                                 Automatically increment action counters and fill move names in the active round when
                                 rolling from token sheets.
+                            </span>
+                        </div>
+                    </label>
+
+                    <label
+                        className={`bo-settings__checkbox-card ${settings.showCriticalMarks !== false ? 'bo-settings__checkbox-card--active' : ''}`}
+                    >
+                        <input
+                            type="checkbox"
+                            checked={settings.showCriticalMarks !== false}
+                            onChange={handleToggleCriticalMarks}
+                        />
+                        <div className="bo-settings__card-info">
+                            <span className="bo-settings__card-title text-label">Show Critical Marks</span>
+                            <span className="bo-settings__card-desc text-subtext">
+                                Display visual outlines and icons for Critical Hits (Sparkles) and Critical Failures (Alert Triangle) in the action slots.
                             </span>
                         </div>
                     </label>

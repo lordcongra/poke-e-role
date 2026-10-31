@@ -4,15 +4,16 @@ import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAda
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { extractTokenImage, extractCharacterName } from '../../../utils/combat/initiativeHelpers';
 import { getBattleOrganizerSettings } from './battleOrganizerSettingsHelper';
-import type { BattleOrganizerState, BattleRoundData, CombatantRowData } from '../../../types/battleOrganizerTypes';
+import type { BattleOrganizerState, BattleRoundData } from '../../../types/battleOrganizerTypes';
 import {
     STORAGE_KEY,
     LEGACY_OBR_SCENE_META_KEY,
     parseStatusesFromMetadata,
     parseHealthAndWillFromMetadata,
-    parseRollLogEntry,
     sanitizeBattlefield
 } from './battleOrganizerUtils';
+import { parseRollLogEntry } from './battleOrganizerRollParser';
+import { applyRollToBattleOrganizerState } from './battleOrganizerStorageSync';
 
 export interface UseBattleOrganizerSyncProps {
     state: BattleOrganizerState;
@@ -328,7 +329,7 @@ export function useBattleOrganizerSync({
             const parsedRoll = parseRollLogEntry(logData);
             if (!parsedRoll || !parsedRoll.shouldAddToRoundTracker) return;
 
-            const { rollId, charName, moveName, rollTokenId, isEvade, isClash, cleanLabel } = parsedRoll;
+            const { rollId, charName, moveName, rollTokenId } = parsedRoll;
 
             if (rollId) {
                 if (processedRollIdsRef.current.has(rollId)) {
@@ -351,62 +352,8 @@ export function useBattleOrganizerSync({
             lastMoveRollTimestampRef.current.set(throttleKey, now);
 
             updateState((prev) => {
-                const currentRound = prev.rounds[prev.activeRoundIndex];
-                if (!currentRound) return prev;
-
-                // Ensure the Battle Organizer has been utilized (has at least one real combatant in current round)
-                const hasActiveCombatants = currentRound.combatants.some((c) => c.tokenId || c.name.trim());
-                if (!hasActiveCombatants) return prev;
-
-                let changed = false;
-                const newCombatants = currentRound.combatants.map((c) => {
-                    if (!c.tokenId && !c.name.trim()) return c;
-
-                    const safeName = c.name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    const isMatch =
-                        (rollTokenId && c.tokenId && rollTokenId === c.tokenId) ||
-                        (charName && c.name.trim() && charName.trim().toLowerCase() === c.name.trim().toLowerCase()) ||
-                        (c.name.trim() && new RegExp(`\\b${safeName}\\b`, 'i').test(cleanLabel));
-
-                    if (!isMatch) return c;
-
-                    let updatedCombatant = { ...c };
-
-                    // Toggle reaction checkboxes (Evade / Clash)
-                    if (isEvade && !updatedCombatant.evadeUsed) {
-                        updatedCombatant.evadeUsed = true;
-                        changed = true;
-                    }
-                    if (isClash && !updatedCombatant.clashUsed) {
-                        updatedCombatant.clashUsed = true;
-                        changed = true;
-                    }
-
-                    // Fill an action slot
-                    const newActions = [...updatedCombatant.actions] as CombatantRowData['actions'];
-                    const targetIdx = newActions.findIndex((a) => !a.text.trim());
-                    if (targetIdx !== -1) {
-                        newActions[targetIdx] = {
-                            ...newActions[targetIdx],
-                            text: moveName
-                        };
-                        updatedCombatant.actions = newActions;
-                        changed = true;
-                    }
-
-                    return updatedCombatant;
-                });
-
-                if (!changed) return prev;
-
-                const updatedRound: BattleRoundData = {
-                    ...currentRound,
-                    combatants: newCombatants
-                };
-                return {
-                    ...prev,
-                    rounds: prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r))
-                };
+                const { nextState, changed } = applyRollToBattleOrganizerState(prev, logData);
+                return changed ? nextState : prev;
             });
         };
 

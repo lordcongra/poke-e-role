@@ -2,6 +2,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { isStandaloneMode } from '../sync/storageAdapter';
 import { removeSettingFromIndexedDB } from '../sync/userPreferences';
 import { isBattleOrganizerOpen } from '../../components/modals/battleOrganizer/battleOrganizerSettingsHelper';
+import { applyRollToBattleOrganizerStorage } from '../../components/modals/battleOrganizer/battleOrganizerStorageSync';
 import { EXTENSION_ID, type RollSyncData } from '../../hooks/owlbearSync/owlbearSyncConstants';
 
 /**
@@ -39,6 +40,9 @@ export async function broadcastRollLog(rollLogData: RollSyncData): Promise<void>
         if (!existingLog.find((r) => r.id === rollLogData.id)) {
             localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
         }
+
+        // Apply roll to Battle Organizer storage if organizer is closed so entries persist even if roll log is cleared
+        applyRollToBattleOrganizerStorage(rollLogData);
 
         // 1. Dispatch local window events so all in-page subscribers immediately update
         window.dispatchEvent(new CustomEvent('pkr-roll-log-event', { detail: rollLogData }));

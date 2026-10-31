@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { CombatantRowData, ActionStatus } from '../../../types/battleOrganizerTypes';
+import type { CombatantRowData, ActionStatus, ActionCritType } from '../../../types/battleOrganizerTypes';
 import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import { imageManager } from '../../../utils/graphics/imageManager';
 import { useCharacterStore } from '../../../store/useCharacterStore';
@@ -16,6 +16,7 @@ import './CombatantRow.css';
 interface CombatantRowProps {
     combatant: CombatantRowData;
     index: number;
+    showCriticalMarks?: boolean;
     onUpdate: (updated: CombatantRowData) => void;
     onDelete: (id: string) => void;
     onRollInitiative?: (id: string) => void;
@@ -27,6 +28,7 @@ interface CombatantRowProps {
 export function CombatantRow({
     combatant,
     index,
+    showCriticalMarks = true,
     onUpdate,
     onDelete,
     onRollInitiative,
@@ -187,7 +189,27 @@ export function CombatantRow({
 
         newActions[actionIndex] = {
             ...newActions[actionIndex],
-            status: nextStatus
+            status: nextStatus,
+            critType: 'none'
+        };
+        handleFieldChange('actions', newActions);
+    };
+
+    const handleActionCritToggle = (actionIndex: number, critType: ActionCritType) => {
+        if (isLocked) return;
+        const newActions = [...combatant.actions] as CombatantRowData['actions'];
+        let nextStatus: ActionStatus = newActions[actionIndex].status;
+        if (critType === 'crit_hit') {
+            nextStatus = 'success';
+        } else if (critType === 'crit_fail') {
+            nextStatus = 'failed';
+        } else if (critType === 'none') {
+            nextStatus = 'none';
+        }
+        newActions[actionIndex] = {
+            ...newActions[actionIndex],
+            status: nextStatus,
+            critType
         };
         handleFieldChange('actions', newActions);
     };
@@ -195,13 +217,15 @@ export function CombatantRow({
     const handleActionClear = (actionIndex: number) => {
         if (isLocked) return;
         const clearedAction = combatant.actions[actionIndex];
-        if (!clearedAction.text && clearedAction.status === 'none') return;
+        if (!clearedAction.text && clearedAction.status === 'none' && clearedAction.critType === 'none') return;
 
         const actionText = clearedAction.text.trim() || `Action ${actionIndex + 1}`;
         const newActions = [...combatant.actions] as CombatantRowData['actions'];
         newActions[actionIndex] = {
             text: '',
-            status: 'none'
+            status: 'none',
+            critType: 'none',
+            rollId: undefined
         };
 
         const isEvade = /evad|dodge/i.test(clearedAction.text.trim());
@@ -431,8 +455,10 @@ export function CombatantRow({
                 actions={combatant.actions}
                 combatantName={combatant.name}
                 disabled={isLocked}
+                showCriticalMarks={showCriticalMarks}
                 onActionTextChange={handleActionTextChange}
                 onActionStatusToggle={handleActionStatusToggle}
+                onActionCritToggle={handleActionCritToggle}
                 onActionClear={handleActionClear}
             />
 

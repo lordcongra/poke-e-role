@@ -2,6 +2,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { isBattleOrganizerOpen } from '../../components/modals/battleOrganizer/battleOrganizerSettingsHelper';
 import { parseRollLogEntry } from '../../components/modals/battleOrganizer/battleOrganizerRollParser';
+import { applyRollToBattleOrganizerStorage } from '../../components/modals/battleOrganizer/battleOrganizerStorageSync';
 import { isStandaloneMode, storageAdapter, LOCAL_STORAGE_PREFIX } from '../../utils/sync/storageAdapter';
 import { idbGetCharacter } from '../../utils/sync/standaloneIdb';
 import { EXTENSION_ID, type RollSyncData, showDicePlusRetirementNotice } from './owlbearSyncConstants';
@@ -293,6 +294,9 @@ export function setupOwlbearRollSync(): OwlbearRollSyncResult {
             }
 
             // Dispatch local window events so all active UI components (Battle Organizer, RollLogWidget) update immediately
+            if (!myId || rollData.playerId !== myId) {
+                applyRollToBattleOrganizerStorage(rollData);
+            }
             window.dispatchEvent(new CustomEvent('pkr-roll-log-event', { detail: rollData }));
             window.dispatchEvent(new Event('pkr-roll-log-update'));
             window.dispatchEvent(new Event('storage'));

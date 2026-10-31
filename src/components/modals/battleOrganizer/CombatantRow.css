@@ -414,9 +414,21 @@
     background-color: color-mix(in srgb, #2e7d32 15%, var(--panel-alt, #242424));
 }
 
+.bo-action-box--crit-hit {
+    border-color: #f59e0b;
+    box-shadow: 0 0 6px color-mix(in srgb, #f59e0b 50%, transparent);
+    background-color: color-mix(in srgb, #d97706 20%, var(--panel-alt, #242424));
+}
+
 .bo-action-box--failed {
     border-color: #ef5350;
     background-color: color-mix(in srgb, #c62828 15%, var(--panel-alt, #242424));
+}
+
+.bo-action-box--crit-fail {
+    border: 1.5px dashed #ef4444;
+    box-shadow: 0 0 6px color-mix(in srgb, #ef4444 40%, transparent);
+    background-color: color-mix(in srgb, #b91c1c 20%, var(--panel-alt, #242424));
 }
 
 .bo-action-text-input {
@@ -470,11 +482,25 @@
     box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
 }
 
+.bo-status-btn--active-crit-hit {
+    background-color: #d97706;
+    border-color: #f59e0b;
+    color: #fff;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.7);
+}
+
 .bo-status-btn--active-cross {
     background-color: #c62828;
     border-color: #ef5350;
     color: #fff;
     box-shadow: 0 0 6px rgba(239, 83, 80, 0.6);
+}
+
+.bo-status-btn--active-crit-fail {
+    background-color: #b91c1c;
+    border-color: #ef4444;
+    color: #fff;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
 }
 
 .bo-status-btn--clear {

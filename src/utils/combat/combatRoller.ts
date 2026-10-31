@@ -820,7 +820,13 @@ export async function rollGeneric(
     incrementEvade = false,
     incrementClash = false,
     incrementAction = false,
-    hasSkill = false
+    hasSkill = false,
+    options?: {
+        requiredSuccesses?: number;
+        criticalRequirement?: number;
+        critExplanationTags?: string[];
+        isOutOfCombat?: boolean;
+    }
 ) {
     const state = useCharacterStore.getState();
     const nickname = state.identity.nickname || state.identity.species || 'Someone';
@@ -907,6 +913,23 @@ export async function rollGeneric(
 
     if (statuses.isFrozen) {
         tags.push(`FROZEN: Attacking Ice Block (5HP/2DEF). Fire/Super-Effective breaks instantly.`);
+    }
+
+    if (options?.requiredSuccesses !== undefined) {
+        tags.push(`Need ${options.requiredSuccesses} Succ`);
+    }
+    if (options?.criticalRequirement !== undefined) {
+        tags.push(`Crit on ${options.criticalRequirement}+`);
+    }
+    if (options?.critExplanationTags && options.critExplanationTags.length > 0) {
+        for (const expl of options.critExplanationTags) {
+            if (!tags.includes(expl)) {
+                tags.push(expl);
+            }
+        }
+    }
+    if (options?.isOutOfCombat) {
+        tags.push('Out of Combat');
     }
 
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';

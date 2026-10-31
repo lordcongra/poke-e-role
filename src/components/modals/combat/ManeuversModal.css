@@ -118,6 +118,39 @@
     box-sizing: border-box;
 }
 
+.maneuvers-modal__toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.maneuvers-modal__action-counter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    user-select: none;
+    padding: 3px 8px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: border-color 0.15s ease;
+}
+
+.maneuvers-modal__action-counter-toggle:hover {
+    border-color: var(--primary);
+}
+
+.maneuvers-modal__action-counter-toggle input[type="checkbox"] {
+    cursor: pointer;
+    accent-color: var(--primary);
+    margin: 0;
+}
+
 .maneuvers-modal__search-input:focus {
     border-color: var(--primary);
 }

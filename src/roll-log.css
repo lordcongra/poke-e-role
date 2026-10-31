@@ -146,6 +146,14 @@ body,
     background: linear-gradient(135deg, var(--panel-alt) 75%, rgba(245, 158, 11, 0.12));
 }
 
+.roll-log__entry--crit-fail {
+    border: 1.5px dashed #ef4444;
+    box-shadow:
+        0 0 10px rgba(239, 68, 68, 0.25),
+        inset 0 0 6px rgba(239, 68, 68, 0.1);
+    background: linear-gradient(135deg, var(--panel-alt) 75%, rgba(239, 68, 68, 0.12));
+}
+
 .roll-log__crit-badge {
     display: inline-flex;
     align-items: center;
@@ -158,6 +166,21 @@ body,
     border-radius: 999px;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     box-shadow: 0 1px 4px rgba(245, 158, 11, 0.4);
+    letter-spacing: 0.02em;
+}
+
+.roll-log__crit-fail-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: linear-gradient(135deg, #b91c1c, #ef4444);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 999px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 1px 4px rgba(239, 68, 68, 0.4);
     letter-spacing: 0.02em;
 }
 

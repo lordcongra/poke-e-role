@@ -400,31 +400,44 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
                                         </td>
                                         <td>
                                             <div className="print-bo-actions-row">
-                                                {c.actions.map((act, actIdx) => (
-                                                    <div key={actIdx} className="print-bo-action-col">
-                                                        <div className="print-bo-action-box">
-                                                            <span className="print-bo-action-text">{act.text}</span>
-                                                        </div>
-                                                        <span className="print-bo-action-indicator">
-                                                            <strong
-                                                                style={{
-                                                                    color:
-                                                                        act.status === 'success'
-                                                                            ? '#2e7d32'
-                                                                            : act.status === 'failed'
-                                                                              ? '#c62828'
-                                                                              : '#888'
-                                                                }}
+                                                {c.actions.map((act, actIdx) => {
+                                                    const isCritHit = act.critType === 'crit_hit';
+                                                    const isCritFail = act.critType === 'crit_fail';
+                                                    return (
+                                                        <div key={actIdx} className="print-bo-action-col">
+                                                            <div
+                                                                className={`print-bo-action-box ${isCritHit ? 'print-bo-action-box--crit-hit' : ''} ${isCritFail ? 'print-bo-action-box--crit-fail' : ''}`}
                                                             >
-                                                                {act.status === 'success'
-                                                                    ? '✓'
-                                                                    : act.status === 'failed'
-                                                                      ? '✗'
-                                                                      : '—'}
-                                                            </strong>
-                                                        </span>
-                                                    </div>
-                                                ))}
+                                                                <span className="print-bo-action-text">{act.text}</span>
+                                                            </div>
+                                                            <span className="print-bo-action-indicator">
+                                                                <strong
+                                                                    style={{
+                                                                        color: isCritHit
+                                                                            ? '#d97706'
+                                                                            : isCritFail
+                                                                              ? '#dc2626'
+                                                                              : act.status === 'success'
+                                                                                ? '#2e7d32'
+                                                                                : act.status === 'failed'
+                                                                                  ? '#c62828'
+                                                                                  : '#888'
+                                                                    }}
+                                                                >
+                                                                    {isCritHit
+                                                                        ? 'Crit Hit'
+                                                                        : isCritFail
+                                                                          ? 'Crit Fail'
+                                                                          : act.status === 'success'
+                                                                            ? '✓'
+                                                                            : act.status === 'failed'
+                                                                              ? '✗'
+                                                                              : '—'}
+                                                                </strong>
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
                                         </td>
                                     </tr>

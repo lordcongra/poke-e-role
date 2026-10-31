@@ -33,10 +33,13 @@ export interface BattlefieldData {
 }
 
 export type ActionStatus = 'none' | 'success' | 'failed';
+export type ActionCritType = 'none' | 'crit_hit' | 'crit_fail';
 
 export interface ActionSlotData {
     text: string;
     status: ActionStatus;
+    critType?: ActionCritType;
+    rollId?: string;
 }
 
 export interface CombatantRowData {
@@ -96,4 +99,5 @@ export interface BattleOrganizerSettings {
     autoSyncActions: boolean;
     fullScreen?: boolean;
     rollLogMode?: RollLogLayoutMode;
+    showCriticalMarks?: boolean;
 }

@@ -1,3 +1,7 @@
+import type { RollSyncData } from '../../../hooks/owlbearSync/owlbearSyncConstants';
+
+export type RollLogDataInput = RollSyncData | Record<string, unknown>;
+
 export type RollClassificationKind =
     | 'accuracy'
     | 'damage'
@@ -30,10 +34,11 @@ export interface ParsedRollMeta {
  * Parses a raw roll log item (from roll-channel broadcast or storage)
  * and classifies it into its Battle Organizer domain (accuracy, damage, chance, evade, clash, status recovery, or action roll).
  */
-export function parseRollLogEntry(logData: Record<string, unknown>): ParsedRollMeta | null {
+export function parseRollLogEntry(logData: RollLogDataInput): ParsedRollMeta | null {
     if (!logData) return null;
+    const rawData = logData as Record<string, unknown>;
     const rollId = String(logData.id || '');
-    const label = String(logData.label || logData.title || '');
+    const label = String(logData.label || rawData.title || '');
     const fallbackCharName = String(logData.characterName || logData.player || '');
     const rollTokenId = String(logData.tokenId || '');
     const rawRollType = String(logData.rollType || '')
@@ -138,10 +143,12 @@ export function parseRollLogEntry(logData: Record<string, unknown>): ParsedRollM
 
     // 4. Check for Accuracy Roll
     const matchAcc =
-        clean.match(/^(.+?)\s+rolled\s+(.+?)\s*\((?:Acc|Attack)\)/i) || clean.match(/^(.+?)\s*(?:\(Acc\)|\(Attack\))/i);
+        clean.match(/^(.+?)\s+rolled\s+(.+?)\s*\((?:Acc|Accuracy|Attack)\)/i) ||
+        clean.match(/^(.+?)\s*(?:\(Acc\)|\(Accuracy\)|\(Attack\))/i);
     if (matchAcc) {
         charName = matchAcc[1].trim();
         moveName = (matchAcc[2] || matchAcc[1]).trim();
+        const isOutOfCombat = /Out of Combat/i.test(label) || /Out of Combat/i.test(clean);
         return {
             rollId,
             charName,
@@ -154,8 +161,8 @@ export function parseRollLogEntry(logData: Record<string, unknown>): ParsedRollM
             isAccuracyRoll: true,
             isActionRoll: false,
             isActionConsumingRecovery: false,
-            shouldAddToRoundTracker: true,
-            canMarkInRollLog: true,
+            shouldAddToRoundTracker: !isOutOfCombat,
+            canMarkInRollLog: !isOutOfCombat,
             cleanLabel: clean
         };
     }
@@ -171,8 +178,13 @@ export function parseRollLogEntry(logData: Record<string, unknown>): ParsedRollM
 
     const isEvade = /^(?:evade|evasion)$/i.test(moveName.trim());
     const isClash = /(?:physical clash|special clash|^clash$)/i.test(moveName.trim());
+    const isManeuverAction = /^(?:Ambush|Grapple|Cover an Ally|Run Away|Stabilize Ally|Stabilize an Ally)$/i.test(
+        moveName.trim()
+    );
+    const isOutOfCombat = /Out of Combat/i.test(label) || /Out of Combat/i.test(clean);
 
     if (isEvade) {
+        const shouldAdd = !isOutOfCombat;
         return {
             rollId,
             charName,
@@ -185,13 +197,14 @@ export function parseRollLogEntry(logData: Record<string, unknown>): ParsedRollM
             isAccuracyRoll: false,
             isActionRoll: false,
             isActionConsumingRecovery: false,
-            shouldAddToRoundTracker: true,
-            canMarkInRollLog: true,
+            shouldAddToRoundTracker: shouldAdd,
+            canMarkInRollLog: shouldAdd,
             cleanLabel: clean
         };
     }
 
     if (isClash) {
+        const shouldAdd = !isOutOfCombat;
         return {
             rollId,
             charName,
@@ -204,8 +217,28 @@ export function parseRollLogEntry(logData: Record<string, unknown>): ParsedRollM
             isAccuracyRoll: false,
             isActionRoll: false,
             isActionConsumingRecovery: false,
-            shouldAddToRoundTracker: true,
-            canMarkInRollLog: true,
+            shouldAddToRoundTracker: shouldAdd,
+            canMarkInRollLog: shouldAdd,
+            cleanLabel: clean
+        };
+    }
+
+    if (isManeuverAction) {
+        const shouldAdd = !isOutOfCombat;
+        return {
+            rollId,
+            charName,
+            moveName,
+            rollTokenId,
+            rollKind: 'action_roll',
+            isEvade: false,
+            isClash: false,
+            isDamageRoll: false,
+            isAccuracyRoll: false,
+            isActionRoll: true,
+            isActionConsumingRecovery: false,
+            shouldAddToRoundTracker: shouldAdd,
+            canMarkInRollLog: shouldAdd,
             cleanLabel: clean
         };
     }

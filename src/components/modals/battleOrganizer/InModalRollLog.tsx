@@ -37,6 +37,8 @@ export interface RollLogEntry {
     result: string;
     icon: string;
     rollType?: string;
+    isCrit?: boolean;
+    isCritFail?: boolean;
     chanceDice?: number;
     chanceEffect?: string;
     chanceRolled?: boolean;
@@ -424,15 +426,34 @@ export function InModalRollLog({
                             const actionRollDecision = actionRollDecisions[r.id] || 'pending';
 
                             const { cleanLabel, coreTags, factorTags } = parseRollLabel(r.label);
+                            const isCrit = Boolean(
+                                r.isCrit ||
+                                /critical hit/i.test(r.result) ||
+                                /CRITICAL HIT/i.test(r.label)
+                            );
+                            const isCritFail = Boolean(
+                                r.isCritFail ||
+                                /critical failure/i.test(r.result) ||
+                                /CRITICAL FAILURE/i.test(r.label)
+                            );
 
                             return (
-                                <div key={r.id} className="in-modal-roll-log__entry">
+                                <div
+                                    key={r.id}
+                                    className={`in-modal-roll-log__entry ${isCrit ? 'in-modal-roll-log__entry--crit' : ''} ${isCritFail ? 'in-modal-roll-log__entry--crit-fail' : ''}`}
+                                >
                                     <div className="in-modal-roll-log__entry-top">
                                         <div className="in-modal-roll-log__avatar">
                                             <img src={iconSrc} alt={displayChar} />
                                         </div>
                                         <div className="in-modal-roll-log__meta">
-                                            <span className="in-modal-roll-log__char">{displayChar}</span>
+                                            <div className="in-modal-roll-log__char-row">
+                                                <span className="in-modal-roll-log__char">{displayChar}</span>
+                                                {isCrit && <span className="roll-log__crit-badge">Critical Hit!</span>}
+                                                {isCritFail && (
+                                                    <span className="roll-log__crit-fail-badge">Critical Failure!</span>
+                                                )}
+                                            </div>
                                             <span className="in-modal-roll-log__label" title={r.label}>
                                                 <span>{cleanLabel}</span>
                                                 {coreTags.length > 0 && (

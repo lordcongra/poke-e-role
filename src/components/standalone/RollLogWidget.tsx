@@ -15,6 +15,7 @@ interface RollData {
     result: string;
     icon: string;
     isCrit?: boolean;
+    isCritFail?: boolean;
 }
 
 interface RollLogWidgetProps {
@@ -194,12 +195,18 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
                             /CRITICAL HIT/i.test(r.label) ||
                             /It's a critical hit/i.test(r.result)
                         );
+                        const isCritFail = Boolean(
+                            r.isCritFail ||
+                            /critical failure/i.test(r.result) ||
+                            /CRITICAL FAILURE/i.test(r.label) ||
+                            /It is a critical failure/i.test(r.result)
+                        );
                         const { cleanLabel, coreTags, factorTags } = parseRollLabel(r.label);
 
                         return (
                             <div
                                 key={r.id}
-                                className={`roll-log-widget__entry ${isCrit ? 'roll-log-widget__entry--crit' : ''}`}
+                                className={`roll-log-widget__entry ${isCrit ? 'roll-log-widget__entry--crit' : ''} ${isCritFail ? 'roll-log-widget__entry--crit-fail' : ''}`}
                             >
                                 <div className="roll-log-widget__entry-header">
                                     <img
@@ -214,6 +221,9 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
                                         {r.player}
                                     </strong>
                                     {isCrit && <span className="roll-log-widget__crit-badge">Critical Hit!</span>}
+                                    {isCritFail && (
+                                        <span className="roll-log-widget__crit-fail-badge">Critical Failure!</span>
+                                    )}
                                     <button
                                         type="button"
                                         onClick={() => dismiss(r.id)}

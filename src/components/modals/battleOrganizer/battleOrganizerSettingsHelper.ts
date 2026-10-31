@@ -10,6 +10,7 @@ export const BO_WINDOW_MODE_KEY = 'pkr_bo_window_mode';
 export const BO_AUTO_SYNC_ACTIONS_KEY = 'pkr_bo_auto_sync_actions';
 export const BO_FULLSCREEN_KEY = 'pkr_bo_fullscreen';
 export const BO_ROLL_LOG_MODE_KEY = 'pkr_bo_roll_log_mode';
+export const BO_SHOW_CRITICAL_MARKS_KEY = 'pkr_bo_show_critical_marks';
 export const BO_IS_OPEN_KEY = 'pkr_battle_organizer_open';
 export const BO_SETTINGS_UPDATE_EVENT = 'pkr-bo-settings-update';
 
@@ -26,7 +27,7 @@ try {
 
 export function isBattleOrganizerOpen(): boolean {
     if (typeof window !== 'undefined') {
-        if (window.location.pathname.includes('battle-organizer')) {
+        if (window.location?.pathname?.includes('battle-organizer')) {
             return true;
         }
         if (isBoModalOpenInMemory) {
@@ -34,13 +35,25 @@ export function isBattleOrganizerOpen(): boolean {
         }
         if (
             typeof document !== 'undefined' &&
-            document.querySelector('.battle-organizer-modal__overlay, .battle-organizer-modal')
+            document.querySelector(
+                '.bo-modal__overlay, .bo-modal__content, .battle-organizer-modal__overlay, .battle-organizer-modal'
+            )
         ) {
             return true;
         }
     }
     try {
-        return sessionStorage.getItem(BO_IS_OPEN_KEY) === 'true';
+        if (sessionStorage.getItem(BO_IS_OPEN_KEY) === 'true') {
+            return true;
+        }
+        const boTs = localStorage.getItem(BO_IS_OPEN_KEY);
+        if (boTs) {
+            const age = Date.now() - parseInt(boTs, 10);
+            if (!isNaN(age) && age < 30 * 60 * 1000) {
+                return true;
+            }
+        }
+        return false;
     } catch {
         return false;
     }
@@ -51,6 +64,7 @@ export function setBattleOrganizerOpen(isOpen: boolean): void {
     try {
         if (isOpen) {
             sessionStorage.setItem(BO_IS_OPEN_KEY, 'true');
+            localStorage.setItem(BO_IS_OPEN_KEY, Date.now().toString());
         } else {
             sessionStorage.removeItem(BO_IS_OPEN_KEY);
             localStorage.removeItem(BO_IS_OPEN_KEY);
@@ -66,7 +80,8 @@ export const DEFAULT_BO_SETTINGS: BattleOrganizerSettings = {
     windowMode: 'modal',
     autoSyncActions: true,
     fullScreen: false,
-    rollLogMode: 'floating'
+    rollLogMode: 'floating',
+    showCriticalMarks: true
 };
 
 export function getBattleOrganizerSettings(): BattleOrganizerSettings {
@@ -77,6 +92,7 @@ export function getBattleOrganizerSettings(): BattleOrganizerSettings {
         const rawAutoSync = localStorage.getItem(BO_AUTO_SYNC_ACTIONS_KEY);
         const rawFullScreen = localStorage.getItem(BO_FULLSCREEN_KEY);
         const rawRollLogMode = localStorage.getItem(BO_ROLL_LOG_MODE_KEY) as RollLogLayoutMode | null;
+        const rawCritMarks = localStorage.getItem(BO_SHOW_CRITICAL_MARKS_KEY);
 
         let showBattlefield = rawBattlefield !== null ? rawBattlefield === 'true' : DEFAULT_BO_SETTINGS.showBattlefield;
         let showRoundTracker =
@@ -103,6 +119,8 @@ export function getBattleOrganizerSettings(): BattleOrganizerSettings {
             rawRollLogMode === 'rounds-nested'
                 ? rawRollLogMode
                 : (DEFAULT_BO_SETTINGS.rollLogMode ?? 'floating');
+        const showCriticalMarks =
+            rawCritMarks !== null ? rawCritMarks === 'true' : (DEFAULT_BO_SETTINGS.showCriticalMarks ?? true);
 
         return {
             showBattlefield,
@@ -110,7 +128,8 @@ export function getBattleOrganizerSettings(): BattleOrganizerSettings {
             windowMode,
             autoSyncActions,
             fullScreen,
-            rollLogMode
+            rollLogMode,
+            showCriticalMarks
         };
     } catch (e) {
         console.error('[BattleOrganizerSettings] Failed to load settings from localStorage:', e);
@@ -148,6 +167,9 @@ export function saveBattleOrganizerSettings(partial: Partial<BattleOrganizerSett
         if (next.rollLogMode !== undefined) {
             localStorage.setItem(BO_ROLL_LOG_MODE_KEY, next.rollLogMode);
         }
+        if (next.showCriticalMarks !== undefined) {
+            localStorage.setItem(BO_SHOW_CRITICAL_MARKS_KEY, String(next.showCriticalMarks));
+        }
 
         // Dispatch local event for same-window components
         window.dispatchEvent(new CustomEvent(BO_SETTINGS_UPDATE_EVENT, { detail: next }));
@@ -176,7 +198,8 @@ export function subscribeBattleOrganizerSettings(callback: (settings: BattleOrga
             e.key === BO_WINDOW_MODE_KEY ||
             e.key === BO_AUTO_SYNC_ACTIONS_KEY ||
             e.key === BO_FULLSCREEN_KEY ||
-            e.key === BO_ROLL_LOG_MODE_KEY
+            e.key === BO_ROLL_LOG_MODE_KEY ||
+            e.key === BO_SHOW_CRITICAL_MARKS_KEY
         ) {
             callback(getBattleOrganizerSettings());
         }

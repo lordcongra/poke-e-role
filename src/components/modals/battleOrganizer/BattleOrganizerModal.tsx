@@ -137,6 +137,29 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
             setBattleOrganizerOpen(false);
             document.body.style.overflow = prevBodyOverflow;
             document.documentElement.style.overflow = prevHtmlOverflow;
+
+            if (OBR.isAvailable && !isStandaloneMode) {
+                try {
+                    const stored = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+                    if (Array.isArray(stored) && stored.length > 0) {
+                        const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+                        OBR.popover
+                            .open({
+                                id: 'pkr-roll-log',
+                                url: `${baseUrl}/roll-log.html`,
+                                height: 380,
+                                width: 320,
+                                disableClickAway: true,
+                                anchorReference: 'POSITION',
+                                anchorPosition: { left: window.innerWidth - 340, top: window.innerHeight - 400 }
+                            })
+                            .catch(() => {});
+                    }
+                } catch (e) {
+                    console.warn('[BattleOrganizer] Failed to re-open roll-log popover:', e);
+                }
+            }
+            window.dispatchEvent(new Event('pkr-roll-log-update'));
         };
     }, []);
 
@@ -375,6 +398,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                                         <CombatantsTable
                                             combatants={currentRound?.combatants || []}
                                             endOfRoundEffects={currentRound?.endOfRoundEffects || ''}
+                                            showCriticalMarks={boSettings.showCriticalMarks !== false}
                                             onUpdateCombatant={updateCombatant}
                                             onDeleteCombatant={deleteCombatant}
                                             onRollInitiative={rollCombatantInitiative}

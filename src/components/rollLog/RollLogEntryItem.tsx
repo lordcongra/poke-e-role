@@ -24,10 +24,18 @@ export const RollLogEntryItem: React.FC<RollLogEntryItemProps> = ({ roll, resolv
         /CRITICAL HIT/i.test(roll.label) ||
         /It's a critical hit/i.test(roll.result)
     );
+    const isCritFail = Boolean(
+        roll.isCritFail ||
+        /critical failure/i.test(roll.result) ||
+        /CRITICAL FAILURE/i.test(roll.label) ||
+        /It is a critical failure/i.test(roll.result)
+    );
     const { cleanLabel, coreTags, factorTags } = parseRollLabel(roll.label);
 
     return (
-        <div className={`roll-log__entry ${isCrit ? 'roll-log__entry--crit' : ''}`}>
+        <div
+            className={`roll-log__entry ${isCrit ? 'roll-log__entry--crit' : ''} ${isCritFail ? 'roll-log__entry--crit-fail' : ''}`}
+        >
             <div className="roll-log__entry-header">
                 <img
                     src={resolvedIcon || roll.icon}
@@ -41,6 +49,7 @@ export const RollLogEntryItem: React.FC<RollLogEntryItemProps> = ({ roll, resolv
                     {roll.player}
                 </strong>
                 {isCrit && <span className="roll-log__crit-badge">Critical Hit!</span>}
+                {isCritFail && <span className="roll-log__crit-fail-badge">Critical Failure!</span>}
                 <button
                     type="button"
                     onClick={() => onDismiss(roll.id)}

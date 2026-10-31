@@ -37,6 +37,7 @@ export interface RollSyncData {
     icon: string;
     rollType?: string;
     isCrit?: boolean;
+    isCritFail?: boolean;
     targetTokenId?: string;
     targetId?: string;
     targetCombatantId?: string;

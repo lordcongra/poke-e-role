@@ -34,10 +34,14 @@ export function addRollLogEntry(
     rollType?: string,
     isCrit?: boolean,
     explicitTargetVisibility?: string,
-    options?: { chanceDice?: number; chanceEffect?: string; chanceRolled?: boolean }
+    options?: { chanceDice?: number; chanceEffect?: string; chanceRolled?: boolean; isCritFail?: boolean }
 ) {
     const activeTokenId = tokenId || useCharacterStore.getState().tokenId || undefined;
     const detectedCrit = isCrit !== undefined ? isCrit : /critical hit/i.test(result) || /critical hit/i.test(label);
+    const detectedCritFail =
+        options?.isCritFail !== undefined
+            ? options.isCritFail
+            : /critical failure/i.test(result) || /critical failure/i.test(label);
     const state = useCharacterStore.getState();
     const targetVisibility =
         explicitTargetVisibility || (state.identity.rolls === 'Private (GM)' ? 'gm_only' : 'everyone');
@@ -55,6 +59,7 @@ export function addRollLogEntry(
         rollType,
         targetVisibility,
         isCrit: detectedCrit,
+        isCritFail: detectedCritFail,
         chanceDice: options?.chanceDice,
         chanceEffect: options?.chanceEffect,
         chanceRolled: options?.chanceRolled
@@ -406,6 +411,11 @@ export async function rollDicePlus(
         const isDmgCrit = rollType === 'damage' && (/CRITICAL HIT/i.test(label) || /Critical Hit/i.test(label));
         const isCrit = isAccCrit || isDmgCrit;
 
+        // Detect critical failure:
+        const neededSuccMatch = label.match(/Need (\d+) Succ/i);
+        const neededSucc = neededSuccMatch ? parseInt(neededSuccMatch[1], 10) : null;
+        const isCritFail = Boolean(neededSucc !== null && neededSucc >= 3 && finalSuccesses <= (neededSucc - 3));
+
         // Safely wipe emojis strictly from the start in case they were appended
         const cleanLabel = label.replace(/^(?:🎲|💥|🩹|🍀|🎯|🛡️|❄️|🛡|❄)\s*/u, '').trim();
         const privacyTag = targetVisibility === 'gm_only' ? '[PRIVATE] ' : '';
@@ -450,6 +460,9 @@ export async function rollDicePlus(
 
         if (isCrit) {
             popupMessage += "\nIt's a critical hit!";
+        }
+        if (isCritFail) {
+            popupMessage += '\nIt is a critical failure!';
         }
 
         const executeStateIntercepts = async (messageAppendix: string) => {
@@ -541,7 +554,7 @@ export async function rollDicePlus(
                 rollType,
                 isCrit,
                 targetVisibility,
-                options
+                { ...options, isCritFail }
             );
             return;
         }
@@ -565,6 +578,7 @@ export async function rollDicePlus(
                 rollType,
                 targetVisibility,
                 isCrit,
+                isCritFail,
                 chanceDice: options?.chanceDice,
                 chanceEffect: options?.chanceEffect,
                 chanceRolled: options?.chanceRolled
@@ -574,7 +588,7 @@ export async function rollDicePlus(
         }
 
         // --- NATIVE OBR 3D DICE ROLL (Custom Action Rolls) ---
-        const critPrefix = isCrit ? 'CRITICAL HIT! | ' : '';
+        const critPrefix = isCrit ? 'CRITICAL HIT! | ' : isCritFail ? 'CRITICAL FAILURE! | ' : '';
         const mensaje = `${obrPlayerName} | ${critPrefix}${finalLabel}`;
 
         let diceTheme: Record<string, unknown> | undefined = undefined;
@@ -612,7 +626,7 @@ export async function rollDicePlus(
             );
         }
 
-        const broadcastPayload = { mensaje, icon, diceData, diceTheme };
+        const broadcastPayload = { mensaje, icon, diceData, diceTheme, isCrit, isCritFail };
         if (targetVisibility === 'gm_only') {
             await OBR.broadcast.sendMessage('tirada:mensaje', broadcastPayload, { destination: 'LOCAL' });
         } else {
@@ -635,6 +649,7 @@ export async function rollDicePlus(
                 rollType,
                 targetVisibility,
                 isCrit,
+                isCritFail,
                 chanceDice: options?.chanceDice,
                 chanceEffect: options?.chanceEffect,
                 chanceRolled: options?.chanceRolled

@@ -1,11 +1,12 @@
-import type { CharacterState } from '../../../store/storeTypes';
+import type { CharacterState, MoveData } from '../../../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../../types/enums';
 import {
     getAbilityText,
     parseCombatTags,
     getRankBonusStats,
     calculateStatTotal,
-    calculateSkillTotal
+    calculateSkillTotal,
+    calculateCriticalRequirement
 } from '../../../utils/combat/combatMath';
 import { rollGeneric } from '../../../utils/combat/combatRoller';
 import { rollDicePlus, broadcastInfo } from '../../../utils/combat/diceRoller';
@@ -84,14 +85,26 @@ export async function executeManeuverRoll(
     maneuverId: string,
     state: CharacterState,
     option?: string,
-    extraDice?: number
+    extraDice?: number,
+    consumeActionCounter = true
 ): Promise<void> {
     const pools = getManeuverPools(state);
     const nickname = state.identity.nickname || state.identity.species || 'Someone';
+    const requiredSuccesses = state.trackers.actions + 1;
+    const combatOptions = consumeActionCounter ? { requiredSuccesses } : { isOutOfCombat: true };
 
     switch (maneuverId) {
         case 'maneuver-ambush':
-            await rollGeneric('Ambush', pools.ambushTotal - pools.rankSkillBonus, 'dex', false, false, true, true);
+            await rollGeneric(
+                'Ambush',
+                pools.ambushTotal - pools.rankSkillBonus,
+                'dex',
+                false,
+                false,
+                consumeActionCounter,
+                true,
+                combatOptions
+            );
             break;
 
         case 'maneuver-clash':
@@ -102,8 +115,9 @@ export async function executeManeuverRoll(
                     'spe',
                     false,
                     true,
+                    consumeActionCounter,
                     true,
-                    true
+                    consumeActionCounter ? undefined : { isOutOfCombat: true }
                 );
             } else {
                 await rollGeneric(
@@ -112,37 +126,77 @@ export async function executeManeuverRoll(
                     'str',
                     false,
                     true,
+                    consumeActionCounter,
                     true,
-                    true
+                    consumeActionCounter ? undefined : { isOutOfCombat: true }
                 );
             }
             break;
 
         case 'maneuver-cover-an-ally':
-            await rollGeneric('Cover an Ally', pools.coverTotal, 'will', false, false, true, false);
+            await rollGeneric(
+                'Cover an Ally',
+                pools.coverTotal,
+                'will',
+                false,
+                false,
+                consumeActionCounter,
+                false,
+                combatOptions
+            );
             break;
 
         case 'maneuver-evasion':
-            await rollGeneric('Evasion', pools.evasionTotal - pools.rankSkillBonus, 'dex', true, false, true, true);
+            await rollGeneric(
+                'Evasion',
+                pools.evasionTotal - pools.rankSkillBonus,
+                'dex',
+                true,
+                false,
+                consumeActionCounter,
+                true,
+                consumeActionCounter ? undefined : { isOutOfCombat: true }
+            );
             break;
 
         case 'maneuver-grapple':
-            await rollGeneric('Grapple', pools.grappleTotal - pools.rankSkillBonus, 'str', false, false, true, true);
+            await rollGeneric(
+                'Grapple',
+                pools.grappleTotal - pools.rankSkillBonus,
+                'str',
+                false,
+                false,
+                consumeActionCounter,
+                true,
+                combatOptions
+            );
             break;
 
         case 'maneuver-help-another': {
             const count = Math.max(1, Math.min(6, extraDice ?? 3));
-            state.incrementAction();
+            if (consumeActionCounter) {
+                state.incrementAction();
+            }
+            const outOfCombatTag = !consumeActionCounter ? ' [ Out of Combat ]' : '';
             await rollDicePlus(
                 `${count}d6>5`,
-                `[Help Another] ${nickname} rolled Help Another (Chance dice)!`,
+                `[Help Another] ${nickname} rolled Help Another (Chance dice)!${outOfCombatTag}`,
                 'chance'
             );
             break;
         }
 
         case 'maneuver-run-away':
-            await rollGeneric('Run Away', pools.runAwayTotal - pools.rankSkillBonus, 'dex', false, false, true, true);
+            await rollGeneric(
+                'Run Away',
+                pools.runAwayTotal - pools.rankSkillBonus,
+                'dex',
+                false,
+                false,
+                consumeActionCounter,
+                true,
+                combatOptions
+            );
             break;
 
         case 'maneuver-stabilize-an-ally':
@@ -152,8 +206,9 @@ export async function executeManeuverRoll(
                 'cle',
                 false,
                 false,
+                consumeActionCounter,
                 true,
-                true
+                combatOptions
             );
             break;
 
@@ -175,14 +230,53 @@ export async function executeManeuverRoll(
                     'damage'
                 );
             } else {
+                let struggleOptions: {
+                    requiredSuccesses?: number;
+                    criticalRequirement?: number;
+                    critExplanationTags?: string[];
+                    isOutOfCombat?: boolean;
+                };
+
+                if (consumeActionCounter) {
+                    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+                    const itemBuffs = parseCombatTags(
+                        state.inventory,
+                        state.extraCategories,
+                        undefined,
+                        abilityText,
+                        state.passives
+                    );
+                    const struggleMove: MoveData = {
+                        id: 'struggle',
+                        active: true,
+                        name: 'Struggle',
+                        type: 'Normal',
+                        category: 'Physical',
+                        power: 1,
+                        acc1: 'dex',
+                        acc2: 'brawl',
+                        dmg1: 'str',
+                        desc: 'Struggle accuracy attack'
+                    };
+                    const critResult = calculateCriticalRequirement(struggleMove, requiredSuccesses, state, itemBuffs);
+                    struggleOptions = {
+                        requiredSuccesses,
+                        criticalRequirement: critResult.criticalRequirement,
+                        critExplanationTags: critResult.critExplanationTags
+                    };
+                } else {
+                    struggleOptions = { isOutOfCombat: true };
+                }
+
                 await rollGeneric(
                     'Struggle (Accuracy)',
                     pools.struggleAccTotal - pools.rankSkillBonus,
                     'dex',
                     false,
                     false,
+                    consumeActionCounter,
                     true,
-                    true
+                    struggleOptions
                 );
             }
             break;

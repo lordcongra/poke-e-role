@@ -17,6 +17,7 @@ export const ManeuversModal: React.FC<ManeuversModalProps> = ({ onClose }) => {
     const [expandedManeuver, setExpandedManeuver] = useState<string | null>(null);
     const [helpDice, setHelpDice] = useState(3);
     const [showHelpAnotherModal, setShowHelpAnotherModal] = useState(false);
+    const [consumeActionCounter, setConsumeActionCounter] = useState(true);
 
     // Targeted selectors
     const activeTransformation = useCharacterStore((s) => s.identity.activeTransformation);
@@ -49,7 +50,7 @@ export const ManeuversModal: React.FC<ManeuversModalProps> = ({ onClose }) => {
     }, [searchQuery]);
 
     const handleRoll = async (maneuverId: string, option?: string, extra?: number) => {
-        await executeManeuverRoll(maneuverId, useCharacterStore.getState(), option, extra);
+        await executeManeuverRoll(maneuverId, useCharacterStore.getState(), option, extra, consumeActionCounter);
     };
 
     const toggleExpand = (id: string) => {
@@ -92,7 +93,20 @@ export const ManeuversModal: React.FC<ManeuversModalProps> = ({ onClose }) => {
                             className="maneuvers-modal__search-input"
                         />
                     </div>
-                    <span className="maneuvers-modal__rules-badge">CANNOT Clash nor be Clashed</span>
+                    <div className="maneuvers-modal__toolbar-actions">
+                        <label
+                            className="maneuvers-modal__action-counter-toggle"
+                            title="When checked, combat maneuvers increment your Action Counter and set target required successes (actions + 1). Uncheck for casual or out-of-combat rolls."
+                        >
+                            <input
+                                type="checkbox"
+                                checked={consumeActionCounter}
+                                onChange={(e) => setConsumeActionCounter(e.target.checked)}
+                            />
+                            <span>Action Counter (Combat)</span>
+                        </label>
+                        <span className="maneuvers-modal__rules-badge">CANNOT Clash nor be Clashed</span>
+                    </div>
                 </div>
 
                 {/* Maneuvers List */}

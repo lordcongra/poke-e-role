@@ -6,6 +6,7 @@ import type { CombatantRowData } from '../../../types/battleOrganizerTypes';
 export interface CombatantsTableProps {
     combatants: CombatantRowData[];
     endOfRoundEffects: string;
+    showCriticalMarks?: boolean;
     onUpdateCombatant: (updated: CombatantRowData) => void;
     onDeleteCombatant: (id: string) => void;
     onRollInitiative: (id: string) => void;
@@ -19,6 +20,7 @@ export interface CombatantsTableProps {
 export function CombatantsTable({
     combatants,
     endOfRoundEffects,
+    showCriticalMarks = true,
     onUpdateCombatant,
     onDeleteCombatant,
     onRollInitiative,
@@ -55,6 +57,7 @@ export function CombatantsTable({
                                 key={combatant.id}
                                 combatant={combatant}
                                 index={cIdx}
+                                showCriticalMarks={showCriticalMarks}
                                 onUpdate={onUpdateCombatant}
                                 onDelete={onDeleteCombatant}
                                 onRollInitiative={onRollInitiative}
