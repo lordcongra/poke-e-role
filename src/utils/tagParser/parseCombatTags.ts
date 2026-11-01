@@ -257,8 +257,16 @@ export function parseCombatTags(
     const sideForTags = state ? resolveCharacterSide(state) : 'none';
     const effectiveSideForTags: 'player' | 'foe' =
         sideForTags !== 'none' ? sideForTags : state?.identity.isNPC ? 'foe' : 'player';
+    const charIdentifiers = state
+        ? ([
+              state.identity.entityId,
+              state.tokenId,
+              state.identity.nickname,
+              state.identity.species
+          ].filter(Boolean) as string[])
+        : '';
     const isSuppressedByGas =
-        state && isAbilitySuppressedByField(effectiveSideForTags, state.activeBattlefield || null);
+        state && isAbilitySuppressedByField(effectiveSideForTags, state.activeBattlefield || null, charIdentifiers);
 
     if (state.identity.abilityActive !== false && !isSuppressedByGas) {
         let desc = state.identity.abilityTags;

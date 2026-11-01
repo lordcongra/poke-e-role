@@ -48,6 +48,67 @@ import { markDataChanged } from '../../utils/sync/storageAdapter';
 import { broadcastGmPc, triggerDebouncedPcBroadcast } from '../../hooks/owlbearSync/owlbearPcBroadcastOps';
 import OBR from '@owlbear-rodeo/sdk';
 
+function syncDepositedPokemonToBattleOrganizer(entityId: string, pcData: PcStorageData) {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    try {
+        const raw = localStorage.getItem('pkr_battle_organizer_data');
+        if (!raw) return;
+        const bo = JSON.parse(raw);
+        if (!bo || !Array.isArray(bo.rounds)) return;
+
+        let boChanged = false;
+        const summary = pcData.pokemonSummaries[entityId];
+        const mapTokenId = summary?.mapTokenId;
+        const savedTokenId = summary?.savedTokenItem?.id;
+        const summaryName = (summary?.name || summary?.species || '').trim().toLowerCase();
+
+        const idsToRemove = new Set([entityId]);
+        if (mapTokenId) idsToRemove.add(mapTokenId);
+        if (savedTokenId) idsToRemove.add(savedTokenId);
+
+        bo.rounds.forEach((r: any) => {
+            if (!r?.combatants) return;
+            r.combatants.forEach((c: any) => {
+                const isMatch =
+                    idsToRemove.has(c.id) ||
+                    idsToRemove.has(c.entityId) ||
+                    (c.tokenId && idsToRemove.has(c.tokenId)) ||
+                    (summaryName && c.name && c.name.trim().toLowerCase() === summaryName);
+
+                if (isMatch) {
+                    if (c.abilityActive !== false) {
+                        c.abilityActive = false;
+                        boChanged = true;
+                    }
+                } else {
+                    if (c.abilityTargetIds && c.abilityTargetIds.length > 0) {
+                        const filtered = c.abilityTargetIds.filter((tId: string) => !idsToRemove.has(tId));
+                        if (filtered.length !== c.abilityTargetIds.length) {
+                            c.abilityTargetIds = filtered;
+                            boChanged = true;
+                        }
+                    }
+                }
+            });
+        });
+
+        if (boChanged) {
+            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(bo));
+            if (OBR.isAvailable) {
+                OBR.broadcast
+                    .sendMessage(
+                        `${EXTENSION_ID}/battle-organizer-sync`,
+                        bo,
+                        { destination: 'REMOTE' }
+                    )
+                    .catch(() => {});
+            }
+        }
+    } catch (err) {
+        console.warn('[PcSlice] Failed to clean deposited pokemon from battle organizer:', err);
+    }
+}
+
 export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set, get) => {
     const safeSavePc = (data: PcStorageData) => {
         if (!get().isInitialized) {
@@ -124,6 +185,11 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
                 if (!OBR.isAvailable && entityId) {
                     const camp = nextData.campaigns[nextData.activeCampaignId];
                     syncSidebarOnDeposit(camp, camp?.trainers[camp?.activeTrainerId], entityId, boxIndex);
+                } else if (OBR.isAvailable) {
+                    triggerDebouncedPcBroadcast();
+                }
+                if (entityId) {
+                    syncDepositedPokemonToBattleOrganizer(entityId, nextData);
                 }
             } catch (e) {
                 console.error('[PcSlice] Failed to set box slot:', e);
@@ -197,60 +263,8 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
                 syncSidebarOnDeposit(camp, targetTr, entityId, targetIdx);
                 if (OBR.isAvailable) triggerDebouncedPcBroadcast();
 
-                // Clean battle organizer data in localStorage
-                if (typeof window !== 'undefined' && window.localStorage) {
-                    try {
-                        const raw = localStorage.getItem('pkr_battle_organizer_data');
-                        if (raw) {
-                            const bo = JSON.parse(raw);
-                            if (bo && Array.isArray(bo.rounds)) {
-                                let boChanged = false;
-                                const summary = pcData.pokemonSummaries[entityId];
-                                const mapTokenId = summary?.mapTokenId;
-                                const idsToRemove = new Set([entityId]);
-                                if (mapTokenId) idsToRemove.add(mapTokenId);
-
-                                bo.rounds.forEach((r: any) => {
-                                    if (!r?.combatants) return;
-                                    const beforeLen = r.combatants.length;
-                                    r.combatants = r.combatants.filter(
-                                        (c: any) =>
-                                            !idsToRemove.has(c.id) &&
-                                            !idsToRemove.has(c.entityId) &&
-                                            (!c.tokenId || !idsToRemove.has(c.tokenId))
-                                    );
-                                    if (r.combatants.length !== beforeLen) boChanged = true;
-
-                                    r.combatants.forEach((c: any) => {
-                                        if (c.abilityTargetIds && c.abilityTargetIds.length > 0) {
-                                            const filtered = c.abilityTargetIds.filter((tId: string) => !idsToRemove.has(tId));
-                                            if (filtered.length !== c.abilityTargetIds.length) {
-                                                c.abilityTargetIds = filtered;
-                                                boChanged = true;
-                                            }
-                                        }
-                                    });
-                                });
-
-                                if (boChanged) {
-                                    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(bo));
-                                    if (OBR.isAvailable) {
-                                        OBR.broadcast
-                                            .sendMessage(
-                                                `${EXTENSION_ID}/battle-organizer-sync`,
-                                                bo,
-                                                { destination: 'REMOTE' }
-                                            )
-                                            .catch(() => {});
-                                    }
-                                }
-                            }
-                        }
-                    } catch (err) {
-                        console.warn('[PcSlice] Failed to clean deposited pokemon from battle organizer:', err);
-                    }
-                }
-
+                // Clean battle organizer data in localStorage (deactivates ability aura while preserving combatant)
+                syncDepositedPokemonToBattleOrganizer(entityId, nextData);
                 return true;
             } catch (e) {
                 console.error('[PcSlice] Failed to deposit to box:', e);

@@ -2551,11 +2551,11 @@ await runTest('abilityTargeting: serialization, hydration, stance resolution, an
     };
     localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(battleState));
 
-    // When unconfigured, auto-targets eligible foes (Pikachu is player side foe to Koffing)
+    // When unconfigured (undefined), treat as 0 targets selected (does not auto-target)
     assert.equal(
         isTargetAffectedByAbility('foe-1', 'player', 'Neutralizing Gas', null),
-        true,
-        'Unconfigured ability auto-targets eligible candidates'
+        false,
+        'Unconfigured ability (undefined) treats as 0 targets selected'
     );
 
     // When explicitly configured with [] (0 targets cleared), target is NOT affected
@@ -2582,6 +2582,80 @@ await runTest('abilityTargeting: serialization, hydration, stance resolution, an
         isTargetAffectedByAbility('foe-1', 'player', 'Neutralizing Gas', null),
         true,
         'Explicitly configured affects targets in list'
+    );
+
+    // 5. Invariant: Neutralizing Gas only suppresses targeted individuals, allowing unaffected allies to project auras
+    const multiCombatState = {
+        rounds: [
+            {
+                roundNumber: 1,
+                combatants: [
+                    {
+                        id: 'koffing-1',
+                        tokenId: 'token-koffing',
+                        name: 'Koffing',
+                        ability: 'Neutralizing Gas',
+                        abilityActive: true,
+                        isPlayerSide: false,
+                        isNPC: true,
+                        rank: 'Starter',
+                        abilityTargetIds: ['growlithe-1'] // Koffing ONLY targets Growlithe
+                    },
+                    {
+                        id: 'growlithe-1',
+                        tokenId: 'token-growlithe',
+                        name: 'Growlithe',
+                        ability: 'Intimidate',
+                        abilityActive: true,
+                        isPlayerSide: true,
+                        isNPC: false,
+                        rank: 'Starter',
+                        abilityTargetIds: ['koffing-1']
+                    },
+                    {
+                        id: 'milcery-1',
+                        tokenId: 'token-milcery',
+                        name: 'Milcery',
+                        ability: 'Sweet Veil',
+                        abilityActive: true,
+                        isPlayerSide: true,
+                        isNPC: false,
+                        rank: 'Starter',
+                        abilityTargetIds: ['growlithe-1', 'milcery-1'] // Milcery protects Growlithe
+                    }
+                ]
+            }
+        ],
+        activeRoundIndex: 0
+    };
+    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(multiCombatState));
+
+    // Growlithe IS affected by Neutralizing Gas
+    assert.equal(
+        isTargetAffectedByAbility('growlithe-1', 'player', 'Neutralizing Gas', null),
+        true,
+        'Growlithe is suppressed by Neutralizing Gas'
+    );
+
+    // Milcery is NOT targeted by Neutralizing Gas, so Milcery is NOT affected
+    assert.equal(
+        isTargetAffectedByAbility('milcery-1', 'player', 'Neutralizing Gas', null),
+        false,
+        'Milcery is not suppressed because Koffing only targeted Growlithe'
+    );
+
+    // Growlithe receives aura benefit (Sweet Veil) from ally Milcery
+    assert.equal(
+        isTargetAffectedByAbility('growlithe-1', 'player', 'Sweet Veil', null),
+        true,
+        'Growlithe receives Sweet Veil benefit from ally Milcery even though Growlithe is gassed'
+    );
+
+    // Growlithe own ability (Intimidate) IS suppressed by Neutralizing Gas
+    assert.equal(
+        isTargetAffectedByAbility('koffing-1', 'foe', 'Intimidate', null),
+        false,
+        'Growlithe Intimidate is suppressed by Neutralizing Gas and does not affect Koffing'
     );
 });
 

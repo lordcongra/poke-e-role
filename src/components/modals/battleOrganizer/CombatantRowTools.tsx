@@ -93,7 +93,6 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
                         title={isLocked ? 'Pressure: Locked by GM' : 'Trigger Pressure: Drain opposing Will'}
                         aria-label="Trigger Pressure"
                         disabled={isLocked}
-                        style={{ color: '#eab308' }}
                     >
                         <Zap size={12} />
                     </button>
@@ -106,7 +105,6 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
                         title={isLocked ? 'Curious Medicine: Locked by GM' : "Trigger Curious Medicine: Reset allies' buffs/debuffs"}
                         aria-label="Trigger Curious Medicine"
                         disabled={isLocked}
-                        style={{ color: '#06b6d4' }}
                     >
                         <RotateCcw size={12} />
                     </button>
@@ -123,7 +121,6 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
                         }
                         aria-label="Toggle Ability Active"
                         disabled={isLocked}
-                        style={{ color: combatant.abilityActive !== false ? '#22c55e' : 'var(--text-muted, #94a3b8)' }}
                     >
                         <Power size={12} />
                     </button>
@@ -140,7 +137,6 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
                         }
                         aria-label="Configure Ability Targets"
                         disabled={isLocked}
-                        style={{ color: '#38bdf8' }}
                     >
                         <Users size={12} />
                     </button>

@@ -215,7 +215,10 @@ export function isTargetAffectedByAbility(
 
                         // Check Neutralizing Gas suppression of source (unless source itself is Neutralizing Gas)
                         if (cleanAbility !== 'neutralizing gas') {
-                            if (isAbilitySuppressedByField(sourceSide, battlefield)) {
+                            const sourceIdentifiers = [source.id, source.tokenId, source.entityId, source.name].filter(
+                                Boolean
+                            ) as string[];
+                            if (isTargetAffectedByAbility(sourceIdentifiers, sourceSide, 'neutralizing gas', battlefield)) {
                                 continue;
                             }
                         }
@@ -227,37 +230,14 @@ export function isTargetAffectedByAbility(
                             continue;
                         }
 
-                        // Check explicit targeting configuration
+                        // Check explicit targeting configuration:
+                        // If configuredTargets is empty ([]) or undefined, treat it as 0 targets selected (do NOT fall back to auto-targeting candidates)
                         const configuredTargets = getCombatantTargets(source);
-                        if (configuredTargets !== undefined) {
-                            if (configuredTargets.length > 0) {
-                                return isTargetInList(configuredTargets, targetId, allCombatants);
-                            }
-                            return false;
+                        if (!configuredTargets || configuredTargets.length === 0) {
+                            continue;
                         }
 
-                        // Unconfigured: falls back to first getMaxTargetsForRank(sourceRank) eligible candidates
-                        const rankLimit = getMaxTargetsForRank(source.rank || 'Starter');
-                        const eligibleCandidates = allCombatants.filter((cand) => {
-                            if (cand.isFainted) return false;
-                            const candIsPlayer = typeof cand.isPlayerSide === 'boolean' ? cand.isPlayerSide : !cand.isNPC;
-                            const candSide: 'player' | 'foe' = candIsPlayer ? 'player' : 'foe';
-
-                            if (stance === 'foes') {
-                                return candSide === targetSide;
-                            } else if (stance === 'allies-only') {
-                                return candSide === sourceSide && !matchesTarget(source, cand.id) && !matchesTarget(source, cand.tokenId || '');
-                            } else {
-                                return candSide === sourceSide;
-                            }
-                        });
-
-                        const selectedSlice = eligibleCandidates.slice(0, rankLimit);
-
-                        const hasTarget = Boolean(Array.isArray(targetId) ? targetId.length > 0 : targetId);
-                        if (!hasTarget) {
-                            if (selectedSlice.length > 0) return true;
-                        } else if (selectedSlice.some((cand) => matchesTarget(cand, targetId))) {
+                        if (isTargetInList(configuredTargets, targetId, allCombatants)) {
                             return true;
                         }
                     }
@@ -272,15 +252,16 @@ export function isTargetAffectedByAbility(
 }
 
 /**
- * Losslessly detects whether a side's abilities are suppressed by active opposing Neutralizing Gas,
+ * Losslessly detects whether a side or specific character is suppressed by active opposing Neutralizing Gas,
  * delegating to the unified isTargetAffectedByAbility engine.
  */
 export function isAbilitySuppressedByField(
     side: 'player' | 'foe',
-    battlefield: BattlefieldData | null | undefined
+    battlefield: BattlefieldData | null | undefined,
+    targetId: string | string[] = ''
 ): boolean {
     if (!side || (side !== 'player' && side !== 'foe')) return false;
-    return isTargetAffectedByAbility('', side, 'neutralizing gas', battlefield);
+    return isTargetAffectedByAbility(targetId, side, 'neutralizing gas', battlefield);
 }
 
 /**
@@ -307,15 +288,15 @@ export function isAllyAuraActive(
 ): boolean {
     if (!side || (side !== 'player' && side !== 'foe')) return false;
 
-    if (isAbilitySuppressedByField(side, battlefield)) {
-        return false;
-    }
-
     const cleanAbility = abilityName.trim().toLowerCase();
 
     if (userAbility && userAbilityActive !== false) {
         const cleanUserAb = userAbility.replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
-        if (cleanUserAb === cleanAbility) return true;
+        if (cleanUserAb === cleanAbility) {
+            if (!isAbilitySuppressedByField(side, battlefield)) {
+                return true;
+            }
+        }
     }
 
     return isTargetAffectedByAbility('', side, abilityName, battlefield);

@@ -8,7 +8,7 @@ import {
 } from '../../utils/graphics/graphicsManager';
 import { setActiveTokenId, hasPendingUpdates, getIsPcSheetActive, setIsRemoteSyncActive } from '../../utils/sync/obr';
 import { harvestTokensItemArt } from '../../utils/graphics/itemArtCatalog';
-import { METADATA_ID, getEffectiveScaleAndOffsets, type TransformData } from './owlbearSyncConstants';
+import { METADATA_ID, EXTENSION_ID, getEffectiveScaleAndOffsets, type TransformData } from './owlbearSyncConstants';
 import { reconcileSceneTokens } from './reconcileSceneTokens';
 import {
     extractLiveAccessoryBundles,
@@ -233,13 +233,84 @@ export async function setupOwlbearTokenSync(params: {
                     const bo = JSON.parse(raw);
                     if (bo?.rounds && Array.isArray(bo.rounds)) {
                         let boChanged = false;
+                        const deletedSet = new Set(deletedTokenIds);
+
+                        const pcSummaries = Object.values(store.pcData?.pokemonSummaries || {});
+                        const pcEntityIds = new Set<string>();
+                        const pcTokenIds = new Set<string>();
+                        const pcNames = new Set<string>();
+
+                        pcSummaries.forEach((s) => {
+                            if (s.entityId) pcEntityIds.add(s.entityId);
+                            if (s.mapTokenId) pcTokenIds.add(s.mapTokenId);
+                            if (s.savedTokenItem?.id) pcTokenIds.add(s.savedTokenItem.id);
+                            const name = (s.name || s.species || '').trim().toLowerCase();
+                            if (name) pcNames.add(name);
+                        });
+                        if (store.identity?.entityId) pcEntityIds.add(store.identity.entityId);
+                        if (store.tokenId) pcTokenIds.add(store.tokenId);
+                        const activeName = (
+                            store.identity?.nickname ||
+                            store.identity?.species ||
+                            ''
+                        )
+                            .trim()
+                            .toLowerCase();
+                        if (activeName) pcNames.add(activeName);
+
+                        const isPreservedCombatant = (c: any) => {
+                            if (c.isPlayerSide || !c.isNPC) return true;
+                            if (c.entityId && pcEntityIds.has(c.entityId)) return true;
+                            if (c.tokenId && pcTokenIds.has(c.tokenId)) return true;
+                            if (pcEntityIds.has(c.id) || pcTokenIds.has(c.id)) return true;
+                            const cName = (c.name || '').trim().toLowerCase();
+                            if (cName && pcNames.has(cName)) return true;
+                            return false;
+                        };
+
                         bo.rounds.forEach((r: any) => {
                             if (!r?.combatants) return;
                             const before = r.combatants.length;
-                            r.combatants = r.combatants.filter((c: any) => !deletedTokenIds.includes(c.tokenId) && !deletedTokenIds.includes(c.id));
+                            r.combatants = r.combatants.filter((c: any) => {
+                                const isDeleted =
+                                    (c.tokenId && deletedSet.has(c.tokenId)) ||
+                                    (c.id && deletedSet.has(c.id));
+                                if (!isDeleted) return true;
+
+                                // NEVER delete PC, player-side, or non-NPC combatants when stored in PC or deleted from map
+                                if (isPreservedCombatant(c)) {
+                                    if (c.abilityActive !== false) {
+                                        c.abilityActive = false;
+                                        boChanged = true;
+                                    }
+                                    return true;
+                                }
+                                return false;
+                            });
                             if (r.combatants.length !== before) boChanged = true;
+
+                            r.combatants.forEach((c: any) => {
+                                if (c.abilityTargetIds && c.abilityTargetIds.length > 0) {
+                                    const filtered = c.abilityTargetIds.filter((tId: string) => !deletedSet.has(tId));
+                                    if (filtered.length !== c.abilityTargetIds.length) {
+                                        c.abilityTargetIds = filtered;
+                                        boChanged = true;
+                                    }
+                                }
+                            });
                         });
-                        if (boChanged) localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(bo));
+                        if (boChanged) {
+                            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(bo));
+                            if (OBR.isAvailable) {
+                                OBR.broadcast
+                                    .sendMessage(
+                                        `${EXTENSION_ID}/battle-organizer-sync`,
+                                        bo,
+                                        { destination: 'REMOTE' }
+                                    )
+                                    .catch(() => {});
+                            }
+                        }
                     }
                 }
             } catch (e) {

@@ -45,7 +45,13 @@ export function getEffectiveAbilityText(state: CharacterState): string {
     }
     const side = resolveCharacterSide(state);
     const effectiveSide: 'player' | 'foe' = side !== 'none' ? side : state.identity.isNPC ? 'foe' : 'player';
-    if (isAbilitySuppressedByField(effectiveSide, state.activeBattlefield || null)) {
+    const charIdentifiers = [
+        state.identity.entityId,
+        state.tokenId,
+        state.identity.nickname,
+        state.identity.species
+    ].filter(Boolean) as string[];
+    if (isAbilitySuppressedByField(effectiveSide, state.activeBattlefield || null, charIdentifiers)) {
         return '';
     }
     return getAbilityText(state.identity.ability, state.roomCustomAbilities);

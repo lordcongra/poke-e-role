@@ -26,7 +26,7 @@ export const CombatantActionSlots: React.FC<CombatantActionSlotsProps> = ({
     return (
         <td className="bo-cell bo-cell--actions">
             <div className="bo-actions-grid">
-                {(actions || []).map((act, actIdx) => {
+                {(Array.isArray(actions) ? actions : []).map((act, actIdx) => {
                     const isSuccess = act?.status === 'success';
                     const isFailed = act?.status === 'failed';
                     const isCritHit = showCriticalMarks && act?.critType === 'crit_hit';

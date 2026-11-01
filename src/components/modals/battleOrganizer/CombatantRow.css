@@ -534,6 +534,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, filter 0.15s ease;
 }
 
 .bo-reaction-toggle:hover {
@@ -543,7 +544,38 @@
 .bo-reaction-toggle--active {
     background-color: var(--primary, #3b82f6);
     border-color: var(--primary, #3b82f6);
-    color: #fff;
+    color: #ffffff;
+}
+
+.bo-reaction-toggle--active svg {
+    filter: var(--shadow-icon);
+}
+
+.bo-reaction-toggle--pressure {
+    color: #eab308;
+}
+
+.bo-reaction-toggle--pressure:hover {
+    color: #fde047;
+    filter: brightness(1.2);
+}
+
+.bo-reaction-toggle--medicine {
+    color: #06b6d4;
+}
+
+.bo-reaction-toggle--medicine:hover {
+    color: #67e8f9;
+    filter: brightness(1.2);
+}
+
+.bo-reaction-toggle--targets {
+    color: #38bdf8;
+}
+
+.bo-reaction-toggle--targets:hover {
+    color: #7dd3fc;
+    filter: brightness(1.2);
 }
 
 .bo-reaction-toggle--faint {

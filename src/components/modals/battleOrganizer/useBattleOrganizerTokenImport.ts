@@ -140,14 +140,15 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                       : !isNPC;
 
                             const rawTargetMeta = matchingChar?.metadata?.['ability-target-ids'] ?? meta['ability-target-ids'];
-                            const abilityTargetIds =
-                                existing?.abilityTargetIds !== undefined
-                                    ? existing.abilityTargetIds
-                                    : rawTargetMeta !== undefined
-                                      ? String(rawTargetMeta).trim()
-                                          ? String(rawTargetMeta).split(',').map((s) => s.trim()).filter(Boolean)
-                                          : []
-                                      : undefined;
+                            const abilityTargetIds = shouldReset
+                                ? []
+                                : existing?.abilityTargetIds !== undefined
+                                  ? existing.abilityTargetIds
+                                  : rawTargetMeta !== undefined
+                                    ? String(rawTargetMeta).trim()
+                                        ? String(rawTargetMeta).split(',').map((s) => s.trim()).filter(Boolean)
+                                        : []
+                                    : [];
 
                             combatantRows.push({
                                 id: crypto.randomUUID(),
@@ -286,14 +287,15 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                     : !isNPC;
 
                         const rawTargetMeta = statsMeta['ability-target-ids'] ?? meta['ability-target-ids'];
-                        const abilityTargetIds =
-                            existing?.abilityTargetIds !== undefined
-                                ? existing.abilityTargetIds
-                                : rawTargetMeta !== undefined
-                                  ? String(rawTargetMeta).trim()
-                                      ? String(rawTargetMeta).split(',').map((s) => s.trim()).filter(Boolean)
-                                      : []
-                                  : undefined;
+                        const abilityTargetIds = shouldReset
+                            ? []
+                            : existing?.abilityTargetIds !== undefined
+                              ? existing.abilityTargetIds
+                              : rawTargetMeta !== undefined
+                                ? String(rawTargetMeta).trim()
+                                    ? String(rawTargetMeta).split(',').map((s) => s.trim()).filter(Boolean)
+                                    : []
+                                : [];
 
                         combatantRows.push({
                             id: crypto.randomUUID(),
@@ -403,7 +405,11 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                 return {
                                     ...row,
                                     isPlayerSide: existing.isPlayerSide !== undefined ? existing.isPlayerSide : row.isPlayerSide,
-                                    abilityTargetIds: existing.abilityTargetIds !== undefined ? existing.abilityTargetIds : row.abilityTargetIds
+                                    abilityTargetIds: shouldReset
+                                        ? []
+                                        : existing.abilityTargetIds !== undefined
+                                          ? existing.abilityTargetIds
+                                          : (row.abilityTargetIds ?? [])
                                 };
                             }
                             return row;
@@ -460,6 +466,7 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                             stats['clashes-used'] = false;
                                             stats['ability-boost-active'] = false;
                                             stats['ability-boost-level'] = 0;
+                                            stats['ability-target-ids'] = '';
 
                                             if (!item.metadata['pokerole-pmd-extension/stats']) {
                                                 item.metadata['pokerole-pmd-extension/stats'] = {};
@@ -473,12 +480,14 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                             pmdStats['clashes-used'] = false;
                                             pmdStats['ability-boost-active'] = false;
                                             pmdStats['ability-boost-level'] = 0;
+                                            pmdStats['ability-target-ids'] = '';
 
                                             item.metadata['actions-used'] = 0;
                                             item.metadata['evasions-used'] = false;
                                             item.metadata['clashes-used'] = false;
                                             item.metadata['ability-boost-active'] = false;
                                             item.metadata['ability-boost-level'] = 0;
+                                            item.metadata['ability-target-ids'] = '';
                                         }
                                     });
                                 }
@@ -494,7 +503,8 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                                 'evasions-used': false,
                                                 'clashes-used': false,
                                                 'ability-boost-active': false,
-                                                'ability-boost-level': 0
+                                                'ability-boost-level': 0,
+                                                'ability-target-ids': ''
                                             },
                                             'pokerole-extension/stats'
                                         );
@@ -507,13 +517,16 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
 
                         const globalStore = useCharacterStore.getState();
                         if (globalStore.tokenId) {
-                            const isMatched = targetCombatantsToReset.some((c) => c.tokenId === globalStore.tokenId);
+                            const isMatched = targetCombatantsToReset.some(
+                                (c) => c.tokenId === globalStore.tokenId || (c.entityId && c.entityId === globalStore.tokenId)
+                            );
                             if (isMatched) {
                                 globalStore.updateTracker('actions', 0);
                                 globalStore.updateTracker('evade', false);
                                 globalStore.updateTracker('clash', false);
                                 globalStore.setIdentity('abilityBoostActive' as any, false);
                                 globalStore.setIdentity('abilityBoostLevel' as any, 0);
+                                globalStore.setIdentity('abilityTargetIds' as any, []);
                             }
                         }
                     }

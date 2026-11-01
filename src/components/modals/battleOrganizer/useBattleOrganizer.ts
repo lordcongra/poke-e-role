@@ -3,6 +3,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { setActiveTokenId } from '../../../utils/sync/obr';
+import { EXTENSION_ID } from '../../../hooks/owlbearSync/owlbearSyncConstants';
 import {
     extractTokenImage,
     extractCharacterName,
@@ -459,6 +460,68 @@ export function useBattleOrganizer() {
         }
 
         setState(fresh);
+
+        if (OBR.isAvailable) {
+            OBR.broadcast
+                .sendMessage(
+                    `${EXTENSION_ID}/battle-organizer-sync`,
+                    fresh,
+                    { destination: 'REMOTE' }
+                )
+                .catch(() => {});
+
+            OBR.scene.items
+                .updateItems(
+                    (item) => item.layer === 'CHARACTER',
+                    (items) => {
+                        items.forEach((item) => {
+                            if (!item.metadata) item.metadata = {};
+                            const stats = (item.metadata['pokerole-extension/stats'] || {}) as Record<string, unknown>;
+                            stats['ability-target-ids'] = '';
+                            item.metadata['pokerole-extension/stats'] = stats;
+
+                            const pmdStats = (item.metadata['pokerole-pmd-extension/stats'] || {}) as Record<string, unknown>;
+                            pmdStats['ability-target-ids'] = '';
+                            item.metadata['pokerole-pmd-extension/stats'] = pmdStats;
+
+                            item.metadata['ability-target-ids'] = '';
+                        });
+                    }
+                )
+                .catch((err) => {
+                    console.warn('[BattleOrganizer] Failed to clear token ability-target-ids on clearAll:', err);
+                });
+        } else if (isStandaloneMode) {
+            storageAdapter
+                .getLocalCharacters()
+                .then((chars) => {
+                    chars.forEach((c) => {
+                        storageAdapter
+                            .saveCharacter(
+                                c.id,
+                                {
+                                    'actions-used': 0,
+                                    'evasions-used': false,
+                                    'clashes-used': false,
+                                    'ability-boost-active': false,
+                                    'ability-boost-level': 0,
+                                    'ability-target-ids': ''
+                                },
+                                'pokerole-extension/stats'
+                            )
+                            .catch(() => {});
+                    });
+                })
+                .catch((e) => {
+                    console.warn('[BattleOrganizer] Failed to clear characters ability-target-ids on clearAll:', e);
+                });
+        }
+
+        const globalStore = useCharacterStore.getState();
+        globalStore.updateTracker('actions', 0);
+        globalStore.updateTracker('evade', false);
+        globalStore.updateTracker('clash', false);
+        globalStore.setIdentity('abilityTargetIds' as any, []);
     }, []);
 
     const updateCombatantHp = useCallback(

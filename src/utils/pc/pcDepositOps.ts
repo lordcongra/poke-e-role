@@ -413,6 +413,30 @@ export async function prepareDepositSummary(
         }
     }
 
+    if (finalSummary.savedTokenItem) {
+        const meta = { ...(finalSummary.savedTokenItem.metadata || {}) };
+        meta['ability-target-ids'] = '';
+        meta['ability-boost-active'] = false;
+        if (meta['pokerole-extension/stats'] && typeof meta['pokerole-extension/stats'] === 'object') {
+            meta['pokerole-extension/stats'] = {
+                ...(meta['pokerole-extension/stats'] as Record<string, unknown>),
+                'ability-target-ids': '',
+                'ability-boost-active': false
+            };
+        }
+        if (meta['pokerole-pmd-extension/stats'] && typeof meta['pokerole-pmd-extension/stats'] === 'object') {
+            meta['pokerole-pmd-extension/stats'] = {
+                ...(meta['pokerole-pmd-extension/stats'] as Record<string, unknown>),
+                'ability-target-ids': '',
+                'ability-boost-active': false
+            };
+        }
+        finalSummary.savedTokenItem = {
+            ...finalSummary.savedTokenItem,
+            metadata: meta
+        };
+    }
+
     return finalSummary;
 }
 

@@ -11,19 +11,23 @@ import { resolveCharacterSide } from '../../utils/combat/combatantSideUtils';
 import { isTargetAffectedByAbility } from '../../utils/combat/abilityTargetingUtils';
 import type { CharacterState, Trackers } from '../../store/storeTypes';
 import type { ConditionItem } from './TrackerConditionsList';
+import { removeCharacterFromAuraSources } from './trackerAuraUtils';
+import { useCharacterStore } from '../../store/useCharacterStore';
 
 export interface BuildTrackerConditionsParams {
     state: CharacterState;
     boostSources: BoostTrackerSource[];
     updateTracker: <K extends keyof Trackers>(field: K, value: Trackers[K]) => void;
     clearActiveCombatBoost: () => void;
+    onRefresh?: () => void;
 }
 
 export function buildTrackerConditions({
     state,
     boostSources,
     updateTracker,
-    clearActiveCombatBoost
+    clearActiveCombatBoost,
+    onRefresh
 }: BuildTrackerConditionsParams): ConditionItem[] {
     const conditions: ConditionItem[] = [];
 
@@ -80,6 +84,11 @@ export function buildTrackerConditions({
     const statusPenalties = getStatusPenalties(state);
     (state.statuses || []).forEach((status) => {
         if (status.name !== 'Healthy') {
+            const handleClearStatus = () => {
+                useCharacterStore.getState().removeStatus(status.id);
+                onRefresh?.();
+            };
+
             const customStatusData = (state.roomCustomStatuses || []).find(
                 (s) => s.name === status.name || s.name === status.customName
             );
@@ -95,7 +104,13 @@ export function buildTrackerConditions({
 
                 if (penalties.length > 0) label += ` (${penalties.join(', ')})`;
 
-                conditions.push({ id: status.id, label, bg: customStatusData.color, text: customStatusData.textColor });
+                conditions.push({
+                    id: status.id,
+                    label,
+                    bg: customStatusData.color,
+                    text: customStatusData.textColor,
+                    onClear: handleClearStatus
+                });
             } else {
                 const name = status.name === 'Custom...' ? status.customName || 'Custom' : status.name;
                 let label = name;
@@ -107,28 +122,137 @@ export function buildTrackerConditions({
                 }
 
                 const colors = STATUS_COLORS[status.name] || { bg: '#9C27B0', text: '#ffffff' };
-                conditions.push({ id: status.id, label, bg: colors.bg, text: colors.text });
+                conditions.push({
+                    id: status.id,
+                    label,
+                    bg: colors.bg,
+                    text: colors.text,
+                    onClear: handleClearStatus
+                });
             }
         }
     });
 
     // 6. Stat Buffs / Debuffs
-    const addStatCondition = (label: string, buff: number, debuff: number) => {
-        if (buff > 0) conditions.push({ id: `buff-${label}`, label: `${label} +${buff}`, bg: '#1976d2', text: '#ffffff' });
+    const addStatCondition = (
+        label: string,
+        buff: number,
+        debuff: number,
+        onClearBuff?: () => void,
+        onClearDebuff?: () => void
+    ) => {
+        if (buff > 0)
+            conditions.push({
+                id: `buff-${label}`,
+                label: `${label} +${buff}`,
+                bg: '#1976d2',
+                text: '#ffffff',
+                onClear: onClearBuff
+            });
         if (debuff > 0)
-            conditions.push({ id: `debuff-${label}`, label: `${label} -${debuff}`, bg: '#d32f2f', text: '#ffffff' });
+            conditions.push({
+                id: `debuff-${label}`,
+                label: `${label} -${debuff}`,
+                bg: '#d32f2f',
+                text: '#ffffff',
+                onClear: onClearDebuff
+            });
     };
 
     if (state.stats) {
-        addStatCondition('STR', state.stats[CombatStat.STR]?.buff || 0, state.stats[CombatStat.STR]?.debuff || 0);
-        addStatCondition('DEX', state.stats[CombatStat.DEX]?.buff || 0, state.stats[CombatStat.DEX]?.debuff || 0);
-        addStatCondition('VIT', state.stats[CombatStat.VIT]?.buff || 0, state.stats[CombatStat.VIT]?.debuff || 0);
-        addStatCondition('SPE', state.stats[CombatStat.SPE]?.buff || 0, state.stats[CombatStat.SPE]?.debuff || 0);
-        addStatCondition('INS', state.stats[CombatStat.INS]?.buff || 0, state.stats[CombatStat.INS]?.debuff || 0);
+        addStatCondition(
+            'STR',
+            state.stats[CombatStat.STR]?.buff || 0,
+            state.stats[CombatStat.STR]?.debuff || 0,
+            () => {
+                useCharacterStore.getState().setStat(CombatStat.STR, 'buff', 0);
+                onRefresh?.();
+            },
+            () => {
+                useCharacterStore.getState().setStat(CombatStat.STR, 'debuff', 0);
+                onRefresh?.();
+            }
+        );
+        addStatCondition(
+            'DEX',
+            state.stats[CombatStat.DEX]?.buff || 0,
+            state.stats[CombatStat.DEX]?.debuff || 0,
+            () => {
+                useCharacterStore.getState().setStat(CombatStat.DEX, 'buff', 0);
+                onRefresh?.();
+            },
+            () => {
+                useCharacterStore.getState().setStat(CombatStat.DEX, 'debuff', 0);
+                onRefresh?.();
+            }
+        );
+        addStatCondition(
+            'VIT',
+            state.stats[CombatStat.VIT]?.buff || 0,
+            state.stats[CombatStat.VIT]?.debuff || 0,
+            () => {
+                useCharacterStore.getState().setStat(CombatStat.VIT, 'buff', 0);
+                onRefresh?.();
+            },
+            () => {
+                useCharacterStore.getState().setStat(CombatStat.VIT, 'debuff', 0);
+                onRefresh?.();
+            }
+        );
+        addStatCondition(
+            'SPE',
+            state.stats[CombatStat.SPE]?.buff || 0,
+            state.stats[CombatStat.SPE]?.debuff || 0,
+            () => {
+                useCharacterStore.getState().setStat(CombatStat.SPE, 'buff', 0);
+                onRefresh?.();
+            },
+            () => {
+                useCharacterStore.getState().setStat(CombatStat.SPE, 'debuff', 0);
+                onRefresh?.();
+            }
+        );
+        addStatCondition(
+            'INS',
+            state.stats[CombatStat.INS]?.buff || 0,
+            state.stats[CombatStat.INS]?.debuff || 0,
+            () => {
+                useCharacterStore.getState().setStat(CombatStat.INS, 'buff', 0);
+                onRefresh?.();
+            },
+            () => {
+                useCharacterStore.getState().setStat(CombatStat.INS, 'debuff', 0);
+                onRefresh?.();
+            }
+        );
     }
     if (state.derived) {
-        addStatCondition('DEF', state.derived.defBuff || 0, state.derived.defDebuff || 0);
-        addStatCondition('S.DEF', state.derived.sdefBuff || 0, state.derived.sdefDebuff || 0);
+        addStatCondition(
+            'DEF',
+            state.derived.defBuff || 0,
+            state.derived.defDebuff || 0,
+            () => {
+                useCharacterStore.getState().setDerived('defBuff', 0);
+                onRefresh?.();
+            },
+            () => {
+                useCharacterStore.getState().setDerived('defDebuff', 0);
+                onRefresh?.();
+            }
+        );
+        addStatCondition(
+            'S.DEF',
+            state.derived.sdefBuff || 0,
+            state.derived.sdefDebuff || 0,
+            () => {
+                useCharacterStore.getState().setDerived('sdefBuff', 0);
+                onRefresh?.();
+            },
+            () => {
+                useCharacterStore.getState().setDerived('sdefDebuff', 0);
+                onRefresh?.();
+            }
+        );
     }
 
     // 7. Active Ability
@@ -152,7 +276,16 @@ export function buildTrackerConditions({
             abilityBoostLevel
         );
         const abilityLabel = benefit ? `Ability: ${abilityName} (${benefit})` : `Ability: ${abilityName}`;
-        conditions.push({ id: 'active-ability', label: abilityLabel, bg: '#2563eb', text: '#ffffff' });
+        conditions.push({
+            id: 'active-ability',
+            label: abilityLabel,
+            bg: '#2563eb',
+            text: '#ffffff',
+            onClear: () => {
+                useCharacterStore.getState().setIdentity('abilityActive', false);
+                onRefresh?.();
+            }
+        });
     }
 
     // 8. Boost Sources
@@ -222,7 +355,8 @@ export function buildTrackerConditions({
             id: 'flower-gift-aura',
             label: 'Flower Gift (+2 STR, +2 Sp.Def)',
             bg: '#db2777',
-            text: '#ffffff'
+            text: '#ffffff',
+            onClear: () => removeCharacterFromAuraSources('flower gift', state, onRefresh)
         });
     }
 
@@ -232,7 +366,8 @@ export function buildTrackerConditions({
             id: 'neutralizing-gas-suppressed',
             label: 'Neutralizing Gas: Ability Negated',
             bg: '#475569',
-            text: '#ffffff'
+            text: '#ffffff',
+            onClear: () => removeCharacterFromAuraSources('neutralizing gas', state, onRefresh)
         });
     }
 
@@ -242,7 +377,8 @@ export function buildTrackerConditions({
             id: 'intimidate-debuff',
             label: 'Intimidate: -1 Strength',
             bg: '#dc2626',
-            text: '#ffffff'
+            text: '#ffffff',
+            onClear: () => removeCharacterFromAuraSources('intimidate', state, onRefresh)
         });
     }
 
@@ -252,7 +388,8 @@ export function buildTrackerConditions({
             id: 'armor-tail-immunity',
             label: 'Armor Tail: Reaction Immune',
             bg: '#d97706',
-            text: '#ffffff'
+            text: '#ffffff',
+            onClear: () => removeCharacterFromAuraSources('armor tail', state, onRefresh)
         });
     }
 
@@ -262,7 +399,8 @@ export function buildTrackerConditions({
             id: 'sweet-veil-immunity',
             label: 'Sweet Veil: Sleep Immune',
             bg: '#ec4899',
-            text: '#ffffff'
+            text: '#ffffff',
+            onClear: () => removeCharacterFromAuraSources('sweet veil', state, onRefresh)
         });
     }
 
@@ -272,7 +410,8 @@ export function buildTrackerConditions({
             id: 'pastel-veil-immunity',
             label: 'Pastel Veil: Poison Immune',
             bg: '#a855f7',
-            text: '#ffffff'
+            text: '#ffffff',
+            onClear: () => removeCharacterFromAuraSources('pastel veil', state, onRefresh)
         });
     }
 
@@ -282,7 +421,8 @@ export function buildTrackerConditions({
             id: 'aroma-veil-immunity',
             label: 'Aroma Veil: Mental Immune',
             bg: '#06b6d4',
-            text: '#ffffff'
+            text: '#ffffff',
+            onClear: () => removeCharacterFromAuraSources('aroma veil', state, onRefresh)
         });
     }
 
@@ -292,7 +432,8 @@ export function buildTrackerConditions({
             id: 'flower-veil-immunity',
             label: 'Flower Veil: Stat Lowering Immune',
             bg: '#16a34a',
-            text: '#ffffff'
+            text: '#ffffff',
+            onClear: () => removeCharacterFromAuraSources('flower veil', state, onRefresh)
         });
     }
 
@@ -302,7 +443,8 @@ export function buildTrackerConditions({
             id: 'supersweet-syrup-evade-denied',
             label: 'Supersweet Syrup: Evade Denied',
             bg: '#f59e0b',
-            text: '#000000'
+            text: '#000000',
+            onClear: () => removeCharacterFromAuraSources('supersweet syrup', state, onRefresh)
         });
     }
 
@@ -312,7 +454,8 @@ export function buildTrackerConditions({
             id: 'battery-boost',
             label: 'Battery (+1 Special, +1 Sp.Dmg)',
             bg: '#eab308',
-            text: '#000000'
+            text: '#000000',
+            onClear: () => removeCharacterFromAuraSources('battery', state, onRefresh)
         });
     }
 
@@ -322,7 +465,8 @@ export function buildTrackerConditions({
             id: 'power-spot-boost',
             label: 'Power Spot (+1 Damage)',
             bg: '#f59e0b',
-            text: '#000000'
+            text: '#000000',
+            onClear: () => removeCharacterFromAuraSources('power spot', state, onRefresh)
         });
     }
 
@@ -332,7 +476,8 @@ export function buildTrackerConditions({
             id: 'steely-spirit-boost',
             label: 'Steely Spirit (+1 Steel Dmg)',
             bg: '#64748b',
-            text: '#ffffff'
+            text: '#ffffff',
+            onClear: () => removeCharacterFromAuraSources('steely spirit', state, onRefresh)
         });
     }
 

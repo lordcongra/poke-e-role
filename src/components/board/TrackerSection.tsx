@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, Skill } from '../../types/enums';
@@ -24,6 +24,7 @@ import { ActiveFieldEffectsRow } from './ActiveFieldEffectsRow';
 import { TrackerBoostsList } from './TrackerBoostsList';
 import { TrackerConditionsList } from './TrackerConditionsList';
 import { buildTrackerConditions } from './trackerConditionUtils';
+import { refreshAndCleanAuraAssociations } from './trackerAuraUtils';
 import { RoundEndTriggerModal } from '../modals/character/RoundEndTriggerModal';
 import { findRoundEndTriggers, type RoundEndTrigger } from '../modals/character/roundEndTriggerUtils';
 import './TrackerSection.css';
@@ -261,11 +262,20 @@ export function TrackerSection() {
 
     const disableReactions = isMaxed || parsedGlobals.noReactions;
 
+    const [, setRefreshNonce] = useState(0);
+
+    const handleRefreshConditions = useCallback(() => {
+        refreshAndCleanAuraAssociations(currentState, () => {
+            setRefreshNonce((n) => n + 1);
+        });
+    }, [currentState]);
+
     const conditions = buildTrackerConditions({
         state: currentState,
         boostSources,
         updateTracker,
-        clearActiveCombatBoost
+        clearActiveCombatBoost,
+        onRefresh: () => setRefreshNonce((n) => n + 1)
     });
 
     return (
@@ -493,7 +503,7 @@ export function TrackerSection() {
                     />
 
                     <ActiveFieldEffectsRow />
-                    <TrackerConditionsList conditions={conditions} />
+                    <TrackerConditionsList conditions={conditions} onRefresh={handleRefreshConditions} />
                 </div>
             </div>
 
