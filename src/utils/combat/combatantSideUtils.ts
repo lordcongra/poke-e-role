@@ -5,16 +5,14 @@ import { getEffectsByCategory } from './fieldEffectsData';
 /**
  * Resolves whether a given CharacterState belongs to the 'player' (Ally) side or 'foe' side.
  * Checks in order:
- * 1. Explicit `isPlayerSide` on the character identity.
- * 2. Active round combatant entries in `localStorage['pkr_battle_organizer_data']`.
- * 3. Fallback to `state.identity.isNPC` (NPC -> 'foe', PC -> 'player').
+ * 1. Active round combatant entries in `localStorage['pkr_battle_organizer_data']`:
+ *    - Matched combatants return their resolved side ('player' or 'foe').
+ *    - Unmatched characters return 'none' when active round combatants exist.
+ * 2. Fallback (no active combatants in round):
+ *    - Explicit `isPlayerSide` on identity if set, else `state.identity.isNPC` (NPC -> 'foe', PC -> 'player').
  */
-export function resolveCharacterSide(state: CharacterState): 'player' | 'foe' {
-    if (!state || !state.identity) return 'player';
-
-    if ((state.identity as { isPlayerSide?: boolean }).isPlayerSide !== undefined) {
-        return (state.identity as { isPlayerSide?: boolean }).isPlayerSide ? 'player' : 'foe';
-    }
+export function resolveCharacterSide(state: CharacterState): 'player' | 'foe' | 'none' {
+    if (!state || !state.identity) return 'none';
 
     if (typeof window !== 'undefined' && window.localStorage) {
         try {
@@ -22,7 +20,7 @@ export function resolveCharacterSide(state: CharacterState): 'player' | 'foe' {
             if (raw) {
                 const data = JSON.parse(raw) as BattleOrganizerState;
                 const activeRound = data.rounds?.[data.activeRoundIndex ?? 0] || data.rounds?.[0];
-                if (activeRound?.combatants) {
+                if (activeRound?.combatants && activeRound.combatants.length > 0) {
                     const matched = activeRound.combatants.find((c) => {
                         if (state.tokenId && c.tokenId && state.tokenId === c.tokenId) {
                             return true;
@@ -34,14 +32,22 @@ export function resolveCharacterSide(state: CharacterState): 'player' | 'foe' {
                         if (species && cName === species) return true;
                         return false;
                     });
-                    if (matched && typeof matched.isPlayerSide === 'boolean') {
-                        return matched.isPlayerSide ? 'player' : 'foe';
+                    if (matched) {
+                        if (typeof matched.isPlayerSide === 'boolean') {
+                            return matched.isPlayerSide ? 'player' : 'foe';
+                        }
+                        return matched.isNPC ? 'foe' : 'player';
                     }
+                    return 'none';
                 }
             }
         } catch (e) {
             console.warn('[combatantSideUtils] Failed to resolve combatant side from storage:', e);
         }
+    }
+
+    if ((state.identity as { isPlayerSide?: boolean }).isPlayerSide !== undefined) {
+        return (state.identity as { isPlayerSide?: boolean }).isPlayerSide ? 'player' : 'foe';
     }
 
     return state.identity.isNPC ? 'foe' : 'player';
@@ -57,11 +63,14 @@ export function resolveCharacterSide(state: CharacterState): 'player' | 'foe' {
  * 4. Checks active round combatants in localStorage to see if an unfainted ally on that side has Flower Gift / Cherrim.
  */
 export function isFlowerGiftActiveForSide(
-    sideName: 'player' | 'foe',
+    sideName: 'player' | 'foe' | 'none',
     battlefield: BattlefieldData | null | undefined,
     activeAbilityName?: string,
     abilityActive?: boolean
 ): boolean {
+    if (sideName !== 'player' && sideName !== 'foe') {
+        return false;
+    }
     if (!battlefield) return false;
 
     // 1. Must have active Sunny / Harsh Sun / Desolate weather

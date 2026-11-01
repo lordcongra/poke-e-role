@@ -142,10 +142,13 @@ export function calculateStatTotal(
             (itemBuffs.stats[normalizedStat] || 0);
 
         if (normalizedStat === CombatStat.DEX && state.activeBattlefield) {
+            const sideName = resolveCharacterSide(state);
             const side =
-                resolveCharacterSide(state) === 'foe'
+                sideName === 'foe'
                     ? state.activeBattlefield.foeSide
-                    : state.activeBattlefield.playerSide;
+                    : sideName === 'player'
+                    ? state.activeBattlefield.playerSide
+                    : undefined;
             const hasTailwind = Boolean(
                 side?.forceFields?.some(
                     (ff) =>
@@ -336,9 +339,13 @@ export function getWeatherDamageBonus(
                 currentState = undefined;
             }
         }
-        const side = (currentState ? resolveCharacterSide(currentState) === 'foe' : Boolean(isNPC))
-            ? battlefield.foeSide
-            : battlefield.playerSide;
+        const resolvedSide = currentState ? resolveCharacterSide(currentState) : (isNPC ? 'foe' : 'player');
+        const side =
+            resolvedSide === 'foe'
+                ? battlefield.foeSide
+                : resolvedSide === 'player'
+                ? battlefield.playerSide
+                : undefined;
         if (side) {
             const sideHasGrassy = Boolean(
                 side.forceFields?.some(
