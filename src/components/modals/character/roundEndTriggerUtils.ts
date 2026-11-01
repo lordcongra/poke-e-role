@@ -6,7 +6,7 @@ import { getAllActiveFieldEffects } from '../../../utils/combat/fieldEffectsData
 export interface RoundEndTrigger {
     id: string;
     source: string;
-    type: 'healHp' | 'damageHp' | 'restoreWill' | 'reduceWill';
+    type: 'healHp' | 'damageHp' | 'restoreWill' | 'reduceWill' | 'resetIgnoredPain';
     amount: number;
     promptText: string;
     conditionText?: string;
@@ -177,6 +177,19 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
             if (customDef && customDef.tags) {
                 inspectText(customDef.name, customDef.tags, true);
             }
+        });
+    }
+
+    // 6. Inspect Ignored Pain (Scene-End Reset Option)
+    if ((state.trackers?.ignoredPain || 0) > 0) {
+        const stacks = state.trackers.ignoredPain;
+        triggers.push({
+            id: 'scene-end-ignored-pain',
+            source: 'Scene',
+            type: 'resetIgnoredPain',
+            amount: stacks,
+            promptText: `Scene Concluded: Clear Ignored Pain Penalties (${stacks} stack${stacks > 1 ? 's' : ''})? (Note: Normally lasts for the entire scene)`,
+            checked: false
         });
     }
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Copy, AlertTriangle } from 'lucide-react';
+import { Check, Copy, AlertTriangle, Zap } from 'lucide-react';
 import { useCharacterStore } from '../../../../store/useCharacterStore';
 import { TooltipIcon } from '../../../ui/TooltipIcon';
 import { isStandaloneMode } from '../../../../utils/sync/storageAdapter';
@@ -78,8 +78,16 @@ export function RulesSectionGeneral({ onOpenInfo }: RulesSectionGeneralProps) {
                                 color: 'var(--text-main)'
                             }}
                         >
-                            <span style={{ fontWeight: 600, color: 'var(--primary)' }}>
-                                ⚡ Performance Mode Active:
+                            <span
+                                style={{
+                                    fontWeight: 600,
+                                    color: 'var(--primary)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                }}
+                            >
+                                <Zap size={14} /> Performance Mode Active:
                             </span>{' '}
                             All calculations, combat tags, crits, and health/tracker intercepts resolve instantly and
                             log directly to the in-app roll log without rendering 3D dice. No external plugins required!

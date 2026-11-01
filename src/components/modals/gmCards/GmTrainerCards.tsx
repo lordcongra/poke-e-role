@@ -257,7 +257,7 @@ export const GmTrainerCards: React.FC<GmTrainerCardsProps> = ({ itemId, onBroadc
                             onClick={() =>
                                 broadcastInfo(
                                     `GM Screen: ${TRAINER_SWITCHING_RULES.title}`,
-                                    `⚠️ **${TRAINER_SWITCHING_RULES.title}**\n` +
+                                    `**${TRAINER_SWITCHING_RULES.title}**\n` +
                                         TRAINER_SWITCHING_RULES.rules.map((r) => `• ${r}`).join('\n')
                                 )
                             }
@@ -273,10 +273,14 @@ export const GmTrainerCards: React.FC<GmTrainerCardsProps> = ({ itemId, onBroadc
                             backgroundColor: 'rgba(234, 179, 8, 0.15)',
                             borderRadius: '4px',
                             fontWeight: 600,
-                            color: '#eab308'
+                            color: '#eab308',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
                         }}
                     >
-                        {TRAINER_SWITCHING_RULES.warning}
+                        <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+                        <span>{TRAINER_SWITCHING_RULES.warning}</span>
                     </div>
 
                     <ul style={{ margin: 0, paddingLeft: '20px', lineHeight: '1.5' }}>

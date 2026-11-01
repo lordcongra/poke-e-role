@@ -231,12 +231,11 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                                                 : t.name;
                                         return (
                                             <option key={t.id} value={t.id}>
-                                                📦 {displayName}
+                                                {displayName}
                                             </option>
                                         );
                                     })}
                                 <option value="__none__">
-                                    📦{' '}
                                     {activeCampaign?.teamStorageName ||
                                         (isGm && storageProfiles.length > 0
                                             ? 'Campaign Storage (GM)'

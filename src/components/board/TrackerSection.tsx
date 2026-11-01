@@ -6,13 +6,11 @@ import {
     rollGeneric,
     parseCombatTags,
     getAbilityText,
-    getStatusPenalties,
     calculateStatTotal,
     calculateSkillTotal,
     getActiveBoostSources,
     type BoostTrackerSource
 } from '../../utils/combat/combatUtils';
-import { STATUS_COLORS } from '../../data/constants';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { NumberSpinner } from '../ui/NumberSpinner';
@@ -22,11 +20,10 @@ import { ManeuversModal } from '../modals/combat/ManeuversModal';
 import { RestModal } from '../modals/combat/RestModal';
 import { Dices, RotateCcw, Swords, Tent, XCircle } from 'lucide-react';
 import { AbilityTrackerControl } from '../abilities/AbilityTrackerControl';
-import { getAbilityBenefitSummary } from '../../data/abilities/knownAbilities';
-import { resolveCharacterSide, isFlowerGiftActiveForSide } from '../../utils/combat/combatantSideUtils';
 import { ActiveFieldEffectsRow } from './ActiveFieldEffectsRow';
 import { TrackerBoostsList } from './TrackerBoostsList';
-import { TrackerConditionsList, type ConditionItem } from './TrackerConditionsList';
+import { TrackerConditionsList } from './TrackerConditionsList';
+import { buildTrackerConditions } from './trackerConditionUtils';
 import { RoundEndTriggerModal } from '../modals/character/RoundEndTriggerModal';
 import { findRoundEndTriggers, type RoundEndTrigger } from '../modals/character/roundEndTriggerUtils';
 import './TrackerSection.css';
@@ -37,31 +34,16 @@ export function TrackerSection() {
     const resetRound = useCharacterStore((state) => state.resetRound);
     const clearActiveCombatBoost = useCharacterStore((state) => state.clearActiveCombatBoost);
 
-    const abilityName = useCharacterStore((state) => state.identity.ability);
-    const abilityActive = useCharacterStore((state) => state.identity.abilityActive ?? true);
-    const abilityBoostActive = useCharacterStore((state) => state.identity.abilityBoostActive ?? false);
-    const abilityBoostLevel = useCharacterStore(
-        (state) => state.identity.abilityBoostLevel ?? (state.identity.abilityBoostActive ? 1 : 0)
-    );
-    const abilityTags = useCharacterStore((state) => state.identity.abilityTags || '');
-    const rank = useCharacterStore((state) => state.identity.rank);
-
     const activeTransformation = useCharacterStore((state) => state.identity.activeTransformation);
     const isMaxed = activeTransformation === 'Dynamax' || activeTransformation === 'Gigantamax';
 
     const painEnabled =
         String(useCharacterStore((state) => state.identity.pain || 'Enabled')).toLowerCase() === 'enabled';
     const will = useCharacterStore((state) => state.will);
-    const health = useCharacterStore((state) => state.health);
     const updateWill = useCharacterStore((state) => state.updateWill);
 
-    const stats = useCharacterStore((state) => state.stats);
-    const derived = useCharacterStore((state) => state.derived);
-    const activeStatuses = useCharacterStore((state) => state.statuses);
-    const customStatuses = useCharacterStore((state) => state.roomCustomStatuses);
     const passives = useCharacterStore((state) => state.passives);
     const inventory = useCharacterStore((state) => state.inventory);
-    const activeBattlefield = useCharacterStore((state) => state.activeBattlefield);
 
     // Detect active boost sources across passives and inventory items
     const boostSources = getActiveBoostSources(passives, inventory, trackers.boostLevels || {});
@@ -184,6 +166,10 @@ export function TrackerSection() {
             }
         }
 
+        if (confirmed.some((t) => t.type === 'resetIgnoredPain')) {
+            store.updateTracker('ignoredPain', 0);
+        }
+
         setPendingTriggers(null);
         resetRound(true);
     };
@@ -275,141 +261,12 @@ export function TrackerSection() {
 
     const disableReactions = isMaxed || parsedGlobals.noReactions;
 
-    const conditions: ConditionItem[] = [];
-
-    if (painEnabled) {
-        const hpCurr = health.hpCurr;
-        const hpMax = Math.max(1, health.hpMax);
-        let rawPenalty = 0;
-
-        if (hpCurr <= 1) rawPenalty = 3;
-        else if (hpCurr <= Math.floor(hpMax / 2)) rawPenalty = 1;
-
-        const finalPenalty = Math.max(0, rawPenalty - trackers.ignoredPain);
-        if (finalPenalty > 0) {
-            conditions.push({ id: 'pain', label: `Pain (-${finalPenalty} Succ)`, bg: '#c62828', text: '#fff' });
-        }
-    }
-
-    const statusPenalties = getStatusPenalties(useCharacterStore.getState());
-    activeStatuses.forEach((status) => {
-        if (status.name !== 'Healthy') {
-            const customStatusData = customStatuses.find((s) => s.name === status.name || s.name === status.customName);
-
-            if (customStatusData) {
-                let label = customStatusData.shorthand || customStatusData.name;
-
-                const parsedEffects = parseCombatTags([], [], undefined, customStatusData.effects);
-                const penalties: string[] = [];
-                Object.entries(parsedEffects.stats).forEach(([stat, val]) => {
-                    if (val !== 0) penalties.push(`${val > 0 ? '+' : ''}${val} ${stat.toUpperCase()}`);
-                });
-
-                if (penalties.length > 0) label += ` (${penalties.join(', ')})`;
-
-                conditions.push({ id: status.id, label, bg: customStatusData.color, text: customStatusData.textColor });
-            } else {
-                const name = status.name === 'Custom...' ? status.customName || 'Custom' : status.name;
-                let label = name;
-
-                if (status.name === 'Paralysis' && statusPenalties.paralysisDexterityPenalty < 0) {
-                    label = `Paralysis (${statusPenalties.paralysisDexterityPenalty} Dex)`;
-                } else if (status.name === 'Confusion' && statusPenalties.confusionPenalty < 0) {
-                    label = `Confusion (${statusPenalties.confusionPenalty} Succ)`;
-                }
-
-                const colors = STATUS_COLORS[status.name] || { bg: '#9C27B0', text: '#fff' };
-                conditions.push({ id: status.id, label, bg: colors.bg, text: colors.text });
-            }
-        }
+    const conditions = buildTrackerConditions({
+        state: currentState,
+        boostSources,
+        updateTracker,
+        clearActiveCombatBoost
     });
-
-    const addStatCondition = (label: string, buff: number, debuff: number) => {
-        if (buff > 0) conditions.push({ id: `buff-${label}`, label: `${label} +${buff}`, bg: '#1976d2', text: '#fff' });
-        if (debuff > 0)
-            conditions.push({ id: `debuff-${label}`, label: `${label} -${debuff}`, bg: '#d32f2f', text: '#fff' });
-    };
-
-    addStatCondition('STR', stats[CombatStat.STR].buff, stats[CombatStat.STR].debuff);
-    addStatCondition('DEX', stats[CombatStat.DEX].buff, stats[CombatStat.DEX].debuff);
-    addStatCondition('VIT', stats[CombatStat.VIT].buff, stats[CombatStat.VIT].debuff);
-    addStatCondition('SPE', stats[CombatStat.SPE].buff, stats[CombatStat.SPE].debuff);
-    addStatCondition('INS', stats[CombatStat.INS].buff, stats[CombatStat.INS].debuff);
-    addStatCondition('DEF', derived.defBuff, derived.defDebuff);
-    addStatCondition('S.DEF', derived.sdefBuff, derived.sdefDebuff);
-
-    if (abilityName && abilityActive) {
-        const hpCurr = Number(health.hpCurr) || 0;
-        const hpMax = Math.max(1, Number(health.hpMax) || 1);
-        const isHalfHp = hpCurr <= Math.floor(hpMax / 2);
-        const benefit = getAbilityBenefitSummary(
-            abilityName,
-            abilityTags,
-            rank,
-            isHalfHp,
-            abilityBoostActive,
-            abilityBoostLevel
-        );
-        const abilityLabel = benefit ? `Ability: ${abilityName} (${benefit})` : `Ability: ${abilityName}`;
-        conditions.push({ id: 'active-ability', label: abilityLabel, bg: '#2563eb', text: '#fff' });
-    }
-
-    boostSources.forEach((source) => {
-        if (source.currentLevel > 0) {
-            const badgeLabel =
-                source.maxBoost > 1 ? `${source.label}: +${source.currentLevel}` : `${source.label}: Active`;
-            conditions.push({
-                id: `boost-${source.id}`,
-                label: badgeLabel,
-                bg: '#f59e0b',
-                text: '#000000'
-            });
-        }
-    });
-
-    passives?.forEach((passive) => {
-        if (passive.active && passive.showInConditions) {
-            const rawTags = (passive.desc || '').match(/\[.*?\]/g);
-            let label = `Passive: ${passive.name || 'Passive'}`;
-            if (rawTags && rawTags.length > 0) {
-                const cleanedTags = rawTags.map((t) => t.replace(/[\[\]]/g, '').trim()).filter(Boolean);
-                if (cleanedTags.length > 0 && !passive.name.toLowerCase().includes(cleanedTags[0].toLowerCase())) {
-                    label = `Passive: ${passive.name || 'Passive'} (${cleanedTags.join(', ')})`;
-                }
-            }
-            conditions.push({
-                id: `passive-${passive.id}`,
-                label,
-                bg: '#0d9488',
-                text: '#fff'
-            });
-        }
-    });
-
-    if (trackers.activeCombatBoost) {
-        const boost = trackers.activeCombatBoost;
-        const label =
-            boost.stage === 'armed'
-                ? `💎 ${boost.sourceName}: +${boost.accSucc} Acc, +${boost.dmgSucc} Dmg`
-                : `💎 ${boost.sourceName}: +${boost.dmgSucc} Dmg Pending`;
-        conditions.push({
-            id: 'active-combat-boost',
-            label,
-            bg: '#8b5cf6',
-            text: '#ffffff',
-            onClear: clearActiveCombatBoost
-        });
-    }
-
-    const characterSide = resolveCharacterSide(currentState);
-    if (isFlowerGiftActiveForSide(characterSide, activeBattlefield, abilityName, abilityActive)) {
-        conditions.push({
-            id: 'flower-gift-aura',
-            label: 'Flower Gift (+2 STR, +2 Sp.Def)',
-            bg: '#db2777',
-            text: '#ffffff'
-        });
-    }
 
     return (
         <CollapsingSection title="ROUND TRACKER" className="sheet-panel tracker-section">
@@ -606,7 +463,17 @@ export function TrackerSection() {
                         <span className="text-label">:</span>
                         <NumberSpinner
                             value={trackers.chances}
-                            onChange={(value) => updateTracker('chances', value)}
+                            onChange={(value) => {
+                                if (value > 0 && trackers.fate > 0) {
+                                    if (OBR.isAvailable)
+                                        OBR.notification.show(
+                                            'Cannot use Take Your Chances in the same round as Pushing Fate!',
+                                            'WARNING'
+                                        );
+                                    return;
+                                }
+                                updateTracker('chances', value);
+                            }}
                             min={0}
                         />
                         <button
