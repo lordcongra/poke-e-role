@@ -3,6 +3,7 @@ import type { BattlefieldData, BattleOrganizerState, CombatantRowData } from '..
 import type { CharacterState } from '../../store/storeTypes';
 import { getEffectsByCategory } from './fieldEffectsData';
 import { resolveCharacterSide } from './combatantSideUtils';
+import { useCharacterStore } from '../../store/useCharacterStore';
 
 export { RANK_TARGET_LIMITS, getMaxTargetsForRank };
 
@@ -157,9 +158,46 @@ export function isTargetAffectedByAbility(
                 if (activeRound?.combatants && activeRound.combatants.length > 0) {
                     const allCombatants = activeRound.combatants;
 
+                    let activeCharState: CharacterState | null = null;
+                    try {
+                        activeCharState = useCharacterStore.getState();
+                    } catch {
+                        // Ignore if store not ready
+                    }
+
+                    const isCombatantAbilityActive = (c: CombatantRowData): boolean => {
+                        if (activeCharState) {
+                            const activeTokenId = activeCharState.tokenId;
+                            const activeEntityId = activeCharState.identity?.entityId;
+                            if (
+                                (activeTokenId && (c.tokenId === activeTokenId || c.id === activeTokenId)) ||
+                                (activeEntityId && (c.entityId === activeEntityId || c.id === activeEntityId))
+                            ) {
+                                return activeCharState.identity?.abilityActive !== false;
+                            }
+                        }
+                        return c.abilityActive !== false;
+                    };
+
+                    const getCombatantTargets = (c: CombatantRowData): string[] | undefined => {
+                        if (activeCharState) {
+                            const activeTokenId = activeCharState.tokenId;
+                            const activeEntityId = activeCharState.identity?.entityId;
+                            if (
+                                (activeTokenId && (c.tokenId === activeTokenId || c.id === activeTokenId)) ||
+                                (activeEntityId && (c.entityId === activeEntityId || c.id === activeEntityId))
+                            ) {
+                                if (activeCharState.identity?.abilityTargetIds !== undefined) {
+                                    return activeCharState.identity.abilityTargetIds;
+                                }
+                            }
+                        }
+                        return c.abilityTargetIds;
+                    };
+
                     const potentialSources = allCombatants.filter((c) => {
                         if (c.isFainted) return false;
-                        if (c.abilityActive === false) return false;
+                        if (!isCombatantAbilityActive(c)) return false;
                         const cAb = (c.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
                         return cAb === cleanAbility;
                     });
@@ -190,11 +228,12 @@ export function isTargetAffectedByAbility(
                         }
 
                         // Check explicit targeting configuration
-                        if (source.abilityTargetIds && source.abilityTargetIds.length > 0) {
-                            if (isTargetInList(source.abilityTargetIds, targetId, allCombatants)) {
-                                return true;
+                        const configuredTargets = getCombatantTargets(source);
+                        if (configuredTargets !== undefined) {
+                            if (configuredTargets.length > 0) {
+                                return isTargetInList(configuredTargets, targetId, allCombatants);
                             }
-                            continue;
+                            return false;
                         }
 
                         // Unconfigured: falls back to first getMaxTargetsForRank(sourceRank) eligible candidates
@@ -219,8 +258,6 @@ export function isTargetAffectedByAbility(
                         if (!hasTarget) {
                             if (selectedSlice.length > 0) return true;
                         } else if (selectedSlice.some((cand) => matchesTarget(cand, targetId))) {
-                            return true;
-                        } else if (!allCombatants.some((cand) => matchesTarget(cand, targetId)) && eligibleCandidates.length < rankLimit) {
                             return true;
                         }
                     }

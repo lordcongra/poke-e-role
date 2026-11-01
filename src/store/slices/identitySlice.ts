@@ -101,6 +101,7 @@ const OBR_KEY_MAP: Record<string, string> = {
     abilityBoostActive: 'ability-boost-active',
     abilityBoostLevel: 'ability-boost-level',
     abilityTags: 'ability-tags',
+    abilityTargetIds: 'ability-target-ids',
     previousNativeAbility: 'previous-native-ability',
     showTrackers: 'show-trackers',
     ignoreRoomHudRules: 'ignore-room-hud-rules',
@@ -667,7 +668,19 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 return { identity: newIdentity };
             }
 
-            if (state.identity[field] === value) {
+            if (field === 'abilityTargetIds') {
+                const prevTargets = state.identity.abilityTargetIds;
+                const nextTargets = Array.isArray(value) ? (value as string[]) : undefined;
+                if (
+                    prevTargets === nextTargets ||
+                    (Array.isArray(prevTargets) &&
+                        Array.isArray(nextTargets) &&
+                        prevTargets.length === nextTargets.length &&
+                        prevTargets.every((id, idx) => id === nextTargets[idx]))
+                ) {
+                    return state;
+                }
+            } else if (state.identity[field] === value) {
                 return state;
             }
 
@@ -719,6 +732,106 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 }
             }
 
+            if (field === 'abilityActive' || field === 'ability') {
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    try {
+                        const raw = localStorage.getItem('pkr_battle_organizer_data');
+                        if (raw) {
+                            const boData = JSON.parse(raw);
+                            if (boData && Array.isArray(boData.rounds)) {
+                                let hasChanged = false;
+                                const tokenId = state.tokenId;
+                                const nickname = state.identity.nickname?.trim().toLowerCase();
+                                const species = state.identity.species?.trim().toLowerCase();
+                                const targetActive = newIdentity.abilityActive !== false;
+
+                                const updatedRounds = boData.rounds.map((round: any) => {
+                                    if (!round || !Array.isArray(round.combatants)) return round;
+                                    const updatedCombatants = round.combatants.map((c: any) => {
+                                        const cTokenId = c.tokenId;
+                                        const cName = (c.name || '').trim().toLowerCase();
+                                        const matches =
+                                            (tokenId && cTokenId === tokenId) ||
+                                            (nickname && cName === nickname) ||
+                                            (species && cName === species);
+                                        if (matches && c.abilityActive !== targetActive) {
+                                            hasChanged = true;
+                                            return { ...c, abilityActive: targetActive };
+                                        }
+                                        return c;
+                                    });
+                                    return { ...round, combatants: updatedCombatants };
+                                });
+
+                                if (hasChanged) {
+                                    boData.rounds = updatedRounds;
+                                    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('[IdentitySlice] Failed to sync abilityActive to battle organizer localStorage:', e);
+                    }
+                }
+            }
+
+            if (field === 'abilityTargetIds') {
+                const targetList = Array.isArray(value) ? (value as string[]) : undefined;
+                newIdentity.abilityTargetIds = targetList;
+                updatesToSave['ability-target-ids'] = Array.isArray(value)
+                    ? (value as string[]).join(',')
+                    : String(value || '');
+
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    try {
+                        const raw = localStorage.getItem('pkr_battle_organizer_data');
+                        if (raw) {
+                            const boData = JSON.parse(raw);
+                            if (boData && Array.isArray(boData.rounds)) {
+                                let hasChanged = false;
+                                const tokenId = state.tokenId;
+                                const nickname = state.identity.nickname?.trim().toLowerCase();
+                                const species = state.identity.species?.trim().toLowerCase();
+
+                                const updatedRounds = boData.rounds.map((round: any) => {
+                                    if (!round || !Array.isArray(round.combatants)) return round;
+                                    const updatedCombatants = round.combatants.map((c: any) => {
+                                        const cTokenId = c.tokenId;
+                                        const cName = (c.name || '').trim().toLowerCase();
+                                        const matches =
+                                            (tokenId && cTokenId === tokenId) ||
+                                            (nickname && cName === nickname) ||
+                                            (species && cName === species);
+                                        if (matches) {
+                                            hasChanged = true;
+                                            return { ...c, abilityTargetIds: targetList };
+                                        }
+                                        return c;
+                                    });
+                                    return { ...round, combatants: updatedCombatants };
+                                });
+
+                                if (hasChanged) {
+                                    boData.rounds = updatedRounds;
+                                    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+                                    if (OBR.isAvailable) {
+                                        OBR.broadcast
+                                            .sendMessage(
+                                                'pokerole-pmd-extension/battle-organizer-sync',
+                                                boData,
+                                                { destination: 'REMOTE' }
+                                            )
+                                            .catch(() => {});
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('[IdentitySlice] Failed to sync abilityTargetIds to battle organizer localStorage:', e);
+                    }
+                }
+            }
+
             if (field === 'abilityBoostActive') {
                 const isActive = Boolean(value);
                 newIdentity.abilityBoostActive = isActive;
@@ -760,6 +873,8 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                     if (field === 'maxFormData') updatesToSave['max-form-data'] = value;
                     else if (field === 'activeFormId') updatesToSave['active-form-id'] = value;
                     else updatesToSave[obrKey] = value;
+                } else if (field === 'abilityTargetIds' || (Array.isArray(value) && field === 'abilityTargetIds')) {
+                    updatesToSave['ability-target-ids'] = Array.isArray(value) ? value.join(',') : String(value || '');
                 } else if (field === 'formSaves') {
                     updatesToSave['form-saves'] = JSON.stringify(value);
                 } else if (field === 'customFormConfig') {

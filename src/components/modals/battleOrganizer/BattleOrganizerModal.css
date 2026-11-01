@@ -756,7 +756,7 @@
 }
 
 .bo-th {
-    padding: 10px 12px;
+    padding: 8px 6px;
     font-size: 0.82rem;
     font-weight: 700;
     letter-spacing: 0.5px;
@@ -768,23 +768,27 @@
 }
 
 .bo-th--combatant {
-    width: 185px;
+    width: 200px;
+    min-width: 175px;
 }
 
 .bo-th--item {
-    width: 130px;
+    width: 90px;
+    min-width: 85px;
 }
 
 .bo-th--status {
-    width: 105px;
+    width: 95px;
+    min-width: 90px;
 }
 
 .bo-th--actions {
-    min-width: 440px;
+    min-width: 390px;
 }
 
 .bo-th--tools {
-    width: 80px;
+    width: 84px;
+    min-width: 84px;
     text-align: center;
 }
 

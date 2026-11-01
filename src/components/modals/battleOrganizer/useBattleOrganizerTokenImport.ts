@@ -124,18 +124,6 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                     : identityObj.abilityActive !== false;
                             const species = String(identityObj.species || meta.species || '');
                             const rank = String(identityObj.rank || meta.rank || 'Starter');
-                            const rawTargets = String(
-                                (Array.isArray(identityObj.abilityTargetIds)
-                                    ? identityObj.abilityTargetIds.join(',')
-                                    : '') ||
-                                    meta['ability-target-ids'] ||
-                                    ''
-                            );
-                            const abilityTargetIds = Array.isArray(identityObj.abilityTargetIds)
-                                ? (identityObj.abilityTargetIds as string[])
-                                : rawTargets
-                                  ? rawTargets.split(',').map((s: string) => s.trim()).filter(Boolean)
-                                  : undefined;
 
                             const entityId = (matchingChar?.metadata?.entityId as string) || charId;
                             const existing = existingRoundCombatants.find(
@@ -150,10 +138,16 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                     : meta['is-player-side'] !== undefined
                                       ? Boolean(meta['is-player-side'])
                                       : !isNPC;
-                            const finalAbilityTargetIds =
-                                existing?.abilityTargetIds !== undefined && existing.abilityTargetIds.length > 0
+
+                            const rawTargetMeta = matchingChar?.metadata?.['ability-target-ids'] ?? meta['ability-target-ids'];
+                            const abilityTargetIds =
+                                existing?.abilityTargetIds !== undefined
                                     ? existing.abilityTargetIds
-                                    : abilityTargetIds;
+                                    : rawTargetMeta !== undefined
+                                      ? String(rawTargetMeta).trim()
+                                          ? String(rawTargetMeta).split(',').map((s) => s.trim()).filter(Boolean)
+                                          : []
+                                      : undefined;
 
                             combatantRows.push({
                                 id: crypto.randomUUID(),
@@ -181,7 +175,7 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                 activeTransformation,
                                 ability,
                                 abilityActive,
-                                abilityTargetIds: finalAbilityTargetIds,
+                                abilityTargetIds,
                                 rank,
                                 species,
                                 isNPC,
@@ -274,19 +268,6 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                   : identityObj.abilityActive !== false;
                         const species = String(identityObj.species || statsMeta.species || meta.species || '');
                         const rank = String(identityObj.rank || statsMeta.rank || meta.rank || 'Starter');
-                        const rawTargets = String(
-                            statsMeta['ability-target-ids'] ||
-                                meta['ability-target-ids'] ||
-                                (Array.isArray(identityObj.abilityTargetIds)
-                                    ? identityObj.abilityTargetIds.join(',')
-                                    : '') ||
-                                ''
-                        );
-                        const abilityTargetIds = Array.isArray(identityObj.abilityTargetIds)
-                            ? (identityObj.abilityTargetIds as string[])
-                            : rawTargets
-                              ? rawTargets.split(',').map((s: string) => s.trim()).filter(Boolean)
-                              : undefined;
 
                         const itemEntityId = extractEntityId(item);
                         const existing = existingRoundCombatants.find(
@@ -303,10 +284,16 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                   : statsMeta['is-player-side'] !== undefined
                                     ? Boolean(statsMeta['is-player-side'])
                                     : !isNPC;
-                        const finalAbilityTargetIds =
-                            existing?.abilityTargetIds !== undefined && existing.abilityTargetIds.length > 0
+
+                        const rawTargetMeta = statsMeta['ability-target-ids'] ?? meta['ability-target-ids'];
+                        const abilityTargetIds =
+                            existing?.abilityTargetIds !== undefined
                                 ? existing.abilityTargetIds
-                                : abilityTargetIds;
+                                : rawTargetMeta !== undefined
+                                  ? String(rawTargetMeta).trim()
+                                      ? String(rawTargetMeta).split(',').map((s) => s.trim()).filter(Boolean)
+                                      : []
+                                  : undefined;
 
                         combatantRows.push({
                             id: crypto.randomUUID(),
@@ -332,7 +319,7 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                             activeTransformation,
                             ability,
                             abilityActive,
-                            abilityTargetIds: finalAbilityTargetIds,
+                            abilityTargetIds,
                             rank,
                             species,
                             isNPC,
@@ -416,10 +403,7 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                 return {
                                     ...row,
                                     isPlayerSide: existing.isPlayerSide !== undefined ? existing.isPlayerSide : row.isPlayerSide,
-                                    abilityTargetIds:
-                                        existing.abilityTargetIds !== undefined && existing.abilityTargetIds.length > 0
-                                            ? existing.abilityTargetIds
-                                            : row.abilityTargetIds
+                                    abilityTargetIds: existing.abilityTargetIds !== undefined ? existing.abilityTargetIds : row.abilityTargetIds
                                 };
                             }
                             return row;
@@ -474,6 +458,8 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                             stats['actions-used'] = 0;
                                             stats['evasions-used'] = false;
                                             stats['clashes-used'] = false;
+                                            stats['ability-boost-active'] = false;
+                                            stats['ability-boost-level'] = 0;
 
                                             if (!item.metadata['pokerole-pmd-extension/stats']) {
                                                 item.metadata['pokerole-pmd-extension/stats'] = {};
@@ -485,10 +471,14 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                             pmdStats['actions-used'] = 0;
                                             pmdStats['evasions-used'] = false;
                                             pmdStats['clashes-used'] = false;
+                                            pmdStats['ability-boost-active'] = false;
+                                            pmdStats['ability-boost-level'] = 0;
 
                                             item.metadata['actions-used'] = 0;
                                             item.metadata['evasions-used'] = false;
                                             item.metadata['clashes-used'] = false;
+                                            item.metadata['ability-boost-active'] = false;
+                                            item.metadata['ability-boost-level'] = 0;
                                         }
                                     });
                                 }
@@ -502,7 +492,9 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                             {
                                                 'actions-used': 0,
                                                 'evasions-used': false,
-                                                'clashes-used': false
+                                                'clashes-used': false,
+                                                'ability-boost-active': false,
+                                                'ability-boost-level': 0
                                             },
                                             'pokerole-extension/stats'
                                         );
@@ -520,6 +512,8 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                 globalStore.updateTracker('actions', 0);
                                 globalStore.updateTracker('evade', false);
                                 globalStore.updateTracker('clash', false);
+                                globalStore.setIdentity('abilityBoostActive' as any, false);
+                                globalStore.setIdentity('abilityBoostLevel' as any, 0);
                             }
                         }
                     }

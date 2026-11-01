@@ -90,6 +90,13 @@ export function setupOwlbearHomebrewSync(role: 'PLAYER' | 'GM'): OwlbearHomebrew
     const unsubBattleOrganizerSync = OBR.broadcast.onMessage(`${EXTENSION_ID}/battle-organizer-sync`, (event) => {
         try {
             const incoming = event.data as BattleOrganizerState;
+            if (incoming) {
+                try {
+                    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(incoming));
+                } catch (storageErr) {
+                    console.warn('[SyncEngine] Failed to cache battle organizer data:', storageErr);
+                }
+            }
             if (incoming && incoming.battlefield) {
                 if (role !== 'GM' && incoming.battlefield.broadcastToPlayers === false) {
                     useCharacterStore.getState().setActiveBattlefield(null);

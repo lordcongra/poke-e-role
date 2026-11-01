@@ -196,6 +196,61 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
                 const targetTr = camp?.trainers[trainerId || camp?.activeTrainerId];
                 syncSidebarOnDeposit(camp, targetTr, entityId, targetIdx);
                 if (OBR.isAvailable) triggerDebouncedPcBroadcast();
+
+                // Clean battle organizer data in localStorage
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    try {
+                        const raw = localStorage.getItem('pkr_battle_organizer_data');
+                        if (raw) {
+                            const bo = JSON.parse(raw);
+                            if (bo && Array.isArray(bo.rounds)) {
+                                let boChanged = false;
+                                const summary = pcData.pokemonSummaries[entityId];
+                                const mapTokenId = summary?.mapTokenId;
+                                const idsToRemove = new Set([entityId]);
+                                if (mapTokenId) idsToRemove.add(mapTokenId);
+
+                                bo.rounds.forEach((r: any) => {
+                                    if (!r?.combatants) return;
+                                    const beforeLen = r.combatants.length;
+                                    r.combatants = r.combatants.filter(
+                                        (c: any) =>
+                                            !idsToRemove.has(c.id) &&
+                                            !idsToRemove.has(c.entityId) &&
+                                            (!c.tokenId || !idsToRemove.has(c.tokenId))
+                                    );
+                                    if (r.combatants.length !== beforeLen) boChanged = true;
+
+                                    r.combatants.forEach((c: any) => {
+                                        if (c.abilityTargetIds && c.abilityTargetIds.length > 0) {
+                                            const filtered = c.abilityTargetIds.filter((tId: string) => !idsToRemove.has(tId));
+                                            if (filtered.length !== c.abilityTargetIds.length) {
+                                                c.abilityTargetIds = filtered;
+                                                boChanged = true;
+                                            }
+                                        }
+                                    });
+                                });
+
+                                if (boChanged) {
+                                    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(bo));
+                                    if (OBR.isAvailable) {
+                                        OBR.broadcast
+                                            .sendMessage(
+                                                `${EXTENSION_ID}/battle-organizer-sync`,
+                                                bo,
+                                                { destination: 'REMOTE' }
+                                            )
+                                            .catch(() => {});
+                                    }
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        console.warn('[PcSlice] Failed to clean deposited pokemon from battle organizer:', err);
+                    }
+                }
+
                 return true;
             } catch (e) {
                 console.error('[PcSlice] Failed to deposit to box:', e);

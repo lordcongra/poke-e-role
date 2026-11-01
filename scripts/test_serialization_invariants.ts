@@ -25,6 +25,7 @@ mockWindow.top = mockWindow;
         Object.keys(localStorageStore).forEach((k) => delete localStorageStore[k]);
     }
 };
+mockWindow.localStorage = (globalThis as any).localStorage;
 
 const { flattenStateToMetadata } = await import('../src/utils/sync/flattenStateToMetadata');
 const { hydrateStateFromMetadata } = await import('../src/utils/sync/stateMapper');
@@ -2482,6 +2483,106 @@ await runTest('abilityTargeting: serialization, hydration, stance resolution, an
     testState.identity.abilityTargetIds = [];
     const flatEmpty = flattenStateToMetadata(testState);
     assert.equal(flatEmpty['ability-target-ids'], '', 'Serializes empty targets array as empty string');
+
+    // 3. Invariant test for stateMapper distinguishing undefined vs [] target configurations
+    const unconfiguredMeta: Record<string, unknown> = {
+        species: 'Koffing',
+        ability: 'Neutralizing Gas'
+    };
+    const hydUnconfigured = hydrateStateFromMetadata(unconfiguredMeta, createTestCharacterState());
+    assert.equal(
+        hydUnconfigured.identity?.abilityTargetIds,
+        undefined,
+        'stateMapper distinguishes unconfigured metadata by returning undefined'
+    );
+
+    const emptyConfigMeta: Record<string, unknown> = {
+        species: 'Koffing',
+        ability: 'Neutralizing Gas',
+        'ability-target-ids': ''
+    };
+    const hydEmpty = hydrateStateFromMetadata(emptyConfigMeta, createTestCharacterState());
+    assert.deepEqual(
+        hydEmpty.identity?.abilityTargetIds,
+        [],
+        'stateMapper distinguishes explicit empty configuration by returning []'
+    );
+
+    const targetedMeta: Record<string, unknown> = {
+        species: 'Koffing',
+        ability: 'Neutralizing Gas',
+        'ability-target-ids': 'combatant-1, combatant-2'
+    };
+    const hydTargeted = hydrateStateFromMetadata(targetedMeta, createTestCharacterState());
+    assert.deepEqual(
+        hydTargeted.identity?.abilityTargetIds,
+        ['combatant-1', 'combatant-2'],
+        'stateMapper hydrates targeted combatant IDs'
+    );
+
+    // 4. Invariant: isTargetAffectedByAbility behavior with undefined vs []
+    const battleState = {
+        rounds: [
+            {
+                roundNumber: 1,
+                combatants: [
+                    {
+                        id: 'source-koffing',
+                        tokenId: 'token-koffing',
+                        name: 'Koffing',
+                        ability: 'Neutralizing Gas',
+                        abilityActive: true,
+                        isPlayerSide: false,
+                        isNPC: true,
+                        rank: 'Starter',
+                        abilityTargetIds: undefined // Unconfigured
+                    },
+                    {
+                        id: 'foe-1',
+                        tokenId: 'token-foe-1',
+                        name: 'Pikachu',
+                        isPlayerSide: true,
+                        isNPC: false
+                    }
+                ]
+            }
+        ],
+        activeRoundIndex: 0
+    };
+    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(battleState));
+
+    // When unconfigured, auto-targets eligible foes (Pikachu is player side foe to Koffing)
+    assert.equal(
+        isTargetAffectedByAbility('foe-1', 'player', 'Neutralizing Gas', null),
+        true,
+        'Unconfigured ability auto-targets eligible candidates'
+    );
+
+    // When explicitly configured with [] (0 targets cleared), target is NOT affected
+    battleState.rounds[0].combatants[0].abilityTargetIds = [];
+    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(battleState));
+    assert.equal(
+        isTargetAffectedByAbility('foe-1', 'player', 'Neutralizing Gas', null),
+        false,
+        'Explicitly configured with 0 targets [] does not affect target'
+    );
+
+    // When explicitly configured with specific target, only affected if in list
+    battleState.rounds[0].combatants[0].abilityTargetIds = ['foe-other'];
+    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(battleState));
+    assert.equal(
+        isTargetAffectedByAbility('foe-1', 'player', 'Neutralizing Gas', null),
+        false,
+        'Explicitly configured does not affect targets outside list'
+    );
+
+    battleState.rounds[0].combatants[0].abilityTargetIds = ['foe-1'];
+    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(battleState));
+    assert.equal(
+        isTargetAffectedByAbility('foe-1', 'player', 'Neutralizing Gas', null),
+        true,
+        'Explicitly configured affects targets in list'
+    );
 });
 
 console.log('\n=============================================');

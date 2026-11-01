@@ -105,6 +105,7 @@ export function executeSpeciesChange(
             abilityActive: known?.autoActive ?? true,
             abilityBoostActive: false,
             abilityBoostLevel: 0,
+            abilityTargetIds: [],
             abilityTags: initialTags,
             learnset: learnsetArray,
             dexId: String(data.DexID || ''),
@@ -124,6 +125,7 @@ export function executeSpeciesChange(
         updatesToSave['ability-active'] = newIdentity.abilityActive;
         updatesToSave['ability-boost-active'] = false;
         updatesToSave['ability-boost-level'] = 0;
+        updatesToSave['ability-target-ids'] = '';
         updatesToSave['ability-tags'] = newIdentity.abilityTags;
         updatesToSave['ability-list'] = abilities.join(',');
         updatesToSave['dex-id'] = newIdentity.dexId;
@@ -291,6 +293,7 @@ export function executeSpeciesChange(
         abilityActive: known?.autoActive ?? true,
         abilityBoostActive: false,
         abilityBoostLevel: 0,
+        abilityTargetIds: [],
         abilityTags: initialTags,
         learnset: learnsetArray,
         dexId: String(data.DexID || state.identity.dexId || ''),
@@ -307,6 +310,7 @@ export function executeSpeciesChange(
     updatesToSave['ability-active'] = newIdentity.abilityActive;
     updatesToSave['ability-boost-active'] = false;
     updatesToSave['ability-boost-level'] = 0;
+    updatesToSave['ability-target-ids'] = '';
     updatesToSave['ability-tags'] = newIdentity.abilityTags;
     updatesToSave['ability-list'] = abilities.join(',');
     updatesToSave['dex-id'] = newIdentity.dexId;

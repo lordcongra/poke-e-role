@@ -186,6 +186,9 @@ export function useBattleOrganizer() {
                 const actionsChanged = JSON.stringify(prevCombatant.actions) !== JSON.stringify(updated.actions);
                 const initiativeChanged = prevCombatant.initiative !== updated.initiative;
                 const sideChanged = prevCombatant.isPlayerSide !== updated.isPlayerSide;
+                const abilityActiveChanged = prevCombatant.abilityActive !== updated.abilityActive;
+                const abilityTargetsChanged =
+                    JSON.stringify(prevCombatant.abilityTargetIds) !== JSON.stringify(updated.abilityTargetIds);
 
                 if (
                     statusChanged ||
@@ -195,7 +198,9 @@ export function useBattleOrganizer() {
                     clashChanged ||
                     actionsChanged ||
                     initiativeChanged ||
-                    sideChanged
+                    sideChanged ||
+                    abilityActiveChanged ||
+                    abilityTargetsChanged
                 ) {
                     syncCombatantToToken(updated, {
                         syncStatus: statusChanged,
@@ -205,7 +210,9 @@ export function useBattleOrganizer() {
                         syncClash: clashChanged,
                         syncActions: actionsChanged,
                         syncInitiative: initiativeChanged,
-                        syncSide: sideChanged
+                        syncSide: sideChanged,
+                        syncAbilityActive: abilityActiveChanged,
+                        syncAbilityTargets: abilityTargetsChanged
                     });
                 }
             }
@@ -218,9 +225,29 @@ export function useBattleOrganizer() {
             updateState((prev) => {
                 const currentRound = prev.rounds[prev.activeRoundIndex];
                 if (!currentRound) return prev;
+                const toDelete = currentRound.combatants.find((c) => c.id === id);
+                const removedIds = new Set<string>();
+                if (toDelete) {
+                    if (toDelete.id) removedIds.add(toDelete.id);
+                    if (toDelete.tokenId) removedIds.add(toDelete.tokenId);
+                    if (toDelete.entityId) removedIds.add(toDelete.entityId);
+                } else {
+                    removedIds.add(id);
+                }
+
                 const updatedRound: BattleRoundData = {
                     ...currentRound,
-                    combatants: currentRound.combatants.filter((c) => c.id !== id)
+                    combatants: currentRound.combatants
+                        .filter((c) => c.id !== id)
+                        .map((c) => {
+                            if (c.abilityTargetIds && c.abilityTargetIds.length > 0) {
+                                const nextTargets = c.abilityTargetIds.filter((tId) => !removedIds.has(tId));
+                                if (nextTargets.length !== c.abilityTargetIds.length) {
+                                    return { ...c, abilityTargetIds: nextTargets };
+                                }
+                            }
+                            return c;
+                        })
                 };
                 const newRounds = prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r));
                 return { ...prev, rounds: newRounds };

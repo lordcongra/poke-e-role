@@ -184,6 +184,8 @@ export function useBattleOrganizerTokenSync({
                 syncActions?: boolean;
                 syncInitiative?: boolean;
                 syncSide?: boolean;
+                syncAbilityActive?: boolean;
+                syncAbilityTargets?: boolean;
             }
         ) => {
             try {
@@ -268,6 +270,16 @@ export function useBattleOrganizerTokenSync({
                     updates['is-player-side'] = Boolean(combatant.isPlayerSide);
                 }
 
+                if (syncOptions.syncAbilityActive) {
+                    updates['ability-active'] = combatant.abilityActive !== false;
+                }
+
+                if (syncOptions.syncAbilityTargets) {
+                    updates['ability-target-ids'] = Array.isArray(combatant.abilityTargetIds)
+                        ? combatant.abilityTargetIds.join(',')
+                        : '';
+                }
+
                 if (Object.keys(updates).length === 0) return;
 
                 // Live in-memory update for current window's active character store if it matches
@@ -275,6 +287,12 @@ export function useBattleOrganizerTokenSync({
                 if (globalStore.tokenId === targetTokenId) {
                     if (statusItems) {
                         useCharacterStore.setState({ statuses: statusItems });
+                    }
+                    if (syncOptions.syncAbilityActive) {
+                        globalStore.setIdentity('abilityActive', combatant.abilityActive !== false);
+                    }
+                    if (syncOptions.syncAbilityTargets) {
+                        globalStore.setIdentity('abilityTargetIds' as any, combatant.abilityTargetIds);
                     }
                     if (combatant.isPlayerSide !== undefined) {
                         globalStore.setIdentity('isPlayerSide' as any, Boolean(combatant.isPlayerSide));

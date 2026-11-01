@@ -263,6 +263,9 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                 'banked-acc-dice': '{}',
                 'boost-levels': '{}',
                 'active-combat-boost': '',
+                'ability-boost-active': false,
+                'ability-boost-level': 0,
+                'ability-target-ids': '',
                 'effects-data': '[]',
                 'moves-data': JSON.stringify(newMoves),
                 'status-list': JSON.stringify(newStatuses)
@@ -356,6 +359,12 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                 effects: [],
                 moves: newMoves,
                 statuses: newStatuses,
+                identity: {
+                    ...state.identity,
+                    abilityBoostActive: false,
+                    abilityBoostLevel: 0,
+                    abilityTargetIds: []
+                },
                 ...(resetBuffs ? { stats: newStats, derived: newDerived } : {})
             };
         }),

@@ -361,8 +361,12 @@ export async function prepareDepositSummary(
     }
     finalSummary.fullMetadata = {
         ...finalSummary.fullMetadata,
-        entityId: finalSummary.entityId
+        entityId: finalSummary.entityId,
+        'ability-target-ids': '',
+        'ability-boost-active': false,
+        'ability-boost-level': 0
     };
+    delete finalSummary.fullMetadata['active-combat-boost'];
 
     // 1. Unify with existing summary if it is the same token
     if (pokemonSummaries && finalSummary.mapTokenId) {

@@ -218,20 +218,33 @@ export async function setupOwlbearTokenSync(params: {
         if (deletedTokenIds.length > 0) {
             const store = useCharacterStore.getState();
             if (store.tokenId && deletedTokenIds.includes(store.tokenId)) {
-                if (
-                    store.identity.entityId &&
-                    (getIsPcSheetActive() || Boolean(store.pcData?.pokemonSummaries?.[store.identity.entityId]))
-                ) {
-                    setActiveTokenId(store.identity.entityId);
-                    store.setTokenData(store.identity.entityId, store.role || 'PLAYER');
-                } else {
-                    setActiveTokenId(null);
-                    store.setTokenData('', store.role || 'PLAYER');
-                }
+                const isPc = Boolean(store.identity.entityId && (getIsPcSheetActive() || store.pcData?.pokemonSummaries?.[store.identity.entityId]));
+                const nextId = isPc && store.identity.entityId ? store.identity.entityId : '';
+                setActiveTokenId(isPc && store.identity.entityId ? store.identity.entityId : null);
+                store.setTokenData(nextId, store.role || 'PLAYER');
             }
             cleanupOrphanedGraphics(currentItemIds).catch((err) =>
                 console.error('[SyncEngine] Failed to clean up orphaned graphics on token delete:', err)
             );
+
+            try {
+                const raw = localStorage.getItem('pkr_battle_organizer_data');
+                if (raw) {
+                    const bo = JSON.parse(raw);
+                    if (bo?.rounds && Array.isArray(bo.rounds)) {
+                        let boChanged = false;
+                        bo.rounds.forEach((r: any) => {
+                            if (!r?.combatants) return;
+                            const before = r.combatants.length;
+                            r.combatants = r.combatants.filter((c: any) => !deletedTokenIds.includes(c.tokenId) && !deletedTokenIds.includes(c.id));
+                            if (r.combatants.length !== before) boChanged = true;
+                        });
+                        if (boChanged) localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(bo));
+                    }
+                }
+            } catch (e) {
+                console.warn('[SyncEngine] Failed to clean deleted tokens from battle organizer:', e);
+            }
         }
 
         // Harvest item art from updated scene items

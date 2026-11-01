@@ -631,8 +631,11 @@ function parseIdentity(
         abilityBoostLevel: loadedBoostLevel,
         abilityTags: loadedTags,
         abilityTargetIds: (() => {
-            const raw = String(meta['ability-target-ids'] || '').trim();
-            return raw ? raw.split(',').map((s) => s.trim()).filter(Boolean) : undefined;
+            if (meta['ability-target-ids'] === undefined || meta['ability-target-ids'] === null) {
+                return undefined;
+            }
+            const raw = String(meta['ability-target-ids']).trim();
+            return raw ? raw.split(',').map((s) => s.trim()).filter(Boolean) : [];
         })(),
         availableAbilities: loadedAbilities,
         previousNativeAbility: String(meta['previous-native-ability'] || ''),

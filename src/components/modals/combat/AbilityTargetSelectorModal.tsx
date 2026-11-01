@@ -50,20 +50,6 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
     const stance = useMemo(() => getAbilityTargetStance(abilityName), [abilityName]);
     const maxTargets = useMemo(() => getMaxTargetsForRank(sourceRank), [sourceRank]);
 
-    // Initial targets from source
-    const initialTargets = useMemo(() => {
-        if (sourceCombatant?.abilityTargetIds) {
-            return sourceCombatant.abilityTargetIds;
-        }
-        if (!sourceCombatant && charState.identity.abilityTargetIds) {
-            return charState.identity.abilityTargetIds;
-        }
-        return [];
-    }, [sourceCombatant, charState.identity.abilityTargetIds]);
-
-    const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [initialized, setInitialized] = useState(false);
-
     // Load matching round combatants from Battle Organizer storage
     const candidates: CombatantRowData[] = useMemo(() => {
         if (!isOpen || typeof window === 'undefined' || !window.localStorage) return [];
@@ -97,6 +83,23 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
             return [];
         }
     }, [isOpen, sourceIsPlayer, stance, sourceId, sourceTokenId]);
+
+    const rawTargetIds = sourceCombatant
+        ? sourceCombatant.abilityTargetIds
+        : charState.identity.abilityTargetIds;
+
+    // Initial targets from source: if unconfigured (undefined), default to eligible aura targets so they can be unchecked
+    const initialTargets = useMemo(() => {
+        if (rawTargetIds !== undefined) {
+            return rawTargetIds;
+        }
+        return candidates
+            .slice(0, maxTargets)
+            .map((c) => c.tokenId || c.entityId || c.name || c.id);
+    }, [rawTargetIds, candidates, maxTargets]);
+
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [initialized, setInitialized] = useState(false);
 
     // Initialize selection when opened, pruning ghost targets that no longer exist
     useEffect(() => {
@@ -144,43 +147,65 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
         // 1. Call parent callback if provided
         onSaveTargets?.(selectedIds);
 
-        // 2. If configuring for a Battle Organizer combatant, persist to local storage
-        if (sourceCombatant) {
-            try {
-                const raw = localStorage.getItem('pkr_battle_organizer_data');
-                if (raw) {
-                    const data = JSON.parse(raw) as BattleOrganizerState;
-                    const activeRound = data.rounds?.[data.activeRoundIndex ?? 0] || data.rounds?.[0];
-                    if (activeRound?.combatants) {
-                        const targetIndex = activeRound.combatants.findIndex(
-                            (c) => c.id === sourceCombatant.id || (sourceCombatant.tokenId && c.tokenId === sourceCombatant.tokenId)
-                        );
-                        if (targetIndex >= 0) {
-                            activeRound.combatants[targetIndex].abilityTargetIds = selectedIds;
-                            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(data));
+        // 2. Persist to Battle Organizer local storage regardless of whether sourceCombatant is passed
+        try {
+            const raw = localStorage.getItem('pkr_battle_organizer_data');
+            if (raw) {
+                const data = JSON.parse(raw) as BattleOrganizerState;
+                const activeRound = data.rounds?.[data.activeRoundIndex ?? 0] || data.rounds?.[0];
+                if (activeRound?.combatants) {
+                    let boChanged = false;
+                    activeRound.combatants.forEach((c) => {
+                        const matches = sourceCombatant
+                            ? c.id === sourceCombatant.id ||
+                              (sourceCombatant.tokenId && c.tokenId === sourceCombatant.tokenId) ||
+                              (sourceCombatant.entityId && c.entityId === sourceCombatant.entityId)
+                            : (sourceTokenId && c.tokenId === sourceTokenId) ||
+                              (sourceId && (c.id === sourceId || c.entityId === sourceId)) ||
+                              (sourceName && c.name?.trim().toLowerCase() === sourceName.trim().toLowerCase());
+
+                        if (matches) {
+                            c.abilityTargetIds = selectedIds;
+                            boChanged = true;
+                        }
+                    });
+
+                    if (boChanged) {
+                        localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(data));
+                        if (OBR.isAvailable) {
+                            OBR.broadcast
+                                .sendMessage('pokerole-pmd-extension/battle-organizer-sync', data, { destination: 'REMOTE' })
+                                .catch(() => {});
                         }
                     }
                 }
-            } catch (e) {
-                console.warn('[AbilityTargetSelectorModal] Failed to persist targets to organizer storage:', e);
             }
+        } catch (e) {
+            console.warn('[AbilityTargetSelectorModal] Failed to persist targets to organizer storage:', e);
+        }
 
-            // Sync to OBR token metadata if linked
-            if (OBR.isAvailable && sourceCombatant.tokenId) {
-                try {
-                    await OBR.scene.items.updateItems([sourceCombatant.tokenId], (items) => {
-                        for (const item of items) {
-                            const statsMeta = (item.metadata[STATS_META_ID] || {}) as Record<string, unknown>;
-                            statsMeta['ability-target-ids'] = selectedIds.join(',');
-                            item.metadata[STATS_META_ID] = statsMeta;
-                        }
-                    });
-                } catch (e) {
-                    console.warn('[AbilityTargetSelectorModal] Failed to sync target IDs to OBR item metadata:', e);
-                }
+        // 3. Persist to OBR token metadata regardless of whether sourceCombatant is passed
+        const targetTokenId = sourceCombatant?.tokenId || sourceTokenId || charState.tokenId;
+        if (OBR.isAvailable && targetTokenId) {
+            try {
+                await OBR.scene.items.updateItems([targetTokenId], (items) => {
+                    for (const item of items) {
+                        const statsMeta = (item.metadata[STATS_META_ID] || {}) as Record<string, unknown>;
+                        statsMeta['ability-target-ids'] = selectedIds.join(',');
+                        item.metadata[STATS_META_ID] = statsMeta;
+                    }
+                });
+            } catch (e) {
+                console.warn('[AbilityTargetSelectorModal] Failed to sync target IDs to OBR item metadata:', e);
             }
-        } else {
-            // Sheet mode: persist to Zustand identity
+        }
+
+        // 4. Update Zustand identity if active sheet
+        if (
+            !sourceCombatant ||
+            (sourceCombatant.tokenId && sourceCombatant.tokenId === charState.tokenId) ||
+            (sourceCombatant.entityId && sourceCombatant.entityId === charState.identity.entityId)
+        ) {
             setIdentity('abilityTargetIds', selectedIds);
         }
 
