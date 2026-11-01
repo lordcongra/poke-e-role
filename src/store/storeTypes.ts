@@ -428,162 +428,165 @@ export interface GeneratorSlice {
     applyGeneratedBuild: (build: TempBuild) => void;
 }
 
+export interface CharacterIdentity {
+    entityId?: string;
+    nickname: string;
+    species: string;
+    nature: string;
+    rank: Rank;
+    type1: string;
+    type2: string;
+    ability: string;
+    abilityActive?: boolean;
+    abilityBoostActive?: boolean;
+    abilityBoostLevel?: number;
+    abilityTags?: string;
+    abilityTargetIds?: string[];
+    availableAbilities: string[];
+    previousNativeAbility?: string;
+    mode: string;
+    age: string;
+    gender: string;
+    ruleset: string;
+    pain: string;
+    diceEngine: 'car' | 'log-only';
+    rolls: string;
+    homebrewAccess: string;
+    combat: string;
+    social: string;
+    hand: string;
+    isNPC: boolean;
+    isPlayerSide?: boolean;
+    learnset: Array<{ Learned: string; Name: string }>;
+    pokemonBackup?: string;
+    trainerBackup?: string;
+
+    activeTransformation: TransformationType;
+    activeFormId: string;
+    formSaves: Record<string, string>;
+    customFormConfig: Record<string, boolean>;
+    customFormImages: Record<string, string>;
+
+    baseFormData?: string;
+    altFormData?: string;
+    maxFormData?: string;
+
+    terastallizeAffinity: string;
+    terastallizeBonusActive: boolean;
+    customFormFirstHitAccActive: boolean;
+    customFormFirstHitDmgActive: boolean;
+
+    megaImageUrl?: string;
+    maxImageUrl?: string;
+    teraImageUrl?: string;
+
+    badges: Badge[];
+
+    showTrackers: boolean;
+    settingHpBar: boolean;
+    gmHpBar: boolean;
+    settingHpText: boolean;
+    gmHpText: boolean;
+    settingWillBar: boolean;
+    gmWillBar: boolean;
+    settingWillText: boolean;
+    gmWillText: boolean;
+    settingDefBadge: boolean;
+    gmDefBadge: boolean;
+    settingEcoBadge: boolean;
+    gmEcoBadge: boolean;
+
+    gmOnlyLootGen: boolean;
+    gmOnlyGenerators: boolean;
+    gmOnlyMatchups: boolean;
+    gmOnlyDamageOverride: boolean;
+    gmOnlyTrackers?: boolean;
+    gmOnlyAttributeLock?: boolean;
+    gmOnlyPullEnemies?: boolean;
+    defaultNpcInitiativeHidden?: boolean;
+    coreLocked?: boolean;
+    socialLocked?: boolean;
+    hpLocked?: boolean;
+    willLocked?: boolean;
+    pmdSkills?: boolean;
+    gmDemoMode: boolean;
+    activeRoomCampaignName?: string;
+    activeRoomCampaignId?: string;
+    roomHideHpBar?: boolean;
+    roomHideHpText?: boolean;
+    roomHideWillBar?: boolean;
+    roomHideWillText?: boolean;
+    roomHideDef?: boolean;
+    roomHideActions?: boolean;
+    roomHideEvade?: boolean;
+    roomHideClash?: boolean;
+    roomHideHudPlayersOnly?: boolean;
+    roomHideHudEnemiesOnly?: boolean;
+    roomTrackersRequireInitiative?: boolean;
+    isInitiativeActive?: boolean;
+    ignoreRoomHudRules?: boolean;
+
+    // Initiative HUD User Settings
+    initiativeTrackerPreset: string;
+    initiativeTrackerOffsetX: number;
+    initiativeTrackerOffsetY: number;
+    initiativeTrackerLayout: 'vertical' | 'horizontal';
+    initiativeTrackerAvatarShape: 'circle' | 'square' | 'none';
+    initiativeTrackerMaxWidth: number;
+    initiativeTrackerMaxHeight: number;
+
+    colorAct: string;
+    colorEva: string;
+    colorCla: string;
+
+    trackerScale: number;
+    trackerLayer: 'POPOVER' | 'ATTACHMENT' | 'CHARACTER' | 'MOUNT';
+    roomDefaultScale: number;
+    roomDefaultOffsetX: number;
+    roomDefaultOffsetY: number;
+    sceneDefaultScale: number | null;
+    sceneDefaultOffsetX: number | null;
+    sceneDefaultOffsetY: number | null;
+    xOffset: number;
+    yOffset: number;
+    hpOffsetX: number;
+    hpOffsetY: number;
+    willOffsetX: number;
+    willOffsetY: number;
+    defOffsetX: number;
+    defOffsetY: number;
+    actOffsetX: number;
+    actOffsetY: number;
+    evaOffsetX: number;
+    evaOffsetY: number;
+    claOffsetX: number;
+    claOffsetY: number;
+
+    // Dynamic Theming Overrides
+    themePrimaryOverride: string;
+    themeSecondaryOverride: string;
+
+    tokenImageUrl: string | null;
+    printConfig: PrintConfig;
+    isPrinting: boolean;
+
+    pendingDemoRoll: PendingDemoRoll | null;
+
+    // Pokédex Info
+    dexId: string;
+    dexCategory: string;
+    height: string;
+    weight: string;
+    dexDescription: string;
+
+    // Trainer Pokédex
+    pokedex: TrainerPokedexData;
+}
+
 export interface IdentitySlice {
     tokenId: string | null;
     role: 'GM' | 'PLAYER';
-    identity: {
-        entityId?: string;
-        nickname: string;
-        species: string;
-        nature: string;
-        rank: Rank;
-        type1: string;
-        type2: string;
-        ability: string;
-        abilityActive?: boolean;
-        abilityBoostActive?: boolean;
-        abilityBoostLevel?: number;
-        abilityTags?: string;
-        availableAbilities: string[];
-        previousNativeAbility?: string;
-        mode: string;
-        age: string;
-        gender: string;
-        ruleset: string;
-        pain: string;
-        diceEngine: 'car' | 'log-only';
-        rolls: string;
-        homebrewAccess: string;
-        combat: string;
-        social: string;
-        hand: string;
-        isNPC: boolean;
-        isPlayerSide?: boolean;
-        learnset: Array<{ Learned: string; Name: string }>;
-        pokemonBackup?: string;
-        trainerBackup?: string;
-
-        activeTransformation: TransformationType;
-        activeFormId: string;
-        formSaves: Record<string, string>;
-        customFormConfig: Record<string, boolean>;
-        customFormImages: Record<string, string>;
-
-        baseFormData?: string;
-        altFormData?: string;
-        maxFormData?: string;
-
-        terastallizeAffinity: string;
-        terastallizeBonusActive: boolean;
-        customFormFirstHitAccActive: boolean;
-        customFormFirstHitDmgActive: boolean;
-
-        megaImageUrl?: string;
-        maxImageUrl?: string;
-        teraImageUrl?: string;
-
-        badges: Badge[];
-
-        showTrackers: boolean;
-        settingHpBar: boolean;
-        gmHpBar: boolean;
-        settingHpText: boolean;
-        gmHpText: boolean;
-        settingWillBar: boolean;
-        gmWillBar: boolean;
-        settingWillText: boolean;
-        gmWillText: boolean;
-        settingDefBadge: boolean;
-        gmDefBadge: boolean;
-        settingEcoBadge: boolean;
-        gmEcoBadge: boolean;
-
-        gmOnlyLootGen: boolean;
-        gmOnlyGenerators: boolean;
-        gmOnlyMatchups: boolean;
-        gmOnlyDamageOverride: boolean;
-        gmOnlyTrackers?: boolean;
-        gmOnlyAttributeLock?: boolean;
-        gmOnlyPullEnemies?: boolean;
-        defaultNpcInitiativeHidden?: boolean;
-        coreLocked?: boolean;
-        socialLocked?: boolean;
-        hpLocked?: boolean;
-        willLocked?: boolean;
-        pmdSkills?: boolean;
-        gmDemoMode: boolean;
-        activeRoomCampaignName?: string;
-        activeRoomCampaignId?: string;
-        roomHideHpBar?: boolean;
-        roomHideHpText?: boolean;
-        roomHideWillBar?: boolean;
-        roomHideWillText?: boolean;
-        roomHideDef?: boolean;
-        roomHideActions?: boolean;
-        roomHideEvade?: boolean;
-        roomHideClash?: boolean;
-        roomHideHudPlayersOnly?: boolean;
-        roomHideHudEnemiesOnly?: boolean;
-        roomTrackersRequireInitiative?: boolean;
-        isInitiativeActive?: boolean;
-        ignoreRoomHudRules?: boolean;
-
-        // Initiative HUD User Settings
-        initiativeTrackerPreset: string;
-        initiativeTrackerOffsetX: number;
-        initiativeTrackerOffsetY: number;
-        initiativeTrackerLayout: 'vertical' | 'horizontal';
-        initiativeTrackerAvatarShape: 'circle' | 'square' | 'none';
-        initiativeTrackerMaxWidth: number;
-        initiativeTrackerMaxHeight: number;
-
-        colorAct: string;
-        colorEva: string;
-        colorCla: string;
-
-        trackerScale: number;
-        trackerLayer: 'POPOVER' | 'ATTACHMENT' | 'CHARACTER' | 'MOUNT';
-        roomDefaultScale: number;
-        roomDefaultOffsetX: number;
-        roomDefaultOffsetY: number;
-        sceneDefaultScale: number | null;
-        sceneDefaultOffsetX: number | null;
-        sceneDefaultOffsetY: number | null;
-        xOffset: number;
-        yOffset: number;
-        hpOffsetX: number;
-        hpOffsetY: number;
-        willOffsetX: number;
-        willOffsetY: number;
-        defOffsetX: number;
-        defOffsetY: number;
-        actOffsetX: number;
-        actOffsetY: number;
-        evaOffsetX: number;
-        evaOffsetY: number;
-        claOffsetX: number;
-        claOffsetY: number;
-
-        // Dynamic Theming Overrides
-        themePrimaryOverride: string;
-        themeSecondaryOverride: string;
-
-        tokenImageUrl: string | null;
-        printConfig: PrintConfig;
-        isPrinting: boolean;
-
-        pendingDemoRoll: PendingDemoRoll | null;
-
-        // Pokédex Info
-        dexId: string;
-        dexCategory: string;
-        height: string;
-        weight: string;
-        dexDescription: string;
-
-        // Trainer Pokédex
-        pokedex: TrainerPokedexData;
-    };
+    identity: CharacterIdentity;
 
     setIdentity: <K extends keyof IdentitySlice['identity']>(field: K, value: IdentitySlice['identity'][K]) => void;
     setPokedexEntry: (name: string, entry: Partial<TrainerPokedexEntry> | null) => void;

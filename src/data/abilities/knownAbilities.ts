@@ -644,6 +644,78 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
         autoActive: true,
         summary: 'Increases Dexterity upon consuming or losing held item.',
         benefitDisplay: '+2 DEX (Boost)'
+    },
+
+    // --- Range, Aura, & Entry Abilities ---
+    'Neutralizing Gas': {
+        name: 'Neutralizing Gas',
+        tags: '',
+        autoActive: true,
+        summary: 'Negates the effects of abilities of all foes in range while on the field.',
+        benefitDisplay: "Aura: Negate Foes' Abilities"
+    },
+    Intimidate: {
+        name: 'Intimidate',
+        tags: '',
+        autoActive: true,
+        summary: 'Reduces the Strength of all foes in range by 1 while on the field.',
+        benefitDisplay: 'Aura: -1 Foe STR'
+    },
+    'Victory Star': {
+        name: 'Victory Star',
+        tags: '',
+        autoActive: true,
+        summary: 'All Physical and Special Moves of user and allies in range cannot miss.',
+        benefitDisplay: 'Aura: Never Miss (Physical & Special)'
+    },
+    'Armor Tail': {
+        name: 'Armor Tail',
+        tags: '',
+        autoActive: true,
+        summary: 'User and allies in range cannot be targeted by moves with the Reaction Added Effect.',
+        benefitDisplay: 'Aura: Reaction Immune'
+    },
+    'Sweet Veil': {
+        name: 'Sweet Veil',
+        tags: '',
+        autoActive: true,
+        summary: 'User and allies in range are immune to the Sleep status condition.',
+        benefitDisplay: 'Aura: Sleep Immune'
+    },
+    'Pastel Veil': {
+        name: 'Pastel Veil',
+        tags: '',
+        autoActive: true,
+        summary: 'User and allies in range are immune to Poison and Badly Poisoned.',
+        benefitDisplay: 'Aura: Poison Immune'
+    },
+    'Aroma Veil': {
+        name: 'Aroma Veil',
+        tags: '',
+        autoActive: true,
+        summary: 'User and allies in range are immune to Love status, Taunt, Torment, Spite, Attract, Disable, Encore, and Heal Block.',
+        benefitDisplay: 'Aura: Mental Immune'
+    },
+    'Supersweet Syrup': {
+        name: 'Supersweet Syrup',
+        tags: '',
+        autoActive: true,
+        summary: 'All foes in range cannot evade moves performed by this Pokémon.',
+        benefitDisplay: 'Aura: Foes Cannot Evade'
+    },
+    Pressure: {
+        name: 'Pressure',
+        tags: '',
+        autoActive: true,
+        summary: 'When entering battle, all foes in range spend half (rounded up) of their remaining Will Points.',
+        benefitDisplay: 'Entry: Drain 50% Foe Will'
+    },
+    'Curious Medicine': {
+        name: 'Curious Medicine',
+        tags: '',
+        autoActive: true,
+        summary: 'When entering battle, removes all attribute increases and reductions on all allies in range.',
+        benefitDisplay: "Entry: Reset Allies' Buffs/Debuffs"
     }
 };
 

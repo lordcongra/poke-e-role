@@ -16,6 +16,8 @@ import {
 } from './combatMath';
 import { parseCombatTags } from '../tagParser/index';
 import { rollDicePlus } from './diceRoller';
+import { isTargetAffectedByAbility } from './abilityTargetingUtils';
+import { resolveCharacterSide } from './combatantSideUtils';
 
 function getStatStageModifier(statKey: string, state: CharacterState): { name: string; stage: number } | null {
     if (!statKey) return null;
@@ -319,6 +321,19 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
 
     if (moveDescription.includes('never miss') || moveDescription.includes('cannot be evaded')) {
         tags.push(`CANNOT BE EVADED`);
+    }
+
+    const isPhysOrSpec = move.category === 'Physical' || move.category === 'Special';
+    const sideName = resolveCharacterSide(state);
+    const rollerSide: 'player' | 'foe' = sideName !== 'none' ? sideName : state.identity.isNPC ? 'foe' : 'player';
+    const rollerId = state.identity.entityId || state.tokenId || state.identity.nickname || state.identity.species || '';
+    if (isPhysOrSpec && isTargetAffectedByAbility(rollerId, rollerSide, 'victory star', state.activeBattlefield || null)) {
+        if (!tags.includes('Victory Star (Never Miss)')) {
+            tags.push('Victory Star (Never Miss)');
+        }
+        if (!tags.includes('CANNOT BE EVADED')) {
+            tags.push('CANNOT BE EVADED');
+        }
     }
 
     const dualScaleMatch = (move.desc || '').match(/\[\s*(Dual Scale:[^\]]+)\]/i);

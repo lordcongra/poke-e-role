@@ -471,6 +471,7 @@ export function CombatantRow({
                 onToggleEvade={handleToggleEvade}
                 onToggleClash={handleToggleClash}
                 onOpenSheet={onOpenSheet}
+                onUpdate={onUpdate}
                 onDelete={onDelete}
             />
         </tr>

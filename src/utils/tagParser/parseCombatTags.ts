@@ -21,6 +21,8 @@ import {
     extractDamageSuccesses
 } from './tagExtractors';
 import { extractActiveEffectSummary } from './tagSummaries';
+import { isAbilitySuppressedByField } from '../combat/abilityTargetingUtils';
+import { resolveCharacterSide } from '../combat/combatantSideUtils';
 
 export function parseCombatTags(
     inventory: InventoryItem[],
@@ -252,7 +254,13 @@ export function parseCombatTags(
         });
 
     // 3. Ability
-    if (state.identity.abilityActive !== false) {
+    const sideForTags = state ? resolveCharacterSide(state) : 'none';
+    const effectiveSideForTags: 'player' | 'foe' =
+        sideForTags !== 'none' ? sideForTags : state?.identity.isNPC ? 'foe' : 'player';
+    const isSuppressedByGas =
+        state && isAbilitySuppressedByField(effectiveSideForTags, state.activeBattlefield || null);
+
+    if (state.identity.abilityActive !== false && !isSuppressedByGas) {
         let desc = state.identity.abilityTags;
         const cleanAbility = (state.identity.ability || '').replace(/\s*\(HA\)$/i, '').trim();
         const known = getKnownAbility(cleanAbility, state.identity.rank);

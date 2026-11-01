@@ -630,6 +630,10 @@ function parseIdentity(
         abilityBoostActive: loadedBoostActive,
         abilityBoostLevel: loadedBoostLevel,
         abilityTags: loadedTags,
+        abilityTargetIds: (() => {
+            const raw = String(meta['ability-target-ids'] || '').trim();
+            return raw ? raw.split(',').map((s) => s.trim()).filter(Boolean) : undefined;
+        })(),
         availableAbilities: loadedAbilities,
         previousNativeAbility: String(meta['previous-native-ability'] || ''),
         mode: String(meta['mode'] || 'Pokémon'),

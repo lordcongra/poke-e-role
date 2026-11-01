@@ -1,10 +1,17 @@
 import { useState } from 'react';
-import { Zap, Sliders } from 'lucide-react';
+import { Zap, Sliders, RotateCcw, Users } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { getAbilityBenefitSummary, getMaxBoost } from '../../data/abilities/knownAbilities';
+import { getAbilityTargetStance } from '../../utils/combat/abilityTargetingUtils';
+import { getMaxTargetsForRank } from '../modals/combat/targetingModalUtils';
 import { AbilityMenuModal } from './AbilityMenuModal';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
+import { PressureDrainModal } from '../modals/combat/PressureDrainModal';
+import { CuriousMedicineModal } from '../modals/combat/CuriousMedicineModal';
+import { AbilityTargetSelectorModal } from '../modals/combat/AbilityTargetSelectorModal';
 import './AbilityTrackerControl.css';
+
+const EMPTY_TARGET_IDS: string[] = [];
 
 export function AbilityTrackerControl() {
     const ability = useCharacterStore((state) => state.identity.ability);
@@ -14,6 +21,7 @@ export function AbilityTrackerControl() {
         (state) => state.identity.abilityBoostLevel ?? (state.identity.abilityBoostActive ? 1 : 0)
     );
     const abilityTags = useCharacterStore((state) => state.identity.abilityTags || '');
+    const abilityTargetIds = useCharacterStore((state) => state.identity.abilityTargetIds) ?? EMPTY_TARGET_IDS;
     const rank = useCharacterStore((state) => state.identity.rank);
     const hpCurr = useCharacterStore((state) => state.health.hpCurr);
     const hpMax = useCharacterStore((state) => state.health.hpMax);
@@ -22,8 +30,18 @@ export function AbilityTrackerControl() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [tagBuilderInitialTag, setTagBuilderInitialTag] = useState<string | undefined>(undefined);
     const [isTagBuilderOpen, setIsTagBuilderOpen] = useState(false);
+    const [isPressureModalOpen, setIsPressureModalOpen] = useState(false);
+    const [isMedicineModalOpen, setIsMedicineModalOpen] = useState(false);
+    const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
 
     if (!ability) return null;
+
+    const cleanAbility = (ability || '').toLowerCase().trim();
+    const isPressure = cleanAbility === 'pressure';
+    const isCuriousMedicine = cleanAbility === 'curious medicine';
+    const stance = getAbilityTargetStance(ability);
+    const hasTargetStance = stance !== 'none';
+    const maxTargets = getMaxTargetsForRank(rank);
 
     const isHalfHp = (hpCurr || 0) <= Math.floor(Math.max(1, hpMax || 1) / 2);
     const maxBoost = getMaxBoost(ability, abilityTags);
@@ -137,6 +155,42 @@ export function AbilityTrackerControl() {
                         </span>
                     )}
 
+                    {abilityActive && isPressure && (
+                        <button
+                            type="button"
+                            onClick={() => setIsPressureModalOpen(true)}
+                            className="action-button action-button--theme"
+                            style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '3px' }}
+                            title="Trigger Pressure: Drain opposing Will"
+                        >
+                            <Zap size={11} /> Drain Will
+                        </button>
+                    )}
+
+                    {abilityActive && isCuriousMedicine && (
+                        <button
+                            type="button"
+                            onClick={() => setIsMedicineModalOpen(true)}
+                            className="action-button action-button--theme"
+                            style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '3px' }}
+                            title="Trigger Curious Medicine: Reset allies' buffs & debuffs"
+                        >
+                            <RotateCcw size={11} /> Reset Allies
+                        </button>
+                    )}
+
+                    {abilityActive && hasTargetStance && (
+                        <button
+                            type="button"
+                            onClick={() => setIsTargetModalOpen(true)}
+                            className="action-button action-button--theme"
+                            style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '3px' }}
+                            title={`Configure Ability Targets (${abilityTargetIds.length}/${maxTargets} selected)`}
+                        >
+                            <Users size={11} /> Targets ({abilityTargetIds.length}/{maxTargets})
+                        </button>
+                    )}
+
                     <button
                         type="button"
                         onClick={() => setIsMenuOpen(true)}
@@ -148,6 +202,29 @@ export function AbilityTrackerControl() {
                     </button>
                 </div>
             </div>
+
+            {isPressureModalOpen && (
+                <PressureDrainModal
+                    isOpen={isPressureModalOpen}
+                    onClose={() => setIsPressureModalOpen(false)}
+                />
+            )}
+
+            {isMedicineModalOpen && (
+                <CuriousMedicineModal
+                    isOpen={isMedicineModalOpen}
+                    onClose={() => setIsMedicineModalOpen(false)}
+                />
+            )}
+
+            {isTargetModalOpen && (
+                <AbilityTargetSelectorModal
+                    isOpen={isTargetModalOpen}
+                    onClose={() => setIsTargetModalOpen(false)}
+                    abilityName={ability}
+                    sourceRank={rank}
+                />
+            )}
 
             {isMenuOpen && (
                 <AbilityMenuModal

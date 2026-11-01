@@ -5,9 +5,10 @@ import { checkCondition } from '../tagParser/conditionChecker';
 import { getEffectsByCategory, getAllActiveFieldEffects } from './fieldEffectsData';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { resolveCharacterSide, isFlowerGiftActiveForSide } from './combatantSideUtils';
+import { isAbilitySuppressedByField, isTargetUnderIntimidate, isTargetAffectedByAbility } from './abilityTargetingUtils';
 
 // PROXY EXPORT: Prevents app crashes if a file is still directly importing from combatMath!
-export { parseCombatTags, resolveCharacterSide, isFlowerGiftActiveForSide };
+export { parseCombatTags, resolveCharacterSide, isFlowerGiftActiveForSide, isAbilitySuppressedByField, isTargetUnderIntimidate, isTargetAffectedByAbility };
 
 export const ATTRIBUTE_MAPPING: Record<string, string> = {
     Strength: 'str',
@@ -33,6 +34,23 @@ export function getAbilityText(abilityName: string, customAbilities?: CustomAbil
     return custom ? `${custom.description} ${custom.effect}` : '';
 }
 
+/**
+ * Returns the effective ability text for a character, accounting for:
+ * 1. User manual ability active toggle
+ * 2. Neutralizing Gas suppression from opposing side
+ */
+export function getEffectiveAbilityText(state: CharacterState): string {
+    if (state.identity.abilityActive === false) {
+        return '';
+    }
+    const side = resolveCharacterSide(state);
+    const effectiveSide: 'player' | 'foe' = side !== 'none' ? side : state.identity.isNPC ? 'foe' : 'player';
+    if (isAbilitySuppressedByField(effectiveSide, state.activeBattlefield || null)) {
+        return '';
+    }
+    return getAbilityText(state.identity.ability, state.roomCustomAbilities);
+}
+
 export function getPainPenalty(
     attribute: string,
     state: CharacterState,
@@ -45,7 +63,7 @@ export function getPainPenalty(
     if (itemBuffs?.ignorePain) return 0;
 
     if (move && !itemBuffs) {
-        const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+        const abilityText = getEffectiveAbilityText(state);
         const buffs = parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
         if (buffs.ignorePain) return 0;
     }
@@ -169,19 +187,37 @@ export function calculateStatTotal(
             }
         }
 
-        if (normalizedStat === CombatStat.STR && state.activeBattlefield) {
-            const sideName = resolveCharacterSide(state);
-            if (
-                isFlowerGiftActiveForSide(
-                    sideName,
-                    state.activeBattlefield,
-                    state.identity.ability,
-                    state.identity.abilityActive
-                )
-            ) {
+        const charSide = resolveCharacterSide(state);
+        const effectiveSide: 'player' | 'foe' =
+            charSide !== 'none' ? charSide : state.identity.isNPC ? 'foe' : 'player';
+        const targetId = [
+            state.identity.entityId,
+            state.tokenId,
+            state.identity.nickname,
+            state.identity.species
+        ].filter(Boolean) as string[];
+
+        if (normalizedStat === CombatStat.STR) {
+            if (isTargetAffectedByAbility(targetId, effectiveSide, 'flower gift', state.activeBattlefield || null)) {
                 total += 2;
                 if (factorTags) {
                     factorTags.push('Flower Gift (+2 Strength)');
+                }
+            }
+
+            if (isTargetAffectedByAbility(targetId, effectiveSide, 'intimidate', state.activeBattlefield || null)) {
+                total -= 1;
+                if (factorTags) {
+                    factorTags.push('Intimidate (-1 Strength)');
+                }
+            }
+        }
+
+        if (normalizedStat === CombatStat.SPE) {
+            if (isTargetAffectedByAbility(targetId, effectiveSide, 'battery', state.activeBattlefield || null)) {
+                total += 1;
+                if (factorTags) {
+                    factorTags.push('Battery (+1 Special)');
                 }
             }
         }
@@ -419,7 +455,7 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState, itemB
         return 0;
     }
 
-    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const abilityText = getEffectiveAbilityText(state);
     const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
     const extraDice = state.trackers.globalDmg + invMods.dmg;
     const statuses = getStatusPenalties(state);
@@ -484,7 +520,7 @@ export const getRankBonusStats = (rank: string) => {
 };
 
 export function calculateMaxHp(state: CharacterState, itemBuffs?: CombatBonuses): number {
-    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const abilityText = getEffectiveAbilityText(state);
     const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
     const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
     const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
@@ -537,7 +573,7 @@ export function calculateMaxHp(state: CharacterState, itemBuffs?: CombatBonuses)
 }
 
 export function calculateMaxWill(state: CharacterState, itemBuffs?: CombatBonuses): number {
-    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const abilityText = getEffectiveAbilityText(state);
     const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
     const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
 
@@ -586,7 +622,7 @@ export function calculateMaxWill(state: CharacterState, itemBuffs?: CombatBonuse
 }
 
 export function calculateDefTotal(state: CharacterState, itemBuffs?: CombatBonuses): number {
-    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const abilityText = getEffectiveAbilityText(state);
     const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
     const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
     const rankBonus = getRankBonusStats(state.identity.rank).def;
@@ -611,7 +647,7 @@ export function calculateDefTotal(state: CharacterState, itemBuffs?: CombatBonus
 }
 
 export function calculateSDefTotal(state: CharacterState, itemBuffs?: CombatBonuses): number {
-    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const abilityText = getEffectiveAbilityText(state);
     const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
     const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
     const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
@@ -658,7 +694,7 @@ export function calculateSDefTotal(state: CharacterState, itemBuffs?: CombatBonu
 }
 
 export function calculateBaseInitiative(state: CharacterState, itemBuffs?: CombatBonuses): number {
-    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const abilityText = getEffectiveAbilityText(state);
     const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
 
     const dex = calculateStatTotal(CombatStat.DEX, state, invMods);
@@ -669,7 +705,7 @@ export function calculateBaseInitiative(state: CharacterState, itemBuffs?: Comba
 }
 
 export function calculateBaseAccuracy(move: MoveData, state: CharacterState, itemBuffs?: CombatBonuses): number {
-    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const abilityText = getEffectiveAbilityText(state);
     const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
     const statuses = getStatusPenalties(state);
 

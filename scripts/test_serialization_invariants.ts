@@ -2439,6 +2439,51 @@ await runTest('itemStatChoice: custom PlayerChoice stat whitelist parsing and re
     assert.equal(res.summaryText, '+2 Beauty (Permanent).', 'Formats summary text with chosen stat');
 });
 
+await runTest('abilityTargeting: serialization, hydration, stance resolution, and rank-capped target limits', async () => {
+    const { getAbilityTargetStance, isTargetAffectedByAbility } = await import(
+        '../src/utils/combat/abilityTargetingUtils'
+    );
+
+    // 1. Stance resolution for all unified abilities
+    assert.equal(getAbilityTargetStance('Flower Gift'), 'allies-and-self');
+    assert.equal(getAbilityTargetStance('Steely Spirit'), 'allies-and-self');
+    assert.equal(getAbilityTargetStance('Armor Tail'), 'allies-and-self');
+    assert.equal(getAbilityTargetStance('Sweet Veil'), 'allies-and-self');
+    assert.equal(getAbilityTargetStance('Pastel Veil'), 'allies-and-self');
+    assert.equal(getAbilityTargetStance('Aroma Veil'), 'allies-and-self');
+    assert.equal(getAbilityTargetStance('Flower Veil'), 'allies-and-self');
+    assert.equal(getAbilityTargetStance('Victory Star'), 'allies-and-self');
+
+    assert.equal(getAbilityTargetStance('Battery'), 'allies-only');
+    assert.equal(getAbilityTargetStance('Power Spot'), 'allies-only');
+
+    assert.equal(getAbilityTargetStance('Intimidate'), 'foes');
+    assert.equal(getAbilityTargetStance('Supersweet Syrup'), 'foes');
+    assert.equal(getAbilityTargetStance('Neutralizing Gas'), 'foes');
+
+    assert.equal(getAbilityTargetStance('Blaze'), 'none');
+
+    // 2. Serialization & Hydration of abilityTargetIds
+    const testState = createTestCharacterState();
+    testState.identity.ability = 'Intimidate';
+    testState.identity.abilityTargetIds = ['foe-1', 'foe-2'];
+
+    const flat = flattenStateToMetadata(testState);
+    assert.equal(flat['ability-target-ids'], 'foe-1,foe-2', 'Serializes comma-joined ability target IDs');
+
+    const hydrated = hydrateStateFromMetadata(flat, createTestCharacterState());
+    assert.deepEqual(
+        hydrated.identity?.abilityTargetIds,
+        ['foe-1', 'foe-2'],
+        'Hydrates comma-joined string back to string array'
+    );
+
+    // Empty array serialization
+    testState.identity.abilityTargetIds = [];
+    const flatEmpty = flattenStateToMetadata(testState);
+    assert.equal(flatEmpty['ability-target-ids'], '', 'Serializes empty targets array as empty string');
+});
+
 console.log('\n=============================================');
 console.log(`Results: ${passedCount} passed, ${failedCount} failed`);
 console.log('=============================================\n');

@@ -66,6 +66,8 @@ export interface CombatantRowData {
     activeTransformation?: string;
     ability?: string;
     abilityActive?: boolean;
+    abilityTargetIds?: string[];
+    rank?: string;
     species?: string;
     isNPC?: boolean;
     hidden?: boolean;

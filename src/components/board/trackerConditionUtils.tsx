@@ -7,7 +7,8 @@ import {
     type BoostTrackerSource
 } from '../../utils/combat/combatUtils';
 import { getAbilityBenefitSummary } from '../../data/abilities/knownAbilities';
-import { resolveCharacterSide, isFlowerGiftActiveForSide } from '../../utils/combat/combatantSideUtils';
+import { resolveCharacterSide } from '../../utils/combat/combatantSideUtils';
+import { isTargetAffectedByAbility } from '../../utils/combat/abilityTargetingUtils';
 import type { CharacterState, Trackers } from '../../store/storeTypes';
 import type { ConditionItem } from './TrackerConditionsList';
 
@@ -205,14 +206,103 @@ export function buildTrackerConditions({
         });
     }
 
-    // 11. Flower Gift Aura
+    const targetId = [
+        state.identity.entityId,
+        state.tokenId,
+        state.identity.nickname,
+        state.identity.species
+    ].filter(Boolean) as string[];
     const characterSide = resolveCharacterSide(state);
-    if (isFlowerGiftActiveForSide(characterSide, state.activeBattlefield, abilityName, abilityActive)) {
+    const effectiveSide: 'player' | 'foe' =
+        characterSide !== 'none' ? characterSide : state.identity.isNPC ? 'foe' : 'player';
+
+    // 11. Flower Gift Aura
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'flower gift', state.activeBattlefield || null)) {
         conditions.push({
             id: 'flower-gift-aura',
             label: 'Flower Gift (+2 STR, +2 Sp.Def)',
             bg: '#db2777',
             text: '#ffffff'
+        });
+    }
+
+    // 12. Neutralizing Gas Suppression
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'neutralizing gas', state.activeBattlefield || null)) {
+        conditions.push({
+            id: 'neutralizing-gas-suppressed',
+            label: 'Neutralizing Gas: Ability Negated',
+            bg: '#475569',
+            text: '#ffffff'
+        });
+    }
+
+    // 13. Intimidate Debuff
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'intimidate', state.activeBattlefield || null)) {
+        conditions.push({
+            id: 'intimidate-debuff',
+            label: 'Intimidate: -1 Strength',
+            bg: '#dc2626',
+            text: '#ffffff'
+        });
+    }
+
+    // 14. Armor Tail: Reaction Immune
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'armor tail', state.activeBattlefield || null)) {
+        conditions.push({
+            id: 'armor-tail-immunity',
+            label: 'Armor Tail: Reaction Immune',
+            bg: '#d97706',
+            text: '#ffffff'
+        });
+    }
+
+    // 15. Sweet Veil: Sleep Immune
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'sweet veil', state.activeBattlefield || null)) {
+        conditions.push({
+            id: 'sweet-veil-immunity',
+            label: 'Sweet Veil: Sleep Immune',
+            bg: '#ec4899',
+            text: '#ffffff'
+        });
+    }
+
+    // 16. Pastel Veil: Poison Immune
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'pastel veil', state.activeBattlefield || null)) {
+        conditions.push({
+            id: 'pastel-veil-immunity',
+            label: 'Pastel Veil: Poison Immune',
+            bg: '#a855f7',
+            text: '#ffffff'
+        });
+    }
+
+    // 17. Aroma Veil: Mental Immune
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'aroma veil', state.activeBattlefield || null)) {
+        conditions.push({
+            id: 'aroma-veil-immunity',
+            label: 'Aroma Veil: Mental Immune',
+            bg: '#06b6d4',
+            text: '#ffffff'
+        });
+    }
+
+    // 18. Flower Veil: Stat Lowering Immune
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'flower veil', state.activeBattlefield || null)) {
+        conditions.push({
+            id: 'flower-veil-immunity',
+            label: 'Flower Veil: Stat Lowering Immune',
+            bg: '#16a34a',
+            text: '#ffffff'
+        });
+    }
+
+    // 19. Supersweet Syrup: Evade Denied
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'supersweet syrup', state.activeBattlefield || null)) {
+        conditions.push({
+            id: 'supersweet-syrup-evade-denied',
+            label: 'Supersweet Syrup: Evade Denied',
+            bg: '#f59e0b',
+            text: '#000000'
         });
     }
 

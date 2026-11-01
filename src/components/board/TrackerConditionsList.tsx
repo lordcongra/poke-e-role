@@ -17,7 +17,8 @@ interface TrackerConditionsListProps {
 export function TrackerConditionsList({ conditions }: TrackerConditionsListProps) {
     const [isExpanded, setIsExpanded] = useState(false);
     const [confirmingId, setConfirmingId] = useState<string | null>(null);
-    const hasMultiple = conditions.length > 2;
+    const hasMultiple = conditions.length > 4;
+    const displayedConditions = isExpanded || !hasMultiple ? conditions : conditions.slice(0, 4);
 
     // Auto-clear confirmation after 4 seconds of inactivity
     useEffect(() => {
@@ -47,7 +48,7 @@ export function TrackerConditionsList({ conditions }: TrackerConditionsListProps
                 {conditions.length === 0 ? (
                     <span className="tracker-section__conditions-empty text-subtext">None</span>
                 ) : (
-                    conditions.map((c) => {
+                    displayedConditions.map((c) => {
                         const isConfirming = confirmingId === c.id;
                         return (
                             <span

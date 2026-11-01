@@ -105,6 +105,19 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                                     ? Boolean(meta['ability-active'])
                                     : identityObj.abilityActive !== false;
                             const species = String(identityObj.species || meta.species || '');
+                            const rank = String(identityObj.rank || meta.rank || 'Starter');
+                            const rawTargets = String(
+                                (Array.isArray(identityObj.abilityTargetIds)
+                                    ? identityObj.abilityTargetIds.join(',')
+                                    : '') ||
+                                    meta['ability-target-ids'] ||
+                                    ''
+                            );
+                            const abilityTargetIds = Array.isArray(identityObj.abilityTargetIds)
+                                ? (identityObj.abilityTargetIds as string[])
+                                : rawTargets
+                                  ? rawTargets.split(',').map((s: string) => s.trim()).filter(Boolean)
+                                  : undefined;
 
                             combatantRows.push({
                                 id: crypto.randomUUID(),
@@ -132,6 +145,8 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                                 activeTransformation,
                                 ability,
                                 abilityActive,
+                                abilityTargetIds,
+                                rank,
                                 species,
                                 isNPC,
                                 hidden: isHidden,
@@ -222,6 +237,20 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                                   ? Boolean(meta['ability-active'])
                                   : identityObj.abilityActive !== false;
                         const species = String(identityObj.species || statsMeta.species || meta.species || '');
+                        const rank = String(identityObj.rank || statsMeta.rank || meta.rank || 'Starter');
+                        const rawTargets = String(
+                            statsMeta['ability-target-ids'] ||
+                                meta['ability-target-ids'] ||
+                                (Array.isArray(identityObj.abilityTargetIds)
+                                    ? identityObj.abilityTargetIds.join(',')
+                                    : '') ||
+                                ''
+                        );
+                        const abilityTargetIds = Array.isArray(identityObj.abilityTargetIds)
+                            ? (identityObj.abilityTargetIds as string[])
+                            : rawTargets
+                              ? rawTargets.split(',').map((s: string) => s.trim()).filter(Boolean)
+                              : undefined;
 
                         combatantRows.push({
                             id: crypto.randomUUID(),
@@ -247,6 +276,8 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                             activeTransformation,
                             ability,
                             abilityActive,
+                            abilityTargetIds,
+                            rank,
                             species,
                             isNPC,
                             hidden: isHidden,

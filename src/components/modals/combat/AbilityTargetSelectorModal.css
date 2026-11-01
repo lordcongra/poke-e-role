@@ -1,0 +1,267 @@
+.ability-target-modal__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.72);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    backdrop-filter: blur(2px);
+}
+
+.ability-target-modal__dialog {
+    background-color: var(--panel-bg, #1e293b);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+    border-radius: 8px;
+    width: 440px;
+    max-width: 95vw;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    color: var(--text-main, #f8fafc);
+}
+
+.ability-target-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    background-color: var(--panel-alt, rgba(0, 0, 0, 0.2));
+}
+
+.ability-target-modal__title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ability-target-modal__icon {
+    color: var(--primary, #38bdf8);
+    flex-shrink: 0;
+}
+
+.ability-target-modal__title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main, #f8fafc);
+}
+
+.ability-target-modal__subtitle {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted, #94a3b8);
+    margin-top: 1px;
+}
+
+.ability-target-modal__close-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted, #94a3b8);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: color 0.15s ease;
+}
+
+.ability-target-modal__close-btn:hover {
+    color: var(--text-main, #f8fafc);
+}
+
+.ability-target-modal__description {
+    padding: 8px 16px;
+    font-size: 0.78rem;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.06));
+    color: var(--text-muted, #cbd5e1);
+}
+
+.ability-target-modal__counter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: rgba(0, 0, 0, 0.15);
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+}
+
+.ability-target-modal__counter {
+    font-size: 0.8rem;
+    color: var(--text-muted, #cbd5e1);
+}
+
+.ability-target-modal__counter strong {
+    color: var(--primary, #38bdf8);
+}
+
+.ability-target-modal__counter--danger strong {
+    color: var(--semantic-danger, #ef4444);
+}
+
+.ability-target-modal__warning {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    color: var(--semantic-danger, #ef4444);
+    font-weight: 600;
+}
+
+.ability-target-modal__list-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 16px;
+    min-height: 180px;
+    max-height: 380px;
+}
+
+.ability-target-modal__empty {
+    padding: 30px 10px;
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--text-muted, #94a3b8);
+}
+
+.ability-target-modal__list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ability-target-modal__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background-color: var(--panel-alt, rgba(0, 0, 0, 0.2));
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    user-select: none;
+}
+
+.ability-target-modal__item:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ability-target-modal__item--selected {
+    background-color: rgba(56, 189, 248, 0.12);
+    border-color: var(--primary, #38bdf8);
+}
+
+.ability-target-modal__checkbox {
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+    accent-color: var(--primary, #38bdf8);
+    flex-shrink: 0;
+}
+
+.ability-target-modal__avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    object-fit: cover;
+    background-color: rgba(0, 0, 0, 0.3);
+    flex-shrink: 0;
+}
+
+.ability-target-modal__avatar-placeholder {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    background-color: var(--panel-bg, #334155);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted, #94a3b8);
+    flex-shrink: 0;
+}
+
+.ability-target-modal__info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.ability-target-modal__name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-main, #f8fafc);
+}
+
+.ability-target-modal__species {
+    font-size: 0.7rem;
+    color: var(--text-muted, #94a3b8);
+}
+
+.ability-target-modal__tags {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.ability-target-modal__badge {
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.ability-target-modal__badge--ally {
+    background-color: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.ability-target-modal__badge--foe {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.ability-target-modal__badge--self {
+    background-color: rgba(234, 179, 8, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(234, 179, 8, 0.4);
+}
+
+.ability-target-modal__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    background-color: var(--panel-alt, rgba(0, 0, 0, 0.2));
+}
+
+.ability-target-modal__actions-left,
+.ability-target-modal__actions-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+

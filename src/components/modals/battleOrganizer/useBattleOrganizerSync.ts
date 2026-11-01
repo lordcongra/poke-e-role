@@ -220,9 +220,24 @@ export function useBattleOrganizerSync({
             }
         };
 
+        const handleCustomUpdate = (e: Event) => {
+            const custom = e as CustomEvent<BattleOrganizerState>;
+            if (custom.detail && Array.isArray(custom.detail.rounds)) {
+                if (saveTimerRef.current) {
+                    clearTimeout(saveTimerRef.current);
+                    saveTimerRef.current = null;
+                }
+                const serialized = JSON.stringify(custom.detail);
+                lastSavedJsonRef.current = serialized;
+                setState(custom.detail);
+            }
+        };
+
         window.addEventListener('storage', handleStorage);
+        window.addEventListener('pkr-battle-organizer-update', handleCustomUpdate as EventListener);
         return () => {
             window.removeEventListener('storage', handleStorage);
+            window.removeEventListener('pkr-battle-organizer-update', handleCustomUpdate as EventListener);
         };
     }, [lastSavedJsonRef, saveTimerRef, setState]);
 

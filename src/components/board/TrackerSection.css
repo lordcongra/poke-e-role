@@ -213,7 +213,7 @@
 /* Active Conditions Container */
 .tracker-section__conditions-container {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 6px;
     background: var(--row-odd);
     border: 1px solid var(--border);
@@ -221,13 +221,14 @@
     padding: 3px 8px;
     border-radius: 4px;
     box-sizing: border-box;
+    flex-wrap: wrap;
+    min-height: 28px;
     transition: max-height 0.2s ease;
 }
 
 .tracker-section__conditions-container--collapsed {
-    flex-wrap: nowrap;
-    overflow: hidden;
-    max-height: 28px;
+    flex-wrap: wrap;
+    max-height: none;
     min-height: 28px;
 }
 
@@ -240,7 +241,8 @@
 
 .tracker-section__conditions-label {
     white-space: nowrap;
-    align-self: center;
+    align-self: flex-start;
+    padding-top: 2px;
     font-size: 0.75rem;
 }
 
@@ -255,11 +257,11 @@
     align-items: center;
     flex: 1 1 auto;
     min-width: 0;
+    flex-wrap: wrap;
 }
 
 .tracker-section__conditions-list--collapsed {
-    flex-wrap: nowrap;
-    overflow: hidden;
+    flex-wrap: wrap;
 }
 
 .tracker-section__conditions-list--expanded {

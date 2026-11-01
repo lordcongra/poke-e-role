@@ -5,6 +5,8 @@ import { getKnownAbility, getAbilityBenefitSummary, getMaxBoost } from '../../da
 import { fetchAbilityData } from '../../utils/api/api';
 import { TagPillList } from '../ui/TagPillList';
 import { extractTagsFromText } from '../modals/items/tagBuilder/tagBuilderLogic';
+import { PressureDrainModal } from '../modals/combat/PressureDrainModal';
+import { CuriousMedicineModal } from '../modals/combat/CuriousMedicineModal';
 import './AbilityMenuModal.css';
 
 interface AbilityMenuModalProps {
@@ -39,6 +41,8 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
 
     const [detailsMap, setDetailsMap] = useState<Record<string, AbilityDetail>>({});
     const [overrideInput, setOverrideInput] = useState('');
+    const [isPressureModalOpen, setIsPressureModalOpen] = useState(false);
+    const [isCuriousMedicineModalOpen, setIsCuriousMedicineModalOpen] = useState(false);
 
     const isHalfHp = (hpCurr || 0) <= Math.floor(Math.max(1, hpMax || 1) / 2);
 
@@ -324,6 +328,43 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
                             </div>
                         )}
 
+                        {currentAbility.trim().toLowerCase().startsWith('pressure') && (
+                            <div style={{ marginTop: '8px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsPressureModalOpen(true)}
+                                    className="action-button action-button--theme"
+                                    style={{
+                                        padding: '4px 10px',
+                                        fontSize: '0.78rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px'
+                                    }}
+                                >
+                                    <Zap size={12} /> Trigger Pressure (Will Drain)
+                                </button>
+                            </div>
+                        )}
+                        {currentAbility.trim().toLowerCase().startsWith('curious medicine') && (
+                            <div style={{ marginTop: '8px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCuriousMedicineModalOpen(true)}
+                                    className="action-button action-button--theme"
+                                    style={{
+                                        padding: '4px 10px',
+                                        fontSize: '0.78rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px'
+                                    }}
+                                >
+                                    <RotateCcw size={12} /> Trigger Curious Medicine (Reset Modifiers)
+                                </button>
+                            </div>
+                        )}
+
                         {/* Tags */}
                         {effectiveTags && <div className="ability-modal__tags-box">{effectiveTags}</div>}
 
@@ -512,6 +553,44 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
                                     </div>
                                 )}
 
+                                {/* Pressure & Curious Medicine Entry Triggers */}
+                                {clean.toLowerCase() === 'pressure' && (
+                                    <div style={{ marginTop: '8px' }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsPressureModalOpen(true)}
+                                            className="action-button action-button--theme"
+                                            style={{
+                                                padding: '4px 10px',
+                                                fontSize: '0.78rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px'
+                                            }}
+                                        >
+                                            <Zap size={12} /> Trigger Pressure (Will Drain)
+                                        </button>
+                                    </div>
+                                )}
+                                {clean.toLowerCase() === 'curious medicine' && (
+                                    <div style={{ marginTop: '8px' }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsCuriousMedicineModalOpen(true)}
+                                            className="action-button action-button--theme"
+                                            style={{
+                                                padding: '4px 10px',
+                                                fontSize: '0.78rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px'
+                                            }}
+                                        >
+                                            <RotateCcw size={12} /> Trigger Curious Medicine (Reset Modifiers)
+                                        </button>
+                                    </div>
+                                )}
+
                                 {/* Tags */}
                                 {displayedTags && <div className="ability-modal__tags-box">{displayedTags}</div>}
 
@@ -645,6 +724,19 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
                     </button>
                 </div>
             </div>
+
+            {isPressureModalOpen && (
+                <PressureDrainModal
+                    isOpen={isPressureModalOpen}
+                    onClose={() => setIsPressureModalOpen(false)}
+                />
+            )}
+            {isCuriousMedicineModalOpen && (
+                <CuriousMedicineModal
+                    isOpen={isCuriousMedicineModalOpen}
+                    onClose={() => setIsCuriousMedicineModalOpen(false)}
+                />
+            )}
         </div>
     );
 }

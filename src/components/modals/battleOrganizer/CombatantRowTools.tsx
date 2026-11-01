@@ -1,6 +1,11 @@
-import React from 'react';
-import { Trash2, Shield, Swords, Skull, Lock, FileText } from 'lucide-react';
+import React, { useState } from 'react';
+import { Trash2, Shield, Swords, Skull, Lock, FileText, Zap, RotateCcw, Users } from 'lucide-react';
 import type { CombatantRowData } from '../../../types/battleOrganizerTypes';
+import { PressureDrainModal } from '../combat/PressureDrainModal';
+import { CuriousMedicineModal } from '../combat/CuriousMedicineModal';
+import { AbilityTargetSelectorModal } from '../combat/AbilityTargetSelectorModal';
+import { getAbilityTargetStance } from '../../../utils/combat/abilityTargetingUtils';
+import { getMaxTargetsForRank } from '../combat/targetingModalUtils';
 
 export interface CombatantRowToolsProps {
     combatant: CombatantRowData;
@@ -10,6 +15,7 @@ export interface CombatantRowToolsProps {
     onToggleEvade: () => void;
     onToggleClash: () => void;
     onOpenSheet?: (combatant: CombatantRowData) => void;
+    onUpdate?: (updated: CombatantRowData) => void;
     onDelete: (id: string) => void;
 }
 
@@ -21,8 +27,19 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
     onToggleEvade,
     onToggleClash,
     onOpenSheet,
+    onUpdate,
     onDelete
 }) => {
+    const [showPressureModal, setShowPressureModal] = useState(false);
+    const [showMedicineModal, setShowMedicineModal] = useState(false);
+    const [showTargetModal, setShowTargetModal] = useState(false);
+
+    const hasPressure = Boolean(combatant.ability?.toLowerCase().includes('pressure'));
+    const hasCuriousMedicine = Boolean(combatant.ability?.toLowerCase().includes('curious medicine'));
+    const hasTargetableAbility = Boolean(combatant.ability && getAbilityTargetStance(combatant.ability) !== 'none');
+    const targetCount = combatant.abilityTargetIds?.length || 0;
+    const maxTargets = getMaxTargetsForRank(combatant.rank);
+
     return (
         <td className="bo-cell bo-cell--tools">
             <div className="bo-tools-group">
@@ -68,6 +85,49 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
                 >
                     <Swords size={12} />
                 </button>
+                {hasPressure && (
+                    <button
+                        type="button"
+                        className="bo-reaction-toggle bo-reaction-toggle--pressure"
+                        onClick={() => setShowPressureModal(true)}
+                        title={isLocked ? 'Pressure: Locked by GM' : 'Trigger Pressure: Drain opposing Will'}
+                        aria-label="Trigger Pressure"
+                        disabled={isLocked}
+                        style={{ color: '#eab308' }}
+                    >
+                        <Zap size={12} />
+                    </button>
+                )}
+                {hasCuriousMedicine && (
+                    <button
+                        type="button"
+                        className="bo-reaction-toggle bo-reaction-toggle--medicine"
+                        onClick={() => setShowMedicineModal(true)}
+                        title={isLocked ? 'Curious Medicine: Locked by GM' : "Trigger Curious Medicine: Reset allies' buffs/debuffs"}
+                        aria-label="Trigger Curious Medicine"
+                        disabled={isLocked}
+                        style={{ color: '#06b6d4' }}
+                    >
+                        <RotateCcw size={12} />
+                    </button>
+                )}
+                {hasTargetableAbility && (
+                    <button
+                        type="button"
+                        className="bo-reaction-toggle bo-reaction-toggle--targets"
+                        onClick={() => setShowTargetModal(true)}
+                        title={
+                            isLocked
+                                ? 'Ability Targets: Locked by GM'
+                                : `Configure ${combatant.ability} Targets (${targetCount}/${maxTargets} selected)`
+                        }
+                        aria-label="Configure Ability Targets"
+                        disabled={isLocked}
+                        style={{ color: '#38bdf8' }}
+                    >
+                        <Users size={12} />
+                    </button>
+                )}
                 {isLocked ? (
                     <button
                         type="button"
@@ -110,6 +170,32 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
                     <Trash2 size={12} />
                 </button>
             </div>
+            {showPressureModal && (
+                <PressureDrainModal
+                    isOpen={showPressureModal}
+                    onClose={() => setShowPressureModal(false)}
+                    sourceCombatant={combatant}
+                />
+            )}
+            {showMedicineModal && (
+                <CuriousMedicineModal
+                    isOpen={showMedicineModal}
+                    onClose={() => setShowMedicineModal(false)}
+                    sourceCombatant={combatant}
+                />
+            )}
+            {showTargetModal && (
+                <AbilityTargetSelectorModal
+                    isOpen={showTargetModal}
+                    onClose={() => setShowTargetModal(false)}
+                    abilityName={combatant.ability || ''}
+                    sourceCombatant={combatant}
+                    sourceRank={combatant.rank}
+                    onSaveTargets={(targetIds) => {
+                        onUpdate?.({ ...combatant, abilityTargetIds: targetIds });
+                    }}
+                />
+            )}
         </td>
     );
 };
