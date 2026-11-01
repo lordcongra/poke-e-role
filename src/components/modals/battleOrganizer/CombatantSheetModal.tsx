@@ -257,7 +257,7 @@ export function CombatantSheetModal({
                 unsubScene();
             }
         };
-    }, [combatant]);
+    }, [combatant?.id, combatant?.tokenId]);
 
     const selectableCombatants = allCombatants.filter((c) => !(!isStandaloneMode && role === 'PLAYER' && c.isNPC));
     const currentIndex = selectableCombatants.findIndex((c) => c.id === combatant.id);

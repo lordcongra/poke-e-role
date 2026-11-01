@@ -703,6 +703,27 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
         summary: 'All foes in range cannot evade moves performed by this Pokémon.',
         benefitDisplay: 'Aura: Foes Cannot Evade'
     },
+    Battery: {
+        name: 'Battery',
+        tags: '',
+        autoActive: true,
+        summary: 'Increase Special Attribute of allies in range by 1 and adds 1 extra die to their Special damage pools.',
+        benefitDisplay: 'Aura: +1 Ally SPE & Sp.Dmg'
+    },
+    'Power Spot': {
+        name: 'Power Spot',
+        tags: '',
+        autoActive: true,
+        summary: 'Add 1 extra die to Physical and Special damage pools of allies in range. Does not stack with multiple Power Spots.',
+        benefitDisplay: 'Aura: +1 Ally Dmg'
+    },
+    'Flower Veil': {
+        name: 'Flower Veil',
+        tags: '',
+        autoActive: true,
+        summary: 'User and allies in range cannot have Attributes reduced or Status Ailments inflicted.',
+        benefitDisplay: 'Aura: Stat & Status Immune'
+    },
     Pressure: {
         name: 'Pressure',
         tags: '',

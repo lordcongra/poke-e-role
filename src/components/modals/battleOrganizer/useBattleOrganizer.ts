@@ -185,6 +185,7 @@ export function useBattleOrganizer() {
                 const clashChanged = prevCombatant.clashUsed !== updated.clashUsed;
                 const actionsChanged = JSON.stringify(prevCombatant.actions) !== JSON.stringify(updated.actions);
                 const initiativeChanged = prevCombatant.initiative !== updated.initiative;
+                const sideChanged = prevCombatant.isPlayerSide !== updated.isPlayerSide;
 
                 if (
                     statusChanged ||
@@ -193,7 +194,8 @@ export function useBattleOrganizer() {
                     evadeChanged ||
                     clashChanged ||
                     actionsChanged ||
-                    initiativeChanged
+                    initiativeChanged ||
+                    sideChanged
                 ) {
                     syncCombatantToToken(updated, {
                         syncStatus: statusChanged,
@@ -202,7 +204,8 @@ export function useBattleOrganizer() {
                         syncEvade: evadeChanged,
                         syncClash: clashChanged,
                         syncActions: actionsChanged,
-                        syncInitiative: initiativeChanged
+                        syncInitiative: initiativeChanged,
+                        syncSide: sideChanged
                     });
                 }
             }

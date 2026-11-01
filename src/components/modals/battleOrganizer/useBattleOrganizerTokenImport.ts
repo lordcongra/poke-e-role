@@ -17,10 +17,12 @@ import {
     parseHeldItemsFromMetadata,
     parseTokenPrivacyFlags,
     createDefaultActions,
-    compareCombatantsByInitiative
+    compareCombatantsByInitiative,
+    STORAGE_KEY
 } from './battleOrganizerUtils';
 
 export interface UseBattleOrganizerTokenImportProps {
+    state?: BattleOrganizerState;
     updateState: (
         updater: (prev: BattleOrganizerState) => BattleOrganizerState,
         immediate?: boolean,
@@ -28,13 +30,29 @@ export interface UseBattleOrganizerTokenImportProps {
     ) => void;
 }
 
-export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganizerTokenImportProps) {
+export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleOrganizerTokenImportProps) {
     const pullFromInitiative = useCallback(
         async (options?: { resetTrackers?: boolean; mergeOnly?: boolean }) => {
             const shouldReset = options?.resetTrackers !== false;
             const isMergeOnly = options?.mergeOnly === true;
 
             try {
+                let existingRoundCombatants: CombatantRowData[] = [];
+                if (state?.rounds && typeof state.activeRoundIndex === 'number') {
+                    existingRoundCombatants = state.rounds[state.activeRoundIndex]?.combatants || [];
+                }
+                if (existingRoundCombatants.length === 0) {
+                    try {
+                        const raw = localStorage.getItem(STORAGE_KEY);
+                        if (raw) {
+                            const parsed = JSON.parse(raw) as BattleOrganizerState;
+                            existingRoundCombatants = parsed.rounds?.[parsed.activeRoundIndex ?? 0]?.combatants || [];
+                        }
+                    } catch {
+                        // ignore
+                    }
+                }
+
                 const combatantRows: CombatantRowData[] = [];
                 const role = useCharacterStore.getState().role;
                 const gmOnlyPullEnemies = useCharacterStore.getState().identity.gmOnlyPullEnemies ?? true;
@@ -119,10 +137,28 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                                   ? rawTargets.split(',').map((s: string) => s.trim()).filter(Boolean)
                                   : undefined;
 
+                            const entityId = (matchingChar?.metadata?.entityId as string) || charId;
+                            const existing = existingRoundCombatants.find(
+                                (c) =>
+                                    (c.tokenId && c.tokenId === charId) ||
+                                    (c.entityId && c.entityId === entityId) ||
+                                    c.name.toLowerCase().trim() === displayName.toLowerCase().trim()
+                            );
+                            const isPlayerSide =
+                                existing?.isPlayerSide !== undefined
+                                    ? existing.isPlayerSide
+                                    : meta['is-player-side'] !== undefined
+                                      ? Boolean(meta['is-player-side'])
+                                      : !isNPC;
+                            const finalAbilityTargetIds =
+                                existing?.abilityTargetIds !== undefined && existing.abilityTargetIds.length > 0
+                                    ? existing.abilityTargetIds
+                                    : abilityTargetIds;
+
                             combatantRows.push({
                                 id: crypto.randomUUID(),
                                 tokenId: charId,
-                                entityId: (matchingChar?.metadata?.entityId as string) || charId,
+                                entityId,
                                 initiative: initScore,
                                 baseInit: effectiveBase,
                                 name: displayName,
@@ -135,7 +171,7 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                                 actions,
                                 evadeUsed,
                                 clashUsed,
-                                isPlayerSide: !isNPC,
+                                isPlayerSide,
                                 hpCurr,
                                 hpMax,
                                 willCurr,
@@ -145,7 +181,7 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                                 activeTransformation,
                                 ability,
                                 abilityActive,
-                                abilityTargetIds,
+                                abilityTargetIds: finalAbilityTargetIds,
                                 rank,
                                 species,
                                 isNPC,
@@ -252,10 +288,30 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                               ? rawTargets.split(',').map((s: string) => s.trim()).filter(Boolean)
                               : undefined;
 
+                        const itemEntityId = extractEntityId(item);
+                        const existing = existingRoundCombatants.find(
+                            (c) =>
+                                (c.tokenId && c.tokenId === item.id) ||
+                                (c.entityId && c.entityId === itemEntityId) ||
+                                c.name.toLowerCase().trim() === charName.toLowerCase().trim()
+                        );
+                        const isPlayerSide =
+                            existing?.isPlayerSide !== undefined
+                                ? existing.isPlayerSide
+                                : meta['is-player-side'] !== undefined
+                                  ? Boolean(meta['is-player-side'])
+                                  : statsMeta['is-player-side'] !== undefined
+                                    ? Boolean(statsMeta['is-player-side'])
+                                    : !isNPC;
+                        const finalAbilityTargetIds =
+                            existing?.abilityTargetIds !== undefined && existing.abilityTargetIds.length > 0
+                                ? existing.abilityTargetIds
+                                : abilityTargetIds;
+
                         combatantRows.push({
                             id: crypto.randomUUID(),
                             tokenId: item.id,
-                            entityId: extractEntityId(item),
+                            entityId: itemEntityId,
                             initiative: initScore,
                             baseInit,
                             name: charName,
@@ -266,7 +322,7 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                             actions,
                             evadeUsed,
                             clashUsed,
-                            isPlayerSide: !isNPC,
+                            isPlayerSide,
                             hpCurr,
                             hpMax,
                             willCurr,
@@ -276,7 +332,7 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                             activeTransformation,
                             ability,
                             abilityActive,
-                            abilityTargetIds,
+                            abilityTargetIds: finalAbilityTargetIds,
                             rank,
                             species,
                             isNPC,
@@ -348,14 +404,35 @@ export function useBattleOrganizerTokenImport({ updateState }: UseBattleOrganize
                             };
                         }
 
-                        targetCombatantsToReset = combatantRows;
+                        const currentRoundCombatants = currentRound.combatants;
+                        const preservedCombatantRows = combatantRows.map((row) => {
+                            const existing = currentRoundCombatants.find(
+                                (c) =>
+                                    (c.tokenId && c.tokenId === row.tokenId) ||
+                                    (c.entityId && c.entityId === row.entityId) ||
+                                    c.name.toLowerCase().trim() === row.name.toLowerCase().trim()
+                            );
+                            if (existing) {
+                                return {
+                                    ...row,
+                                    isPlayerSide: existing.isPlayerSide !== undefined ? existing.isPlayerSide : row.isPlayerSide,
+                                    abilityTargetIds:
+                                        existing.abilityTargetIds !== undefined && existing.abilityTargetIds.length > 0
+                                            ? existing.abilityTargetIds
+                                            : row.abilityTargetIds
+                                };
+                            }
+                            return row;
+                        });
+
+                        targetCombatantsToReset = preservedCombatantRows;
                         const updatedRound: BattleRoundData = {
                             ...currentRound,
-                            combatants: combatantRows
+                            combatants: preservedCombatantRows
                         };
 
-                        const playerTargets = combatantRows.filter((c) => c.isPlayerSide && !c.isFainted).length;
-                        const foeTargets = combatantRows.filter((c) => !c.isPlayerSide && !c.isFainted).length;
+                        const playerTargets = preservedCombatantRows.filter((c) => c.isPlayerSide && !c.isFainted).length;
+                        const foeTargets = preservedCombatantRows.filter((c) => !c.isPlayerSide && !c.isFainted).length;
 
                         return {
                             ...prev,

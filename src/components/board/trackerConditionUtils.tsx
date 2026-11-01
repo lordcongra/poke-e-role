@@ -306,5 +306,35 @@ export function buildTrackerConditions({
         });
     }
 
+    // 20. Battery: +1 Special, +1 Sp.Dmg
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'battery', state.activeBattlefield || null)) {
+        conditions.push({
+            id: 'battery-boost',
+            label: 'Battery (+1 Special, +1 Sp.Dmg)',
+            bg: '#eab308',
+            text: '#000000'
+        });
+    }
+
+    // 21. Power Spot: +1 Damage
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'power spot', state.activeBattlefield || null)) {
+        conditions.push({
+            id: 'power-spot-boost',
+            label: 'Power Spot (+1 Damage)',
+            bg: '#f59e0b',
+            text: '#000000'
+        });
+    }
+
+    // 22. Steely Spirit: +1 Steel Dmg
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'steely spirit', state.activeBattlefield || null)) {
+        conditions.push({
+            id: 'steely-spirit-boost',
+            label: 'Steely Spirit (+1 Steel Dmg)',
+            bg: '#64748b',
+            text: '#ffffff'
+        });
+    }
+
     return conditions;
 }

@@ -48,6 +48,7 @@ export function useBattleOrganizerTokenOps({
 
     // 3. Initiative & Character Ingestion
     const { pullFromInitiative } = useBattleOrganizerTokenImport({
+        state,
         updateState
     });
 

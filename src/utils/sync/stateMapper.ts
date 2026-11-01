@@ -644,6 +644,7 @@ function parseIdentity(
         social: String(meta['social'] || ''),
         hand: String(meta['hand'] || ''),
         isNPC: meta['is-npc'] === true || meta['is-npc'] === 'true',
+        isPlayerSide: meta['is-player-side'] !== undefined ? Boolean(meta['is-player-side']) : undefined,
         coreLocked: meta['core-locked'] !== undefined ? Boolean(meta['core-locked']) : true,
         socialLocked: meta['social-locked'] !== undefined ? Boolean(meta['social-locked']) : true,
         hpLocked: meta['hp-locked'] !== undefined ? Boolean(meta['hp-locked']) : true,

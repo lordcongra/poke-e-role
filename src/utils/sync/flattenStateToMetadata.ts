@@ -44,6 +44,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
         if (state.identity) {
             const id = state.identity;
             if (id.entityId && id.entityId !== '') flatMetadata['entityId'] = id.entityId;
+            if (id.isPlayerSide !== undefined) flatMetadata['is-player-side'] = Boolean(id.isPlayerSide);
             if (id.nickname !== undefined) flatMetadata['nickname'] = id.nickname;
             if (id.species !== undefined && id.species !== '') flatMetadata['species'] = id.species;
             if (id.nature !== undefined && id.nature !== '') flatMetadata['nature'] = id.nature;

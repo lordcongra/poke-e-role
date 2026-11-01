@@ -183,6 +183,7 @@ export function useBattleOrganizerTokenSync({
                 syncClash?: boolean;
                 syncActions?: boolean;
                 syncInitiative?: boolean;
+                syncSide?: boolean;
             }
         ) => {
             try {
@@ -263,6 +264,10 @@ export function useBattleOrganizerTokenSync({
                     updates['actions-used'] = Math.max(0, Math.min(5, usedActionsCount));
                 }
 
+                if (syncOptions.syncSide || combatant.isPlayerSide !== undefined) {
+                    updates['is-player-side'] = Boolean(combatant.isPlayerSide);
+                }
+
                 if (Object.keys(updates).length === 0) return;
 
                 // Live in-memory update for current window's active character store if it matches
@@ -270,6 +275,9 @@ export function useBattleOrganizerTokenSync({
                 if (globalStore.tokenId === targetTokenId) {
                     if (statusItems) {
                         useCharacterStore.setState({ statuses: statusItems });
+                    }
+                    if (combatant.isPlayerSide !== undefined) {
+                        globalStore.setIdentity('isPlayerSide' as any, Boolean(combatant.isPlayerSide));
                     }
                     if (typeof updates['hp-curr'] === 'number') {
                         globalStore.updateHealth('hpCurr', updates['hp-curr']);

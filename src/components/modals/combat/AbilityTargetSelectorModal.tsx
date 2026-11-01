@@ -98,49 +98,41 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
         }
     }, [isOpen, sourceIsPlayer, stance, sourceId, sourceTokenId]);
 
-    // Initialize selection when opened
+    // Initialize selection when opened, pruning ghost targets that no longer exist
     useEffect(() => {
         if (isOpen && !initialized) {
-            setSelectedIds(initialTargets);
+            const validTargets = (initialTargets || []).filter((id) =>
+                candidates.some((c) => matchesTarget(c, id))
+            );
+            setSelectedIds(validTargets);
             setInitialized(true);
         } else if (!isOpen && initialized) {
             setInitialized(false);
             setSelectedIds([]);
         }
-    }, [isOpen, initialized, initialTargets]);
+    }, [isOpen, initialized, initialTargets, candidates]);
 
     if (!isOpen || stance === 'none') return null;
 
     const isTargetSelected = (candidate: CombatantRowData): boolean => {
-        return (
-            selectedIds.includes(candidate.id) ||
-            Boolean(candidate.tokenId && selectedIds.includes(candidate.tokenId)) ||
-            Boolean(candidate.entityId && selectedIds.includes(candidate.entityId)) ||
-            selectedIds.map((s) => s.toLowerCase()).includes((candidate.name || '').toLowerCase())
-        );
+        return matchesTarget(candidate, selectedIds);
     };
 
     const handleToggleTarget = (candidate: CombatantRowData) => {
-        const idToToggle = candidate.id;
+        const idToToggle = candidate.tokenId || candidate.entityId || candidate.name || candidate.id;
         const isSelected = isTargetSelected(candidate);
 
         if (isSelected) {
-            setSelectedIds((prev) =>
-                prev.filter(
-                    (id) =>
-                        id !== candidate.id &&
-                        (!candidate.tokenId || id !== candidate.tokenId) &&
-                        (!candidate.entityId || id !== candidate.entityId) &&
-                        id.toLowerCase() !== (candidate.name || '').toLowerCase()
-                )
-            );
+            setSelectedIds((prev) => prev.filter((id) => !matchesTarget(candidate, id)));
         } else {
             setSelectedIds((prev) => [...prev, idToToggle]);
         }
     };
 
     const handleAutoSelect = () => {
-        const auto = candidates.slice(0, maxTargets).map((c) => c.id);
+        const auto = candidates
+            .slice(0, maxTargets)
+            .map((c) => c.tokenId || c.entityId || c.name || c.id);
         setSelectedIds(auto);
     };
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, Shield, Swords, Skull, Lock, FileText, Zap, RotateCcw, Users } from 'lucide-react';
+import { Trash2, Shield, Swords, Skull, Lock, FileText, Zap, RotateCcw, Users, Power } from 'lucide-react';
 import type { CombatantRowData } from '../../../types/battleOrganizerTypes';
 import { PressureDrainModal } from '../combat/PressureDrainModal';
 import { CuriousMedicineModal } from '../combat/CuriousMedicineModal';
@@ -109,6 +109,23 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
                         style={{ color: '#06b6d4' }}
                     >
                         <RotateCcw size={12} />
+                    </button>
+                )}
+                {hasTargetableAbility && (
+                    <button
+                        type="button"
+                        className={`bo-reaction-toggle bo-reaction-toggle--ability-active ${combatant.abilityActive !== false ? 'bo-reaction-toggle--active' : ''}`}
+                        onClick={() => onUpdate?.({ ...combatant, abilityActive: combatant.abilityActive === false })}
+                        title={
+                            isLocked
+                                ? 'Ability Active: Locked by GM'
+                                : `${combatant.ability}: ${combatant.abilityActive !== false ? 'Active (Click to disable aura)' : 'Inactive (Click to enable aura)'}`
+                        }
+                        aria-label="Toggle Ability Active"
+                        disabled={isLocked}
+                        style={{ color: combatant.abilityActive !== false ? '#22c55e' : 'var(--text-muted, #94a3b8)' }}
+                    >
+                        <Power size={12} />
                     </button>
                 )}
                 {hasTargetableAbility && (

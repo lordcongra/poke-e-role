@@ -98,6 +98,16 @@ export function getStatusPenalties(state: CharacterState) {
     let isFrozen = false;
 
     const abilityString = (state.identity.ability || '').toLowerCase();
+    const charSide = resolveCharacterSide(state);
+    const effectiveSide: 'player' | 'foe' =
+        charSide !== 'none' ? charSide : state.identity.isNPC ? 'foe' : 'player';
+    const targetId = [
+        state.identity.entityId,
+        state.tokenId,
+        state.identity.nickname,
+        state.identity.species
+    ].filter(Boolean) as string[];
+
     const activeStatuses = state.statuses.map((status) =>
         (status.name === 'Custom...' ? status.customName : status.name).toLowerCase()
     );
@@ -119,7 +129,8 @@ export function getStatusPenalties(state: CharacterState) {
                 if (
                     !abilityString.includes('insomnia') &&
                     !abilityString.includes('vital spirit') &&
-                    !abilityString.includes('sweet veil')
+                    !abilityString.includes('sweet veil') &&
+                    !isTargetAffectedByAbility(targetId, effectiveSide, 'sweet veil', state.activeBattlefield || null)
                 )
                     isAsleep = true;
             }

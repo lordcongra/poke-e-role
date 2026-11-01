@@ -326,13 +326,43 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     const isPhysOrSpec = move.category === 'Physical' || move.category === 'Special';
     const sideName = resolveCharacterSide(state);
     const rollerSide: 'player' | 'foe' = sideName !== 'none' ? sideName : state.identity.isNPC ? 'foe' : 'player';
-    const rollerId = state.identity.entityId || state.tokenId || state.identity.nickname || state.identity.species || '';
+    const rollerId = [
+        state.identity.entityId,
+        state.tokenId,
+        state.identity.nickname,
+        state.identity.species
+    ].filter((id): id is string => Boolean(id));
     if (isPhysOrSpec && isTargetAffectedByAbility(rollerId, rollerSide, 'victory star', state.activeBattlefield || null)) {
         if (!tags.includes('Victory Star (Never Miss)')) {
             tags.push('Victory Star (Never Miss)');
         }
         if (!tags.includes('CANNOT BE EVADED')) {
             tags.push('CANNOT BE EVADED');
+        }
+    }
+
+    if (move.category === 'Special' && isTargetAffectedByAbility(rollerId, rollerSide, 'battery', state.activeBattlefield || null)) {
+        if (!tags.includes('Battery (+1 Damage)')) {
+            tags.push('Battery (+1 Damage)');
+        }
+    }
+    if (
+        (move.category === 'Physical' || move.category === 'Special') &&
+        isTargetAffectedByAbility(rollerId, rollerSide, 'power spot', state.activeBattlefield || null)
+    ) {
+        if (!tags.includes('Power Spot (+1 Damage)')) {
+            tags.push('Power Spot (+1 Damage)');
+        }
+    }
+    if (
+        move.type?.toLowerCase() === 'steel' &&
+        isTargetAffectedByAbility(rollerId, rollerSide, 'steely spirit', state.activeBattlefield || null)
+    ) {
+        const hasSelfSteely =
+            itemBuffs.accAbilityNames?.some((a) => a.toLowerCase().includes('steely spirit')) ||
+            tags.some((t) => t.toLowerCase().includes('steely spirit'));
+        if (!hasSelfSteely && !tags.includes('Steely Spirit (+1 Damage)')) {
+            tags.push('Steely Spirit (+1 Damage)');
         }
     }
 
@@ -587,7 +617,40 @@ export async function executeDamageRoll(
         tags.push(dualScaleMatch[1]);
     }
 
+    const sideName = resolveCharacterSide(state);
+    const rollerSide: 'player' | 'foe' = sideName !== 'none' ? sideName : state.identity.isNPC ? 'foe' : 'player';
+    const rollerId = [
+        state.identity.entityId,
+        state.tokenId,
+        state.identity.nickname,
+        state.identity.species
+    ].filter((id): id is string => Boolean(id));
+
     if (!override.active || override.type !== 'flat') {
+        if (move.category === 'Special' && isTargetAffectedByAbility(rollerId, rollerSide, 'battery', state.activeBattlefield || null)) {
+            actualDicePool += 1;
+            tags.push('Battery (+1 Damage)');
+        }
+        if (
+            (move.category === 'Physical' || move.category === 'Special') &&
+            isTargetAffectedByAbility(rollerId, rollerSide, 'power spot', state.activeBattlefield || null)
+        ) {
+            actualDicePool += 1;
+            tags.push('Power Spot (+1 Damage)');
+        }
+        if (
+            move.type?.toLowerCase() === 'steel' &&
+            isTargetAffectedByAbility(rollerId, rollerSide, 'steely spirit', state.activeBattlefield || null)
+        ) {
+            const hasSelfSteely =
+                itemBuffs.dmgAbilityNames?.some((a) => a.toLowerCase().includes('steely spirit')) ||
+                tags.some((t) => t.toLowerCase().includes('steely spirit'));
+            if (!hasSelfSteely) {
+                actualDicePool += 1;
+                tags.push('Steely Spirit (+1 Damage)');
+            }
+        }
+
         if (statuses.paralysisDexterityPenalty < 0 && normalizedDamageStatistic === 'dex') {
             tags.push(`Paralysis: -2 Dice`);
         }
