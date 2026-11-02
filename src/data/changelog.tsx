@@ -29,7 +29,7 @@ import {
     Target
 } from 'lucide-react';
 
-export const CURRENT_VERSION = '3.7.5';
+export const CURRENT_VERSION = '3.7.6';
 
 export interface ChangelogHighlight {
     id: string;
@@ -130,6 +130,73 @@ export function getChangelogDiff(lastSeenVersion: string | null): ChangelogDiffR
 }
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
+    {
+        version: '3.7.6',
+        date: 'November 2026',
+        changes: [
+            <strong
+                key="target-all-abilities-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Target size={16} /> Rank-Scaled Range & Area Abilities
+            </strong>,
+            <ul
+                key="target-all-abilities-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Rank-Based Target Scaling:</strong> Abilities that target all combatants in range
+                    (such as Intimidate, Flower Gift, or Neutralizing Gas) now dynamically scale their maximum
+                    number of allowed targets according to Pokémon Rank, automatically keeping tabletop encounters
+                    balanced and accurate as your party levels up.
+                </li>
+                <li>
+                    <strong>Ally & Foe Targeting:</strong> Area abilities cleanly distinguish between allies and
+                    foes when selecting targets in range, ensuring passive auras and entry penalties only apply to
+                    the intended combatants and automatically deactivating when recalled to PC storage.
+                </li>
+            </ul>,
+            <strong
+                key="conditions-tracker-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Shield size={16} /> Enhanced Combat Conditions Tracker
+            </strong>,
+            <ul
+                key="conditions-tracker-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Round Combat Factors & Gambits:</strong> The conditions tracker now displays round-specific
+                    combat factors such as <em>Pushing Fate</em> and <em>Take Your Chances</em> (including remaining rerolls),
+                    giving players and GMs a far more descriptive and transparent overview of ongoing battle states.
+                </li>
+                <li>
+                    <strong>One-Click Condition Clear:</strong> Added quick-clear buttons directly on conditions badges
+                    (including Ignored Pain, Pushing Fate, Take Your Chances, and nearby aura effects) so combatants can
+                    easily reset round triggers and temporary modifiers or correct potential bugs (submit a bug report if you find any please).
+                </li>
+            </ul>
+        ]
+    },
     {
         version: '3.7.5',
         date: 'October 2026',
