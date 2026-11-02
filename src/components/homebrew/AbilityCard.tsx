@@ -25,6 +25,9 @@ export function AbilityCard({ ability, role, canEdit, onRemove, onDuplicate }: A
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(ability.name !== 'New Ability');
 
+    const targetTagMatch = (localEffect || '').match(/\[\s*Target\s*:\s*([^\]]+)\]/i);
+    const stanceLabel = targetTagMatch ? targetTagMatch[1].trim() : '';
+
     const [prevAbility, setPrevAbility] = useState(ability);
     if (prevAbility !== ability) {
         setPrevAbility(ability);
@@ -68,6 +71,22 @@ export function AbilityCard({ ability, role, canEdit, onRemove, onDuplicate }: A
                         />
                         GM Only
                     </label>
+                )}
+                {stanceLabel && (
+                    <span
+                        className="action-button action-button--theme"
+                        style={{
+                            padding: '2px 8px',
+                            fontSize: '0.72rem',
+                            borderRadius: '12px',
+                            cursor: 'default',
+                            pointerEvents: 'none',
+                            whiteSpace: 'nowrap'
+                        }}
+                        title={`Targeting Stance: ${stanceLabel}`}
+                    >
+                        Target: {stanceLabel}
+                    </span>
                 )}
                 {canEdit && (
                     <>

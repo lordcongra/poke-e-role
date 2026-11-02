@@ -15,7 +15,9 @@ import {
     Check,
     Trash2,
     AlertTriangle,
-    Search
+    Search,
+    Users,
+    GitFork
 } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { POKEMON_TYPES } from '../../../data/constants';
@@ -184,6 +186,9 @@ export function TagBuilderModal({
             }));
         } else {
             updateConfig('target', targetOpt);
+            if (config.category === 'choice' && targetOpt !== 'Custom Choice') {
+                updateConfig('typeOption', targetOpt);
+            }
         }
     };
 
@@ -217,6 +222,8 @@ export function TagBuilderModal({
         { id: 'mechanic', label: 'Mechanics', icon: <Wrench size={14} /> },
         { id: 'turn_based', label: 'Turn-Based', icon: <Clock size={14} /> },
         { id: 'status', label: 'Status', icon: <Sparkles size={14} /> },
+        { id: 'targeting', label: 'Targeting', icon: <Users size={14} /> },
+        { id: 'choice', label: 'Choice', icon: <GitFork size={14} /> },
         ...(isMove
             ? [
                   { id: 'move_mechanics', label: 'Move Modifiers', icon: <Flame size={14} /> },

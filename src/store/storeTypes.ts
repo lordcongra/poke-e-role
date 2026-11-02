@@ -440,6 +440,7 @@ export interface CharacterIdentity {
     abilityActive?: boolean;
     abilityBoostActive?: boolean;
     abilityBoostLevel?: number;
+    abilityChoiceIndex?: number;
     abilityTags?: string;
     abilityTargetIds?: string[];
     availableAbilities: string[];

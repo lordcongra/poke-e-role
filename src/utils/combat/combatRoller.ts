@@ -12,12 +12,14 @@ import {
     getRankBonusStats,
     calculateBaseAccuracy,
     calculateCriticalRequirement,
-    getWeatherDamageBonus
+    getWeatherDamageBonus,
+    calculateBaseInitiative
 } from './combatMath';
 import { parseCombatTags } from '../tagParser/index';
 import { rollDicePlus } from './diceRoller';
-import { isTargetAffectedByAbility } from './abilityTargetingUtils';
+import { isTargetAffectedByAbility, isAbilitySuppressedByField, matchesTarget } from './abilityTargetingUtils';
 import { resolveCharacterSide } from './combatantSideUtils';
+import { STATS_META_ID } from '../graphics/graphicsManager';
 
 function getStatStageModifier(statKey: string, state: CharacterState): { name: string; stage: number } | null {
     if (!statKey) return null;
@@ -648,6 +650,62 @@ export async function executeDamageRoll(
             if (!hasSelfSteely) {
                 actualDicePool += 1;
                 tags.push('Steely Spirit (+1 Damage)');
+            }
+        }
+
+        const cleanAbility = (state.identity.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+        if (cleanAbility === 'analytic' && state.identity.abilityActive !== false) {
+            const isSuppressed = isAbilitySuppressedByField(rollerSide, state.activeBattlefield || null, rollerId);
+            if (!isSuppressed) {
+                let attackerInit: number | null = null;
+                let targetInit: number | null = null;
+                const targetFoeId = state.identity.abilityTargetIds?.[0];
+
+                try {
+                    const rawBo = typeof window !== 'undefined' && window.localStorage ? localStorage.getItem('pkr_battle_organizer_data') : null;
+                    if (rawBo) {
+                        const bo = JSON.parse(rawBo);
+                        const activeRound = bo.rounds?.[bo.activeRoundIndex ?? 0] || bo.rounds?.[0];
+                        if (activeRound?.combatants) {
+                            const allC = activeRound.combatants;
+                            const attackerC = allC.find((c: any) => matchesTarget(c, rollerId));
+                            if (attackerC) {
+                                attackerInit = Number(attackerC.initiative) || attackerC.baseInit || 0;
+                            }
+                            if (targetFoeId) {
+                                const targetC = allC.find((c: any) => matchesTarget(c, targetFoeId));
+                                if (targetC) {
+                                    targetInit = Number(targetC.initiative) || targetC.baseInit || 0;
+                                }
+                            }
+                        }
+                    }
+                } catch {
+                    // Ignore storage errors
+                }
+
+                if (targetInit === null && targetFoeId && OBR.isAvailable) {
+                    try {
+                        const items = await OBR.scene.items.getItems([targetFoeId]);
+                        if (items.length > 0) {
+                            const stats = items[0].metadata[STATS_META_ID] as Record<string, unknown> | undefined;
+                            if (stats && stats['initiative'] !== undefined) {
+                                targetInit = Number(stats['initiative']) || 0;
+                            }
+                        }
+                    } catch {
+                        // ignore
+                    }
+                }
+
+                if (attackerInit === null) {
+                    attackerInit = calculateBaseInitiative(state);
+                }
+
+                if (targetInit !== null && attackerInit < targetInit) {
+                    actualDicePool += 1;
+                    tags.push('Analytic (+1 Damage)');
+                }
             }
         }
 

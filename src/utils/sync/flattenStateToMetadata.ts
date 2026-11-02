@@ -52,6 +52,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             flatMetadata['ability-active'] = id.abilityActive !== false;
             flatMetadata['ability-boost-active'] = Boolean(id.abilityBoostActive);
             flatMetadata['ability-boost-level'] = id.abilityBoostLevel ?? 0;
+            flatMetadata['ability-choice-index'] = id.abilityChoiceIndex ?? 0;
             if (id.abilityTags !== undefined && id.abilityTags !== '') flatMetadata['ability-tags'] = id.abilityTags;
             flatMetadata['ability-target-ids'] = id.abilityTargetIds?.join(',') || '';
             if (id.availableAbilities && id.availableAbilities.length > 0)

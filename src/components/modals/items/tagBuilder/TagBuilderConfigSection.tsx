@@ -184,6 +184,28 @@ export function TagBuilderConfigSection({
                 </div>
             )}
 
+            {/* Choice Controls */}
+            {category === 'choice' && (
+                <div className="tag-builder__row">
+                    <span className="tag-builder__row-label">Options:</span>
+                    <input
+                        type="text"
+                        className="identity-grid__select tag-builder__select text-label"
+                        style={{
+                            color: 'var(--text-main)',
+                            flex: 1,
+                            padding: '4px 8px',
+                            background: 'rgba(0, 0, 0, 0.25)',
+                            border: '1px solid var(--border-color, rgba(255, 255, 255, 0.15))',
+                            borderRadius: '4px'
+                        }}
+                        placeholder="Option A | Option B | Option C"
+                        value={typeOption || ''}
+                        onChange={(e) => onChangeConfig('typeOption', e.target.value)}
+                    />
+                </div>
+            )}
+
             {/* Battlefield Effect Controls */}
             {category === 'battlefield' && (
                 <>

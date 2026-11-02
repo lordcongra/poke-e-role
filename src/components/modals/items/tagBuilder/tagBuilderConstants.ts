@@ -160,6 +160,24 @@ export const getTargetOptions = (category: string, extraCategories: ExtraCategor
     if (category === 'battlefield') {
         return ['Force Field', 'Entry Hazard', 'Weather', 'Terrain', 'Battlefield (Other)'];
     }
+    if (category === 'targeting') {
+        return [
+            'All Foes',
+            'All Allies',
+            'Allies & Self',
+            'All on Field',
+            'Single Foe',
+            'Single Ally'
+        ];
+    }
+    if (category === 'choice') {
+        return [
+            'Custom Choice',
+            'Str +1 (Same Gender) | Str -1 (Opposite Gender)',
+            'Str +1 (Lower Def) | Spe +1 (Lower SpD)',
+            '1 Neutral Dmg | 2 Typeless Dmg'
+        ];
+    }
     return [];
 };
 
@@ -284,6 +302,12 @@ export const getDefaultTargetForCategory = (
     }
     if (catId === 'battlefield') {
         return { target: 'Force Field', reqGroup: 'none', typeOption: '' };
+    }
+    if (catId === 'targeting') {
+        return { target: 'All Foes', reqGroup: 'none', typeOption: '' };
+    }
+    if (catId === 'choice') {
+        return { target: 'Custom Choice', reqGroup: 'none', typeOption: 'Option A | Option B' };
     }
     return { target: '', reqGroup: 'none', typeOption: '' };
 };

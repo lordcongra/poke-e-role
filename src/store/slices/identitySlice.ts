@@ -100,6 +100,7 @@ const OBR_KEY_MAP: Record<string, string> = {
     abilityActive: 'ability-active',
     abilityBoostActive: 'ability-boost-active',
     abilityBoostLevel: 'ability-boost-level',
+    abilityChoiceIndex: 'ability-choice-index',
     abilityTags: 'ability-tags',
     abilityTargetIds: 'ability-target-ids',
     previousNativeAbility: 'previous-native-ability',
@@ -259,6 +260,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         abilityActive: true,
         abilityBoostActive: false,
         abilityBoostLevel: 0,
+        abilityChoiceIndex: 0,
         abilityTags: '',
         availableAbilities: [],
         previousNativeAbility: '',
@@ -711,8 +713,10 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 );
                 newIdentity.abilityBoostActive = false;
                 newIdentity.abilityBoostLevel = 0;
+                newIdentity.abilityChoiceIndex = 0;
                 updatesToSave['ability-boost-active'] = false;
                 updatesToSave['ability-boost-level'] = 0;
+                updatesToSave['ability-choice-index'] = 0;
                 if (known) {
                     newIdentity.abilityTags = known.tags;
                     newIdentity.abilityActive = known.autoActive ?? true;
@@ -850,6 +854,12 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 newIdentity.abilityBoostActive = lvl > 0;
                 updatesToSave['ability-boost-level'] = lvl;
                 updatesToSave['ability-boost-active'] = lvl > 0;
+            }
+
+            if (field === 'abilityChoiceIndex') {
+                const idx = Math.max(0, Number(value) || 0);
+                newIdentity.abilityChoiceIndex = idx;
+                updatesToSave['ability-choice-index'] = idx;
             }
 
             if (field === 'ruleset' || field === 'rank') {

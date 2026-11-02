@@ -11,7 +11,14 @@ import { STATS_META_ID } from '../graphics/graphicsManager';
 
 export { RANK_TARGET_LIMITS, getMaxTargetsForRank };
 
-export type AbilityTargetStance = 'allies-and-self' | 'allies-only' | 'foes' | 'none';
+export type AbilityTargetStance = 'allies-and-self' | 'allies-only' | 'foes' | 'all-except-self' | 'all-on-field' | 'none';
+
+export const RUIN_ABILITIES = new Set([
+    'tablets of ruin',
+    'sword of ruin',
+    'vessel of ruin',
+    'beads of ruin'
+]);
 
 /**
  * Checks if a combatant is currently deposited or recalled to the PC.
@@ -380,7 +387,31 @@ export async function syncCombatantSentToMap(entityId: string, pcData?: PcStorag
 /**
  * Returns the targeting stance for unified range-based abilities.
  */
-export function getAbilityTargetStance(ability: string): AbilityTargetStance {
+export function getAbilityTargetStance(ability: string, tags?: string): AbilityTargetStance {
+    if (tags) {
+        const lowerTags = tags.toLowerCase();
+        if (lowerTags.includes('[target: all foes]') || lowerTags.includes('[target: single foe]')) {
+            return 'foes';
+        }
+        if (lowerTags.includes('[target: all allies]') || lowerTags.includes('[target: single ally]')) {
+            return 'allies-only';
+        }
+        if (lowerTags.includes('[target: allies & self]') || lowerTags.includes('[target: allies and self]')) {
+            return 'allies-and-self';
+        }
+        if (lowerTags.includes('[target: all except self]')) {
+            return 'all-except-self';
+        }
+        if (lowerTags.includes('[target: all on field]') || lowerTags.includes('[target: field]')) {
+            return 'all-on-field';
+        }
+        if (/\[target:\s*(?:all\s+)?foes?\]/i.test(tags)) return 'foes';
+        if (/\[target:\s*(?:all\s+)?allies(?:-only)?\]/i.test(tags)) return 'allies-only';
+        if (/\[target:\s*allies\s*(?:&|and)\s*self\]/i.test(tags)) return 'allies-and-self';
+        if (/\[target:\s*all\s+(?:on\s+)?field\]/i.test(tags)) return 'all-on-field';
+        if (/\[target:\s*all\s+except\s+self\]/i.test(tags)) return 'all-except-self';
+    }
+
     if (!ability) return 'none';
     const clean = ability.replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
     switch (clean) {
@@ -395,14 +426,54 @@ export function getAbilityTargetStance(ability: string): AbilityTargetStance {
             return 'allies-and-self';
         case 'battery':
         case 'power spot':
+        case 'costar':
+        case 'hospitality':
+        case 'commander':
             return 'allies-only';
         case 'intimidate':
         case 'supersweet syrup':
         case 'neutralizing gas':
+        case 'frisk':
+        case 'analytic':
+        case 'unaware':
+        case 'stakeout':
             return 'foes';
+        case 'tablets of ruin':
+        case 'sword of ruin':
+        case 'vessel of ruin':
+        case 'beads of ruin':
+            return 'all-except-self';
+        case 'dark aura':
+        case 'fairy aura':
+        case 'aura break':
+            return 'all-on-field';
         default:
             return 'none';
     }
+}
+
+/**
+ * Calculates max target count for an ability based on its tags, canonical type, and rank.
+ */
+export function getAbilityMaxTargets(ability: string, tags?: string, rank?: string): number {
+    const cleanTags = (tags || '').toLowerCase();
+    if (cleanTags.includes('[target: single') || /\[target:\s*single\b/i.test(cleanTags)) {
+        return 1;
+    }
+    const cleanAbility = (ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+    const singleTargetAbilities = new Set([
+        'analytic',
+        'costar',
+        'hospitality',
+        'frisk',
+        'commander',
+        'unaware',
+        'stakeout'
+    ]);
+    if (singleTargetAbilities.has(cleanAbility)) {
+        return 1;
+    }
+    return getMaxTargetsForRank(rank);
 }
 
 /**
@@ -534,6 +605,84 @@ export function isTargetCombatantActiveNeutralizingGas(
 }
 
 /**
+ * Checks whether a target combatant is immune to Ruin abilities (has an active Ruin ability).
+ */
+export function isTargetCombatantImmuneToRuin(
+    targetId: string | string[],
+    allCombatants?: CombatantRowData[],
+    activeCharState?: CharacterState | null
+): boolean {
+    if (!targetId) return false;
+    const targetIds = Array.isArray(targetId) ? targetId.filter(Boolean) : [targetId];
+    if (targetIds.length === 0) return false;
+
+    let resolvedChar = activeCharState;
+    if (resolvedChar === undefined) {
+        try {
+            resolvedChar = useCharacterStore.getState();
+        } catch {
+            resolvedChar = null;
+        }
+    }
+
+    let combatants = allCombatants;
+    if (!combatants && typeof window !== 'undefined' && window.localStorage) {
+        try {
+            const raw = localStorage.getItem('pkr_battle_organizer_data');
+            if (raw) {
+                const bo = JSON.parse(raw) as BattleOrganizerState;
+                const activeRound = bo.rounds?.[bo.activeRoundIndex ?? 0] || bo.rounds?.[0];
+                combatants = activeRound?.combatants;
+            }
+        } catch {
+            // ignore
+        }
+    }
+
+    if (combatants && combatants.length > 0) {
+        const matched = combatants.find((c) => matchesTarget(c, targetIds));
+        if (matched) {
+            if (isCombatantInPc(matched, resolvedChar?.pcData) || matched.isFainted) {
+                return false;
+            }
+            let ability = matched.ability;
+            let active = matched.abilityActive !== false;
+            if (resolvedChar) {
+                const activeTokenId = resolvedChar.tokenId;
+                const activeEntityId = resolvedChar.identity?.entityId;
+                if (
+                    (activeTokenId && (matched.tokenId === activeTokenId || matched.id === activeTokenId)) ||
+                    (activeEntityId && (matched.entityId === activeEntityId || matched.id === activeEntityId))
+                ) {
+                    if (resolvedChar.identity?.ability) ability = resolvedChar.identity.ability;
+                    if (resolvedChar.identity?.abilityActive !== undefined) active = resolvedChar.identity.abilityActive;
+                }
+            }
+            const clean = (ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+            return RUIN_ABILITIES.has(clean) && active;
+        }
+    }
+
+    if (resolvedChar) {
+        const activeTokenId = resolvedChar.tokenId;
+        const activeEntityId = resolvedChar.identity?.entityId;
+        const activeName = resolvedChar.identity?.nickname || resolvedChar.identity?.species;
+        if (
+            matchesTarget(
+                { id: activeEntityId, tokenId: activeTokenId || undefined, entityId: activeEntityId, name: activeName },
+                targetIds
+            )
+        ) {
+            const clean = (resolvedChar.identity?.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+            const active = resolvedChar.identity?.abilityActive !== false;
+            return RUIN_ABILITIES.has(clean) && active;
+        }
+    }
+
+    return false;
+}
+
+/**
  * Core unified engine for range-based and aura abilities.
  * Determines if targetId on targetSide is affected by abilityName under rank limits and targeting stance.
  */
@@ -553,6 +702,11 @@ export function isTargetAffectedByAbility(
 
     // Neutralizing Gas self-immunity: Neutralizing Gas cannot negate another active Neutralizing Gas
     if (cleanAbility === 'neutralizing gas' && isTargetCombatantActiveNeutralizingGas(targetId)) {
+        return false;
+    }
+
+    // Ruin Quartet mutual immunity: A combatant with a Ruin ability is immune to all Ruin abilities
+    if (RUIN_ABILITIES.has(cleanAbility) && isTargetCombatantImmuneToRuin(targetId)) {
         return false;
     }
 
@@ -673,8 +827,10 @@ export function isTargetAffectedByAbility(
                         // Verify stance match
                         if (stance === 'foes') {
                             if (sourceSide === targetSide) continue;
-                        } else {
+                        } else if (stance === 'allies-only' || stance === 'allies-and-self') {
                             if (sourceSide !== targetSide) continue;
+                        } else if (stance === 'all-except-self' || stance === 'all-on-field') {
+                            // Both sides are eligible
                         }
 
                         // Check Neutralizing Gas suppression of source (unless source itself is Neutralizing Gas)
@@ -689,8 +845,8 @@ export function isTargetAffectedByAbility(
 
                         const isTargetSelf = matchesTarget(source, targetId);
 
-                        // If allies-only, source itself is never affected
-                        if (stance === 'allies-only' && isTargetSelf) {
+                        // If allies-only or all-except-self, source itself is never affected
+                        if ((stance === 'allies-only' || stance === 'all-except-self') && isTargetSelf) {
                             continue;
                         }
 

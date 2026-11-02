@@ -4,8 +4,8 @@ import type { CombatantRowData } from '../../../types/battleOrganizerTypes';
 import { PressureDrainModal } from '../combat/PressureDrainModal';
 import { CuriousMedicineModal } from '../combat/CuriousMedicineModal';
 import { AbilityTargetSelectorModal } from '../combat/AbilityTargetSelectorModal';
-import { getAbilityTargetStance } from '../../../utils/combat/abilityTargetingUtils';
-import { getMaxTargetsForRank } from '../combat/targetingModalUtils';
+import { getAbilityTargetStance, getAbilityMaxTargets } from '../../../utils/combat/abilityTargetingUtils';
+import { getKnownAbility } from '../../../data/abilities/knownAbilities';
 
 export interface CombatantRowToolsProps {
     combatant: CombatantRowData;
@@ -34,11 +34,12 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
     const [showMedicineModal, setShowMedicineModal] = useState(false);
     const [showTargetModal, setShowTargetModal] = useState(false);
 
+    const combatantTags = combatant.abilityTags || getKnownAbility(combatant.ability || '')?.tags || '';
     const hasPressure = Boolean(combatant.ability?.toLowerCase().includes('pressure'));
     const hasCuriousMedicine = Boolean(combatant.ability?.toLowerCase().includes('curious medicine'));
-    const hasTargetableAbility = Boolean(combatant.ability && getAbilityTargetStance(combatant.ability) !== 'none');
+    const hasTargetableAbility = Boolean(combatant.ability && getAbilityTargetStance(combatant.ability, combatantTags) !== 'none');
     const targetCount = combatant.abilityTargetIds?.length || 0;
-    const maxTargets = getMaxTargetsForRank(combatant.rank);
+    const maxTargets = getAbilityMaxTargets(combatant.ability || '', combatantTags, combatant.rank);
 
     return (
         <td className="bo-cell bo-cell--tools">
@@ -204,6 +205,7 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
                     abilityName={combatant.ability || ''}
                     sourceCombatant={combatant}
                     sourceRank={combatant.rank}
+                    sourceTags={combatantTags}
                     onSaveTargets={(targetIds) => {
                         onUpdate?.({ ...combatant, abilityTargetIds: targetIds });
                     }}

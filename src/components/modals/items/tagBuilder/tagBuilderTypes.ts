@@ -28,6 +28,8 @@ export type TagCategory =
     | 'mechanic'
     | 'turn_based'
     | 'status'
+    | 'targeting'
+    | 'choice'
     | 'move_mechanics'
     | 'battlefield';
 

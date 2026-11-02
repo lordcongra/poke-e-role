@@ -363,6 +363,7 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                     ...state.identity,
                     abilityBoostActive: false,
                     abilityBoostLevel: 0,
+                    abilityChoiceIndex: 0,
                     abilityTargetIds: []
                 },
                 ...(resetBuffs ? { stats: newStats, derived: newDerived } : {})

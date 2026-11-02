@@ -28,9 +28,10 @@ export function DerivedBoard() {
     const mode = useCharacterStore((state) => state.identity.mode);
     const ability = useCharacterStore((state) => state.identity.ability);
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
-    useCharacterStore((state) => state.identity.abilityActive);
-    useCharacterStore((state) => state.identity.abilityTags);
-    useCharacterStore((state) => state.identity.rank);
+    const abilityActive = useCharacterStore((state) => state.identity.abilityActive);
+    const abilityTags = useCharacterStore((state) => state.identity.abilityTags);
+    const abilityChoiceIndex = useCharacterStore((state) => state.identity.abilityChoiceIndex);
+    const rank = useCharacterStore((state) => state.identity.rank);
 
     const health = useCharacterStore((state) => state.health);
     const will = useCharacterStore((state) => state.will);
@@ -101,7 +102,20 @@ export function DerivedBoard() {
     const abilityText = getAbilityText(ability, customAbilities);
     const inventoryModifiers = useMemo(
         () => parseCombatTags(inventory, extraCategories, undefined, abilityText, passives),
-        [inventory, extraCategories, abilityText, passives, activeBattlefield]
+        [
+            inventory,
+            extraCategories,
+            abilityText,
+            passives,
+            activeBattlefield,
+            ability,
+            abilityActive,
+            abilityTags,
+            abilityChoiceIndex,
+            rank,
+            health.hpCurr,
+            health.hpMax
+        ]
     );
     const fullState = useCharacterStore.getState();
 

@@ -214,6 +214,10 @@ export function calculateStatTotal(
             state.identity.species
         ].filter(Boolean) as string[];
 
+        const isDondozo =
+            (state.identity.species || '').trim().toLowerCase() === 'dondozo' ||
+            (state.identity.nickname || '').trim().toLowerCase() === 'dondozo';
+
         if (normalizedStat === CombatStat.STR) {
             if (isTargetAffectedByAbility(targetId, effectiveSide, 'flower gift', state.activeBattlefield || null)) {
                 total += 2;
@@ -228,6 +232,29 @@ export function calculateStatTotal(
                     factorTags.push('Intimidate (-1 Strength)');
                 }
             }
+
+            if (isTargetAffectedByAbility(targetId, effectiveSide, 'tablets of ruin', state.activeBattlefield || null)) {
+                total -= 2;
+                if (factorTags) {
+                    factorTags.push('Tablets of Ruin (-2 Strength)');
+                }
+            }
+
+            if (isDondozo && isTargetAffectedByAbility(targetId, effectiveSide, 'commander', state.activeBattlefield || null)) {
+                total += 2;
+                if (factorTags) {
+                    factorTags.push('Commander (+2 Strength)');
+                }
+            }
+        }
+
+        if (normalizedStat === CombatStat.DEX) {
+            if (isDondozo && isTargetAffectedByAbility(targetId, effectiveSide, 'commander', state.activeBattlefield || null)) {
+                total += 2;
+                if (factorTags) {
+                    factorTags.push('Commander (+2 Dexterity)');
+                }
+            }
         }
 
         if (normalizedStat === CombatStat.SPE) {
@@ -235,6 +262,20 @@ export function calculateStatTotal(
                 total += 1;
                 if (factorTags) {
                     factorTags.push('Battery (+1 Special)');
+                }
+            }
+
+            if (isTargetAffectedByAbility(targetId, effectiveSide, 'vessel of ruin', state.activeBattlefield || null)) {
+                total -= 2;
+                if (factorTags) {
+                    factorTags.push('Vessel of Ruin (-2 Special)');
+                }
+            }
+
+            if (isDondozo && isTargetAffectedByAbility(targetId, effectiveSide, 'commander', state.activeBattlefield || null)) {
+                total += 2;
+                if (factorTags) {
+                    factorTags.push('Commander (+2 Special)');
                 }
             }
         }
@@ -657,9 +698,25 @@ export function calculateDefTotal(state: CharacterState, itemBuffs?: CombatBonus
         }
     }
 
+    const charSide = resolveCharacterSide(state);
+    const effectiveSide: 'player' | 'foe' = charSide !== 'none' ? charSide : state.identity.isNPC ? 'foe' : 'player';
+    const targetId = [state.identity.entityId, state.tokenId, state.identity.nickname, state.identity.species].filter(Boolean) as string[];
+
+    let ruinPenalty = 0;
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'sword of ruin', state.activeBattlefield || null)) {
+        ruinPenalty = 2;
+    }
+
+    let commanderBonus = 0;
+    const isDondozo = (state.identity.species || '').trim().toLowerCase() === 'dondozo' ||
+        (state.identity.nickname || '').trim().toLowerCase() === 'dondozo';
+    if (isDondozo && isTargetAffectedByAbility(targetId, effectiveSide, 'commander', state.activeBattlefield || null)) {
+        commanderBonus = 2;
+    }
+
     return Math.max(
         1,
-        vitTotal + state.derived.defBuff - state.derived.defDebuff + invMods.def + rankBonus + weatherBonus
+        vitTotal + state.derived.defBuff - state.derived.defDebuff + invMods.def + rankBonus + weatherBonus - ruinPenalty + commanderBonus
     );
 }
 
@@ -698,6 +755,22 @@ export function calculateSDefTotal(state: CharacterState, itemBuffs?: CombatBonu
         }
     }
 
+    const charSide = resolveCharacterSide(state);
+    const effectiveSide: 'player' | 'foe' = charSide !== 'none' ? charSide : state.identity.isNPC ? 'foe' : 'player';
+    const targetId = [state.identity.entityId, state.tokenId, state.identity.nickname, state.identity.species].filter(Boolean) as string[];
+    const isDondozo = (state.identity.species || '').trim().toLowerCase() === 'dondozo' ||
+        (state.identity.nickname || '').trim().toLowerCase() === 'dondozo';
+
+    let ruinSDefPenalty = 0;
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'beads of ruin', state.activeBattlefield || null)) {
+        ruinSDefPenalty = 2;
+    }
+
+    let commanderSDefBonus = 0;
+    if (isDondozo && isTargetAffectedByAbility(targetId, effectiveSide, 'commander', state.activeBattlefield || null)) {
+        commanderSDefBonus = 2;
+    }
+
     return Math.max(
         1,
         sdefBase +
@@ -706,7 +779,9 @@ export function calculateSDefTotal(state: CharacterState, itemBuffs?: CombatBonu
             invMods.spd +
             rankBonus +
             weatherBonus +
-            flowerGiftBonus
+            flowerGiftBonus -
+            ruinSDefPenalty +
+            commanderSDefBonus
     );
 }
 

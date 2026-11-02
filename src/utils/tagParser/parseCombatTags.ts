@@ -24,6 +24,24 @@ import { extractActiveEffectSummary } from './tagSummaries';
 import { isAbilitySuppressedByField } from '../combat/abilityTargetingUtils';
 import { resolveCharacterSide } from '../combat/combatantSideUtils';
 
+export function resolveChoiceTags(desc: string, choiceIndex: number = 0): string {
+    if (!desc || !desc.includes('Choice:')) return desc;
+    return desc.replace(/\[\s*Choice\s*:\s*([^\]]+)\]/gi, (fullMatch, optionsStr) => {
+        const options = optionsStr.split('|').map((s: string) => s.trim()).filter(Boolean);
+        if (options.length === 0) return fullMatch;
+        const activeIdx = ((choiceIndex % options.length) + options.length) % options.length;
+        const selected = options[activeIdx];
+        const statMatch = selected.match(/^([a-zA-Z]+(?:\s+[a-zA-Z]+)?)\s*([+-]\s*\d+)/);
+        if (statMatch) {
+            return `[${statMatch[1].trim()} ${statMatch[2].replace(/\s+/g, '')}]`;
+        }
+        if (selected.startsWith('[') && selected.endsWith(']')) {
+            return selected;
+        }
+        return `[${selected}]`;
+    });
+}
+
 export function parseCombatTags(
     inventory: InventoryItem[],
     extraCategories: ExtraCategory[],
@@ -333,6 +351,7 @@ export function parseCombatTags(
         }
 
         if (desc) {
+            desc = resolveChoiceTags(desc, state.identity.abilityChoiceIndex ?? 0);
             if (cleanAbility === 'Huge Power' || cleanAbility === 'Pure Power') {
                 const rank = (state.identity.rank || 'Starter').toLowerCase().trim();
                 const isHigh = rank === 'expert' || rank === 'ace' || rank === 'master' || rank === 'champion';
@@ -405,7 +424,8 @@ export function parseCombatTags(
     });
 
     itemsToParse.forEach((item) => {
-        const description = item.desc.toLowerCase();
+        const resolvedDesc = resolveChoiceTags(item.desc, item.kind === 'ability' ? (state.identity.abilityChoiceIndex ?? 0) : 0);
+        const description = resolvedDesc.toLowerCase();
         const name = item.name.trim();
         const boostLevel = item.boostLevel;
         const maxBoost = item.maxBoost;

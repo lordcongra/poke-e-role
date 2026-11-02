@@ -116,6 +116,7 @@ function createTestCharacterState(overrides: DeepPartial<CharacterState> = {}): 
             abilityActive: true,
             abilityBoostActive: false,
             abilityBoostLevel: 0,
+            abilityChoiceIndex: 0,
             abilityTags: '',
             availableAbilities: ['Static', 'Lightning Rod'],
             previousNativeAbility: '',
@@ -386,6 +387,7 @@ runTest('Explicitly serializes numeric 0 for offsets, buffs, and debuffs', () =>
     assert.equal(meta['spd-debuff'], 0, 'spd-debuff must serialize as 0');
     assert.equal(meta['happiness-curr'], 0, 'happiness-curr must serialize as 0');
     assert.equal(meta['loyalty-curr'], 0, 'loyalty-curr must serialize as 0');
+    assert.equal(meta['ability-choice-index'], 0, 'ability-choice-index must serialize as 0');
 });
 
 // -----------------------------------------------------------------------------
@@ -2441,9 +2443,10 @@ await runTest('itemStatChoice: custom PlayerChoice stat whitelist parsing and re
 });
 
 await runTest('abilityTargeting: serialization, hydration, stance resolution, and rank-capped target limits', async () => {
-    const { getAbilityTargetStance, isTargetAffectedByAbility } = await import(
+    const { getAbilityTargetStance, getAbilityMaxTargets, isTargetAffectedByAbility } = await import(
         '../src/utils/combat/abilityTargetingUtils'
     );
+    const { resolveChoiceTags } = await import('../src/utils/tagParser/parseCombatTags');
 
     // 1. Stance resolution for all unified abilities
     assert.equal(getAbilityTargetStance('Flower Gift'), 'allies-and-self');
@@ -2457,12 +2460,68 @@ await runTest('abilityTargeting: serialization, hydration, stance resolution, an
 
     assert.equal(getAbilityTargetStance('Battery'), 'allies-only');
     assert.equal(getAbilityTargetStance('Power Spot'), 'allies-only');
+    assert.equal(getAbilityTargetStance('Commander'), 'allies-only');
+    assert.equal(getAbilityTargetStance('Costar'), 'allies-only');
+    assert.equal(getAbilityTargetStance('Hospitality'), 'allies-only');
 
     assert.equal(getAbilityTargetStance('Intimidate'), 'foes');
     assert.equal(getAbilityTargetStance('Supersweet Syrup'), 'foes');
     assert.equal(getAbilityTargetStance('Neutralizing Gas'), 'foes');
+    assert.equal(getAbilityTargetStance('Frisk'), 'foes');
+    assert.equal(getAbilityTargetStance('Analytic'), 'foes');
+    assert.equal(getAbilityTargetStance('Unaware'), 'foes');
+    assert.equal(getAbilityTargetStance('Stakeout'), 'foes');
+
+    assert.equal(getAbilityTargetStance('Tablets of Ruin'), 'all-except-self');
+    assert.equal(getAbilityTargetStance('Sword of Ruin'), 'all-except-self');
+    assert.equal(getAbilityTargetStance('Vessel of Ruin'), 'all-except-self');
+    assert.equal(getAbilityTargetStance('Beads of Ruin'), 'all-except-self');
+
+    assert.equal(getAbilityTargetStance('Dark Aura'), 'all-on-field');
+    assert.equal(getAbilityTargetStance('Fairy Aura'), 'all-on-field');
+    assert.equal(getAbilityTargetStance('Aura Break'), 'all-on-field');
+
+    // Tag overrides
+    assert.equal(getAbilityTargetStance('Custom', '[Target: All Foes]'), 'foes');
+    assert.equal(getAbilityTargetStance('Custom', '[Target: Single Ally]'), 'allies-only');
+    assert.equal(getAbilityTargetStance('Custom', '[Target: Allies & Self]'), 'allies-and-self');
+    assert.equal(getAbilityTargetStance('Custom', '[Target: All on Field]'), 'all-on-field');
+    assert.equal(getAbilityTargetStance('Custom', '[Target: All Except Self]'), 'all-except-self');
 
     assert.equal(getAbilityTargetStance('Blaze'), 'none');
+
+    // Max target limits
+    assert.equal(getAbilityMaxTargets('Commander'), 1);
+    assert.equal(getAbilityMaxTargets('Analytic'), 1);
+    assert.equal(getAbilityMaxTargets('Costar'), 1);
+    assert.equal(getAbilityMaxTargets('Custom', '[Target: Single Foe]'), 1);
+    assert.equal(getAbilityMaxTargets('Flower Gift', undefined, 'Standard'), 3);
+
+    // Choice tags resolution
+    assert.equal(
+        resolveChoiceTags('[Choice: Str +1 (Same Gender) | Str -1 (Opposite Gender)]', 0),
+        '[Str +1]'
+    );
+    assert.equal(
+        resolveChoiceTags('[Choice: Str +1 (Same Gender) | Str -1 (Opposite Gender)]', 1),
+        '[Str -1]'
+    );
+    assert.equal(
+        resolveChoiceTags('[Choice: Str +1 (Lower Def) | Spe +1 (Lower SpD)]', 0),
+        '[Str +1]'
+    );
+    assert.equal(
+        resolveChoiceTags('[Choice: Str +1 (Lower Def) | Spe +1 (Lower SpD)]', 1),
+        '[Spe +1]'
+    );
+    assert.equal(
+        resolveChoiceTags('[Choice: 1 Neutral Dmg | 2 Typeless Dmg]', 0),
+        '[1 Neutral Dmg]'
+    );
+    assert.equal(
+        resolveChoiceTags('[Choice: 1 Neutral Dmg | 2 Typeless Dmg]', 1),
+        '[2 Typeless Dmg]'
+    );
 
     // 2. Serialization & Hydration of abilityTargetIds
     const testState = createTestCharacterState();
@@ -3042,6 +3101,177 @@ await runTest('abilityTargeting: syncCombatantSentToPc prunes targets, sets isIn
     assert.equal(vulpixAfterMap.isInPc, false, 'Vulpix isInPc reset to false after sent to map');
     assert.deepEqual(ninetalesAfterMap.abilityTargetIds, ['c-other'], 'Targeting is NOT resurrected on Ninetales');
     assert.deepEqual(otherAfterMap.abilityTargetIds, [], 'Targeting is NOT resurrected on Oddish');
+});
+
+await runTest('abilityTargeting: Commander Dondozo buffs and Ruin mutual immunity', async () => {
+    const { calculateStatTotal, calculateDefTotal, calculateSDefTotal } = await import(
+        '../src/utils/combat/combatMath'
+    );
+    const { isTargetAffectedByAbility, RUIN_ABILITIES } = await import(
+        '../src/utils/combat/abilityTargetingUtils'
+    );
+    const { CombatStat } = await import('../src/types/enums');
+
+    // 1. Setup BO with Tatsugiri (Commander targeting Dondozo) and Wo-Chien (Tablets of Ruin targeting all)
+    const boData = {
+        battlefield: {
+            playerSide: { forceFields: [], extraForceFields: [] },
+            foeSide: { forceFields: [], extraForceFields: [] }
+        },
+        rounds: [
+            {
+                id: 'r1',
+                roundNumber: 1,
+                combatants: [
+                    {
+                        id: 'tatsugiri-1',
+                        name: 'Tatsugiri',
+                        ability: 'Commander',
+                        abilityActive: true,
+                        abilityTargetIds: ['dondozo-1'],
+                        isPlayerSide: true,
+                        isNPC: false
+                    },
+                    {
+                        id: 'dondozo-1',
+                        name: 'Dondozo',
+                        species: 'Dondozo',
+                        ability: 'Unaware',
+                        abilityActive: true,
+                        isPlayerSide: true,
+                        isNPC: false
+                    },
+                    {
+                        id: 'wo-chien-1',
+                        name: 'Wo-Chien',
+                        ability: 'Tablets of Ruin',
+                        abilityActive: true,
+                        abilityTargetIds: ['dondozo-1', 'chien-pao-1'],
+                        isPlayerSide: false,
+                        isNPC: true
+                    },
+                    {
+                        id: 'chien-pao-1',
+                        name: 'Chien-Pao',
+                        ability: 'Sword of Ruin',
+                        abilityActive: true,
+                        isPlayerSide: false,
+                        isNPC: true
+                    }
+                ]
+            }
+        ],
+        activeRoundIndex: 0
+    };
+    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+
+    // Commander targets Dondozo
+    assert.equal(
+        isTargetAffectedByAbility('dondozo-1', 'player', 'commander'),
+        true,
+        'Dondozo is affected by allied Commander'
+    );
+
+    // Mutual Ruin immunity: Chien-Pao has Sword of Ruin, so immune to Tablets of Ruin
+    assert.equal(
+        isTargetAffectedByAbility('chien-pao-1', 'foe', 'tablets of ruin'),
+        false,
+        'Chien-Pao (with Sword of Ruin) is immune to Tablets of Ruin'
+    );
+    // Dondozo does not have a Ruin ability, so is affected by Tablets of Ruin
+    assert.equal(
+        isTargetAffectedByAbility('dondozo-1', 'player', 'tablets of ruin'),
+        true,
+        'Dondozo (no Ruin ability) is affected by Tablets of Ruin'
+    );
+
+    // Verify Dondozo calculations: +2 Str from Commander, -2 Str from Tablets of Ruin
+    const dondozoState = createTestCharacterState({
+        identity: {
+            entityId: 'dondozo-1',
+            species: 'Dondozo',
+            nickname: 'Dondozo',
+            isNPC: false,
+            rank: 'Standard'
+        },
+        stats: {
+            str: { base: 4, rank: 0, buff: 0, debuff: 0 },
+            dex: { base: 2, rank: 0, buff: 0, debuff: 0 },
+            vit: { base: 5, rank: 0, buff: 0, debuff: 0 },
+            spe: { base: 3, rank: 0, buff: 0, debuff: 0 },
+            ins: { base: 3, rank: 0, buff: 0, debuff: 0 }
+        }
+    });
+
+    const dummyInvMods = {
+        stats: {},
+        skills: {},
+        def: 0,
+        spd: 0,
+        hp: 0,
+        will: 0,
+        init: 0,
+        dmg: 0,
+        acc: 0,
+        accSucc: 0,
+        dmgSucc: 0,
+        chance: 0,
+        seDmg: 0,
+        critDmg: 0,
+        firstHitDmg: 0,
+        firstHitAcc: 0,
+        gainTempHp: 0,
+        tempHpOnHit: 0,
+        tempHpDmgRatio: '',
+        highCritStacks: 0,
+        stackingHighCritStacks: 0,
+        ignoreLowAcc: 0,
+        addLowAcc: 0,
+        ignorePain: false,
+        roundHeal: 0,
+        roundDamage: 0,
+        roundWillRestore: 0,
+        roundWillDamage: 0,
+        loseAction: 0,
+        noReactions: false,
+        extraReactions: 0,
+        accFaceAddsDmg: 0,
+        accFaceAddsDmgLimit: 0,
+        itemNames: [],
+        accItemNames: [],
+        dmgItemNames: [],
+        accSuccItemNames: [],
+        dmgSuccItemNames: [],
+        passiveNames: [],
+        accPassiveNames: [],
+        dmgPassiveNames: [],
+        accSuccPassiveNames: [],
+        dmgSuccPassiveNames: [],
+        abilityNames: [],
+        accAbilityNames: [],
+        dmgAbilityNames: [],
+        accSuccAbilityNames: [],
+        dmgSuccAbilityNames: [],
+        highCritItemNames: [],
+        highCritPassiveNames: [],
+        highCritAbilityNames: []
+    };
+
+    // Str: 4 + 2 (Commander) - 2 (Tablets of Ruin) = 4
+    assert.equal(calculateStatTotal(CombatStat.STR, dondozoState, dummyInvMods), 4);
+    // Dex: 2 + 2 (Commander) = 4
+    assert.equal(calculateStatTotal(CombatStat.DEX, dondozoState, dummyInvMods), 4);
+    // Spe: 3 + 2 (Commander) = 5
+    assert.equal(calculateStatTotal(CombatStat.SPE, dondozoState, dummyInvMods), 5);
+    // Vit: 5 + 0 = 5 (Commander DOES NOT touch Vitality)
+    assert.equal(calculateStatTotal(CombatStat.VIT, dondozoState, dummyInvMods), 5);
+    // Ins: 3 + 0 = 3 (Commander DOES NOT touch Insight)
+    assert.equal(calculateStatTotal(CombatStat.INS, dondozoState, dummyInvMods), 3);
+
+    // Def: vit (5) + commander (2) = 7
+    assert.equal(calculateDefTotal(dondozoState, dummyInvMods), 7);
+    // SpD: ins (3) + commander (2) = 5
+    assert.equal(calculateSDefTotal(dondozoState, dummyInvMods), 5);
 });
 
 console.log('\n=============================================');

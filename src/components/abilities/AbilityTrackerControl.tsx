@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Zap, Sliders, RotateCcw, Users } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { getAbilityBenefitSummary, getMaxBoost } from '../../data/abilities/knownAbilities';
-import { getAbilityTargetStance } from '../../utils/combat/abilityTargetingUtils';
-import { getMaxTargetsForRank } from '../modals/combat/targetingModalUtils';
+import { getAbilityBenefitSummary, getMaxBoost, getKnownAbility } from '../../data/abilities/knownAbilities';
+import { getAbilityTargetStance, getAbilityMaxTargets } from '../../utils/combat/abilityTargetingUtils';
 import { AbilityMenuModal } from './AbilityMenuModal';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import { PressureDrainModal } from '../modals/combat/PressureDrainModal';
@@ -21,6 +20,7 @@ export function AbilityTrackerControl() {
         (state) => state.identity.abilityBoostLevel ?? (state.identity.abilityBoostActive ? 1 : 0)
     );
     const abilityTags = useCharacterStore((state) => state.identity.abilityTags || '');
+    const abilityChoiceIndex = useCharacterStore((state) => state.identity.abilityChoiceIndex ?? 0);
     const abilityTargetIds = useCharacterStore((state) => state.identity.abilityTargetIds) ?? EMPTY_TARGET_IDS;
     const rank = useCharacterStore((state) => state.identity.rank);
     const hpCurr = useCharacterStore((state) => state.health.hpCurr);
@@ -39,9 +39,24 @@ export function AbilityTrackerControl() {
     const cleanAbility = (ability || '').toLowerCase().trim();
     const isPressure = cleanAbility === 'pressure';
     const isCuriousMedicine = cleanAbility === 'curious medicine';
-    const stance = getAbilityTargetStance(ability);
+    const resolvedTags = abilityTags || getKnownAbility(ability)?.tags || '';
+    const stance = getAbilityTargetStance(ability, resolvedTags);
     const hasTargetStance = stance !== 'none';
-    const maxTargets = getMaxTargetsForRank(rank);
+    const maxTargets = getAbilityMaxTargets(ability, resolvedTags, rank);
+
+    const choiceMatch = resolvedTags.match(/\[\s*Choice\s*:\s*([^\]]+)\]/i);
+    const choiceOptions = choiceMatch ? choiceMatch[1].split('|').map((s) => s.trim()).filter(Boolean) : [];
+    const hasChoice = choiceOptions.length > 0;
+    const activeChoiceIndex = hasChoice
+        ? ((abilityChoiceIndex % choiceOptions.length) + choiceOptions.length) % choiceOptions.length
+        : 0;
+    const activeChoice = hasChoice ? choiceOptions[activeChoiceIndex] : '';
+
+    const handleCycleChoice = () => {
+        if (!hasChoice) return;
+        const next = (activeChoiceIndex + 1) % choiceOptions.length;
+        setIdentity('abilityChoiceIndex', next);
+    };
 
     const isHalfHp = (hpCurr || 0) <= Math.floor(Math.max(1, hpMax || 1) / 2);
     const maxBoost = getMaxBoost(ability, abilityTags);
@@ -49,7 +64,7 @@ export function AbilityTrackerControl() {
     const effectiveBoostLevel = abilityBoostActive ? Math.max(1, abilityBoostLevel) : 0;
     const benefit = getAbilityBenefitSummary(
         ability,
-        abilityTags,
+        resolvedTags,
         rank,
         isHalfHp,
         abilityBoostActive,
@@ -149,7 +164,19 @@ export function AbilityTrackerControl() {
                             </button>
                         ))}
 
-                    {abilityActive && benefit && !hasBoostTag && (
+                    {abilityActive && hasChoice && (
+                        <button
+                            type="button"
+                            onClick={handleCycleChoice}
+                            className="action-button action-button--theme ability-tracker__choice-badge"
+                            style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '3px' }}
+                            title={`Active Choice: ${activeChoice} (Click to cycle)`}
+                        >
+                            {activeChoice}
+                        </button>
+                    )}
+
+                    {abilityActive && benefit && !hasBoostTag && !hasChoice && (
                         <span className="ability-tracker__benefit" title={benefit}>
                             {benefit}
                         </span>
@@ -223,6 +250,7 @@ export function AbilityTrackerControl() {
                     onClose={() => setIsTargetModalOpen(false)}
                     abilityName={ability}
                     sourceRank={rank}
+                    sourceTags={resolvedTags}
                 />
             )}
 

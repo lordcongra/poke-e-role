@@ -2,8 +2,14 @@ import React, { useState, useMemo, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { Users, AlertTriangle, Check, RotateCcw, XCircle, Archive } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { getMaxTargetsForRank } from './targetingModalUtils';
-import { getAbilityTargetStance, matchesTarget, isCombatantInPc, isTargetCombatantActiveNeutralizingGas } from '../../../utils/combat/abilityTargetingUtils';
+import {
+    getAbilityTargetStance,
+    getAbilityMaxTargets,
+    matchesTarget,
+    isCombatantInPc,
+    isTargetCombatantActiveNeutralizingGas,
+    RUIN_ABILITIES
+} from '../../../utils/combat/abilityTargetingUtils';
 import { resolveCharacterSide } from '../../../utils/combat/combatantSideUtils';
 import { STATS_META_ID } from '../../../utils/graphics/graphicsManager';
 import type { CombatantRowData, BattleOrganizerState } from '../../../types/battleOrganizerTypes';
@@ -16,6 +22,7 @@ export interface AbilityTargetSelectorModalProps {
     abilityName: string;
     sourceCombatant?: CombatantRowData;
     sourceRank?: string;
+    sourceTags?: string;
     onSaveTargets?: (targetIds: string[]) => void;
 }
 
@@ -25,6 +32,7 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
     abilityName,
     sourceCombatant,
     sourceRank: propSourceRank,
+    sourceTags: propSourceTags,
     onSaveTargets
 }) => {
     const pcData = useCharacterStore((s) => s.pcData);
@@ -50,10 +58,14 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
         return !charIdentity.isNPC;
     }, [sourceCombatant, charIdentity, charTokenId]);
 
-    const stance = useMemo(() => getAbilityTargetStance(abilityName), [abilityName]);
-    const maxTargets = useMemo(() => getMaxTargetsForRank(sourceRank), [sourceRank]);
+    const resolvedTags = propSourceTags || sourceCombatant?.abilityTags || charIdentity.abilityTags || '';
+    const stance = useMemo(() => getAbilityTargetStance(abilityName, resolvedTags), [abilityName, resolvedTags]);
+    const maxTargets = useMemo(() => getAbilityMaxTargets(abilityName, resolvedTags, sourceRank), [abilityName, resolvedTags, sourceRank]);
     const isNeutralizingGas = useMemo(() => {
         return abilityName.replace(/\s*\(HA\)$/i, '').trim().toLowerCase() === 'neutralizing gas';
+    }, [abilityName]);
+    const isRuinAbility = useMemo(() => {
+        return RUIN_ABILITIES.has(abilityName.replace(/\s*\(HA\)$/i, '').trim().toLowerCase());
     }, [abilityName]);
 
     // Load matching round combatants from Battle Organizer storage
@@ -82,6 +94,13 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
                 if (stance === 'allies-and-self') {
                     return candidateIsPlayer === sourceIsPlayer;
                 }
+                if (stance === 'all-except-self') {
+                    const isSelf = matchesTarget(c, sourceId) || (sourceTokenId && matchesTarget(c, sourceTokenId));
+                    return !isSelf;
+                }
+                if (stance === 'all-on-field') {
+                    return true;
+                }
                 return false;
             });
         } catch (e) {
@@ -91,9 +110,15 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
     }, [isOpen, sourceIsPlayer, stance, sourceId, sourceTokenId]);
 
     const isCandidateImmune = (candidate: CombatantRowData): boolean => {
-        if (!isNeutralizingGas) return false;
-        const candId = candidate.tokenId || candidate.entityId || candidate.id || candidate.name;
-        return isTargetCombatantActiveNeutralizingGas(candId, candidates);
+        if (isNeutralizingGas) {
+            const candId = candidate.tokenId || candidate.entityId || candidate.id || candidate.name;
+            return isTargetCombatantActiveNeutralizingGas(candId, candidates);
+        }
+        if (isRuinAbility) {
+            const candAb = (candidate.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+            return RUIN_ABILITIES.has(candAb);
+        }
+        return false;
     };
 
     const rawTargetIds = sourceCombatant

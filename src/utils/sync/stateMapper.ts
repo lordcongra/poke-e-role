@@ -602,6 +602,7 @@ function parseIdentity(
     const loadedBoostActive = meta['ability-boost-active'] === true || meta['ability-boost-active'] === 'true';
     const rawBoostLevel = meta['ability-boost-level'];
     const loadedBoostLevel = rawBoostLevel !== undefined ? Number(rawBoostLevel) : loadedBoostActive ? 1 : 0;
+    const loadedChoiceIndex = Number(meta['ability-choice-index']) || 0;
 
     return {
         ...state.identity,
@@ -629,6 +630,7 @@ function parseIdentity(
                 : meta['ability-active'] === true || meta['ability-active'] === 'true',
         abilityBoostActive: loadedBoostActive,
         abilityBoostLevel: loadedBoostLevel,
+        abilityChoiceIndex: loadedChoiceIndex,
         abilityTags: loadedTags,
         abilityTargetIds: (() => {
             if (meta['ability-target-ids'] === undefined || meta['ability-target-ids'] === null) {

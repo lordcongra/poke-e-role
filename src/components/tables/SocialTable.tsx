@@ -28,10 +28,11 @@ export function SocialTable() {
     const extraCategories = useCharacterStore((state) => state.extraCategories);
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const ability = useCharacterStore((state) => state.identity.ability);
-    useCharacterStore((state) => state.identity.abilityActive);
-    useCharacterStore((state) => state.identity.abilityTags);
-    useCharacterStore((state) => state.health.hpCurr);
-    useCharacterStore((state) => state.health.hpMax);
+    const abilityActive = useCharacterStore((state) => state.identity.abilityActive);
+    const abilityTags = useCharacterStore((state) => state.identity.abilityTags);
+    const abilityChoiceIndex = useCharacterStore((state) => state.identity.abilityChoiceIndex);
+    const hpCurr = useCharacterStore((state) => state.health.hpCurr);
+    const hpMax = useCharacterStore((state) => state.health.hpMax);
     const activeBattlefield = useCharacterStore((state) => state.activeBattlefield);
 
     const isLocked = useCharacterStore((state) => state.identity.socialLocked ?? true);
@@ -48,7 +49,19 @@ export function SocialTable() {
     const abilityText = getAbilityText(ability, customAbilities);
     const inventoryModifiers = useMemo(
         () => parseCombatTags(inventory, extraCategories, undefined, abilityText, passives),
-        [inventory, extraCategories, abilityText, passives, activeBattlefield]
+        [
+            inventory,
+            extraCategories,
+            abilityText,
+            passives,
+            activeBattlefield,
+            ability,
+            abilityActive,
+            abilityTags,
+            abilityChoiceIndex,
+            hpCurr,
+            hpMax
+        ]
     );
     const fullState = useCharacterStore.getState();
 

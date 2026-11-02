@@ -103,6 +103,14 @@ export function buildTagString(config: TagBuilderConfig): string {
         } else {
             tag = `[Battlefield: ${name}${durStr}]`;
         }
+    } else if (category === 'targeting') {
+        if (!target) return '';
+        tag = `[Target: ${target}]`;
+    } else if (category === 'choice') {
+        const choiceText = target === 'Custom Choice' ? (typeOption || '') : (target || typeOption || '');
+        if (choiceText.trim()) {
+            tag = `[Choice: ${choiceText.trim()}]`;
+        }
     }
 
     if (tag && condition && condition !== 'none') {
@@ -228,6 +236,11 @@ export function generateExplanation(config: TagBuilderConfig, builtTag: string):
         } else {
             base = `Activates battlefield effect "${name}" ${durText}`;
         }
+    } else if (category === 'targeting') {
+        base = `Targets ${target} within range`;
+    } else if (category === 'choice') {
+        const choiceText = target === 'Custom Choice' ? (typeOption || '') : (target || typeOption || '');
+        base = `Allows selecting between: ${choiceText}`;
     }
 
     if (!base) base = `Applies ${builtTag}`;
@@ -306,6 +319,34 @@ export function parseTagStringToConfig(tagStr: string, isMoveContext = false): P
         } else {
             condition = lowerCond;
         }
+    }
+
+    // Choice Tag: [Choice: A | B | C]
+    const choiceMatch = clean.match(/^choice:\s*(.+)$/i);
+    if (choiceMatch) {
+        const rawOptions = choiceMatch[1].trim();
+        return {
+            category: 'choice',
+            target: 'Custom Choice',
+            typeOption: rawOptions,
+            value: 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Targeting Tag: [Target: All Foes], [Target: Single Ally], etc.
+    const targetMatch = clean.match(/^target:\s*(.+)$/i);
+    if (targetMatch) {
+        const rawTarget = targetMatch[1].trim();
+        return {
+            category: 'targeting',
+            target: rawTarget,
+            typeOption: '',
+            value: 1,
+            condition,
+            customMaxStacks
+        };
     }
 
     // Battlefield: Force Field

@@ -37,6 +37,118 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
         summary: 'While Sunny Weather is active, increases Strength and Sp. Defense by 2 for the user and allies in range.',
         benefitDisplay: '+2 STR & +2 Sp.Def (Sun)'
     },
+    Rivalry: {
+        name: 'Rivalry',
+        tags: '[Choice: Str +1 (Same Gender) | Str -1 (Opposite Gender)]',
+        autoActive: true,
+        summary: 'Increases Strength if the opponent is of the same gender, but decreases Strength if the opponent is of the opposite gender.',
+        benefitDisplay: 'Rivalry (Choice)'
+    },
+    Download: {
+        name: 'Download',
+        tags: '[Choice: Str +1 (Lower Def) | Spe +1 (Lower SpD)]',
+        autoActive: true,
+        summary: 'Raises Strength if target has lower Defense than Sp. Defense, or Special if target has lower Sp. Defense.',
+        benefitDisplay: 'Download (Choice)'
+    },
+    'Iron Barbs': {
+        name: 'Iron Barbs',
+        tags: '[Choice: 1 Neutral Dmg | 2 Typeless Dmg]',
+        autoActive: true,
+        summary: 'Inflicts damage to the attacker on contact.',
+        benefitDisplay: 'Iron Barbs (Choice)'
+    },
+    'Rough Skin': {
+        name: 'Rough Skin',
+        tags: '[Choice: 1 Neutral Dmg | 2 Typeless Dmg]',
+        autoActive: true,
+        summary: 'Inflicts damage to the attacker on contact.',
+        benefitDisplay: 'Rough Skin (Choice)'
+    },
+    Stakeout: {
+        name: 'Stakeout',
+        tags: '[First Hit Dmg +1]',
+        autoActive: true,
+        summary: 'Deals doubled damage to a target that has just switched into battle.',
+        benefitDisplay: '+1 First Hit Dmg'
+    },
+    Commander: {
+        name: 'Commander',
+        tags: '[Target: Single Ally]',
+        autoActive: true,
+        summary: 'When entering battle alongside an allied Dondozo, commands from inside its mouth. Increases Dondozo\'s Strength, Dexterity, Special, Defense, and Sp. Defense by +2.',
+        benefitDisplay: '+2 Combat Stats to Dondozo'
+    },
+    Costar: {
+        name: 'Costar',
+        tags: '[Target: Single Ally]',
+        autoActive: true,
+        summary: 'When entering battle, copies an ally\'s stat changes.',
+        benefitDisplay: 'Costar (Copy Ally)'
+    },
+    Hospitality: {
+        name: 'Hospitality',
+        tags: '[Target: Single Ally]',
+        autoActive: true,
+        summary: 'When entering battle, restores a small portion of the targeted ally\'s HP.',
+        benefitDisplay: 'Hospitality (Restore Ally)'
+    },
+    Frisk: {
+        name: 'Frisk',
+        tags: '[Target: Single Foe]',
+        autoActive: true,
+        summary: 'Checks the opposing combatant\'s held item upon entering battle.',
+        benefitDisplay: 'Frisk (Identify Item)'
+    },
+    Analytic: {
+        name: 'Analytic',
+        tags: '[Target: Single Foe]',
+        autoActive: true,
+        summary: 'Boosts damage by 1 die if the user attacks after the target has already acted in the round.',
+        benefitDisplay: '+1 Dmg Die if Moving Slower'
+    },
+    Unaware: {
+        name: 'Unaware',
+        tags: '[Target: Single Foe]',
+        autoActive: true,
+        summary: 'Ignores the opponent\'s stat buffs when taking damage or attacking.',
+        benefitDisplay: 'Unaware (Ignore Buffs)'
+    },
+    'Tablets of Ruin': {
+        name: 'Tablets of Ruin',
+        tags: '[Target: All on Field]',
+        autoActive: true,
+        summary: 'Reduces the Strength of everyone on the field by 2, except this Pokémon. Immune to all Ruin abilities.',
+        benefitDisplay: '-2 Field Str (Ruin)'
+    },
+    'Sword of Ruin': {
+        name: 'Sword of Ruin',
+        tags: '[Target: All on Field]',
+        autoActive: true,
+        summary: 'Reduces the Defense of everyone on the field by 2, except this Pokémon. Immune to all Ruin abilities.',
+        benefitDisplay: '-2 Field Def (Ruin)'
+    },
+    'Vessel of Ruin': {
+        name: 'Vessel of Ruin',
+        tags: '[Target: All on Field]',
+        autoActive: true,
+        summary: 'Reduces the Special of everyone on the field by 2, except this Pokémon. Immune to all Ruin abilities.',
+        benefitDisplay: '-2 Field Spe (Ruin)'
+    },
+    'Beads of Ruin': {
+        name: 'Beads of Ruin',
+        tags: '[Target: All on Field]',
+        autoActive: true,
+        summary: 'Reduces the Sp. Defense of everyone on the field by 2, except this Pokémon. Immune to all Ruin abilities.',
+        benefitDisplay: '-2 Field SpD (Ruin)'
+    },
+    'Aura Break': {
+        name: 'Aura Break',
+        tags: '[Target: All on Field]',
+        autoActive: true,
+        summary: 'Reverses the effects of Dark Aura and Fairy Aura, lowering their power instead.',
+        benefitDisplay: 'Aura Break (Field)'
+    },
 
     // --- Passives: Roll Modifiers & Criticals ---
     'Compound Eyes': {
@@ -229,17 +341,17 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     'Dark Aura': {
         name: 'Dark Aura',
-        tags: '[Dmg +2: Dark]',
+        tags: '[Dmg +2: Dark] [Target: All on Field]',
         autoActive: true,
         summary: 'Increases damage of Dark-type moves by 2 dice for all on field.',
-        benefitDisplay: '+2 Dark Dmg'
+        benefitDisplay: '+2 Dark Dmg (Field)'
     },
     'Fairy Aura': {
         name: 'Fairy Aura',
-        tags: '[Dmg +2: Fairy]',
+        tags: '[Dmg +2: Fairy] [Target: All on Field]',
         autoActive: true,
         summary: 'Increases damage of Fairy-type moves by 2 dice for all on field.',
-        benefitDisplay: '+2 Fairy Dmg'
+        benefitDisplay: '+2 Fairy Dmg (Field)'
     },
     Aerilate: {
         name: 'Aerilate',
