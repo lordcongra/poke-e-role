@@ -3,7 +3,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CharacterState } from '../../store/storeTypes';
 import type { BattleOrganizerState } from '../../types/battleOrganizerTypes';
 import { STATS_META_ID } from '../../utils/graphics/graphicsManager';
-import { matchesTarget } from '../../utils/combat/abilityTargetingUtils';
+import { matchesTarget, isCombatantInPc } from '../../utils/combat/abilityTargetingUtils';
 
 /**
  * Removes the current character from an attacker's `abilityTargetIds` in Battle Organizer
@@ -127,7 +127,9 @@ export async function refreshAndCleanAuraAssociations(
                         const originalLength = c.abilityTargetIds.length;
                         const validTargets = c.abilityTargetIds.filter((tId) => {
                             if (!tId) return false;
-                            return allCombatants.some((cand) => matchesTarget(cand, tId));
+                            return allCombatants.some(
+                                (cand) => matchesTarget(cand, tId) && !isCombatantInPc(cand, currentState.pcData)
+                            );
                         });
 
                         if (validTargets.length !== originalLength) {

@@ -3,6 +3,8 @@ import { METADATA_ID } from '../sync/obr';
 import type { PcPokemonSummary, TrainerRoster } from '../../types/pcStorageTypes';
 import { calculateRelativeAttachment } from './rehomeEngine';
 import { broadcastPlayerPc, broadcastGmPc } from '../../hooks/owlbearSync/setupOwlbearPcSync';
+import { useCharacterStore } from '../../store/useCharacterStore';
+import { syncCombatantSentToPc, syncCombatantSentToMap } from '../combat/abilityTargetingUtils';
 
 import { isMatchingPokemonItem, isItemTrainer } from './pcItemMatching';
 import { separateAttachments, detachTokensFromParent, sanitizeAttachmentBundles } from './pcAttachmentOps';
@@ -318,6 +320,11 @@ export async function executeRecallWorkflow(
     };
     updatePokemonSummary?.(updated);
     broadcastSummaryMapChange(updated, campaignId, trainer, role);
+    try {
+        await syncCombatantSentToPc(summary.entityId, useCharacterStore.getState().pcData);
+    } catch (e) {
+        console.warn('[pcRecallOps] Failed to sync recalled combatant to PC in battle organizer:', e);
+    }
     return updated;
 }
 
@@ -341,6 +348,11 @@ export async function executeSendOutWorkflow(
         };
         updatePokemonSummary?.(updated);
         broadcastSummaryMapChange(updated, campaignId, trainer, role);
+        try {
+            await syncCombatantSentToMap(summary.entityId);
+        } catch (e) {
+            console.warn('[pcRecallOps] Failed to sync send-out combatant to map in battle organizer:', e);
+        }
         return updated;
     }
     if (spawnResult.success && spawnResult.newMapTokenId) {
@@ -352,6 +364,11 @@ export async function executeSendOutWorkflow(
         };
         updatePokemonSummary?.(updated);
         broadcastSummaryMapChange(updated, campaignId, trainer, role);
+        try {
+            await syncCombatantSentToMap(summary.entityId);
+        } catch (e) {
+            console.warn('[pcRecallOps] Failed to sync send-out combatant to map in battle organizer:', e);
+        }
         return updated;
     }
     console.error('[pcRecallOps] Failed to send out Pokémon to map:', summary);

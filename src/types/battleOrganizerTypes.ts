@@ -75,6 +75,7 @@ export interface CombatantRowData {
     gmHpText?: boolean;
     gmWillBar?: boolean;
     gmWillText?: boolean;
+    isInPc?: boolean;
 }
 
 export interface BattleRoundData {

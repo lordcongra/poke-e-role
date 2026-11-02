@@ -340,11 +340,16 @@ export function useBattleOrganizerTokenWatch({
                                 updated = true;
                             }
 
+                            if (combatant.isInPc) {
+                                updated = true;
+                            }
+
                             if (updated || (!combatant.tokenId && matchingItem.id)) {
                                 hasChanges = true;
                                 changesFound = true;
                                 return {
                                     ...combatant,
+                                    isInPc: false,
                                     initiative: nextInitiative,
                                     baseInit: nextBaseInit,
                                     name: nextName,

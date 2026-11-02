@@ -15,6 +15,7 @@ import {
     hasAttachmentDiff,
     sanitizeAttachmentBundles
 } from '../../utils/pc/pcAttachmentOps';
+import { matchesTarget } from '../../utils/combat/abilityTargetingUtils';
 
 export interface OwlbearTokenSyncResult {
     renderAllTokens: (forceRebuild?: boolean | 'badges-only') => Promise<void>;
@@ -268,6 +269,30 @@ export async function setupOwlbearTokenSync(params: {
                             return false;
                         };
 
+                        const affectedSources: Array<{ tokenId?: string; entityId?: string; id: string; newTargetIds: string[] }> = [];
+
+                        // Collect all deleted combatant identifiers to match targets against
+                        const deletedCombatants: Array<{ id?: string; tokenId?: string; entityId?: string; name?: string }> = [];
+                        bo.rounds.forEach((r: any) => {
+                            if (!r?.combatants) return;
+                            r.combatants.forEach((c: any) => {
+                                const isDeletedToken =
+                                    (c.tokenId && deletedSet.has(c.tokenId)) ||
+                                    (c.id && deletedSet.has(c.id));
+                                if (isDeletedToken) {
+                                    deletedCombatants.push({
+                                        id: c.id,
+                                        tokenId: c.tokenId,
+                                        entityId: c.entityId,
+                                        name: c.name
+                                    });
+                                }
+                            });
+                        });
+                        deletedTokenIds.forEach((tId) => {
+                            deletedCombatants.push({ id: tId, tokenId: tId });
+                        });
+
                         bo.rounds.forEach((r: any) => {
                             if (!r?.combatants) return;
                             const before = r.combatants.length;
@@ -283,6 +308,10 @@ export async function setupOwlbearTokenSync(params: {
                                         c.abilityActive = false;
                                         boChanged = true;
                                     }
+                                    if (c.abilityTargetIds && c.abilityTargetIds.length > 0) {
+                                        c.abilityTargetIds = [];
+                                        boChanged = true;
+                                    }
                                     return true;
                                 }
                                 return false;
@@ -291,10 +320,21 @@ export async function setupOwlbearTokenSync(params: {
 
                             r.combatants.forEach((c: any) => {
                                 if (c.abilityTargetIds && c.abilityTargetIds.length > 0) {
-                                    const filtered = c.abilityTargetIds.filter((tId: string) => !deletedSet.has(tId));
-                                    if (filtered.length !== c.abilityTargetIds.length) {
+                                    const originalCount = c.abilityTargetIds.length;
+                                    const filtered = c.abilityTargetIds.filter((tId: string) => {
+                                        if (!tId) return false;
+                                        if (deletedSet.has(tId)) return false;
+                                        return !deletedCombatants.some((dc) => matchesTarget(dc, tId));
+                                    });
+                                    if (filtered.length !== originalCount) {
                                         c.abilityTargetIds = filtered;
                                         boChanged = true;
+                                        affectedSources.push({
+                                            tokenId: c.tokenId,
+                                            entityId: c.entityId,
+                                            id: c.id,
+                                            newTargetIds: filtered
+                                        });
                                     }
                                 }
                             });
@@ -309,6 +349,74 @@ export async function setupOwlbearTokenSync(params: {
                                         { destination: 'REMOTE' }
                                     )
                                     .catch(() => {});
+                            }
+                        }
+
+                        // Sync active Zustand store if affected
+                        const activeChar = useCharacterStore.getState();
+                        if (activeChar) {
+                            const activeTokenId = activeChar.tokenId;
+                            const activeEntityId = activeChar.identity?.entityId;
+
+                            const matchedSource = affectedSources.find(
+                                (src) =>
+                                    (activeTokenId && src.tokenId === activeTokenId) ||
+                                    (activeEntityId && (src.entityId === activeEntityId || src.id === activeEntityId))
+                            );
+                            if (matchedSource) {
+                                activeChar.setIdentity('abilityTargetIds', matchedSource.newTargetIds);
+                            } else if (
+                                Array.isArray(activeChar.identity?.abilityTargetIds) &&
+                                activeChar.identity.abilityTargetIds.length > 0
+                            ) {
+                                const currentTargets = activeChar.identity.abilityTargetIds;
+                                const pruned = currentTargets.filter(
+                                    (tId) =>
+                                        !deletedSet.has(tId) &&
+                                        !deletedCombatants.some((dc) => matchesTarget(dc, tId))
+                                );
+                                if (pruned.length !== currentTargets.length) {
+                                    activeChar.setIdentity('abilityTargetIds', pruned);
+                                    if (activeTokenId && !affectedSources.some((s) => s.tokenId === activeTokenId)) {
+                                        affectedSources.push({
+                                            tokenId: activeTokenId,
+                                            entityId: activeEntityId,
+                                            id: activeEntityId || activeTokenId,
+                                            newTargetIds: pruned
+                                        });
+                                    }
+                                }
+                            }
+                        }
+
+                        // Update OBR item metadata for surviving source tokens
+                        if (OBR.isAvailable && affectedSources.length > 0) {
+                            const tokenMap = new Map<string, string[]>();
+                            for (const src of affectedSources) {
+                                if (src.tokenId && !deletedSet.has(src.tokenId)) {
+                                    tokenMap.set(src.tokenId, src.newTargetIds);
+                                }
+                            }
+                            if (tokenMap.size > 0) {
+                                OBR.scene.items
+                                    .updateItems(Array.from(tokenMap.keys()), (items) => {
+                                        for (const item of items) {
+                                            const newIds = tokenMap.get(item.id);
+                                            if (newIds !== undefined) {
+                                                const statsMeta = (item.metadata[METADATA_ID] ||
+                                                    item.metadata['pokerole-pmd-extension/stats'] ||
+                                                    {}) as Record<string, unknown>;
+                                                statsMeta['ability-target-ids'] = newIds.join(',');
+                                                item.metadata[METADATA_ID] = statsMeta;
+                                            }
+                                        }
+                                    })
+                                    .catch((err) =>
+                                        console.warn(
+                                            '[SyncEngine] Failed to update OBR metadata for pruned targets:',
+                                            err
+                                        )
+                                    );
                             }
                         }
                     }

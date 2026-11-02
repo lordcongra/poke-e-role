@@ -46,68 +46,8 @@ import {
 } from '../../utils/pc/pcStorageStoreOps';
 import { markDataChanged } from '../../utils/sync/storageAdapter';
 import { broadcastGmPc, triggerDebouncedPcBroadcast } from '../../hooks/owlbearSync/owlbearPcBroadcastOps';
+import { syncCombatantSentToPc, syncCombatantSentToMap } from '../../utils/combat/abilityTargetingUtils';
 import OBR from '@owlbear-rodeo/sdk';
-
-function syncDepositedPokemonToBattleOrganizer(entityId: string, pcData: PcStorageData) {
-    if (typeof window === 'undefined' || !window.localStorage) return;
-    try {
-        const raw = localStorage.getItem('pkr_battle_organizer_data');
-        if (!raw) return;
-        const bo = JSON.parse(raw);
-        if (!bo || !Array.isArray(bo.rounds)) return;
-
-        let boChanged = false;
-        const summary = pcData.pokemonSummaries[entityId];
-        const mapTokenId = summary?.mapTokenId;
-        const savedTokenId = summary?.savedTokenItem?.id;
-        const summaryName = (summary?.name || summary?.species || '').trim().toLowerCase();
-
-        const idsToRemove = new Set([entityId]);
-        if (mapTokenId) idsToRemove.add(mapTokenId);
-        if (savedTokenId) idsToRemove.add(savedTokenId);
-
-        bo.rounds.forEach((r: any) => {
-            if (!r?.combatants) return;
-            r.combatants.forEach((c: any) => {
-                const isMatch =
-                    idsToRemove.has(c.id) ||
-                    idsToRemove.has(c.entityId) ||
-                    (c.tokenId && idsToRemove.has(c.tokenId)) ||
-                    (summaryName && c.name && c.name.trim().toLowerCase() === summaryName);
-
-                if (isMatch) {
-                    if (c.abilityActive !== false) {
-                        c.abilityActive = false;
-                        boChanged = true;
-                    }
-                } else {
-                    if (c.abilityTargetIds && c.abilityTargetIds.length > 0) {
-                        const filtered = c.abilityTargetIds.filter((tId: string) => !idsToRemove.has(tId));
-                        if (filtered.length !== c.abilityTargetIds.length) {
-                            c.abilityTargetIds = filtered;
-                            boChanged = true;
-                        }
-                    }
-                }
-            });
-        });
-
-        if (boChanged) {
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(bo));
-            if (OBR.isAvailable) {
-                OBR.broadcast
-                    .sendMessage(
-                        `${EXTENSION_ID}/battle-organizer-sync`,
-                        bo,
-                        { destination: 'REMOTE' }
-                    )
-                    .catch(() => {});
-            }
-        }
-    } catch (err) {
-        console.warn('[PcSlice] Failed to clean deposited pokemon from battle organizer:', err);
-    }
-}
 
 export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set, get) => {
     const safeSavePc = (data: PcStorageData) => {
@@ -189,7 +129,7 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
                     triggerDebouncedPcBroadcast();
                 }
                 if (entityId) {
-                    syncDepositedPokemonToBattleOrganizer(entityId, nextData);
+                    syncCombatantSentToPc(entityId, nextData);
                 }
             } catch (e) {
                 console.error('[PcSlice] Failed to set box slot:', e);
@@ -199,17 +139,46 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
         swapPcSlots: (from, to) => {
             try {
                 const { pcData, activeBoxIndex } = get();
+                const camp = pcData.campaigns[pcData.activeCampaignId];
+                const activeTrainer = camp?.trainers[camp?.activeTrainerId];
+                const trainerBoxes = getTrainerBoxes(activeTrainer, camp);
+                const fromBoxIdx = from.boxIndex ?? activeBoxIndex;
+                const toBoxIdx = to.boxIndex ?? activeBoxIndex;
+
+                const fromEntity =
+                    from.type === 'party'
+                        ? (activeTrainer ? activeTrainer.party : camp?.teamParty || [])[from.index]
+                        : trainerBoxes[fromBoxIdx]?.slots[from.index];
+                const toEntity =
+                    to.type === 'party'
+                        ? (activeTrainer ? activeTrainer.party : camp?.teamParty || [])[to.index]
+                        : trainerBoxes[toBoxIdx]?.slots[to.index];
+
                 const nextData = applySwapPcSlots(pcData, from, to, activeBoxIndex);
                 set({ pcData: nextData, selectedPcSlot: null });
                 safeSavePc(nextData);
                 markDataChanged();
 
                 if (!OBR.isAvailable) {
-                    const camp = nextData.campaigns[nextData.activeCampaignId];
-                    const tr = camp?.trainers[camp?.activeTrainerId];
+                    const nextCamp = nextData.campaigns[nextData.activeCampaignId];
+                    const tr = nextCamp?.trainers[nextCamp?.activeTrainerId];
                     if (tr) syncSwappedSlotsToSidebar(tr, from, to, nextData, activeBoxIndex).catch(console.warn);
                 } else {
                     triggerDebouncedPcBroadcast();
+                }
+
+                // If moving an entity from a box slot to a party slot, trigger map sync
+                if (from.type === 'box' && to.type === 'party' && fromEntity) {
+                    syncCombatantSentToMap(fromEntity, nextData);
+                } else if (to.type === 'box' && from.type === 'party' && toEntity) {
+                    syncCombatantSentToMap(toEntity, nextData);
+                }
+
+                // If moving an entity from a party slot to a box slot, sync to PC
+                if (from.type === 'party' && to.type === 'box' && fromEntity) {
+                    syncCombatantSentToPc(fromEntity, nextData);
+                } else if (to.type === 'party' && from.type === 'box' && toEntity) {
+                    syncCombatantSentToPc(toEntity, nextData);
                 }
             } catch (e) {
                 console.error('[PcSlice] Failed to swap PC slots:', e);
@@ -233,6 +202,7 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
                 const targetTr = camp?.trainers[trainerId || camp?.activeTrainerId];
                 syncSidebarOnMoveToParty(targetTr, entityId);
                 if (OBR.isAvailable) triggerDebouncedPcBroadcast();
+                syncCombatantSentToMap(entityId, nextData);
                 return true;
             } catch (e) {
                 console.error('[PcSlice] Failed to move to party:', e);
@@ -264,7 +234,7 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
                 if (OBR.isAvailable) triggerDebouncedPcBroadcast();
 
                 // Clean battle organizer data in localStorage (deactivates ability aura while preserving combatant)
-                syncDepositedPokemonToBattleOrganizer(entityId, nextData);
+                syncCombatantSentToPc(entityId, nextData);
                 return true;
             } catch (e) {
                 console.error('[PcSlice] Failed to deposit to box:', e);

@@ -2657,6 +2657,391 @@ await runTest('abilityTargeting: serialization, hydration, stance resolution, an
         false,
         'Growlithe Intimidate is suppressed by Neutralizing Gas and does not affect Koffing'
     );
+
+    // 6. Invariant: Neutralizing Gas self-immunity & cross-targeting
+    // Two opposing Weezings with Neutralizing Gas do not suppress each other, while still suppressing other opposing combatants.
+    const dualWeezingState = {
+        rounds: [
+            {
+                roundNumber: 1,
+                combatants: [
+                    {
+                        id: 'player-weezing',
+                        tokenId: 'token-player-weezing',
+                        name: 'Galarian Weezing',
+                        ability: 'Neutralizing Gas',
+                        abilityActive: true,
+                        isPlayerSide: true,
+                        isNPC: false,
+                        rank: 'Ace',
+                        abilityTargetIds: ['foe-weezing', 'foe-pikachu']
+                    },
+                    {
+                        id: 'foe-weezing',
+                        tokenId: 'token-foe-weezing',
+                        name: 'Kanto Weezing',
+                        ability: 'Neutralizing Gas',
+                        abilityActive: true,
+                        isPlayerSide: false,
+                        isNPC: true,
+                        rank: 'Ace',
+                        abilityTargetIds: ['player-weezing', 'player-eevee']
+                    },
+                    {
+                        id: 'foe-pikachu',
+                        tokenId: 'token-foe-pikachu',
+                        name: 'Pikachu',
+                        ability: 'Static',
+                        abilityActive: true,
+                        isPlayerSide: false,
+                        isNPC: true,
+                        rank: 'Starter',
+                        abilityTargetIds: []
+                    },
+                    {
+                        id: 'player-eevee',
+                        tokenId: 'token-player-eevee',
+                        name: 'Eevee',
+                        ability: 'Run Away',
+                        abilityActive: true,
+                        isPlayerSide: true,
+                        isNPC: false,
+                        rank: 'Starter',
+                        abilityTargetIds: []
+                    }
+                ]
+            }
+        ],
+        activeRoundIndex: 0
+    };
+    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(dualWeezingState));
+
+    // Player Weezing is NOT suppressed by Neutralizing Gas even though targeted by Foe Weezing
+    assert.equal(
+        isTargetAffectedByAbility('player-weezing', 'player', 'Neutralizing Gas', null),
+        false,
+        'Player Weezing is immune to Neutralizing Gas from Foe Weezing'
+    );
+
+    // Foe Weezing is NOT suppressed by Neutralizing Gas even though targeted by Player Weezing
+    assert.equal(
+        isTargetAffectedByAbility('foe-weezing', 'foe', 'Neutralizing Gas', null),
+        false,
+        'Foe Weezing is immune to Neutralizing Gas from Player Weezing'
+    );
+
+    // Other opposing combatants ARE suppressed by their respective opposing Weezing
+    assert.equal(
+        isTargetAffectedByAbility('foe-pikachu', 'foe', 'Neutralizing Gas', null),
+        true,
+        'Foe Pikachu is suppressed by Player Weezing Neutralizing Gas'
+    );
+
+    assert.equal(
+        isTargetAffectedByAbility('player-eevee', 'player', 'Neutralizing Gas', null),
+        true,
+        'Player Eevee is suppressed by Foe Weezing Neutralizing Gas'
+    );
+});
+
+await runTest('abilityTargeting: isCombatantInPc targeting and syncCombatantSentToMap invariants', async () => {
+    const { isCombatantInPc, syncCombatantSentToMap } = await import(
+        '../src/utils/combat/abilityTargetingUtils'
+    );
+    const typeCastPcData = (data: any) => data;
+
+    const testPcData = typeCastPcData({
+        activeCampaignId: 'c1',
+        campaigns: {
+            c1: {
+                id: 'c1',
+                name: 'Campaign 1',
+                activeTrainerId: 't1',
+                trainers: {
+                    t1: {
+                        id: 't1',
+                        name: 'Ash',
+                        party: ['party-mon-1', 'party-mon-2', null, null, null, null],
+                        boxes: [
+                            {
+                                id: 'b1',
+                                name: 'Box 1',
+                                slots: ['box-mon-1', null]
+                            }
+                        ]
+                    }
+                },
+                teamParty: ['team-mon-1', null],
+                boxes: [
+                    {
+                        id: 'cb1',
+                        name: 'Campaign Box 1',
+                        slots: ['box-mon-2', null]
+                    }
+                ]
+            }
+        },
+        pokemonSummaries: {
+            'party-mon-1': {
+                entityId: 'party-mon-1',
+                name: 'Pikachu',
+                species: 'Pikachu',
+                isOnMap: true,
+                mapTokenId: 'tok-pika'
+            },
+            'party-mon-2': {
+                entityId: 'party-mon-2',
+                name: 'Bulbasaur',
+                species: 'Bulbasaur',
+                isOnMap: false
+            },
+            'team-mon-1': {
+                entityId: 'team-mon-1',
+                name: 'Charmander',
+                species: 'Charmander',
+                isOnMap: true
+            },
+            'box-mon-1': {
+                entityId: 'box-mon-1',
+                name: 'Gengar',
+                species: 'Gengar',
+                isOnMap: false
+            },
+            'box-mon-2': {
+                entityId: 'box-mon-2',
+                name: 'Machamp',
+                species: 'Machamp',
+                isOnMap: true,
+                mapTokenId: 'tok-machamp'
+            }
+        },
+        version: 1
+    });
+
+    // 1. Pokémon in box slot, but taken out onto map (isOnMap === true) -> is NOT in PC
+    assert.equal(
+        isCombatantInPc(
+            { id: 'c-machamp', entityId: 'box-mon-2', tokenId: 'tok-machamp', initiative: '10' } as any,
+            testPcData
+        ),
+        false,
+        'Boxed Pokémon with isOnMap === true is not considered in PC'
+    );
+
+    // 2. Party Pokémon on map (isOnMap === true) -> is NOT in PC
+    assert.equal(
+        isCombatantInPc(
+            { id: 'c-pika', entityId: 'party-mon-1', tokenId: 'tok-pika', initiative: '10' } as any,
+            testPcData
+        ),
+        false,
+        'Party Pokémon with isOnMap === true is not considered in PC'
+    );
+
+    // 3. Team Party Pokémon (not recalled) -> is NOT in PC
+    assert.equal(
+        isCombatantInPc(
+            { id: 'c-charmander', entityId: 'team-mon-1', initiative: '10' } as any,
+            testPcData
+        ),
+        false,
+        'Team party Pokémon is not considered in PC'
+    );
+
+    // 4. Party Pokémon explicitly recalled (isOnMap === false) -> IS in PC
+    assert.equal(
+        isCombatantInPc(
+            { id: 'c-bulba', entityId: 'party-mon-2', initiative: '10' } as any,
+            testPcData
+        ),
+        true,
+        'Party Pokémon with isOnMap === false is considered in PC'
+    );
+
+    // 5. Boxed Pokémon with isOnMap !== true -> IS in PC
+    assert.equal(
+        isCombatantInPc(
+            { id: 'c-gengar', entityId: 'box-mon-1', initiative: '10' } as any,
+            testPcData
+        ),
+        true,
+        'Boxed Pokémon with isOnMap === false is considered in PC'
+    );
+
+    // 6. Species name collision check: Wild Gengar on battlefield must NOT match boxed Gengar
+    assert.equal(
+        isCombatantInPc(
+            { id: 'c-wild-gengar', entityId: 'wild-gengar-id', name: 'Gengar', initiative: '10' } as any,
+            testPcData
+        ),
+        false,
+        'Wild Pokémon with unique entityId does not match boxed summary with shared species name'
+    );
+
+    // 7. Wild Pokémon with tokenId must NOT match boxed summary by species name
+    assert.equal(
+        isCombatantInPc(
+            { id: 'c-wild-pika', tokenId: 'wild-tok-pika', name: 'Pikachu', initiative: '10' } as any,
+            testPcData
+        ),
+        false,
+        'Wild Pokémon with tokenId does not match PC summary by name'
+    );
+
+    // 8. Stale c.isInPc === true is cleared if combatant is actually on field
+    assert.equal(
+        isCombatantInPc(
+            { id: 'c-machamp-stale', entityId: 'box-mon-2', tokenId: 'tok-machamp', isInPc: true, initiative: '10' } as any,
+            testPcData
+        ),
+        false,
+        'Combatant with stale isInPc: true is not treated as in PC when on map'
+    );
+
+    // 9. c.isInPc === true without on-field token or map presence is preserved
+    assert.equal(
+        isCombatantInPc(
+            { id: 'c-orphan-pc', isInPc: true, initiative: '10' } as any,
+            testPcData
+        ),
+        true,
+        'Combatant with isInPc: true not on field remains in PC'
+    );
+
+    // 10. Symmetrical syncCombatantSentToMap restores combatants across identifiers
+    const initialBoState = {
+        rounds: [
+            {
+                roundNumber: 1,
+                combatants: [
+                    {
+                        id: 'c-map-1',
+                        entityId: 'box-mon-1',
+                        isInPc: true,
+                        name: 'Gengar'
+                    },
+                    {
+                        id: 'c-map-2',
+                        tokenId: 'saved-tok-99',
+                        isInPc: true,
+                        name: 'Gengar'
+                    }
+                ]
+            }
+        ],
+        activeRoundIndex: 0
+    };
+    testPcData.pokemonSummaries['box-mon-1'].savedTokenItem = { id: 'saved-tok-99' };
+    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(initialBoState));
+
+    await syncCombatantSentToMap('box-mon-1', testPcData);
+
+    const updatedBo = JSON.parse(localStorage.getItem('pkr_battle_organizer_data') || '{}');
+    assert.equal(updatedBo.rounds[0].combatants[0].isInPc, false, 'Clears isInPc for matched entityId');
+    assert.equal(updatedBo.rounds[0].combatants[1].isInPc, false, 'Clears isInPc for matched savedTokenItem id');
+});
+
+await runTest('abilityTargeting: syncCombatantSentToPc prunes targets, sets isInPc: true, and does not resurrect on send to map', async () => {
+    const { syncCombatantSentToPc, syncCombatantSentToMap } = await import(
+        '../src/utils/combat/abilityTargetingUtils'
+    );
+    const typeCastPcData = (data: any) => data;
+
+    const testPcData = typeCastPcData({
+        activeCampaignId: 'c1',
+        campaigns: {
+            c1: {
+                id: 'c1',
+                name: 'Campaign 1',
+                trainers: {},
+                boxes: [
+                    {
+                        id: 'b1',
+                        slots: ['mon-pc-deposit']
+                    }
+                ]
+            }
+        },
+        pokemonSummaries: {
+            'mon-pc-deposit': {
+                entityId: 'mon-pc-deposit',
+                name: 'Vulpix',
+                species: 'Vulpix',
+                isOnMap: false,
+                mapTokenId: 'tok-vulpix'
+            }
+        },
+        version: 1
+    });
+
+    const initialBo = {
+        rounds: [
+            {
+                roundNumber: 1,
+                combatants: [
+                    {
+                        id: 'c-ninetales',
+                        name: 'Ninetales',
+                        tokenId: 'tok-ninetales',
+                        ability: 'Drought',
+                        abilityActive: true,
+                        abilityTargetIds: ['mon-pc-deposit', 'c-other']
+                    },
+                    {
+                        id: 'c-vulpix',
+                        name: 'Vulpix',
+                        entityId: 'mon-pc-deposit',
+                        tokenId: 'tok-vulpix',
+                        isInPc: false,
+                        abilityActive: true,
+                        abilityTargetIds: ['c-ninetales']
+                    },
+                    {
+                        id: 'c-other',
+                        name: 'Oddish',
+                        tokenId: 'tok-oddish',
+                        isInPc: false,
+                        abilityTargetIds: ['tok-vulpix']
+                    }
+                ]
+            }
+        ],
+        activeRoundIndex: 0
+    };
+
+    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(initialBo));
+
+    await syncCombatantSentToPc('mon-pc-deposit', testPcData);
+
+    const boAfterDeposit = JSON.parse(localStorage.getItem('pkr_battle_organizer_data') || '{}');
+    const round1 = boAfterDeposit.rounds[0];
+    const ninetales = round1.combatants.find((c: any) => c.id === 'c-ninetales');
+    const vulpix = round1.combatants.find((c: any) => c.id === 'c-vulpix');
+    const other = round1.combatants.find((c: any) => c.id === 'c-other');
+
+    // 1. Prunes the target ID from any combatant targeting it in bo.rounds
+    assert.deepEqual(ninetales.abilityTargetIds, ['c-other'], 'Target ID pruned by entityId from Ninetales');
+    assert.deepEqual(other.abilityTargetIds, [], 'Target ID pruned by tokenId from Oddish');
+
+    // 2. Leaves the combatant in the battle organizer with isInPc: true, abilityActive: false, and abilityTargetIds: []
+    assert.ok(vulpix, 'Vulpix remains in the Battle Organizer');
+    assert.equal(vulpix.isInPc, true, 'Vulpix has isInPc: true');
+    assert.equal(vulpix.abilityActive, false, 'Vulpix has abilityActive: false');
+    assert.deepEqual(vulpix.abilityTargetIds, [], 'Vulpix has abilityTargetIds reset to empty');
+
+    // 3. Does NOT resurrect targeting when syncCombatantSentToMap is subsequently called
+    testPcData.pokemonSummaries['mon-pc-deposit'].isOnMap = true;
+    await syncCombatantSentToMap('mon-pc-deposit', testPcData);
+
+    const boAfterMap = JSON.parse(localStorage.getItem('pkr_battle_organizer_data') || '{}');
+    const round1AfterMap = boAfterMap.rounds[0];
+    const ninetalesAfterMap = round1AfterMap.combatants.find((c: any) => c.id === 'c-ninetales');
+    const vulpixAfterMap = round1AfterMap.combatants.find((c: any) => c.id === 'c-vulpix');
+    const otherAfterMap = round1AfterMap.combatants.find((c: any) => c.id === 'c-other');
+
+    assert.equal(vulpixAfterMap.isInPc, false, 'Vulpix isInPc reset to false after sent to map');
+    assert.deepEqual(ninetalesAfterMap.abilityTargetIds, ['c-other'], 'Targeting is NOT resurrected on Ninetales');
+    assert.deepEqual(otherAfterMap.abilityTargetIds, [], 'Targeting is NOT resurrected on Oddish');
 });
 
 console.log('\n=============================================');
