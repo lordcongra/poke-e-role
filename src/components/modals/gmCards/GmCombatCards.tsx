@@ -11,6 +11,7 @@ import {
 } from '../../../data/gmScreenData';
 import { GmAttributeBenchmarkCard } from './GmAttributeBenchmarkCard';
 import { GmMoveClarificationsCard } from './GmMoveClarificationsCard';
+import { GmMoveTagsCard } from './GmMoveTagsCard';
 import { GmReactionRulesCard } from './GmReactionRulesCard';
 
 interface GmCombatCardsProps {
@@ -346,6 +347,9 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
 
         case 'move-clarifications-core':
             return <GmMoveClarificationsCard />;
+
+        case 'move-tags-reference':
+            return <GmMoveTagsCard />;
 
         case 'holding-back-attack':
             return (

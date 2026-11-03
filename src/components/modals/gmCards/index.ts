@@ -3,6 +3,7 @@ export { GmReactionRulesCard } from './GmReactionRulesCard';
 export { GmReactionPriorityLadder } from './GmReactionPriorityLadder';
 export { GmAttributeBenchmarkCard } from './GmAttributeBenchmarkCard';
 export { GmMoveClarificationsCard } from './GmMoveClarificationsCard';
+export { GmMoveTagsCard } from './GmMoveTagsCard';
 export { GmHomebrewCards } from './GmHomebrewCards';
 export { GmRangersCards } from './GmRangersCards';
 export { GmReferenceCards } from './GmReferenceCards';

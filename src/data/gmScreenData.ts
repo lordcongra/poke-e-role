@@ -12,6 +12,7 @@
  * - gmMoveClarificationsData: Encore, Fling, Powers, Natural Gift, Snatch, Substitute, Narrative moves
  * - gmHomebrewData: PMD creation, bag weight, food, weapons, switcher moves
  * - gmRangersData: Pokémon Rangers supplement
+ * - gmMoveTagsData: All 20 official corebook move tags & mechanics
  * - gmCheatItems: Searchable GM_CHEAT_ITEMS dataset & interfaces
  */
 
@@ -22,6 +23,7 @@ export * from './gm/gmTrainerData';
 export * from './gm/gmManeuversData';
 export * from './gm/gmAttributeBenchmarksData';
 export * from './gm/gmMoveClarificationsData';
+export * from './gm/gmMoveTagsData';
 export * from './gm/gmHomebrewData';
 export * from './gm/gmRangersData';
 export * from './gm/gmCheatItems';

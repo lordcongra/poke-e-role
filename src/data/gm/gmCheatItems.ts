@@ -46,6 +46,9 @@ import {
     FLING_DAMAGE_TABLE,
     ENVIRONMENT_POWER_TABLE
 } from './gmMoveClarificationsData';
+import {
+    MOVE_TAGS_DATA
+} from './gmMoveTagsData';
 
 export interface GmCheatItem {
     id: string;
@@ -472,6 +475,75 @@ ${formatDiscordTable(
 • **Reflect / Light Screen:** Form temporary invisible bridges over ravines or emergency barricades.
 • **Electric Moves:** Jump-start generators, recharge drained batteries, or short-circuit security doors.
 • **Vine Whip:** Anchor precarious platforms, tether falling allies, or swing across gaps.`
+    },
+    {
+        id: 'move-tags-reference',
+        title: 'Move Tags & Special Mechanics',
+        category: 'rules',
+        categoryLabel: 'Combat & Rules',
+        badge: 'Core Reference',
+        summary:
+            'Complete quick-reference for all official Move Tags: Must Recharge, Rampage, Charge Move, Never Miss, High Critical, Low Accuracy, Force Field, Entry Hazard, Copy Move, Unique Move, Recoil, Set Damage, Blocking, Powder Move, and more.',
+        keywords: [
+            'move tags',
+            'move tag',
+            'tags',
+            'must recharge',
+            'recharge',
+            'rampage',
+            'charged moves',
+            'charge move',
+            'never miss',
+            'ongoing damage',
+            'out of range',
+            'vulnerable',
+            'ranged moves',
+            'ranged',
+            'bite moves',
+            'cutter moves',
+            'fist moves',
+            'projectile moves',
+            'wind moves',
+            'archetypes',
+            'sound moves',
+            'sound',
+            'shield moves',
+            'shield',
+            'successive actions',
+            'double action',
+            'triple action',
+            'switcher moves',
+            'switcher',
+            'force fields',
+            'force field',
+            'entry hazards',
+            'hazards',
+            'heals',
+            'hp recovery',
+            'healing',
+            'high critical',
+            'low accuracy',
+            'copying moves',
+            'unique moves',
+            'recoil',
+            'recoil damage',
+            'set damage',
+            'blocking',
+            'powder moves',
+            'durations',
+            'scene duration',
+            'round duration',
+            'permanent duration'
+        ],
+        broadcastText:
+            'Move Tags & Special Mechanics:\n' +
+            MOVE_TAGS_DATA.map((t) => `• ${t.name} (${t.categoryLabel}): ${t.summary}`).join('\n'),
+        discordMarkdown: `## 🏷️ **Pokerole Move Tags & Special Mechanics**
+> *Complete quick-reference for official corebook move tags and combat mechanics.*
+
+${MOVE_TAGS_DATA.map(
+    (t) => `### **${t.name}** *(${t.categoryLabel})*\n${t.summary}\n${t.rules.map((r) => `• ${r}`).join('\n')}`
+).join('\n\n---\n\n')}`
     },
     {
         id: 'holding-back-attack',

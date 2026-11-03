@@ -98,6 +98,7 @@ export function GmScreenCardContent({ itemId }: GmScreenCardContentProps) {
         'combat-flow',
         'using-a-move',
         'move-clarifications-core',
+        'move-tags-reference',
         'holding-back-attack',
         'reactions-late-reactions',
         'pain-penalties',
