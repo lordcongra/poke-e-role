@@ -2,6 +2,7 @@ import path from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 export default defineConfig({
     base: '/poke-e-role/',
@@ -41,6 +42,12 @@ export default defineConfig({
                 // Without this, your offline Pokemon/Move database will fail to load without internet.
                 globPatterns: ['**/*.{js,css,html,ico,png,svg,json}']
             }
+        }),
+        visualizer({
+            filename: 'stats.html',
+            gzipSize: true,
+            brotliSize: true,
+            open: false
         })
     ],
 
