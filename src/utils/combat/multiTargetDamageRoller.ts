@@ -3,7 +3,7 @@ import type { CharacterState, MoveData } from '../../store/storeTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { isStandaloneMode } from '../sync/storageAdapter';
 import { parseCombatTags } from '../tagParser/index';
-import { getAbilityText, getWeatherDamageBonus, getPainPenalty } from './combatUtils';
+import { getAbilityText, getWeatherDamageBonus, getFieldAuraDamageBonus, getPainPenalty } from './combatUtils';
 import { buildDefenseTierGroups, type MultiTargetSelection } from '../../components/modals/combat/targetingModalUtils';
 import { addRollLogEntry } from './diceRoller';
 import { broadcastRollLog } from './rollLogSync';
@@ -162,6 +162,19 @@ export async function executeMultiTargetDamageRoll(
         }
         if (weatherInfo.tag) {
             tags.push(weatherInfo.tag);
+        }
+
+        const fieldAuraInfo = getFieldAuraDamageBonus(
+            move.type,
+            state.activeBattlefield,
+            state.identity.isNPC,
+            state
+        );
+        if (fieldAuraInfo.diceBonus !== 0) {
+            effectiveBaseDamage += fieldAuraInfo.diceBonus;
+        }
+        if (fieldAuraInfo.tag) {
+            tags.push(fieldAuraInfo.tag);
         }
     }
 

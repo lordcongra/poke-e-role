@@ -13,9 +13,10 @@ import {
     calculateBaseAccuracy,
     calculateCriticalRequirement,
     getWeatherDamageBonus,
+    getFieldAuraDamageBonus,
     calculateBaseInitiative
 } from './combatMath';
-import { parseCombatTags } from '../tagParser/index';
+import { parseCombatTags, isStatOrSkillMatch } from '../tagParser/index';
 import { rollDicePlus } from './diceRoller';
 import { isTargetAffectedByAbility, isAbilitySuppressedByField, matchesTarget } from './abilityTargetingUtils';
 import { resolveCharacterSide } from './combatantSideUtils';
@@ -777,6 +778,19 @@ export async function executeDamageRoll(
         if (weatherInfo.tag) {
             tags.push(weatherInfo.tag);
         }
+
+        const fieldAuraInfo = getFieldAuraDamageBonus(
+            move.type,
+            state.activeBattlefield,
+            state.identity.isNPC,
+            state
+        );
+        if (fieldAuraInfo.diceBonus !== 0) {
+            actualDicePool += fieldAuraInfo.diceBonus;
+        }
+        if (fieldAuraInfo.tag) {
+            tags.push(fieldAuraInfo.tag);
+        }
     }
 
     const allDmgSourceTexts = [
@@ -899,6 +913,12 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
 
     const tags: string[] = [];
     if (rankSkillBonus > 0) tags.push('Master/Champion Rank (+2 Dice)');
+    for (const ab of Array.from(new Set(itemBuffs.abilityNames || []))) {
+        if (isStatOrSkillMatch(ab, check.attr) || isStatOrSkillMatch(ab, check.skill)) {
+            const tagStr = ab.startsWith('Ability:') ? ab : `Ability: ${ab}`;
+            if (!tags.includes(tagStr)) tags.push(tagStr);
+        }
+    }
     if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}: ${pain} Succ`);
     if (statuses.confusionPenalty < 0) tags.push(`Confusion: ${statuses.confusionPenalty} Succ`);
     if (state.trackers.globalSucc !== 0)
@@ -1009,6 +1029,67 @@ export async function rollGeneric(
         tags.push(`Tracker Mod: ${state.trackers.globalSucc > 0 ? '+' : ''}${state.trackers.globalSucc} Succ`);
     if (chancesUsed > 0) tags.push(`Chances: Max ${chancesUsed} Rerolls`);
     if (statuses.paralysisDexterityPenalty < 0 && attribute.toLowerCase() === 'dex') tags.push(`Paralysis: -2 Dice`);
+
+    const actionLower = actionName.toLowerCase();
+    const isEvasion = actionLower.includes('evas');
+    const isSpd = actionLower.includes('spd') || actionLower.includes('special def') || actionLower.includes('sdef');
+    const isDef = (actionLower.includes('def') || actionLower.includes('defense')) && !isSpd;
+
+    if (isDef) {
+        if (itemBuffs.defAbilityNames && itemBuffs.defAbilityNames.length > 0) {
+            for (const ab of Array.from(new Set(itemBuffs.defAbilityNames))) {
+                const tagStr = ab.startsWith('Ability:') ? ab : `Ability: ${ab}`;
+                if (!tags.includes(tagStr)) tags.push(tagStr);
+            }
+        }
+        for (const ab of Array.from(new Set(itemBuffs.abilityNames || []))) {
+            if (/\b(?:def|defense|vit|vitality)\b/i.test(ab)) {
+                const tagStr = ab.startsWith('Ability:') ? ab : `Ability: ${ab}`;
+                if (!tags.includes(tagStr)) tags.push(tagStr);
+            }
+        }
+        if (abilityString.includes('fur coat') && !tags.some((t) => t.toLowerCase().includes('fur coat'))) {
+            tags.push('Ability: Fur Coat (-2 Phys Dmg Taken)');
+        }
+    }
+
+    if (isSpd) {
+        if (itemBuffs.spdAbilityNames && itemBuffs.spdAbilityNames.length > 0) {
+            for (const ab of Array.from(new Set(itemBuffs.spdAbilityNames))) {
+                const tagStr = ab.startsWith('Ability:') ? ab : `Ability: ${ab}`;
+                if (!tags.includes(tagStr)) tags.push(tagStr);
+            }
+        }
+        for (const ab of Array.from(new Set(itemBuffs.abilityNames || []))) {
+            if (/\b(?:spd|sdef|special defense|spdef|ins|insight)\b/i.test(ab)) {
+                const tagStr = ab.startsWith('Ability:') ? ab : `Ability: ${ab}`;
+                if (!tags.includes(tagStr)) tags.push(tagStr);
+            }
+        }
+        if (abilityString.includes('ice scales') && !tags.some((t) => t.toLowerCase().includes('ice scales'))) {
+            tags.push('Ability: Ice Scales (-2 Special Dmg Taken)');
+        }
+    }
+
+    if (isEvasion) {
+        for (const ab of Array.from(new Set(itemBuffs.abilityNames || []))) {
+            if (/\b(?:evas|evasion|dex|dexterity)\b/i.test(ab)) {
+                const tagStr = ab.startsWith('Ability:') ? ab : `Ability: ${ab}`;
+                if (!tags.includes(tagStr)) tags.push(tagStr);
+            }
+        }
+        if (abilityString.includes('tangled feet') && !tags.some((t) => t.toLowerCase().includes('tangled feet'))) {
+            if (statuses.confusionPenalty < 0) {
+                tags.push('Ability: Tangled Feet (Foe Low Acc)');
+            }
+        }
+        if (abilityString.includes('sand veil') && !tags.some((t) => t.toLowerCase().includes('sand veil'))) {
+            const isSand = Boolean(state.activeBattlefield?.weather?.name?.toLowerCase().includes('sand'));
+            if (isSand) {
+                tags.push('Ability: Sand Veil (Evasion up to 5/Round)');
+            }
+        }
+    }
 
     if (actionName.toLowerCase().includes('evas')) {
         const isGravityActive = Boolean(

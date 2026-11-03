@@ -187,8 +187,26 @@ export function useBattleOrganizerTokenWatch({
                             const metaSpecies = String(
                                 identityObj.species || meta.species || matchingItem.metadata?.species || ''
                             );
+                            const metaAbilityBoostLevel =
+                                meta['ability-boost-level'] !== undefined
+                                    ? Number(meta['ability-boost-level'])
+                                    : typeof identityObj.abilityBoostLevel === 'number'
+                                      ? identityObj.abilityBoostLevel
+                                      : undefined;
+                            const metaAbilityBoostActive =
+                                meta['ability-boost-active'] !== undefined
+                                    ? Boolean(meta['ability-boost-active'])
+                                    : typeof identityObj.abilityBoostActive === 'boolean'
+                                      ? identityObj.abilityBoostActive
+                                      : undefined;
+                            const metaAbilityChoiceIndex =
+                                meta['ability-choice-index'] !== undefined
+                                    ? Number(meta['ability-choice-index'])
+                                    : typeof identityObj.abilityChoiceIndex === 'number'
+                                      ? identityObj.abilityChoiceIndex
+                                      : undefined;
 
-                            const fingerprint = `${matchingItem.id}|${hpCurr}|${hpMax}|${willCurr}|${willMax}|${tempHp}|${tempWill}|${statusText}|${statusFainted}|${activeTransformation}|${resolvedName}|${resolvedImg}|${isNPC}|${gmHpBar}|${gmHpText}|${gmWillBar}|${gmWillText}|${metaAbility}|${metaAbilityActive}|${metaSpecies}|${tokenInitDisplay ?? ''}|${tokenBaseInit ?? ''}`;
+                            const fingerprint = `${matchingItem.id}|${hpCurr}|${hpMax}|${willCurr}|${willMax}|${tempHp}|${tempWill}|${statusText}|${statusFainted}|${activeTransformation}|${resolvedName}|${resolvedImg}|${isNPC}|${gmHpBar}|${gmHpText}|${gmWillBar}|${gmWillText}|${metaAbility}|${metaAbilityActive}|${metaSpecies}|${tokenInitDisplay ?? ''}|${tokenBaseInit ?? ''}|${metaAbilityBoostLevel ?? ''}|${metaAbilityBoostActive ?? ''}|${metaAbilityChoiceIndex ?? ''}`;
                             const lastFingerprint = lastTokenFingerprintsRef.current.get(matchingItem.id);
                             if (
                                 !isReboundToken &&
@@ -209,6 +227,9 @@ export function useBattleOrganizerTokenWatch({
                                 combatant.ability === metaAbility &&
                                 combatant.abilityActive === metaAbilityActive &&
                                 combatant.species === metaSpecies &&
+                                combatant.abilityBoostLevel === metaAbilityBoostLevel &&
+                                combatant.abilityBoostActive === metaAbilityBoostActive &&
+                                combatant.abilityChoiceIndex === metaAbilityChoiceIndex &&
                                 (tokenInitDisplay === undefined ||
                                     (combatant.initiative === tokenInitDisplay &&
                                         (tokenBaseInit === undefined || combatant.baseInit === tokenBaseInit)))
@@ -340,6 +361,24 @@ export function useBattleOrganizerTokenWatch({
                                 updated = true;
                             }
 
+                            let nextAbilityBoostLevel = combatant.abilityBoostLevel;
+                            if (metaAbilityBoostLevel !== undefined && metaAbilityBoostLevel !== combatant.abilityBoostLevel) {
+                                nextAbilityBoostLevel = metaAbilityBoostLevel;
+                                updated = true;
+                            }
+
+                            let nextAbilityBoostActive = combatant.abilityBoostActive;
+                            if (metaAbilityBoostActive !== undefined && metaAbilityBoostActive !== combatant.abilityBoostActive) {
+                                nextAbilityBoostActive = metaAbilityBoostActive;
+                                updated = true;
+                            }
+
+                            let nextAbilityChoiceIndex = combatant.abilityChoiceIndex;
+                            if (metaAbilityChoiceIndex !== undefined && metaAbilityChoiceIndex !== combatant.abilityChoiceIndex) {
+                                nextAbilityChoiceIndex = metaAbilityChoiceIndex;
+                                updated = true;
+                            }
+
                             if (combatant.isInPc) {
                                 updated = true;
                             }
@@ -365,6 +404,9 @@ export function useBattleOrganizerTokenWatch({
                                     activeTransformation: nextTrans,
                                     ability: nextAbility,
                                     abilityActive: nextAbilityActive,
+                                    abilityBoostLevel: nextAbilityBoostLevel,
+                                    abilityBoostActive: nextAbilityBoostActive,
+                                    abilityChoiceIndex: nextAbilityChoiceIndex,
                                     species: nextSpecies,
                                     tokenId: matchingItem.id,
                                     entityId: resolved.entityId || combatant.entityId,
@@ -473,7 +515,10 @@ export function useBattleOrganizerTokenWatch({
             const abilityChanged =
                 currState.identity.ability !== prevState.identity.ability ||
                 currState.identity.abilityActive !== prevState.identity.abilityActive ||
-                currState.identity.species !== prevState.identity.species;
+                currState.identity.species !== prevState.identity.species ||
+                currState.identity.abilityBoostLevel !== prevState.identity.abilityBoostLevel ||
+                currState.identity.abilityBoostActive !== prevState.identity.abilityBoostActive ||
+                currState.identity.abilityChoiceIndex !== prevState.identity.abilityChoiceIndex;
             if (
                 statusChanged ||
                 hpChanged ||
@@ -584,6 +629,9 @@ export function useBattleOrganizerTokenWatch({
                             let nextAbility = targetCombatant.ability;
                             let nextAbilityActive = targetCombatant.abilityActive;
                             let nextSpecies = targetCombatant.species;
+                            let nextAbilityBoostLevel = targetCombatant.abilityBoostLevel;
+                            let nextAbilityBoostActive = targetCombatant.abilityBoostActive;
+                            let nextAbilityChoiceIndex = targetCombatant.abilityChoiceIndex;
                             if (currState.identity.ability !== targetCombatant.ability) {
                                 nextAbility = currState.identity.ability;
                                 updated = true;
@@ -594,6 +642,18 @@ export function useBattleOrganizerTokenWatch({
                             }
                             if (currState.identity.species !== targetCombatant.species) {
                                 nextSpecies = currState.identity.species;
+                                updated = true;
+                            }
+                            if (currState.identity.abilityBoostLevel !== targetCombatant.abilityBoostLevel) {
+                                nextAbilityBoostLevel = currState.identity.abilityBoostLevel;
+                                updated = true;
+                            }
+                            if (currState.identity.abilityBoostActive !== targetCombatant.abilityBoostActive) {
+                                nextAbilityBoostActive = currState.identity.abilityBoostActive;
+                                updated = true;
+                            }
+                            if (currState.identity.abilityChoiceIndex !== targetCombatant.abilityChoiceIndex) {
+                                nextAbilityChoiceIndex = currState.identity.abilityChoiceIndex;
                                 updated = true;
                             }
 
@@ -613,6 +673,9 @@ export function useBattleOrganizerTokenWatch({
                                           clashUsed: nextClash,
                                           ability: nextAbility,
                                           abilityActive: nextAbilityActive,
+                                          abilityBoostLevel: nextAbilityBoostLevel,
+                                          abilityBoostActive: nextAbilityBoostActive,
+                                          abilityChoiceIndex: nextAbilityChoiceIndex,
                                           species: nextSpecies,
                                           gmHpBar: nextGmHpBar,
                                           gmHpText: nextGmHpText,

@@ -47,6 +47,8 @@ export interface CombatBonuses {
     dmgAbilityNames: string[];
     accSuccAbilityNames: string[];
     dmgSuccAbilityNames: string[];
+    defAbilityNames: string[];
+    spdAbilityNames: string[];
     highCritItemNames: string[];
     highCritPassiveNames: string[];
     highCritAbilityNames: string[];

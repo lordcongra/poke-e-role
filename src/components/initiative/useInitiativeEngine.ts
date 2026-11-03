@@ -136,6 +136,11 @@ export function useInitiativeEngine() {
         tokenImageUrl,
         storeIdentity?.nickname,
         storeIdentity?.species,
+        storeIdentity?.ability,
+        storeIdentity?.abilityActive,
+        storeIdentity?.abilityBoostActive,
+        storeIdentity?.abilityBoostLevel,
+        storeIdentity?.abilityChoiceIndex,
         inventory?.length,
         extraCategories?.length,
         combatants

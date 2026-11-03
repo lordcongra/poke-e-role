@@ -68,6 +68,9 @@ export interface CombatantRowData {
     abilityActive?: boolean;
     abilityTags?: string;
     abilityTargetIds?: string[];
+    abilityBoostLevel?: number;
+    abilityBoostActive?: boolean;
+    abilityChoiceIndex?: number;
     rank?: string;
     species?: string;
     isNPC?: boolean;

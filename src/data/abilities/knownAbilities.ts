@@ -341,17 +341,17 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     'Dark Aura': {
         name: 'Dark Aura',
-        tags: '[Dmg +2: Dark] [Target: All on Field]',
+        tags: '[Target: All on Field]',
         autoActive: true,
-        summary: 'Increases damage of Dark-type moves by 2 dice for all on field.',
-        benefitDisplay: '+2 Dark Dmg (Field)'
+        summary: 'Increases damage of Dark-type moves by 1 die for all on field (reversed by Aura Break).',
+        benefitDisplay: '+1 Dark Dmg (Field)'
     },
     'Fairy Aura': {
         name: 'Fairy Aura',
-        tags: '[Dmg +2: Fairy] [Target: All on Field]',
+        tags: '[Target: All on Field]',
         autoActive: true,
-        summary: 'Increases damage of Fairy-type moves by 2 dice for all on field.',
-        benefitDisplay: '+2 Fairy Dmg (Field)'
+        summary: 'Increases damage of Fairy-type moves by 1 die for all on field (reversed by Aura Break).',
+        benefitDisplay: '+1 Fairy Dmg (Field)'
     },
     Aerilate: {
         name: 'Aerilate',

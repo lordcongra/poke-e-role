@@ -754,13 +754,41 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                                     const updatedCombatants = round.combatants.map((c: any) => {
                                         const cTokenId = c.tokenId;
                                         const cName = (c.name || '').trim().toLowerCase();
+                                        const entityId = state.identity.entityId;
                                         const matches =
                                             (tokenId && cTokenId === tokenId) ||
+                                            (entityId && (c.entityId === entityId || c.id === entityId)) ||
                                             (nickname && cName === nickname) ||
                                             (species && cName === species);
-                                        if (matches && c.abilityActive !== targetActive) {
-                                            hasChanged = true;
-                                            return { ...c, abilityActive: targetActive };
+                                        if (matches) {
+                                            let combatantUpdated = false;
+                                            const updatedC = { ...c };
+                                            if (c.abilityActive !== targetActive) {
+                                                updatedC.abilityActive = targetActive;
+                                                combatantUpdated = true;
+                                            }
+                                            if (field === 'ability') {
+                                                if (c.ability !== newIdentity.ability) {
+                                                    updatedC.ability = newIdentity.ability;
+                                                    combatantUpdated = true;
+                                                }
+                                                if (c.abilityBoostActive) {
+                                                    updatedC.abilityBoostActive = false;
+                                                    combatantUpdated = true;
+                                                }
+                                                if (c.abilityBoostLevel) {
+                                                    updatedC.abilityBoostLevel = 0;
+                                                    combatantUpdated = true;
+                                                }
+                                                if (c.abilityChoiceIndex) {
+                                                    updatedC.abilityChoiceIndex = 0;
+                                                    combatantUpdated = true;
+                                                }
+                                            }
+                                            if (combatantUpdated) {
+                                                hasChanged = true;
+                                                return updatedC;
+                                            }
                                         }
                                         return c;
                                     });
@@ -770,6 +798,15 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                                 if (hasChanged) {
                                     boData.rounds = updatedRounds;
                                     localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+                                    if (OBR.isAvailable) {
+                                        OBR.broadcast
+                                            .sendMessage(
+                                                'pokerole-pmd-extension/battle-organizer-sync',
+                                                boData,
+                                                { destination: 'REMOTE' }
+                                            )
+                                            .catch(() => {});
+                                    }
                                 }
                             }
                         }
@@ -860,6 +897,83 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 const idx = Math.max(0, Number(value) || 0);
                 newIdentity.abilityChoiceIndex = idx;
                 updatesToSave['ability-choice-index'] = idx;
+            }
+
+            if (
+                field === 'abilityBoostActive' ||
+                field === 'abilityBoostLevel' ||
+                field === 'abilityChoiceIndex'
+            ) {
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    try {
+                        const raw = localStorage.getItem('pkr_battle_organizer_data');
+                        if (raw) {
+                            const boData = JSON.parse(raw);
+                            if (boData && Array.isArray(boData.rounds)) {
+                                let hasChanged = false;
+                                const tokenId = state.tokenId;
+                                const nickname = state.identity.nickname?.trim().toLowerCase();
+                                const species = state.identity.species?.trim().toLowerCase();
+                                const entityId = state.identity.entityId;
+
+                                const targetBoostActive = Boolean(newIdentity.abilityBoostActive);
+                                const targetBoostLevel = newIdentity.abilityBoostLevel ?? 0;
+                                const targetChoiceIndex = newIdentity.abilityChoiceIndex ?? 0;
+
+                                const updatedRounds = boData.rounds.map((round: any) => {
+                                    if (!round || !Array.isArray(round.combatants)) return round;
+                                    const updatedCombatants = round.combatants.map((c: any) => {
+                                        const cTokenId = c.tokenId;
+                                        const cName = (c.name || '').trim().toLowerCase();
+                                        const matches =
+                                            (tokenId && cTokenId === tokenId) ||
+                                            (entityId && (c.entityId === entityId || c.id === entityId)) ||
+                                            (nickname && cName === nickname) ||
+                                            (species && cName === species);
+                                        if (matches) {
+                                            let combatantUpdated = false;
+                                            const updatedC = { ...c };
+                                            if (c.abilityBoostActive !== targetBoostActive) {
+                                                updatedC.abilityBoostActive = targetBoostActive;
+                                                combatantUpdated = true;
+                                            }
+                                            if (c.abilityBoostLevel !== targetBoostLevel) {
+                                                updatedC.abilityBoostLevel = targetBoostLevel;
+                                                combatantUpdated = true;
+                                            }
+                                            if (c.abilityChoiceIndex !== targetChoiceIndex) {
+                                                updatedC.abilityChoiceIndex = targetChoiceIndex;
+                                                combatantUpdated = true;
+                                            }
+                                            if (combatantUpdated) {
+                                                hasChanged = true;
+                                                return updatedC;
+                                            }
+                                        }
+                                        return c;
+                                    });
+                                    return { ...round, combatants: updatedCombatants };
+                                });
+
+                                if (hasChanged) {
+                                    boData.rounds = updatedRounds;
+                                    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+                                    if (OBR.isAvailable) {
+                                        OBR.broadcast
+                                            .sendMessage(
+                                                'pokerole-pmd-extension/battle-organizer-sync',
+                                                boData,
+                                                { destination: 'REMOTE' }
+                                            )
+                                            .catch(() => {});
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('[IdentitySlice] Failed to sync ability boost/choice to battle organizer localStorage:', e);
+                    }
+                }
             }
 
             if (field === 'ruleset' || field === 'rank') {

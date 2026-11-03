@@ -14,7 +14,11 @@
         "format": "prettier --write .",
         "check": "tsc -b",
         "check:size": "node scripts/checkFileSizes.js",
-        "test:invariants": "npx tsx scripts/test_serialization_invariants.ts"
+        "test": "npm run test:invariants && npm run test:combat && npm run test:pc && npm run test:claims",
+        "test:invariants": "npx tsx scripts/test_serialization_invariants.ts",
+        "test:combat": "npx tsx scripts/test_combat_engine.ts",
+        "test:pc": "npx tsx scripts/test_pc_standalone_bridge.ts",
+        "test:claims": "npx tsx scripts/test_trainer_claims.ts"
     },
     "dependencies": {
         "@owlbear-rodeo/sdk": "^3.1.0",

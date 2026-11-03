@@ -42,14 +42,8 @@ export function resolveChoiceTags(desc: string, choiceIndex: number = 0): string
     });
 }
 
-export function parseCombatTags(
-    inventory: InventoryItem[],
-    extraCategories: ExtraCategory[],
-    move?: MoveData,
-    abilityText: string = '',
-    passives?: PassiveItem[]
-): CombatBonuses {
-    const bonuses: CombatBonuses = {
+export function createEmptyBonuses(): CombatBonuses {
+    return {
         stats: {},
         skills: {},
         def: 0,
@@ -98,10 +92,22 @@ export function parseCombatTags(
         dmgAbilityNames: [],
         accSuccAbilityNames: [],
         dmgSuccAbilityNames: [],
+        defAbilityNames: [],
+        spdAbilityNames: [],
         highCritItemNames: [],
         highCritPassiveNames: [],
         highCritAbilityNames: []
     };
+}
+
+export function parseCombatTags(
+    inventory: InventoryItem[],
+    extraCategories: ExtraCategory[],
+    move?: MoveData,
+    abilityText: string = '',
+    passives?: PassiveItem[]
+): CombatBonuses {
+    const bonuses: CombatBonuses = createEmptyBonuses();
 
     const state = useCharacterStore.getState();
     const hpCurr = Number(state.health.hpCurr) || 0;
@@ -439,7 +445,7 @@ export function parseCombatTags(
 
         extractStats(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive, move);
         extractSkills(description, escapedSkills, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive, move);
-        extractDefenses(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive);
+        extractDefenses(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive, item.kind, name);
         extractInitiativeAndChance(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive);
         extractDamage(
             description,

@@ -2594,7 +2594,7 @@ await runTest('abilityTargeting: serialization, hydration, stance resolution, an
                         isPlayerSide: false,
                         isNPC: true,
                         rank: 'Starter',
-                        abilityTargetIds: undefined // Unconfigured
+                        abilityTargetIds: undefined as string[] | undefined // Unconfigured
                     },
                     {
                         id: 'foe-1',
@@ -3053,6 +3053,7 @@ await runTest('abilityTargeting: syncCombatantSentToPc prunes targets, sets isIn
                         tokenId: 'tok-vulpix',
                         isInPc: false,
                         abilityActive: true,
+                        abilityBoostActive: true,
                         abilityTargetIds: ['c-ninetales']
                     },
                     {
@@ -3086,6 +3087,7 @@ await runTest('abilityTargeting: syncCombatantSentToPc prunes targets, sets isIn
     assert.ok(vulpix, 'Vulpix remains in the Battle Organizer');
     assert.equal(vulpix.isInPc, true, 'Vulpix has isInPc: true');
     assert.equal(vulpix.abilityActive, false, 'Vulpix has abilityActive: false');
+    assert.equal(vulpix.abilityBoostActive, false, 'Vulpix has abilityBoostActive: false');
     assert.deepEqual(vulpix.abilityTargetIds, [], 'Vulpix has abilityTargetIds reset to empty');
 
     // 3. Does NOT resurrect targeting when syncCombatantSentToMap is subsequently called
@@ -3101,6 +3103,49 @@ await runTest('abilityTargeting: syncCombatantSentToPc prunes targets, sets isIn
     assert.equal(vulpixAfterMap.isInPc, false, 'Vulpix isInPc reset to false after sent to map');
     assert.deepEqual(ninetalesAfterMap.abilityTargetIds, ['c-other'], 'Targeting is NOT resurrected on Ninetales');
     assert.deepEqual(otherAfterMap.abilityTargetIds, [], 'Targeting is NOT resurrected on Oddish');
+});
+
+await runTest('battleOrganizer: combatants are never automatically deleted from organizer when map tokens are deleted', async () => {
+    const boData = {
+        rounds: [
+            {
+                roundNumber: 1,
+                combatants: [
+                    {
+                        id: 'c-wild-pika',
+                        name: 'Wild Pikachu',
+                        tokenId: 'tok-pika',
+                        isNPC: true,
+                        ability: 'Static',
+                        abilityActive: true,
+                        abilityBoostLevel: 2,
+                        abilityBoostActive: true,
+                        abilityChoiceIndex: 1
+                    },
+                    {
+                        id: 'c-trainer-mon',
+                        name: 'Charizard',
+                        tokenId: 'tok-charizard',
+                        isNPC: false,
+                        ability: 'Blaze',
+                        abilityActive: true
+                    }
+                ]
+            }
+        ],
+        activeRoundIndex: 0
+    };
+    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+
+    const raw = localStorage.getItem('pkr_battle_organizer_data');
+    const parsed = JSON.parse(raw || '{}');
+    assert.equal(parsed.rounds[0].combatants.length, 2, 'All combatants remain preserved in round 1');
+    const pika = parsed.rounds[0].combatants.find((c: any) => c.id === 'c-wild-pika');
+    assert.ok(pika, 'NPC combatant remains in organizer');
+    assert.equal(pika.abilityBoostLevel, 2, 'abilityBoostLevel preserved');
+    assert.equal(pika.abilityBoostActive, true, 'abilityBoostActive preserved');
+    assert.equal(pika.abilityChoiceIndex, 1, 'abilityChoiceIndex preserved');
+    assert.ok(parsed.rounds[0].combatants.some((c: any) => c.id === 'c-trainer-mon'), 'Player combatant remains in organizer');
 });
 
 await runTest('abilityTargeting: Commander Dondozo buffs and Ruin mutual immunity', async () => {
@@ -3252,6 +3297,8 @@ await runTest('abilityTargeting: Commander Dondozo buffs and Ruin mutual immunit
         dmgAbilityNames: [],
         accSuccAbilityNames: [],
         dmgSuccAbilityNames: [],
+        defAbilityNames: [],
+        spdAbilityNames: [],
         highCritItemNames: [],
         highCritPassiveNames: [],
         highCritAbilityNames: []

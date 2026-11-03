@@ -151,11 +151,16 @@ export function extractStats(
 
         if (move) {
             const acc1Clean = (move.acc1 || '').toLowerCase().trim();
+            const acc2Clean = (move.acc2 || '').toLowerCase().trim();
             const dmg1Clean = (move.dmg1 || '').toLowerCase().trim();
             const acc1Short = map[acc1Clean] || acc1Clean;
+            const acc2Short = map[acc2Clean] || acc2Clean;
             const dmg1Short = map[dmg1Clean] || dmg1Clean;
 
             if (acc1Clean && (statisticKey === acc1Short || rawStatistic === acc1Clean)) {
+                triggers.accuracy = true;
+            }
+            if (acc2Clean && (statisticKey === acc2Short || rawStatistic === acc2Clean)) {
                 triggers.accuracy = true;
             }
             if (dmg1Clean && (statisticKey === dmg1Short || rawStatistic === dmg1Clean)) {
@@ -206,14 +211,24 @@ export function extractDefenses(
     isHalfHp: boolean,
     boostLevel: number = 1,
     maxBoost: number = 1,
-    sourceBoostActive?: boolean
+    sourceBoostActive?: boolean,
+    kind: 'item' | 'passive' | 'ability' | 'move' | 'form' | 'status' = 'item',
+    sourceName: string = ''
 ) {
     const defenseMatches = description.matchAll(/\[\s*(?:def|defense)\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of defenseMatches) {
         if (!checkCondition(match[2], isHalfHp, sourceBoostActive)) continue;
         const mult = getBoostMultiplier(match[2], boostLevel, maxBoost);
-        bonuses.def += safeParseInt(match[1]) * mult;
+        const val = safeParseInt(match[1]) * mult;
+        bonuses.def += val;
         triggers.general = true;
+        if (kind === 'ability' && val !== 0) {
+            const sign = val > 0 ? `+${val}` : `${val}`;
+            const cleanSource = (sourceName || '').trim();
+            const isGeneric = !cleanSource || ['item', 'passive', 'ability'].includes(cleanSource.toLowerCase());
+            const label = !isGeneric ? `${cleanSource} (${sign} Def)` : `${sign} Def`;
+            bonuses.defAbilityNames.push(label);
+        }
     }
 
     const specialDefenseMatches = description.matchAll(
@@ -222,8 +237,16 @@ export function extractDefenses(
     for (const match of specialDefenseMatches) {
         if (!checkCondition(match[2], isHalfHp, sourceBoostActive)) continue;
         const mult = getBoostMultiplier(match[2], boostLevel, maxBoost);
-        bonuses.spd += safeParseInt(match[1]) * mult;
+        const val = safeParseInt(match[1]) * mult;
+        bonuses.spd += val;
         triggers.general = true;
+        if (kind === 'ability' && val !== 0) {
+            const sign = val > 0 ? `+${val}` : `${val}`;
+            const cleanSource = (sourceName || '').trim();
+            const isGeneric = !cleanSource || ['item', 'passive', 'ability'].includes(cleanSource.toLowerCase());
+            const label = !isGeneric ? `${cleanSource} (${sign} Sp. Def)` : `${sign} Sp. Def`;
+            bonuses.spdAbilityNames.push(label);
+        }
     }
 
     const hpMatches = description.matchAll(/\[\s*(?:max\s+)?hp\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);

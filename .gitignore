@@ -32,3 +32,4 @@ AGENTS.md
 
 # Local maintenance scripts
 scripts/checkFileSizes.js
+scripts/test_ui_interactions.js

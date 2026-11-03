@@ -129,7 +129,7 @@ export const PcSheetModal: React.FC<PcSheetModalProps> = ({
                                     onChange={(e) => handleSelectEntity(e.target.value)}
                                 >
                                     {allSummaries.map((s, i) => (
-                                        <option key={s.entityId} value={s.entityId}>
+                                        <option key={s.entityId || `summary-${i}`} value={s.entityId}>
                                             {s.rank === 'Trainer' || s.fullMetadata?.mode === 'Trainer'
                                                 ? `${s.name} (Trainer)`
                                                 : s.name || s.species || `Pokémon ${i + 1}`}

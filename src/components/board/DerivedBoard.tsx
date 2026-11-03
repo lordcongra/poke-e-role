@@ -127,6 +127,18 @@ export function DerivedBoard() {
     const sdefTotal = calculateSDefTotal(fullState, inventoryModifiers);
     const initiative = calculateBaseInitiative(fullState, inventoryModifiers);
 
+    const alertSkillTotal = calculateSkillTotal(Skill.ALERT, fullState, inventoryModifiers);
+    const rankInitBonus = getRankBonusStats(fullState.identity.rank).init;
+    const initFactors: string[] = [`Dex: ${dexTotal}`, `Alert: ${alertSkillTotal}`];
+    if (rankInitBonus > 0) {
+        initFactors.push(`Master/Champion Rank (+${rankInitBonus} Init)`);
+    }
+    const initAbilities = (inventoryModifiers.abilityNames || []).filter((a) => /\b(?:init|dex|alert)\b/i.test(a));
+    for (const a of Array.from(new Set(initAbilities))) {
+        initFactors.push(a.startsWith('Ability:') ? a : `Ability: ${a}`);
+    }
+    const initiativeLabel = `Initiative [${initFactors.join(' | ')}]`;
+
     const rankSkillBonus = getRankBonusStats(fullState.identity.rank).skillDice;
     const clashPhysical = strTotal + calculateSkillTotal(Skill.CLASH, fullState, inventoryModifiers) + rankSkillBonus;
     const clashSpecial = speTotal + calculateSkillTotal(Skill.CLASH, fullState, inventoryModifiers) + rankSkillBonus;
@@ -264,7 +276,7 @@ export function DerivedBoard() {
                                 <button
                                     className="action-button action-button--dark derived-board__roll-btn text-theme-header"
                                     onClick={() =>
-                                        rollDicePlus(`1d6+${initiative}`, 'Initiative', 'init', String(initiative))
+                                        rollDicePlus(`1d6+${initiative}`, initiativeLabel, 'init', String(initiative))
                                     }
                                 >
                                     <Dices size={16} />

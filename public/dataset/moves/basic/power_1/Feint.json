@@ -12,6 +12,7 @@
     "_id": "feint",
     "Attributes": {
         "IgnoreShield": true,
+        "Reaction": "6",
         "LateReaction": "1"
     },
     "AddedEffects": {},

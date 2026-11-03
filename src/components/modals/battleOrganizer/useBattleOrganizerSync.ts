@@ -451,6 +451,32 @@ export function useBattleOrganizerSync({
                             const { hpCurr, hpMax, willCurr, willMax, tempHp, tempWill, activeTransformation } =
                                 parseHealthAndWillFromMetadata(meta);
 
+                            const stateObj = (meta.state || meta) as Record<string, unknown>;
+                            const identityObj = (stateObj?.identity || meta.identity || {}) as Record<string, unknown>;
+                            const metaAbility = String(identityObj.ability || meta.ability || '');
+                            const metaAbilityActive =
+                                meta['ability-active'] !== undefined
+                                    ? Boolean(meta['ability-active'])
+                                    : identityObj.abilityActive !== false;
+                            const metaAbilityBoostLevel =
+                                meta['ability-boost-level'] !== undefined
+                                    ? Number(meta['ability-boost-level'])
+                                    : typeof identityObj.abilityBoostLevel === 'number'
+                                      ? identityObj.abilityBoostLevel
+                                      : undefined;
+                            const metaAbilityBoostActive =
+                                meta['ability-boost-active'] !== undefined
+                                    ? Boolean(meta['ability-boost-active'])
+                                    : typeof identityObj.abilityBoostActive === 'boolean'
+                                      ? identityObj.abilityBoostActive
+                                      : undefined;
+                            const metaAbilityChoiceIndex =
+                                meta['ability-choice-index'] !== undefined
+                                    ? Number(meta['ability-choice-index'])
+                                    : typeof identityObj.abilityChoiceIndex === 'number'
+                                      ? identityObj.abilityChoiceIndex
+                                      : undefined;
+
                             let updated = false;
 
                             let nextName = combatant.name;
@@ -519,6 +545,36 @@ export function useBattleOrganizerSync({
                                 }
                             }
 
+                            let nextAbility = combatant.ability;
+                            if (metaAbility && metaAbility !== combatant.ability) {
+                                nextAbility = metaAbility;
+                                updated = true;
+                            }
+
+                            let nextAbilityActive = combatant.abilityActive;
+                            if (metaAbilityActive !== combatant.abilityActive) {
+                                nextAbilityActive = metaAbilityActive;
+                                updated = true;
+                            }
+
+                            let nextAbilityBoostLevel = combatant.abilityBoostLevel;
+                            if (metaAbilityBoostLevel !== undefined && metaAbilityBoostLevel !== combatant.abilityBoostLevel) {
+                                nextAbilityBoostLevel = metaAbilityBoostLevel;
+                                updated = true;
+                            }
+
+                            let nextAbilityBoostActive = combatant.abilityBoostActive;
+                            if (metaAbilityBoostActive !== undefined && metaAbilityBoostActive !== combatant.abilityBoostActive) {
+                                nextAbilityBoostActive = metaAbilityBoostActive;
+                                updated = true;
+                            }
+
+                            let nextAbilityChoiceIndex = combatant.abilityChoiceIndex;
+                            if (metaAbilityChoiceIndex !== undefined && metaAbilityChoiceIndex !== combatant.abilityChoiceIndex) {
+                                nextAbilityChoiceIndex = metaAbilityChoiceIndex;
+                                updated = true;
+                            }
+
                             if (updated || (!combatant.tokenId && matchingChar.id)) {
                                 hasChanges = true;
                                 return {
@@ -534,6 +590,11 @@ export function useBattleOrganizerSync({
                                     tempHp,
                                     tempWill,
                                     activeTransformation: nextTrans,
+                                    ability: nextAbility,
+                                    abilityActive: nextAbilityActive,
+                                    abilityBoostLevel: nextAbilityBoostLevel,
+                                    abilityBoostActive: nextAbilityBoostActive,
+                                    abilityChoiceIndex: nextAbilityChoiceIndex,
                                     tokenId: matchingChar.id,
                                     evadeUsed: nextEvade,
                                     clashUsed: nextClash

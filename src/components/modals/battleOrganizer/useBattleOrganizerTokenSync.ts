@@ -186,6 +186,8 @@ export function useBattleOrganizerTokenSync({
                 syncSide?: boolean;
                 syncAbilityActive?: boolean;
                 syncAbilityTargets?: boolean;
+                syncAbilityBoost?: boolean;
+                syncAbilityChoice?: boolean;
             }
         ) => {
             try {
@@ -280,6 +282,21 @@ export function useBattleOrganizerTokenSync({
                         : '';
                 }
 
+                if (syncOptions.syncAbilityBoost || combatant.abilityBoostActive !== undefined || combatant.abilityBoostLevel !== undefined) {
+                    if (combatant.abilityBoostActive !== undefined) {
+                        updates['ability-boost-active'] = Boolean(combatant.abilityBoostActive);
+                    }
+                    if (combatant.abilityBoostLevel !== undefined) {
+                        updates['ability-boost-level'] = combatant.abilityBoostLevel;
+                    }
+                }
+
+                if (syncOptions.syncAbilityChoice || combatant.abilityChoiceIndex !== undefined) {
+                    if (combatant.abilityChoiceIndex !== undefined) {
+                        updates['ability-choice-index'] = combatant.abilityChoiceIndex;
+                    }
+                }
+
                 if (Object.keys(updates).length === 0) return;
 
                 // Live in-memory update for current window's active character store if it matches
@@ -293,6 +310,17 @@ export function useBattleOrganizerTokenSync({
                     }
                     if (syncOptions.syncAbilityTargets) {
                         globalStore.setIdentity('abilityTargetIds' as any, combatant.abilityTargetIds);
+                    }
+                    if (syncOptions.syncAbilityBoost) {
+                        if (combatant.abilityBoostActive !== undefined) {
+                            globalStore.setIdentity('abilityBoostActive', Boolean(combatant.abilityBoostActive));
+                        }
+                        if (combatant.abilityBoostLevel !== undefined) {
+                            globalStore.setIdentity('abilityBoostLevel', combatant.abilityBoostLevel);
+                        }
+                    }
+                    if (syncOptions.syncAbilityChoice && combatant.abilityChoiceIndex !== undefined) {
+                        globalStore.setIdentity('abilityChoiceIndex', combatant.abilityChoiceIndex);
                     }
                     if (combatant.isPlayerSide !== undefined) {
                         globalStore.setIdentity('isPlayerSide' as any, Boolean(combatant.isPlayerSide));

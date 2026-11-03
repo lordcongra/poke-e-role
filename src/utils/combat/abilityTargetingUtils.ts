@@ -178,6 +178,10 @@ export async function syncCombatantSentToPc(entityId: string, pcData?: PcStorage
                         c.abilityActive = false;
                         boChanged = true;
                     }
+                    if (c.abilityBoostActive) {
+                        c.abilityBoostActive = false;
+                        boChanged = true;
+                    }
                     if (c.abilityTargetIds && c.abilityTargetIds.length > 0) {
                         c.abilityTargetIds = [];
                         boChanged = true;
@@ -241,6 +245,7 @@ export async function syncCombatantSentToPc(entityId: string, pcData?: PcStorage
 
                 if (isActiveDeposited) {
                     activeChar.setIdentity('abilityActive', false);
+                    activeChar.setIdentity('abilityBoostActive', false);
                     activeChar.setIdentity('abilityTargetIds', []);
                 } else {
                     // Directly inspect and prune active character's abilityTargetIds

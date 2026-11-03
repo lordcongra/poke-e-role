@@ -5,7 +5,7 @@ import { PressureDrainModal } from '../combat/PressureDrainModal';
 import { CuriousMedicineModal } from '../combat/CuriousMedicineModal';
 import { AbilityTargetSelectorModal } from '../combat/AbilityTargetSelectorModal';
 import { getAbilityTargetStance, getAbilityMaxTargets } from '../../../utils/combat/abilityTargetingUtils';
-import { getKnownAbility } from '../../../data/abilities/knownAbilities';
+import { getKnownAbility, getMaxBoost } from '../../../data/abilities/knownAbilities';
 
 export interface CombatantRowToolsProps {
     combatant: CombatantRowData;
@@ -40,6 +40,67 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
     const hasTargetableAbility = Boolean(combatant.ability && getAbilityTargetStance(combatant.ability, combatantTags) !== 'none');
     const targetCount = combatant.abilityTargetIds?.length || 0;
     const maxTargets = getAbilityMaxTargets(combatant.ability || '', combatantTags, combatant.rank);
+
+    // Choice tags handling
+    const choiceMatch = combatantTags.match(/\[\s*Choice\s*:\s*([^\]]+)\]/i);
+    const choiceOptions = choiceMatch ? choiceMatch[1].split('|').map((s) => s.trim()).filter(Boolean) : [];
+    const hasChoice = choiceOptions.length > 0;
+    const choiceIndex = combatant.abilityChoiceIndex ?? 0;
+    const activeChoiceIndex = hasChoice
+        ? ((choiceIndex % choiceOptions.length) + choiceOptions.length) % choiceOptions.length
+        : 0;
+    const activeChoice = hasChoice ? choiceOptions[activeChoiceIndex] : '';
+
+    const handleCycleChoice = () => {
+        if (!hasChoice) return;
+        const next = (activeChoiceIndex + 1) % choiceOptions.length;
+        onUpdate?.({ ...combatant, abilityChoiceIndex: next });
+    };
+
+    // Boost tags handling
+    const maxBoost = getMaxBoost(combatant.ability, combatantTags);
+    const hasBoostTag = /@\s*(?:stacking\s+)?boost|@\s*stacks/i.test(combatantTags) || maxBoost > 1;
+    const isBoostActive = combatant.abilityBoostActive ?? false;
+    const effectiveBoostLevel = isBoostActive ? Math.max(1, combatant.abilityBoostLevel ?? 1) : 0;
+
+    const handleCycleBoost = () => {
+        if (maxBoost <= 1) {
+            const nextActive = !isBoostActive;
+            onUpdate?.({
+                ...combatant,
+                abilityBoostActive: nextActive,
+                abilityBoostLevel: nextActive ? 1 : 0
+            });
+        } else {
+            const nextLevel = effectiveBoostLevel >= maxBoost ? 0 : effectiveBoostLevel + 1;
+            onUpdate?.({
+                ...combatant,
+                abilityBoostActive: nextLevel > 0,
+                abilityBoostLevel: nextLevel
+            });
+        }
+    };
+
+    const handleStepBoost = (delta: number) => {
+        const nextLevel = Math.max(0, Math.min(maxBoost, effectiveBoostLevel + delta));
+        onUpdate?.({
+            ...combatant,
+            abilityBoostActive: nextLevel > 0,
+            abilityBoostLevel: nextLevel
+        });
+    };
+
+    // Support toggling abilityActive for abilities that have active effects/benefits, even if not targetable
+    const hasActiveAbility = Boolean(
+        combatant.ability?.trim() &&
+        (hasTargetableAbility ||
+         hasBoostTag ||
+         hasChoice ||
+         hasPressure ||
+         hasCuriousMedicine ||
+         Boolean(combatantTags) ||
+         Boolean(getKnownAbility(combatant.ability)))
+    );
 
     return (
         <td className="bo-cell bo-cell--tools">
@@ -110,7 +171,7 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
                         <RotateCcw size={12} />
                     </button>
                 )}
-                {hasTargetableAbility && (
+                {hasActiveAbility && (
                     <button
                         type="button"
                         className={`bo-reaction-toggle bo-reaction-toggle--ability-active ${combatant.abilityActive !== false ? 'bo-reaction-toggle--active' : ''}`}
@@ -118,12 +179,82 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
                         title={
                             isLocked
                                 ? 'Ability Active: Locked by GM'
-                                : `${combatant.ability}: ${combatant.abilityActive !== false ? 'Active (Click to disable aura)' : 'Inactive (Click to enable aura)'}`
+                                : `${combatant.ability}: ${combatant.abilityActive !== false ? 'Active (Click to turn OFF)' : 'Inactive (Click to turn ON)'}`
                         }
                         aria-label="Toggle Ability Active"
                         disabled={isLocked}
                     >
                         <Power size={12} />
+                    </button>
+                )}
+                {hasChoice && (
+                    <button
+                        type="button"
+                        className="bo-reaction-toggle bo-reaction-toggle--choice"
+                        onClick={handleCycleChoice}
+                        title={
+                            isLocked
+                                ? `Choice: ${activeChoice} (Locked by GM)`
+                                : `Choice: ${activeChoice} (Click to cycle choice)`
+                        }
+                        aria-label="Cycle Ability Choice"
+                        disabled={isLocked}
+                    >
+                        {activeChoice}
+                    </button>
+                )}
+                {hasBoostTag && maxBoost > 1 && (
+                    <div className="bo-boost-stepper">
+                        <button
+                            type="button"
+                            className="bo-boost-step-btn"
+                            disabled={isLocked || effectiveBoostLevel <= 0}
+                            onClick={() => handleStepBoost(-1)}
+                            title="Decrease boost stack (-1)"
+                            aria-label="Decrease boost stack"
+                        >
+                            -
+                        </button>
+                        <button
+                            type="button"
+                            className={`bo-reaction-toggle bo-reaction-toggle--boost ${effectiveBoostLevel > 0 ? 'bo-reaction-toggle--boost-active' : ''}`}
+                            onClick={handleCycleBoost}
+                            title={
+                                isLocked
+                                    ? `Boost +${effectiveBoostLevel}/${maxBoost} (Locked by GM)`
+                                    : `Boost ${effectiveBoostLevel > 0 ? `+${effectiveBoostLevel}` : 'OFF'} (${effectiveBoostLevel}/${maxBoost} - Click to cycle, or use +/-)`
+                            }
+                            aria-label="Cycle Ability Boost"
+                            disabled={isLocked}
+                        >
+                            {effectiveBoostLevel > 0 ? `+${effectiveBoostLevel}` : '0'}
+                        </button>
+                        <button
+                            type="button"
+                            className="bo-boost-step-btn"
+                            disabled={isLocked || effectiveBoostLevel >= maxBoost}
+                            onClick={() => handleStepBoost(1)}
+                            title="Increase boost stack (+1)"
+                            aria-label="Increase boost stack"
+                        >
+                            +
+                        </button>
+                    </div>
+                )}
+                {hasBoostTag && maxBoost <= 1 && (
+                    <button
+                        type="button"
+                        className={`bo-reaction-toggle bo-reaction-toggle--boost ${isBoostActive ? 'bo-reaction-toggle--boost-active' : ''}`}
+                        onClick={handleCycleBoost}
+                        title={
+                            isLocked
+                                ? `Boost: ${isBoostActive ? 'ON' : 'OFF'} (Locked by GM)`
+                                : `Boost: ${isBoostActive ? 'ON (Click to turn OFF)' : 'OFF (Click to turn ON)'}`
+                        }
+                        aria-label="Toggle Ability Boost"
+                        disabled={isLocked}
+                    >
+                        {isBoostActive ? 'Bst ON' : 'Bst OFF'}
                     </button>
                 )}
                 {hasTargetableAbility && (

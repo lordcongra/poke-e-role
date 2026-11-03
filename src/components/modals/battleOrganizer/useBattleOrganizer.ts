@@ -190,6 +190,11 @@ export function useBattleOrganizer() {
                 const abilityActiveChanged = prevCombatant.abilityActive !== updated.abilityActive;
                 const abilityTargetsChanged =
                     JSON.stringify(prevCombatant.abilityTargetIds) !== JSON.stringify(updated.abilityTargetIds);
+                const abilityBoostChanged =
+                    prevCombatant.abilityBoostActive !== updated.abilityBoostActive ||
+                    prevCombatant.abilityBoostLevel !== updated.abilityBoostLevel;
+                const abilityChoiceChanged =
+                    prevCombatant.abilityChoiceIndex !== updated.abilityChoiceIndex;
 
                 if (
                     statusChanged ||
@@ -201,7 +206,9 @@ export function useBattleOrganizer() {
                     initiativeChanged ||
                     sideChanged ||
                     abilityActiveChanged ||
-                    abilityTargetsChanged
+                    abilityTargetsChanged ||
+                    abilityBoostChanged ||
+                    abilityChoiceChanged
                 ) {
                     syncCombatantToToken(updated, {
                         syncStatus: statusChanged,
@@ -213,7 +220,9 @@ export function useBattleOrganizer() {
                         syncInitiative: initiativeChanged,
                         syncSide: sideChanged,
                         syncAbilityActive: abilityActiveChanged,
-                        syncAbilityTargets: abilityTargetsChanged
+                        syncAbilityTargets: abilityTargetsChanged,
+                        syncAbilityBoost: abilityBoostChanged,
+                        syncAbilityChoice: abilityChoiceChanged
                     });
                 }
             }
