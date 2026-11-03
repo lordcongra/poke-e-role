@@ -9,7 +9,7 @@ import {
     isCombatantInPc,
     isTargetCombatantActiveNeutralizingGas,
     RUIN_ABILITIES,
-    resolveTargetHeldItemInfo
+    resolveTargetHeldItemInfoAsync
 } from '../../../utils/combat/abilityTargetingUtils';
 import { addRollLogEntry } from '../../../utils/combat/diceRoller';
 import { resolveCharacterSide } from '../../../utils/combat/combatantSideUtils';
@@ -351,7 +351,7 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
         if (abilityName.toLowerCase().trim() === 'frisk' && selectedIds.length > 0) {
             try {
                 const targetId = selectedIds[0];
-                const { targetName, heldItems } = resolveTargetHeldItemInfo(targetId);
+                const { targetName, heldItems } = await resolveTargetHeldItemInfoAsync(targetId);
                 const sourceIcon = sourceCombatant?.image || charIdentity.tokenImageUrl || '';
                 const resultMsg = (heldItems && heldItems !== 'None')
                     ? `${sourceName} frisked ${targetName} and identified their held item: **${heldItems}**!`

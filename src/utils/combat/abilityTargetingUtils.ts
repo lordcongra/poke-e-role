@@ -10,6 +10,7 @@ import { getKnownAbility } from '../../data/abilities/knownAbilities';
 import { parseHeldItemsFromMetadata } from '../../components/modals/battleOrganizer/battleOrganizerUtils';
 import { EXTENSION_ID } from '../../hooks/owlbearSync/owlbearSyncConstants';
 import { STATS_META_ID } from '../graphics/graphicsManager';
+import { extractCharacterName } from './initiativeHelpers';
 
 export { RANK_TARGET_LIMITS, getMaxTargetsForRank };
 
@@ -1099,17 +1100,18 @@ export function resolveTargetHeldItemInfo(
                 if (activeRound?.combatants) {
                     const combatant = activeRound.combatants.find((c) => matchesTarget(c, targetId));
                     if (combatant) {
-                        fallbackTargetName = combatant.name || targetId;
+                        const combatantMeta = (combatant as { metadata?: Record<string, unknown> }).metadata;
+                        fallbackTargetName = combatantMeta
+                            ? extractCharacterName(combatantMeta, combatant.name || targetId)
+                            : (combatant.name || targetId);
                         if (combatant.heldItem !== undefined) {
                             const trimmed = combatant.heldItem.trim();
                             if (trimmed) {
                                 return { targetName: fallbackTargetName, heldItems: trimmed };
                             }
                         }
-                        if ((combatant as unknown as Record<string, unknown>).metadata) {
-                            const parsed = parseHeldItemsFromMetadata(
-                                (combatant as unknown as Record<string, unknown>).metadata as Record<string, unknown>
-                            );
+                        if (combatantMeta) {
+                            const parsed = parseHeldItemsFromMetadata(combatantMeta);
                             if (parsed) {
                                 return { targetName: fallbackTargetName, heldItems: parsed };
                             }
@@ -1239,15 +1241,9 @@ export async function resolveTargetHeldItemInfoAsync(
                 const stateObj = (rawMeta?.state || rawMeta) as Record<string, unknown> | undefined;
                 const identityObj = (stateObj?.identity || rawMeta?.identity || {}) as Record<string, unknown>;
 
-                const candName = String(
-                    rawMeta?.name ||
-                    rawMeta?.nickname ||
-                    rawMeta?.species ||
-                    identityObj.nickname ||
-                    identityObj.species ||
-                    identityObj.name ||
-                    item.name ||
-                    ''
+                const candName = extractCharacterName(
+                    (rawMeta || item.metadata) as Record<string, unknown>,
+                    item.name || ''
                 );
                 const candId = String(rawMeta?.id || rawMeta?.entityId || identityObj.entityId || item.id || '');
                 const candEntityId = String(rawMeta?.entityId || identityObj.entityId || '');
@@ -1279,9 +1275,11 @@ export async function resolveTargetHeldItemInfoAsync(
     const fallback = resolveTargetHeldItemInfo(targetId, resolvedChar);
     return {
         targetName:
-            fallback.targetName && fallback.targetName !== targetId
-                ? fallback.targetName
-                : sceneTargetName || fallback.targetName || targetId,
+            sceneTargetName && sceneTargetName !== targetId
+                ? sceneTargetName
+                : fallback.targetName && fallback.targetName !== targetId
+                  ? fallback.targetName
+                  : targetId,
         heldItems: fallback.heldItems
     };
 }

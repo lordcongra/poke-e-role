@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import OBR from '@owlbear-rodeo/sdk';
 import {
     getAbilityTargetStance,
     getAbilityMaxTargets,
@@ -6,7 +7,8 @@ import {
     isCombatantInPc,
     syncCombatantSentToMap,
     syncCombatantSentToPc,
-    resolveTargetHeldItemInfo
+    resolveTargetHeldItemInfo,
+    resolveTargetHeldItemInfoAsync
 } from '../abilityTargetingUtils';
 import { resolveChoiceTags } from '../../tagParser/parseCombatTags';
 import { flattenStateToMetadata } from '../../sync/flattenStateToMetadata';
@@ -27,6 +29,7 @@ import type {
     BattleRoundData,
     BattlefieldData
 } from '../../../types/battleOrganizerTypes';
+import type { PcPokemonSummary, PcStorageData } from '../../../types/pcStorageTypes';
 
 describe('Ability Targeting System', () => {
     beforeEach(() => {
@@ -1342,6 +1345,314 @@ describe('Ability Targeting System', () => {
             const resolvedUnknown = resolveTargetHeldItemInfo('non-existent');
             expect(resolvedUnknown.targetName).toBe('non-existent');
             expect(resolvedUnknown.heldItems).toBe('None');
+        });
+
+        it('resolveTargetHeldItemInfo falls through when Battle Organizer heldItem is empty string', () => {
+            const boData: BattleOrganizerState = {
+                rounds: [
+                    {
+                        id: 'round-1',
+                        roundNumber: 1,
+                        endOfRoundEffects: '',
+                        combatants: [
+                            {
+                                id: 'foe-eevee',
+                                name: 'Eevee',
+                                heldItem: '',
+                                status: '',
+                                evadeUsed: false,
+                                clashUsed: false,
+                                initiative: '10',
+                                actions: [
+                                    { text: '', status: 'none' },
+                                    { text: '', status: 'none' },
+                                    { text: '', status: 'none' },
+                                    { text: '', status: 'none' },
+                                    { text: '', status: 'none' }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                activeRoundIndex: 0,
+                battlefield: createDefaultBattlefield()
+            };
+            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+
+            const testState = createTestCharacterState();
+            testState.pcData = {
+                campaigns: {},
+                pokemonSummaries: {
+                    'foe-eevee': {
+                        entityId: 'foe-eevee',
+                        name: 'Eevee',
+                        species: 'Eevee',
+                        heldItem: 'Silk Scarf',
+                        level: 5,
+                        boxNumber: 1,
+                        slotIndex: 0
+                    } as unknown as PcPokemonSummary
+                }
+            } as unknown as PcStorageData;
+
+            const result = resolveTargetHeldItemInfo('foe-eevee', testState);
+            expect(result.targetName).toBe('Eevee');
+            expect(result.heldItems).toBe('Silk Scarf');
+        });
+
+        it('resolveTargetHeldItemInfoAsync resolves equipped bag items from live OBR scene tokens without Battle Organizer', async () => {
+            localStorage.removeItem('pkr_battle_organizer_data');
+
+            const originalIsAvailable = OBR.isAvailable;
+            const originalGetItems = OBR.scene?.items?.getItems;
+
+            try {
+                Object.defineProperty(OBR, 'isAvailable', { value: true, configurable: true, writable: true });
+                const mockToken = {
+                    id: 'token-growlithe-1',
+                    layer: 'CHARACTER',
+                    name: 'Growlithe',
+                    metadata: {
+                        'pokerole-extension/stats': {
+                            name: 'Growlithe',
+                            'inv-data': JSON.stringify([
+                                { name: 'Charcoal', active: true },
+                                { name: 'Potion', active: false }
+                            ])
+                        }
+                    }
+                };
+
+                if (!OBR.scene) (OBR as unknown as Record<string, unknown>).scene = {};
+                if (!OBR.scene.items) (OBR.scene as unknown as Record<string, unknown>).items = {};
+                (OBR.scene.items as unknown as Record<string, unknown>).getItems = vi.fn().mockResolvedValue([mockToken]);
+
+                const result = await resolveTargetHeldItemInfoAsync('token-growlithe-1');
+                expect(result.targetName).toBe('Growlithe');
+                expect(result.heldItems).toBe('Charcoal');
+
+                // Also resolves by name match
+                const resultByName = await resolveTargetHeldItemInfoAsync('Growlithe');
+                expect(resultByName.targetName).toBe('Growlithe');
+                expect(resultByName.heldItems).toBe('Charcoal');
+            } finally {
+                Object.defineProperty(OBR, 'isAvailable', { value: originalIsAvailable, configurable: true, writable: true });
+                if (originalGetItems) {
+                    (OBR.scene.items as unknown as Record<string, unknown>).getItems = originalGetItems;
+                }
+            }
+        });
+
+        it('resolveTargetHeldItemInfoAsync resolves species when nickname is empty and stale name or Battle Organizer name is present, preferring live scene metadata over organizer fallback', async () => {
+            const originalIsAvailable = OBR.isAvailable;
+            const originalGetItems = OBR.scene?.items?.getItems;
+
+            try {
+                // Battle Organizer has stale name 'The Spunch' and held item 'Quick Powder'
+                const boData: BattleOrganizerState = {
+                    rounds: [
+                        {
+                            id: 'round-1',
+                            roundNumber: 1,
+                            endOfRoundEffects: '',
+                            combatants: [
+                                {
+                                    id: 'combatant-ditto-1',
+                                    tokenId: 'token-ditto-1',
+                                    name: 'The Spunch',
+                                    heldItem: 'Quick Powder',
+                                    status: '',
+                                    evadeUsed: false,
+                                    clashUsed: false,
+                                    initiative: '10',
+                                    actions: [
+                                        { text: '', status: 'none' },
+                                        { text: '', status: 'none' },
+                                        { text: '', status: 'none' },
+                                        { text: '', status: 'none' },
+                                        { text: '', status: 'none' }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    activeRoundIndex: 0,
+                    battlefield: createDefaultBattlefield()
+                };
+                localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+
+                Object.defineProperty(OBR, 'isAvailable', { value: true, configurable: true, writable: true });
+                // Live scene token has empty nickname, species 'Ditto', stale name 'The Spunch', and held item 'Metal Powder'
+                const mockToken = {
+                    id: 'token-ditto-1',
+                    layer: 'CHARACTER',
+                    name: 'The Spunch',
+                    metadata: {
+                        'pokerole-extension/stats': {
+                            name: 'The Spunch',
+                            nickname: '',
+                            species: 'Ditto',
+                            'inv-data': JSON.stringify([
+                                { name: 'Metal Powder', active: true }
+                            ])
+                        }
+                    }
+                };
+
+                if (!OBR.scene) (OBR as unknown as Record<string, unknown>).scene = {};
+                if (!OBR.scene.items) (OBR.scene as unknown as Record<string, unknown>).items = {};
+                (OBR.scene.items as unknown as Record<string, unknown>).getItems = vi.fn().mockResolvedValue([mockToken]);
+
+                // 1. Live scene token has held item: resolves species 'Ditto' instead of stale 'The Spunch'
+                const result = await resolveTargetHeldItemInfoAsync('token-ditto-1');
+                expect(result.targetName).toBe('Ditto');
+                expect(result.heldItems).toBe('Metal Powder');
+
+                // 2. Live scene token has no held items, but Battle Organizer has held item and stale name:
+                // should prefer live scene targetName ('Ditto') over Battle Organizer name ('The Spunch')
+                const mockTokenNoItem = {
+                    id: 'token-ditto-1',
+                    layer: 'CHARACTER',
+                    name: 'The Spunch',
+                    metadata: {
+                        'pokerole-extension/stats': {
+                            name: 'The Spunch',
+                            nickname: '',
+                            species: 'Ditto',
+                            'inv-data': JSON.stringify([])
+                        }
+                    }
+                };
+                (OBR.scene.items as unknown as Record<string, unknown>).getItems = vi.fn().mockResolvedValue([mockTokenNoItem]);
+
+                const resultFallback = await resolveTargetHeldItemInfoAsync('token-ditto-1');
+                expect(resultFallback.targetName).toBe('Ditto');
+                expect(resultFallback.heldItems).toBe('Quick Powder');
+            } finally {
+                Object.defineProperty(OBR, 'isAvailable', { value: originalIsAvailable, configurable: true, writable: true });
+                if (originalGetItems) {
+                    (OBR.scene.items as unknown as Record<string, unknown>).getItems = originalGetItems;
+                }
+            }
+        });
+
+        it('resolveTargetHeldItemInfo resolves fresh name from combatant.metadata when present in Battle Organizer', () => {
+            const boData: BattleOrganizerState = {
+                rounds: [
+                    {
+                        id: 'round-1',
+                        roundNumber: 1,
+                        endOfRoundEffects: '',
+                        combatants: [
+                            {
+                                id: 'combatant-ditto-2',
+                                tokenId: 'token-ditto-2',
+                                name: 'The Spunch',
+                                heldItem: 'Quick Powder',
+                                status: '',
+                                evadeUsed: false,
+                                clashUsed: false,
+                                initiative: '10',
+                                actions: [
+                                    { text: '', status: 'none' },
+                                    { text: '', status: 'none' },
+                                    { text: '', status: 'none' },
+                                    { text: '', status: 'none' },
+                                    { text: '', status: 'none' }
+                                ],
+                                metadata: {
+                                    name: 'The Spunch',
+                                    nickname: '',
+                                    species: 'Ditto'
+                                }
+                            } as unknown as CombatantRowData
+                        ]
+                    }
+                ],
+                activeRoundIndex: 0,
+                battlefield: createDefaultBattlefield()
+            };
+            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+
+            const result = resolveTargetHeldItemInfo('token-ditto-2');
+            expect(result.targetName).toBe('Ditto');
+            expect(result.heldItems).toBe('Quick Powder');
+        });
+
+        it('setIdentity updates Battle Organizer combatant names and scene item name when nickname or species changes', async () => {
+            const boData: BattleOrganizerState = {
+                rounds: [
+                    {
+                        id: 'round-1',
+                        roundNumber: 1,
+                        endOfRoundEffects: '',
+                        combatants: [
+                            {
+                                id: 'combatant-1',
+                                tokenId: 'my-token-123',
+                                name: 'Old Nickname',
+                                heldItem: '',
+                                status: '',
+                                evadeUsed: false,
+                                clashUsed: false,
+                                initiative: '10',
+                                actions: [
+                                    { text: '', status: 'none' },
+                                    { text: '', status: 'none' },
+                                    { text: '', status: 'none' },
+                                    { text: '', status: 'none' },
+                                    { text: '', status: 'none' }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                activeRoundIndex: 0,
+                battlefield: createDefaultBattlefield()
+            };
+            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+
+            const updateItemsMock = vi.fn(async (_ids: string[], updater: (items: Array<{ name: string }>) => void) => {
+                const dummyItem = { name: 'Old Nickname' };
+                updater([dummyItem]);
+                expect(dummyItem.name).toBe('New Nickname');
+            });
+
+            const originalUpdateItems = OBR.scene?.items?.updateItems;
+            if (!OBR.scene) (OBR as unknown as Record<string, unknown>).scene = {};
+            if (!OBR.scene.items) (OBR.scene as unknown as Record<string, unknown>).items = {};
+            (OBR.scene.items as unknown as Record<string, unknown>).updateItems = updateItemsMock;
+
+            try {
+                const store = useCharacterStore.getState();
+                useCharacterStore.setState({
+                    tokenId: 'my-token-123',
+                    identity: {
+                        ...store.identity,
+                        nickname: 'Old Nickname',
+                        species: 'Ditto'
+                    }
+                });
+
+                store.setIdentity('nickname', 'New Nickname');
+
+                const updatedBo: BattleOrganizerState = JSON.parse(
+                    localStorage.getItem('pkr_battle_organizer_data') || '{}'
+                );
+                expect(updatedBo.rounds[0].combatants[0].name).toBe('New Nickname');
+                expect(updateItemsMock).toHaveBeenCalledWith(['my-token-123'], expect.any(Function));
+
+                // Clearing nickname should fallback to species
+                store.setIdentity('nickname', '');
+                const updatedBoAfterClear: BattleOrganizerState = JSON.parse(
+                    localStorage.getItem('pkr_battle_organizer_data') || '{}'
+                );
+                expect(updatedBoAfterClear.rounds[0].combatants[0].name).toBe('Ditto');
+            } finally {
+                if (originalUpdateItems) {
+                    (OBR.scene.items as unknown as Record<string, unknown>).updateItems = originalUpdateItems;
+                }
+            }
         });
 
         it('Frisk does not populate spurious badges in buildTrackerConditions', () => {

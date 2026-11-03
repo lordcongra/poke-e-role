@@ -736,6 +736,76 @@ export const createIdentitySlice: StateCreator<CharacterState, [['zustand/devtoo
                 }
             }
 
+            if (field === 'nickname' || field === 'species') {
+                const nextNickname = String(newIdentity.nickname || '').trim();
+                const nextSpecies = String(newIdentity.species || '').trim();
+                const nextDisplayName = nextNickname || nextSpecies || 'Unknown';
+
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    try {
+                        const raw = localStorage.getItem('pkr_battle_organizer_data');
+                        if (raw) {
+                            const boData = JSON.parse(raw);
+                            if (boData && Array.isArray(boData.rounds)) {
+                                let hasChanged = false;
+                                const tokenId = state.tokenId;
+                                const entityId = state.identity.entityId;
+
+                                const updatedRounds = boData.rounds.map((round: { combatants?: Array<Record<string, unknown>> }) => {
+                                    if (!round || !Array.isArray(round.combatants)) return round;
+                                    const updatedCombatants = round.combatants.map((c) => {
+                                        const cTokenId = c.tokenId as string | undefined;
+                                        const cEntityId = c.entityId as string | undefined;
+                                        const cId = c.id as string | undefined;
+                                        const matches =
+                                            (Boolean(tokenId) && cTokenId === tokenId) ||
+                                            (Boolean(entityId) && (cEntityId === entityId || cId === entityId));
+                                        if (matches) {
+                                            if (c.name !== nextDisplayName) {
+                                                hasChanged = true;
+                                                return { ...c, name: nextDisplayName };
+                                            }
+                                        }
+                                        return c;
+                                    });
+                                    return { ...round, combatants: updatedCombatants };
+                                });
+
+                                if (hasChanged) {
+                                    boData.rounds = updatedRounds;
+                                    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+                                    if (OBR.isAvailable) {
+                                        OBR.broadcast
+                                            .sendMessage(
+                                                'pokerole-pmd-extension/battle-organizer-sync',
+                                                boData,
+                                                { destination: 'REMOTE' }
+                                            )
+                                            .catch(() => {});
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('[IdentitySlice] Failed to sync name to battle organizer localStorage:', e);
+                    }
+                }
+
+                if (OBR.isAvailable && state.tokenId) {
+                    try {
+                        OBR.scene.items
+                            .updateItems([state.tokenId], (items) => {
+                                for (const item of items) {
+                                    item.name = nextDisplayName;
+                                }
+                            })
+                            .catch(() => {});
+                    } catch (e) {
+                        console.warn('[IdentitySlice] Failed to update scene item name:', e);
+                    }
+                }
+            }
+
             if (field === 'abilityActive' || field === 'ability') {
                 if (typeof window !== 'undefined' && window.localStorage) {
                     try {

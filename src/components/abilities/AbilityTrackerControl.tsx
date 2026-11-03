@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Zap, Sliders, RotateCcw, Users, Eye } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { getAbilityBenefitSummary, getMaxBoost, getKnownAbility } from '../../data/abilities/knownAbilities';
-import { getAbilityTargetStance, getAbilityMaxTargets, resolveTargetHeldItemInfo } from '../../utils/combat/abilityTargetingUtils';
+import { getAbilityTargetStance, getAbilityMaxTargets, resolveTargetHeldItemInfo, resolveTargetHeldItemInfoAsync } from '../../utils/combat/abilityTargetingUtils';
 import { addRollLogEntry } from '../../utils/combat/diceRoller';
 import { AbilityMenuModal } from './AbilityMenuModal';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
@@ -73,16 +73,18 @@ export function AbilityTrackerControl() {
     );
 
     let displayBenefit = benefit;
+    let friskTargetName = '';
     if (cleanAbility === 'frisk' && abilityTargetIds.length > 0) {
         const targetFoeId = abilityTargetIds[0];
-        const { targetName, heldItems } = resolveTargetHeldItemInfo(targetFoeId);
-        displayBenefit = `Frisk: ${targetName} carrying ${heldItems}`;
+        const { targetName } = resolveTargetHeldItemInfo(targetFoeId);
+        friskTargetName = targetName;
+        displayBenefit = 'Frisk';
     }
 
-    const handleBroadcastFrisk = () => {
+    const handleBroadcastFrisk = async () => {
         if (cleanAbility !== 'frisk' || abilityTargetIds.length === 0) return;
         const targetFoeId = abilityTargetIds[0];
-        const { targetName, heldItems } = resolveTargetHeldItemInfo(targetFoeId);
+        const { targetName, heldItems } = await resolveTargetHeldItemInfoAsync(targetFoeId);
         const state = useCharacterStore.getState();
         const charName = state.identity.nickname || state.identity.species || 'Pokemon';
         const charIcon = state.identity.tokenImageUrl || '';
@@ -212,11 +214,10 @@ export function AbilityTrackerControl() {
                             <button
                                 type="button"
                                 onClick={handleBroadcastFrisk}
-                                className="action-button action-button--theme"
-                                style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '3px' }}
-                                title="Click to announce Frisk target held item to Roll Log"
+                                className="action-button action-button--theme ability-tracker__frisk-btn"
+                                title={`Click to announce Frisk on ${friskTargetName || 'target'} to Roll Log`}
                             >
-                                <Eye size={11} /> {displayBenefit}
+                                <Eye size={11} /> <span>{displayBenefit}</span>
                             </button>
                         ) : (
                             <span className="ability-tracker__benefit" title={displayBenefit}>

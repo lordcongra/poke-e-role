@@ -2,11 +2,14 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    flex-wrap: wrap;
+    gap: 6px 8px;
     padding: 4px 8px;
     border-radius: 6px;
     background: var(--panel-alt, rgba(0, 0, 0, 0.2));
     border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    box-sizing: border-box;
+    max-width: 100%;
     transition:
         border-color 0.2s ease,
         background-color 0.2s ease;
@@ -23,8 +26,8 @@
     gap: 6px;
     cursor: pointer;
     user-select: none;
-    min-width: 0;
-    flex: 1 1 auto;
+    min-width: 70px;
+    flex: 0 1 auto;
     overflow: hidden;
 }
 
@@ -52,6 +55,9 @@
     display: flex;
     align-items: center;
     gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
     flex-shrink: 0;
 }
 
@@ -167,4 +173,20 @@
     justify-content: center !important;
     flex-shrink: 0;
     box-sizing: border-box !important;
+}
+
+.ability-tracker__frisk-btn {
+    max-width: 130px;
+    padding: 2px 7px;
+    font-size: 0.72rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    box-sizing: border-box;
+}
+
+.ability-tracker__frisk-btn span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
