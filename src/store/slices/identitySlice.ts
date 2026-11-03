@@ -245,7 +245,7 @@ try {
     console.warn('[IdentitySlice] Failed to load scene scale from local storage.', e);
 }
 
-export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentitySlice> = (set) => ({
+export const createIdentitySlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], IdentitySlice> = (set) => ({
     tokenId: null,
     role: isStandaloneMode ? 'GM' : 'PLAYER',
     identity: {

@@ -49,7 +49,7 @@ import { broadcastGmPc, triggerDebouncedPcBroadcast } from '../../hooks/owlbearS
 import { syncCombatantSentToPc, syncCombatantSentToMap } from '../../utils/combat/abilityTargetingUtils';
 import OBR from '@owlbear-rodeo/sdk';
 
-export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set, get) => {
+export const createPcSlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], PcSlice> = (set, get) => {
     const safeSavePc = (data: PcStorageData) => {
         if (!get().isInitialized) {
             console.warn('[PcSlice] Prevented premature save: PC storage is not yet initialized.');

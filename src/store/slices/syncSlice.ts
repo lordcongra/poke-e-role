@@ -2,7 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { CharacterState, SyncSlice } from '../storeTypes';
 import { hydrateStateFromMetadata } from '../../utils/sync/stateMapper';
 
-export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = (set) => ({
+export const createSyncSlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], SyncSlice> = (set) => ({
     loadFromOwlbear: (meta) =>
         set((state) => ({
             ...state,

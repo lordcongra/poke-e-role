@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 import type { CharacterState, Rank } from './storeTypes';
 import { createCoreSlice } from './slices/coreSlice';
 import { createMovesSlice } from './slices/movesSlice';
@@ -51,20 +52,25 @@ export const getAgePoints = (age: string) => {
     }
 };
 
-export const useCharacterStore = create<CharacterState>()((set, get, api) => ({
-    ...createCoreSlice(set, get, api),
-    ...createMovesSlice(set, get, api),
-    ...createInventorySlice(set, get, api),
-    ...createPassivesSlice(set, get, api),
-    ...createTrackerSlice(set, get, api),
-    ...createHomebrewSlice(set, get, api),
-    ...createExtraSkillsSlice(set, get, api),
-    ...createGeneratorSlice(set, get, api),
-    ...createIdentitySlice(set, get, api),
-    ...createMacroSlice(set, get, api),
-    ...createSyncSlice(set, get, api),
-    ...createPcSlice(set, get, api)
-}));
+export const useCharacterStore = create<CharacterState>()(
+    devtools(
+        (set, get, api) => ({
+            ...createCoreSlice(set, get, api),
+            ...createMovesSlice(set, get, api),
+            ...createInventorySlice(set, get, api),
+            ...createPassivesSlice(set, get, api),
+            ...createTrackerSlice(set, get, api),
+            ...createHomebrewSlice(set, get, api),
+            ...createExtraSkillsSlice(set, get, api),
+            ...createGeneratorSlice(set, get, api),
+            ...createIdentitySlice(set, get, api),
+            ...createMacroSlice(set, get, api),
+            ...createSyncSlice(set, get, api),
+            ...createPcSlice(set, get, api)
+        }),
+        { name: 'CharacterStore', enabled: import.meta.env.DEV }
+    )
+);
 
 if (typeof window !== 'undefined') {
     (window as unknown as { __POKEROLE_STORE__: typeof useCharacterStore }).__POKEROLE_STORE__ = useCharacterStore;

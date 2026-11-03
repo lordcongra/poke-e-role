@@ -35,7 +35,7 @@ const saveHomebrewLocal = (state: CharacterState) => {
     }
 };
 
-export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewSlice> = (set, get) => ({
+export const createHomebrewSlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], HomebrewSlice> = (set, get) => ({
     isHomebrewInitialized: false,
     roomCustomTypes: [],
     roomCustomAbilities: [],

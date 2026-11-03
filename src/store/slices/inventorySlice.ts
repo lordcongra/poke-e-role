@@ -9,7 +9,7 @@ import { broadcastInfo } from '../../utils/combat/diceRoller';
 
 import { syncHealthWill, applyUsageToState, drainInventoryItemCharge } from '../../utils/items/inventoryItemOps';
 
-export const createInventorySlice: StateCreator<CharacterState, [], [], InventorySlice> = (set) => ({
+export const createInventorySlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], InventorySlice> = (set) => ({
     inventory: [],
     notes: '',
     customInfo: [],

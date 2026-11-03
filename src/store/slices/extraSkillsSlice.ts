@@ -2,7 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { CharacterState, ExtraSkillsSlice, ExtraCategory } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/sync/obr';
 
-export const createExtraSkillsSlice: StateCreator<CharacterState, [], [], ExtraSkillsSlice> = (set) => ({
+export const createExtraSkillsSlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], ExtraSkillsSlice> = (set) => ({
     extraCategories: [],
 
     addExtraCategory: (name = 'EXTRA') =>

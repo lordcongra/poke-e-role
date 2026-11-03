@@ -4,7 +4,7 @@ import { saveToOwlbear } from '../../utils/sync/obr';
 import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../../utils/combat/combatUtils';
 import { CombatStat } from '../../types/enums';
 
-export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSlice> = (set) => ({
+export const createTrackerSlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], TrackerSlice> = (set) => ({
     statuses: [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }],
     effects: [],
     trackers: {

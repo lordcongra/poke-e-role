@@ -2,7 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { CharacterState, MovesSlice, MoveData, SkillCheck, PendingDualScale } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/sync/obr';
 
-export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> = (set) => ({
+export const createMovesSlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], MovesSlice> = (set) => ({
     moves: [],
     skillChecks: [],
     pendingDualScale: null,

@@ -1,3 +1,4 @@
+import type { StateCreator } from 'zustand';
 import type { CombatStat, SocialStat, Skill } from '../types/enums';
 import type { PcSlice } from '../types/pcStorageTypes';
 import type { BattlefieldData } from '../types/battleOrganizerTypes';
@@ -676,6 +677,15 @@ export interface CharacterState
         MacroSlice,
         SyncSlice,
         PcSlice {}
+
+export type CharacterSliceCreator<T> = StateCreator<
+    CharacterState,
+    [['zustand/devtools', never]],
+    [],
+    T
+>;
+
+export type SliceCreator<T> = CharacterSliceCreator<T>;
 
 declare module './entityTypes' {
     interface TempMove {

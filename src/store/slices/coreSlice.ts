@@ -4,7 +4,7 @@ import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { saveToOwlbear, getIsRemoteSyncActive } from '../../utils/sync/obr';
 import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../../utils/combat/combatUtils';
 
-export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = (set) => ({
+export const createCoreSlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], CoreSlice> = (set) => ({
     health: { hpCurr: 5, hpMax: 5, hpBase: 4, temporaryHitPoints: 0, temporaryHitPointsMax: 0 },
     will: { willCurr: 4, willMax: 4, willBase: 3, temporaryWill: 0, temporaryWillMax: 0 },
     derived: { defBuff: 0, defDebuff: 0, sdefBuff: 0, sdefDebuff: 0, happy: 0, loyal: 0 },
@@ -33,24 +33,28 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
     ),
 
     setDerived: (field, value) =>
-        set((state) => {
-            const newDerived = { ...state.derived, [field]: value };
+        set(
+            (state) => {
+                const newDerived = { ...state.derived, [field]: value };
 
-            let obrKey = field as string;
-            if (field === 'defBuff') obrKey = 'def-buff';
-            else if (field === 'defDebuff') obrKey = 'def-debuff';
-            else if (field === 'sdefBuff') obrKey = 'spd-buff';
-            else if (field === 'sdefDebuff') obrKey = 'spd-debuff';
-            else if (field === 'happy') obrKey = 'happiness-curr';
-            else if (field === 'loyal') obrKey = 'loyalty-curr';
+                let obrKey = field as string;
+                if (field === 'defBuff') obrKey = 'def-buff';
+                else if (field === 'defDebuff') obrKey = 'def-debuff';
+                else if (field === 'sdefBuff') obrKey = 'spd-buff';
+                else if (field === 'sdefDebuff') obrKey = 'spd-debuff';
+                else if (field === 'happy') obrKey = 'happiness-curr';
+                else if (field === 'loyal') obrKey = 'loyalty-curr';
 
-            try {
-                saveToOwlbear({ [obrKey]: value });
-            } catch (e) {
-                console.warn(`[CoreSlice] Failed to save derived stat (${field}) to Owlbear.`, e);
-            }
-            return { derived: newDerived };
-        }),
+                try {
+                    saveToOwlbear({ [obrKey]: value });
+                } catch (e) {
+                    console.warn(`[CoreSlice] Failed to save derived stat (${field}) to Owlbear.`, e);
+                }
+                return { derived: newDerived };
+            },
+            false,
+            'core/setDerived'
+        ),
 
     updateHealth: (field, value) =>
         set((state) => {

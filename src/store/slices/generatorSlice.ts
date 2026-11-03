@@ -5,7 +5,7 @@ import { saveToOwlbear } from '../../utils/sync/obr';
 import { syncHealthAndWill } from '../../utils/common/macroHelpers';
 import OBR from '@owlbear-rodeo/sdk';
 
-export const createGeneratorSlice: StateCreator<CharacterState, [], [], GeneratorSlice> = (set, get) => ({
+export const createGeneratorSlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], GeneratorSlice> = (set, get) => ({
     generatorConfig: {
         buildType: 'minmax',
         combatBias: 'auto',
