@@ -2,15 +2,18 @@ import React from 'react';
 import { Megaphone, ArrowUp, ArrowDown } from 'lucide-react';
 import { REACTION_RULES_EXAMPLES, REACTION_CORE_RULES, type ReactionRuleExample } from '../../../data/gmScreenData';
 import { broadcastInfo } from '../../../utils/combat/diceRoller';
+import { GmReactionPriorityLadder } from './GmReactionPriorityLadder';
 
 interface GmReactionRulesCardProps {
     onBroadcastReactionExample?: (ex: ReactionRuleExample) => void;
     onBroadcastReactionCoreRules?: () => void;
+    onBroadcastReactionLadder?: () => void;
 }
 
 export const GmReactionRulesCard: React.FC<GmReactionRulesCardProps> = ({
     onBroadcastReactionExample,
-    onBroadcastReactionCoreRules
+    onBroadcastReactionCoreRules,
+    onBroadcastReactionLadder
 }) => {
     const handleBroadcastExample = (ex: ReactionRuleExample) => {
         if (onBroadcastReactionExample) {
@@ -137,12 +140,15 @@ export const GmReactionRulesCard: React.FC<GmReactionRulesCardProps> = ({
                     </p>
                     <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
                         <em>
-                            Examples: Circle Throw / Feint (&darr;1), Shell Trap (&darr;3), Avalanche (&darr;4), Counter
-                            / Mirror Coat (&darr;5), Dragon Tail / Roar (&darr;6).
+                            Examples: Circle Throw / Feint (&darr;1), Dragon Tail (&darr;2), Shell Trap (&darr;3), Avalanche (&darr;4), Counter
+                            / Mirror Coat (&darr;5), Roar / Whirlwind (&darr;6).
                         </em>
                     </div>
                 </div>
             </div>
+
+            {/* 12-Tier Reaction Priority Ladder */}
+            <GmReactionPriorityLadder onBroadcastLadder={onBroadcastReactionLadder} />
 
             {/* Interactive Timing Rules & Examples */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

@@ -521,6 +521,7 @@ ${formatDiscordTable(
             'late reactions',
             'late reaction',
             'priority',
+            'priority ladder',
             'speed',
             'order',
             'resolution',
@@ -528,33 +529,53 @@ ${formatDiscordTable(
             'extreme speed',
             'avalanche',
             'dragon tail',
+            'roar',
+            'whirlwind',
+            'stalemate',
             'timing',
             'interrupt'
         ],
         broadcastText:
-            'Reactions & Late Reactions:\n• Reactions (↑): Instant movements used when it’s not your turn. Resolve BEFORE the incoming action hits. Higher numbers resolve FIRST (e.g. Extreme Speed ↑2 resolves before Quick Attack ↑1).\n• Late Reactions (↓): Retaliations/traps that resolve AFTER the incoming action hits. Higher numbers resolve LATER (Lower numbers resolve first: Main Action ➔ Avalanche ↓4 ➔ Dragon Tail ↓6).\n• Interactivity: You CANNOT react (↑) to a Late Reaction (↓), but you CAN Late React (↓) to a Reaction (↑).\n• Action Cost: Rolling any Reaction or Late Reaction consumes 1 Action for the Round (bound to Multi-Action chart). Max 1 reaction per turn.\n• Trigger Rule: Cannot use a reaction without an incoming trigger/target (support moves like Wide Guard / Cover an Ally can protect allies).',
+            'Reactions & Late Reactions:\n• Reactions (↑): Instant movements used when it’s not your turn. Resolve BEFORE incoming action hits. Higher numbers resolve FIRST (↑6 down to ↑1).\n• Late Reactions (↓): Delayed retaliations/traps that resolve AFTER incoming action hits. Higher numbers resolve LATER (Lower numbers resolve first: Main Action ➔ Dragon Tail ↓2 ➔ Avalanche ↓4 ➔ Roar/Whirlwind ↓6).\n• 12-Tier Ladder:\n  Reactions: ↑6 (Evasion, Clash, Snatch, Sucker Punch), ↑5 (Protect, Endure, Helping Hand), ↑4 (King’s Shield, Obstruct, Baneful Bunker), ↑3 (Encore, Spotlight, Wide Guard), ↑2 (Extreme Speed, Rage Powder, Zippy Zap), ↑1 (Quick Attack, Water Shuriken, Mach Punch).\n  Late Reactions: ↓1 (Circle Throw, Vital Throw, Feint), ↓2 (Dragon Tail), ↓3 (Shell Trap), ↓4 (Avalanche), ↓5 (Counter, Mirror Coat, Metal Burst), ↓6 (Roar, Whirlwind).\n• Interactivity: Standard Reactions (↑) cannot answer a Late Reaction (↓), but Late Reactions (↓) can answer standard Reactions (↑).\n• Stalemate: If two Pokémon declare at the same tier, higher Initiative prevails.\n• Action Cost: Rolling any Reaction or Late Reaction consumes 1 Action for the Round (bound to Multi-Action chart, except Evade/Clash). Max 1 reaction per turn.\n• Trigger Rule: Cannot use a reaction without an incoming trigger/target (support moves/maneuvers can aid allies).',
         discordMarkdown: `## ⚡ **Reactions & Late Reactions**
 > *Reactions are fast, tactical maneuvers and moves used when it is not your turn yet.*
 
 ### ↑ **Reactions [1..6] (Fast - Resolve Before Main Action)**
 • **Timing:** Resolve **BEFORE** the incoming main action hits (speeds range from 1 to 6).
-• **Speed Order:** **Higher numbers resolve FIRST** *(e.g. Protect ↑5 resolves before Upper Hand ↑3, which resolves before Quick Attack ↑1)*.
-• **Examples by Speed:** Quick Attack / Water Shuriken (↑1), Extreme Speed (↑2), Upper Hand (↑3), King’s Shield (↑4), Protect (↑5), Evade / Clash maneuvers (↑6).
+• **Speed Order:** **Higher numbers resolve FIRST** *(↑6 before ↑1)*.
+• **Ladder by Tier:**
+  - **↑6**: Evasion, Clash, Snatch, Sucker Punch
+  - **↑5**: Protect, Endure, Helping Hand
+  - **↑4**: King's Shield, Obstruct, Baneful Bunker
+  - **↑3**: Encore, Spotlight, Wide Guard
+  - **↑2**: Extreme Speed, Rage Powder, Zippy Zap
+  - **↑1**: Quick Attack, Water Shuriken, Mach Punch
 • **Preemption:** You **cannot** answer a higher reaction number with a lower reaction number.
+• **Turn Flow:** [Main Action Declared] ➔ [Reaction Declared] ➔ [Reaction Resolves] ➔ [Main Action Resolves]
 
 ### ↓ **Late Reactions [1..6] (Delayed - Resolve After Main Action)**
-• **Timing:** Resolve **AFTER** the incoming main action hits (speeds range from 1 to 6, like enduring a blow to trigger a counter or trap).
-• **Speed Order (Reverse):** **Higher numbers resolve LATER** *(e.g. Main Slash ➔ Late Reaction 1 Circle Throw ➔ Late Reaction 3 Shell Trap ➔ Late Reaction 4 Avalanche ➔ Late Reaction 5 Counter ➔ Late Reaction 6 Dragon Tail)*.
-• **Examples by Speed:** Circle Throw / Feint (↓1), Shell Trap (↓3), Avalanche (↓4), Counter / Mirror Coat / Metal Burst (↓5), Dragon Tail / Roar / Whirlwind (↓6).
+• **Timing:** Resolve **AFTER** the incoming main action hits (speeds range from 1 to 6).
+• **Speed Order (Reverse):** **Higher numbers resolve LATER** *(Lower numbers resolve first: Main Action ➔ ↓1 ➔ ↓2 Dragon Tail ➔ ↓3 Shell Trap ➔ ↓4 Avalanche ➔ ↓5 Counter ➔ ↓6 Roar/Whirlwind)*.
+• **Ladder by Tier:**
+  - **↓1**: Circle Throw, Vital Throw, Feint
+  - **↓2**: Dragon Tail
+  - **↓3**: Shell Trap
+  - **↓4**: Avalanche
+  - **↓5**: Counter, Mirror Coat, Metal Burst
+  - **↓6**: Roar, Whirlwind
 • **Interaction Rule:** You **CANNOT** use a standard Reaction (↑) against a Late Reaction (↓). Late Reactions can only be answered by another Late Reaction.
 • **Late Reacting to a Reaction:** You **CAN** use a Late Reaction against a Reaction *(e.g. ↑1 Quick Attack ➔ Main Action ➔ ↓4 Avalanche)*.
+• **Turn Flow:** [Main Action Declared] ➔ [Main Action Resolves] ➔ [Late Reaction Declared] ➔ [Late Reaction Resolves]
 
 ---
 ### ⚠️ **Key Rules & Limitations**
-1. **Action Cost:** Every Reaction or Late Reaction consumes **1 Action** from your pool for the Round (bound to the Multiple Action difficulty chart).
-2. **1 Reaction per Turn:** You can use at most **one reaction per turn** (including enemy turns or your own turn when answering a reaction).
-3. **No Reaction Without a Reason:** You cannot react without an incoming trigger/target attacking you *(e.g. in multi-battles, you cannot Quick Attack an enemy attacking an ally)*.
-4. **Support Moves Exception:** Defensive support moves *(e.g. Wide Guard)* and intercept maneuvers *(e.g. Cover an Ally)* CAN be used to defend teammates.`
+1. **Action Cost:** Every Reaction or Late Reaction consumes **1 Action** from your pool for the Round (bound to Multiple Action difficulty chart; Evade and Clash maneuvers only need to match/surpass foe's Accuracy).
+2. **1 Reaction per Turn:** Each Pokémon can only use **one reaction per turn** (including enemy turns or on your own turn when answering a reaction).
+3. **Preemption & Lockout:** Higher reaction numbers resolve first. Lower reaction numbers cannot be declared against higher ones.
+4. **Stalemate Resolution:** When two Pokémon declare a reaction at the exact same priority tier, the Pokémon with the **higher Initiative score prevails**.
+5. **Who Can React:** Limited to the User of the Main Action and those being targeted (Allies may only react with Support Moves/Maneuvers like Cover an Ally, Helping Hand, or Shield Moves).
+6. **No Unprovoked Reactions:** A Pokémon cannot react without a direct reason or trigger.
+7. **Voluntary Usage:** Moves with Reaction badges may still be used normally on the Pokémon's own turn as standard actions.`
     },
     {
         id: 'pain-penalties',

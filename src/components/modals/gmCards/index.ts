@@ -1,5 +1,6 @@
 export { GmCombatCards } from './GmCombatCards';
 export { GmReactionRulesCard } from './GmReactionRulesCard';
+export { GmReactionPriorityLadder } from './GmReactionPriorityLadder';
 export { GmAttributeBenchmarkCard } from './GmAttributeBenchmarkCard';
 export { GmMoveClarificationsCard } from './GmMoveClarificationsCard';
 export { GmHomebrewCards } from './GmHomebrewCards';

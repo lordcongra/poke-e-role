@@ -201,13 +201,13 @@ export const REACTION_RULES_EXAMPLES: ReactionRuleExample[] = [
     {
         id: 'late-reaction-vs-late-reaction',
         title: 'Late Reaction vs. Late Reaction (Lower Number Resolves First)',
-        scenario: 'Charizard uses Slash on its turn. Blastoise sets a trap with Avalanche (↓4). Charizard answers with Dragon Tail (↓6).',
+        scenario: 'Abomasnow uses Powder Snow on its turn. Charizard answers with Dragon Tail (↓2). Abomasnow answers with Avalanche (↓4).',
         orderSteps: [
-            '1. Slash (Main Action) [Charizard]',
-            '2. Avalanche (↓4) [Blastoise]',
-            '3. Dragon Tail (↓6) [Charizard]'
+            '1. Powder Snow (Main Action) [Abomasnow]',
+            '2. Dragon Tail (↓2) [Charizard]',
+            '3. Avalanche (↓4) [Abomasnow]'
         ],
-        explanation: 'Charizard’s Slash hits first. Then Blastoise’s Avalanche (↓4) triggers. Finally, Charizard’s Dragon Tail (↓6) knocks Blastoise back.'
+        explanation: 'Abomasnow’s Powder Snow hits first. Then Charizard’s Dragon Tail (↓2) triggers. Finally, Abomasnow’s Avalanche (↓4) triggers last. (Remember: Higher numbers in Late Reactions resolve LATER; lower numbers resolve first!).'
     },
     {
         id: 'reaction-vs-late-reaction',
@@ -229,11 +229,11 @@ export const REACTION_CORE_RULES = [
     },
     {
         title: '1 Reaction Per Turn Limit',
-        desc: 'You can only use ONE reaction per turn (including during an opponent’s turn or on your own turn when answering an incoming reaction).'
+        desc: 'Each Pokémon can only use ONE Reaction or Late Reaction per turn (including during an opponent’s turn or on your own turn when answering an incoming reaction).'
     },
     {
         title: 'Preemption & Lockout',
-        desc: 'If a higher reaction number is declared (e.g. ↑2 Extreme Speed), you cannot respond to it with a lower reaction number (e.g. ↑1 Quick Attack).'
+        desc: 'Higher numbers in Reactions resolve first (↑6 before ↑1). If a higher reaction number is declared (e.g. ↑2 Extreme Speed), you cannot respond to it with a lower reaction number (e.g. ↑1 Quick Attack).'
     },
     {
         title: 'Cannot React to a Late Reaction',
@@ -241,10 +241,22 @@ export const REACTION_CORE_RULES = [
     },
     {
         title: 'Can Late React to a Reaction',
-        desc: 'You CAN use a Late Reaction (↓) to answer an opponent’s standard Reaction (↑).'
+        desc: 'You CAN use a Late Reaction (↓) to answer an opponent’s standard Reaction (↑) (e.g., Quick Attack ↑1 ➔ Main Action ➔ Avalanche ↓4).'
     },
     {
-        title: 'No Reaction Without a Reason',
-        desc: 'You cannot react unless you are being directly targeted by an incoming action or answering a reaction. (Exception: Support moves like Wide Guard or maneuvers like Cover an Ally can protect teammates).'
+        title: 'Stalemate Resolution (Higher Initiative Prevails)',
+        desc: 'In case of a stalemate (where two Pokémon declare a Reaction or Late Reaction at the exact same priority tier), the Pokémon with the higher Initiative score prevails to use their Reaction/Late Reaction.'
+    },
+    {
+        title: 'Who Can React (Main Action & Targets Only)',
+        desc: 'Using Reactions and Late Reactions is strictly reserved to the Pokémon involved in the current Move/Maneuver/Action being used: the User of the Main Action and those being targeted. *The only exception:* Allies may react with Support Moves or Support Maneuvers (such as *Cover an Ally*, *Helping Hand*, or a *Shield Move*) to aid those involved in the current Action.'
+    },
+    {
+        title: 'No Unprovoked Reactions',
+        desc: 'A Pokémon cannot use any Reaction or Late Reaction without a direct reason or trigger to do so. You cannot declare a reaction if no other reaction or incoming action has occurred (e.g., A Pokémon cannot use *Swords Dance* on its turn and then immediately declare *Quick Attack* as a Reaction unprompted).'
+    },
+    {
+        title: 'Voluntary Usage',
+        desc: 'You are never obligated to use a Move or Maneuver as a Reaction or Late Reaction. Any move labeled with a Reaction or Late Reaction badge may still be used normally on the Pokémon\'s own turn as a standard action.'
     }
 ];
