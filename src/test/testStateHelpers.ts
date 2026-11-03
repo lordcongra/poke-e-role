@@ -159,6 +159,11 @@ export function createTestCharacterState(overrides: DeepPartial<CharacterState> 
         effects: [],
         customInfo: [],
         stats: {
+            str: { base: 1, rank: 0, buff: 0, debuff: 0, limit: 5 },
+            dex: { base: 2, rank: 0, buff: 0, debuff: 0, limit: 5 },
+            vit: { base: 1, rank: 0, buff: 0, debuff: 0, limit: 5 },
+            spe: { base: 2, rank: 0, buff: 0, debuff: 0, limit: 5 },
+            ins: { base: 1, rank: 0, buff: 0, debuff: 0, limit: 5 },
             strength: { base: 1, rank: 0, buff: 0, debuff: 0, limit: 5 },
             dexterity: { base: 2, rank: 0, buff: 0, debuff: 0, limit: 5 },
             vitality: { base: 1, rank: 0, buff: 0, debuff: 0, limit: 5 },
@@ -166,6 +171,11 @@ export function createTestCharacterState(overrides: DeepPartial<CharacterState> 
             insight: { base: 1, rank: 0, buff: 0, debuff: 0, limit: 5 }
         },
         socials: {
+            tou: { base: 1, rank: 0, buff: 0, debuff: 0, limit: 5 },
+            coo: { base: 1, rank: 0, buff: 0, debuff: 0, limit: 5 },
+            bea: { base: 1, rank: 0, buff: 0, debuff: 0, limit: 5 },
+            cut: { base: 1, rank: 0, buff: 0, debuff: 0, limit: 5 },
+            cle: { base: 1, rank: 0, buff: 0, debuff: 0, limit: 5 },
             tough: { base: 1, rank: 0, buff: 0, debuff: 0, limit: 5 },
             cool: { base: 1, rank: 0, buff: 0, debuff: 0, limit: 5 },
             beauty: { base: 1, rank: 0, buff: 0, debuff: 0, limit: 5 },

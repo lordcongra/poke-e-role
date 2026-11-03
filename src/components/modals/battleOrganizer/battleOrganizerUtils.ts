@@ -208,28 +208,33 @@ export function parseTokenPrivacyFlags(
     };
 }
 
-export function parseHeldItemsFromMetadata(meta: Record<string, unknown>): string {
-    const heldItems: string[] = [];
-    const combatSlot = typeof meta['combat'] === 'string' ? meta['combat'].trim() : '';
-    const socialSlot = typeof meta['social'] === 'string' ? meta['social'].trim() : '';
-    const handSlot = typeof meta['hand'] === 'string' ? meta['hand'].trim() : '';
+export function parseHeldItemsFromMetadata(rawMeta: Record<string, unknown>): string {
+    if (!rawMeta || typeof rawMeta !== 'object') return '';
+    const meta = (rawMeta['pokerole-extension/stats'] || rawMeta['pokerole-pmd-extension/stats'] || rawMeta) as Record<string, unknown>;
+    const stateObj = (meta?.state || meta) as Record<string, unknown>;
+    const identityObj = (stateObj?.identity || meta?.identity || {}) as Record<string, unknown>;
 
-    if (combatSlot) heldItems.push(combatSlot);
-    if (socialSlot && !heldItems.includes(socialSlot)) heldItems.push(socialSlot);
-    if (handSlot && !heldItems.includes(handSlot)) heldItems.push(handSlot);
+    const heldItems: string[] = [];
+    const addUnique = (val: unknown) => {
+        if (typeof val === 'string') {
+            const trimmed = val.trim();
+            if (trimmed && !heldItems.includes(trimmed)) heldItems.push(trimmed);
+        }
+    };
+
+    addUnique(meta['combat'] ?? identityObj['combat']);
+    addUnique(meta['social'] ?? identityObj['social']);
+    addUnique(meta['hand'] ?? identityObj['hand']);
 
     try {
-        const rawInv = meta['inv-data'] ? JSON.parse(String(meta['inv-data'])) : [];
+        const invCandidate = meta['inv-data'] ?? stateObj['inventory'] ?? meta['inventory'];
+        const rawInv = typeof invCandidate === 'string' ? JSON.parse(invCandidate) : invCandidate;
         if (Array.isArray(rawInv)) {
             rawInv
-                .filter((i: Record<string, unknown>) => i.active === true || i.active === 'true')
+                .filter((i: Record<string, unknown>) => i && (i.active === true || i.active === 'true'))
                 .map((i: Record<string, unknown>) => String(i.name || '').trim())
                 .filter(Boolean)
-                .forEach((itemName) => {
-                    if (!heldItems.includes(itemName)) {
-                        heldItems.push(itemName);
-                    }
-                });
+                .forEach(addUnique);
         }
     } catch (e) {
         console.warn('[battleOrganizerUtils] Failed to parse inventory items:', e);

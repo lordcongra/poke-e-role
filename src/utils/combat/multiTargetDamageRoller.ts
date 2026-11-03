@@ -8,6 +8,8 @@ import { buildDefenseTierGroups, type MultiTargetSelection } from '../../compone
 import { addRollLogEntry } from './diceRoller';
 import { broadcastRollLog } from './rollLogSync';
 import { showDicePlusRetirementNotice } from '../../hooks/owlbearSync/owlbearSyncConstants';
+import { matchesTarget } from './abilityTargetingUtils';
+import { calculateBaseDamage } from './combatMath';
 
 async function emitRollLogEntry(params: {
     title: string;
@@ -310,6 +312,17 @@ export async function executeMultiTargetDamageRoll(
         return;
     }
 
+    // Check Stakeout
+    const cleanAbility = (state.identity.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+    const stakeoutTargetId = state.identity.abilityTargetIds?.[0];
+    const isStakeoutActive =
+        cleanAbility === 'stakeout' && state.identity.abilityActive !== false && Boolean(stakeoutTargetId);
+
+    // If baseDamage already included stakeout bonus from calculateBaseDamage, normalize base for non-matching targets
+    const rawBase = calculateBaseDamage(move, state);
+    const baseHadStakeout = isStakeoutActive && baseDamage >= rawBase && rawBase > 0;
+    const baseWithoutStakeout = baseHadStakeout ? effectiveBaseDamage - 1 : effectiveBaseDamage;
+
     // 2. Flat True-Damage Override
     if (override.active && override.type === 'flat') {
         for (const target of activeTargets) {
@@ -320,6 +333,9 @@ export async function executeMultiTargetDamageRoll(
             const redStr = targetFlatRed > 0 ? ` (-${targetFlatRed} Force Field)` : '';
 
             const targetTags = [...tags];
+            if (isStakeoutActive && matchesTarget(target, stakeoutTargetId!)) {
+                targetTags.push('Stakeout (+1 Damage)');
+            }
             if (effMod > 0) {
                 targetTags.push(`SUPER EFFECTIVE (+${effMod} Succ)`);
             } else if (effMod < 0) {
@@ -347,8 +363,15 @@ export async function executeMultiTargetDamageRoll(
 
     // 3. Sequenced Defense Tiers
     const ignoresDef = override.active && override.type === 'dice-ignore';
-    const targetsForTiers = ignoresDef ? activeTargets.map((t) => ({ ...t, def: 0 })) : activeTargets;
-    const tiers = buildDefenseTierGroups(targetsForTiers, effectiveBaseDamage);
+    const targetsForTiers = activeTargets.map((t) => {
+        let def = ignoresDef ? 0 : t.def;
+        const matchesStakeout = isStakeoutActive && matchesTarget(t, stakeoutTargetId!);
+        if (matchesStakeout) {
+            def = def - 1;
+        }
+        return { ...t, def };
+    });
+    const tiers = buildDefenseTierGroups(targetsForTiers, baseWithoutStakeout);
 
     const maxDice = tiers.length > 0 ? tiers[tiers.length - 1].dicePool : 0;
     let overrideDice: number[] | null = null;
@@ -499,6 +522,9 @@ export async function executeMultiTargetDamageRoll(
             }
 
             const targetTags = [...tags];
+            if (isStakeoutActive && matchesTarget(target, stakeoutTargetId!)) {
+                targetTags.push('Stakeout (+1 Damage)');
+            }
             if (effMod > 0) {
                 targetTags.push(`SUPER EFFECTIVE (+${effMod} Succ)`);
             } else if (effMod < 0) {

@@ -8,8 +8,10 @@ import {
     matchesTarget,
     isCombatantInPc,
     isTargetCombatantActiveNeutralizingGas,
-    RUIN_ABILITIES
+    RUIN_ABILITIES,
+    resolveTargetHeldItemInfo
 } from '../../../utils/combat/abilityTargetingUtils';
+import { addRollLogEntry } from '../../../utils/combat/diceRoller';
 import { resolveCharacterSide } from '../../../utils/combat/combatantSideUtils';
 import { STATS_META_ID } from '../../../utils/graphics/graphicsManager';
 import type { CombatantRowData, BattleOrganizerState } from '../../../types/battleOrganizerTypes';
@@ -79,7 +81,7 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
             const activeRound = data.rounds?.[data.activeRoundIndex ?? 0] || data.rounds?.[0];
             if (!activeRound?.combatants) return [];
 
-            return activeRound.combatants.filter((c) => {
+            const filtered = activeRound.combatants.filter((c) => {
                 if (c.isFainted) return false;
                 const candidateIsPlayer = typeof c.isPlayerSide === 'boolean' ? c.isPlayerSide : !c.isNPC;
 
@@ -103,11 +105,27 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
                 }
                 return false;
             });
+
+            if (abilityName.toLowerCase() === 'commander') {
+                return filtered.sort((a, b) => {
+                    const aSpecies = (a.species || '').toLowerCase();
+                    const aName = (a.name || '').toLowerCase();
+                    const aIsDondozo = (aSpecies === 'dondozo' || aName === 'dondozo') ? 1 : 0;
+
+                    const bSpecies = (b.species || '').toLowerCase();
+                    const bName = (b.name || '').toLowerCase();
+                    const bIsDondozo = (bSpecies === 'dondozo' || bName === 'dondozo') ? 1 : 0;
+
+                    return bIsDondozo - aIsDondozo;
+                });
+            }
+
+            return filtered;
         } catch (e) {
             console.warn('[AbilityTargetSelectorModal] Failed to read combatants from storage:', e);
             return [];
         }
-    }, [isOpen, sourceIsPlayer, stance, sourceId, sourceTokenId]);
+    }, [isOpen, sourceIsPlayer, stance, sourceId, sourceTokenId, abilityName]);
 
     const isCandidateImmune = (candidate: CombatantRowData): boolean => {
         if (isNeutralizingGas) {
@@ -327,6 +345,30 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
             (sourceCombatant.entityId && sourceCombatant.entityId === charIdentity.entityId)
         ) {
             setIdentity('abilityTargetIds', selectedIds);
+        }
+
+        // 5. Broadcast Frisk identification to Roll Log
+        if (abilityName.toLowerCase().trim() === 'frisk' && selectedIds.length > 0) {
+            try {
+                const targetId = selectedIds[0];
+                const { targetName, heldItems } = resolveTargetHeldItemInfo(targetId);
+                const sourceIcon = sourceCombatant?.image || charIdentity.tokenImageUrl || '';
+                const resultMsg = (heldItems && heldItems !== 'None')
+                    ? `${sourceName} frisked ${targetName} and identified their held item: **${heldItems}**!`
+                    : `${sourceName} frisked ${targetName} — they are not holding any items.`;
+
+                addRollLogEntry(
+                    'Frisk',
+                    resultMsg,
+                    String(sourceIcon || ''),
+                    sourceName,
+                    sourceName,
+                    sourceCombatant?.tokenId || sourceTokenId || charTokenId || undefined,
+                    'ability'
+                );
+            } catch (e) {
+                console.warn('[AbilityTargetSelectorModal] Failed to broadcast Frisk to Roll Log:', e);
+            }
         }
 
         onClose();

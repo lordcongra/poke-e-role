@@ -1,4 +1,4 @@
-import type { MoveData, CharacterState, CustomAbility, InventoryItem, PassiveItem, Rank } from '../../store/storeTypes';
+import type { MoveData, CharacterState, CustomAbility, InventoryItem, PassiveItem, Rank, StatData } from '../../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { parseCombatTags, type CombatBonuses } from '../tagParser/index';
 import { checkCondition } from '../tagParser/conditionChecker';
@@ -168,7 +168,10 @@ export function calculateStatTotal(
     if (normalizedStat === 'will') return state.will.willMax;
 
     if (Object.values(CombatStat).includes(normalizedStat as CombatStat)) {
-        const statistic = state.stats[normalizedStat as CombatStat];
+        const statistic =
+            state.stats?.[normalizedStat as CombatStat] ||
+            (state.stats as Record<string, StatData> | undefined)?.[statKey.toLowerCase().trim()];
+        if (!statistic) return 0;
         let total =
             statistic.base +
             statistic.rank +
@@ -660,11 +663,26 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState, itemB
         customFirstHitTag = invMods.firstHitDmg;
     }
 
+    const cleanAbility = (state.identity.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+    const stakeoutBonus =
+        cleanAbility === 'stakeout' &&
+        state.identity.abilityActive !== false &&
+        Boolean(state.identity.abilityTargetIds?.[0])
+            ? 1
+            : 0;
+
     const paralysisPenalty = normalizedDamageStatistic === 'dex' ? statuses.paralysisDexterityPenalty : 0;
 
     return Math.max(
         1,
-        move.power + scalingValue + extraDice + sameTypeAttackBonus + teraBonus + customFirstHitTag + paralysisPenalty
+        move.power +
+            scalingValue +
+            extraDice +
+            sameTypeAttackBonus +
+            teraBonus +
+            customFirstHitTag +
+            paralysisPenalty +
+            stakeoutBonus
     );
 }
 

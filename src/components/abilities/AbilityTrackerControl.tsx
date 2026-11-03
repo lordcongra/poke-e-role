@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Zap, Sliders, RotateCcw, Users } from 'lucide-react';
+import { Zap, Sliders, RotateCcw, Users, Eye } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { getAbilityBenefitSummary, getMaxBoost, getKnownAbility } from '../../data/abilities/knownAbilities';
-import { getAbilityTargetStance, getAbilityMaxTargets } from '../../utils/combat/abilityTargetingUtils';
+import { getAbilityTargetStance, getAbilityMaxTargets, resolveTargetHeldItemInfo } from '../../utils/combat/abilityTargetingUtils';
+import { addRollLogEntry } from '../../utils/combat/diceRoller';
 import { AbilityMenuModal } from './AbilityMenuModal';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import { PressureDrainModal } from '../modals/combat/PressureDrainModal';
@@ -70,6 +71,36 @@ export function AbilityTrackerControl() {
         abilityBoostActive,
         effectiveBoostLevel
     );
+
+    let displayBenefit = benefit;
+    if (cleanAbility === 'frisk' && abilityTargetIds.length > 0) {
+        const targetFoeId = abilityTargetIds[0];
+        const { targetName, heldItems } = resolveTargetHeldItemInfo(targetFoeId);
+        displayBenefit = `Frisk: ${targetName} carrying ${heldItems}`;
+    }
+
+    const handleBroadcastFrisk = () => {
+        if (cleanAbility !== 'frisk' || abilityTargetIds.length === 0) return;
+        const targetFoeId = abilityTargetIds[0];
+        const { targetName, heldItems } = resolveTargetHeldItemInfo(targetFoeId);
+        const state = useCharacterStore.getState();
+        const charName = state.identity.nickname || state.identity.species || 'Pokemon';
+        const charIcon = state.identity.tokenImageUrl || '';
+        const activeTokenId = state.tokenId;
+        const resultMsg = (heldItems && heldItems !== 'None')
+            ? `${charName} frisked ${targetName} and identified their held item: **${heldItems}**!`
+            : `${charName} frisked ${targetName} — they are not holding any items.`;
+
+        addRollLogEntry(
+            'Frisk',
+            resultMsg,
+            charIcon,
+            charName,
+            charName,
+            activeTokenId || undefined,
+            'ability'
+        );
+    };
 
     const handleCycleBoost = () => {
         if (maxBoost <= 1) {
@@ -176,10 +207,22 @@ export function AbilityTrackerControl() {
                         </button>
                     )}
 
-                    {abilityActive && benefit && !hasBoostTag && !hasChoice && (
-                        <span className="ability-tracker__benefit" title={benefit}>
-                            {benefit}
-                        </span>
+                    {abilityActive && displayBenefit && !hasBoostTag && !hasChoice && (
+                        cleanAbility === 'frisk' && abilityTargetIds.length > 0 ? (
+                            <button
+                                type="button"
+                                onClick={handleBroadcastFrisk}
+                                className="action-button action-button--theme"
+                                style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '3px' }}
+                                title="Click to announce Frisk target held item to Roll Log"
+                            >
+                                <Eye size={11} /> {displayBenefit}
+                            </button>
+                        ) : (
+                            <span className="ability-tracker__benefit" title={displayBenefit}>
+                                {displayBenefit}
+                            </span>
+                        )
                     )}
 
                     {abilityActive && isPressure && (

@@ -17,7 +17,8 @@ import {
     parseHealthAndWillFromMetadata,
     parseTokenPrivacyFlags,
     resolveCombatantLiveTokenSync,
-    parseCombatantInitiativeHierarchy
+    parseCombatantInitiativeHierarchy,
+    parseHeldItemsFromMetadata
 } from './battleOrganizerUtils';
 
 export interface UseBattleOrganizerTokenWatchProps {
@@ -206,7 +207,9 @@ export function useBattleOrganizerTokenWatch({
                                       ? identityObj.abilityChoiceIndex
                                       : undefined;
 
-                            const fingerprint = `${matchingItem.id}|${hpCurr}|${hpMax}|${willCurr}|${willMax}|${tempHp}|${tempWill}|${statusText}|${statusFainted}|${activeTransformation}|${resolvedName}|${resolvedImg}|${isNPC}|${gmHpBar}|${gmHpText}|${gmWillBar}|${gmWillText}|${metaAbility}|${metaAbilityActive}|${metaSpecies}|${tokenInitDisplay ?? ''}|${tokenBaseInit ?? ''}|${metaAbilityBoostLevel ?? ''}|${metaAbilityBoostActive ?? ''}|${metaAbilityChoiceIndex ?? ''}`;
+                            const heldItemText = parseHeldItemsFromMetadata(meta);
+
+                            const fingerprint = `${matchingItem.id}|${hpCurr}|${hpMax}|${willCurr}|${willMax}|${tempHp}|${tempWill}|${statusText}|${statusFainted}|${activeTransformation}|${resolvedName}|${resolvedImg}|${isNPC}|${gmHpBar}|${gmHpText}|${gmWillBar}|${gmWillText}|${metaAbility}|${metaAbilityActive}|${metaSpecies}|${tokenInitDisplay ?? ''}|${tokenBaseInit ?? ''}|${metaAbilityBoostLevel ?? ''}|${metaAbilityBoostActive ?? ''}|${metaAbilityChoiceIndex ?? ''}|${heldItemText}`;
                             const lastFingerprint = lastTokenFingerprintsRef.current.get(matchingItem.id);
                             if (
                                 !isReboundToken &&
@@ -230,6 +233,7 @@ export function useBattleOrganizerTokenWatch({
                                 combatant.abilityBoostLevel === metaAbilityBoostLevel &&
                                 combatant.abilityBoostActive === metaAbilityBoostActive &&
                                 combatant.abilityChoiceIndex === metaAbilityChoiceIndex &&
+                                combatant.heldItem === heldItemText &&
                                 (tokenInitDisplay === undefined ||
                                     (combatant.initiative === tokenInitDisplay &&
                                         (tokenBaseInit === undefined || combatant.baseInit === tokenBaseInit)))
@@ -379,6 +383,12 @@ export function useBattleOrganizerTokenWatch({
                                 updated = true;
                             }
 
+                            let nextHeldItem = combatant.heldItem;
+                            if (heldItemText !== combatant.heldItem) {
+                                nextHeldItem = heldItemText;
+                                updated = true;
+                            }
+
                             if (combatant.isInPc) {
                                 updated = true;
                             }
@@ -393,6 +403,7 @@ export function useBattleOrganizerTokenWatch({
                                     baseInit: nextBaseInit,
                                     name: nextName,
                                     image: nextImage,
+                                    heldItem: nextHeldItem,
                                     status: nextStatus,
                                     isFainted: nextIsFainted,
                                     hpCurr: nextHpCurr,
@@ -519,6 +530,11 @@ export function useBattleOrganizerTokenWatch({
                 currState.identity.abilityBoostLevel !== prevState.identity.abilityBoostLevel ||
                 currState.identity.abilityBoostActive !== prevState.identity.abilityBoostActive ||
                 currState.identity.abilityChoiceIndex !== prevState.identity.abilityChoiceIndex;
+            const heldItemChanged =
+                currState.inventory !== prevState.inventory ||
+                currState.identity.combat !== prevState.identity.combat ||
+                currState.identity.social !== prevState.identity.social ||
+                currState.identity.hand !== prevState.identity.hand;
             if (
                 statusChanged ||
                 hpChanged ||
@@ -526,7 +542,8 @@ export function useBattleOrganizerTokenWatch({
                 evadeChanged ||
                 clashChanged ||
                 gmPrivacyChanged ||
-                abilityChanged
+                abilityChanged ||
+                heldItemChanged
             ) {
                 const targetTokenId = currState.tokenId;
                 const charName = (currState.identity.nickname || currState.identity.species || '').toLowerCase().trim();
@@ -657,6 +674,20 @@ export function useBattleOrganizerTokenWatch({
                                 updated = true;
                             }
 
+                            let nextHeldItem = targetCombatant.heldItem;
+                            if (heldItemChanged) {
+                                const heldText = parseHeldItemsFromMetadata({
+                                    combat: currState.identity.combat,
+                                    social: currState.identity.social,
+                                    hand: currState.identity.hand,
+                                    'inv-data': JSON.stringify(currState.inventory)
+                                });
+                                if (heldText !== targetCombatant.heldItem) {
+                                    nextHeldItem = heldText;
+                                    updated = true;
+                                }
+                            }
+
                             if (!updated) return prev;
 
                             const newCombatants = currentRound.combatants.map((c) =>
@@ -669,6 +700,7 @@ export function useBattleOrganizerTokenWatch({
                                           hpMax: nextHpMax,
                                           willCurr: nextWillCurr,
                                           willMax: nextWillMax,
+                                          heldItem: nextHeldItem,
                                           evadeUsed: nextEvade,
                                           clashUsed: nextClash,
                                           ability: nextAbility,

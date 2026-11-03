@@ -263,7 +263,16 @@ export function buildTrackerConditions({
     const abilityTags = state.identity.abilityTags || '';
     const rank = state.identity.rank;
 
-    if (abilityName && abilityActive) {
+    const INFORMATIONAL_ENTRY_ABILITIES = new Set([
+        'frisk',
+        'hospitality',
+        'costar',
+        'ball fetch'
+    ]);
+
+    const cleanAbilityName = (abilityName || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+
+    if (abilityName && abilityActive && !INFORMATIONAL_ENTRY_ABILITIES.has(cleanAbilityName)) {
         const hpCurr = Number(state.health.hpCurr) || 0;
         const hpMax = Math.max(1, Number(state.health.hpMax) || 1);
         const isHalfHp = hpCurr <= Math.floor(hpMax / 2);
@@ -275,17 +284,28 @@ export function buildTrackerConditions({
             abilityBoostActive,
             abilityBoostLevel
         );
-        const abilityLabel = benefit ? `Ability: ${abilityName} (${benefit})` : `Ability: ${abilityName}`;
-        conditions.push({
-            id: 'active-ability',
-            label: abilityLabel,
-            bg: '#2563eb',
-            text: '#ffffff',
-            onClear: () => {
-                useCharacterStore.getState().setIdentity('abilityActive', false);
-                onRefresh?.();
-            }
-        });
+
+        // Only display abilities that provide real combat stat modifications, dice bonuses, or active damage/defense modifiers
+        const isCombatModifier = Boolean(
+            benefit &&
+                !benefit.toLowerCase().includes('(identify item)') &&
+                !benefit.toLowerCase().includes('(copy ally)') &&
+                !benefit.toLowerCase().includes('(restore ally)')
+        );
+
+        if (isCombatModifier) {
+            const abilityLabel = `Ability: ${abilityName} (${benefit})`;
+            conditions.push({
+                id: 'active-ability',
+                label: abilityLabel,
+                bg: '#2563eb',
+                text: '#ffffff',
+                onClear: () => {
+                    useCharacterStore.getState().setIdentity('abilityActive', false);
+                    onRefresh?.();
+                }
+            });
+        }
     }
 
     // 8. Boost Sources

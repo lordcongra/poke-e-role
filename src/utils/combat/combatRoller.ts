@@ -14,7 +14,8 @@ import {
     calculateCriticalRequirement,
     getWeatherDamageBonus,
     getFieldAuraDamageBonus,
-    calculateBaseInitiative
+    calculateBaseInitiative,
+    calculateBaseDamage
 } from './combatMath';
 import { parseCombatTags, isStatOrSkillMatch } from '../tagParser/index';
 import { rollDicePlus } from './diceRoller';
@@ -481,7 +482,8 @@ export async function executeDamageRoll(
     reduction: number,
     override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number },
     fieldFactors?: string[],
-    flatReduction: number = 0
+    flatReduction: number = 0,
+    target?: string | { id?: string; tokenId?: string; entityId?: string; name?: string }
 ) {
     const nickname = state.identity.nickname || state.identity.species || 'Someone';
     const abilityString = (state.identity.ability || '').toLowerCase();
@@ -710,6 +712,30 @@ export async function executeDamageRoll(
             }
         }
 
+        if (cleanAbility === 'stakeout' && state.identity.abilityActive !== false) {
+            const stakeoutTargetId = state.identity.abilityTargetIds?.[0];
+            const targetObj = target
+                ? typeof target === 'string'
+                    ? { id: target, tokenId: target, entityId: target, name: target }
+                    : target
+                : undefined;
+            const isMatched = Boolean(
+                stakeoutTargetId && targetObj && matchesTarget(targetObj, stakeoutTargetId)
+            );
+
+            const rawBase = calculateBaseDamage(move, state);
+            const baseHadStakeout = baseDamage >= rawBase && rawBase > 0;
+
+            if (isMatched) {
+                if (!baseHadStakeout) {
+                    actualDicePool += 1;
+                }
+                tags.push('Stakeout (+1 Damage)');
+            } else if (baseHadStakeout) {
+                actualDicePool = Math.max(1, actualDicePool - 1);
+            }
+        }
+
         if (statuses.paralysisDexterityPenalty < 0 && normalizedDamageStatistic === 'dex') {
             tags.push(`Paralysis: -2 Dice`);
         }
@@ -884,6 +910,8 @@ export async function executeDamageRoll(
         'damage',
         payload
     );
+
+    return { diceToRoll, finalTags, tags };
 }
 
 export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {

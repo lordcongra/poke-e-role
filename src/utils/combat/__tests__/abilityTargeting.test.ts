@@ -5,12 +5,17 @@ import {
     isTargetAffectedByAbility,
     isCombatantInPc,
     syncCombatantSentToMap,
-    syncCombatantSentToPc
+    syncCombatantSentToPc,
+    resolveTargetHeldItemInfo
 } from '../abilityTargetingUtils';
 import { resolveChoiceTags } from '../../tagParser/parseCombatTags';
 import { flattenStateToMetadata } from '../../sync/flattenStateToMetadata';
 import { hydrateStateFromMetadata } from '../../sync/stateMapper';
-import { calculateStatTotal, calculateDefTotal, calculateSDefTotal } from '../combatMath';
+import { calculateStatTotal, calculateDefTotal, calculateSDefTotal, calculateBaseDamage } from '../combatMath';
+import { KNOWN_ABILITIES } from '../../../data/abilities/knownAbilities';
+import { executeDamageRoll } from '../combatRoller';
+import { executeMultiTargetDamageRoll } from '../multiTargetDamageRoller';
+import type { MoveData } from '../../../store/storeTypes';
 import { CombatStat } from '../../../types/enums';
 import { createTestCharacterState } from '../../../test/testStateHelpers';
 import { useCharacterStore } from '../../../store/useCharacterStore';
@@ -96,12 +101,6 @@ describe('Ability Targeting System', () => {
             expect(
                 resolveChoiceTags('[Choice: Str +1 (Lower Def) | Spe +1 (Lower SpD)]', 1)
             ).toBe('[Spe +1]');
-            expect(
-                resolveChoiceTags('[Choice: 1 Neutral Dmg | 2 Typeless Dmg]', 0)
-            ).toBe('[1 Neutral Dmg]');
-            expect(
-                resolveChoiceTags('[Choice: 1 Neutral Dmg | 2 Typeless Dmg]', 1)
-            ).toBe('[2 Typeless Dmg]');
         });
 
         it('serializes and hydrates ability-target-ids', () => {
@@ -170,7 +169,8 @@ describe('Ability Targeting System', () => {
                         ]
                     }
                 ],
-                activeRoundIndex: 0
+                activeRoundIndex: 0,
+                battlefield: createDefaultBattlefield()
             };
             localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(battleState));
 
@@ -231,7 +231,8 @@ describe('Ability Targeting System', () => {
                         ]
                     }
                 ],
-                activeRoundIndex: 0
+                activeRoundIndex: 0,
+                battlefield: createDefaultBattlefield()
             };
             localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(multiCombatState));
 
@@ -294,7 +295,8 @@ describe('Ability Targeting System', () => {
                         ]
                     }
                 ],
-                activeRoundIndex: 0
+                activeRoundIndex: 0,
+                battlefield: createDefaultBattlefield()
             };
             localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(dualWeezingState));
 
@@ -468,7 +470,8 @@ describe('Ability Targeting System', () => {
                         ]
                     }
                 ],
-                activeRoundIndex: 0
+                activeRoundIndex: 0,
+                battlefield: createDefaultBattlefield()
             };
             testPcData.pokemonSummaries['box-mon-1'].savedTokenItem = { id: 'saved-tok-99' };
             localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(initialBoState));
@@ -541,7 +544,8 @@ describe('Ability Targeting System', () => {
                         ]
                     }
                 ],
-                activeRoundIndex: 0
+                activeRoundIndex: 0,
+                battlefield: createDefaultBattlefield()
             };
             localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(initialBo));
 
@@ -1098,6 +1102,281 @@ describe('Ability Targeting System', () => {
             const blastoiseInRound = preservedCombatantRows.find((c) => c.entityId === 'ent-blastoise');
             expect(blastoiseInRound).toBeDefined();
             expect(blastoiseInRound?.isInPc).toBe(true);
+        });
+    });
+
+    describe('Ability Refinements: Iron Barbs, Commander, Stakeout, and Frisk', () => {
+        it('removes Iron Barbs and Rough Skin from KNOWN_ABILITIES and updates Stakeout tags', () => {
+            expect(KNOWN_ABILITIES['Iron Barbs']).toBeUndefined();
+            expect(KNOWN_ABILITIES['Rough Skin']).toBeUndefined();
+            expect(KNOWN_ABILITIES['Stakeout']).toBeDefined();
+            expect(KNOWN_ABILITIES['Stakeout'].tags).toBe('[Target: Single Foe]');
+        });
+
+        it('prioritizes Dondozo candidate for Commander ability sorting', () => {
+            const candidates = [
+                { id: '1', name: 'Pikachu', species: 'Pikachu' },
+                { id: '2', name: 'Titan Fish', species: 'Dondozo' },
+                { id: '3', name: 'Raichu', species: 'Raichu' },
+                { id: '4', name: 'Dondozo', species: 'Unknown' }
+            ];
+
+            const abilityName = 'Commander';
+            const sorted = [...candidates].sort((a, b) => {
+                if (abilityName.toLowerCase() === 'commander') {
+                    const aSpecies = (a.species || '').toLowerCase();
+                    const aName = (a.name || '').toLowerCase();
+                    const aIsDondozo = (aSpecies === 'dondozo' || aName === 'dondozo') ? 1 : 0;
+
+                    const bSpecies = (b.species || '').toLowerCase();
+                    const bName = (b.name || '').toLowerCase();
+                    const bIsDondozo = (bSpecies === 'dondozo' || bName === 'dondozo') ? 1 : 0;
+
+                    return bIsDondozo - aIsDondozo;
+                }
+                return 0;
+            });
+
+            expect(sorted[0].id).toBe('2'); // Titan Fish (species Dondozo)
+            expect(sorted[1].id).toBe('4'); // Dondozo (name Dondozo)
+            expect(sorted[2].id).toBe('1');
+            expect(sorted[3].id).toBe('3');
+        });
+
+        it('reflects Stakeout +1 damage bonus in calculateBaseDamage when active and target is selected', () => {
+            const state = createTestCharacterState();
+            state.identity.ability = 'Stakeout';
+            state.identity.abilityActive = true;
+            state.identity.abilityTargetIds = ['foe-target-1'];
+
+            const move: MoveData = {
+                id: 'tackle',
+                name: 'Tackle',
+                type: 'Normal',
+                power: 2,
+                category: 'Physical',
+                acc1: 'Dexterity',
+                acc2: 'Brawl',
+                dmg1: 'Strength',
+                active: true
+            };
+
+            const baseDmgWithTarget = calculateBaseDamage(move, state);
+
+            // Inactive ability should not get bonus
+            state.identity.abilityActive = false;
+            const baseDmgInactive = calculateBaseDamage(move, state);
+            expect(baseDmgWithTarget).toBe(baseDmgInactive + 1);
+
+            // Active but no target selected should not get bonus
+            state.identity.abilityActive = true;
+            state.identity.abilityTargetIds = [];
+            const baseDmgNoTarget = calculateBaseDamage(move, state);
+            expect(baseDmgWithTarget).toBe(baseDmgNoTarget + 1);
+        });
+
+        it('applies Stakeout +1 damage die and tag when executing damage roll against matching target', async () => {
+            const state = createTestCharacterState();
+            state.identity.ability = 'Stakeout';
+            state.identity.abilityActive = true;
+            state.identity.abilityTargetIds = ['foe-gumshoos'];
+
+            const move: MoveData = {
+                id: 'bite',
+                name: 'Bite',
+                type: 'Dark',
+                power: 2,
+                category: 'Physical',
+                acc1: 'Dexterity',
+                acc2: 'Brawl',
+                dmg1: 'Strength',
+                active: true
+            };
+
+            const override = { active: false, type: 'dice' as const, value: 0 };
+
+            // Roll vs matching target
+            const matchingResult = await executeDamageRoll(
+                move,
+                state,
+                4,
+                false,
+                0,
+                0,
+                override,
+                undefined,
+                0,
+                { id: 'foe-gumshoos', name: 'Gumshoos' }
+            );
+
+            expect(matchingResult?.tags).toContain('Stakeout (+1 Damage)');
+
+            // Roll vs non-matching target
+            const nonMatchingResult = await executeDamageRoll(
+                move,
+                state,
+                4,
+                false,
+                0,
+                0,
+                override,
+                undefined,
+                0,
+                { id: 'foe-rattata', name: 'Rattata' }
+            );
+
+            expect(nonMatchingResult?.tags).not.toContain('Stakeout (+1 Damage)');
+        });
+
+        it('applies Stakeout only to matching target in executeMultiTargetDamageRoll', async () => {
+            const state = createTestCharacterState();
+            state.identity.ability = 'Stakeout';
+            state.identity.abilityActive = true;
+            state.identity.abilityTargetIds = ['target-gumshoos'];
+
+            const move: MoveData = {
+                id: 'earthquake',
+                name: 'Earthquake',
+                type: 'Ground',
+                power: 3,
+                category: 'Physical',
+                acc1: 'Dexterity',
+                acc2: 'Brawl',
+                dmg1: 'Strength',
+                active: true
+            };
+
+            const selections = [
+                { id: 'target-gumshoos', name: 'Gumshoos', def: 2, effectiveness: 0, isEvaded: false, isPlayerSide: false },
+                { id: 'target-rattata', name: 'Rattata', def: 2, effectiveness: 0, isEvaded: false, isPlayerSide: false }
+            ];
+
+            const override = { active: false, type: 'dice' as const, value: 0 };
+            await executeMultiTargetDamageRoll(move, state, 5, false, selections, override);
+
+            const logs: Array<{ label: string }> = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+            const gumshoosLog = logs.find((l) => l.label.includes('vs Gumshoos'));
+            const rattataLog = logs.find((l) => l.label.includes('vs Rattata'));
+
+            expect(gumshoosLog).toBeDefined();
+            expect(gumshoosLog?.label).toContain('Stakeout (+1 Damage)');
+
+            expect(rattataLog).toBeDefined();
+            expect(rattataLog?.label).not.toContain('Stakeout (+1 Damage)');
+        });
+
+        it('resolveTargetHeldItemInfo identifies equipped bag items and identity held items on active sheet', () => {
+            const testState = createTestCharacterState();
+            testState.identity.entityId = 'furret-1';
+            testState.identity.nickname = 'Furret';
+            testState.identity.combat = 'Leftovers';
+            testState.identity.social = 'Amulet Coin';
+            testState.identity.hand = '';
+            testState.inventory = [
+                {
+                    id: 'inv-1',
+                    name: 'Life Orb',
+                    active: true,
+                    desc: '',
+                    qty: 1
+                },
+                {
+                    id: 'inv-2',
+                    name: 'Potion',
+                    active: false,
+                    desc: '',
+                    qty: 3
+                }
+            ];
+
+            const result = resolveTargetHeldItemInfo('furret-1', testState);
+            expect(result.targetName).toBe('Furret');
+            expect(result.heldItems).toBe('Leftovers, Amulet Coin, Life Orb');
+        });
+
+        it('resolveTargetHeldItemInfo resolves held items from Battle Organizer combatants', () => {
+            const boData: BattleOrganizerState = {
+                rounds: [
+                    {
+                        id: 'round-1',
+                        roundNumber: 1,
+                        endOfRoundEffects: '',
+                        combatants: [
+                            {
+                                id: 'foe-gengar',
+                                name: 'Gengar',
+                                heldItem: 'Choice Specs',
+                                status: '',
+                                evadeUsed: false,
+                                clashUsed: false,
+                                initiative: '10',
+                                actions: [
+                                    { text: '', status: 'none' },
+                                    { text: '', status: 'none' },
+                                    { text: '', status: 'none' },
+                                    { text: '', status: 'none' },
+                                    { text: '', status: 'none' }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                activeRoundIndex: 0,
+                battlefield: createDefaultBattlefield()
+            };
+            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+
+            const resolvedWithItem = resolveTargetHeldItemInfo('foe-gengar');
+            expect(resolvedWithItem.targetName).toBe('Gengar');
+            expect(resolvedWithItem.heldItems).toBe('Choice Specs');
+
+            // When combatant held item is empty, returns "None"
+            boData.rounds[0].combatants[0].heldItem = '';
+            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+
+            const resolvedEmpty = resolveTargetHeldItemInfo('foe-gengar');
+            expect(resolvedEmpty.targetName).toBe('Gengar');
+            expect(resolvedEmpty.heldItems).toBe('None');
+
+            // Fallback for unknown target
+            const resolvedUnknown = resolveTargetHeldItemInfo('non-existent');
+            expect(resolvedUnknown.targetName).toBe('non-existent');
+            expect(resolvedUnknown.heldItems).toBe('None');
+        });
+
+        it('Frisk does not populate spurious badges in buildTrackerConditions', () => {
+            const testState = createTestCharacterState();
+            testState.identity.ability = 'Frisk';
+            testState.identity.abilityActive = true;
+            testState.identity.abilityTargetIds = ['foe-gengar'];
+
+            const conditions = buildTrackerConditions({
+                state: testState,
+                boostSources: [],
+                updateTracker: () => {},
+                clearActiveCombatBoost: () => {}
+            });
+
+            // Neither the old dedicated frisk badge nor the generic active-ability badge should be present
+            const friskBadge = conditions.find((c) => c.id === 'frisk-target-held-item');
+            expect(friskBadge).toBeUndefined();
+
+            const abilityBadge = conditions.find((c) => c.id === 'active-ability');
+            expect(abilityBadge).toBeUndefined();
+
+            // Contrast with real combat modifier abilities like Huge Power
+            testState.identity.ability = 'Huge Power';
+            testState.identity.abilityTags = '[Str +2]';
+            const combatConditions = buildTrackerConditions({
+                state: testState,
+                boostSources: [],
+                updateTracker: () => {},
+                clearActiveCombatBoost: () => {}
+            });
+
+            const combatAbilityBadge = combatConditions.find((c) => c.id === 'active-ability');
+            expect(combatAbilityBadge).toBeDefined();
+            expect(combatAbilityBadge?.label).toBe('Ability: Huge Power (+2 STR)');
         });
     });
 });

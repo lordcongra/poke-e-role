@@ -35,7 +35,8 @@ interface TargetingModalProps {
         reduction: number,
         override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number },
         fieldFactors?: string[],
-        fieldReduction?: number
+        fieldReduction?: number,
+        target?: TargetOption | string
     ) => void;
     onMultiRoll?: (
         baseDmg: number,
@@ -202,7 +203,17 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
             value: overrideValue
         };
         if (mode === 'single') {
-            onRoll(baseDamage, isCrit, effectiveness, reduction, override, appliedFieldFactors, fieldReduction);
+            const chosenTarget = targets.find((t) => t.id === selectedTargetId);
+            onRoll(
+                baseDamage,
+                isCrit,
+                effectiveness,
+                reduction,
+                override,
+                appliedFieldFactors,
+                fieldReduction,
+                chosenTarget || selectedTargetId
+            );
         } else {
             const selections: MultiTargetSelection[] = multiTargets
                 .filter((r) => r.selected)

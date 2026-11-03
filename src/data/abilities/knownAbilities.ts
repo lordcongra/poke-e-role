@@ -51,26 +51,12 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
         summary: 'Raises Strength if target has lower Defense than Sp. Defense, or Special if target has lower Sp. Defense.',
         benefitDisplay: 'Download (Choice)'
     },
-    'Iron Barbs': {
-        name: 'Iron Barbs',
-        tags: '[Choice: 1 Neutral Dmg | 2 Typeless Dmg]',
-        autoActive: true,
-        summary: 'Inflicts damage to the attacker on contact.',
-        benefitDisplay: 'Iron Barbs (Choice)'
-    },
-    'Rough Skin': {
-        name: 'Rough Skin',
-        tags: '[Choice: 1 Neutral Dmg | 2 Typeless Dmg]',
-        autoActive: true,
-        summary: 'Inflicts damage to the attacker on contact.',
-        benefitDisplay: 'Rough Skin (Choice)'
-    },
     Stakeout: {
         name: 'Stakeout',
-        tags: '[First Hit Dmg +1]',
+        tags: '[Target: Single Foe]',
         autoActive: true,
         summary: 'Deals doubled damage to a target that has just switched into battle.',
-        benefitDisplay: '+1 First Hit Dmg'
+        benefitDisplay: '+1 Dmg vs Target'
     },
     Commander: {
         name: 'Commander',
