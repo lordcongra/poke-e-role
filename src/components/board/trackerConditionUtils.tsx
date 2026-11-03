@@ -481,5 +481,63 @@ export function buildTrackerConditions({
         });
     }
 
+    // 23. Tablets of Ruin (-2 Strength)
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'tablets of ruin', state.activeBattlefield || null)) {
+        conditions.push({
+            id: 'tablets-of-ruin-debuff',
+            label: '-2 Strength (Ruin)',
+            bg: '#78350f',
+            text: '#ffffff',
+            onClear: () => removeCharacterFromAuraSources('tablets of ruin', state, onRefresh)
+        });
+    }
+
+    // 24. Sword of Ruin (-2 Defense)
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'sword of ruin', state.activeBattlefield || null)) {
+        conditions.push({
+            id: 'sword-of-ruin-debuff',
+            label: '-2 Defense (Ruin)',
+            bg: '#0284c7',
+            text: '#ffffff',
+            onClear: () => removeCharacterFromAuraSources('sword of ruin', state, onRefresh)
+        });
+    }
+
+    // 25. Vessel of Ruin (-2 Special)
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'vessel of ruin', state.activeBattlefield || null)) {
+        conditions.push({
+            id: 'vessel-of-ruin-debuff',
+            label: '-2 Special (Ruin)',
+            bg: '#475569',
+            text: '#ffffff',
+            onClear: () => removeCharacterFromAuraSources('vessel of ruin', state, onRefresh)
+        });
+    }
+
+    // 26. Beads of Ruin (-2 Sp.Def)
+    if (isTargetAffectedByAbility(targetId, effectiveSide, 'beads of ruin', state.activeBattlefield || null)) {
+        conditions.push({
+            id: 'beads-of-ruin-debuff',
+            label: '-2 Sp.Def (Ruin)',
+            bg: '#4f46e5',
+            text: '#ffffff',
+            onClear: () => removeCharacterFromAuraSources('beads of ruin', state, onRefresh)
+        });
+    }
+
+    // 27. Commander (+2 All Combat Stats) - Dondozo only
+    const isDondozo =
+        (state.identity.species || '').trim().toLowerCase() === 'dondozo' ||
+        (state.identity.nickname || '').trim().toLowerCase() === 'dondozo';
+    if (isDondozo && isTargetAffectedByAbility(targetId, effectiveSide, 'commander', state.activeBattlefield || null)) {
+        conditions.push({
+            id: 'commander-buff',
+            label: 'Commander (+2 All Combat Stats)',
+            bg: '#ea580c',
+            text: '#ffffff',
+            onClear: () => removeCharacterFromAuraSources('commander', state, onRefresh)
+        });
+    }
+
     return conditions;
 }

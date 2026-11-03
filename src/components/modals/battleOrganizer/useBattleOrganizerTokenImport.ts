@@ -394,14 +394,23 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                         }
 
                         const currentRoundCombatants = currentRound.combatants;
+                        const matchedExistingIds = new Set<string>();
+
                         const preservedCombatantRows = combatantRows.map((row) => {
-                            const existing = currentRoundCombatants.find(
-                                (c) =>
-                                    (c.tokenId && c.tokenId === row.tokenId) ||
-                                    (c.entityId && c.entityId === row.entityId) ||
-                                    c.name.toLowerCase().trim() === row.name.toLowerCase().trim()
-                            );
+                            const existing = currentRoundCombatants.find((c) => {
+                                if (row.tokenId && c.tokenId && c.tokenId === row.tokenId) return true;
+                                if (row.entityId && c.entityId && c.entityId === row.entityId) return true;
+                                if (row.id && c.id && c.id === row.id) return true;
+                                const hasSpecificRowId = Boolean(row.tokenId || row.entityId);
+                                const hasSpecificCId = Boolean(c.tokenId || c.entityId);
+                                if (!hasSpecificRowId && !hasSpecificCId && !c.isInPc) {
+                                    return c.name.toLowerCase().trim() === row.name.toLowerCase().trim();
+                                }
+                                return false;
+                            });
+
                             if (existing) {
+                                matchedExistingIds.add(existing.id);
                                 return {
                                     ...row,
                                     isPlayerSide: existing.isPlayerSide !== undefined ? existing.isPlayerSide : row.isPlayerSide,
@@ -414,6 +423,17 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                             }
                             return row;
                         });
+
+                        // Preserve any combatants from currentRoundCombatants where c.isInPc === true
+                        // (or orphaned combatants not in combatantRows), appending them to the preserved list
+                        const unmappedCombatants = currentRoundCombatants
+                            .filter((c) => !matchedExistingIds.has(c.id))
+                            .map((c) => ({
+                                ...c,
+                                abilityTargetIds: shouldReset ? [] : (c.abilityTargetIds ?? [])
+                            }));
+
+                        preservedCombatantRows.push(...unmappedCombatants);
 
                         targetCombatantsToReset = preservedCombatantRows;
                         const updatedRound: BattleRoundData = {

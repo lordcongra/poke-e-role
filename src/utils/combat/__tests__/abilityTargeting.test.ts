@@ -13,6 +13,15 @@ import { hydrateStateFromMetadata } from '../../sync/stateMapper';
 import { calculateStatTotal, calculateDefTotal, calculateSDefTotal } from '../combatMath';
 import { CombatStat } from '../../../types/enums';
 import { createTestCharacterState } from '../../../test/testStateHelpers';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { buildTrackerConditions } from '../../../components/board/trackerConditionUtils';
+import { createDefaultBattlefield } from '../../../components/modals/battleOrganizer/battleOrganizerUtils';
+import type {
+    CombatantRowData,
+    BattleOrganizerState,
+    BattleRoundData,
+    BattlefieldData
+} from '../../../types/battleOrganizerTypes';
 
 describe('Ability Targeting System', () => {
     beforeEach(() => {
@@ -714,6 +723,381 @@ describe('Ability Targeting System', () => {
             expect(calculateDefTotal(dondozoState, dummyInvMods)).toBe(7);
             // SpD: ins (3) + commander (2) = 5
             expect(calculateSDefTotal(dondozoState, dummyInvMods)).toBe(5);
+        });
+    });
+
+    describe('Homebrew Dynamic Stance Resolution & Invariants', () => {
+        const createTestCombatant = (overrides: Partial<CombatantRowData> = {}): CombatantRowData => ({
+            id: 'test-c-' + Math.random(),
+            name: 'Combatant',
+            initiative: '10',
+            evadeUsed: false,
+            clashUsed: false,
+            heldItem: '',
+            status: 'Normal',
+            actions: [
+                { text: '', status: 'none' },
+                { text: '', status: 'none' },
+                { text: '', status: 'none' },
+                { text: '', status: 'none' },
+                { text: '', status: 'none' }
+            ],
+            ...overrides
+        });
+
+        const createTestBattlefield = (overrides: Partial<BattlefieldData> = {}): BattlefieldData => ({
+            ...createDefaultBattlefield(),
+            playerTargets: 1,
+            foeTargets: 1,
+            ...overrides
+        });
+
+        const createTestRound = (overrides: Partial<BattleRoundData> = {}): BattleRoundData => ({
+            id: 'round-1',
+            roundNumber: 1,
+            combatants: [],
+            endOfRoundEffects: '',
+            ...overrides
+        });
+
+        it('resolves homebrew ability stance from roomCustomAbilities and affects targets dynamically', () => {
+            // Set up homebrew ability in character store
+            useCharacterStore.setState({
+                roomCustomAbilities: [
+                    {
+                        id: 'custom-curse-aura',
+                        name: 'Cursed Mist',
+                        effect: '[Target: All Foes]',
+                        description: 'Reduces enemy stats in range'
+                    }
+                ]
+            });
+
+            // 1. Check getAbilityTargetStance without tags falls back to roomCustomAbilities
+            expect(getAbilityTargetStance('Cursed Mist')).toBe('foes');
+
+            // 2. Set up Battle Organizer state with a source wielding Cursed Mist targeting foe-target-1
+            const boData: BattleOrganizerState = {
+                rounds: [
+                    createTestRound({
+                        roundNumber: 1,
+                        combatants: [
+                            createTestCombatant({
+                                id: 'player-source-1',
+                                name: 'Gengar',
+                                entityId: 'ent-gengar',
+                                tokenId: 'tok-gengar',
+                                ability: 'Cursed Mist',
+                                abilityActive: true,
+                                abilityTargetIds: ['foe-target-1'],
+                                isPlayerSide: true,
+                                isFainted: false,
+                                isInPc: false,
+                                initiative: '10'
+                            }),
+                            createTestCombatant({
+                                id: 'foe-target-1',
+                                name: 'Hypno',
+                                entityId: 'ent-hypno',
+                                tokenId: 'tok-hypno',
+                                isPlayerSide: false,
+                                isFainted: false,
+                                isInPc: false,
+                                initiative: '8'
+                            }),
+                            createTestCombatant({
+                                id: 'foe-target-2',
+                                name: 'Alakazam',
+                                entityId: 'ent-alakazam',
+                                tokenId: 'tok-alakazam',
+                                isPlayerSide: false,
+                                isFainted: false,
+                                isInPc: false,
+                                initiative: '12'
+                            })
+                        ]
+                    })
+                ],
+                activeRoundIndex: 0,
+                battlefield: createTestBattlefield({ playerTargets: 1, foeTargets: 2 })
+            };
+            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+
+            // Target 1 is explicitly in Gengar's abilityTargetIds -> affected
+            expect(isTargetAffectedByAbility('foe-target-1', 'foe', 'Cursed Mist')).toBe(true);
+            // Target 2 is not in Gengar's abilityTargetIds -> not affected
+            expect(isTargetAffectedByAbility('foe-target-2', 'foe', 'Cursed Mist')).toBe(false);
+            // Allied side cannot be affected by 'foes' stance ability
+            expect(isTargetAffectedByAbility('player-source-1', 'player', 'Cursed Mist')).toBe(false);
+        });
+
+        it('syncCombatantSentToPc strictly matches IDs and ignores same-name duplicate combatants', async () => {
+            const boData: BattleOrganizerState = {
+                rounds: [
+                    createTestRound({
+                        roundNumber: 1,
+                        combatants: [
+                            createTestCombatant({
+                                id: 'pika-player',
+                                name: 'Pikachu',
+                                entityId: 'ent-pika-player',
+                                tokenId: 'tok-pika-player',
+                                ability: 'Lightning Rod',
+                                abilityActive: true,
+                                abilityTargetIds: [],
+                                isPlayerSide: true,
+                                isFainted: false,
+                                isInPc: false,
+                                initiative: '10'
+                            }),
+                            createTestCombatant({
+                                id: 'pika-wild',
+                                name: 'Pikachu',
+                                entityId: 'ent-pika-wild',
+                                tokenId: 'tok-pika-wild',
+                                ability: 'Static',
+                                abilityActive: true,
+                                abilityTargetIds: [],
+                                isPlayerSide: false,
+                                isFainted: false,
+                                isInPc: false,
+                                initiative: '8'
+                            })
+                        ]
+                    })
+                ],
+                activeRoundIndex: 0,
+                battlefield: createTestBattlefield({ playerTargets: 1, foeTargets: 1 })
+            };
+            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+
+            const playerPcData = {
+                pokemonSummaries: {
+                    'ent-pika-player': {
+                        entityId: 'ent-pika-player',
+                        name: 'Pikachu',
+                        species: 'Pikachu',
+                        mapTokenId: 'tok-pika-player',
+                        isOnMap: false
+                    }
+                }
+            };
+
+            // Deposit player Pikachu to PC
+            await syncCombatantSentToPc('ent-pika-player', playerPcData as any);
+
+            const afterPcRaw = localStorage.getItem('pkr_battle_organizer_data');
+            const afterPcBo = JSON.parse(afterPcRaw!) as BattleOrganizerState;
+            const combatants = afterPcBo.rounds[0].combatants;
+
+            const playerMon = combatants.find((c) => c.id === 'pika-player')!;
+            const wildMon = combatants.find((c) => c.id === 'pika-wild')!;
+
+            // Player Pikachu MUST be marked isInPc: true and abilityActive: false
+            expect(playerMon.isInPc).toBe(true);
+            expect(playerMon.abilityActive).toBe(false);
+
+            // Wild Pikachu MUST remain untouched despite sharing the identical name "Pikachu"
+            expect(wildMon.isInPc).toBe(false);
+            expect(wildMon.abilityActive).toBe(true);
+
+            // Now send player Pikachu back to map
+            playerPcData.pokemonSummaries['ent-pika-player'].isOnMap = true;
+            syncCombatantSentToMap('ent-pika-player', playerPcData as any);
+
+            const afterMapRaw = localStorage.getItem('pkr_battle_organizer_data');
+            const afterMapBo = JSON.parse(afterMapRaw!) as BattleOrganizerState;
+            const restoredCombatants = afterMapBo.rounds[0].combatants;
+
+            const restoredPlayerMon = restoredCombatants.find((c) => c.id === 'pika-player')!;
+            const untouchedWildMon = restoredCombatants.find((c) => c.id === 'pika-wild')!;
+
+            expect(restoredPlayerMon.isInPc).toBe(false);
+            expect(untouchedWildMon.isInPc).toBe(false);
+            expect(untouchedWildMon.abilityActive).toBe(true);
+        });
+
+        it('buildTrackerConditions generates badges for Ruin Quartet and Commander (Dondozo)', () => {
+            // Setup battle organizer with Ruin and Commander auras targeting test character
+            const boData: BattleOrganizerState = {
+                rounds: [
+                    createTestRound({
+                        roundNumber: 1,
+                        combatants: [
+                            createTestCombatant({
+                                id: 'chi-yu',
+                                name: 'Chi-Yu',
+                                ability: 'Beads of Ruin',
+                                abilityActive: true,
+                                abilityTargetIds: ['test-dondozo'],
+                                isPlayerSide: false,
+                                isFainted: false,
+                                isInPc: false,
+                                initiative: '15'
+                            }),
+                            createTestCombatant({
+                                id: 'chien-pao',
+                                name: 'Chien-Pao',
+                                ability: 'Sword of Ruin',
+                                abilityActive: true,
+                                abilityTargetIds: ['test-dondozo'],
+                                isPlayerSide: false,
+                                isFainted: false,
+                                isInPc: false,
+                                initiative: '14'
+                            }),
+                            createTestCombatant({
+                                id: 'ting-lu',
+                                name: 'Ting-Lu',
+                                ability: 'Vessel of Ruin',
+                                abilityActive: true,
+                                abilityTargetIds: ['test-dondozo'],
+                                isPlayerSide: false,
+                                isFainted: false,
+                                isInPc: false,
+                                initiative: '13'
+                            }),
+                            createTestCombatant({
+                                id: 'wo-chien',
+                                name: 'Wo-Chien',
+                                ability: 'Tablets of Ruin',
+                                abilityActive: true,
+                                abilityTargetIds: ['test-dondozo'],
+                                isPlayerSide: false,
+                                isFainted: false,
+                                isInPc: false,
+                                initiative: '12'
+                            }),
+                            createTestCombatant({
+                                id: 'tatsugiri',
+                                name: 'Tatsugiri',
+                                ability: 'Commander',
+                                abilityActive: true,
+                                abilityTargetIds: ['test-dondozo'],
+                                isPlayerSide: true,
+                                isFainted: false,
+                                isInPc: false,
+                                initiative: '10'
+                            })
+                        ]
+                    })
+                ],
+                activeRoundIndex: 0,
+                battlefield: createTestBattlefield({ playerTargets: 2, foeTargets: 4 })
+            };
+            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+
+            const testState = createTestCharacterState();
+            testState.identity.entityId = 'test-dondozo';
+            testState.identity.species = 'Dondozo';
+            testState.identity.nickname = 'Dondozo';
+            testState.identity.isNPC = false;
+
+            const conditions = buildTrackerConditions({
+                state: testState,
+                boostSources: [],
+                updateTracker: () => {},
+                clearActiveCombatBoost: () => {}
+            });
+
+            const conditionIds = conditions.map((c) => c.id);
+            expect(conditionIds).toContain('tablets-of-ruin-debuff');
+            expect(conditionIds).toContain('sword-of-ruin-debuff');
+            expect(conditionIds).toContain('vessel-of-ruin-debuff');
+            expect(conditionIds).toContain('beads-of-ruin-debuff');
+            expect(conditionIds).toContain('commander-buff');
+
+            const commanderBadge = conditions.find((c) => c.id === 'commander-buff')!;
+            expect(commanderBadge.label).toBe('Commander (+2 All Combat Stats)');
+            expect(commanderBadge.bg).toBe('#ea580c');
+            expect(typeof commanderBadge.onClear).toBe('function');
+
+            const tabletsBadge = conditions.find((c) => c.id === 'tablets-of-ruin-debuff')!;
+            expect(tabletsBadge.label).toBe('-2 Strength (Ruin)');
+            expect(tabletsBadge.bg).toBe('#78350f');
+            expect(typeof tabletsBadge.onClear).toBe('function');
+        });
+
+        it('preserves in-PC combatants when re-importing scene tokens', () => {
+            // Emulate the preservedCombatantRows logic from useBattleOrganizerTokenImport
+            const currentRoundCombatants: CombatantRowData[] = [
+                createTestCombatant({
+                    id: 'active-token-1',
+                    name: 'Charizard',
+                    tokenId: 'tok-charizard',
+                    entityId: 'ent-charizard',
+                    isInPc: false,
+                    isPlayerSide: true,
+                    isFainted: false,
+                    initiative: '10'
+                }),
+                createTestCombatant({
+                    id: 'pc-mon-1',
+                    name: 'Blastoise',
+                    tokenId: undefined,
+                    entityId: 'ent-blastoise',
+                    isInPc: true,
+                    isPlayerSide: true,
+                    isFainted: false,
+                    initiative: '8'
+                })
+            ];
+
+            // Scene only has tokens currently on map (Charizard + newly placed Venusaur)
+            const sceneTokensOnMap: CombatantRowData[] = [
+                createTestCombatant({
+                    id: 'active-token-1',
+                    name: 'Charizard',
+                    tokenId: 'tok-charizard',
+                    entityId: 'ent-charizard',
+                    isInPc: false,
+                    isPlayerSide: true,
+                    isFainted: false,
+                    initiative: '10'
+                }),
+                createTestCombatant({
+                    id: 'active-token-2',
+                    name: 'Venusaur',
+                    tokenId: 'tok-venusaur',
+                    entityId: 'ent-venusaur',
+                    isInPc: false,
+                    isPlayerSide: true,
+                    isFainted: false,
+                    initiative: '9'
+                })
+            ];
+
+            const matchedExistingIds = new Set<string>();
+            const preservedCombatantRows = sceneTokensOnMap.map((row) => {
+                const existing = currentRoundCombatants.find((c) => {
+                    if (row.tokenId && c.tokenId && c.tokenId === row.tokenId) return true;
+                    if (row.entityId && c.entityId && c.entityId === row.entityId) return true;
+                    if (row.id && c.id && c.id === row.id) return true;
+                    const hasSpecificRowId = Boolean(row.tokenId || row.entityId);
+                    const hasSpecificCId = Boolean(c.tokenId || c.entityId);
+                    if (!hasSpecificRowId && !hasSpecificCId && !c.isInPc) {
+                        return c.name.toLowerCase().trim() === row.name.toLowerCase().trim();
+                    }
+                    return false;
+                });
+                if (existing) {
+                    matchedExistingIds.add(existing.id);
+                    return { ...row, isPlayerSide: existing.isPlayerSide };
+                }
+                return row;
+            });
+
+            // Preserve unmapped combatants from current round (such as Blastoise in PC)
+            const unmapped = currentRoundCombatants
+                .filter((c) => !matchedExistingIds.has(c.id))
+                .map((c) => ({ ...c }));
+
+            preservedCombatantRows.push(...unmapped);
+
+            expect(preservedCombatantRows.length).toBe(3);
+            const blastoiseInRound = preservedCombatantRows.find((c) => c.entityId === 'ent-blastoise');
+            expect(blastoiseInRound).toBeDefined();
+            expect(blastoiseInRound?.isInPc).toBe(true);
         });
     });
 });

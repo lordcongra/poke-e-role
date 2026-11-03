@@ -6,6 +6,7 @@ import type { PcPokemonSummary, PcStorageData } from '../../types/pcStorageTypes
 import { getEffectsByCategory } from './fieldEffectsData';
 import { resolveCharacterSide } from './combatantSideUtils';
 import { useCharacterStore } from '../../store/useCharacterStore';
+import { getKnownAbility } from '../../data/abilities/knownAbilities';
 import { EXTENSION_ID } from '../../hooks/owlbearSync/owlbearSyncConstants';
 import { STATS_META_ID } from '../graphics/graphicsManager';
 
@@ -131,20 +132,25 @@ export async function syncCombatantSentToPc(entityId: string, pcData?: PcStorage
         if (mapTokenId) idsToRemove.add(mapTokenId);
         if (savedTokenId) idsToRemove.add(savedTokenId);
 
-        // Also search rounds for matching combatants to capture c.id or c.name
+        const summaryHasId = Boolean(entityId || mapTokenId || savedTokenId);
+
+        // Also search rounds for matching combatants to capture c.id, c.tokenId, c.entityId
         bo.rounds.forEach((r) => {
             if (!r?.combatants) return;
             r.combatants.forEach((c) => {
-                const isMatch =
-                    idsToRemove.has(c.id) ||
-                    (c.entityId && idsToRemove.has(c.entityId)) ||
-                    (c.tokenId && idsToRemove.has(c.tokenId)) ||
-                    (summaryName && c.name && c.name.trim().toLowerCase() === summaryName);
+                const combatantHasId = Boolean(c.entityId || c.tokenId);
+                const isMatch = combatantHasId || summaryHasId
+                    ? idsToRemove.has(c.id) ||
+                      (Boolean(c.entityId) && idsToRemove.has(c.entityId!)) ||
+                      (Boolean(c.tokenId) && idsToRemove.has(c.tokenId!))
+                    : Boolean(summaryName && c.name && c.name.trim().toLowerCase() === summaryName);
                 if (isMatch) {
                     if (c.id) idsToRemove.add(c.id);
                     if (c.tokenId) idsToRemove.add(c.tokenId);
                     if (c.entityId) idsToRemove.add(c.entityId);
-                    if (c.name) idsToRemove.add(c.name.trim().toLowerCase());
+                    if (!combatantHasId && !summaryHasId && c.name) {
+                        idsToRemove.add(c.name.trim().toLowerCase());
+                    }
                 }
             });
         });
@@ -162,12 +168,12 @@ export async function syncCombatantSentToPc(entityId: string, pcData?: PcStorage
         bo.rounds.forEach((r) => {
             if (!r?.combatants) return;
             r.combatants.forEach((c) => {
-                const isMatch =
-                    idsToRemove.has(c.id) ||
-                    (c.entityId && idsToRemove.has(c.entityId)) ||
-                    (c.tokenId && idsToRemove.has(c.tokenId)) ||
-                    (c.name && idsToRemove.has(c.name.trim().toLowerCase())) ||
-                    matchesTarget(c, Array.from(idsToRemove));
+                const combatantHasId = Boolean(c.entityId || c.tokenId);
+                const isMatch = combatantHasId || summaryHasId
+                    ? idsToRemove.has(c.id) ||
+                      (Boolean(c.entityId) && idsToRemove.has(c.entityId!)) ||
+                      (Boolean(c.tokenId) && idsToRemove.has(c.tokenId!))
+                    : Boolean(summaryName && c.name && c.name.trim().toLowerCase() === summaryName);
 
                 if (isMatch) {
                     if (!c.isInPc) {
@@ -343,20 +349,25 @@ export async function syncCombatantSentToMap(entityId: string, pcData?: PcStorag
         if (mapTokenId) idsToMatch.add(mapTokenId);
         if (savedTokenId) idsToMatch.add(savedTokenId);
 
-        // Also search rounds for matching combatants to capture c.id, c.tokenId, c.entityId or c.name
+        const summaryHasId = Boolean(entityId || mapTokenId || savedTokenId);
+
+        // Also search rounds for matching combatants to capture c.id, c.tokenId, c.entityId
         bo.rounds.forEach((r) => {
             if (!r?.combatants) return;
             r.combatants.forEach((c) => {
-                const isMatch =
-                    idsToMatch.has(c.id) ||
-                    (c.entityId && idsToMatch.has(c.entityId)) ||
-                    (c.tokenId && idsToMatch.has(c.tokenId)) ||
-                    (summaryName && c.name && c.name.trim().toLowerCase() === summaryName);
+                const combatantHasId = Boolean(c.entityId || c.tokenId);
+                const isMatch = combatantHasId || summaryHasId
+                    ? idsToMatch.has(c.id) ||
+                      (Boolean(c.entityId) && idsToMatch.has(c.entityId!)) ||
+                      (Boolean(c.tokenId) && idsToMatch.has(c.tokenId!))
+                    : Boolean(summaryName && c.name && c.name.trim().toLowerCase() === summaryName);
                 if (isMatch) {
                     if (c.id) idsToMatch.add(c.id);
                     if (c.tokenId) idsToMatch.add(c.tokenId);
                     if (c.entityId) idsToMatch.add(c.entityId);
-                    if (c.name) idsToMatch.add(c.name.trim().toLowerCase());
+                    if (!combatantHasId && !summaryHasId && c.name) {
+                        idsToMatch.add(c.name.trim().toLowerCase());
+                    }
                 }
             });
         });
@@ -364,11 +375,12 @@ export async function syncCombatantSentToMap(entityId: string, pcData?: PcStorag
         bo.rounds.forEach((r) => {
             if (!r?.combatants) return;
             r.combatants.forEach((c) => {
-                const isMatch =
-                    idsToMatch.has(c.id) ||
-                    (c.entityId && idsToMatch.has(c.entityId)) ||
-                    (c.tokenId && idsToMatch.has(c.tokenId)) ||
-                    (c.name && idsToMatch.has(c.name.trim().toLowerCase()));
+                const combatantHasId = Boolean(c.entityId || c.tokenId);
+                const isMatch = combatantHasId || summaryHasId
+                    ? idsToMatch.has(c.id) ||
+                      (Boolean(c.entityId) && idsToMatch.has(c.entityId!)) ||
+                      (Boolean(c.tokenId) && idsToMatch.has(c.tokenId!))
+                    : Boolean(summaryName && c.name && c.name.trim().toLowerCase() === summaryName);
                 if (isMatch && c.isInPc) {
                     c.isInPc = false;
                     boChanged = true;
@@ -390,31 +402,41 @@ export async function syncCombatantSentToMap(entityId: string, pcData?: PcStorag
 }
 
 /**
+ * Helper to parse ability target stance from tag strings.
+ */
+export function parseAbilityTargetStanceFromTags(tags: string): AbilityTargetStance {
+    if (!tags) return 'none';
+    const lowerTags = tags.toLowerCase();
+    if (lowerTags.includes('[target: all foes]') || lowerTags.includes('[target: single foe]')) {
+        return 'foes';
+    }
+    if (lowerTags.includes('[target: all allies]') || lowerTags.includes('[target: single ally]')) {
+        return 'allies-only';
+    }
+    if (lowerTags.includes('[target: allies & self]') || lowerTags.includes('[target: allies and self]')) {
+        return 'allies-and-self';
+    }
+    if (lowerTags.includes('[target: all except self]')) {
+        return 'all-except-self';
+    }
+    if (lowerTags.includes('[target: all on field]') || lowerTags.includes('[target: field]')) {
+        return 'all-on-field';
+    }
+    if (/\[target:\s*(?:all\s+)?foes?\]/i.test(tags)) return 'foes';
+    if (/\[target:\s*(?:all\s+)?allies(?:-only)?\]/i.test(tags)) return 'allies-only';
+    if (/\[target:\s*allies\s*(?:&|and)\s*self\]/i.test(tags)) return 'allies-and-self';
+    if (/\[target:\s*all\s+(?:on\s+)?field\]/i.test(tags)) return 'all-on-field';
+    if (/\[target:\s*all\s+except\s+self\]/i.test(tags)) return 'all-except-self';
+    return 'none';
+}
+
+/**
  * Returns the targeting stance for unified range-based abilities.
  */
 export function getAbilityTargetStance(ability: string, tags?: string): AbilityTargetStance {
     if (tags) {
-        const lowerTags = tags.toLowerCase();
-        if (lowerTags.includes('[target: all foes]') || lowerTags.includes('[target: single foe]')) {
-            return 'foes';
-        }
-        if (lowerTags.includes('[target: all allies]') || lowerTags.includes('[target: single ally]')) {
-            return 'allies-only';
-        }
-        if (lowerTags.includes('[target: allies & self]') || lowerTags.includes('[target: allies and self]')) {
-            return 'allies-and-self';
-        }
-        if (lowerTags.includes('[target: all except self]')) {
-            return 'all-except-self';
-        }
-        if (lowerTags.includes('[target: all on field]') || lowerTags.includes('[target: field]')) {
-            return 'all-on-field';
-        }
-        if (/\[target:\s*(?:all\s+)?foes?\]/i.test(tags)) return 'foes';
-        if (/\[target:\s*(?:all\s+)?allies(?:-only)?\]/i.test(tags)) return 'allies-only';
-        if (/\[target:\s*allies\s*(?:&|and)\s*self\]/i.test(tags)) return 'allies-and-self';
-        if (/\[target:\s*all\s+(?:on\s+)?field\]/i.test(tags)) return 'all-on-field';
-        if (/\[target:\s*all\s+except\s+self\]/i.test(tags)) return 'all-except-self';
+        const fromTags = parseAbilityTargetStanceFromTags(tags);
+        if (fromTags !== 'none') return fromTags;
     }
 
     if (!ability) return 'none';
@@ -452,9 +474,30 @@ export function getAbilityTargetStance(ability: string, tags?: string): AbilityT
         case 'fairy aura':
         case 'aura break':
             return 'all-on-field';
-        default:
-            return 'none';
     }
+
+    // Fall back to known ability tags or custom room abilities
+    const known = getKnownAbility(clean);
+    if (known?.tags) {
+        const fromKnown = parseAbilityTargetStanceFromTags(known.tags);
+        if (fromKnown !== 'none') return fromKnown;
+    }
+
+    try {
+        const roomCustomAbilities = useCharacterStore.getState()?.roomCustomAbilities;
+        const custom = roomCustomAbilities?.find(
+            (ca) => ca.name?.trim().toLowerCase() === clean
+        );
+        if (custom) {
+            const customTags = `${custom.effect || ''} ${custom.description || ''}`.trim();
+            const fromCustom = parseAbilityTargetStanceFromTags(customTags);
+            if (fromCustom !== 'none') return fromCustom;
+        }
+    } catch {
+        // Ignore if store not available
+    }
+
+    return 'none';
 }
 
 /**
@@ -702,8 +745,6 @@ export function isTargetAffectedByAbility(
     }
 
     const cleanAbility = abilityName.replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
-    const stance = getAbilityTargetStance(cleanAbility);
-    if (stance === 'none') return false;
 
     // Neutralizing Gas self-immunity: Neutralizing Gas cannot negate another active Neutralizing Gas
     if (cleanAbility === 'neutralizing gas' && isTargetCombatantActiveNeutralizingGas(targetId)) {
@@ -826,6 +867,12 @@ export function isTargetAffectedByAbility(
                     });
 
                     for (const source of potentialSources) {
+                        const sourceTags = source.abilityTags || getKnownAbility(source.ability || '')?.tags || '';
+                        const stance = getAbilityTargetStance(source.ability || cleanAbility, sourceTags);
+                        if (stance === 'none') {
+                            continue;
+                        }
+
                         const sourceIsPlayer = typeof source.isPlayerSide === 'boolean' ? source.isPlayerSide : !source.isNPC;
                         const sourceSide: 'player' | 'foe' = sourceIsPlayer ? 'player' : 'foe';
 

@@ -116,28 +116,28 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     'Tablets of Ruin': {
         name: 'Tablets of Ruin',
-        tags: '[Target: All on Field]',
+        tags: '[Target: All Except Self]',
         autoActive: true,
         summary: 'Reduces the Strength of everyone on the field by 2, except this Pokémon. Immune to all Ruin abilities.',
         benefitDisplay: '-2 Field Str (Ruin)'
     },
     'Sword of Ruin': {
         name: 'Sword of Ruin',
-        tags: '[Target: All on Field]',
+        tags: '[Target: All Except Self]',
         autoActive: true,
         summary: 'Reduces the Defense of everyone on the field by 2, except this Pokémon. Immune to all Ruin abilities.',
         benefitDisplay: '-2 Field Def (Ruin)'
     },
     'Vessel of Ruin': {
         name: 'Vessel of Ruin',
-        tags: '[Target: All on Field]',
+        tags: '[Target: All Except Self]',
         autoActive: true,
         summary: 'Reduces the Special of everyone on the field by 2, except this Pokémon. Immune to all Ruin abilities.',
         benefitDisplay: '-2 Field Spe (Ruin)'
     },
     'Beads of Ruin': {
         name: 'Beads of Ruin',
-        tags: '[Target: All on Field]',
+        tags: '[Target: All Except Self]',
         autoActive: true,
         summary: 'Reduces the Sp. Defense of everyone on the field by 2, except this Pokémon. Immune to all Ruin abilities.',
         benefitDisplay: '-2 Field SpD (Ruin)'
