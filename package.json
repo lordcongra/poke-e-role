@@ -14,11 +14,12 @@
         "format": "prettier --write .",
         "check": "tsc -b",
         "check:size": "node scripts/checkFileSizes.js",
-        "test": "npm run test:invariants && npm run test:combat && npm run test:pc && npm run test:claims",
-        "test:invariants": "npx tsx scripts/test_serialization_invariants.ts",
-        "test:combat": "npx tsx scripts/test_combat_engine.ts",
-        "test:pc": "npx tsx scripts/test_pc_standalone_bridge.ts",
-        "test:claims": "npx tsx scripts/test_trainer_claims.ts"
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:invariants": "vitest run serializationInvariants",
+        "test:combat": "vitest run combatEngine",
+        "test:pc": "vitest run pcStandaloneBridge",
+        "test:claims": "vitest run trainerClaims"
     },
     "dependencies": {
         "@owlbear-rodeo/sdk": "^3.1.0",
@@ -38,10 +39,12 @@
         "eslint-plugin-react-hooks": "^7.0.1",
         "eslint-plugin-react-refresh": "^0.5.2",
         "globals": "^17.4.0",
+        "happy-dom": "^21.0.4",
         "prettier": "^3.2.5",
         "typescript": "~5.9.3",
         "typescript-eslint": "^8.57.0",
         "vite": "^8.0.1",
-        "vite-plugin-pwa": "^1.3.0"
+        "vite-plugin-pwa": "^1.3.0",
+        "vitest": "^5.1.0"
     }
 }

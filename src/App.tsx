@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useOwlbearSync } from './hooks/useOwlbearSync';
-import { useDynamicThemeSync } from './hooks/useDynamicThemeSync';
-import { useCharacterStore } from './store/useCharacterStore';
+import { useOwlbearSync } from '@/hooks/useOwlbearSync';
+import { useDynamicThemeSync } from '@/hooks/useDynamicThemeSync';
+import { useCharacterStore } from '@/store/useCharacterStore';
 import { IdentityHeader } from './components/identity/IdentityHeader';
 import { DerivedBoard } from './components/board/DerivedBoard';
 import { CoreTable } from './components/tables/CoreTable';
