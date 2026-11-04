@@ -166,6 +166,7 @@ export const getTargetOptions = (category: string, extraCategories: ExtraCategor
             'All Allies',
             'Allies & Self',
             'All on Field',
+            'All Except Self',
             'Single Foe',
             'Single Ally'
         ];

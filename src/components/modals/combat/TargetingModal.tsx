@@ -63,6 +63,7 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
     const [targets, setTargets] = useState<TargetOption[]>([]);
     const [isCrit, setIsCrit] = useState(false);
     const descAndTags = `${move.desc || ''} ${move.marker || ''} ${move.attackAction?.tags || ''}`;
+    const setDmgMatch = descAndTags.match(/\[set\s*damage\s*(\d+)\]/i);
     const hasIgnoreDefense = Boolean(
         move.attackAction?.ignoreDefense || /\[ignores?\s*def(?:ense)?\]/i.test(descAndTags)
     );
@@ -75,10 +76,16 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
     const shouldPrepopulateOverride =
         hasIgnoreDefense || Boolean(poolMatch) || move.attackAction?.damageMode === 'flat-dice';
 
-    const [overrideType, setOverrideType] = useState<'none' | 'dice' | 'flat' | 'dice-ignore'>(() =>
-        shouldPrepopulateOverride ? 'dice-ignore' : 'none'
-    );
-    const [overrideValue, setOverrideValue] = useState<number>(() => (shouldPrepopulateOverride ? poolValue : 0));
+    const [overrideType, setOverrideType] = useState<'none' | 'dice' | 'flat' | 'dice-ignore'>(() => {
+        if (setDmgMatch) return 'flat';
+        if (move.attackAction?.damageMode === 'set-damage') return 'flat';
+        return shouldPrepopulateOverride ? 'dice-ignore' : 'none';
+    });
+    const [overrideValue, setOverrideValue] = useState<number>(() => {
+        if (setDmgMatch) return parseInt(setDmgMatch[1], 10);
+        if (move.attackAction?.damageMode === 'set-damage') return move.attackAction.power;
+        return shouldPrepopulateOverride ? poolValue : 0;
+    });
     const [modalConfig, setModalConfig] = useState<{ title: string; content: string } | null>(null);
 
     const rank = useCharacterStore((s) => s.identity.rank);
@@ -123,14 +130,15 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
                     activeBattlefield,
                     activeTransformation,
                     detectedMode,
-                    maxTargets
+                    maxTargets,
+                    move
                 )
             );
         });
         return () => {
             isMounted = false;
         };
-    }, [isPhysicalMove, ruleset, activeTransformation, activeBattlefield, move.type, detectedMode, maxTargets]);
+    }, [isPhysicalMove, ruleset, activeTransformation, activeBattlefield, move.type, detectedMode, maxTargets, move]);
 
     const handleTargetSelect = (e: ChangeEvent<HTMLSelectElement>) => {
         const val = e.target.value;

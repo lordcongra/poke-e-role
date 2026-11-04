@@ -1,4 +1,5 @@
 import { useState, memo } from 'react';
+import { createPortal } from 'react-dom';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { MoveData, SkillData, ExtraCategory } from '../../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
@@ -447,52 +448,55 @@ export const MoveRow = memo(function MoveRow({
 
             {editModalOpen && <MoveEditModal moveId={move.id} onClose={() => setEditModalOpen(false)} />}
 
-            {bankModalOpen && (
-                <div className="moves-table__modal-overlay">
-                    <div className="moves-table__modal-content" style={{ width: '340px', maxWidth: '90%' }}>
-                        <h3
-                            className="moves-table__modal-title modal-title-with-icon text-title-primary"
-                            style={{ color: 'var(--semantic-danger)' }}
-                        >
-                            <AlertTriangle size={20} /> Banked Dice Detected
-                        </h3>
-                        <p
-                            className="moves-table__modal-text text-subtext"
-                            style={{ textAlign: 'left', color: 'var(--text-muted)' }}
-                        >
-                            You currently have <strong>{totalBanked}</strong> extra Damage Dice banked from previous
-                            rolls.
-                            <br />
-                            <br />
-                            Are you abandoning your previous attack, or is this a Reaction move where you want to keep
-                            your previously banked dice?
-                        </p>
-                        <div className="moves-table__modal-actions">
-                            <button
-                                type="button"
-                                className="action-button action-button--dark moves-table__modal-btn text-theme-header"
-                                onClick={() => setBankModalOpen(false)}
+            {bankModalOpen &&
+                typeof document !== 'undefined' &&
+                createPortal(
+                    <div className="moves-table__modal-overlay">
+                        <div className="moves-table__modal-content" style={{ width: '340px', maxWidth: '90%' }}>
+                            <h3
+                                className="moves-table__modal-title modal-title-with-icon text-title-primary"
+                                style={{ color: 'var(--semantic-danger)' }}
                             >
-                                <XCircle size={16} /> Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="action-button action-button--theme moves-table__modal-btn text-theme-header"
-                                onClick={confirmKeepBank}
+                                <AlertTriangle size={20} /> Banked Dice Detected
+                            </h3>
+                            <p
+                                className="moves-table__modal-text text-subtext"
+                                style={{ textAlign: 'left', color: 'var(--text-muted)' }}
                             >
-                                <PiggyBank size={16} /> Keep Bank
-                            </button>
-                            <button
-                                type="button"
-                                className="action-button action-button--red moves-table__modal-btn text-theme-header"
-                                onClick={confirmWipeBank}
-                            >
-                                <Trash2 size={16} /> Clear Bank
-                            </button>
+                                You currently have <strong>{totalBanked}</strong> extra Damage Dice banked from previous
+                                rolls.
+                                <br />
+                                <br />
+                                Are you abandoning your previous attack, or is this a Reaction move where you want to keep
+                                your previously banked dice?
+                            </p>
+                            <div className="moves-table__modal-actions">
+                                <button
+                                    type="button"
+                                    className="action-button action-button--dark moves-table__modal-btn text-theme-header"
+                                    onClick={() => setBankModalOpen(false)}
+                                >
+                                    <XCircle size={16} /> Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    className="action-button action-button--theme moves-table__modal-btn text-theme-header"
+                                    onClick={confirmKeepBank}
+                                >
+                                    <PiggyBank size={16} /> Keep Bank
+                                </button>
+                                <button
+                                    type="button"
+                                    className="action-button action-button--red moves-table__modal-btn text-theme-header"
+                                    onClick={confirmWipeBank}
+                                >
+                                    <Trash2 size={16} /> Clear Bank
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            )}
+                    </div>,
+                    document.body
+                )}
         </>
     );
 });

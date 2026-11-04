@@ -28,29 +28,26 @@ export function getMaxTargetsForRank(rank?: string): number {
 }
 
 export function detectMoveTargetingType(move: MoveData): 'single' | 'target-all' | 'area' {
-    const desc = (move.desc || '').toLowerCase();
+    const desc = `${move.desc || ''} ${move.marker || ''} ${move.attackAction?.tags || ''}`.toLowerCase();
     const rawTarget = String((move as unknown as Record<string, unknown>).target || '').toLowerCase();
 
-    // Check Area Move first (hits all combatants including allies)
+    // Check Area Move
     if (
         rawTarget === 'area' ||
-        /\barea\s+move\b/i.test(desc) ||
-        /\barea\s+attack\b/i.test(desc) ||
-        /\btarget:\s*area\b/i.test(desc) ||
+        /\barea\s+(?:move|attack)\b/i.test(desc) ||
+        /\btarget:\s*(?:area|all\s+on\s+field|field)\b/i.test(desc) ||
         /\btarget\s+area\b/i.test(desc)
     ) {
         return 'area';
     }
 
-    // Check Target All in Range / Target All Foes / Target All Allies
+    // Check "Target All in Range"
     if (
         rawTarget.includes('all foes') ||
+        rawTarget.includes('all allies') ||
         rawTarget.includes('all in range') ||
-        /\btarget\s+all\s+in\s+range\b/i.test(desc) ||
-        /\btarget\s+all\s+foes\b/i.test(desc) ||
-        /\btarget:\s*all\s+foes\b/i.test(desc) ||
-        /\btarget\s+all\s+allies\b/i.test(desc) ||
-        /\btarget\s+allies\s+in\s+range\b/i.test(desc) ||
+        /\btarget:\s*all\s+(?:foes|allies|in\s+range)\b/i.test(desc) ||
+        /\btarget\s+all\s+(?:foes|allies|in\s+range)\b/i.test(desc) ||
         /\btarget\s+all\b/i.test(desc)
     ) {
         return 'target-all';
@@ -119,7 +116,8 @@ export function initializeMultiTargetRows(
     activeBattlefield: BattlefieldData | null | undefined,
     activeTransformation: string | undefined,
     mode: 'single' | 'target-all' | 'area',
-    maxTargets: number
+    maxTargets: number,
+    move?: MoveData | string
 ): MultiTargetRowData[] {
     const rows: MultiTargetRowData[] = targets.map((t) => {
         const { targetDef, flatReduction } = calculateTargetDefAndFactors(t, isPhysicalMove, activeBattlefield);
@@ -141,11 +139,23 @@ export function initializeMultiTargetRows(
         };
     });
 
+    const desc = (
+        typeof move === 'string'
+            ? move
+            : `${move?.desc || ''} ${move?.marker || ''} ${move?.attackAction?.tags || ''}`
+    ).toLowerCase();
+    const rawTarget = (
+        typeof move === 'object' && move !== null
+            ? String((move as unknown as Record<string, unknown>).target || '')
+            : ''
+    ).toLowerCase();
+
     if (mode === 'area') {
         rows.slice(0, maxTargets).forEach((r) => (r.selected = true));
     } else if (mode === 'target-all') {
-        const foes = rows.filter((r) => !r.isPlayerSide);
-        (foes.length > 0 ? foes : rows).slice(0, maxTargets).forEach((r) => (r.selected = true));
+        const isAllies = desc.includes('allies') || rawTarget.includes('allies');
+        const candidates = isAllies ? rows.filter((r) => r.isPlayerSide) : rows.filter((r) => !r.isPlayerSide);
+        candidates.slice(0, maxTargets).forEach((r) => (r.selected = true));
     }
 
     return rows;

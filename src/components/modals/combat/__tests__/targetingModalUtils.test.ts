@@ -2,8 +2,10 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
     calculateDefaultEffectiveness,
     initializeMultiTargetRows,
+    detectMoveTargetingType,
     type TargetOption
 } from '@/components/modals/combat/targetingModalUtils';
+import { getTargetOptions } from '@/components/modals/items/tagBuilder/tagBuilderConstants';
 import { executeMultiTargetDamageRoll } from '@/utils/combat/multiTargetDamageRoller';
 import { executeDamageRoll } from '@/utils/combat/combatRoller';
 import type { CharacterState, MoveData } from '@/store/storeTypes';
@@ -230,6 +232,130 @@ describe('targetingModalUtils', () => {
             expect(result.tags).toContain('IMMUNE: 0 Damage');
             expect(result.tags).toContain('Snorlax is IMMUNE to Normal attacks (0 Damage)');
             expect(result.finalTags).toContain('IMMUNE: 0 Damage');
+        });
+    });
+
+    describe('detectMoveTargetingType', () => {
+        const testMove: MoveData = {
+            id: 'earthquake',
+            name: 'Earthquake',
+            type: 'Ground',
+            category: 'Physical',
+            power: 3,
+            acc1: 'Strength',
+            acc2: 'Brawl',
+            dmg1: 'Strength',
+            active: true
+        };
+
+        it('detects area moves correctly', () => {
+            const rawAreaMove = { ...testMove, target: 'area' } as unknown as MoveData;
+            expect(detectMoveTargetingType(rawAreaMove)).toBe('area');
+
+            const descAreaMove = { ...testMove, desc: 'A destructive area move striking all combatants.' };
+            expect(detectMoveTargetingType(descAreaMove)).toBe('area');
+
+            const descAreaAttack = { ...testMove, desc: 'An explosive area attack.' };
+            expect(detectMoveTargetingType(descAreaAttack)).toBe('area');
+
+            const tagAreaMove = { ...testMove, desc: '[Target: Area] Hits all nearby.' };
+            expect(detectMoveTargetingType(tagAreaMove)).toBe('area');
+
+            const tagAllOnField = { ...testMove, desc: '[Target: All on Field]' };
+            expect(detectMoveTargetingType(tagAllOnField)).toBe('area');
+
+            const tagField = { ...testMove, desc: '[Target: Field]' };
+            expect(detectMoveTargetingType(tagField)).toBe('area');
+        });
+
+        it('detects target-all in range / all foes / all allies correctly', () => {
+            const rawAllFoes = { ...testMove, target: 'all foes' } as unknown as MoveData;
+            expect(detectMoveTargetingType(rawAllFoes)).toBe('target-all');
+
+            const rawAllAllies = { ...testMove, target: 'all allies' } as unknown as MoveData;
+            expect(detectMoveTargetingType(rawAllAllies)).toBe('target-all');
+
+            const rawAllInRange = { ...testMove, target: 'all in range' } as unknown as MoveData;
+            expect(detectMoveTargetingType(rawAllInRange)).toBe('target-all');
+
+            const descAllFoes = { ...testMove, desc: '[Target: All Foes]' };
+            expect(detectMoveTargetingType(descAllFoes)).toBe('target-all');
+
+            const descAllAllies = { ...testMove, desc: '[Target: All Allies]' };
+            expect(detectMoveTargetingType(descAllAllies)).toBe('target-all');
+
+            const descAllInRange = { ...testMove, desc: '[Target: All in Range]' };
+            expect(detectMoveTargetingType(descAllInRange)).toBe('target-all');
+        });
+
+        it('defaults to single targeting when no area or multi-target patterns match', () => {
+            expect(detectMoveTargetingType(testMove)).toBe('single');
+            const singleTagMove = { ...testMove, desc: '[Target: Single Foe]' };
+            expect(detectMoveTargetingType(singleTagMove)).toBe('single');
+        });
+    });
+
+    describe('initializeMultiTargetRows target preselection', () => {
+        const combatants: TargetOption[] = [
+            { id: 'f1', name: 'Foe 1', def: 1, isTera: false, isPlayerSide: false, types: ['Normal'] },
+            { id: 'f2', name: 'Foe 2', def: 1, isTera: false, isPlayerSide: false, types: ['Normal'] },
+            { id: 'a1', name: 'Ally 1', def: 1, isTera: false, isPlayerSide: true, types: ['Normal'] },
+            { id: 'a2', name: 'Ally 2', def: 1, isTera: false, isPlayerSide: true, types: ['Normal'] }
+        ];
+
+        const baseMove: MoveData = {
+            id: 'surf',
+            name: 'Surf',
+            type: 'Water',
+            category: 'Special',
+            power: 3,
+            acc1: 'Special',
+            acc2: 'Channel',
+            dmg1: 'Special',
+            active: true
+        };
+
+        it('preselects up to maxTargets across all combatants (including allies) in area mode', () => {
+            const rows = initializeMultiTargetRows(combatants, 'Water', false, null, undefined, 'area', 3);
+            const selected = rows.filter((r) => r.selected);
+            expect(selected).toHaveLength(3);
+            expect(selected.map((r) => r.id)).toEqual(['f1', 'f2', 'a1']);
+        });
+
+        it('preselects player allies up to maxTargets in target-all mode when targeting allies', () => {
+            const allyMove: MoveData = { ...baseMove, desc: '[Target: All Allies]' };
+            const rows = initializeMultiTargetRows(combatants, 'Water', false, null, undefined, 'target-all', 2, allyMove);
+            const selected = rows.filter((r) => r.selected);
+            expect(selected).toHaveLength(2);
+            expect(selected.every((r) => r.isPlayerSide)).toBe(true);
+            expect(selected.map((r) => r.id)).toEqual(['a1', 'a2']);
+        });
+
+        it('preselects foes up to maxTargets in target-all mode when targeting foes', () => {
+            const foeMove: MoveData = { ...baseMove, desc: '[Target: All Foes]' };
+            const rows = initializeMultiTargetRows(combatants, 'Water', false, null, undefined, 'target-all', 1, foeMove);
+            const selected = rows.filter((r) => r.selected);
+            expect(selected).toHaveLength(1);
+            expect(selected[0].id).toBe('f1');
+            expect(selected[0].isPlayerSide).toBe(false);
+        });
+    });
+
+    describe('tagBuilder getTargetOptions', () => {
+        it('includes all required targeting options without emojis', () => {
+            const options = getTargetOptions('targeting', []);
+            expect(options).toEqual([
+                'All Foes',
+                'All Allies',
+                'Allies & Self',
+                'All on Field',
+                'All Except Self',
+                'Single Foe',
+                'Single Ally'
+            ]);
+            options.forEach((opt) => {
+                expect(/\p{Extended_Pictographic}/u.test(opt)).toBe(false);
+            });
         });
     });
 });

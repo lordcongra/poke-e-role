@@ -108,19 +108,6 @@ export function MovesTable() {
             return;
         }
 
-        const moveDescription = (move.desc || '').toLowerCase();
-        const setDamageMatch = moveDescription.match(/set damage\s*(\d+)?/i);
-        if (setDamageMatch || moveDescription.includes('set damage')) {
-            const damageValue = setDamageMatch && setDamageMatch[1] ? setDamageMatch[1] : move.power;
-            const currentState = useCharacterStore.getState();
-            const nickname = currentState.identity.nickname || currentState.identity.species || 'Someone';
-            rollDicePlus(
-                `0d6+${damageValue}`,
-                `[Set Damage] ${nickname} used ${move.name || 'a Move'}! (Deals exactly ${damageValue} Set Damage, ignores defenses)`
-            );
-            return;
-        }
-
         setTargetingMove(move);
     };
 

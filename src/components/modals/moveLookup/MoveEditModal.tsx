@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Pencil, Tags, Megaphone, Check, Target, Swords, FileText } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { TYPE_COLORS } from '../../../data/constants';
@@ -76,7 +77,7 @@ export function MoveEditModal({ moveId, onClose }: MoveEditModalProps) {
               : `${acc1Label} + ${acc2Label}`;
     const dmgStr =
         move.category === 'Status' ? '-' : `${move.dmg1 ? move.dmg1.toUpperCase() + ' + ' : ''}${move.power}`;
-    return (
+    const modalContent = (
         <div
             className="move-edit-modal__overlay"
             onClick={(e) => e.target === e.currentTarget && onClose()}
@@ -251,4 +252,6 @@ export function MoveEditModal({ moveId, onClose }: MoveEditModalProps) {
             )}
         </div>
     );
+
+    return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 }
