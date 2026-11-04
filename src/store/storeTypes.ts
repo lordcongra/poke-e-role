@@ -435,6 +435,7 @@ export interface CharacterIdentity {
     species: string;
     nature: string;
     rank: Rank;
+    heldItem?: string;
     type1: string;
     type2: string;
     ability: string;

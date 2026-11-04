@@ -198,4 +198,122 @@ describe('findRoundEndTriggers', () => {
         );
         expect(findRoundEndTriggers(stateImmune).find((t) => t.source === 'Hail')).toBeUndefined();
     });
+
+    it('detects Leftovers in inventory with default base charges (3/3) and binds itemId', () => {
+        const state = createMockCharacterState({
+            inventory: [
+                {
+                    id: 'item-leftovers-1',
+                    name: 'Leftovers',
+                    active: true,
+                    qty: 1
+                } as any
+            ]
+        });
+
+        const triggers = findRoundEndTriggers(state);
+        const leftoversTrigger = triggers.find((t) => t.itemId === 'item-leftovers-1');
+        expect(leftoversTrigger).toBeDefined();
+        expect(leftoversTrigger?.type).toBe('healHp');
+        expect(leftoversTrigger?.amount).toBe(1);
+        expect(leftoversTrigger?.promptText).toBe('Leftovers (3/3 Charges): Restore 1 HP?');
+        expect(leftoversTrigger?.checked).toBe(true);
+        expect(leftoversTrigger?.itemId).toBe('item-leftovers-1');
+    });
+
+    it('does not trigger Leftovers when charges are depleted (0 remaining)', () => {
+        const state = createMockCharacterState({
+            inventory: [
+                {
+                    id: 'item-leftovers-depleted',
+                    name: 'Leftovers',
+                    charges: 0,
+                    maxCharges: 3,
+                    active: true,
+                    qty: 1
+                } as any
+            ]
+        });
+
+        const triggers = findRoundEndTriggers(state);
+        const leftoversTrigger = triggers.find((t) => t.itemId === 'item-leftovers-depleted');
+        expect(leftoversTrigger).toBeUndefined();
+    });
+
+    it('displays custom remaining charges on Leftovers in promptText', () => {
+        const state = createMockCharacterState({
+            inventory: [
+                {
+                    id: 'item-leftovers-custom',
+                    name: 'Leftovers',
+                    charges: 2,
+                    maxCharges: 3,
+                    active: true,
+                    qty: 1
+                } as any
+            ]
+        });
+
+        const triggers = findRoundEndTriggers(state);
+        const leftoversTrigger = triggers.find((t) => t.itemId === 'item-leftovers-custom');
+        expect(leftoversTrigger).toBeDefined();
+        expect(leftoversTrigger?.promptText).toBe('Leftovers (2/3 Charges): Restore 1 HP?');
+    });
+
+    it('detects Leftovers specified on identity.heldItem when not in inventory', () => {
+        const state = createMockCharacterState(
+            { inventory: [] },
+            { heldItem: 'Leftovers' }
+        );
+
+        const triggers = findRoundEndTriggers(state);
+        const leftoversTrigger = triggers.find((t) => t.source.toLowerCase() === 'leftovers');
+        expect(leftoversTrigger).toBeDefined();
+        expect(leftoversTrigger?.type).toBe('healHp');
+        expect(leftoversTrigger?.amount).toBe(1);
+        expect(leftoversTrigger?.promptText).toBe('Leftovers: Restore 1 HP?');
+        expect(leftoversTrigger?.checked).toBe(true);
+        expect(leftoversTrigger?.itemId).toBeUndefined();
+    });
+
+    it('triggers item in inventory even if active is false if it matches identity.heldItem', () => {
+        const state = createMockCharacterState(
+            {
+                inventory: [
+                    {
+                        id: 'item-held-inactive',
+                        name: 'Leftovers',
+                        active: false,
+                        qty: 1
+                    } as any
+                ]
+            },
+            { heldItem: 'Leftovers' }
+        );
+
+        const triggers = findRoundEndTriggers(state);
+        const leftoversTrigger = triggers.find((t) => t.itemId === 'item-held-inactive');
+        expect(leftoversTrigger).toBeDefined();
+        expect(leftoversTrigger?.promptText).toBe('Leftovers (3/3 Charges): Restore 1 HP?');
+    });
+
+    it('does not trigger inactive inventory item if it is not the held item', () => {
+        const state = createMockCharacterState(
+            {
+                inventory: [
+                    {
+                        id: 'item-inactive',
+                        name: 'Leftovers',
+                        active: false,
+                        qty: 1
+                    } as any
+                ]
+            },
+            { heldItem: '' }
+        );
+
+        const triggers = findRoundEndTriggers(state);
+        const leftoversTrigger = triggers.find((t) => t.itemId === 'item-inactive');
+        expect(leftoversTrigger).toBeUndefined();
+    });
 });

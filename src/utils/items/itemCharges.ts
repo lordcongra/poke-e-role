@@ -14,7 +14,8 @@ export const BASE_ITEM_CHARGES: Record<string, number> = {
     Lemonade: 6,
     'MooMoo Milk': 8,
     'Berry Juice': 2,
-    'Pepper Spray Can': 5
+    'Pepper Spray Can': 5,
+    Leftovers: 3
 };
 
 /**

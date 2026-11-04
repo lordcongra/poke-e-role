@@ -171,6 +171,12 @@ export function TrackerSection() {
             store.updateTracker('ignoredPain', 0);
         }
 
+        confirmed.forEach((t) => {
+            if (t.itemId) {
+                store.consumeItemCharge(t.itemId);
+            }
+        });
+
         setPendingTriggers(null);
         resetRound(true);
     };

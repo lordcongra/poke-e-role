@@ -142,7 +142,7 @@ export const KNOWN_ITEMS: KnownItem[] = [
     { name: 'Iron Ball', tags: '[Dex -1] [Remove Immunity: Ground]' },
     { name: "King's Rock" },
     { name: 'Leek', tags: '[High Crit]' },
-    { name: 'Leftovers' },
+    { name: 'Leftovers', tags: '[Heal 1 Round End]' },
     { name: 'Life Orb', tags: '[Dmg +2] [Recoil]' },
     { name: 'Light Ball', tags: '[Str +1] [Spe +1]' },
     { name: 'Loaded Dice', tags: '[Chance +2]' },

@@ -3,6 +3,8 @@ import { checkCondition } from '../../../utils/tagParser/conditionChecker';
 import { getAbilityText } from '../../../utils/combat/combatUtils';
 import { getAllActiveFieldEffects, getEffectsByCategory } from '../../../utils/combat/fieldEffectsData';
 import { getKnownAbility } from '../../../data/abilities/knownAbilities';
+import { KNOWN_ITEMS } from '../../../data/constants';
+import { getItemEffectiveCharges } from '../../../utils/items/itemCharges';
 
 export interface RoundEndTrigger {
     id: string;
@@ -12,6 +14,7 @@ export interface RoundEndTrigger {
     promptText: string;
     conditionText?: string;
     checked: boolean;
+    itemId?: string;
 }
 
 export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
@@ -23,8 +26,15 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
     const abilityBoostActive = state.identity.abilityBoostActive ?? false;
 
     // Helper to test and extract tags from a text source
-    const inspectText = (sourceName: string, text: string, sourceActive: boolean = true) => {
+    const inspectText = (
+        sourceName: string,
+        text: string,
+        sourceActive: boolean = true,
+        itemId?: string,
+        chargesInfo?: string
+    ) => {
         if (!text || !sourceActive) return;
+        const chargesSuffix = chargesInfo ? ` (${chargesInfo})` : '';
 
         // 1. Heal HP: [Heal X Round End @ Condition] or [Heal X HP Round End @ Condition]
         const healMatches = text.matchAll(
@@ -38,13 +48,14 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
             }
             const condStr = condition ? ` (${condition} Active)` : '';
             triggers.push({
-                id: `${sourceName}-heal-${triggers.length}`,
+                id: itemId ? `item-heal-${itemId}-${triggers.length}` : `${sourceName}-heal-${triggers.length}`,
                 source: sourceName,
                 type: 'healHp',
                 amount,
-                promptText: `${sourceName}${condStr}: Restore ${amount} HP?`,
+                promptText: `${sourceName}${chargesSuffix}${condStr}: Restore ${amount} HP?`,
                 conditionText: condition,
-                checked: true
+                checked: true,
+                ...(itemId ? { itemId } : {})
             });
         }
 
@@ -60,13 +71,14 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
             }
             const condStr = condition ? ` (${condition} Active)` : '';
             triggers.push({
-                id: `${sourceName}-dmg-${triggers.length}`,
+                id: itemId ? `item-dmg-${itemId}-${triggers.length}` : `${sourceName}-dmg-${triggers.length}`,
                 source: sourceName,
                 type: 'damageHp',
                 amount,
-                promptText: `${sourceName}${condStr}: Suffer ${amount} Damage?`,
+                promptText: `${sourceName}${chargesSuffix}${condStr}: Suffer ${amount} Damage?`,
                 conditionText: condition,
-                checked: true
+                checked: true,
+                ...(itemId ? { itemId } : {})
             });
         }
 
@@ -82,13 +94,14 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
             }
             const condStr = condition ? ` (${condition} Active)` : '';
             triggers.push({
-                id: `${sourceName}-willheal-${triggers.length}`,
+                id: itemId ? `item-willheal-${itemId}-${triggers.length}` : `${sourceName}-willheal-${triggers.length}`,
                 source: sourceName,
                 type: 'restoreWill',
                 amount,
-                promptText: `${sourceName}${condStr}: Restore ${amount} Will?`,
+                promptText: `${sourceName}${chargesSuffix}${condStr}: Restore ${amount} Will?`,
                 conditionText: condition,
-                checked: true
+                checked: true,
+                ...(itemId ? { itemId } : {})
             });
         }
 
@@ -104,13 +117,14 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
             }
             const condStr = condition ? ` (${condition} Active)` : '';
             triggers.push({
-                id: `${sourceName}-willdmg-${triggers.length}`,
+                id: itemId ? `item-willdmg-${itemId}-${triggers.length}` : `${sourceName}-willdmg-${triggers.length}`,
                 source: sourceName,
                 type: 'reduceWill',
                 amount,
-                promptText: `${sourceName}${condStr}: Lose ${amount} Will?`,
+                promptText: `${sourceName}${chargesSuffix}${condStr}: Lose ${amount} Will?`,
                 conditionText: condition,
-                checked: true
+                checked: true,
+                ...(itemId ? { itemId } : {})
             });
         }
     };
@@ -130,11 +144,73 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
 
     // 3. Inspect Inventory Items
     state.inventory?.forEach((item) => {
-        if (item.active || (item.qty && item.qty > 0)) {
-            const fullItemText = `${item.tags || ''} ${item.desc || ''}`;
-            inspectText(item.name || 'Item', fullItemText, true);
+        const isHeldItem = Boolean(
+            state.identity.heldItem &&
+                item.name &&
+                state.identity.heldItem.trim().toLowerCase() === item.name.trim().toLowerCase()
+        );
+        const isEquippedOrActive = item.active !== false || isHeldItem;
+
+        if (isEquippedOrActive && (item.qty === undefined || item.qty > 0)) {
+            const known = KNOWN_ITEMS.find((k) => k.name.toLowerCase() === (item.name || '').trim().toLowerCase());
+            const canonicalTags = known?.tags || '';
+            const existingText = `${item.tags || ''} ${item.desc || ''}`.trim();
+            const fullItemText =
+                canonicalTags && !existingText.includes(canonicalTags)
+                    ? `${existingText} ${canonicalTags}`.trim()
+                    : existingText || canonicalTags;
+
+            const effective = getItemEffectiveCharges(item);
+            if (effective.hasCharges && effective.charges <= 0) {
+                return; // Depleted (0 charges remaining), do not trigger
+            }
+
+            const chargesInfo = effective.hasCharges ? `${effective.charges}/${effective.maxCharges} Charges` : undefined;
+            const isLeftovers = (item.name || '').trim().toLowerCase().includes('leftovers');
+
+            if (isLeftovers && !fullItemText.toLowerCase().includes('heal')) {
+                triggers.push({
+                    id: `item-heal-${item.id}`,
+                    source: item.name || 'Leftovers',
+                    type: 'healHp',
+                    amount: 1,
+                    promptText: `${item.name || 'Leftovers'}${chargesInfo ? ` (${chargesInfo})` : ''}: Restore 1 HP?`,
+                    checked: true,
+                    itemId: item.id
+                });
+            } else {
+                inspectText(item.name || 'Item', fullItemText, true, item.id, chargesInfo);
+            }
         }
     });
+
+    // 4. Inspect Held Item (fallback if heldItem is set on identity but no matching item exists in inventory)
+    if (state.identity.heldItem && state.identity.heldItem.trim()) {
+        const heldName = state.identity.heldItem.trim();
+        const hasMatchingInventoryItem = state.inventory?.some(
+            (item) => item.name && item.name.trim().toLowerCase() === heldName.toLowerCase()
+        );
+
+        if (!hasMatchingInventoryItem) {
+            const known = KNOWN_ITEMS.find((k) => k.name.toLowerCase() === heldName.toLowerCase());
+            const canonicalTags = known?.tags || '';
+            const fullHeldText = `${heldName} ${canonicalTags}`.trim();
+            const isLeftovers = heldName.toLowerCase().includes('leftovers');
+
+            if (isLeftovers && !fullHeldText.toLowerCase().includes('heal')) {
+                triggers.push({
+                    id: `held-item-heal-${triggers.length}`,
+                    source: heldName,
+                    type: 'healHp',
+                    amount: 1,
+                    promptText: `${heldName}: Restore 1 HP?`,
+                    checked: true
+                });
+            } else {
+                inspectText(heldName, fullHeldText, true);
+            }
+        }
+    }
 
     // 4. Inspect Statuses: Burn, Poison, Badly Poisoned
     state.statuses?.forEach((status, idx) => {
