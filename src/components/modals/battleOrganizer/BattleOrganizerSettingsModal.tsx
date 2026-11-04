@@ -67,6 +67,13 @@ export function BattleOrganizerSettingsModal({ onClose }: BattleOrganizerSetting
         setSettings(updated);
     };
 
+    const handleToggleCombatantChips = () => {
+        const updated = saveBattleOrganizerSettings({
+            showCombatantChips: settings.showCombatantChips !== false ? false : true
+        });
+        setSettings(updated);
+    };
+
     const handleToggleFullScreen = () => {
         const updated = saveBattleOrganizerSettings({ fullScreen: !settings.fullScreen });
         setSettings(updated);
@@ -171,6 +178,23 @@ export function BattleOrganizerSettingsModal({ onClose }: BattleOrganizerSetting
                             <span className="bo-settings__card-desc text-subtext">
                                 Display visual outlines and icons for Critical Hits (Sparkles) and Critical Failures
                                 (Alert Triangle) in the action slots.
+                            </span>
+                        </div>
+                    </label>
+
+                    <label
+                        className={`bo-settings__checkbox-card ${settings.showCombatantChips !== false ? 'bo-settings__checkbox-card--active' : ''}`}
+                    >
+                        <input
+                            type="checkbox"
+                            checked={settings.showCombatantChips !== false}
+                            onChange={handleToggleCombatantChips}
+                        />
+                        <div className="bo-settings__card-info">
+                            <span className="bo-settings__card-title text-label">Show Ability & Held Item Badges</span>
+                            <span className="bo-settings__card-desc text-subtext">
+                                Display compact badges for abilities, choice buffs, and held items below combatant names
+                                in the lineup rows.
                             </span>
                         </div>
                     </label>

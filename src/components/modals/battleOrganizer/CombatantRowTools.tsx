@@ -6,11 +6,13 @@ import { CuriousMedicineModal } from '../combat/CuriousMedicineModal';
 import { AbilityTargetSelectorModal } from '../combat/AbilityTargetSelectorModal';
 import { getAbilityTargetStance, getAbilityMaxTargets } from '../../../utils/combat/abilityTargetingUtils';
 import { getKnownAbility, getMaxBoost } from '../../../data/abilities/knownAbilities';
+import { getCombatantAbilityChoice, cycleCombatantAbilityChoice } from './battleOrganizerUtils';
 
 export interface CombatantRowToolsProps {
     combatant: CombatantRowData;
     isLocked: boolean;
     hasToken: boolean;
+    showChoiceInTools?: boolean;
     onToggleFainted: () => void;
     onToggleEvade: () => void;
     onToggleClash: () => void;
@@ -23,6 +25,7 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
     combatant,
     isLocked,
     hasToken,
+    showChoiceInTools = false,
     onToggleFainted,
     onToggleEvade,
     onToggleClash,
@@ -42,19 +45,11 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
     const maxTargets = getAbilityMaxTargets(combatant.ability || '', combatantTags, combatant.rank);
 
     // Choice tags handling
-    const choiceMatch = combatantTags.match(/\[\s*Choice\s*:\s*([^\]]+)\]/i);
-    const choiceOptions = choiceMatch ? choiceMatch[1].split('|').map((s) => s.trim()).filter(Boolean) : [];
-    const hasChoice = choiceOptions.length > 0;
-    const choiceIndex = combatant.abilityChoiceIndex ?? 0;
-    const activeChoiceIndex = hasChoice
-        ? ((choiceIndex % choiceOptions.length) + choiceOptions.length) % choiceOptions.length
-        : 0;
-    const activeChoice = hasChoice ? choiceOptions[activeChoiceIndex] : '';
+    const { hasChoice, activeChoice } = getCombatantAbilityChoice(combatant);
 
     const handleCycleChoice = () => {
         if (!hasChoice) return;
-        const next = (activeChoiceIndex + 1) % choiceOptions.length;
-        onUpdate?.({ ...combatant, abilityChoiceIndex: next });
+        onUpdate?.(cycleCombatantAbilityChoice(combatant));
     };
 
     // Boost tags handling
@@ -187,7 +182,7 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
                         <Power size={12} />
                     </button>
                 )}
-                {hasChoice && (
+                {showChoiceInTools && hasChoice && (
                     <button
                         type="button"
                         className="bo-reaction-toggle bo-reaction-toggle--choice"

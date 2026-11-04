@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react';
+import { Plus, Zap } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { CombatantRow } from './CombatantRow';
 import type { CombatantRowData } from '../../../types/battleOrganizerTypes';
@@ -7,6 +7,8 @@ export interface CombatantsTableProps {
     combatants: CombatantRowData[];
     endOfRoundEffects: string;
     showCriticalMarks?: boolean;
+    showCombatantChips?: boolean;
+    onToggleCombatantChips?: () => void;
     onUpdateCombatant: (updated: CombatantRowData) => void;
     onDeleteCombatant: (id: string) => void;
     onRollInitiative: (id: string) => void;
@@ -21,6 +23,8 @@ export function CombatantsTable({
     combatants,
     endOfRoundEffects,
     showCriticalMarks = true,
+    showCombatantChips = true,
+    onToggleCombatantChips,
     onUpdateCombatant,
     onDeleteCombatant,
     onRollInitiative,
@@ -44,7 +48,22 @@ export function CombatantsTable({
                     <thead>
                         <tr className="bo-table-header text-theme-header">
                             <th className="bo-th bo-th--init">Initiative Order</th>
-                            <th className="bo-th bo-th--combatant">Combatant</th>
+                            <th className="bo-th bo-th--combatant">
+                                <div className="bo-th-combatant-title">
+                                    <span>Combatant</span>
+                                    {onToggleCombatantChips && (
+                                        <button
+                                            type="button"
+                                            className={`bo-th-chip-toggle ${showCombatantChips ? 'bo-th-chip-toggle--active' : ''}`}
+                                            onClick={onToggleCombatantChips}
+                                            title={showCombatantChips ? 'Hide Ability & Held Item Badges' : 'Show Ability & Held Item Badges'}
+                                            aria-label="Toggle Ability & Held Item Badges"
+                                        >
+                                            <Zap size={11} />
+                                        </button>
+                                    )}
+                                </div>
+                            </th>
                             <th className="bo-th bo-th--item">Held Item</th>
                             <th className="bo-th bo-th--status">Status</th>
                             <th className="bo-th bo-th--actions">Action Counter (1 - 5)</th>
@@ -58,6 +77,7 @@ export function CombatantsTable({
                                 combatant={combatant}
                                 index={cIdx}
                                 showCriticalMarks={showCriticalMarks}
+                                showCombatantChips={showCombatantChips}
                                 onUpdate={onUpdateCombatant}
                                 onDelete={onDeleteCombatant}
                                 onRollInitiative={onRollInitiative}

@@ -236,9 +236,11 @@
 .bo-name-field-wrap {
     position: relative;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    justify-content: center;
     flex: 1;
     min-width: 85px;
+    gap: 2px;
 }
 
 .bo-form-badge {
@@ -308,6 +310,126 @@
     border: 1px solid var(--border, #3a3a3a);
     background-color: var(--panel-alt, #242424);
     font-weight: 600;
+}
+
+.bo-combatant-badges {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.bo-pill--ability,
+.bo-pill--item {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 5px;
+    background-color: var(--panel-alt);
+    border: 1px solid var(--border-color, var(--border, #3a3a3a));
+    border-radius: 3px;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    line-height: 1.2;
+    max-width: 130px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+}
+
+.bo-pill--ability .bo-pill-text,
+.bo-pill--item .bo-pill-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bo-pill--ability svg,
+.bo-pill--item svg {
+    flex-shrink: 0;
+    opacity: 0.85;
+}
+
+.bo-pill--ability:hover,
+.bo-pill--item:hover {
+    color: var(--text-main);
+    border-color: var(--primary);
+}
+
+.bo-pill--choice {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 5px;
+    background-color: color-mix(in srgb, var(--primary, #3b82f6) 18%, var(--panel-alt, #242424));
+    border: 1px solid color-mix(in srgb, var(--primary, #3b82f6) 55%, var(--border-color, var(--border, #3a3a3a)));
+    border-radius: 3px;
+    color: var(--text-main, #fff);
+    font-size: 0.72rem;
+    line-height: 1.2;
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.bo-pill--choice:hover:not(:disabled) {
+    background-color: color-mix(in srgb, var(--primary, #3b82f6) 32%, var(--panel-alt, #242424));
+    border-color: var(--primary, #3b82f6);
+}
+
+.bo-pill--choice:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.bo-pill--choice .bo-pill-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bo-pill--choice svg {
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+
+.bo-th-combatant-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.bo-th-chip-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border-radius: 3px;
+    border: 1px solid var(--border-color, var(--border, #444));
+    background-color: var(--panel-alt, #242424);
+    color: var(--text-muted, #888);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+}
+
+.bo-th-chip-toggle:hover {
+    color: var(--text-main, #fff);
+    border-color: var(--primary, #3b82f6);
+}
+
+.bo-th-chip-toggle--active {
+    background-color: color-mix(in srgb, var(--primary, #3b82f6) 20%, transparent);
+    color: var(--primary, #3b82f6);
+    border-color: var(--primary, #3b82f6);
 }
 
 .bo-input--item {

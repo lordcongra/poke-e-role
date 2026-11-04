@@ -242,15 +242,19 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
     }, []);
 
     const handleQuickToggleBattlefield = () => {
-        if (boSettings.showBattlefield && !boSettings.showRoundTracker) return;
-        const next = saveBattleOrganizerSettings({ showBattlefield: !boSettings.showBattlefield });
-        setBoSettings(next);
+        if (!boSettings.showBattlefield || boSettings.showRoundTracker) {
+            setBoSettings(saveBattleOrganizerSettings({ showBattlefield: !boSettings.showBattlefield }));
+        }
     };
 
     const handleQuickToggleRoundTracker = () => {
-        if (boSettings.showRoundTracker && !boSettings.showBattlefield) return;
-        const next = saveBattleOrganizerSettings({ showRoundTracker: !boSettings.showRoundTracker });
-        setBoSettings(next);
+        if (!boSettings.showRoundTracker || boSettings.showBattlefield) {
+            setBoSettings(saveBattleOrganizerSettings({ showRoundTracker: !boSettings.showRoundTracker }));
+        }
+    };
+
+    const handleToggleCombatantChips = () => {
+        setBoSettings(saveBattleOrganizerSettings({ showCombatantChips: boSettings.showCombatantChips === false }));
     };
 
     const handleCycleRollLogMode = () => {
@@ -281,20 +285,13 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
     const [isHeaderToolsOpen, setIsHeaderToolsOpen] = useState(true);
     const [isBattlefieldOpen, setIsBattlefieldOpen] = useState(true);
 
-    const handlePrintClick = () => {
-        if (onPrint) {
-            onPrint();
-        } else {
-            window.print();
-        }
-    };
+    const handlePrintClick = () => (onPrint ? onPrint() : window.print());
 
-    const contentModeClass =
-        boSettings.showBattlefield && !boSettings.showRoundTracker
-            ? 'bo-modal__content--battlefield-only'
-            : !boSettings.showBattlefield && boSettings.showRoundTracker
-              ? 'bo-modal__content--rounds-only'
-              : '';
+    const contentModeClass = boSettings.showBattlefield && !boSettings.showRoundTracker
+        ? 'bo-modal__content--battlefield-only'
+        : !boSettings.showBattlefield && boSettings.showRoundTracker
+          ? 'bo-modal__content--rounds-only'
+          : '';
 
     const layoutModeClass = boSettings.rollLogMode === 'full-sidebar' ? 'bo-modal__content--with-sidebar' : '';
     const rollLogMode = boSettings.rollLogMode || 'floating';
@@ -334,6 +331,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                     onToggleHelp={() => setShowHelp(!showHelp)}
                     onQuickToggleBattlefield={handleQuickToggleBattlefield}
                     onQuickToggleRoundTracker={handleQuickToggleRoundTracker}
+                    onToggleCombatantChips={handleToggleCombatantChips}
                     onCycleRollLogMode={handleCycleRollLogMode}
                     onShowTooltip={(info) => setTooltipInfo(info)}
                     onWheel={handleStaticWheel}
@@ -399,6 +397,8 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                                             combatants={currentRound?.combatants || []}
                                             endOfRoundEffects={currentRound?.endOfRoundEffects || ''}
                                             showCriticalMarks={boSettings.showCriticalMarks !== false}
+                                            showCombatantChips={boSettings.showCombatantChips !== false}
+                                            onToggleCombatantChips={handleToggleCombatantChips}
                                             onUpdateCombatant={updateCombatant}
                                             onDeleteCombatant={deleteCombatant}
                                             onRollInitiative={rollCombatantInitiative}

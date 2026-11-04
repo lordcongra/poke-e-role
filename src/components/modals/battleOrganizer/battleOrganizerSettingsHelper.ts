@@ -11,6 +11,7 @@ export const BO_AUTO_SYNC_ACTIONS_KEY = 'pkr_bo_auto_sync_actions';
 export const BO_FULLSCREEN_KEY = 'pkr_bo_fullscreen';
 export const BO_ROLL_LOG_MODE_KEY = 'pkr_bo_roll_log_mode';
 export const BO_SHOW_CRITICAL_MARKS_KEY = 'pkr_bo_show_critical_marks';
+export const BO_SHOW_COMBATANT_CHIPS_KEY = 'pkr_bo_show_combatant_chips';
 export const BO_IS_OPEN_KEY = 'pkr_battle_organizer_open';
 export const BO_SETTINGS_UPDATE_EVENT = 'pkr-bo-settings-update';
 
@@ -81,7 +82,8 @@ export const DEFAULT_BO_SETTINGS: BattleOrganizerSettings = {
     autoSyncActions: true,
     fullScreen: false,
     rollLogMode: 'floating',
-    showCriticalMarks: true
+    showCriticalMarks: true,
+    showCombatantChips: true
 };
 
 export function getBattleOrganizerSettings(): BattleOrganizerSettings {
@@ -93,6 +95,7 @@ export function getBattleOrganizerSettings(): BattleOrganizerSettings {
         const rawFullScreen = localStorage.getItem(BO_FULLSCREEN_KEY);
         const rawRollLogMode = localStorage.getItem(BO_ROLL_LOG_MODE_KEY) as RollLogLayoutMode | null;
         const rawCritMarks = localStorage.getItem(BO_SHOW_CRITICAL_MARKS_KEY);
+        const rawCombatantChips = localStorage.getItem(BO_SHOW_COMBATANT_CHIPS_KEY);
 
         let showBattlefield = rawBattlefield !== null ? rawBattlefield === 'true' : DEFAULT_BO_SETTINGS.showBattlefield;
         let showRoundTracker =
@@ -121,6 +124,8 @@ export function getBattleOrganizerSettings(): BattleOrganizerSettings {
                 : (DEFAULT_BO_SETTINGS.rollLogMode ?? 'floating');
         const showCriticalMarks =
             rawCritMarks !== null ? rawCritMarks === 'true' : (DEFAULT_BO_SETTINGS.showCriticalMarks ?? true);
+        const showCombatantChips =
+            rawCombatantChips !== null ? rawCombatantChips === 'true' : (DEFAULT_BO_SETTINGS.showCombatantChips ?? true);
 
         return {
             showBattlefield,
@@ -129,7 +134,8 @@ export function getBattleOrganizerSettings(): BattleOrganizerSettings {
             autoSyncActions,
             fullScreen,
             rollLogMode,
-            showCriticalMarks
+            showCriticalMarks,
+            showCombatantChips
         };
     } catch (e) {
         console.error('[BattleOrganizerSettings] Failed to load settings from localStorage:', e);
@@ -169,6 +175,9 @@ export function saveBattleOrganizerSettings(partial: Partial<BattleOrganizerSett
         }
         if (next.showCriticalMarks !== undefined) {
             localStorage.setItem(BO_SHOW_CRITICAL_MARKS_KEY, String(next.showCriticalMarks));
+        }
+        if (next.showCombatantChips !== undefined) {
+            localStorage.setItem(BO_SHOW_COMBATANT_CHIPS_KEY, String(next.showCombatantChips));
         }
 
         // Dispatch local event for same-window components

@@ -1,5 +1,6 @@
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { STATUS_OPTIONS } from '../../../data/constants';
+import { getKnownAbility } from '../../../data/abilities/knownAbilities';
 import type { StatusItem } from '../../../store/storeTypes';
 import type {
     BattleOrganizerState,
@@ -670,5 +671,39 @@ export function toggleCombatantFainted(combatant: CombatantRowData): Partial<Com
     return {
         isFainted: nextFainted,
         status: newStatus
+    };
+}
+
+export function getCombatantAbilityChoice(combatant: CombatantRowData): {
+    hasChoice: boolean;
+    choiceOptions: string[];
+    activeChoice: string;
+    nextChoiceIndex: number;
+} {
+    const combatantTags = combatant.abilityTags || getKnownAbility(combatant.ability || '')?.tags || '';
+    const choiceMatch = combatantTags.match(/\[\s*Choice\s*:\s*([^\]]+)\]/i);
+    const choiceOptions = choiceMatch ? choiceMatch[1].split('|').map((s) => s.trim()).filter(Boolean) : [];
+    const hasChoice = choiceOptions.length > 0;
+    const choiceIndex = combatant.abilityChoiceIndex ?? 0;
+    const activeChoiceIndex = hasChoice
+        ? ((choiceIndex % choiceOptions.length) + choiceOptions.length) % choiceOptions.length
+        : 0;
+    const activeChoice = hasChoice ? choiceOptions[activeChoiceIndex] : '';
+    const nextChoiceIndex = hasChoice ? (activeChoiceIndex + 1) % choiceOptions.length : 0;
+
+    return {
+        hasChoice,
+        choiceOptions,
+        activeChoice,
+        nextChoiceIndex
+    };
+}
+
+export function cycleCombatantAbilityChoice(combatant: CombatantRowData): CombatantRowData {
+    const { hasChoice, nextChoiceIndex } = getCombatantAbilityChoice(combatant);
+    if (!hasChoice) return combatant;
+    return {
+        ...combatant,
+        abilityChoiceIndex: nextChoiceIndex
     };
 }

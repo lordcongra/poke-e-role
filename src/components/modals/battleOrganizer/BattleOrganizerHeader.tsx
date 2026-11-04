@@ -14,7 +14,8 @@ import {
     Mountain,
     Swords,
     Dices,
-    UserPlus
+    UserPlus,
+    Zap
 } from 'lucide-react';
 import { TooltipIcon } from '../../ui/TooltipIcon';
 import { getRollLogModeLabel, getRollLogModeShortLabel } from './battleOrganizerUtils';
@@ -40,6 +41,7 @@ export interface BattleOrganizerHeaderProps {
     onToggleHelp: () => void;
     onQuickToggleBattlefield: () => void;
     onQuickToggleRoundTracker: () => void;
+    onToggleCombatantChips?: () => void;
     onCycleRollLogMode: () => void;
     onShowTooltip: (info: { title: string; desc: string }) => void;
     onWheel?: (e: React.WheelEvent) => void;
@@ -65,6 +67,7 @@ export function BattleOrganizerHeader({
     onToggleHelp,
     onQuickToggleBattlefield,
     onQuickToggleRoundTracker,
+    onToggleCombatantChips,
     onCycleRollLogMode,
     onShowTooltip,
     onWheel
@@ -244,6 +247,20 @@ export function BattleOrganizerHeader({
                         >
                             <Swords size={13} /> Rounds
                         </button>
+                        {onToggleCombatantChips && (
+                            <button
+                                type="button"
+                                className={`action-button bo-header-view-toggle ${boSettings.showCombatantChips !== false ? 'action-button--primary' : 'action-button--dark'}`}
+                                onClick={onToggleCombatantChips}
+                                title={
+                                    boSettings.showCombatantChips !== false
+                                        ? 'Hide Ability & Held Item Badges'
+                                        : 'Show Ability & Held Item Badges'
+                                }
+                            >
+                                <Zap size={13} /> Badges
+                            </button>
+                        )}
                         <button
                             type="button"
                             className={`action-button bo-header-view-toggle ${boSettings.rollLogMode && boSettings.rollLogMode !== 'floating' ? 'action-button--primary' : 'action-button--dark'}`}

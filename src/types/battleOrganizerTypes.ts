@@ -107,4 +107,5 @@ export interface BattleOrganizerSettings {
     fullScreen?: boolean;
     rollLogMode?: RollLogLayoutMode;
     showCriticalMarks?: boolean;
+    showCombatantChips?: boolean;
 }

@@ -4,9 +4,15 @@ import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import { imageManager } from '../../../utils/graphics/imageManager';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { STATUS_OPTIONS } from '../../../data/constants';
-import { Dices } from 'lucide-react';
+import { Dices, Zap, Package, SlidersHorizontal } from 'lucide-react';
 import { addRollLogEntry } from '../../../utils/combat/diceRoller';
-import { adjustCombatantHp, adjustCombatantWill, toggleCombatantFainted } from './battleOrganizerUtils';
+import {
+    adjustCombatantHp,
+    adjustCombatantWill,
+    toggleCombatantFainted,
+    getCombatantAbilityChoice,
+    cycleCombatantAbilityChoice
+} from './battleOrganizerUtils';
 import { CombatantActionSlots } from './CombatantActionSlots';
 import { CombatantStatusCell } from './CombatantStatusCell';
 import { CombatantRowTools } from './CombatantRowTools';
@@ -17,6 +23,7 @@ interface CombatantRowProps {
     combatant: CombatantRowData;
     index: number;
     showCriticalMarks?: boolean;
+    showCombatantChips?: boolean;
     onUpdate: (updated: CombatantRowData) => void;
     onDelete: (id: string) => void;
     onRollInitiative?: (id: string) => void;
@@ -29,6 +36,7 @@ export function CombatantRow({
     combatant,
     index,
     showCriticalMarks = true,
+    showCombatantChips = true,
     onUpdate,
     onDelete,
     onRollInitiative,
@@ -46,12 +54,7 @@ export function CombatantRow({
     const customStatuses = useCharacterStore((state) => state.roomCustomStatuses || []);
 
     const combinedStatusOptions = Array.from(
-        new Set([
-            'Healthy',
-            ...STATUS_OPTIONS.filter((s) => s !== 'Healthy'),
-            'Fainted',
-            ...customStatuses.map((s) => s.name)
-        ])
+        new Set(['Healthy', ...STATUS_OPTIONS.filter((s) => s !== 'Healthy'), 'Fainted', ...customStatuses.map((s) => s.name)])
     );
 
     const rawStatusList = (combatant.status || '')
@@ -61,21 +64,10 @@ export function CombatantRow({
 
     const statusList = rawStatusList.length > 0 ? rawStatusList : ['Healthy'];
 
-    const handleAddStatus = (chosen: string) => {
-        if (isLocked || !chosen) return;
-        let nextList: string[];
-        if (chosen === 'Healthy') {
-            nextList = ['Healthy'];
-        } else {
-            const filtered = statusList.filter((s) => s !== 'Healthy');
-            if (!filtered.includes(chosen)) {
-                nextList = [...filtered, chosen];
-            } else {
-                nextList = filtered;
-            }
-        }
-        const newStatusStr = nextList.join(', ');
-        const isFainted = nextList.some((s) => s.toLowerCase().includes('faint'));
+    const updateStatuses = (newList: string[], chosen?: string) => {
+        const finalStatuses = newList.filter((s) => s.trim().length > 0);
+        const newStatusStr = (finalStatuses.length > 0 ? finalStatuses : ['Healthy']).join(', ');
+        const isFainted = finalStatuses.some((s) => s.toLowerCase().includes('faint'));
         onUpdate({
             ...combatant,
             status: newStatusStr,
@@ -83,31 +75,26 @@ export function CombatantRow({
         });
     };
 
+    const handleAddStatus = (chosen: string) => {
+        if (isLocked || !chosen) return;
+        if (chosen === 'Healthy') {
+            updateStatuses(['Healthy'], chosen);
+        } else {
+            const filtered = statusList.filter((s) => s !== 'Healthy');
+            updateStatuses(filtered.includes(chosen) ? filtered : [...filtered, chosen], chosen);
+        }
+    };
+
     const handleRemoveStatus = (indexToRemove: number) => {
         if (isLocked) return;
-        const nextList = statusList.filter((_, idx) => idx !== indexToRemove);
-        const finalStatuses = nextList.length > 0 ? nextList : ['Healthy'];
-        const newStatusStr = finalStatuses.join(', ');
-        const isFainted = finalStatuses.some((s) => s.toLowerCase().includes('faint'));
-        onUpdate({
-            ...combatant,
-            status: newStatusStr,
-            isFainted
-        });
+        updateStatuses(statusList.filter((_, idx) => idx !== indexToRemove));
     };
 
     const handleUpdateStatusItem = (indexToUpdate: number, newVal: string) => {
         if (isLocked) return;
         const nextList = [...statusList];
         nextList[indexToUpdate] = newVal;
-        const finalStatuses = nextList.filter((s) => s.trim().length > 0);
-        const newStatusStr = (finalStatuses.length > 0 ? finalStatuses : ['Healthy']).join(', ');
-        const isFainted = finalStatuses.some((s) => s.toLowerCase().includes('faint'));
-        onUpdate({
-            ...combatant,
-            status: newStatusStr,
-            isFainted
-        });
+        updateStatuses(nextList);
     };
 
     useEffect(() => {
@@ -309,6 +296,12 @@ export function CombatantRow({
         });
     };
 
+    const { hasChoice, activeChoice } = getCombatantAbilityChoice(combatant);
+    const handleCycleChoice = () => {
+        if (isLocked) return;
+        onUpdate(cycleCombatantAbilityChoice(combatant));
+    };
+
     const hpMax = combatant.hpMax || 0;
     const hpCurr = combatant.hpCurr ?? 0;
     const hpRatio = hpCurr <= 0 ? 0 : hpMax > 0 ? hpCurr / hpMax : 0;
@@ -368,11 +361,7 @@ export function CombatantRow({
                         type="button"
                         className={`bo-side-toggle-btn ${combatant.isPlayerSide ? 'bo-side-toggle-btn--player' : 'bo-side-toggle-btn--foe'}`}
                         onClick={handleToggleSide}
-                        title={
-                            isLocked
-                                ? 'Side locked by GM'
-                                : `Click to switch side (Current: ${combatant.isPlayerSide ? 'Player' : 'Foe'})`
-                        }
+                        title={isLocked ? 'Side locked by GM' : `Click to switch side (Current: ${combatant.isPlayerSide ? 'Player' : 'Foe'})`}
                         aria-label="Switch combatant side"
                         disabled={isLocked}
                     >
@@ -402,13 +391,7 @@ export function CombatantRow({
                                 className={`bo-form-badge bo-form-badge--${combatant.activeTransformation.toLowerCase()}`}
                                 title={`Form: ${combatant.activeTransformation}`}
                             >
-                                {combatant.activeTransformation === 'Terastallize'
-                                    ? 'TERA'
-                                    : combatant.activeTransformation === 'Gigantamax'
-                                      ? 'G-MAX'
-                                      : combatant.activeTransformation === 'Dynamax'
-                                        ? 'D-MAX'
-                                        : combatant.activeTransformation.toUpperCase()}
+                                {combatant.activeTransformation === 'Terastallize' ? 'TERA' : combatant.activeTransformation === 'Gigantamax' ? 'G-MAX' : combatant.activeTransformation === 'Dynamax' ? 'D-MAX' : combatant.activeTransformation.toUpperCase()}
                             </span>
                         )}
                         <input
@@ -421,6 +404,37 @@ export function CombatantRow({
                             aria-label="Combatant Name"
                             disabled={isLocked}
                         />
+                        {(Boolean(combatant.ability?.trim()) || Boolean(combatant.heldItem?.trim())) && showCombatantChips && (
+                            <div className="bo-combatant-badges">
+                                {combatant.ability?.trim() && (
+                                    <>
+                                        <span className="bo-pill--ability" title={`Ability: ${combatant.ability.trim()}`}>
+                                            <Zap size={11} className="bo-pill-icon" />
+                                            <span className="bo-pill-text">{combatant.ability.trim()}</span>
+                                        </span>
+                                        {hasChoice && (
+                                            <button
+                                                type="button"
+                                                className="bo-pill--choice"
+                                                onClick={handleCycleChoice}
+                                                title={isLocked ? `Choice: ${activeChoice} (Locked by GM)` : `Choice: ${activeChoice} (Click to cycle choice)`}
+                                                aria-label="Cycle Ability Choice"
+                                                disabled={isLocked}
+                                            >
+                                                <SlidersHorizontal size={10} className="bo-pill-icon" />
+                                                <span className="bo-pill-text">{activeChoice}</span>
+                                            </button>
+                                        )}
+                                    </>
+                                )}
+                                {combatant.heldItem?.trim() && (
+                                    <span className="bo-pill--item" title={`Held Item: ${combatant.heldItem.trim()}`}>
+                                        <Package size={11} className="bo-pill-icon" />
+                                        <span className="bo-pill-text">{combatant.heldItem.trim()}</span>
+                                    </span>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </td>
@@ -467,6 +481,7 @@ export function CombatantRow({
                 combatant={combatant}
                 isLocked={isLocked}
                 hasToken={hasToken}
+                showChoiceInTools={!showCombatantChips}
                 onToggleFainted={handleToggleFainted}
                 onToggleEvade={handleToggleEvade}
                 onToggleClash={handleToggleClash}
