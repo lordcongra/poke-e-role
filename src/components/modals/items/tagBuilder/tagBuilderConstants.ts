@@ -90,8 +90,9 @@ export const getTargetOptions = (category: string, extraCategories: ExtraCategor
     if (category === 'matchup') return ['Immune', 'Resist', 'Weak', 'Remove Immunities'];
     if (category === 'mechanic') {
         return [
-            'High Crit',
+            'High Critical',
             'Stacking High Crit',
+            'Never Miss',
             'Ignore Low Acc',
             'Ignore Pain',
             'Recoil',
@@ -188,7 +189,8 @@ export const showTypeSelect = (category: string, target: string): boolean => {
             !['Init', 'Chance', 'Crit Dmg', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'].includes(target)) ||
         (category === 'matchup' && target !== 'Remove Immunities') ||
         (category === 'mechanic' &&
-            ['Ignore Pain', 'Encounter Buff', 'Encounter Debuff', 'Permanent Boost'].includes(target))
+            ['Ignore Pain', 'Encounter Buff', 'Encounter Debuff', 'Permanent Boost', 'High Critical', 'High Crit', 'Never Miss'].includes(target)) ||
+        (category === 'move_mechanics' && ['High Critical', 'Never Miss'].includes(target))
     );
 };
 
@@ -257,7 +259,7 @@ export const PRESETS: Record<string, PresetConfig> = {
     },
     high_crit: {
         category: 'mechanic',
-        target: 'High Crit',
+        target: 'High Critical',
         value: 1,
         condition: 'none',
         reqGroup: 'none',
@@ -290,7 +292,7 @@ export const getDefaultTargetForCategory = (
         return { target: 'Brawl', reqGroup: 'none', typeOption: '' };
     }
     if (catId === 'mechanic') {
-        return { target: 'High Crit', reqGroup: 'none', typeOption: '' };
+        return { target: 'High Critical', reqGroup: 'none', typeOption: '' };
     }
     if (catId === 'turn_based') {
         return { target: 'Heal Round End', reqGroup: 'none', typeOption: '' };

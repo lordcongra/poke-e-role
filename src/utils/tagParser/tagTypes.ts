@@ -18,6 +18,8 @@ export interface CombatBonuses {
     gainTempHp: number;
     tempHpOnHit: number;
     tempHpDmgRatio: string;
+    neverMiss: boolean;
+    neverMissSourceNames: string[];
     highCritStacks: number;
     stackingHighCritStacks: number;
     ignoreLowAcc: number;

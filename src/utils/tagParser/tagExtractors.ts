@@ -717,15 +717,57 @@ export function extractMechanics(
     showInRollLog: boolean = true,
     sourceBoostActive?: boolean
 ) {
-    const hcMatches = description.matchAll(/\[\s*high crit(?:ical)?(?:\s*@\s*([^\]]+))?\s*\]/gi);
+    const hcMatches = description.matchAll(/\[\s*high crit(?:ical)?(?:\s*:\s*([^\]@]+))?(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of hcMatches) {
-        if (!checkCondition(match[1], isHalfHp, sourceBoostActive)) continue;
+        if (!checkCondition(match[2], isHalfHp, sourceBoostActive)) continue;
+        const req = match[1]?.trim().toLowerCase();
+        const isMatching =
+            !req ||
+            (moveType &&
+                (req === moveType ||
+                    req.replace(/\s*move$/i, '').trim() === moveType ||
+                    req.replace(/\s*-\s*type$/i, '').trim() === moveType)) ||
+            (move && req === 'physical' && move.category === 'Physical') ||
+            (move && req === 'special' && move.category === 'Special') ||
+            matchesModifier(req, move);
+
+        if (!isMatching) continue;
+
         bonuses.highCritStacks += 1;
         triggers.accuracy = true;
-        if (showInRollLog) {
-            if (kind === 'item') bonuses.highCritItemNames.push(sourceName);
-            else if (kind === 'passive') bonuses.highCritPassiveNames.push(sourceName);
-            else if (kind === 'ability') bonuses.highCritAbilityNames.push(sourceName);
+        if (showInRollLog && sourceName) {
+            if (kind === 'item') {
+                if (!bonuses.highCritItemNames.includes(sourceName)) bonuses.highCritItemNames.push(sourceName);
+            } else if (kind === 'passive' || kind === 'form') {
+                if (!bonuses.highCritPassiveNames.includes(sourceName)) bonuses.highCritPassiveNames.push(sourceName);
+            } else if (kind === 'ability') {
+                if (!bonuses.highCritAbilityNames.includes(sourceName)) bonuses.highCritAbilityNames.push(sourceName);
+            }
+        }
+    }
+
+    const nmMatches = description.matchAll(/\[\s*never miss(?:\s*:\s*([^\]@]+))?(?:\s*@\s*([^\]]+))?\s*\]/gi);
+    for (const match of nmMatches) {
+        if (!checkCondition(match[2], isHalfHp, sourceBoostActive)) continue;
+        const req = match[1]?.trim().toLowerCase();
+        const isMatching =
+            !req ||
+            (moveType &&
+                (req === moveType ||
+                    req.replace(/\s*move$/i, '').trim() === moveType ||
+                    req.replace(/\s*-\s*type$/i, '').trim() === moveType)) ||
+            (move && req === 'physical' && move.category === 'Physical') ||
+            (move && req === 'special' && move.category === 'Special') ||
+            matchesModifier(req, move);
+
+        if (!isMatching) continue;
+
+        bonuses.neverMiss = true;
+        triggers.accuracy = true;
+        if (showInRollLog && sourceName) {
+            if (!bonuses.neverMissSourceNames.includes(sourceName)) {
+                bonuses.neverMissSourceNames.push(sourceName);
+            }
         }
     }
 

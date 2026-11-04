@@ -327,6 +327,18 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
         tags.push(`CANNOT BE EVADED`);
     }
 
+    if (itemBuffs.neverMiss) {
+        if (!tags.includes('CANNOT BE EVADED')) {
+            tags.push('CANNOT BE EVADED');
+        }
+        for (const source of itemBuffs.neverMissSourceNames) {
+            const sourceTag = `${source} (Never Miss)`;
+            if (!tags.includes(sourceTag)) {
+                tags.push(sourceTag);
+            }
+        }
+    }
+
     const isPhysOrSpec = move.category === 'Physical' || move.category === 'Special';
     const sideName = resolveCharacterSide(state);
     const rollerSide: 'player' | 'foe' = sideName !== 'none' ? sideName : state.identity.isNPC ? 'foe' : 'player';

@@ -679,6 +679,8 @@ describe('Ability Targeting System', () => {
                 gainTempHp: 0,
                 tempHpOnHit: 0,
                 tempHpDmgRatio: '',
+                neverMiss: false,
+                neverMissSourceNames: [],
                 highCritStacks: 0,
                 stackingHighCritStacks: 0,
                 ignoreLowAcc: 0,

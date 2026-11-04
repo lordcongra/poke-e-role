@@ -118,6 +118,151 @@ describe('Combat Engine, Roller & Battle Organizer', () => {
             const critReq = calculateCriticalRequirement(mockMove, 1, useCharacterStore.getState(), parsedBuffs);
             expect(critReq.criticalRequirement).toBeLessThanOrEqual(4);
         });
+
+        it('parses universal and combo-tagged Never Miss for moves, types, categories, and modifiers', () => {
+            const testItems: InventoryItem[] = [
+                {
+                    id: 'nm-universal',
+                    name: 'Universal Lens',
+                    desc: '[Never Miss]',
+                    qty: 1,
+                    active: true
+                },
+                {
+                    id: 'nm-fire',
+                    name: 'Fire Scope',
+                    desc: '[Never Miss: Fire]',
+                    qty: 1,
+                    active: true
+                },
+                {
+                    id: 'nm-physical',
+                    name: 'Muscle Band',
+                    desc: '[Never Miss: Physical]',
+                    qty: 1,
+                    active: true
+                },
+                {
+                    id: 'nm-punch',
+                    name: 'Boxing Glove',
+                    desc: '[Never Miss: Punch Move]',
+                    qty: 1,
+                    active: true
+                }
+            ];
+
+            const normalPhysicalMove: MoveData = {
+                id: 'move-slash',
+                active: true,
+                name: 'Slash',
+                type: 'Normal',
+                category: 'Physical',
+                power: 2,
+                acc1: 'str',
+                acc2: 'brawl',
+                dmg1: 'str',
+                desc: 'A physical slash.'
+            };
+
+            const buffs = parseCombatTags(testItems, [], normalPhysicalMove);
+            expect(buffs.neverMiss).toBe(true);
+            expect(buffs.neverMissSourceNames).toContain('Universal Lens');
+            expect(buffs.neverMissSourceNames).toContain('Muscle Band');
+            expect(buffs.neverMissSourceNames).not.toContain('Fire Scope');
+            expect(buffs.neverMissSourceNames).not.toContain('Boxing Glove');
+
+            // Fire special move
+            const fireSpecialMove: MoveData = {
+                id: 'move-flamethrower',
+                active: true,
+                name: 'Flamethrower',
+                type: 'Fire',
+                category: 'Special',
+                power: 3,
+                acc1: 'spe',
+                acc2: 'channel',
+                dmg1: 'spe',
+                desc: 'A fiery blast.'
+            };
+            const fireBuffs = parseCombatTags(testItems, [], fireSpecialMove);
+            expect(fireBuffs.neverMiss).toBe(true);
+            expect(fireBuffs.neverMissSourceNames).toContain('Universal Lens');
+            expect(fireBuffs.neverMissSourceNames).toContain('Fire Scope');
+            expect(fireBuffs.neverMissSourceNames).not.toContain('Muscle Band');
+
+            // Punch move
+            const firePunchMove: MoveData = {
+                id: 'move-fire-punch',
+                active: true,
+                name: 'Fire Punch',
+                type: 'Fire',
+                category: 'Physical',
+                power: 2,
+                acc1: 'str',
+                acc2: 'brawl',
+                dmg1: 'str',
+                desc: '[Punch Move] A fiery punch.'
+            };
+            const punchBuffs = parseCombatTags(testItems, [], firePunchMove);
+            expect(punchBuffs.neverMissSourceNames).toContain('Universal Lens');
+            expect(punchBuffs.neverMissSourceNames).toContain('Fire Scope');
+            expect(punchBuffs.neverMissSourceNames).toContain('Muscle Band');
+            expect(punchBuffs.neverMissSourceNames).toContain('Boxing Glove');
+        });
+
+        it('parses combo-tagged High Critical for moves, types, categories, and modifiers', () => {
+            const critItems: InventoryItem[] = [
+                {
+                    id: 'hc-fire',
+                    name: 'Blaze Charm',
+                    desc: '[High Critical: Fire]',
+                    qty: 1,
+                    active: true
+                },
+                {
+                    id: 'hc-spec',
+                    name: 'Mind Lens',
+                    desc: '[High Critical: Special]',
+                    qty: 1,
+                    active: true
+                }
+            ];
+
+            const normalPhysMove: MoveData = {
+                id: 'move-slash',
+                active: true,
+                name: 'Slash',
+                type: 'Normal',
+                category: 'Physical',
+                power: 2,
+                acc1: 'str',
+                acc2: 'brawl',
+                dmg1: 'str',
+                desc: 'Slash attack'
+            };
+
+            const noMatchBuffs = parseCombatTags(critItems, [], normalPhysMove);
+            expect(noMatchBuffs.highCritStacks).toBe(0);
+            expect(noMatchBuffs.highCritItemNames).toHaveLength(0);
+
+            const fireSpecMove: MoveData = {
+                id: 'move-flamethrower',
+                active: true,
+                name: 'Flamethrower',
+                type: 'Fire',
+                category: 'Special',
+                power: 3,
+                acc1: 'spe',
+                acc2: 'channel',
+                dmg1: 'spe',
+                desc: 'Fire blast'
+            };
+
+            const matchBuffs = parseCombatTags(critItems, [], fireSpecMove);
+            expect(matchBuffs.highCritStacks).toBe(2);
+            expect(matchBuffs.highCritItemNames).toContain('Blaze Charm');
+            expect(matchBuffs.highCritItemNames).toContain('Mind Lens');
+        });
     });
 
     describe('Status Penalties & Pain Engine', () => {

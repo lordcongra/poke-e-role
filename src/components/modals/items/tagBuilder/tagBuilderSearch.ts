@@ -94,7 +94,7 @@ const TARGET_KEYWORDS: Record<string, string[]> = {
     Flinch: ['flinched', 'scared', 'cower'],
 
     // Move mechanics
-    'High Critical': ['crit', 'high crit', 'critical hit'],
+    'High Critical': ['crit', 'high crit', 'critical hit', 'crit on 4', 'keen eye', 'scope lens', 'razor claw'],
     'Low Accuracy': ['low acc', 'miss chance'],
     'Never Miss': ['aerial ace', 'swift', 'always hits', '100% accuracy'],
     'Successive Actions': ['multihit', 'consecutive', 'repeat'],

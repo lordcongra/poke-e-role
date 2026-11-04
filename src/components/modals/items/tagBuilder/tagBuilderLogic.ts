@@ -37,8 +37,9 @@ export function buildTagString(config: TagBuilderConfig): string {
         else tag = `[${target}]`;
     } else if (category === 'mechanic') {
         if (!target) return '';
-        if (target === 'High Crit') tag = `[High Crit]`;
+        if (target === 'High Crit' || target === 'High Critical') tag = typeOption ? `[High Critical: ${typeOption}]` : `[High Critical]`;
         else if (target === 'Stacking High Crit') tag = `[Stacking High Crit]`;
+        else if (target === 'Never Miss') tag = typeOption ? `[Never Miss: ${typeOption}]` : `[Never Miss]`;
         else if (target === 'Ignore Pain') tag = typeOption ? `[Ignore Pain: ${typeOption}]` : `[Ignore Pain]`;
         else if (target === 'Ignore Low Acc') tag = `[Ignore Low Acc ${Math.abs(numValue)}]`;
         else if (target === 'Recoil') tag = `[Recoil]`;
@@ -77,9 +78,9 @@ export function buildTagString(config: TagBuilderConfig): string {
         tag = `[Status: ${target}]`;
     } else if (category === 'move_mechanics') {
         if (!target) return '';
-        if (target === 'High Critical') tag = `[High Critical]`;
+        if (target === 'High Critical') tag = typeOption ? `[High Critical: ${typeOption}]` : `[High Critical]`;
         else if (target === 'Low Accuracy') tag = `[Low Accuracy ${Math.abs(numValue)}]`;
-        else if (target === 'Never Miss') tag = `[Never Miss]`;
+        else if (target === 'Never Miss') tag = typeOption ? `[Never Miss: ${typeOption}]` : `[Never Miss]`;
         else if (target === 'Recoil') tag = `[Recoil]`;
         else if (target === 'Set Damage') tag = `[Set Damage ${Math.abs(numValue)}]`;
         else if (target === 'Damage Pool') tag = `[Damage Pool ${Math.abs(numValue) || 1}]`;
@@ -179,12 +180,17 @@ export function generateExplanation(config: TagBuilderConfig, builtTag: string):
         else if (target === 'Weak') base = typeOption ? `Adds weakness to ${typeOption}-type moves` : 'Adds weakness';
         else if (target === 'Remove Immunities') base = 'Ignores enemy type immunities when attacking';
     } else if (category === 'mechanic') {
-        if (target === 'High Crit')
-            base =
-                'Lowers critical hit threshold by 1 (Standard rule: High Critical does not stack across items/moves)';
+        if (target === 'High Crit' || target === 'High Critical')
+            base = typeOption
+                ? `Lowers critical hit threshold by 1 for ${typeOption} moves (Standard rule: High Critical does not stack across items/moves)`
+                : 'Lowers critical hit threshold by 1 (Standard rule: High Critical does not stack across items/moves)';
         else if (target === 'Stacking High Crit')
             base =
                 'Lowers critical threshold by 1 and explicitly stacks with High Critical moves and items (like Razor Claw). Normal [High Crit] does not stack by default; use this for abilities like Super Luck or homebrew situations where stacking crits are permitted';
+        else if (target === 'Never Miss')
+            base = typeOption
+                ? `Attacks using ${typeOption} moves cannot miss and cannot be evaded`
+                : 'Attacks cannot miss and cannot be evaded';
         else if (target === 'Ignore Pain')
             base = typeOption ? `Ignores pain penalties while using ${typeOption} moves` : 'Ignores all pain penalties';
         else if (target === 'Ignore Low Acc') base = `Ignores up to ${Math.abs(num)} Low Accuracy penalty dice`;
@@ -429,9 +435,38 @@ export function parseTagStringToConfig(tagStr: string, isMoveContext = false): P
 
     // Move mechanics keywords (bracketed or unbracketed)
 
+    const critOrNeverMissMatch = clean.match(/^(high crit(?:ical)?|never miss)(?::\s*([^@\]]+))?$/i);
+    if (critOrNeverMissMatch) {
+        const isCrit = /^high crit/i.test(critOrNeverMissMatch[1]);
+        const target = isCrit ? 'High Critical' : 'Never Miss';
+        const typeOpt = critOrNeverMissMatch[2]?.trim() || '';
+        let reqGroup: 'none' | 'type' | 'category' | 'modifier' | 'misc' = 'none';
+        if (typeOpt) {
+            const optLower = typeOpt.toLowerCase();
+            if (optLower === 'physical' || optLower === 'special') {
+                reqGroup = 'category';
+            } else if (optLower === 'super effective') {
+                reqGroup = 'misc';
+            } else if (optLower.endsWith('move')) {
+                reqGroup = 'modifier';
+            } else {
+                reqGroup = 'type';
+            }
+        }
+        return {
+            category: isMoveContext && !typeOpt ? 'move_mechanics' : 'mechanic',
+            target,
+            value: 1,
+            typeOption: typeOpt,
+            reqGroup,
+            condition,
+            customMaxStacks
+        };
+    }
+
     const moveKeywordsMap: Record<string, string> = {
         'high critical': 'High Critical',
-        'high crit': isMoveContext ? 'High Critical' : 'High Crit',
+        'high crit': 'High Critical',
         'never miss': 'Never Miss',
         recoil: 'Recoil',
         'successive actions': 'Successive Actions',
