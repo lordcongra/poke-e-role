@@ -13,7 +13,11 @@ export interface RoundWeatherDamageModalProps {
     battlefield: BattlefieldData;
     combatants: CombatantRowData[];
     weatherName?: string;
-    onApplyDamageAndHeal?: (selectedDamageIds: string[], selectedHealIds: string[]) => void;
+    onApplyDamageAndHeal?: (
+        selectedDamageIds: string[],
+        selectedHealIds: string[],
+        triggerInfoMap?: Record<string, { damageAmount: number; healingAmount: number }>
+    ) => void;
     onApplyDamage?: (selectedCombatantIds: string[]) => void;
     onSkip: () => void;
     onClose: () => void;
@@ -104,7 +108,14 @@ export function RoundWeatherDamageModal({
 
     const handleApply = () => {
         if (onApplyDamageAndHeal) {
-            onApplyDamageAndHeal(Array.from(selectedDamageIds), Array.from(selectedHealIds));
+            const triggerInfoMap: Record<string, { damageAmount: number; healingAmount: number }> = {};
+            statuses.forEach((s) => {
+                triggerInfoMap[s.combatant.id] = {
+                    damageAmount: s.damageAmount,
+                    healingAmount: s.healingAmount
+                };
+            });
+            onApplyDamageAndHeal(Array.from(selectedDamageIds), Array.from(selectedHealIds), triggerInfoMap);
         } else if (onApplyDamage) {
             onApplyDamage(Array.from(selectedDamageIds));
         }
@@ -140,7 +151,7 @@ export function RoundWeatherDamageModal({
                         ) : (
                             <Sparkles size={18} color="var(--primary)" />
                         )}
-                        End of Round: Battlefield &amp; Weather Effects
+                        End of Round Effects
                     </h3>
                     <button
                         type="button"
@@ -165,7 +176,7 @@ export function RoundWeatherDamageModal({
                             <div className="bo-weather-dmg-modal__section">
                                 <div className="bo-weather-dmg-modal__section-header">
                                     <Flame size={14} color="#ef5350" />
-                                    <span>Damage Effects (Sandstorm, Hail, Solar Power, Dry Skin)</span>
+                                    <span>Damage Effects (Weather, Burn, Poison, Tags)</span>
                                 </div>
                                 {damageStatuses.map(
                                     ({ combatant: c, isDamageImmune, damageReason, damageImmuneReason }) => {
@@ -228,7 +239,7 @@ export function RoundWeatherDamageModal({
                             <div className="bo-weather-dmg-modal__section" style={{ marginTop: '8px' }}>
                                 <div className="bo-weather-dmg-modal__section-header">
                                     <Heart size={14} color="#81c784" />
-                                    <span>Healing Effects (Grassy Terrain, Rain Dish, Ice Body, Dry Skin)</span>
+                                    <span>Healing Effects (Terrain, Weather, Leftovers, Tags)</span>
                                 </div>
                                 {healStatuses.map(
                                     ({ combatant: c, isHealingIneligible, healingReason, healingIneligibleReason }) => {
@@ -310,9 +321,9 @@ export function RoundWeatherDamageModal({
                         {damageCount > 0 && healCount > 0
                             ? `Apply (${damageCount} Dmg, ${healCount} Heal) & Advance`
                             : damageCount > 0
-                              ? `Apply 1 Damage to Selected (${damageCount}) & Advance`
+                              ? `Apply Damage to Selected (${damageCount}) & Advance`
                               : healCount > 0
-                                ? `Apply 1 Heal to Selected (${healCount}) & Advance`
+                                ? `Apply Heal to Selected (${healCount}) & Advance`
                                 : 'Advance Round'}
                     </button>
                 </div>

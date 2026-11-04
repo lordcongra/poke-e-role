@@ -29,7 +29,7 @@ export function useRoundAdvanceModal({
             return;
         }
 
-        if (hasPotentialRoundAdvanceTriggers(battlefield)) {
+        if (hasPotentialRoundAdvanceTriggers(battlefield, currentRound.combatants)) {
             const dataMap = await getCombatantCharacterDataMap();
             const triggers = resolveCombatantRoundTriggers(currentRound.combatants, battlefield, dataMap);
             const hasActiveTriggers = triggers.some(
@@ -42,7 +42,7 @@ export function useRoundAdvanceModal({
                     activeWeathers
                         .map((w) => w.name)
                         .filter(Boolean)
-                        .join(' & ') || 'Battlefield'
+                        .join(' & ') || 'Round Effects'
                 );
                 setShowWeatherDamageModal(true);
                 return;
@@ -52,7 +52,11 @@ export function useRoundAdvanceModal({
         advanceRound();
     };
 
-    const handleApplyRoundTriggersAndAdvance = (selectedDamageIds: string[], selectedHealIds: string[]) => {
+    const handleApplyRoundTriggersAndAdvance = (
+        selectedDamageIds: string[],
+        selectedHealIds: string[],
+        triggerInfoMap?: Record<string, { damageAmount: number; healingAmount: number }>
+    ) => {
         if (currentRound?.combatants) {
             const affectedIds = new Set([...selectedDamageIds, ...selectedHealIds]);
             affectedIds.forEach((id) => {
@@ -64,16 +68,22 @@ export function useRoundAdvanceModal({
                 let hp = c.hpCurr;
                 let tempHp = c.tempHp || 0;
                 const maxHp = c.hpMax ?? c.hpCurr;
+                const dmgAmount = triggerInfoMap?.[id]?.damageAmount ?? 1;
+                const healAmount = triggerInfoMap?.[id]?.healingAmount ?? 1;
 
                 if (isDamaged) {
+                    let dmgRemaining = dmgAmount;
                     if (tempHp > 0) {
-                        tempHp = Math.max(0, tempHp - 1);
-                    } else {
-                        hp = Math.max(0, hp - 1);
+                        const deduct = Math.min(tempHp, dmgRemaining);
+                        tempHp -= deduct;
+                        dmgRemaining -= deduct;
+                    }
+                    if (dmgRemaining > 0) {
+                        hp = Math.max(0, hp - dmgRemaining);
                     }
                 }
                 if (isHealed && hp > 0) {
-                    hp = Math.min(maxHp, hp + 1);
+                    hp = Math.min(maxHp, hp + healAmount);
                 }
                 updateCombatant({
                     ...c,

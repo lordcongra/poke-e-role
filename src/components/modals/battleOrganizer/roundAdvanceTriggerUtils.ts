@@ -2,6 +2,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { getEffectsByCategory } from '../../../utils/combat/fieldEffectsData';
 import { getKnownAbility } from '../../../data/abilities/knownAbilities';
+import { checkCondition } from '../../../utils/tagParser/conditionChecker';
 import type { CombatantRowData, BattlefieldData } from '../../../types/battleOrganizerTypes';
 import { compareCombatantsByInitiative } from './battleOrganizerUtils';
 
@@ -32,24 +33,58 @@ export interface CombatantRoundTriggerInfo {
 }
 
 /**
- * Rapid check to determine if any active weather or terrain could trigger end-of-round effects.
+ * Rapid check to determine if any active weather, terrain, combatant status, or smart tags could trigger end-of-round effects.
  */
-export function hasPotentialRoundAdvanceTriggers(battlefield: BattlefieldData): boolean {
+export function hasPotentialRoundAdvanceTriggers(
+    battlefield: BattlefieldData,
+    combatants?: CombatantRowData[]
+): boolean {
     const activeWeathers = getEffectsByCategory(battlefield, 'weather');
     const activeTerrains = getEffectsByCategory(battlefield, 'terrain');
 
-    return (
-        activeWeathers.some((w) => {
-            const n = (w.name || '').toLowerCase();
-            return (
-                n.includes('sand') ||
-                n.includes('hail') ||
-                n.includes('sun') ||
-                n.includes('rain') ||
-                n.includes('snow')
-            );
-        }) || activeTerrains.some((t) => (t.name || '').toLowerCase().includes('grassy'))
-    );
+    const hasActiveWeather = activeWeathers.some((w) => {
+        const n = (w.name || '').toLowerCase();
+        return (
+            n.includes('sand') ||
+            n.includes('hail') ||
+            n.includes('sun') ||
+            n.includes('rain') ||
+            n.includes('snow')
+        );
+    });
+    const hasActiveTerrain = activeTerrains.some((t) => (t.name || '').toLowerCase().includes('grassy'));
+
+    if (hasActiveWeather || hasActiveTerrain) {
+        return true;
+    }
+
+    if (combatants && combatants.length > 0) {
+        const dealOrHealTagRegex =
+            /\[\s*(?:heal\s*\d+(?:\s*hp)?\s*(?:round end|at end of round|at round end)|(?:deal\s*)?\d+\s*(?:damage|dmg)\s*(?:at end of round|at round end|round end)|(?:end of round damage|end of round dmg)\s*:\s*\d+)/i;
+
+        for (const c of combatants) {
+            const statusLower = (c.status || '').toLowerCase();
+            if (
+                statusLower.includes('burn') ||
+                statusLower.includes('poison') ||
+                statusLower.includes('badly poisoned')
+            ) {
+                return true;
+            }
+
+            const heldItemLower = (c.heldItem || '').toLowerCase();
+            if (heldItemLower.includes('leftovers')) {
+                return true;
+            }
+
+            const allTags = `${c.heldItem || ''} ${c.abilityTags || ''} ${c.status || ''}`;
+            if (dealOrHealTagRegex.test(allTags)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 /**
@@ -174,57 +209,98 @@ export function resolveCombatantRoundTriggers(
         if (isFainted) {
             isDamageImmune = true;
             damageImmuneReason = 'Fainted';
-        } else if (hasSandstorm) {
-            hasDamageTrigger = true;
-            damageAmount = 1;
-            const hasSandstormImmunityAbility =
-                abilityActive &&
-                (['sand rush', 'sand force', 'overcoat', 'magic guard'].includes(abilityLower) ||
-                    /immune:\s*(?:weather\s*dmg|sandstorm)/i.test(abilityTags));
+        } else {
+            const damageReasons: string[] = [];
+            let damageSum = 0;
 
-            if (cleanTypes.some((t) => ['rock', 'ground', 'steel'].includes(t))) {
-                isDamageImmune = true;
-                const matchType = types.find((t) => ['rock', 'ground', 'steel'].includes(t.toLowerCase()));
-                damageImmuneReason = `Immune (${matchType || 'Type'})`;
-            } else if (hasSandstormImmunityAbility) {
-                isDamageImmune = true;
-                damageImmuneReason = 'Immune (Ability)';
-            } else {
-                damageReason = 'Sandstorm (1 Dmg)';
+            if (hasSandstorm) {
+                const hasSandstormImmunityAbility =
+                    abilityActive &&
+                    (['sand rush', 'sand force', 'overcoat', 'magic guard'].includes(abilityLower) ||
+                        /immune:\s*(?:weather\s*dmg|sandstorm)/i.test(abilityTags));
+
+                if (cleanTypes.some((t) => ['rock', 'ground', 'steel'].includes(t))) {
+                    const matchType = types.find((t) => ['rock', 'ground', 'steel'].includes(t.toLowerCase()));
+                    damageImmuneReason = `Immune (${matchType || 'Type'})`;
+                } else if (hasSandstormImmunityAbility) {
+                    damageImmuneReason = 'Immune (Ability)';
+                } else {
+                    damageReasons.push('Sandstorm (1 Dmg)');
+                    damageSum += 1;
+                }
             }
-        } else if (hasHail) {
-            hasDamageTrigger = true;
-            damageAmount = 1;
-            const hasHailImmunityAbility =
-                abilityActive &&
-                (['overcoat', 'magic guard', 'ice body'].includes(abilityLower) ||
-                    hasIceBody ||
-                    /immune:\s*(?:weather\s*dmg|hail)/i.test(abilityTags));
 
-            if (cleanTypes.includes('ice')) {
-                isDamageImmune = true;
-                damageImmuneReason = 'Immune (Ice)';
-            } else if (hasHailImmunityAbility) {
-                isDamageImmune = true;
-                damageImmuneReason = 'Immune (Ability)';
-            } else {
-                damageReason = 'Hail (1 Dmg)';
+            if (hasHail) {
+                const hasHailImmunityAbility =
+                    abilityActive &&
+                    (['overcoat', 'magic guard', 'ice body'].includes(abilityLower) ||
+                        hasIceBody ||
+                        /immune:\s*(?:weather\s*dmg|hail)/i.test(abilityTags));
+
+                if (cleanTypes.includes('ice')) {
+                    damageImmuneReason = 'Immune (Ice)';
+                } else if (hasHailImmunityAbility) {
+                    damageImmuneReason = 'Immune (Ability)';
+                } else {
+                    damageReasons.push('Hail (1 Dmg)');
+                    damageSum += 1;
+                }
             }
-        }
 
-        // Additional ability damage triggers (Sun: Solar Power, Dry Skin)
-        if (!isFainted && hasSun) {
-            if (hasSolarPower) {
+            // Additional ability damage triggers (Sun: Solar Power, Dry Skin)
+            if (hasSun) {
+                if (hasSolarPower) {
+                    damageReasons.push('Solar Power (1 Dmg)');
+                    damageSum += 1;
+                }
+                if (hasDrySkin) {
+                    damageReasons.push('Dry Skin (1 Dmg)');
+                    damageSum += 1;
+                }
+            }
+
+            // Status Damage: Burn, Poison, Badly Poisoned
+            const statusLower = (c.status || '').toLowerCase();
+            if (statusLower.includes('burn')) {
+                damageReasons.push('Burn (1 Dmg)');
+                damageSum += 1;
+            }
+            if (statusLower.includes('badly poisoned') || statusLower.includes('toxic')) {
+                const bpMatch = c.status.match(/(?:badly poisoned|toxic)(?:\s*\((\d+)\))?/i);
+                const badlyDmg = bpMatch && bpMatch[1] ? Math.max(1, parseInt(bpMatch[1], 10)) : 1;
+                damageReasons.push(`Badly Poisoned (${badlyDmg} Dmg)`);
+                damageSum += badlyDmg;
+            } else if (statusLower.includes('poison')) {
+                damageReasons.push('Poison (1 Dmg)');
+                damageSum += 1;
+            }
+
+            // Smart Tags: [Deal X Damage at End of Round] or [End of Round Damage: X @ Condition]
+            const isHalfHp =
+                c.hpCurr !== undefined && c.hpMax !== undefined ? c.hpCurr <= Math.floor(c.hpMax / 2) : false;
+            const dmgTagRegex =
+                /\[\s*(?:(?:deal\s*)?(\d+)\s*(?:damage|dmg)\s*(?:at end of round|at round end|round end)|(?:end of round damage|end of round dmg)\s*:\s*(\d+))(?:\s*@\s*([^\]]+))?\s*\]/gi;
+            const allDmgText = `${c.heldItem || ''} ${c.abilityTags || ''} ${charInfo.abilityTags || ''} ${c.status || ''}`;
+            const dmgMatches = allDmgText.matchAll(dmgTagRegex);
+            for (const m of dmgMatches) {
+                const amt = parseInt(m[1] || m[2], 10);
+                const condition = m[3] ? m[3].trim() : undefined;
+                if (condition && !checkCondition(condition, isHalfHp, c.abilityBoostActive)) {
+                    continue;
+                }
+                damageReasons.push(`Round End Tag (${amt} Dmg)`);
+                damageSum += amt;
+            }
+
+            if (damageReasons.length > 0) {
                 hasDamageTrigger = true;
-                damageAmount = Math.max(damageAmount, 1);
-                damageReason = damageReason ? `${damageReason} & Solar Power` : 'Solar Power (1 Dmg)';
+                damageAmount = damageSum;
+                damageReason = damageReasons.join(' & ');
                 isDamageImmune = false;
-            }
-            if (hasDrySkin) {
+            } else if ((hasSandstorm || hasHail) && damageImmuneReason) {
                 hasDamageTrigger = true;
-                damageAmount = Math.max(damageAmount, 1);
-                damageReason = damageReason ? `${damageReason} & Dry Skin` : 'Dry Skin (1 Dmg)';
-                isDamageImmune = false;
+                isDamageImmune = true;
+                damageReason = damageImmuneReason;
             }
         }
 
@@ -286,6 +362,35 @@ export function resolveCombatantRoundTriggers(
             if (hasSnow && hasIceBody) {
                 reasons.push('Ice Body (+1 HP)');
                 healSum += 1;
+            }
+
+            // Leftovers (e.g. Held Item)
+            const heldItemLower = (c.heldItem || '').toLowerCase();
+            const hasLeftovers = heldItemLower.includes('leftovers');
+            if (hasLeftovers) {
+                reasons.push('Leftovers (+1 HP)');
+                healSum += 1;
+            }
+
+            // Smart Tags: [Heal X Round End] or [Heal X HP Round End @ Condition]
+            const isHalfHp =
+                c.hpCurr !== undefined && c.hpMax !== undefined ? c.hpCurr <= Math.floor(c.hpMax / 2) : false;
+            const healTagRegex =
+                /\[\s*heal\s*(\d+)(?:\s*hp)?\s*(?:round end|at end of round|at round end)(?:\s*@\s*([^\]]+))?\s*\]/gi;
+            const allHealText = `${c.heldItem || ''} ${c.abilityTags || ''} ${charInfo.abilityTags || ''} ${c.status || ''}`;
+            const healMatches = allHealText.matchAll(healTagRegex);
+            for (const m of healMatches) {
+                const amt = parseInt(m[1], 10);
+                const condition = m[2] ? m[2].trim() : undefined;
+                if (condition && !checkCondition(condition, isHalfHp, c.abilityBoostActive)) {
+                    continue;
+                }
+                // Avoid double counting if Leftovers already added 1 HP and the tag is on Leftovers description
+                if (hasLeftovers && amt === 1 && heldItemLower.includes('leftovers')) {
+                    continue;
+                }
+                reasons.push(`Round End Tag (+${amt} HP)`);
+                healSum += amt;
             }
 
             if (healSum > 0) {

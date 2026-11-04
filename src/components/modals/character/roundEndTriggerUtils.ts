@@ -1,7 +1,8 @@
 import type { CharacterState } from '../../../store/storeTypes';
 import { checkCondition } from '../../../utils/tagParser/conditionChecker';
 import { getAbilityText } from '../../../utils/combat/combatUtils';
-import { getAllActiveFieldEffects } from '../../../utils/combat/fieldEffectsData';
+import { getAllActiveFieldEffects, getEffectsByCategory } from '../../../utils/combat/fieldEffectsData';
+import { getKnownAbility } from '../../../data/abilities/knownAbilities';
 
 export interface RoundEndTrigger {
     id: string;
@@ -135,7 +136,47 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
         }
     });
 
-    // 4. Inspect Active Grassy Terrain for character's side: In Pokerole, Grassy Terrain healing (+1 HP) ONLY applies to the side it is on
+    // 4. Inspect Statuses: Burn, Poison, Badly Poisoned
+    state.statuses?.forEach((status, idx) => {
+        const sName = (
+            status.name === 'Custom...' ? status.customName : status.name || status.customName || ''
+        )
+            .toLowerCase()
+            .trim();
+        if (!sName) return;
+
+        if (sName.includes('badly poisoned') || sName.includes('toxic')) {
+            const dmg = Math.max(1, Number(status.rounds) || 1);
+            triggers.push({
+                id: `status-badly-poisoned-${status.id || idx}`,
+                source: 'Badly Poisoned',
+                type: 'damageHp',
+                amount: dmg,
+                promptText: 'Badly Poisoned: Suffer ' + dmg + ' Damage?',
+                checked: true
+            });
+        } else if (sName.includes('poison')) {
+            triggers.push({
+                id: `status-poison-${status.id || idx}`,
+                source: 'Poison',
+                type: 'damageHp',
+                amount: 1,
+                promptText: 'Poison: Suffer 1 Damage?',
+                checked: true
+            });
+        } else if (sName.includes('burn')) {
+            triggers.push({
+                id: `status-burn-${status.id || idx}`,
+                source: 'Burn',
+                type: 'damageHp',
+                amount: 1,
+                promptText: 'Burn: Suffer 1 Damage?',
+                checked: true
+            });
+        }
+    });
+
+    // 5. Inspect Active Grassy Terrain for character's side: In Pokerole, Grassy Terrain healing (+1 HP) ONLY applies to the side it is on
     if (state.activeBattlefield) {
         const side = state.identity.isNPC ? state.activeBattlefield.foeSide : state.activeBattlefield.playerSide;
         const sideHasGrassy = Boolean(
@@ -166,9 +207,67 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
                 checked: true
             });
         }
+
+        // Active Weather Damage (Sandstorm, Hail)
+        const activeWeathers = getEffectsByCategory(state.activeBattlefield, 'weather');
+        const hasSandstorm = activeWeathers.some((w) => (w.name || '').toLowerCase().includes('sand'));
+        const hasHail = activeWeathers.some((w) => (w.name || '').toLowerCase().includes('hail'));
+
+        if (hasSandstorm || hasHail) {
+            const types = [state.identity.type1, state.identity.type2].filter(Boolean);
+            const cleanTypes = types.map((t) => t.toLowerCase());
+            const abilityLower = (state.identity.ability || '').trim().toLowerCase();
+            const abilityActive = state.identity.abilityActive ?? true;
+
+            let fullAbilityTags = `${state.identity.abilityTags || ''} ${getAbilityText(state.identity.ability || '', state.roomCustomAbilities)}`.trim();
+            const known = getKnownAbility(state.identity.ability || '');
+            if (known) {
+                fullAbilityTags = `${fullAbilityTags} ${known.tags}`.trim();
+            }
+
+            if (hasSandstorm) {
+                const isImmuneType = cleanTypes.some((t) => ['rock', 'ground', 'steel'].includes(t));
+                const isImmuneAbility =
+                    abilityActive &&
+                    (['sand rush', 'sand force', 'overcoat', 'magic guard'].includes(abilityLower) ||
+                        /immune:\s*(?:weather\s*dmg|sandstorm)/i.test(fullAbilityTags));
+
+                if (!isImmuneType && !isImmuneAbility) {
+                    triggers.push({
+                        id: 'weather-sandstorm-dmg',
+                        source: 'Sandstorm',
+                        type: 'damageHp',
+                        amount: 1,
+                        promptText: 'Sandstorm: Suffer 1 Damage?',
+                        conditionText: 'Sandstorm',
+                        checked: true
+                    });
+                }
+            }
+
+            if (hasHail) {
+                const isImmuneType = cleanTypes.includes('ice');
+                const isImmuneAbility =
+                    abilityActive &&
+                    (['overcoat', 'magic guard', 'ice body'].includes(abilityLower) ||
+                        /immune:\s*(?:weather\s*dmg|hail)/i.test(fullAbilityTags));
+
+                if (!isImmuneType && !isImmuneAbility) {
+                    triggers.push({
+                        id: 'weather-hail-dmg',
+                        source: 'Hail',
+                        type: 'damageHp',
+                        amount: 1,
+                        promptText: 'Hail: Suffer 1 Damage?',
+                        conditionText: 'Hail',
+                        checked: true
+                    });
+                }
+            }
+        }
     }
 
-    // 5. Inspect tags on all active custom field effects
+    // 6. Inspect tags on all active custom field effects
     if (state.activeBattlefield && state.roomCustomFieldEffects) {
         const allActive = getAllActiveFieldEffects(state.activeBattlefield);
         allActive.forEach((activeItem) => {
@@ -180,7 +279,7 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
         });
     }
 
-    // 6. Inspect Ignored Pain (Scene-End Reset Option)
+    // 7. Inspect Ignored Pain (Scene-End Reset Option)
     if ((state.trackers?.ignoredPain || 0) > 0) {
         const stacks = state.trackers.ignoredPain;
         triggers.push({
