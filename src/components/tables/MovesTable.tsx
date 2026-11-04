@@ -132,7 +132,8 @@ export function MovesTable() {
         override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number },
         fieldFactors?: string[],
         fieldReduction?: number,
-        target?: string | { id?: string; tokenId?: string; entityId?: string; name?: string }
+        target?: string | { id?: string; tokenId?: string; entityId?: string; name?: string },
+        isImmune?: boolean
     ) => {
         if (targetingMove) {
             executeDamageRoll(
@@ -145,7 +146,8 @@ export function MovesTable() {
                 override,
                 fieldFactors,
                 fieldReduction,
-                target
+                target,
+                Boolean(isImmune)
             );
         }
         setTargetingMove(null);

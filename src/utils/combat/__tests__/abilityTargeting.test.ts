@@ -1250,8 +1250,8 @@ describe('Ability Targeting System', () => {
             };
 
             const selections = [
-                { id: 'target-gumshoos', name: 'Gumshoos', def: 2, effectiveness: 0, isEvaded: false, isPlayerSide: false },
-                { id: 'target-rattata', name: 'Rattata', def: 2, effectiveness: 0, isEvaded: false, isPlayerSide: false }
+                { id: 'target-gumshoos', name: 'Gumshoos', def: 2, effectiveness: 0, isImmune: false, isEvaded: false, isPlayerSide: false },
+                { id: 'target-rattata', name: 'Rattata', def: 2, effectiveness: 0, isImmune: false, isEvaded: false, isPlayerSide: false }
             ];
 
             const override = { active: false, type: 'dice' as const, value: 0 };

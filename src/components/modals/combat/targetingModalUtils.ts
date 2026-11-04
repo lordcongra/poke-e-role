@@ -59,9 +59,12 @@ export function detectMoveTargetingType(move: MoveData): 'single' | 'target-all'
     return 'single';
 }
 
-export function calculateDefaultEffectiveness(moveType: string, targetTypes: string[]): number {
+export function calculateDefaultEffectiveness(
+    moveType: string,
+    targetTypes: string[]
+): { modifier: number; isImmune: boolean } {
     const cleanMoveType = moveType.trim();
-    if (!cleanMoveType || targetTypes.length === 0) return 0;
+    if (!cleanMoveType || targetTypes.length === 0) return { modifier: 0, isImmune: false };
 
     let totalMult = 1;
     for (const t of targetTypes) {
@@ -76,11 +79,12 @@ export function calculateDefaultEffectiveness(moveType: string, targetTypes: str
         }
     }
 
-    if (totalMult >= 4) return 2;
-    if (totalMult >= 2) return 1;
-    if (totalMult <= 0.25) return -2;
-    if (totalMult <= 0.5) return -1;
-    return 0;
+    if (totalMult === 0) return { modifier: 0, isImmune: true };
+    if (totalMult >= 4) return { modifier: 2, isImmune: false };
+    if (totalMult >= 2) return { modifier: 1, isImmune: false };
+    if (totalMult <= 0.25) return { modifier: -2, isImmune: false };
+    if (totalMult <= 0.5) return { modifier: -1, isImmune: false };
+    return { modifier: 0, isImmune: false };
 }
 
 export interface MultiTargetSelection {
@@ -89,6 +93,7 @@ export interface MultiTargetSelection {
     def: number;
     flatReduction?: number;
     effectiveness: number;
+    isImmune: boolean;
     isEvaded: boolean;
     isPlayerSide: boolean;
     types?: string[];
@@ -101,6 +106,7 @@ export interface MultiTargetRowData {
     def: number;
     flatReduction?: number;
     effectiveness: number;
+    isImmune: boolean;
     isEvaded: boolean;
     isPlayerSide: boolean;
     types: string[];
@@ -118,13 +124,17 @@ export function initializeMultiTargetRows(
     const rows: MultiTargetRowData[] = targets.map((t) => {
         const { targetDef, flatReduction } = calculateTargetDefAndFactors(t, isPhysicalMove, activeBattlefield);
         const isTera = activeTransformation === 'Terastallize' && t.isTera;
+        const effResult = isTera
+            ? { modifier: 1, isImmune: false }
+            : calculateDefaultEffectiveness(moveType, t.types);
         return {
             id: t.id,
             name: t.name,
             selected: false,
             def: targetDef,
             flatReduction: flatReduction || 0,
-            effectiveness: isTera ? 1 : calculateDefaultEffectiveness(moveType, t.types),
+            effectiveness: effResult.modifier,
+            isImmune: effResult.isImmune,
             isEvaded: false,
             isPlayerSide: t.isPlayerSide,
             types: t.types

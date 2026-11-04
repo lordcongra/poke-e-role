@@ -483,7 +483,8 @@ export async function executeDamageRoll(
     override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number },
     fieldFactors?: string[],
     flatReduction: number = 0,
-    target?: string | { id?: string; tokenId?: string; entityId?: string; name?: string }
+    target?: string | { id?: string; tokenId?: string; entityId?: string; name?: string },
+    isImmune: boolean = false
 ) {
     const nickname = state.identity.nickname || state.identity.species || 'Someone';
     const abilityString = (state.identity.ability || '').toLowerCase();
@@ -591,7 +592,13 @@ export async function executeDamageRoll(
         tags.push(`${label} (${sign}${dmg1Stage.stage} ${diceWord})`);
     }
 
-    if (effectiveness > 0) {
+    if (isImmune) {
+        actualDicePool = 0;
+        finalFlatMod = 0;
+        tags.push('IMMUNE: 0 Damage');
+        tags.push(`${nickname} is IMMUNE to ${move.type || 'this'} attacks (0 Damage)`);
+        console.log(`[CombatRoller] ${nickname} is IMMUNE to ${move.type || 'this'} attacks (0 Damage)`);
+    } else if (effectiveness > 0) {
         tags.push(`SUPER EFFECTIVE (+${effectiveness} Succ)`);
         if (superEffectiveDamageBonus > 0 && (!override.active || override.type !== 'flat')) {
             tags.push(`Super Effective Bonus (+${superEffectiveDamageBonus} Dice)`);
@@ -888,12 +895,17 @@ export async function executeDamageRoll(
         tags.push(`Item: ${sign}${itemBuffs.dmgSucc} Dmg Succ`);
     }
 
+    if (isImmune) {
+        actualDicePool = 0;
+        finalFlatMod = 0;
+    }
+
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
     const mathModifier = finalFlatMod !== 0 ? (finalFlatMod > 0 ? `+${finalFlatMod}` : `${finalFlatMod}`) : '';
 
     // Extract the flat SE modifier so the dice engine can check if it needs to negate it on 0 base successes
     let seFlatMod = 0;
-    if (effectiveness > 0 && (!override.active || override.type !== 'flat')) {
+    if (!isImmune && effectiveness > 0 && (!override.active || override.type !== 'flat')) {
         seFlatMod = effectiveness;
     }
 
@@ -902,7 +914,7 @@ export async function executeDamageRoll(
     const flatPayload = itemBuffs.tempHpOnHit || 0;
     const payload = `${flatPayload}_${ratioPayload}_${seFlatMod}`;
 
-    const diceToRoll = override.active && override.type === 'flat' ? 0 : Math.max(1, actualDicePool);
+    const diceToRoll = isImmune || (override.active && override.type === 'flat') ? 0 : Math.max(1, actualDicePool);
 
     await rollDicePlus(
         `${diceToRoll}d6>3${mathModifier}`,

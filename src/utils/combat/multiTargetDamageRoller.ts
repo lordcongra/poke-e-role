@@ -328,7 +328,7 @@ export async function executeMultiTargetDamageRoll(
         for (const target of activeTargets) {
             const effMod = target.effectiveness;
             const targetFlatRed = target.flatReduction || 0;
-            const finalDamage = Math.max(0, override.value + effMod - targetFlatRed);
+            let finalDamage = Math.max(0, override.value + effMod - targetFlatRed);
             const effStr = effMod > 0 ? ` (+${effMod} SE)` : effMod < 0 ? ` (${effMod} NVE)` : '';
             const redStr = targetFlatRed > 0 ? ` (-${targetFlatRed} Force Field)` : '';
 
@@ -336,7 +336,10 @@ export async function executeMultiTargetDamageRoll(
             if (isStakeoutActive && matchesTarget(target, stakeoutTargetId!)) {
                 targetTags.push('Stakeout (+1 Damage)');
             }
-            if (effMod > 0) {
+            if (target.isImmune) {
+                finalDamage = 0;
+                targetTags.push('IMMUNE: 0 Damage');
+            } else if (effMod > 0) {
                 targetTags.push(`SUPER EFFECTIVE (+${effMod} Succ)`);
             } else if (effMod < 0) {
                 targetTags.push(`NOT VERY EFFECTIVE (${effMod} Succ)`);
@@ -344,7 +347,10 @@ export async function executeMultiTargetDamageRoll(
             const finalTags = targetTags.length > 0 ? ` [ ${targetTags.join(' | ')} ]` : '';
             const title = `${privacyTag}${nickname} rolled ${move.name || 'Damage'} vs ${target.name}${finalTags}`;
 
-            const message = `Direct Damage Override: ${override.value} Flat Dmg${effStr}${redStr} = ${finalDamage} Total Damage`;
+            let message = `Direct Damage Override: ${override.value} Flat Dmg${effStr}${redStr} = ${finalDamage} Total Damage`;
+            if (target.isImmune) {
+                message += `\n\nTarget is Immune to ${move.type || 'this'} attacks (0 Damage dealt).`;
+            }
 
             await emitRollLogEntry({
                 title,
@@ -503,33 +509,42 @@ export async function executeMultiTargetDamageRoll(
 
             const targetFlatRed = target.flatReduction || 0;
             const baseDmg = (effectiveSucc > 0 ? effectiveSucc : 1) + attackerFlatMod;
-            const finalDamage = Math.max(0, baseDmg + effMod - targetFlatRed);
+            let finalDamage = Math.max(0, baseDmg + effMod - targetFlatRed);
             const effStr =
                 effMod > 0 ? ` (+${effMod} SE)` : effMod < 0 ? ` (${effMod} NVE)` : seNegated ? ' [SE Negated]' : '';
-            const dmgLine = `${baseDmg} Dmg${effStr}${targetFlatRed > 0 ? ` (-${targetFlatRed} Force Field)` : ''} = ${finalDamage} Total Damage`;
 
             const footnotes: string[] = [];
-            if (seNegated) {
-                footnotes.push('• 0 base successes: Super Effective bonus negated.');
-            }
-            if (effectiveSucc === 0) {
-                footnotes.push(
-                    '• 0 Successes: Still deals 1 Base Damage (unless target has Resistance / Protect). Added effects do not trigger.'
-                );
-            }
-            if (isCritical) {
-                footnotes.push("• It's a critical hit!");
-            }
-
             const targetTags = [...tags];
             if (isStakeoutActive && matchesTarget(target, stakeoutTargetId!)) {
                 targetTags.push('Stakeout (+1 Damage)');
             }
-            if (effMod > 0) {
-                targetTags.push(`SUPER EFFECTIVE (+${effMod} Succ)`);
-            } else if (effMod < 0) {
-                targetTags.push(`NOT VERY EFFECTIVE (${effMod} Succ)`);
+
+            if (target.isImmune) {
+                finalDamage = 0;
+                targetTags.push('IMMUNE: 0 Damage');
+                footnotes.push(`• Target is Immune to ${move.type || 'this'} attacks (0 Damage dealt).`);
+            } else {
+                if (effMod > 0) {
+                    targetTags.push(`SUPER EFFECTIVE (+${effMod} Succ)`);
+                } else if (effMod < 0) {
+                    targetTags.push(`NOT VERY EFFECTIVE (${effMod} Succ)`);
+                }
+                if (seNegated) {
+                    footnotes.push('• 0 base successes: Super Effective bonus negated.');
+                }
+                if (effectiveSucc === 0) {
+                    footnotes.push(
+                        '• 0 Successes: Still deals 1 Base Damage (unless target has Resistance / Protect). Added effects do not trigger.'
+                    );
+                }
             }
+
+            const dmgLine = `${baseDmg} Dmg${effStr}${targetFlatRed > 0 ? ` (-${targetFlatRed} Force Field)` : ''} = ${finalDamage} Total Damage`;
+
+            if (isCritical) {
+                footnotes.push("• It's a critical hit!");
+            }
+
             const finalTags = targetTags.length > 0 ? ` [ ${targetTags.join(' | ')} ]` : '';
             const title = `${privacyTag}${nickname} rolled ${move.name || 'Damage'} vs ${target.name}${finalTags}`;
 

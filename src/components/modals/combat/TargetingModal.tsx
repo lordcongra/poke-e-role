@@ -36,7 +36,8 @@ interface TargetingModalProps {
         override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number },
         fieldFactors?: string[],
         fieldReduction?: number,
-        target?: TargetOption | string
+        target?: TargetOption | string,
+        isImmune?: boolean
     ) => void;
     onMultiRoll?: (
         baseDmg: number,
@@ -55,6 +56,7 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
     const [reduction, setReduction] = useState(0);
     const [fieldReduction, setFieldReduction] = useState(0);
     const [effectiveness, setEffectiveness] = useState<number>(0);
+    const [isImmune, setIsImmune] = useState<boolean>(false);
     const [appliedFieldFactors, setAppliedFieldFactors] = useState<string[]>([]);
     const [multiTargets, setMultiTargets] = useState<MultiTargetRowData[]>([]);
 
@@ -136,6 +138,7 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
         if (val === 'manual') {
             setAppliedFieldFactors([]);
             setFieldReduction(0);
+            setIsImmune(false);
             return;
         }
         const sel = targets.find((t) => t.id === val);
@@ -145,14 +148,20 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
                 isPhysicalMove,
                 activeBattlefield
             );
-            let eff =
+            const effResult =
                 activeTransformation === 'Terastallize' && sel.isTera
-                    ? 1
+                    ? { modifier: 1, isImmune: false }
                     : calculateDefaultEffectiveness(move.type, sel.types);
-            if (forceNeutralFlying && eff > 0) eff = 0;
+            let eff = effResult.modifier;
+            let immune = effResult.isImmune;
+            if (forceNeutralFlying) {
+                if (eff > 0) eff = 0;
+                if (immune) immune = false;
+            }
             setReduction(targetDef);
             setFieldReduction(flatReduction);
             setEffectiveness(eff);
+            setIsImmune(immune);
             setAppliedFieldFactors(factors);
         }
     };
@@ -161,8 +170,8 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
         setMultiTargets((p) => p.map((r) => (r.id === id ? { ...r, selected: !r.selected } : r)));
     const handleToggleEvaded = (id: string) =>
         setMultiTargets((p) => p.map((r) => (r.id === id ? { ...r, isEvaded: !r.isEvaded } : r)));
-    const handleChangeEffectiveness = (id: string, val: number) =>
-        setMultiTargets((p) => p.map((r) => (r.id === id ? { ...r, effectiveness: val } : r)));
+    const handleChangeEffectiveness = (id: string, val: number, immune: boolean = false) =>
+        setMultiTargets((p) => p.map((r) => (r.id === id ? { ...r, effectiveness: val, isImmune: immune } : r)));
     const handleChangeDef = (id: string, val: number) =>
         setMultiTargets((p) => p.map((r) => (r.id === id ? { ...r, def: val } : r)));
 
@@ -212,7 +221,8 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
                 override,
                 appliedFieldFactors,
                 fieldReduction,
-                chosenTarget || selectedTargetId
+                chosenTarget || selectedTargetId,
+                isImmune
             );
         } else {
             const selections: MultiTargetSelection[] = multiTargets
@@ -223,6 +233,7 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
                     def: r.def,
                     flatReduction: r.flatReduction || 0,
                     effectiveness: r.effectiveness,
+                    isImmune: r.isImmune,
                     isEvaded: r.isEvaded,
                     isPlayerSide: r.isPlayerSide,
                     types: r.types
@@ -230,7 +241,17 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
             if (onMultiRoll) {
                 onMultiRoll(baseDamage, isCrit, selections, override, appliedFieldFactors);
             } else {
-                onRoll(baseDamage, isCrit, effectiveness, reduction, override, appliedFieldFactors, fieldReduction);
+                onRoll(
+                    baseDamage,
+                    isCrit,
+                    effectiveness,
+                    reduction,
+                    override,
+                    appliedFieldFactors,
+                    fieldReduction,
+                    undefined,
+                    isImmune
+                );
             }
         }
         onClose();
@@ -258,6 +279,7 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
                         selectedTargetId={selectedTargetId}
                         reduction={reduction}
                         effectiveness={effectiveness}
+                        isImmune={isImmune}
                         appliedFieldFactors={appliedFieldFactors}
                         baseDamage={baseDamage}
                         bankedDice={bankedDice}
@@ -265,7 +287,10 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
                         seDmgBonus={itemBuffs.seDmg || 0}
                         onTargetSelect={handleTargetSelect}
                         onReductionChange={setReduction}
-                        onEffectivenessChange={setEffectiveness}
+                        onEffectivenessChange={(val, immune) => {
+                            setEffectiveness(val);
+                            setIsImmune(Boolean(immune));
+                        }}
                     />
                 ) : (
                     <MultiTargetSection

@@ -14,7 +14,7 @@ interface MultiTargetSectionProps {
     rank: string;
     onToggleTarget: (id: string) => void;
     onToggleEvaded: (id: string) => void;
-    onChangeEffectiveness: (id: string, val: number) => void;
+    onChangeEffectiveness: (id: string, val: number, isImmune?: boolean) => void;
     onChangeDef: (id: string, val: number) => void;
     onSelectAllFoes: () => void;
     onSelectAll: () => void;
@@ -60,6 +60,7 @@ export function MultiTargetSection({
         def: override.active && override.type === 'dice-ignore' ? 0 : t.def,
         flatReduction: t.flatReduction,
         effectiveness: t.effectiveness,
+        isImmune: t.isImmune,
         isEvaded: t.isEvaded,
         isPlayerSide: t.isPlayerSide,
         types: t.types
@@ -171,6 +172,19 @@ export function MultiTargetSection({
                                             >
                                                 {target.isPlayerSide ? 'Ally' : 'Foe'}
                                             </span>
+                                            {target.isImmune && (
+                                                <span
+                                                    className="targeting-modal__side-tag"
+                                                    style={{
+                                                        background: 'rgba(239, 68, 68, 0.15)',
+                                                        color: 'var(--semantic-danger)',
+                                                        border: '1px solid rgba(239, 68, 68, 0.4)'
+                                                    }}
+                                                    title="Immune (0 Damage)"
+                                                >
+                                                    Immune
+                                                </span>
+                                            )}
                                             {Boolean(target.flatReduction && target.flatReduction > 0) && (
                                                 <span
                                                     className="targeting-modal__side-tag"
@@ -213,17 +227,25 @@ export function MultiTargetSection({
                                     {/* Effectiveness Dropdown */}
                                     <td style={{ textAlign: 'right' }}>
                                         <select
-                                            value={target.effectiveness}
+                                            value={target.isImmune ? 'immune' : target.effectiveness}
                                             disabled={!target.selected || target.isEvaded}
-                                            onChange={(e) => onChangeEffectiveness(target.id, Number(e.target.value))}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                if (val === 'immune') {
+                                                    onChangeEffectiveness(target.id, 0, true);
+                                                } else {
+                                                    onChangeEffectiveness(target.id, Number(val), false);
+                                                }
+                                            }}
                                             className="targeting-modal__select targeting-modal__select--compact text-label"
-                                            style={{ color: 'var(--text-main)' }}
+                                            style={{ color: target.isImmune ? 'var(--semantic-danger)' : 'var(--text-main)' }}
                                         >
                                             <option value={2}>4x (+2)</option>
                                             <option value={1}>2x (+1)</option>
                                             <option value={0}>1x (0)</option>
                                             <option value={-1}>0.5x (-1)</option>
                                             <option value={-2}>0.25x (-2)</option>
+                                            <option value="immune">0x (Immune)</option>
                                         </select>
                                     </td>
                                 </tr>

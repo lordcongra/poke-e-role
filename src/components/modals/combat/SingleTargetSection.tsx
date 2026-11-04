@@ -7,6 +7,7 @@ interface SingleTargetSectionProps {
     selectedTargetId: string;
     reduction: number;
     effectiveness: number;
+    isImmune?: boolean;
     appliedFieldFactors: string[];
     baseDamage: number;
     bankedDice: number;
@@ -14,7 +15,7 @@ interface SingleTargetSectionProps {
     seDmgBonus: number;
     onTargetSelect: (e: ChangeEvent<HTMLSelectElement>) => void;
     onReductionChange: (val: number) => void;
-    onEffectivenessChange: (val: number) => void;
+    onEffectivenessChange: (val: number, isImmune?: boolean) => void;
 }
 
 export function SingleTargetSection({
@@ -23,6 +24,7 @@ export function SingleTargetSection({
     selectedTargetId,
     reduction,
     effectiveness,
+    isImmune = false,
     appliedFieldFactors,
     baseDamage,
     bankedDice,
@@ -76,11 +78,16 @@ export function SingleTargetSection({
                         Active Force Field: {appliedFieldFactors.join(', ')}
                     </div>
                 )}
-                {isPoolDepleted && (
+                {isPoolDepleted && !isImmune && (
                     <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '4px' }}>
                         <em>
                             Defenses reduce pool to 0 — <strong>Minimum 1 Die</strong> will still be rolled.
                         </em>
+                    </div>
+                )}
+                {isImmune && (
+                    <div style={{ fontSize: '0.76rem', color: 'var(--semantic-danger)', marginTop: '4px', fontWeight: 600 }}>
+                        Target is Immune — <strong>0 Damage</strong> will be dealt.
                     </div>
                 )}
             </div>
@@ -89,9 +96,16 @@ export function SingleTargetSection({
                 <label className="targeting-modal__label text-label">Effectiveness:</label>
                 <select
                     className="targeting-modal__select text-label"
-                    style={{ color: 'var(--text-main)' }}
-                    value={effectiveness}
-                    onChange={(e) => onEffectivenessChange(Number(e.target.value))}
+                    style={{ color: isImmune ? 'var(--semantic-danger)' : 'var(--text-main)' }}
+                    value={isImmune ? 'immune' : effectiveness}
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'immune') {
+                            onEffectivenessChange(0, true);
+                        } else {
+                            onEffectivenessChange(Number(val), false);
+                        }
+                    }}
                 >
                     <option value={2}>
                         4x Super Effective (+2 Dmg{seDmgBonus > 0 ? `, +${seDmgBonus} SE Dice` : ''})
@@ -102,6 +116,7 @@ export function SingleTargetSection({
                     <option value={0}>1x Normal Effectiveness</option>
                     <option value={-1}>0.5x Not Very Effective (-1 Dmg)</option>
                     <option value={-2}>0.25x Not Very Effective (-2 Dmg)</option>
+                    <option value="immune">0x Immune (0 Damage)</option>
                 </select>
             </div>
         </div>
