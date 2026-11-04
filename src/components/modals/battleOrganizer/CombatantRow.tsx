@@ -30,6 +30,8 @@ interface CombatantRowProps {
     onOpenSheet?: (combatant: CombatantRowData) => void;
     onAdjustHp?: (id: string, delta: number) => void;
     onAdjustWill?: (id: string, delta: number) => void;
+    onViewAbility?: (name: string, rank?: string, tags?: string) => void;
+    onViewHeldItem?: (name: string) => void;
 }
 
 export function CombatantRow({
@@ -42,7 +44,9 @@ export function CombatantRow({
     onRollInitiative,
     onOpenSheet,
     onAdjustHp,
-    onAdjustWill
+    onAdjustWill,
+    onViewAbility,
+    onViewHeldItem
 }: CombatantRowProps) {
     const [resolvedImage, setResolvedImage] = useState<string>('');
     const role = useCharacterStore((state) => state.role);
@@ -143,22 +147,16 @@ export function CombatantRow({
         const prevWasClash = prevAction && /clash/i.test(prevAction.text.trim());
         const nowIsClash = /clash/i.test(text.trim());
 
-        let nextEvadeUsed = combatant.evadeUsed;
-        let nextClashUsed = combatant.clashUsed;
-
-        if (nowIsEvade) {
-            nextEvadeUsed = true;
-        } else if (prevWasEvade) {
-            const hasOtherEvade = newActions.some((a, idx) => idx !== actionIndex && /evad|dodge/i.test(a.text.trim()));
-            if (!hasOtherEvade) nextEvadeUsed = false;
-        }
-
-        if (nowIsClash) {
-            nextClashUsed = true;
-        } else if (prevWasClash) {
-            const hasOtherClash = newActions.some((a, idx) => idx !== actionIndex && /clash/i.test(a.text.trim()));
-            if (!hasOtherClash) nextClashUsed = false;
-        }
+        const nextEvadeUsed = nowIsEvade
+            ? true
+            : prevWasEvade
+              ? newActions.some((a, idx) => idx !== actionIndex && /evad|dodge/i.test(a.text.trim()))
+              : combatant.evadeUsed;
+        const nextClashUsed = nowIsClash
+            ? true
+            : prevWasClash
+              ? newActions.some((a, idx) => idx !== actionIndex && /clash/i.test(a.text.trim()))
+              : combatant.clashUsed;
 
         onUpdate({
             ...combatant,
@@ -217,19 +215,10 @@ export function CombatantRow({
 
         const isEvade = /evad|dodge/i.test(clearedAction.text.trim());
         const isClash = /clash/i.test(clearedAction.text.trim());
-
         const hasOtherEvade = newActions.some((a, idx) => idx !== actionIndex && /evad|dodge/i.test(a.text.trim()));
         const hasOtherClash = newActions.some((a, idx) => idx !== actionIndex && /clash/i.test(a.text.trim()));
-
-        let nextEvadeUsed = combatant.evadeUsed;
-        if (isEvade && !hasOtherEvade) {
-            nextEvadeUsed = false;
-        }
-
-        let nextClashUsed = combatant.clashUsed;
-        if (isClash && !hasOtherClash) {
-            nextClashUsed = false;
-        }
+        const nextEvadeUsed = isEvade && !hasOtherEvade ? false : combatant.evadeUsed;
+        const nextClashUsed = isClash && !hasOtherClash ? false : combatant.clashUsed;
 
         onUpdate({
             ...combatant,
@@ -408,10 +397,16 @@ export function CombatantRow({
                             <div className="bo-combatant-badges">
                                 {combatant.ability?.trim() && (
                                     <>
-                                        <span className="bo-pill--ability" title={`Ability: ${combatant.ability.trim()}`}>
+                                        <button
+                                            type="button"
+                                            className="bo-pill--ability"
+                                            onClick={() => onViewAbility?.(combatant.ability!.trim(), combatant.rank, combatant.abilityTags)}
+                                            title={`Ability: ${combatant.ability.trim()} (Click to view description)`}
+                                            aria-label={`View ability ${combatant.ability.trim()} details`}
+                                        >
                                             <Zap size={11} className="bo-pill-icon" />
                                             <span className="bo-pill-text">{combatant.ability.trim()}</span>
-                                        </span>
+                                        </button>
                                         {hasChoice && (
                                             <button
                                                 type="button"
@@ -428,10 +423,16 @@ export function CombatantRow({
                                     </>
                                 )}
                                 {combatant.heldItem?.trim() && (
-                                    <span className="bo-pill--item" title={`Held Item: ${combatant.heldItem.trim()}`}>
+                                    <button
+                                        type="button"
+                                        className="bo-pill--item"
+                                        onClick={() => onViewHeldItem?.(combatant.heldItem!.trim())}
+                                        title={`Held Item: ${combatant.heldItem.trim()} (Click to view description)`}
+                                        aria-label={`View held item ${combatant.heldItem.trim()} details`}
+                                    >
                                         <Package size={11} className="bo-pill-icon" />
                                         <span className="bo-pill-text">{combatant.heldItem.trim()}</span>
-                                    </span>
+                                    </button>
                                 )}
                             </div>
                         )}

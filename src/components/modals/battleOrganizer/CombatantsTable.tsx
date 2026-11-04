@@ -17,6 +17,8 @@ export interface CombatantsTableProps {
     onAdjustWill: (combatantId: string, delta: number) => void;
     onAddCombatant: () => void;
     onUpdateEndOfRoundEffects: (text: string) => void;
+    onViewAbility?: (name: string, rank?: string, tags?: string) => void;
+    onViewHeldItem?: (name: string) => void;
 }
 
 export function CombatantsTable({
@@ -32,7 +34,9 @@ export function CombatantsTable({
     onAdjustHp,
     onAdjustWill,
     onAddCombatant,
-    onUpdateEndOfRoundEffects
+    onUpdateEndOfRoundEffects,
+    onViewAbility,
+    onViewHeldItem
 }: CombatantsTableProps) {
     const role = useCharacterStore((state) => state.role);
     const gmOnlyPullEnemies = useCharacterStore((state) => state.identity.gmOnlyPullEnemies);
@@ -84,6 +88,8 @@ export function CombatantsTable({
                                 onOpenSheet={onOpenSheet}
                                 onAdjustHp={onAdjustHp}
                                 onAdjustWill={onAdjustWill}
+                                onViewAbility={onViewAbility}
+                                onViewHeldItem={onViewHeldItem}
                             />
                         ))}
                     </tbody>

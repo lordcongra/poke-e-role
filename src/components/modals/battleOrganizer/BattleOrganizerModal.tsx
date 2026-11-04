@@ -7,7 +7,12 @@ import { BattlefieldSection } from './BattlefieldSection';
 import { BattleRoundNav } from './BattleRoundNav';
 import { CombatantsTable } from './CombatantsTable';
 import { BattleOrganizerPullModal } from './BattleOrganizerPullModal';
-import { BattleOrganizerTooltipModal } from './BattleOrganizerTooltipModal';
+import {
+    BattleOrganizerTooltipModal,
+    getAbilityTooltipInfo,
+    getItemTooltipInfo,
+    type BattleOrganizerTooltipInfo
+} from './BattleOrganizerTooltipModal';
 import { SceneSwapPromptModal } from './SceneSwapPromptModal';
 import { useSceneSwapDetection } from './useSceneSwapDetection';
 import { BattleOrganizerAdvisoryBanner } from './BattleOrganizerAdvisoryBanner';
@@ -37,36 +42,14 @@ interface BattleOrganizerModalProps {
 
 export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrganizerModalProps) {
     const {
-        battlefield,
-        rounds,
-        currentRound,
-        activeRoundIndex,
-        pullFromInitiative,
-        syncToSheets,
-        refreshTokenStats,
-        addRound,
-        duplicateRound,
-        deleteRound,
-        setActiveRoundIndex,
-        advanceRound,
-        addCombatant,
-        updateCombatant,
-        updateCombatantHp,
-        updateCombatantWill,
-        deleteCombatant,
-        rollCombatantInitiative,
-        sortCombatantsByInitiative,
-        updateBattlefield,
-        updateBattlefieldWeather,
-        updateBattlefieldTerrain,
-        updateBattlefieldOther,
-        updatePlayerSide,
-        updateFoeSide,
-        updateEndOfRoundEffects,
-        updateRoundNumber,
-        activateFieldEffectFromMove,
-        clearBattlefield,
-        clearAll
+        battlefield, rounds, currentRound, activeRoundIndex,
+        pullFromInitiative, syncToSheets, refreshTokenStats,
+        addRound, duplicateRound, deleteRound, setActiveRoundIndex, advanceRound,
+        addCombatant, updateCombatant, updateCombatantHp, updateCombatantWill,
+        deleteCombatant, rollCombatantInitiative, sortCombatantsByInitiative,
+        updateBattlefield, updateBattlefieldWeather, updateBattlefieldTerrain, updateBattlefieldOther,
+        updatePlayerSide, updateFoeSide, updateEndOfRoundEffects, updateRoundNumber,
+        activateFieldEffectFromMove, clearBattlefield, clearAll
     } = useBattleOrganizer();
 
     const { showSceneSwapModal, handleClearForNewScene, handleKeepCurrentBattle } = useSceneSwapDetection({
@@ -83,8 +66,16 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
     const [resetFieldEffects, setResetFieldEffects] = useState(false);
     const [activeSheetCombatant, setActiveSheetCombatant] = useState<CombatantRowData | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
+    const [tooltipInfo, setTooltipInfo] = useState<BattleOrganizerTooltipInfo | null>(null);
     const bodyRef = useRef<HTMLDivElement>(null);
+
+    const handleViewAbility = (name: string, rank?: string, tags?: string) => {
+        getAbilityTooltipInfo(name, rank, tags).then(setTooltipInfo);
+    };
+
+    const handleViewHeldItem = (name: string) => {
+        getItemTooltipInfo(name).then(setTooltipInfo);
+    };
 
     const {
         showWeatherDamageModal,
@@ -407,6 +398,8 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                                             onAdjustWill={updateCombatantWill}
                                             onAddCombatant={addCombatant}
                                             onUpdateEndOfRoundEffects={updateEndOfRoundEffects}
+                                            onViewAbility={handleViewAbility}
+                                            onViewHeldItem={handleViewHeldItem}
                                         />
                                     </div>
                                 </div>

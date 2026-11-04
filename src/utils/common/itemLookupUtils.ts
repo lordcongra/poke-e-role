@@ -214,3 +214,100 @@ export function splitItemLegacyTags(desc: string): { cleanDesc: string; legacyTa
         .trim();
     return { cleanDesc, legacyTags: matches };
 }
+
+/**
+ * Resolves a comma-delimited held items string into individual item names,
+ * checking whether segments or the entire string matches a custom item,
+ * known item, or dataset item (protecting items with commas in their names).
+ */
+export async function parseHeldItemNames(rawHeldItem: string): Promise<string[]> {
+    const trimmed = (rawHeldItem || '').trim();
+    if (!trimmed) return [];
+
+    // If there is no comma, it's definitely a single item
+    if (!trimmed.includes(',')) {
+        return [trimmed];
+    }
+
+    let customItems: CustomItem[] = [];
+    try {
+        customItems = useCharacterStore.getState().roomCustomItems || [];
+    } catch {
+        customItems = [];
+    }
+
+    const isCustomMatch = (name: string) =>
+        customItems.some((ci) => ci.name.trim().toLowerCase() === name.toLowerCase());
+    const isKnownMatch = (name: string) =>
+        KNOWN_ITEMS.some((ki) => ki.name.trim().toLowerCase() === name.toLowerCase());
+
+    const isMatch = async (name: string) => {
+        if (!name.trim()) return false;
+        if (isCustomMatch(name) || isKnownMatch(name)) return true;
+        try {
+            const data = await fetchItemData(name);
+            return Boolean(data && (data.Name || data.name));
+        } catch {
+            return false;
+        }
+    };
+
+    // 1. Check if the whole string is an exact match for a single item (with comma in name)
+    if (await isMatch(trimmed)) {
+        return [trimmed];
+    }
+
+    // 2. Split by comma and greedily reconstruct items
+    const rawTokens = trimmed
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+    if (rawTokens.length <= 1) {
+        return rawTokens;
+    }
+
+    const resolved: string[] = [];
+    let i = 0;
+    while (i < rawTokens.length) {
+        let matchedCombined = false;
+        for (let j = rawTokens.length; j > i + 1; j--) {
+            const candidate = rawTokens.slice(i, j).join(', ');
+            if (await isMatch(candidate)) {
+                resolved.push(candidate);
+                i = j;
+                matchedCombined = true;
+                break;
+            }
+        }
+        if (!matchedCombined) {
+            resolved.push(rawTokens[i]);
+            i++;
+        }
+    }
+
+    return resolved;
+}
+
+/**
+ * Looks up multiple item details for a held item string (which may contain multiple items).
+ */
+export async function lookupMultipleItemDetails(rawHeldItem: string): Promise<ItemLookupResult[]> {
+    const itemNames = await parseHeldItemNames(rawHeldItem);
+    const results: ItemLookupResult[] = [];
+    for (const name of itemNames) {
+        const item = await lookupItemDetails(name);
+        if (item) {
+            results.push(item);
+        } else {
+            results.push({
+                found: false,
+                name,
+                description: 'No description available.',
+                tags: '',
+                fullDescription: ''
+            });
+        }
+    }
+    return results;
+}

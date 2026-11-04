@@ -333,6 +333,9 @@
     color: var(--text-muted);
     font-size: 0.72rem;
     line-height: 1.2;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
     max-width: 130px;
     white-space: nowrap;
     overflow: hidden;
