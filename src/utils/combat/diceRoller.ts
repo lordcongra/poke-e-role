@@ -1,27 +1,23 @@
 import OBR from '@owlbear-rodeo/sdk';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { isStandaloneMode } from '../sync/storageAdapter';
-import {
-    calculateEncodedInitiative,
-    calculateBaseInitFromCharacterData,
-    sortCombatants,
-    extractIsNpc
-} from './initiativeHelpers';
-import { broadcastRollLog } from './rollLogSync';
-import { showDicePlusRetirementNotice } from '../../hooks/owlbearSync/owlbearSyncConstants';
+import { useCharacterStore } from '@/store/useCharacterStore';
+import { isStandaloneMode } from '@/utils/sync/storageAdapter';
+import { broadcastRollLog } from '@/utils/combat/rollLogSync';
+import { showDicePlusRetirementNotice } from '@/hooks/owlbearSync/owlbearSyncConstants';
+import { assignInitiative } from './dice/diceInitiativeOps';
+import { dispatchNativeObrRoll } from './dice/diceBroadcastOps';
 
-// Defines the structure exactly as saved in Local Storage
-export interface StandaloneCombatant {
-    id: string;
-    name: string;
-    image: string;
-    d6: number;
-    baseInit: number;
-    total: number;
-    tiebreaker: number;
-    hidden?: boolean;
-    isNPC?: boolean;
-}
+// Re-export submodules for clean modularity and backwards compatibility
+export type { StandaloneCombatant } from './dice/diceInitiativeOps';
+export { assignInitiative, INITIATIVE_KEY } from './dice/diceInitiativeOps';
+export {
+    broadcastInfo,
+    broadcastCarDice,
+    resolveCarDiceTheme,
+    broadcastRollEntry,
+    dispatchNativeObrRoll
+} from './dice/diceBroadcastOps';
+export type { CarDicePayload, RollLogBroadcastOptions, NativeObrRollParams } from './dice/diceBroadcastOps';
+export { executeChanceRoll } from './dice/chanceRoller';
 
 // Universal helper to push and broadcast roll entries across the room
 export function addRollLogEntry(
@@ -68,253 +64,6 @@ export function addRollLogEntry(
     broadcastRollLog(rollLogData).catch((e) => {
         console.error('[DiceRoller] Failed to broadcast roll from addRollLogEntry:', e);
     });
-}
-
-export async function assignInitiative(tokenId: string, rollTotal: number, baseInit: number): Promise<number> {
-    const state = useCharacterStore.getState();
-    const rawD6 = Math.max(1, rollTotal - baseInit);
-
-    if (isStandaloneMode) {
-        try {
-            const listString = localStorage.getItem('pkr_standalone_init_list');
-            if (!listString) return 0;
-            const parsedList: StandaloneCombatant[] = JSON.parse(listString);
-            if (!Array.isArray(parsedList)) return 0;
-
-            // Check for true stalemates (identical Total AND identical Base Initiative)
-            let assignedTiebreaker = 0;
-            const stalemateOpponents = parsedList.filter(
-                (combatant) =>
-                    combatant.id !== tokenId && combatant.total === rollTotal && combatant.baseInit === baseInit
-            );
-
-            const isStandaloneNpc = Boolean(state.identity.isNPC);
-            const shouldHideStandalone = isStandaloneNpc && state.identity.defaultNpcInitiativeHidden !== false;
-
-            if (stalemateOpponents.length > 0) {
-                assignedTiebreaker = Math.floor(Math.random() * 6) + 1;
-                const updatedList = parsedList.map((combatant) => {
-                    if (combatant.id === tokenId) {
-                        return {
-                            ...combatant,
-                            d6: rawD6,
-                            baseInit: baseInit,
-                            total: rollTotal,
-                            tiebreaker: assignedTiebreaker,
-                            hidden: combatant.hidden !== undefined ? combatant.hidden : shouldHideStandalone,
-                            isNPC: combatant.isNPC !== undefined ? combatant.isNPC : isStandaloneNpc
-                        };
-                    }
-                    if (stalemateOpponents.some((opponent) => opponent.id === combatant.id)) {
-                        let opponentTiebreaker = combatant.tiebreaker;
-                        if (!opponentTiebreaker || opponentTiebreaker === 0) {
-                            opponentTiebreaker = Math.floor(Math.random() * 6) + 1;
-                        }
-                        while (opponentTiebreaker === assignedTiebreaker) {
-                            opponentTiebreaker = Math.floor(Math.random() * 6) + 1;
-                        }
-                        return {
-                            ...combatant,
-                            tiebreaker: opponentTiebreaker
-                        };
-                    }
-                    return combatant;
-                });
-
-                const sorted = sortCombatants(updatedList);
-                localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
-                window.dispatchEvent(new Event('pkr-standalone-init-update'));
-
-                const rollerName = state.identity.nickname || state.identity.species || 'Combatant';
-                addRollLogEntry(
-                    'Initiative Stalemate Re-roll',
-                    `Stalemate detected on Total ${rollTotal} (Base ${baseInit})!\n${rollerName} rolled 1d6 tiebreaker: [${assignedTiebreaker}]`,
-                    state.identity.tokenImageUrl || '',
-                    rollerName
-                );
-                return assignedTiebreaker;
-            }
-
-            const updated = parsedList.map((combatant) =>
-                combatant.id === tokenId
-                    ? {
-                          ...combatant,
-                          d6: rawD6,
-                          baseInit: baseInit,
-                          total: rollTotal,
-                          tiebreaker: 0,
-                          hidden: combatant.hidden !== undefined ? combatant.hidden : shouldHideStandalone,
-                          isNPC: combatant.isNPC !== undefined ? combatant.isNPC : isStandaloneNpc
-                      }
-                    : combatant
-            );
-
-            const sorted = sortCombatants(updated);
-            localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
-            window.dispatchEvent(new Event('pkr-standalone-init-update'));
-            return 0;
-        } catch (error) {
-            console.error('[DiceRoller] Standalone Init Error:', error);
-            return 0;
-        }
-    }
-
-    if (!OBR.isAvailable) return 0;
-    try {
-        const items = await OBR.scene.items.getItems();
-        const characterItems = items.filter((item) => item.layer === 'CHARACTER');
-
-        let assignedTiebreaker = 0;
-        const stalemateTokens = characterItems.filter((item) => {
-            if (item.id === tokenId) return false;
-            const initMeta = item.metadata['pokerole-pmd-extension/initiative'] as
-                | { value?: number; base?: number; tiebreaker?: number }
-                | undefined;
-            if (!initMeta || typeof initMeta.value !== 'number') return false;
-
-            const existingTotal = Math.floor(initMeta.value);
-            const existingBase =
-                typeof initMeta.base === 'number'
-                    ? initMeta.base
-                    : calculateBaseInitFromCharacterData(item.metadata, state);
-
-            return existingTotal === rollTotal && existingBase === baseInit;
-        });
-
-        if (stalemateTokens.length > 0) {
-            assignedTiebreaker = Math.floor(Math.random() * 6) + 1;
-
-            // Also ensure stalemate opponents have unique non-zero tiebreakers
-            const opponentUpdates: { id: string; tiebreaker: number; value: number; base: number }[] = [];
-            for (const opponent of stalemateTokens) {
-                const opponentMeta = opponent.metadata['pokerole-pmd-extension/initiative'] as
-                    | { value?: number; base?: number; tiebreaker?: number }
-                    | undefined;
-                let opponentTiebreaker = opponentMeta?.tiebreaker || 0;
-                if (opponentTiebreaker === 0 || opponentTiebreaker === assignedTiebreaker) {
-                    opponentTiebreaker = Math.floor(Math.random() * 6) + 1;
-                    while (opponentTiebreaker === assignedTiebreaker) {
-                        opponentTiebreaker = Math.floor(Math.random() * 6) + 1;
-                    }
-                }
-                const opponentBase =
-                    typeof opponentMeta?.base === 'number'
-                        ? opponentMeta.base
-                        : calculateBaseInitFromCharacterData(opponent.metadata, state);
-                const opponentValue = calculateEncodedInitiative(rollTotal, opponentBase, opponentTiebreaker);
-                opponentUpdates.push({
-                    id: opponent.id,
-                    tiebreaker: opponentTiebreaker,
-                    value: opponentValue,
-                    base: opponentBase
-                });
-            }
-
-            if (opponentUpdates.length > 0) {
-                const opponentIds = opponentUpdates.map((u) => u.id);
-                await OBR.scene.items.updateItems(opponentIds, (itemsToUpdate) => {
-                    for (const item of itemsToUpdate) {
-                        const match = opponentUpdates.find((u) => u.id === item.id);
-                        if (match) {
-                            const existingOpponent =
-                                (item.metadata['pokerole-pmd-extension/initiative'] as
-                                    | Record<string, unknown>
-                                    | undefined) || {};
-                            item.metadata['pokerole-pmd-extension/initiative'] = {
-                                ...existingOpponent,
-                                value: match.value,
-                                base: match.base,
-                                tiebreaker: match.tiebreaker
-                            };
-                        }
-                    }
-                });
-            }
-
-            const rollerName = state.identity.nickname || state.identity.species || 'Combatant';
-            addRollLogEntry(
-                'Initiative Stalemate Re-roll',
-                `Stalemate detected on Total ${rollTotal} (Base ${baseInit})!\n${rollerName} rolled 1d6 tiebreaker: [${assignedTiebreaker}]`,
-                state.identity.tokenImageUrl || '',
-                rollerName
-            );
-        }
-
-        const encodedValue = calculateEncodedInitiative(rollTotal, baseInit, assignedTiebreaker);
-
-        const targetItem = characterItems.find((item) => item.id === tokenId);
-        const isTargetNPC = extractIsNpc(
-            targetItem?.metadata,
-            state.tokenId === tokenId && Boolean(state.identity.isNPC)
-        );
-
-        const shouldHide =
-            (isTargetNPC && state.identity.defaultNpcInitiativeHidden !== false) || targetItem?.visible === false;
-
-        await OBR.scene.items.updateItems([tokenId], (itemsToUpdate) => {
-            for (const item of itemsToUpdate) {
-                const existing = item.metadata['pokerole-pmd-extension/initiative'] as
-                    | Record<string, unknown>
-                    | undefined;
-                item.metadata['pokerole-pmd-extension/initiative'] = {
-                    ...(existing || {}),
-                    value: encodedValue,
-                    base: baseInit,
-                    tiebreaker: assignedTiebreaker,
-                    hidden: existing && existing.hidden !== undefined ? Boolean(existing.hidden) : shouldHide
-                };
-            }
-        });
-        return assignedTiebreaker;
-    } catch (error) {
-        console.error('[DiceRoller] Failed to assign Initiative to token:', error);
-        return 0;
-    }
-}
-
-export async function broadcastInfo(title: string, description: string) {
-    const state = useCharacterStore.getState();
-    const playerName = state.identity.nickname || state.identity.species || 'Trainer';
-    const icon = state.identity.tokenImageUrl || `${import.meta.env?.BASE_URL || '/'}pokeball-token.svg`;
-    const targetVisibility = state.identity.rolls === 'Private (GM)' ? 'gm_only' : 'everyone';
-    const privacyTag = targetVisibility === 'gm_only' && !title.startsWith('[PRIVATE]') ? '[PRIVATE] ' : '';
-    const finalTitle = `${privacyTag}${title}`;
-
-    if (isStandaloneMode || !OBR.isAvailable) {
-        addRollLogEntry(
-            finalTitle,
-            description,
-            icon,
-            playerName,
-            playerName,
-            state.tokenId || undefined,
-            'info',
-            false,
-            targetVisibility
-        );
-        return;
-    }
-
-    try {
-        const playerId = await OBR.player.getId();
-        const obrPlayerName = await OBR.player.getName();
-
-        const rollLogData = {
-            id: crypto.randomUUID(),
-            player: obrPlayerName,
-            characterName: playerName,
-            tokenId: state.tokenId || undefined,
-            playerId: playerId,
-            label: finalTitle,
-            result: description,
-            icon,
-            targetVisibility
-        };
-
-        await broadcastRollLog(rollLogData);
-    } catch (error) {
-        console.error('[DiceRoller] Broadcast Info Error:', error);
-    }
 }
 
 export async function rollDicePlus(
@@ -408,10 +157,8 @@ export async function rollDicePlus(
         const modStr = actualFlatMod > 0 ? `+${actualFlatMod}` : actualFlatMod < 0 ? `-${Math.abs(actualFlatMod)}` : '';
 
         // Detect critical hit:
-        // 1. Accuracy roll met or exceeded the Crit threshold:
         const critMatch = label.match(/Crit on (\d+)\+/i);
         const isAccCrit = Boolean(critMatch && finalSuccesses >= parseInt(critMatch[1], 10) && finalSuccesses > 0);
-        // 2. Damage roll tagged with CRITICAL HIT:
         const isDmgCrit = rollType === 'damage' && (/CRITICAL HIT/i.test(label) || /Critical Hit/i.test(label));
         const isCrit = isAccCrit || isDmgCrit;
 
@@ -469,7 +216,7 @@ export async function rollDicePlus(
             popupMessage += '\nIt is a critical failure!';
         }
 
-        const executeStateIntercepts = async (messageAppendix: string) => {
+        const executeStateIntercepts = async (messageAppendix: string = '') => {
             let finalMsg = popupMessage + messageAppendix;
 
             if (rollType === 'init' && state.tokenId) {
@@ -567,135 +314,25 @@ export async function rollDicePlus(
         const playerId = await OBR.player.getId();
         const obrPlayerName = await OBR.player.getName();
 
-        // PERFORMANCE MODE (Pure Roll Log without 3D Dice)
-        if (diceEngine === 'log-only') {
-            const compiledMessage = await executeStateIntercepts('');
-            const rollLogData = {
-                id: crypto.randomUUID(),
-                player: obrPlayerName,
-                characterName: playerName,
-                tokenId: state.tokenId || undefined,
-                playerId: playerId,
-                label: finalLabel,
-                result: compiledMessage,
-                icon,
-                rollType,
-                targetVisibility,
-                isCrit,
-                isCritFail,
-                chanceDice: options?.chanceDice,
-                chanceEffect: options?.chanceEffect,
-                chanceRolled: options?.chanceRolled
-            };
-            await broadcastRollLog(rollLogData);
-            return;
-        }
-
-        // --- NATIVE OBR 3D DICE ROLL (Custom Action Rolls) ---
-        const critPrefix = isCrit ? 'CRITICAL HIT! | ' : isCritFail ? 'CRITICAL FAILURE! | ' : '';
-        const mensaje = `${obrPlayerName} | ${critPrefix}${finalLabel}`;
-
-        let diceTheme: Record<string, unknown> | undefined = undefined;
-        let isOutdatedCarDetected = false;
-        try {
-            const roomMeta = await OBR.room.getMetadata();
-
-            // Detect legacy onrender URL for Custom Action Rolls
-            const metaKeys = Object.keys(roomMeta);
-            if (metaKeys.some((k) => k.includes('action-manager.onrender.com') || k.includes('onrender.com'))) {
-                isOutdatedCarDetected = true;
-            }
-
-            const allThemes = roomMeta['com.grupos-acciones.dice/roomDiceThemes'] as
-                | Record<string, unknown>
-                | undefined;
-
-            if (allThemes && allThemes.players) {
-                const playersMap = allThemes.players as Record<string, Record<string, unknown>>;
-                const connectionId = OBR.player.getConnectionId ? await OBR.player.getConnectionId() : '';
-                const playerThemeData = playersMap[playerId] || playersMap[connectionId];
-
-                if (playerThemeData && playerThemeData.diceTheme) {
-                    diceTheme = playerThemeData.diceTheme as Record<string, unknown>;
-                }
-            }
-        } catch (e) {
-            console.warn('[DiceRoller] Failed to load dice theme', e);
-        }
-
-        if (isOutdatedCarDetected) {
-            OBR.notification.show(
-                '[WARNING] Outdated Custom Action Rolls URL detected! Please update your room to: https://custom-action-rolls.narcolepticdracu.com/manifest.json',
-                'WARNING'
-            );
-        }
-
-        const broadcastPayload = { mensaje, icon, diceData, diceTheme, isCrit, isCritFail };
-        if (targetVisibility === 'gm_only') {
-            await OBR.broadcast.sendMessage('tirada:mensaje', broadcastPayload, { destination: 'LOCAL' });
-        } else {
-            await OBR.broadcast.sendMessage('tirada:mensaje', broadcastPayload, { destination: 'ALL' });
-        }
-
-        const delayMs = targetVisibility === 'gm_only' ? 250 : 3500;
-        setTimeout(async () => {
-            const finalCompiledMsg = await executeStateIntercepts('');
-
-            const rollLogData = {
-                id: crypto.randomUUID(),
-                player: obrPlayerName,
-                characterName: playerName,
-                tokenId: state.tokenId || undefined,
-                playerId: playerId,
-                label: finalLabel,
-                result: finalCompiledMsg,
-                icon,
-                rollType,
-                targetVisibility,
-                isCrit,
-                isCritFail,
-                chanceDice: options?.chanceDice,
-                chanceEffect: options?.chanceEffect,
-                chanceRolled: options?.chanceRolled
-            };
-
-            await broadcastRollLog(rollLogData);
-        }, delayMs);
+        await dispatchNativeObrRoll({
+            diceEngine,
+            obrPlayerName,
+            playerName,
+            playerId,
+            tokenId: state.tokenId || undefined,
+            finalLabel,
+            icon,
+            rollType,
+            targetVisibility,
+            isCrit,
+            isCritFail,
+            diceData,
+            options,
+            executeStateIntercepts: () => executeStateIntercepts('')
+        });
     } catch (error) {
         console.error('[DiceRoller] Broadcast Error:', error);
     }
-}
-
-/**
- * Executes a 1-click Chance Die roll (e.g. 1d6>5 needing 6):
- * - Marks the roll entry as chanceRolled in localStorage roll cache
- * - Dispatches local update events
- * - Rolls dice via rollDicePlus with rollType 'chance'
- */
-export async function executeChanceRoll(
-    roll: import('../../hooks/owlbearSync/owlbearSyncConstants').RollSyncData
-): Promise<void> {
-    if (!roll.chanceDice || roll.chanceDice <= 0) return;
-    const charName = roll.characterName || roll.player || 'Someone';
-    const effectLabel = roll.chanceEffect ? ` for ${roll.chanceEffect}` : '';
-    const label = `[Chance Roll] ${charName} rolled Chance Dice${effectLabel}! (Need 6)`;
-
-    try {
-        const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
-        if (Array.isArray(storedLog)) {
-            const updatedLog = storedLog.map(
-                (r: import('../../hooks/owlbearSync/owlbearSyncConstants').RollSyncData) =>
-                    r.id === roll.id ? { ...r, chanceRolled: true } : r
-            );
-            localStorage.setItem('pkr_roll_log', JSON.stringify(updatedLog));
-            window.dispatchEvent(new Event('pkr-roll-log-update'));
-            window.dispatchEvent(new Event('storage'));
-        }
-    } catch (e) {
-        console.warn('[executeChanceRoll] Failed to update chanceRolled in roll log:', e);
-    }
-
-    await rollDicePlus(`${roll.chanceDice}d6>5`, label, 'chance', roll.chanceEffect || '');
 }
 
 // Export alias for cleaner naming while maintaining backward compatibility with all callers

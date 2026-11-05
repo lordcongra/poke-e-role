@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { imageManager } from '../../utils/graphics/imageManager';
 import { cropImageTransparencyUrl } from '../../utils/graphics/imageCropUtils';
-import { Dices, Trash2, ChevronDown, ChevronUp, X, Info } from 'lucide-react';
+import { Dices, Trash2, ChevronDown, ChevronUp, X, Info, Sparkles, Check } from 'lucide-react';
 import { parseRollLabel } from '../../utils/combat/rollLogParser';
 import { clearRollLogCache } from '../../utils/combat/rollLogSync';
+import { executeChanceRoll } from '../../utils/combat/diceRoller';
+import type { RollSyncData } from '../../hooks/owlbearSync/owlbearSyncConstants';
 import { RollFactorsModal } from '../modals/rollFactors';
 import './RollLogWidget.css';
 
@@ -16,6 +18,9 @@ interface RollData {
     icon: string;
     isCrit?: boolean;
     isCritFail?: boolean;
+    chanceDice?: number;
+    chanceEffect?: string;
+    chanceRolled?: boolean;
 }
 
 interface RollLogWidgetProps {
@@ -259,6 +264,34 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
                                             <span>
                                                 {factorTags.length} {factorTags.length === 1 ? 'Factor' : 'Factors'}
                                             </span>
+                                        </button>
+                                    )}
+                                    {r.chanceDice && r.chanceDice > 0 && (
+                                        <button
+                                            type="button"
+                                            className="roll-log__chance-btn"
+                                            disabled={r.chanceRolled}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                executeChanceRoll(r as unknown as RollSyncData);
+                                            }}
+                                            title={
+                                                r.chanceRolled
+                                                    ? `Chance dice already rolled (${r.chanceDice}d6)`
+                                                    : `Roll ${r.chanceDice}d6 (Need 6) for ${r.chanceEffect || 'Effect'}`
+                                            }
+                                        >
+                                            {r.chanceRolled ? (
+                                                <>
+                                                    <Check size={11} />
+                                                    <span>Rolled ({r.chanceDice}d6)</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Sparkles size={11} />
+                                                    <span>Chance ({r.chanceDice}d6, Need 6)</span>
+                                                </>
+                                            )}
                                         </button>
                                     )}
                                 </div>
