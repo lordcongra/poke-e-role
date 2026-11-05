@@ -1,41 +1,74 @@
 import type { StateCreator } from 'zustand';
-import type {
+import type { CharacterState, HomebrewSlice } from '../storeTypes';
+import {
+    saveHomebrewLocal,
+    loadHomebrewLocalOp,
+    applyHomebrewSync,
+    markHomebrewBackedUp,
+    processHomebrewPayload,
+    getHomebrewPayload
+} from './homebrew/homebrewSyncOps';
+import {
+    addCustomType,
+    updateCustomType,
+    removeCustomType,
+    duplicateCustomType,
+    addCustomAbility,
+    updateCustomAbility,
+    removeCustomAbility,
+    duplicateCustomAbility,
+    addCustomMove,
+    updateCustomMove,
+    removeCustomMove,
+    duplicateCustomMove,
+    addCustomPokemon,
+    updateCustomPokemon,
+    removeCustomPokemon,
+    duplicateCustomPokemon,
+    addCustomItem,
+    updateCustomItem,
+    removeCustomItem,
+    duplicateCustomItem,
+    addCustomForm,
+    updateCustomForm,
+    removeCustomForm,
+    duplicateCustomForm,
+    addCustomStatus,
+    updateCustomStatus,
+    removeCustomStatus,
+    duplicateCustomStatus,
+    addCustomFieldEffect,
+    updateCustomFieldEffect,
+    removeCustomFieldEffect,
+    duplicateCustomFieldEffect
+} from './homebrew/homebrewCrudOps';
+import {
+    overwriteCustomTypeData,
+    overwriteCustomAbilityData,
+    overwriteCustomMoveData,
+    overwriteCustomPokemonData,
+    overwriteCustomItemData,
+    overwriteCustomFormData,
+    overwriteCustomStatusData,
+    overwriteCustomFieldEffectData,
+    overwriteAllHomebrewData,
+    mergeCustomTypeData,
+    mergeCustomAbilityData,
+    mergeCustomMoveData,
+    mergeCustomPokemonData,
+    mergeCustomItemData,
+    mergeCustomFormData,
+    mergeCustomStatusData,
+    mergeCustomFieldEffectData,
+    mergeAllHomebrewData
+} from './homebrew/homebrewMergeOps';
+
+export const createHomebrewSlice: StateCreator<
     CharacterState,
-    HomebrewSlice,
-    CustomMove,
-    CustomPokemon,
-    CustomItem,
-    CustomForm,
-    CustomStatus,
-    CustomFieldEffect
-} from '../storeTypes';
-import { syncHomebrewToApi } from '../../utils/api/api';
-import OBR from '@owlbear-rodeo/sdk';
-import { homebrewStorage, type HomebrewStorageData } from '../../utils/sync/homebrewStorage';
-
-const saveHomebrewLocal = (state: CharacterState) => {
-    if (!state.isHomebrewInitialized) return;
-    try {
-        const data: HomebrewStorageData = {
-            customTypes: state.roomCustomTypes,
-            customAbilities: state.roomCustomAbilities,
-            customMoves: state.roomCustomMoves,
-            customPokemon: state.roomCustomPokemon,
-            customItems: state.roomCustomItems,
-            customForms: state.roomCustomForms,
-            customStatuses: state.roomCustomStatuses,
-            customFieldEffects: state.roomCustomFieldEffects,
-            needsBackup: state.needsBackup
-        };
-        homebrewStorage.saveHomebrew(data).catch((error) => {
-            console.error('[HomebrewSlice] Failed to save homebrew data to storage.', error);
-        });
-    } catch (error) {
-        console.error('[HomebrewSlice] Failed to queue save homebrew data.', error);
-    }
-};
-
-export const createHomebrewSlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], HomebrewSlice> = (set, get) => ({
+    [['zustand/devtools', never]],
+    [],
+    HomebrewSlice
+> = (set, get) => ({
     isHomebrewInitialized: false,
     roomCustomTypes: [],
     roomCustomAbilities: [],
@@ -47,957 +80,104 @@ export const createHomebrewSlice: StateCreator<CharacterState, [['zustand/devtoo
     roomCustomFieldEffects: [],
     needsBackup: false,
 
-    loadHomebrewLocal: async () => {
-        try {
-            const data = await homebrewStorage.loadHomebrew();
-            if (data) {
-                const types = data.customTypes || [];
-                const abilities = data.customAbilities || [];
-                const moves = data.customMoves || [];
-                const pokemon = data.customPokemon || [];
-                const items = data.customItems || [];
-                const forms = data.customForms || [];
-                const statuses = data.customStatuses || [];
-                const fieldEffects = data.customFieldEffects || [];
-                const needsBkp = data.needsBackup || false;
-
-                set({
-                    roomCustomTypes: types,
-                    roomCustomAbilities: abilities,
-                    roomCustomMoves: moves,
-                    roomCustomPokemon: pokemon,
-                    roomCustomItems: items,
-                    roomCustomForms: forms,
-                    roomCustomStatuses: statuses,
-                    roomCustomFieldEffects: fieldEffects,
-                    needsBackup: needsBkp,
-                    isHomebrewInitialized: true
-                });
-
-                syncHomebrewToApi(pokemon, moves, abilities, items);
-            }
-        } catch (error) {
-            console.error('[HomebrewSlice] Failed to load homebrew data from storage.', error);
-        } finally {
-            set({ isHomebrewInitialized: true });
-        }
-    },
-
-    applyHomebrewSync: (payload) => {
-        const types = payload.customTypes || [];
-        const abilities = payload.customAbilities || [];
-        const moves = payload.customMoves || [];
-        const pokemon = payload.customPokemon || [];
-        const items = payload.customItems || [];
-        const forms = payload.customForms || [];
-        const statuses = payload.customStatuses || [];
-        const fieldEffects = payload.customFieldEffects || [];
-        const needsBkp = payload.needsBackup ?? false;
-
-        set({
-            roomCustomTypes: types,
-            roomCustomAbilities: abilities,
-            roomCustomMoves: moves,
-            roomCustomPokemon: pokemon,
-            roomCustomItems: items,
-            roomCustomForms: forms,
-            roomCustomStatuses: statuses,
-            roomCustomFieldEffects: fieldEffects,
-            needsBackup: needsBkp
-        });
-
-        syncHomebrewToApi(pokemon, moves, abilities, items);
-    },
-
-    markHomebrewBackedUp: () => {
-        set({ needsBackup: false });
-        saveHomebrewLocal(get());
-    },
-
-    processHomebrewPayload: (payload) => {
-        set({
-            roomCustomTypes: payload.customTypes || [],
-            roomCustomAbilities: payload.customAbilities || [],
-            roomCustomMoves: payload.customMoves || [],
-            roomCustomPokemon: payload.customPokemon || [],
-            roomCustomItems: payload.customItems || [],
-            roomCustomForms: payload.customForms || [],
-            roomCustomStatuses: payload.customStatuses || [],
-            roomCustomFieldEffects: payload.customFieldEffects || [],
-            needsBackup: true
-        });
-        syncHomebrewToApi(
-            payload.customPokemon || [],
-            payload.customMoves || [],
-            payload.customAbilities || [],
-            payload.customItems || []
-        );
-        saveHomebrewLocal(get());
-    },
-
-    getHomebrewPayload: () => {
-        return {
-            customTypes: get().roomCustomTypes,
-            customAbilities: get().roomCustomAbilities,
-            customMoves: get().roomCustomMoves,
-            customPokemon: get().roomCustomPokemon,
-            customItems: get().roomCustomItems,
-            customForms: get().roomCustomForms,
-            customStatuses: get().roomCustomStatuses,
-            customFieldEffects: get().roomCustomFieldEffects
-        };
-    },
+    loadHomebrewLocal: () => loadHomebrewLocalOp(set, get),
+    applyHomebrewSync: (payload) => applyHomebrewSync(set, payload),
+    markHomebrewBackedUp: () => markHomebrewBackedUp(set, get),
+    processHomebrewPayload: (payload) => processHomebrewPayload(set, get, payload),
+    getHomebrewPayload: () => getHomebrewPayload(get),
 
     setRoomCustomTypes: (types) => {
-        set({ roomCustomTypes: types, needsBackup: true });
+        set({ roomCustomTypes: types, needsBackup: true }, false, 'homebrew/setRoomCustomTypes');
         saveHomebrewLocal(get());
     },
     setRoomCustomAbilities: (abilities) => {
-        set({ roomCustomAbilities: abilities, needsBackup: true });
+        set({ roomCustomAbilities: abilities, needsBackup: true }, false, 'homebrew/setRoomCustomAbilities');
         saveHomebrewLocal(get());
     },
     setRoomCustomMoves: (moves) => {
-        set({ roomCustomMoves: moves, needsBackup: true });
+        set({ roomCustomMoves: moves, needsBackup: true }, false, 'homebrew/setRoomCustomMoves');
         saveHomebrewLocal(get());
     },
     setRoomCustomPokemon: (pokemon) => {
-        set({ roomCustomPokemon: pokemon, needsBackup: true });
+        set({ roomCustomPokemon: pokemon, needsBackup: true }, false, 'homebrew/setRoomCustomPokemon');
         saveHomebrewLocal(get());
     },
     setRoomCustomItems: (items) => {
-        set({ roomCustomItems: items, needsBackup: true });
+        set({ roomCustomItems: items, needsBackup: true }, false, 'homebrew/setRoomCustomItems');
         saveHomebrewLocal(get());
     },
     setRoomCustomForms: (forms) => {
-        set({ roomCustomForms: forms, needsBackup: true });
+        set({ roomCustomForms: forms, needsBackup: true }, false, 'homebrew/setRoomCustomForms');
         saveHomebrewLocal(get());
     },
     setRoomCustomStatuses: (statuses) => {
-        set({ roomCustomStatuses: statuses, needsBackup: true });
+        set({ roomCustomStatuses: statuses, needsBackup: true }, false, 'homebrew/setRoomCustomStatuses');
         saveHomebrewLocal(get());
     },
     setRoomCustomFieldEffects: (effects) => {
-        set({ roomCustomFieldEffects: effects, needsBackup: true });
+        set({ roomCustomFieldEffects: effects, needsBackup: true }, false, 'homebrew/setRoomCustomFieldEffects');
         saveHomebrewLocal(get());
     },
 
-    addCustomType: (typeObject) => {
-        const currentTypes = get().roomCustomTypes;
-        if (currentTypes.find((customType) => customType.name.toLowerCase() === typeObject.name.toLowerCase())) return;
-        const newTypes = [...currentTypes, typeObject];
-        set({ roomCustomTypes: newTypes, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    updateCustomType: (oldName, newType) => {
-        const currentTypes = get().roomCustomTypes;
-        const newTypes = currentTypes.map((customType) => (customType.name === oldName ? newType : customType));
-        set({ roomCustomTypes: newTypes, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    removeCustomType: (name) => {
-        const newTypes = get().roomCustomTypes.filter((customType) => customType.name !== name);
-        set({ roomCustomTypes: newTypes, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    duplicateCustomType: (name) => {
-        const currentTypes = get().roomCustomTypes;
-        const target = currentTypes.find((t) => t.name === name);
-        if (!target) return;
+    addCustomType: (typeObject) => addCustomType(set, get, typeObject),
+    updateCustomType: (oldName, newType) => updateCustomType(set, get, oldName, newType),
+    removeCustomType: (name) => removeCustomType(set, get, name),
+    duplicateCustomType: (name) => duplicateCustomType(set, get, name),
 
-        let copyName = `${target.name} (Copy)`;
-        let counter = 1;
-        while (currentTypes.some((t) => t.name === copyName)) {
-            counter++;
-            copyName = `${target.name} (Copy ${counter})`;
-        }
+    addCustomAbility: () => addCustomAbility(set, get),
+    updateCustomAbility: (id, field, value) => updateCustomAbility(set, get, id, field, value),
+    removeCustomAbility: (id) => removeCustomAbility(set, get, id),
+    duplicateCustomAbility: (id) => duplicateCustomAbility(set, get, id),
 
-        const newType = { ...target, name: copyName };
-        const newTypes = [...currentTypes, newType];
-        set({ roomCustomTypes: newTypes, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
+    addCustomMove: () => addCustomMove(set, get),
+    updateCustomMove: (id, field, value) => updateCustomMove(set, get, id, field, value),
+    removeCustomMove: (id) => removeCustomMove(set, get, id),
+    duplicateCustomMove: (id) => duplicateCustomMove(set, get, id),
 
-    addCustomAbility: () => {
-        const newAbilities = [
-            ...get().roomCustomAbilities,
-            { id: crypto.randomUUID(), name: 'New Ability', description: '', effect: '' }
-        ];
-        set({ roomCustomAbilities: newAbilities, needsBackup: true });
-        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, newAbilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
-    updateCustomAbility: (id, field, value) => {
-        const newAbilities = get().roomCustomAbilities.map((ability) =>
-            ability.id === id ? { ...ability, [field]: value } : ability
-        );
-        const updatedAbility = newAbilities.find((a) => a.id === id);
-        set({ roomCustomAbilities: newAbilities, needsBackup: true });
-        if (
-            updatedAbility &&
-            get().identity.ability?.trim().toLowerCase() === updatedAbility.name.trim().toLowerCase()
-        ) {
-            const customTags = `${updatedAbility.effect || ''} ${updatedAbility.description || ''}`.trim();
-            get().setIdentity('abilityTags', customTags);
-        }
-        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, newAbilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
-    removeCustomAbility: (id) => {
-        const newAbilities = get().roomCustomAbilities.filter((ability) => ability.id !== id);
-        set({ roomCustomAbilities: newAbilities, needsBackup: true });
-        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, newAbilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
-    duplicateCustomAbility: (id) => {
-        const currentAbilities = get().roomCustomAbilities;
-        const target = currentAbilities.find((a) => a.id === id);
-        if (!target) return;
+    addCustomPokemon: (initialData) => addCustomPokemon(set, get, initialData),
+    updateCustomPokemon: (id, field, value) => updateCustomPokemon(set, get, id, field, value),
+    removeCustomPokemon: (id) => removeCustomPokemon(set, get, id),
+    duplicateCustomPokemon: (id) => duplicateCustomPokemon(set, get, id),
 
-        let copyName = `${target.name} (Copy)`;
-        let counter = 1;
-        while (currentAbilities.some((a) => a.name === copyName)) {
-            counter++;
-            copyName = `${target.name} (Copy ${counter})`;
-        }
+    addCustomItem: () => addCustomItem(set, get),
+    updateCustomItem: (id, field, value) => updateCustomItem(set, get, id, field, value),
+    removeCustomItem: (id) => removeCustomItem(set, get, id),
+    duplicateCustomItem: (id) => duplicateCustomItem(set, get, id),
 
-        const newAbilities = [...currentAbilities, { ...target, id: crypto.randomUUID(), name: copyName }];
-        set({ roomCustomAbilities: newAbilities, needsBackup: true });
-        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, newAbilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
+    addCustomForm: (template) => addCustomForm(set, get, template),
+    updateCustomForm: (id, field, value) => updateCustomForm(set, get, id, field, value),
+    removeCustomForm: (id) => removeCustomForm(set, get, id),
+    duplicateCustomForm: (id) => duplicateCustomForm(set, get, id),
 
-    addCustomMove: () => {
-        const newMoves: CustomMove[] = [
-            ...get().roomCustomMoves,
-            {
-                id: crypto.randomUUID(),
-                name: 'New Move',
-                type: 'Normal',
-                category: 'Physical',
-                power: 2,
-                acc1: 'dex',
-                acc2: 'brawl',
-                dmg1: 'str',
-                desc: '',
-                battlefieldCategory: 'none'
-            }
-        ];
-        set({ roomCustomMoves: newMoves, needsBackup: true });
-        syncHomebrewToApi(get().roomCustomPokemon, newMoves, get().roomCustomAbilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
-    updateCustomMove: (id, field, value) => {
-        const newMoves = get().roomCustomMoves.map((move) => (move.id === id ? { ...move, [field]: value } : move));
-        set({ roomCustomMoves: newMoves, needsBackup: true });
-        syncHomebrewToApi(get().roomCustomPokemon, newMoves, get().roomCustomAbilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
-    removeCustomMove: (id) => {
-        const newMoves = get().roomCustomMoves.filter((move) => move.id !== id);
-        set({ roomCustomMoves: newMoves, needsBackup: true });
-        syncHomebrewToApi(get().roomCustomPokemon, newMoves, get().roomCustomAbilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
-    duplicateCustomMove: (id) => {
-        const currentMoves = get().roomCustomMoves;
-        const target = currentMoves.find((m) => m.id === id);
-        if (!target) return;
+    addCustomStatus: () => addCustomStatus(set, get),
+    updateCustomStatus: (id, field, value) => updateCustomStatus(set, get, id, field, value),
+    removeCustomStatus: (id) => removeCustomStatus(set, get, id),
+    duplicateCustomStatus: (id) => duplicateCustomStatus(set, get, id),
 
-        let copyName = `${target.name} (Copy)`;
-        let counter = 1;
-        while (currentMoves.some((m) => m.name === copyName)) {
-            counter++;
-            copyName = `${target.name} (Copy ${counter})`;
-        }
+    addCustomFieldEffect: (initialData) => addCustomFieldEffect(set, get, initialData),
+    updateCustomFieldEffect: (id, field, value) => updateCustomFieldEffect(set, get, id, field, value),
+    removeCustomFieldEffect: (id) => removeCustomFieldEffect(set, get, id),
+    duplicateCustomFieldEffect: (id) => duplicateCustomFieldEffect(set, get, id),
 
-        const newMoves = [...currentMoves, { ...target, id: crypto.randomUUID(), name: copyName }];
-        set({ roomCustomMoves: newMoves, needsBackup: true });
-        syncHomebrewToApi(get().roomCustomPokemon, newMoves, get().roomCustomAbilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
+    overwriteCustomTypeData: (types) => overwriteCustomTypeData(set, get, types),
+    overwriteCustomAbilityData: (abilities) => overwriteCustomAbilityData(set, get, abilities),
+    overwriteCustomMoveData: (moves) => overwriteCustomMoveData(set, get, moves),
+    overwriteCustomPokemonData: (pokemon) => overwriteCustomPokemonData(set, get, pokemon),
+    overwriteCustomItemData: (items) => overwriteCustomItemData(set, get, items),
+    overwriteCustomFormData: (forms) => overwriteCustomFormData(set, get, forms),
+    overwriteCustomStatusData: (statuses) => overwriteCustomStatusData(set, get, statuses),
+    overwriteCustomFieldEffectData: (effects) => overwriteCustomFieldEffectData(set, get, effects),
+    overwriteAllHomebrewData: (types, abilities, moves, pokemon, items, forms, statuses, fieldEffects) =>
+        overwriteAllHomebrewData(set, get, types, abilities, moves, pokemon, items, forms, statuses, fieldEffects),
 
-    addCustomPokemon: (initialData?: Partial<CustomPokemon>) => {
-        let baseName = initialData?.Name || 'New Pokemon';
-        if (!initialData?.Name) {
-            const currentNames = get().roomCustomPokemon.map((p) => p.Name.trim().toLowerCase());
-            if (currentNames.includes(baseName.toLowerCase())) {
-                let counter = 2;
-                while (currentNames.includes(`new pokemon ${counter}`)) {
-                    counter++;
-                }
-                baseName = `New Pokemon ${counter}`;
-            }
-        }
-
-        const newPokemonItem: CustomPokemon = {
-            id: crypto.randomUUID(),
-            Name: baseName,
-            Type1: initialData?.Type1 || 'Normal',
-            Type2: initialData?.Type2 || '',
-            BaseHP: initialData?.BaseHP ?? 4,
-            Strength: initialData?.Strength ?? 2,
-            MaxStrength: initialData?.MaxStrength ?? 5,
-            Dexterity: initialData?.Dexterity ?? 2,
-            MaxDexterity: initialData?.MaxDexterity ?? 5,
-            Vitality: initialData?.Vitality ?? 2,
-            MaxVitality: initialData?.MaxVitality ?? 5,
-            Special: initialData?.Special ?? 2,
-            MaxSpecial: initialData?.MaxSpecial ?? 5,
-            Insight: initialData?.Insight ?? 1,
-            MaxInsight: initialData?.MaxInsight ?? 5,
-            Ability1: initialData?.Ability1 || '',
-            Ability2: initialData?.Ability2 || '',
-            HiddenAbility: initialData?.HiddenAbility || '',
-            EventAbilities: initialData?.EventAbilities || '',
-            ExtraAbilities: initialData?.ExtraAbilities || [],
-            Moves: initialData?.Moves || [],
-            DexID: initialData?.DexID || '',
-            DexCategory: initialData?.DexCategory || '',
-            Height: initialData?.Height || '',
-            Weight: initialData?.Weight || '',
-            DexDescription: initialData?.DexDescription || '',
-            RecommendedRank: initialData?.RecommendedRank || '',
-            Legendary: initialData?.Legendary ?? false,
-            Mythical: initialData?.Mythical ?? false,
-            UltraBeast: initialData?.UltraBeast ?? false,
-            Paradox: initialData?.Paradox ?? false,
-            gmOnly: initialData?.gmOnly ?? false
-        };
-        const newPokemon = [...get().roomCustomPokemon, newPokemonItem];
-        set({ roomCustomPokemon: newPokemon, needsBackup: true });
-        syncHomebrewToApi(newPokemon, get().roomCustomMoves, get().roomCustomAbilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
-    updateCustomPokemon: (id, field, value) => {
-        const newPokemon = get().roomCustomPokemon.map((pokemonData) =>
-            pokemonData.id === id ? { ...pokemonData, [field]: value } : pokemonData
-        );
-        set({ roomCustomPokemon: newPokemon, needsBackup: true });
-        syncHomebrewToApi(newPokemon, get().roomCustomMoves, get().roomCustomAbilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
-    removeCustomPokemon: (id) => {
-        const newPokemon = get().roomCustomPokemon.filter((pokemonData) => pokemonData.id !== id);
-        set({ roomCustomPokemon: newPokemon, needsBackup: true });
-        syncHomebrewToApi(newPokemon, get().roomCustomMoves, get().roomCustomAbilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
-    duplicateCustomPokemon: (id) => {
-        const currentPokemon = get().roomCustomPokemon;
-        const target = currentPokemon.find((p) => p.id === id);
-        if (!target) return;
-
-        let copyName = `${target.Name} (Copy)`;
-        let counter = 2;
-        while (currentPokemon.some((p) => p.Name.trim().toLowerCase() === copyName.trim().toLowerCase())) {
-            copyName = `${target.Name} (Copy ${counter})`;
-            counter++;
-        }
-
-        const newPokemon = [...currentPokemon, { ...target, id: crypto.randomUUID(), Name: copyName }];
-        set({ roomCustomPokemon: newPokemon, needsBackup: true });
-        syncHomebrewToApi(newPokemon, get().roomCustomMoves, get().roomCustomAbilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
-
-    addCustomItem: () => {
-        const newItem: CustomItem = {
-            id: crypto.randomUUID(),
-            name: 'New Item',
-            description: '',
-            pocket: 'Custom',
-            customGroup: 'Custom',
-            category: 'Misc',
-            subCategory: '',
-            rarity: 'Uncommon'
-        };
-        const newItems: CustomItem[] = [newItem, ...get().roomCustomItems];
-        set({ roomCustomItems: newItems, needsBackup: true });
-        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, newItems);
-        saveHomebrewLocal(get());
-    },
-    updateCustomItem: (id, field, value) => {
-        const newItems = get().roomCustomItems.map((item) => (item.id === id ? { ...item, [field]: value } : item));
-        set({ roomCustomItems: newItems, needsBackup: true });
-        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, newItems);
-        saveHomebrewLocal(get());
-    },
-    removeCustomItem: (id) => {
-        const newItems = get().roomCustomItems.filter((item) => item.id !== id);
-        set({ roomCustomItems: newItems, needsBackup: true });
-        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, newItems);
-        saveHomebrewLocal(get());
-    },
-    duplicateCustomItem: (id) => {
-        const currentItems = get().roomCustomItems;
-        const target = currentItems.find((i) => i.id === id);
-        if (!target) return;
-
-        let copyName = `${target.name} (Copy)`;
-        let counter = 1;
-        while (currentItems.some((i) => i.name === copyName)) {
-            counter++;
-            copyName = `${target.name} (Copy ${counter})`;
-        }
-
-        const newItems = [...currentItems, { ...target, id: crypto.randomUUID(), name: copyName }];
-        set({ roomCustomItems: newItems, needsBackup: true });
-        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, newItems);
-        saveHomebrewLocal(get());
-    },
-
-    addCustomForm: (template: boolean | 'mega' | 'aegislash' | 'stance' = false) => {
-        const isMega = template === true || template === 'mega';
-        const isStance = template === 'aegislash' || template === 'stance';
-
-        let name = 'New Form';
-        let description = '';
-        if (isMega) {
-            name = 'New Mega Evolution';
-            description = 'Backs up current stats, restores HP/Will, and clears statuses.';
-        } else if (isStance) {
-            name = 'Aegislash (Blade Form)';
-            description =
-                'Stance Change: choose Form at start of round. Sword Stance can only use Damaging Moves; Shield Stance can only use Support Moves. Keeps highest HP shared across forms.';
-        }
-
-        const newForms: CustomForm[] = [
-            ...get().roomCustomForms,
-            {
-                id: crypto.randomUUID(),
-                name,
-                description,
-                swapBaseStats: isMega || isStance,
-                swapStatLimits: isMega || isStance,
-                swapStatRanks: isMega || isStance,
-                swapSkills: isMega,
-                swapMoves: isMega,
-                swapTyping: isMega,
-                swapAbilities: isMega,
-                swapBuffs: false,
-                swapDebuffs: false,
-                freshBuffs: false,
-                freshDebuffs: false,
-                wipeBuffs: false,
-                wipeDebuffs: false,
-                swapStatuses: false,
-                freshStatuses: isMega,
-                wipeStatuses: false,
-                restoreHp: isMega,
-                restoreWill: isMega,
-                shareHighestHp: isStance,
-                shareHighestWill: isStance,
-                healHp: isMega,
-                healWill: isMega,
-                activationCostHp: 0,
-                activationCostWill: isMega ? 1 : 0,
-                grantedMoves: [],
-                tags: '',
-                targetSpecies: isStance ? 'Aegislash (Blade Form)' : '',
-                tempHp: 0,
-                tempWill: 0,
-                gmOnly: false
-            }
-        ];
-        set({ roomCustomForms: newForms, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    updateCustomForm: (id, field, value) => {
-        const newForms = get().roomCustomForms.map((form) => (form.id === id ? { ...form, [field]: value } : form));
-        set({ roomCustomForms: newForms, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    removeCustomForm: (id) => {
-        const newForms = get().roomCustomForms.filter((form) => form.id !== id);
-        set({ roomCustomForms: newForms, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    duplicateCustomForm: (id) => {
-        const currentForms = get().roomCustomForms;
-        const target = currentForms.find((f) => f.id === id);
-        if (!target) return;
-
-        let copyName = `${target.name} (Copy)`;
-        let counter = 1;
-        while (currentForms.some((f) => f.name === copyName)) {
-            counter++;
-            copyName = `${target.name} (Copy ${counter})`;
-        }
-
-        const newForms = [...currentForms, { ...target, id: crypto.randomUUID(), name: copyName }];
-        set({ roomCustomForms: newForms, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-
-    addCustomStatus: () => {
-        const newStatuses: CustomStatus[] = [
-            ...get().roomCustomStatuses,
-            {
-                id: crypto.randomUUID(),
-                name: 'New Status',
-                shorthand: '',
-                description: '',
-                effects: '',
-                recoveryAttr: 'none',
-                recoverySkill: 'none',
-                color: '#9C27B0',
-                textColor: '#ffffff',
-                gmOnly: false
-            }
-        ];
-        set({ roomCustomStatuses: newStatuses, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    updateCustomStatus: (id, field, value) => {
-        const newStatuses = get().roomCustomStatuses.map((s) => (s.id === id ? { ...s, [field]: value } : s));
-        set({ roomCustomStatuses: newStatuses, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    removeCustomStatus: (id) => {
-        const newStatuses = get().roomCustomStatuses.filter((s) => s.id !== id);
-        set({ roomCustomStatuses: newStatuses, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    duplicateCustomStatus: (id) => {
-        const currentStatuses = get().roomCustomStatuses;
-        const target = currentStatuses.find((s) => s.id === id);
-        if (!target) return;
-
-        let copyName = `${target.name} (Copy)`;
-        let counter = 1;
-        while (currentStatuses.some((s) => s.name === copyName)) {
-            counter++;
-            copyName = `${target.name} (Copy ${counter})`;
-        }
-
-        const newStatuses = [...currentStatuses, { ...target, id: crypto.randomUUID(), name: copyName }];
-        set({ roomCustomStatuses: newStatuses, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-
-    addCustomFieldEffect: (initialData) => {
-        const newEffect: CustomFieldEffect = {
-            id: crypto.randomUUID(),
-            name: 'New Field Effect',
-            category: 'weather',
-            defaultRounds: 4,
-            color: '#3B82F6',
-            icon: 'CloudRain',
-            tags: '',
-            description: '',
-            gmOnly: false,
-            triggerMoves: [],
-            conditionTag: '',
-            ...initialData
-        };
-        const newEffects = [...get().roomCustomFieldEffects, newEffect];
-        set({ roomCustomFieldEffects: newEffects, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    updateCustomFieldEffect: (id, field, value) => {
-        const newEffects = get().roomCustomFieldEffects.map((e) => (e.id === id ? { ...e, [field]: value } : e));
-        set({ roomCustomFieldEffects: newEffects, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    removeCustomFieldEffect: (id) => {
-        const newEffects = get().roomCustomFieldEffects.filter((e) => e.id !== id);
-        set({ roomCustomFieldEffects: newEffects, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    duplicateCustomFieldEffect: (id) => {
-        const currentEffects = get().roomCustomFieldEffects;
-        const target = currentEffects.find((e) => e.id === id);
-        if (!target) return;
-
-        let copyName = `${target.name} (Copy)`;
-        let counter = 1;
-        while (currentEffects.some((e) => e.name === copyName)) {
-            counter++;
-            copyName = `${target.name} (Copy ${counter})`;
-        }
-
-        const newEffects = [
-            ...currentEffects,
-            {
-                ...target,
-                id: crypto.randomUUID(),
-                name: copyName,
-                triggerMoves: target.triggerMoves ? [...target.triggerMoves] : []
-            }
-        ];
-        set({ roomCustomFieldEffects: newEffects, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-
-    overwriteCustomTypeData: (types) => {
-        set({ roomCustomTypes: types, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    overwriteCustomAbilityData: (abilities) => {
-        set({ roomCustomAbilities: abilities, needsBackup: true });
-        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, abilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
-    overwriteCustomMoveData: (moves) => {
-        set({ roomCustomMoves: moves, needsBackup: true });
-        syncHomebrewToApi(get().roomCustomPokemon, moves, get().roomCustomAbilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
-    overwriteCustomPokemonData: (pokemon) => {
-        set({ roomCustomPokemon: pokemon, needsBackup: true });
-        syncHomebrewToApi(pokemon, get().roomCustomMoves, get().roomCustomAbilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
-    overwriteCustomItemData: (items) => {
-        set({ roomCustomItems: items, needsBackup: true });
-        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, items);
-        saveHomebrewLocal(get());
-    },
-    overwriteCustomFormData: (forms) => {
-        const safeForms = forms.map((f) => ({
-            ...f,
-            swapStatuses: f.swapStatuses ?? false,
-            freshStatuses: f.freshStatuses ?? false,
-            wipeStatuses: f.wipeStatuses ?? false,
-            swapBuffs: f.swapBuffs ?? false,
-            swapDebuffs: f.swapDebuffs ?? false,
-            freshBuffs: f.freshBuffs ?? false,
-            freshDebuffs: f.freshDebuffs ?? false,
-            wipeBuffs: f.wipeBuffs ?? false,
-            wipeDebuffs: f.wipeDebuffs ?? false,
-            restoreHp: f.restoreHp ?? false,
-            restoreWill: f.restoreWill ?? false,
-            shareHighestHp: f.shareHighestHp ?? false,
-            shareHighestWill: f.shareHighestWill ?? false,
-            healHp: f.healHp ?? false,
-            healWill: f.healWill ?? false,
-            activationCostHp: f.activationCostHp ?? 0,
-            activationCostWill: f.activationCostWill ?? 0,
-            tempHp: f.tempHp ?? 0,
-            tempWill: f.tempWill ?? 0,
-            targetSpecies: f.targetSpecies ?? '',
-            grantedMoves: Array.isArray(f.grantedMoves) ? f.grantedMoves : []
-        }));
-        set({ roomCustomForms: safeForms, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    overwriteCustomStatusData: (statuses) => {
-        set({ roomCustomStatuses: statuses, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    overwriteCustomFieldEffectData: (effects) => {
-        set({ roomCustomFieldEffects: effects, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    overwriteAllHomebrewData: (types, abilities, moves, pokemon, items, forms, statuses, fieldEffects) => {
-        const safeForms = forms.map((f) => ({
-            ...f,
-            swapStatuses: f.swapStatuses ?? false,
-            freshStatuses: f.freshStatuses ?? false,
-            wipeStatuses: f.wipeStatuses ?? false,
-            swapBuffs: f.swapBuffs ?? false,
-            swapDebuffs: f.swapDebuffs ?? false,
-            freshBuffs: f.freshBuffs ?? false,
-            freshDebuffs: f.freshDebuffs ?? false,
-            wipeBuffs: f.wipeBuffs ?? false,
-            wipeDebuffs: f.wipeDebuffs ?? false,
-            restoreHp: f.restoreHp ?? false,
-            restoreWill: f.restoreWill ?? false,
-            shareHighestHp: f.shareHighestHp ?? false,
-            shareHighestWill: f.shareHighestWill ?? false,
-            healHp: f.healHp ?? false,
-            healWill: f.healWill ?? false,
-            activationCostHp: f.activationCostHp ?? 0,
-            activationCostWill: f.activationCostWill ?? 0,
-            tempHp: f.tempHp ?? 0,
-            tempWill: f.tempWill ?? 0,
-            targetSpecies: f.targetSpecies ?? '',
-            grantedMoves: Array.isArray(f.grantedMoves) ? f.grantedMoves : []
-        }));
-
-        set({
-            roomCustomTypes: types,
-            roomCustomAbilities: abilities,
-            roomCustomMoves: moves,
-            roomCustomPokemon: pokemon,
-            roomCustomItems: items,
-            roomCustomForms: safeForms,
-            roomCustomStatuses: statuses,
-            roomCustomFieldEffects: fieldEffects || get().roomCustomFieldEffects,
-            needsBackup: true
-        });
-        syncHomebrewToApi(pokemon, moves, abilities, items);
-        saveHomebrewLocal(get());
-
-        if (OBR.isAvailable) OBR.notification.show('[ ✓ ] Homebrew Workshop fully restored!', 'SUCCESS');
-    },
-
-    mergeCustomTypeData: (types) => {
-        const mergedTypes = [...get().roomCustomTypes];
-        types.forEach((customType) => {
-            const index = mergedTypes.findIndex(
-                (existing) => existing.name.toLowerCase() === customType.name.toLowerCase()
-            );
-            if (index !== -1) mergedTypes[index] = customType;
-            else mergedTypes.push(customType);
-        });
-        set({ roomCustomTypes: mergedTypes, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    mergeCustomAbilityData: (abilities) => {
-        const mergedAbilities = [...get().roomCustomAbilities];
-        abilities.forEach((ability) => {
-            const index = mergedAbilities.findIndex(
-                (existing) => existing.name.toLowerCase() === ability.name.toLowerCase()
-            );
-            if (index !== -1) mergedAbilities[index] = { ...ability, id: mergedAbilities[index].id };
-            else mergedAbilities.push({ ...ability, id: crypto.randomUUID() });
-        });
-        set({ roomCustomAbilities: mergedAbilities, needsBackup: true });
-        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, mergedAbilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
-    mergeCustomMoveData: (moves) => {
-        const mergedMoves = [...get().roomCustomMoves];
-        moves.forEach((move) => {
-            const index = mergedMoves.findIndex((existing) => existing.name.toLowerCase() === move.name.toLowerCase());
-            if (index !== -1) mergedMoves[index] = { ...move, id: mergedMoves[index].id };
-            else mergedMoves.push({ ...move, id: crypto.randomUUID() });
-        });
-        set({ roomCustomMoves: mergedMoves, needsBackup: true });
-        syncHomebrewToApi(get().roomCustomPokemon, mergedMoves, get().roomCustomAbilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
-    mergeCustomPokemonData: (pokemon) => {
-        const mergedPokemon = [...get().roomCustomPokemon];
-        pokemon.forEach((pokemonData) => {
-            const index = mergedPokemon.findIndex(
-                (existing) => existing.Name.toLowerCase() === pokemonData.Name.toLowerCase()
-            );
-            if (index !== -1) mergedPokemon[index] = { ...pokemonData, id: mergedPokemon[index].id };
-            else mergedPokemon.push({ ...pokemonData, id: crypto.randomUUID() });
-        });
-        set({ roomCustomPokemon: mergedPokemon, needsBackup: true });
-        syncHomebrewToApi(mergedPokemon, get().roomCustomMoves, get().roomCustomAbilities, get().roomCustomItems);
-        saveHomebrewLocal(get());
-    },
-    mergeCustomItemData: (items) => {
-        const mergedItems = [...get().roomCustomItems];
-        items.forEach((item) => {
-            const index = mergedItems.findIndex((existing) => existing.name.toLowerCase() === item.name.toLowerCase());
-            const guaranteedPocket = item.pocket || 'Misc';
-            const guaranteedCategory = item.category || 'Misc';
-            const guaranteedRarity = item.rarity || 'Uncommon';
-            if (index !== -1) {
-                mergedItems[index] = {
-                    ...item,
-                    id: mergedItems[index].id,
-                    pocket: guaranteedPocket,
-                    category: guaranteedCategory,
-                    rarity: guaranteedRarity
-                };
-            } else {
-                mergedItems.push({
-                    ...item,
-                    id: crypto.randomUUID(),
-                    pocket: guaranteedPocket,
-                    category: guaranteedCategory,
-                    rarity: guaranteedRarity
-                });
-            }
-        });
-        set({ roomCustomItems: mergedItems, needsBackup: true });
-        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, mergedItems);
-        saveHomebrewLocal(get());
-    },
-    mergeCustomFormData: (forms) => {
-        const mergedForms = [...get().roomCustomForms];
-        forms.forEach((form) => {
-            const index = mergedForms.findIndex((existing) => existing.name.toLowerCase() === form.name.toLowerCase());
-
-            const safeForm = {
-                ...form,
-                swapStatuses: form.swapStatuses ?? false,
-                freshStatuses: form.freshStatuses ?? false,
-                wipeStatuses: form.wipeStatuses ?? false,
-                swapBuffs: form.swapBuffs ?? false,
-                swapDebuffs: form.swapDebuffs ?? false,
-                freshBuffs: form.freshBuffs ?? false,
-                freshDebuffs: form.freshDebuffs ?? false,
-                wipeBuffs: form.wipeBuffs ?? false,
-                wipeDebuffs: form.wipeDebuffs ?? false,
-                restoreHp: form.restoreHp ?? false,
-                restoreWill: form.restoreWill ?? false,
-                shareHighestHp: form.shareHighestHp ?? false,
-                shareHighestWill: form.shareHighestWill ?? false,
-                healHp: form.healHp ?? false,
-                healWill: form.healWill ?? false,
-                activationCostHp: form.activationCostHp ?? 0,
-                activationCostWill: form.activationCostWill ?? 0,
-                tempHp: form.tempHp ?? 0,
-                tempWill: form.tempWill ?? 0,
-                targetSpecies: form.targetSpecies ?? '',
-                grantedMoves: Array.isArray(form.grantedMoves) ? form.grantedMoves : []
-            };
-
-            if (index !== -1) mergedForms[index] = { ...safeForm, id: mergedForms[index].id };
-            else mergedForms.push({ ...safeForm, id: crypto.randomUUID() });
-        });
-        set({ roomCustomForms: mergedForms, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    mergeCustomStatusData: (statuses) => {
-        const mergedStatuses = [...get().roomCustomStatuses];
-        statuses.forEach((status) => {
-            const index = mergedStatuses.findIndex(
-                (existing) => existing.name.toLowerCase() === status.name.toLowerCase()
-            );
-            if (index !== -1) mergedStatuses[index] = { ...status, id: mergedStatuses[index].id };
-            else mergedStatuses.push({ ...status, id: crypto.randomUUID() });
-        });
-        set({ roomCustomStatuses: mergedStatuses, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    mergeCustomFieldEffectData: (effects) => {
-        const mergedEffects = [...get().roomCustomFieldEffects];
-        effects.forEach((effect) => {
-            const index = mergedEffects.findIndex(
-                (existing) => existing.name.toLowerCase() === effect.name.toLowerCase()
-            );
-            if (index !== -1) mergedEffects[index] = { ...effect, id: mergedEffects[index].id };
-            else mergedEffects.push({ ...effect, id: crypto.randomUUID() });
-        });
-        set({ roomCustomFieldEffects: mergedEffects, needsBackup: true });
-        saveHomebrewLocal(get());
-    },
-    mergeAllHomebrewData: (types, abilities, moves, pokemon, items, forms, statuses, silent, fieldEffects) => {
-        const mergedTypes = [...get().roomCustomTypes];
-        types.forEach((customType) => {
-            const index = mergedTypes.findIndex(
-                (existing) => existing.name.toLowerCase() === customType.name.toLowerCase()
-            );
-            if (index !== -1) mergedTypes[index] = customType;
-            else mergedTypes.push(customType);
-        });
-
-        const mergedAbilities = [...get().roomCustomAbilities];
-        abilities.forEach((ability) => {
-            const index = mergedAbilities.findIndex(
-                (existing) => existing.name.toLowerCase() === ability.name.toLowerCase()
-            );
-            if (index !== -1) mergedAbilities[index] = { ...ability, id: mergedAbilities[index].id };
-            else mergedAbilities.push({ ...ability, id: crypto.randomUUID() });
-        });
-
-        const mergedMoves = [...get().roomCustomMoves];
-        moves.forEach((move) => {
-            const index = mergedMoves.findIndex((existing) => existing.name.toLowerCase() === move.name.toLowerCase());
-            if (index !== -1) mergedMoves[index] = { ...move, id: mergedMoves[index].id };
-            else mergedMoves.push({ ...move, id: crypto.randomUUID() });
-        });
-
-        const mergedPokemon = [...get().roomCustomPokemon];
-        pokemon.forEach((pokemonData) => {
-            const index = mergedPokemon.findIndex(
-                (existing) => existing.Name.toLowerCase() === pokemonData.Name.toLowerCase()
-            );
-            if (index !== -1) mergedPokemon[index] = { ...pokemonData, id: mergedPokemon[index].id };
-            else mergedPokemon.push({ ...pokemonData, id: crypto.randomUUID() });
-        });
-
-        const mergedItems = [...get().roomCustomItems];
-        items.forEach((item) => {
-            const index = mergedItems.findIndex((existing) => existing.name.toLowerCase() === item.name.toLowerCase());
-            const guaranteedPocket = item.pocket || 'Misc';
-            const guaranteedCategory = item.category || 'Misc';
-            const guaranteedRarity = item.rarity || 'Uncommon';
-            if (index !== -1) {
-                mergedItems[index] = {
-                    ...item,
-                    id: mergedItems[index].id,
-                    pocket: guaranteedPocket,
-                    category: guaranteedCategory,
-                    rarity: guaranteedRarity
-                };
-            } else {
-                mergedItems.push({
-                    ...item,
-                    id: crypto.randomUUID(),
-                    pocket: guaranteedPocket,
-                    category: guaranteedCategory,
-                    rarity: guaranteedRarity
-                });
-            }
-        });
-
-        const mergedForms = [...get().roomCustomForms];
-        forms.forEach((form) => {
-            const index = mergedForms.findIndex((existing) => existing.name.toLowerCase() === form.name.toLowerCase());
-
-            const safeForm = {
-                ...form,
-                swapStatuses: form.swapStatuses ?? false,
-                freshStatuses: form.freshStatuses ?? false,
-                wipeStatuses: form.wipeStatuses ?? false,
-                swapBuffs: form.swapBuffs ?? false,
-                swapDebuffs: form.swapDebuffs ?? false,
-                freshBuffs: form.freshBuffs ?? false,
-                freshDebuffs: form.freshDebuffs ?? false,
-                wipeBuffs: form.wipeBuffs ?? false,
-                wipeDebuffs: form.wipeDebuffs ?? false,
-                restoreHp: form.restoreHp ?? false,
-                restoreWill: form.restoreWill ?? false,
-                shareHighestHp: form.shareHighestHp ?? false,
-                shareHighestWill: form.shareHighestWill ?? false,
-                healHp: form.healHp ?? false,
-                healWill: form.healWill ?? false,
-                activationCostHp: form.activationCostHp ?? 0,
-                activationCostWill: form.activationCostWill ?? 0,
-                tempHp: form.tempHp ?? 0,
-                tempWill: form.tempWill ?? 0,
-                targetSpecies: form.targetSpecies ?? '',
-                grantedMoves: Array.isArray(form.grantedMoves) ? form.grantedMoves : []
-            };
-
-            if (index !== -1) mergedForms[index] = { ...safeForm, id: mergedForms[index].id };
-            else mergedForms.push({ ...safeForm, id: crypto.randomUUID() });
-        });
-
-        const mergedStatuses = [...get().roomCustomStatuses];
-        statuses.forEach((status) => {
-            const index = mergedStatuses.findIndex(
-                (existing) => existing.name.toLowerCase() === status.name.toLowerCase()
-            );
-            if (index !== -1) mergedStatuses[index] = { ...status, id: mergedStatuses[index].id };
-            else mergedStatuses.push({ ...status, id: crypto.randomUUID() });
-        });
-
-        const mergedFieldEffects = [...get().roomCustomFieldEffects];
-        if (fieldEffects && Array.isArray(fieldEffects)) {
-            fieldEffects.forEach((effect) => {
-                const index = mergedFieldEffects.findIndex(
-                    (existing) => existing.name.toLowerCase() === effect.name.toLowerCase()
-                );
-                if (index !== -1) mergedFieldEffects[index] = { ...effect, id: mergedFieldEffects[index].id };
-                else mergedFieldEffects.push({ ...effect, id: crypto.randomUUID() });
-            });
-        }
-
-        set({
-            roomCustomTypes: mergedTypes,
-            roomCustomAbilities: mergedAbilities,
-            roomCustomMoves: mergedMoves,
-            roomCustomPokemon: mergedPokemon,
-            roomCustomItems: mergedItems,
-            roomCustomForms: mergedForms,
-            roomCustomStatuses: mergedStatuses,
-            roomCustomFieldEffects: mergedFieldEffects,
-            needsBackup: true
-        });
-        syncHomebrewToApi(mergedPokemon, mergedMoves, mergedAbilities, mergedItems);
-        saveHomebrewLocal(get());
-
-        if (!silent && OBR.isAvailable)
-            OBR.notification.show('[ ✓ ] Homebrew Workshop successfully merged!', 'SUCCESS');
-    }
+    mergeCustomTypeData: (types) => mergeCustomTypeData(set, get, types),
+    mergeCustomAbilityData: (abilities) => mergeCustomAbilityData(set, get, abilities),
+    mergeCustomMoveData: (moves) => mergeCustomMoveData(set, get, moves),
+    mergeCustomPokemonData: (pokemon) => mergeCustomPokemonData(set, get, pokemon),
+    mergeCustomItemData: (items) => mergeCustomItemData(set, get, items),
+    mergeCustomFormData: (forms) => mergeCustomFormData(set, get, forms),
+    mergeCustomStatusData: (statuses) => mergeCustomStatusData(set, get, statuses),
+    mergeCustomFieldEffectData: (effects) => mergeCustomFieldEffectData(set, get, effects),
+    mergeAllHomebrewData: (types, abilities, moves, pokemon, items, forms, statuses, silent, fieldEffects) =>
+        mergeAllHomebrewData(set, get, types, abilities, moves, pokemon, items, forms, statuses, silent, fieldEffects)
 });
