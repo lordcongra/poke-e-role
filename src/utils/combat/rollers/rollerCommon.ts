@@ -3,6 +3,7 @@ import type { CharacterState } from '@/store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '@/types/enums';
 import { ATTRIBUTE_MAPPING, getStatusPenalties, calculateBaseInitiative } from '@/utils/combat/combatMath';
 import { isAbilitySuppressedByField, matchesTarget } from '@/utils/combat/abilityTargetingUtils';
+import { resolveCharacterSide } from '@/utils/combat/combatantSideUtils';
 import { STATS_META_ID } from '@/utils/graphics/graphicsManager';
 
 export function getCharacterNickname(state: CharacterState): string {
@@ -33,7 +34,9 @@ export function checkAsleepGuard(state: CharacterState, isSleepMove = false): bo
 }
 
 export function hasTailwindActive(state: CharacterState): boolean {
-    const side = state.identity.isNPC ? state.activeBattlefield?.foeSide : state.activeBattlefield?.playerSide;
+    const charSide = resolveCharacterSide(state);
+    if (charSide === 'none') return false;
+    const side = charSide === 'player' ? state.activeBattlefield?.playerSide : state.activeBattlefield?.foeSide;
     return Boolean(
         side?.forceFields?.some(
             (ff) =>

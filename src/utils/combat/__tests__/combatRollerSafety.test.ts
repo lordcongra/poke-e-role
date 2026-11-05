@@ -9,6 +9,7 @@ import {
     rollSkillCheck,
     rollGeneric
 } from '../combatRoller';
+import { hasTailwindActive } from '../rollers/rollerCommon';
 import type { MoveData, StatusItem, SkillCheck } from '@/store/storeTypes';
 import { CombatStat, Skill } from '@/types/enums';
 import { createDefaultBattlefield } from '@/components/modals/battleOrganizer/battleOrganizerUtils';
@@ -534,6 +535,71 @@ describe('combatRoller Safety Test Suite', () => {
                 '4d6>3',
                 expect.stringContaining('Furfrou rolled Defense! [ Ability: Fur Coat (-2 Phys Dmg Taken) ]')
             );
+        });
+    });
+
+    describe('hasTailwindActive', () => {
+        beforeEach(() => {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                localStorage.clear();
+            }
+        });
+
+        it('returns true for player character when Tailwind is active on playerSide', () => {
+            const bf = createDefaultBattlefield();
+            bf.playerSide.forceFields[0] = { name: 'Tailwind', remainingRounds: 3 };
+
+            const state = createTestCharacterState({
+                identity: { nickname: 'Pikachu', isNPC: false },
+                activeBattlefield: bf
+            });
+
+            expect(hasTailwindActive(state)).toBe(true);
+        });
+
+        it('returns false for player character when Tailwind is only active on foeSide', () => {
+            const bf = createDefaultBattlefield();
+            bf.foeSide.forceFields[0] = { name: 'Tailwind', remainingRounds: 3 };
+
+            const state = createTestCharacterState({
+                identity: { nickname: 'Pikachu', isNPC: false },
+                activeBattlefield: bf
+            });
+
+            expect(hasTailwindActive(state)).toBe(false);
+        });
+
+        it('returns true for foe character when Tailwind is active on foeSide', () => {
+            const bf = createDefaultBattlefield();
+            bf.foeSide.forceFields[0] = { name: 'Tailwind', remainingRounds: 3 };
+
+            const state = createTestCharacterState({
+                identity: { nickname: 'Zubat', isNPC: true },
+                activeBattlefield: bf
+            });
+
+            expect(hasTailwindActive(state)).toBe(true);
+        });
+
+        it('returns false when character resolves to "none" (non-combatant on bench)', () => {
+            localStorage.setItem(
+                'pkr_battle_organizer_data',
+                JSON.stringify({
+                    activeRoundIndex: 0,
+                    rounds: [{ combatants: [{ name: 'ActiveCharizard', isPlayerSide: true }] }]
+                })
+            );
+
+            const bf = createDefaultBattlefield();
+            bf.playerSide.forceFields[0] = { name: 'Tailwind', remainingRounds: 3 };
+
+            // Pikachu is not ActiveCharizard -> resolves to 'none'
+            const state = createTestCharacterState({
+                identity: { nickname: 'Pikachu', isNPC: false },
+                activeBattlefield: bf
+            });
+
+            expect(hasTailwindActive(state)).toBe(false);
         });
     });
 });

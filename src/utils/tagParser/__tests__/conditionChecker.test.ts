@@ -175,5 +175,116 @@ describe('conditionChecker', () => {
             expect(getBoostMultiplier('boost', 5, 1)).toBe(1);
         });
     });
+
+    describe('checkCondition: Battlefield & Side Isolation', () => {
+        beforeEach(() => {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                localStorage.clear();
+            }
+        });
+
+        it('evaluates Grassy Terrain condition true only for combatants on the side with Grassy Terrain', () => {
+            useCharacterStore.setState({
+                identity: {
+                    ...useCharacterStore.getState().identity,
+                    isNPC: false
+                },
+                activeBattlefield: {
+                    location: '',
+                    weather: { name: '', remainingRounds: 0 },
+                    terrain: { name: 'Grassy Terrain', remainingRounds: 4 },
+                    other: { name: '', remainingRounds: 0 },
+                    playerSide: {
+                        forceFields: [
+                            { name: 'Grassy Terrain', remainingRounds: 4 },
+                            { name: '', remainingRounds: 0 }
+                        ],
+                        entryHazard: '',
+                        cover: '',
+                        other: ''
+                    },
+                    foeSide: {
+                        forceFields: [
+                            { name: '', remainingRounds: 0 },
+                            { name: '', remainingRounds: 0 }
+                        ],
+                        entryHazard: '',
+                        cover: '',
+                        other: ''
+                    },
+                    playerTargets: '',
+                    foeTargets: '',
+                    highlightedSide: 'all'
+                }
+            });
+
+            // Player character has Grassy Terrain on playerSide
+            expect(checkCondition('grassy terrain', false)).toBe(true);
+
+            // Switch character to NPC (foe side)
+            useCharacterStore.setState({
+                identity: {
+                    ...useCharacterStore.getState().identity,
+                    isNPC: true
+                }
+            });
+            // Foe side does not have Grassy Terrain
+            expect(checkCondition('grassy terrain', false)).toBe(false);
+        });
+
+        it('forbids opposing side force fields from fulfilling local @ Condition tags', () => {
+            useCharacterStore.setState({
+                identity: {
+                    ...useCharacterStore.getState().identity,
+                    isNPC: false
+                },
+                activeBattlefield: {
+                    location: '',
+                    weather: { name: '', remainingRounds: 0 },
+                    terrain: { name: '', remainingRounds: 0 },
+                    other: { name: '', remainingRounds: 0 },
+                    playerSide: {
+                        forceFields: [
+                            { name: '', remainingRounds: 0 },
+                            { name: '', remainingRounds: 0 }
+                        ],
+                        entryHazard: '',
+                        cover: '',
+                        other: ''
+                    },
+                    foeSide: {
+                        forceFields: [
+                            { name: 'Reflect', remainingRounds: 3 },
+                            { name: '', remainingRounds: 0 }
+                        ],
+                        entryHazard: '',
+                        cover: '',
+                        other: ''
+                    },
+                    playerTargets: '',
+                    foeTargets: '',
+                    highlightedSide: 'all'
+                }
+            });
+
+            // Player sheet checking condition 'reflect' while only foe has Reflect
+            expect(checkCondition('reflect', false)).toBe(false);
+
+            // Give player Reflect
+            useCharacterStore.setState({
+                activeBattlefield: {
+                    ...useCharacterStore.getState().activeBattlefield!,
+                    playerSide: {
+                        ...useCharacterStore.getState().activeBattlefield!.playerSide,
+                        forceFields: [
+                            { name: 'Reflect', remainingRounds: 3 },
+                            { name: '', remainingRounds: 0 }
+                        ]
+                    }
+                }
+            });
+            expect(checkCondition('reflect', false)).toBe(true);
+        });
+    });
 });
 

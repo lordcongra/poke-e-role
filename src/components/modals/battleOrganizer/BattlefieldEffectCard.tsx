@@ -323,7 +323,7 @@ export function BattlefieldEffectCard({
                     }}
                 >
                     <Plus size={12} />
-                    <span>+ Add {addLabel}</span>
+                    <span>Add {addLabel}</span>
                 </button>
             </div>
 

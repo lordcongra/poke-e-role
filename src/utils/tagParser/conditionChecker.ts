@@ -1,5 +1,6 @@
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { getEffectsByCategory, getAllActiveFieldEffects } from '../combat/fieldEffectsData';
+import { useCharacterStore } from '@/store/useCharacterStore';
+import { getEffectsByCategory, getAllActiveFieldEffects } from '@/utils/combat/fieldEffectsData';
+import { resolveCharacterSide } from '@/utils/combat/combatantSideUtils';
 
 export const safeParseInt = (value: string | undefined): number => parseInt((value || '0').replace(/\s/g, ''), 10) || 0;
 
@@ -209,25 +210,27 @@ export function checkCondition(
             // Grassy Terrain (applies only to combatants on the side that has Grassy Terrain)
             if (cond === 'grassy terrain' || cond === 'grassy') {
                 try {
-                    const isNpc = useCharacterStore.getState().identity.isNPC;
-                    const side = isNpc ? activeBattlefield?.foeSide : activeBattlefield?.playerSide;
-                    const sideHasGrassy = Boolean(
-                        side?.forceFields?.some(
-                            (ff) =>
-                                (ff?.name || '').toLowerCase().includes('grassy') &&
-                                (ff.remainingRounds > 0 || ff.remainingRounds === -1)
-                        ) ||
-                        side?.extraForceFields?.some(
-                            (ff) =>
-                                (ff?.name || '').toLowerCase().includes('grassy') &&
-                                (ff.remainingRounds > 0 || ff.remainingRounds === -1)
-                        ) ||
-                        (side?.other || '').toLowerCase().includes('grassy') ||
-                        side?.extraOther?.some((o) => o.toLowerCase().includes('grassy')) ||
-                        (side?.entryHazard || '').toLowerCase().includes('grassy') ||
-                        side?.extraHazards?.some((h) => h.toLowerCase().includes('grassy'))
-                    );
-                    if (sideHasGrassy) return true;
+                    const charSide = resolveCharacterSide(useCharacterStore.getState());
+                    if (charSide !== 'none') {
+                        const side = charSide === 'player' ? activeBattlefield?.playerSide : activeBattlefield?.foeSide;
+                        const sideHasGrassy = Boolean(
+                            side?.forceFields?.some(
+                                (ff) =>
+                                    (ff?.name || '').toLowerCase().includes('grassy') &&
+                                    (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                            ) ||
+                            side?.extraForceFields?.some(
+                                (ff) =>
+                                    (ff?.name || '').toLowerCase().includes('grassy') &&
+                                    (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                            ) ||
+                            (side?.other || '').toLowerCase().includes('grassy') ||
+                            side?.extraOther?.some((o) => o.toLowerCase().includes('grassy')) ||
+                            (side?.entryHazard || '').toLowerCase().includes('grassy') ||
+                            side?.extraHazards?.some((h) => h.toLowerCase().includes('grassy'))
+                        );
+                        if (sideHasGrassy) return true;
+                    }
                 } catch {
                     if (terrainName.includes('grassy')) return true;
                 }
@@ -274,7 +277,11 @@ export function checkCondition(
 
         const allActiveEffects = getAllActiveFieldEffects(activeBattlefield);
         const customEffects = state.roomCustomFieldEffects || [];
+        const charSide = resolveCharacterSide(useCharacterStore.getState());
         for (const effect of allActiveEffects) {
+            if (effect.side && effect.side !== charSide) {
+                continue;
+            }
             const effName = (effect?.name || '').trim().toLowerCase();
             if (!effName) continue;
 

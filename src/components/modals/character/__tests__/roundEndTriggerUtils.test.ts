@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { findRoundEndTriggers } from '../roundEndTriggerUtils';
 import type { CharacterState, CharacterIdentity } from '../../../../store/storeTypes';
 import type { BattlefieldData } from '../../../../types/battleOrganizerTypes';
@@ -75,6 +75,11 @@ function createMockBattlefield(overrides: Partial<BattlefieldData> = {}): Battle
 }
 
 describe('findRoundEndTriggers', () => {
+    beforeEach(() => {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.clear();
+        }
+    });
     it('detects Burn (1st, 2nd, 3rd degree) and creates a checked 1 Damage trigger', () => {
         const state = createMockCharacterState({
             statuses: [{ id: 'b1', name: '1st Degree Burn', customName: '', rounds: 0 }]
@@ -315,5 +320,187 @@ describe('findRoundEndTriggers', () => {
         const triggers = findRoundEndTriggers(state);
         const leftoversTrigger = triggers.find((t) => t.itemId === 'item-inactive');
         expect(leftoversTrigger).toBeUndefined();
+    });
+
+    describe('Side-Based Battlefield & Gravity Hardening', () => {
+        it('applies Grassy Terrain heal when Grassy Terrain is active on playerSide for a player character', () => {
+            const battlefield = createMockBattlefield({
+                playerSide: {
+                    forceFields: [
+                        { name: 'Grassy Terrain', remainingRounds: 4 },
+                        { name: '', remainingRounds: 0 }
+                    ],
+                    entryHazard: '',
+                    cover: '',
+                    other: ''
+                }
+            });
+            const state = createMockCharacterState(
+                { activeBattlefield: battlefield },
+                { isNPC: false, type1: 'Normal' }
+            );
+
+            const triggers = findRoundEndTriggers(state);
+            const grassyTrigger = triggers.find((t) => t.source === 'Grassy Terrain');
+            expect(grassyTrigger).toBeDefined();
+            expect(grassyTrigger?.amount).toBe(1);
+            expect(grassyTrigger?.type).toBe('healHp');
+        });
+
+        it('does NOT apply Grassy Terrain heal when Grassy Terrain is only on foeSide for a player character', () => {
+            const battlefield = createMockBattlefield({
+                foeSide: {
+                    forceFields: [
+                        { name: 'Grassy Terrain', remainingRounds: 4 },
+                        { name: '', remainingRounds: 0 }
+                    ],
+                    entryHazard: '',
+                    cover: '',
+                    other: ''
+                }
+            });
+            const state = createMockCharacterState(
+                { activeBattlefield: battlefield },
+                { isNPC: false, type1: 'Normal' }
+            );
+
+            const triggers = findRoundEndTriggers(state);
+            const grassyTrigger = triggers.find((t) => t.source === 'Grassy Terrain');
+            expect(grassyTrigger).toBeUndefined();
+        });
+
+        it('excludes Flying-type airborne Pokémon from Grassy Terrain heal when Gravity is inactive', () => {
+            const battlefield = createMockBattlefield({
+                playerSide: {
+                    forceFields: [
+                        { name: 'Grassy Terrain', remainingRounds: 4 },
+                        { name: '', remainingRounds: 0 }
+                    ],
+                    entryHazard: '',
+                    cover: '',
+                    other: ''
+                }
+            });
+            const state = createMockCharacterState(
+                { activeBattlefield: battlefield },
+                { isNPC: false, type1: 'Flying' }
+            );
+
+            const triggers = findRoundEndTriggers(state);
+            const grassyTrigger = triggers.find((t) => t.source === 'Grassy Terrain');
+            expect(grassyTrigger).toBeUndefined();
+        });
+
+        it('allows Flying-type Pokémon to receive Grassy Terrain heal when Gravity is active', () => {
+            const battlefield = createMockBattlefield({
+                other: { name: 'Gravity', remainingRounds: 3 },
+                playerSide: {
+                    forceFields: [
+                        { name: 'Grassy Terrain', remainingRounds: 4 },
+                        { name: '', remainingRounds: 0 }
+                    ],
+                    entryHazard: '',
+                    cover: '',
+                    other: ''
+                }
+            });
+            const state = createMockCharacterState(
+                { activeBattlefield: battlefield },
+                { isNPC: false, type1: 'Flying' }
+            );
+
+            const triggers = findRoundEndTriggers(state);
+            const grassyTrigger = triggers.find((t) => t.source === 'Grassy Terrain');
+            expect(grassyTrigger).toBeDefined();
+            expect(grassyTrigger?.amount).toBe(1);
+        });
+
+        it('skips battlefield side triggers and weather damage for non-combatant sheets', () => {
+            // Set battle organizer in localStorage with combatants not including our Pikachu
+            localStorage.setItem(
+                'pkr_battle_organizer_data',
+                JSON.stringify({
+                    activeRoundIndex: 0,
+                    rounds: [{ combatants: [{ name: 'Charizard', isPlayerSide: true }] }]
+                })
+            );
+
+            const battlefield = createMockBattlefield({
+                weather: { name: 'Sandstorm', remainingRounds: 3 },
+                playerSide: {
+                    forceFields: [
+                        { name: 'Grassy Terrain', remainingRounds: 4 },
+                        { name: '', remainingRounds: 0 }
+                    ],
+                    entryHazard: '',
+                    cover: '',
+                    other: ''
+                }
+            });
+
+            // Pikachu is not Charizard -> side resolves to 'none'
+            const state = createMockCharacterState(
+                { activeBattlefield: battlefield },
+                { nickname: 'Pikachu', species: 'Pikachu', isNPC: false }
+            );
+
+            const triggers = findRoundEndTriggers(state);
+            expect(triggers.find((t) => t.source === 'Grassy Terrain')).toBeUndefined();
+            expect(triggers.find((t) => t.source === 'Sandstorm')).toBeUndefined();
+        });
+
+        it('respects side isolation on custom battlefield effects', () => {
+            const battlefield = createMockBattlefield();
+            const customEffects = [
+                {
+                    id: 'eff-1',
+                    name: 'Ally Ward',
+                    tags: '[Heal 1 HP Round End]',
+                    side: 'player' as const
+                }
+            ];
+
+            // Foe character should NOT trigger Ally Ward
+            const foeState = createMockCharacterState(
+                {
+                    activeBattlefield: {
+                        ...battlefield,
+                        playerSide: {
+                            ...battlefield.playerSide,
+                            forceFields: [
+                                { name: 'Ally Ward', remainingRounds: 3 },
+                                { name: '', remainingRounds: 0 }
+                            ]
+                        }
+                    },
+                    roomCustomFieldEffects: customEffects as any
+                },
+                { isNPC: true }
+            );
+
+            const foeTriggers = findRoundEndTriggers(foeState);
+            expect(foeTriggers.find((t) => t.source === 'Ally Ward')).toBeUndefined();
+
+            // Player character DOES trigger Ally Ward
+            const playerState = createMockCharacterState(
+                {
+                    activeBattlefield: {
+                        ...battlefield,
+                        playerSide: {
+                            ...battlefield.playerSide,
+                            forceFields: [
+                                { name: 'Ally Ward', remainingRounds: 3 },
+                                { name: '', remainingRounds: 0 }
+                            ]
+                        }
+                    },
+                    roomCustomFieldEffects: customEffects as any
+                },
+                { isNPC: false }
+            );
+
+            const playerTriggers = findRoundEndTriggers(playerState);
+            expect(playerTriggers.find((t) => t.source === 'Ally Ward')).toBeDefined();
+        });
     });
 });

@@ -161,6 +161,15 @@ export function resolveCombatantRoundTriggers(
         return n.includes('snow') || n.includes('hail');
     });
 
+    const isGravityActive = Boolean(
+        battlefield &&
+        ((battlefield.other?.name?.toLowerCase().includes('gravity') &&
+            (battlefield.other.remainingRounds > 0 || battlefield.other.remainingRounds === -1)) ||
+            battlefield.extraOther?.some(
+                (o) => o.name?.toLowerCase().includes('gravity') && (o.remainingRounds > 0 || o.remainingRounds === -1)
+            ))
+    );
+
     // Sort combatants in initiative order (descending hierarchy: total, base, tiebreaker)
     const sorted = [...combatants].sort(compareCombatantsByInitiative);
 
@@ -338,8 +347,8 @@ export function resolveCombatantRoundTriggers(
             );
 
             if (sideHasGrassy) {
-                if (cleanTypes.includes('flying')) {
-                    // Flying type is airborne -> not grounded
+                if (cleanTypes.includes('flying') && !isGravityActive) {
+                    // Flying type is airborne -> not grounded (unless Gravity is active)
                 } else {
                     reasons.push('Grassy Terrain (+1 HP)');
                     healSum += 1;
@@ -400,7 +409,7 @@ export function resolveCombatantRoundTriggers(
                 if (c.hpCurr !== undefined && c.hpMax !== undefined && c.hpCurr >= c.hpMax) {
                     healingIneligibleReason = 'Full HP';
                 }
-            } else if (sideHasGrassy && cleanTypes.includes('flying')) {
+            } else if (sideHasGrassy && cleanTypes.includes('flying') && !isGravityActive) {
                 hasHealingTrigger = true;
                 isHealingIneligible = true;
                 healingIneligibleReason = 'Airborne (Flying)';

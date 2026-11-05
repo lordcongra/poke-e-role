@@ -1,10 +1,11 @@
-import type { CharacterState } from '../../../store/storeTypes';
-import { checkCondition } from '../../../utils/tagParser/conditionChecker';
-import { getAbilityText } from '../../../utils/combat/combatUtils';
-import { getAllActiveFieldEffects, getEffectsByCategory } from '../../../utils/combat/fieldEffectsData';
-import { getKnownAbility } from '../../../data/abilities/knownAbilities';
-import { KNOWN_ITEMS } from '../../../data/constants';
-import { getItemEffectiveCharges } from '../../../utils/items/itemCharges';
+import type { CharacterState } from '@/store/storeTypes';
+import { checkCondition } from '@/utils/tagParser/conditionChecker';
+import { getAbilityText } from '@/utils/combat/combatUtils';
+import { getAllActiveFieldEffects, getEffectsByCategory } from '@/utils/combat/fieldEffectsData';
+import { getKnownAbility } from '@/data/abilities/knownAbilities';
+import { KNOWN_ITEMS } from '@/data/constants';
+import { getItemEffectiveCharges } from '@/utils/items/itemCharges';
+import { resolveCharacterSide } from '@/utils/combat/combatantSideUtils';
 
 export interface RoundEndTrigger {
     id: string;
@@ -254,90 +255,108 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
 
     // 5. Inspect Active Grassy Terrain for character's side: In Pokerole, Grassy Terrain healing (+1 HP) ONLY applies to the side it is on
     if (state.activeBattlefield) {
-        const side = state.identity.isNPC ? state.activeBattlefield.foeSide : state.activeBattlefield.playerSide;
-        const sideHasGrassy = Boolean(
-            side?.forceFields?.some(
-                (ff) =>
-                    (ff?.name || '').toLowerCase().includes('grassy') &&
-                    (ff.remainingRounds > 0 || ff.remainingRounds === -1)
-            ) ||
-            side?.extraForceFields?.some(
-                (ff) =>
-                    (ff?.name || '').toLowerCase().includes('grassy') &&
-                    (ff.remainingRounds > 0 || ff.remainingRounds === -1)
-            ) ||
-            (side?.other || '').toLowerCase().includes('grassy') ||
-            side?.extraOther?.some((o) => o.toLowerCase().includes('grassy')) ||
-            (side?.entryHazard || '').toLowerCase().includes('grassy') ||
-            side?.extraHazards?.some((h) => h.toLowerCase().includes('grassy'))
-        );
+        const charSide = resolveCharacterSide(state);
+        if (charSide !== 'none') {
+            const side = charSide === 'player' ? state.activeBattlefield.playerSide : state.activeBattlefield.foeSide;
+            const sideHasGrassy = Boolean(
+                side?.forceFields?.some(
+                    (ff) =>
+                        (ff?.name || '').toLowerCase().includes('grassy') &&
+                        (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                ) ||
+                side?.extraForceFields?.some(
+                    (ff) =>
+                        (ff?.name || '').toLowerCase().includes('grassy') &&
+                        (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                ) ||
+                (side?.other || '').toLowerCase().includes('grassy') ||
+                side?.extraOther?.some((o) => o.toLowerCase().includes('grassy')) ||
+                (side?.entryHazard || '').toLowerCase().includes('grassy') ||
+                side?.extraHazards?.some((h) => h.toLowerCase().includes('grassy'))
+            );
 
-        if (sideHasGrassy) {
-            triggers.push({
-                id: 'grassy-terrain-heal-side',
-                source: 'Grassy Terrain',
-                type: 'healHp',
-                amount: 1,
-                promptText: 'Grassy Terrain (Active): Restore 1 HP?',
-                conditionText: 'Grassy Terrain',
-                checked: true
-            });
-        }
-
-        // Active Weather Damage (Sandstorm, Hail)
-        const activeWeathers = getEffectsByCategory(state.activeBattlefield, 'weather');
-        const hasSandstorm = activeWeathers.some((w) => (w.name || '').toLowerCase().includes('sand'));
-        const hasHail = activeWeathers.some((w) => (w.name || '').toLowerCase().includes('hail'));
-
-        if (hasSandstorm || hasHail) {
             const types = [state.identity.type1, state.identity.type2].filter(Boolean);
             const cleanTypes = types.map((t) => t.toLowerCase());
-            const abilityLower = (state.identity.ability || '').trim().toLowerCase();
-            const abilityActive = state.identity.abilityActive ?? true;
 
-            let fullAbilityTags = `${state.identity.abilityTags || ''} ${getAbilityText(state.identity.ability || '', state.roomCustomAbilities)}`.trim();
-            const known = getKnownAbility(state.identity.ability || '');
-            if (known) {
-                fullAbilityTags = `${fullAbilityTags} ${known.tags}`.trim();
-            }
+            const isGravityActive = Boolean(
+                (state.activeBattlefield.other?.name?.toLowerCase().includes('gravity') &&
+                    (state.activeBattlefield.other.remainingRounds > 0 ||
+                        state.activeBattlefield.other.remainingRounds === -1)) ||
+                state.activeBattlefield.extraOther?.some(
+                    (o) =>
+                        o.name?.toLowerCase().includes('gravity') &&
+                        (o.remainingRounds > 0 || o.remainingRounds === -1)
+                )
+            );
 
-            if (hasSandstorm) {
-                const isImmuneType = cleanTypes.some((t) => ['rock', 'ground', 'steel'].includes(t));
-                const isImmuneAbility =
-                    abilityActive &&
-                    (['sand rush', 'sand force', 'overcoat', 'magic guard'].includes(abilityLower) ||
-                        /immune:\s*(?:weather\s*dmg|sandstorm)/i.test(fullAbilityTags));
-
-                if (!isImmuneType && !isImmuneAbility) {
+            if (sideHasGrassy) {
+                const isAirborne = cleanTypes.includes('flying') && !isGravityActive;
+                if (!isAirborne) {
                     triggers.push({
-                        id: 'weather-sandstorm-dmg',
-                        source: 'Sandstorm',
-                        type: 'damageHp',
+                        id: 'grassy-terrain-heal-side',
+                        source: 'Grassy Terrain',
+                        type: 'healHp',
                         amount: 1,
-                        promptText: 'Sandstorm: Suffer 1 Damage?',
-                        conditionText: 'Sandstorm',
+                        promptText: 'Grassy Terrain (Active): Restore 1 HP?',
+                        conditionText: 'Grassy Terrain',
                         checked: true
                     });
                 }
             }
 
-            if (hasHail) {
-                const isImmuneType = cleanTypes.includes('ice');
-                const isImmuneAbility =
-                    abilityActive &&
-                    (['overcoat', 'magic guard', 'ice body'].includes(abilityLower) ||
-                        /immune:\s*(?:weather\s*dmg|hail)/i.test(fullAbilityTags));
+            // Active Weather Damage (Sandstorm, Hail)
+            const activeWeathers = getEffectsByCategory(state.activeBattlefield, 'weather');
+            const hasSandstorm = activeWeathers.some((w) => (w.name || '').toLowerCase().includes('sand'));
+            const hasHail = activeWeathers.some((w) => (w.name || '').toLowerCase().includes('hail'));
 
-                if (!isImmuneType && !isImmuneAbility) {
-                    triggers.push({
-                        id: 'weather-hail-dmg',
-                        source: 'Hail',
-                        type: 'damageHp',
-                        amount: 1,
-                        promptText: 'Hail: Suffer 1 Damage?',
-                        conditionText: 'Hail',
-                        checked: true
-                    });
+            if (hasSandstorm || hasHail) {
+                const abilityLower = (state.identity.ability || '').trim().toLowerCase();
+                const abilityActive = state.identity.abilityActive ?? true;
+
+                let fullAbilityTags = `${state.identity.abilityTags || ''} ${getAbilityText(state.identity.ability || '', state.roomCustomAbilities)}`.trim();
+                const known = getKnownAbility(state.identity.ability || '');
+                if (known) {
+                    fullAbilityTags = `${fullAbilityTags} ${known.tags}`.trim();
+                }
+
+                if (hasSandstorm) {
+                    const isImmuneType = cleanTypes.some((t) => ['rock', 'ground', 'steel'].includes(t));
+                    const isImmuneAbility =
+                        abilityActive &&
+                        (['sand rush', 'sand force', 'overcoat', 'magic guard'].includes(abilityLower) ||
+                            /immune:\s*(?:weather\s*dmg|sandstorm)/i.test(fullAbilityTags));
+
+                    if (!isImmuneType && !isImmuneAbility) {
+                        triggers.push({
+                            id: 'weather-sandstorm-dmg',
+                            source: 'Sandstorm',
+                            type: 'damageHp',
+                            amount: 1,
+                            promptText: 'Sandstorm: Suffer 1 Damage?',
+                            conditionText: 'Sandstorm',
+                            checked: true
+                        });
+                    }
+                }
+
+                if (hasHail) {
+                    const isImmuneType = cleanTypes.includes('ice');
+                    const isImmuneAbility =
+                        abilityActive &&
+                        (['overcoat', 'magic guard', 'ice body'].includes(abilityLower) ||
+                            /immune:\s*(?:weather\s*dmg|hail)/i.test(fullAbilityTags));
+
+                    if (!isImmuneType && !isImmuneAbility) {
+                        triggers.push({
+                            id: 'weather-hail-dmg',
+                            source: 'Hail',
+                            type: 'damageHp',
+                            amount: 1,
+                            promptText: 'Hail: Suffer 1 Damage?',
+                            conditionText: 'Hail',
+                            checked: true
+                        });
+                    }
                 }
             }
         }
@@ -345,14 +364,20 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
 
     // 6. Inspect tags on all active custom field effects
     if (state.activeBattlefield && state.roomCustomFieldEffects) {
-        const allActive = getAllActiveFieldEffects(state.activeBattlefield);
-        allActive.forEach((activeItem) => {
-            const cleanName = activeItem.name.trim().toLowerCase();
-            const customDef = state.roomCustomFieldEffects.find((c) => c.name.trim().toLowerCase() === cleanName);
-            if (customDef && customDef.tags) {
-                inspectText(customDef.name, customDef.tags, true);
-            }
-        });
+        const charSide = resolveCharacterSide(state);
+        if (charSide !== 'none') {
+            const allActive = getAllActiveFieldEffects(state.activeBattlefield);
+            allActive.forEach((activeItem) => {
+                if (activeItem.side && activeItem.side !== charSide) {
+                    return;
+                }
+                const cleanName = activeItem.name.trim().toLowerCase();
+                const customDef = state.roomCustomFieldEffects.find((c) => c.name.trim().toLowerCase() === cleanName);
+                if (customDef && customDef.tags) {
+                    inspectText(customDef.name, customDef.tags, true);
+                }
+            });
+        }
     }
 
     // 7. Inspect Ignored Pain (Scene-End Reset Option)

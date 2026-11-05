@@ -128,3 +128,27 @@ export function applyForceFieldToSide(
     }
     return updated;
 }
+
+/**
+ * Removes all instances of a Force Field matching effectName from a Battlefield Side.
+ * Clears matches in base slots (setting remainingRounds: 0, name: '') and filters them from extraForceFields.
+ */
+export function removeForceFieldFromSide(
+    side: BattlefieldSideData,
+    effectName: string
+): BattlefieldSideData {
+    const cleanTarget = effectName.toLowerCase().trim();
+    const updated = { ...side };
+    const forceFields = updated.forceFields.map((f) =>
+        f.name.toLowerCase().trim() === cleanTarget || f.name.toLowerCase().includes(cleanTarget)
+            ? { name: '', remainingRounds: 0 }
+            : f
+    ) as [BattleOrganizerTimerEffect, BattleOrganizerTimerEffect];
+    updated.forceFields = forceFields;
+    if (updated.extraForceFields && updated.extraForceFields.length > 0) {
+        updated.extraForceFields = updated.extraForceFields.filter(
+            (f) => !f.name.toLowerCase().trim().includes(cleanTarget)
+        );
+    }
+    return updated;
+}

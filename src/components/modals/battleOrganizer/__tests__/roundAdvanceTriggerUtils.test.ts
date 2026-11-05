@@ -134,6 +134,57 @@ describe('roundAdvanceTriggerUtils', () => {
             expect(triggers[0].healingAmount).toBe(2);
             expect(triggers[0].healingReason).toContain('Round End Tag (+2 HP)');
         });
+
+        it('marks Flying-type combatant as Airborne under Grassy Terrain alone', () => {
+            const bf = createDefaultBattlefield();
+            bf.playerSide.forceFields[0] = { name: 'Grassy Terrain', remainingRounds: 4 };
+
+            const charMap = new Map<string, CombatantCharacterData>([
+                [
+                    'pidgeot',
+                    {
+                        types: ['Normal', 'Flying'],
+                        ability: 'Keen Eye',
+                        abilityActive: true,
+                        abilityTags: ''
+                    }
+                ]
+            ]);
+
+            const c = createMockCombatant({ name: 'Pidgeot', hpCurr: 5, hpMax: 10, isPlayerSide: true });
+            const triggers = resolveCombatantRoundTriggers([c], bf, charMap);
+
+            expect(triggers[0].hasHealingTrigger).toBe(true);
+            expect(triggers[0].isHealingIneligible).toBe(true);
+            expect(triggers[0].healingIneligibleReason).toBe('Airborne (Flying)');
+            expect(triggers[0].healingAmount).toBe(0);
+        });
+
+        it('allows Flying-type combatant to receive Grassy Terrain heal when Gravity is active', () => {
+            const bf = createDefaultBattlefield();
+            bf.playerSide.forceFields[0] = { name: 'Grassy Terrain', remainingRounds: 4 };
+            bf.other = { name: 'Gravity', remainingRounds: 3 };
+
+            const charMap = new Map<string, CombatantCharacterData>([
+                [
+                    'pidgeot',
+                    {
+                        types: ['Normal', 'Flying'],
+                        ability: 'Keen Eye',
+                        abilityActive: true,
+                        abilityTags: ''
+                    }
+                ]
+            ]);
+
+            const c = createMockCombatant({ name: 'Pidgeot', hpCurr: 5, hpMax: 10, isPlayerSide: true });
+            const triggers = resolveCombatantRoundTriggers([c], bf, charMap);
+
+            expect(triggers[0].hasHealingTrigger).toBe(true);
+            expect(triggers[0].isHealingIneligible).toBe(false);
+            expect(triggers[0].healingAmount).toBe(1);
+            expect(triggers[0].healingReason).toBe('Grassy Terrain (+1 HP)');
+        });
     });
 
     describe('Status preservation across round advance', () => {

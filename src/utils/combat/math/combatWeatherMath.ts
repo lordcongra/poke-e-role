@@ -140,17 +140,18 @@ export function getWeatherDamageBonus(
         }
     }
 
+    let currentState = state;
+    if (!currentState) {
+        try {
+            currentState = useCharacterStore.getState();
+        } catch {
+            currentState = undefined;
+        }
+    }
+    const resolvedSide = currentState ? resolveCharacterSide(currentState) : (isNPC ? 'foe' : 'player');
+
     // Side Grassy Terrain check: In Pokerole, Grassy Terrain (+1 Grass Damage) ONLY applies to the side it is on
     if (cleanType === 'grass' && battlefield) {
-        let currentState = state;
-        if (!currentState) {
-            try {
-                currentState = useCharacterStore.getState();
-            } catch {
-                currentState = undefined;
-            }
-        }
-        const resolvedSide = currentState ? resolveCharacterSide(currentState) : (isNPC ? 'foe' : 'player');
         const side =
             resolvedSide === 'foe'
                 ? battlefield.foeSide
@@ -187,6 +188,7 @@ export function getWeatherDamageBonus(
         if (customEffects && Array.isArray(customEffects)) {
             const allActive = getAllActiveFieldEffects(battlefield);
             for (const activeItem of allActive) {
+                if (activeItem.side && activeItem.side !== resolvedSide) continue;
                 const cleanActiveName = activeItem.name.trim().toLowerCase();
                 const customDef = customEffects.find((c) => c.name.trim().toLowerCase() === cleanActiveName);
                 if (customDef && customDef.tags) {

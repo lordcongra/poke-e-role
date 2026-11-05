@@ -4,7 +4,7 @@ import { BattlefieldPitch } from './BattlefieldPitch';
 import { BattlefieldEffectCard } from './BattlefieldEffectCard';
 import { BattlefieldSidePanel } from './BattlefieldSidePanel';
 import { GrassyTerrainSideModal, type GrassySideChoice } from './GrassyTerrainSideModal';
-import { applyForceFieldToSide } from './battlefieldPresetUtils';
+import { applyForceFieldToSide, removeForceFieldFromSide } from './battlefieldPresetUtils';
 import type {
     BattlefieldData,
     BattleOrganizerTimerEffect,
@@ -65,6 +65,60 @@ export function BattlefieldSection({
         if (sideChoice === 'foe' || sideChoice === 'both') {
             const updated = applyForceFieldToSide(battlefield.foeSide, 'Grassy Terrain', rounds);
             updateBattlefield('foeSide', updated);
+        }
+    };
+
+    const cleanupGrassyForceFields = () => {
+        const hasGrassy = (side: typeof battlefield.playerSide) =>
+            side.forceFields.some((f) => f.name.toLowerCase().includes('grassy')) ||
+            side.extraForceFields?.some((f) => f.name.toLowerCase().includes('grassy'));
+
+        if (hasGrassy(battlefield.playerSide)) {
+            const updated = removeForceFieldFromSide(battlefield.playerSide, 'grassy');
+            updateBattlefield('playerSide', updated);
+        }
+        if (hasGrassy(battlefield.foeSide)) {
+            const updated = removeForceFieldFromSide(battlefield.foeSide, 'grassy');
+            updateBattlefield('foeSide', updated);
+        }
+    };
+
+    const handleTerrainNameChange = (val: string) => {
+        const prevIsGrassy = (battlefield.terrain?.name || '').toLowerCase().includes('grassy');
+        const newIsGrassy = val.toLowerCase().includes('grassy');
+        updateBattlefieldTerrain('name', val);
+        if (prevIsGrassy && !newIsGrassy) {
+            const extraHasGrassy = battlefield.extraTerrains?.some(
+                (t) => (t.name || '').toLowerCase().includes('grassy') && (t.remainingRounds > 0 || t.remainingRounds === -1)
+            );
+            if (!extraHasGrassy) {
+                cleanupGrassyForceFields();
+            }
+        }
+    };
+
+    const handleTerrainRoundsChange = (val: number) => {
+        updateBattlefieldTerrain('remainingRounds', val);
+        if (val === 0 && (battlefield.terrain?.name || '').toLowerCase().includes('grassy')) {
+            const extraHasGrassy = battlefield.extraTerrains?.some(
+                (t) => (t.name || '').toLowerCase().includes('grassy') && (t.remainingRounds > 0 || t.remainingRounds === -1)
+            );
+            if (!extraHasGrassy) {
+                cleanupGrassyForceFields();
+            }
+        }
+    };
+
+    const handleTerrainExtrasChange = (extras: BattleOrganizerTimerEffect[]) => {
+        updateBattlefield('extraTerrains', extras);
+        const mainHasGrassy =
+            (battlefield.terrain?.name || '').toLowerCase().includes('grassy') &&
+            (battlefield.terrain?.remainingRounds > 0 || battlefield.terrain?.remainingRounds === -1);
+        const extrasHaveGrassy = extras.some(
+            (t) => (t.name || '').toLowerCase().includes('grassy') && (t.remainingRounds > 0 || t.remainingRounds === -1)
+        );
+        if (!mainHasGrassy && !extrasHaveGrassy) {
+            cleanupGrassyForceFields();
         }
     };
 
@@ -151,10 +205,10 @@ export function BattlefieldSection({
                                     icon={<Mountain size={14} />}
                                     value={battlefield.terrain?.name ?? ''}
                                     remainingRounds={battlefield.terrain?.remainingRounds ?? 0}
-                                    onChangeName={(val) => updateBattlefieldTerrain('name', val)}
-                                    onChangeRounds={(val) => updateBattlefieldTerrain('remainingRounds', val)}
+                                    onChangeName={handleTerrainNameChange}
+                                    onChangeRounds={handleTerrainRoundsChange}
                                     extraEffects={battlefield.extraTerrains ?? []}
-                                    onChangeExtras={(extras) => updateBattlefield('extraTerrains', extras)}
+                                    onChangeExtras={handleTerrainExtrasChange}
                                     category="terrain"
                                     placeholder="e.g. Electric Terrain, Grassy Terrain..."
                                     onTriggerGrassyModal={() => setIsGrassyModalOpen(true)}
