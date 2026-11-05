@@ -592,6 +592,13 @@ export interface IdentitySlice {
     identity: CharacterIdentity;
 
     setIdentity: <K extends keyof IdentitySlice['identity']>(field: K, value: IdentitySlice['identity'][K]) => void;
+    setPrintConfig: (config: Partial<PrintConfig>) => void;
+    setTokenData: (tokenId: string, role: 'GM' | 'PLAYER') => void;
+    applyLearnset: (data: Record<string, unknown>) => void;
+    setPendingDemoRoll: (rollData: PendingDemoRoll | null) => void;
+}
+
+export interface PokedexSlice {
     setPokedexEntry: (name: string, entry: Partial<TrainerPokedexEntry> | null) => void;
     addPokedexEntry: (name: string, entry?: Partial<TrainerPokedexEntry>) => void;
     removePokedexEntry: (name: string) => void;
@@ -599,6 +606,9 @@ export interface IdentitySlice {
     togglePokedexCaught: (name: string) => void;
     togglePokedexShiny: (name: string) => void;
     setPokedexBall: (name: string, ball: string | undefined) => void;
+}
+
+export interface RoomSettingsSlice {
     applyRoomSettings: (settings: Partial<RoomSettings>) => void;
     updateRoomSetting: <K extends keyof RoomSettings>(field: K, value: RoomSettings[K]) => void;
     setIsInitiativeActive: (active: boolean) => void;
@@ -606,10 +616,6 @@ export interface IdentitySlice {
     updateSceneScale: (scale: number | null) => void;
     setSceneOffsets: (x: number | null, y: number | null) => void;
     updateSceneOffsets: (x: number | null, y: number | null) => void;
-    setPrintConfig: (config: Partial<PrintConfig>) => void;
-    setTokenData: (tokenId: string, role: 'GM' | 'PLAYER') => void;
-    applyLearnset: (data: Record<string, unknown>) => void;
-    setPendingDemoRoll: (rollData: PendingDemoRoll | null) => void;
 }
 
 export interface RoomSettings {
@@ -675,6 +681,8 @@ export interface CharacterState
         ExtraSkillsSlice,
         GeneratorSlice,
         IdentitySlice,
+        RoomSettingsSlice,
+        PokedexSlice,
         MacroSlice,
         SyncSlice,
         PcSlice {}

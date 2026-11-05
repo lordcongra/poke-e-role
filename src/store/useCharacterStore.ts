@@ -10,6 +10,8 @@ import { createHomebrewSlice } from './slices/homebrewSlice';
 import { createExtraSkillsSlice } from './slices/extraSkillsSlice';
 import { createGeneratorSlice } from './slices/generatorSlice';
 import { createIdentitySlice } from './slices/identitySlice';
+import { createRoomSettingsSlice } from './slices/roomSettingsSlice';
+import { createPokedexSlice } from './slices/pokedexSlice';
 import { createMacroSlice } from './slices/macroSlice';
 import { createSyncSlice } from './slices/syncSlice';
 import { createPcSlice } from './slices/pcSlice';
@@ -64,6 +66,8 @@ export const useCharacterStore = create<CharacterState>()(
             ...createExtraSkillsSlice(set, get, api),
             ...createGeneratorSlice(set, get, api),
             ...createIdentitySlice(set, get, api),
+            ...createRoomSettingsSlice(set, get, api),
+            ...createPokedexSlice(set, get, api),
             ...createMacroSlice(set, get, api),
             ...createSyncSlice(set, get, api),
             ...createPcSlice(set, get, api)
