@@ -60,8 +60,9 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (id.previousNativeAbility !== undefined && id.previousNativeAbility !== '')
                 flatMetadata['previous-native-ability'] = id.previousNativeAbility;
             if (id.type1 !== undefined && id.type1 !== '') flatMetadata['type1'] = id.type1;
-            if (id.type2 !== undefined && id.type2 !== '' && id.type2.toLowerCase() !== 'none')
-                flatMetadata['type2'] = id.type2;
+            if (id.type2 !== undefined) {
+                flatMetadata['type2'] = id.type2 && id.type2.toLowerCase() !== 'none' ? id.type2 : '';
+            }
             if (id.mode !== undefined && id.mode !== '') flatMetadata['mode'] = id.mode;
             if (id.rank !== undefined) flatMetadata['rank'] = id.rank;
             if (id.age !== undefined && id.age !== '') flatMetadata['age'] = id.age;

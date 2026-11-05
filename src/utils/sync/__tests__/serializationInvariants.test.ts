@@ -2242,4 +2242,24 @@ it('battleOrganizer: combatants are never automatically deleted from organizer w
     assert.equal(pika.abilityChoiceIndex, 1, 'abilityChoiceIndex preserved');
     assert.ok(parsed.rounds[0].combatants.some((c: any) => c.id === 'c-trainer-mon'), 'Player combatant remains in organizer');
 });
+
+it('Explicitly serializes type2 as empty string when empty or none for shallow delta merge invariant', () => {
+    const stateEmptyType2 = createTestCharacterState({
+        identity: { type1: 'Water', type2: '' } as any
+    });
+    const metaEmpty = flattenStateToMetadata(stateEmptyType2);
+    assert.equal(metaEmpty['type2'], '', 'type2 explicitly serializes as empty string when empty');
+
+    const stateNoneType2 = createTestCharacterState({
+        identity: { type1: 'Water', type2: 'none' } as any
+    });
+    const metaNone = flattenStateToMetadata(stateNoneType2);
+    assert.equal(metaNone['type2'], '', 'type2 explicitly serializes as empty string when "none"');
+
+    const stateValType2 = createTestCharacterState({
+        identity: { type1: 'Water', type2: 'Dark' } as any
+    });
+    const metaVal = flattenStateToMetadata(stateValType2);
+    assert.equal(metaVal['type2'], 'Dark', 'type2 serializes as "Dark" when provided');
+});
 });

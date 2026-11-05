@@ -20,6 +20,7 @@ import {
 import { parseCombatTags, isStatOrSkillMatch } from '../tagParser/index';
 import { rollDicePlus } from './diceRoller';
 import { isTargetAffectedByAbility, isAbilitySuppressedByField, matchesTarget } from './abilityTargetingUtils';
+import { shouldShiftTypeForAbility } from './proteanLiberoUtils';
 import { resolveCharacterSide } from './combatantSideUtils';
 import { STATS_META_ID } from '../graphics/graphicsManager';
 
@@ -250,6 +251,20 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
 
     const chancesUsed = state.trackers.chances;
     const tags: string[] = [];
+
+    const typeShift = shouldShiftTypeForAbility(
+        state.identity.ability,
+        state.identity.abilityActive !== false,
+        move.category,
+        move.type,
+        state.identity.type1,
+        state.identity.type2
+    );
+    if (typeShift.shouldShift) {
+        useCharacterStore.getState().setIdentity('type1', typeShift.newType);
+        useCharacterStore.getState().setIdentity('type2', '');
+        tags.push(`Ability: ${typeShift.matchedAbility}`);
+    }
 
     if (boostAccTag) tags.push(boostAccTag);
 

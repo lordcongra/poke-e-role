@@ -7,6 +7,7 @@ import { TagPillList } from '../ui/TagPillList';
 import { extractTagsFromText } from '../modals/items/tagBuilder/tagBuilderLogic';
 import { PressureDrainModal } from '../modals/combat/PressureDrainModal';
 import { CuriousMedicineModal } from '../modals/combat/CuriousMedicineModal';
+import { AbilityTypeResetSection } from './AbilityTypeResetSection';
 import './AbilityMenuModal.css';
 
 interface AbilityMenuModalProps {
@@ -386,6 +387,8 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
                                 )}
                             </div>
                         )}
+
+                        <AbilityTypeResetSection />
                     </div>
                 )}
 
@@ -614,6 +617,8 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
                                         )}
                                     </div>
                                 )}
+
+                                {isBattleActive && <AbilityTypeResetSection />}
                             </div>
                         );
                     })}
