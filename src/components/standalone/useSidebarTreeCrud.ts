@@ -43,7 +43,7 @@ export function useSidebarTreeCrud({
                     await storageAdapter.createFolder(finalName || 'New Folder', null);
                 } else {
                     const newId = await storageAdapter.createLocalCharacter(finalName, null);
-                    onSelectCharacter(newId, { nickname: finalName, parentId: null });
+                    onSelectCharacter(newId, { nickname: finalName, parentId: null, rank: 'Starter' });
                 }
                 setNewName('');
             } catch (error) {

@@ -1,14 +1,22 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useCharacterStore } from '@/store/useCharacterStore';
 import { assignInitiative, type StandaloneCombatant } from '../dice/diceInitiativeOps';
 import { executeChanceRoll } from '../dice/chanceRoller';
-import { broadcastInfo } from '../dice/diceBroadcastOps';
+import { broadcastInfo, dispatchNativeObrRoll } from '../dice/diceBroadcastOps';
+import { executePinnedStateIntercepts } from '../dice/diceStateIntercepts';
 import { addRollLogEntry, rollDicePlus, rollDice } from '../diceRoller';
 import { getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import type { RollSyncData } from '@/hooks/owlbearSync/owlbearSyncConstants';
+import { storageAdapter } from '@/utils/sync/storageAdapter';
+import { METADATA_ID } from '@/utils/sync/obr';
+import * as pcStorageAdapter from '@/utils/pc/pcStorageAdapter';
+import * as rollLogSync from '@/utils/combat/rollLogSync';
 
 vi.mock('@/utils/sync/storageAdapter', () => ({
-    isStandaloneMode: true
+    isStandaloneMode: true,
+    storageAdapter: {
+        saveCharacter: vi.fn().mockResolvedValue(undefined)
+    }
 }));
 
 vi.mock('@owlbear-rodeo/sdk', () => ({
@@ -184,6 +192,195 @@ describe('Dice Roller & OBR Sync Ops Decomposition Suite', () => {
 
             const log: RollSyncData[] = JSON.parse(localStorage.getItem(getRollLogStorageKey()) || '[]');
             expect(log.length).toBe(2);
+        });
+    });
+
+    describe('Delayed Roll Token Pinning & Safe Timeout Handlers (B-03)', () => {
+        afterEach(() => {
+            vi.useRealTimers();
+            vi.restoreAllMocks();
+        });
+
+        it('applies delayed intercepts to active store when token still matches after 3.5s delay', async () => {
+            vi.useFakeTimers();
+            const store = useCharacterStore.getState();
+            store.setTokenData('tok-match', 'PLAYER');
+            store.loadFromOwlbear({
+                'temporary-hit-points': 0,
+                'temporary-hit-points-max': 0,
+                'banked-acc-dice': '{}'
+            });
+
+            await dispatchNativeObrRoll({
+                diceEngine: 'car',
+                obrPlayerName: 'Ash',
+                playerName: 'Pikachu',
+                playerId: 'player-1',
+                tokenId: 'tok-match',
+                finalLabel: 'Shield Move',
+                icon: 'icon.png',
+                rollType: 'damage',
+                targetVisibility: 'everyone',
+                diceData: [{ type: 6, result: 6 }],
+                executeStateIntercepts: () =>
+                    executePinnedStateIntercepts({
+                        rollingTokenId: 'tok-match',
+                        rollingEntityId: 'ent-match',
+                        rollingTempHpMax: 0,
+                        rollingBankedAccDice: {},
+                        rollingStatuses: [],
+                        rollType: 'damage',
+                        payload: '4',
+                        isSuccessRoll: true,
+                        finalSuccesses: 1,
+                        rawSuccesses: 1,
+                        finalSum: 6,
+                        diceData: [{ type: 6, result: 6 }],
+                        baseMessage: 'Hit'
+                    })
+            });
+
+            expect(useCharacterStore.getState().health.temporaryHitPoints).toBe(0);
+            await vi.advanceTimersByTimeAsync(3500);
+
+            expect(useCharacterStore.getState().health.temporaryHitPointsMax).toBe(4);
+            expect(useCharacterStore.getState().health.temporaryHitPoints).toBe(4);
+            expect(storageAdapter.saveCharacter).not.toHaveBeenCalled();
+        });
+
+        it('persists delayed intercepts to rolling token and PC summary when active token switched during delay', async () => {
+            vi.useFakeTimers();
+            const savePcSpy = vi.spyOn(pcStorageAdapter, 'savePcStorage').mockResolvedValue(undefined);
+
+            useCharacterStore.setState((s) => ({
+                ...s,
+                isInitialized: true,
+                pcData: {
+                    ...s.pcData,
+                    pokemonSummaries: {
+                        'ent-a': {
+                            entityId: 'ent-a',
+                            mapTokenId: 'tok-a',
+                            name: 'Bulbasaur',
+                            species: 'Bulbasaur',
+                            rank: 'Starter',
+                            type1: 'Grass',
+                            hp: 5,
+                            maxHp: 5,
+                            will: 4,
+                            maxWill: 4,
+                            lastModified: 1000,
+                            fullMetadata: {}
+                        }
+                    }
+                }
+            }));
+            useCharacterStore.getState().setTokenData('tok-a', 'PLAYER');
+
+            const rollingStatuses = [{ id: 'st-burn', name: 'Burn', customName: '', rounds: 1 }];
+
+            await dispatchNativeObrRoll({
+                diceEngine: 'car',
+                obrPlayerName: 'Ash',
+                playerName: 'Bulbasaur',
+                playerId: 'player-1',
+                tokenId: 'tok-a',
+                finalLabel: 'Status Recovery',
+                icon: 'icon.png',
+                rollType: 'status',
+                targetVisibility: 'everyone',
+                diceData: [{ type: 6, result: 5 }],
+                executeStateIntercepts: () =>
+                    executePinnedStateIntercepts({
+                        rollingTokenId: 'tok-a',
+                        rollingEntityId: 'ent-a',
+                        rollingTempHpMax: 0,
+                        rollingBankedAccDice: {},
+                        rollingStatuses,
+                        rollType: 'status',
+                        payload: 'st-burn',
+                        isSuccessRoll: true,
+                        finalSuccesses: 2,
+                        rawSuccesses: 2,
+                        finalSum: 5,
+                        diceData: [{ type: 6, result: 5 }],
+                        baseMessage: 'Recovery'
+                    })
+            });
+
+            // Switch active sheet to Token B before the 3.5s animation completes
+            useCharacterStore.getState().setTokenData('tok-b', 'PLAYER');
+            useCharacterStore.setState((s) => ({
+                ...s,
+                health: { ...s.health, temporaryHitPoints: 1, temporaryHitPointsMax: 1 },
+                statuses: [{ id: 'st-burn', name: 'Burn', customName: '', rounds: 5 }]
+            }));
+
+            await vi.advanceTimersByTimeAsync(3500);
+
+            // Token B's active sheet must remain untouched
+            expect(useCharacterStore.getState().statuses[0].rounds).toBe(5);
+            expect(useCharacterStore.getState().health.temporaryHitPoints).toBe(1);
+
+            // Token A's updated status must be persisted directly and synced to PC summary
+            expect(storageAdapter.saveCharacter).toHaveBeenCalledWith(
+                'tok-a',
+                { 'status-list': JSON.stringify([{ id: 'st-burn', name: 'Burn', customName: '', rounds: 3 }]) },
+                METADATA_ID
+            );
+            const updatedSummary = useCharacterStore.getState().pcData.pokemonSummaries['ent-a'];
+            expect(updatedSummary.fullMetadata?.['status-list']).toBe(
+                JSON.stringify([{ id: 'st-burn', name: 'Burn', customName: '', rounds: 3 }])
+            );
+            expect(savePcSpy).toHaveBeenCalled();
+        });
+
+        it('catches errors from executeStateIntercepts and broadcastRollEntry inside delayed timeout without unhandled rejection', async () => {
+            vi.useFakeTimers();
+            const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            await dispatchNativeObrRoll({
+                diceEngine: 'car',
+                obrPlayerName: 'Ash',
+                playerName: 'Pikachu',
+                playerId: 'player-1',
+                tokenId: 'tok-err',
+                finalLabel: 'Err Roll',
+                icon: 'icon.png',
+                rollType: 'roll',
+                targetVisibility: 'everyone',
+                diceData: [{ type: 6, result: 4 }],
+                executeStateIntercepts: vi.fn().mockRejectedValue(new Error('intercept boom'))
+            });
+
+            await vi.advanceTimersByTimeAsync(3500);
+            expect(errorSpy).toHaveBeenCalledWith(
+                '[DiceBroadcastOps] Delayed roll execution failed:',
+                expect.objectContaining({ message: 'intercept boom' })
+            );
+
+            errorSpy.mockClear();
+            vi.spyOn(rollLogSync, 'broadcastRollLog').mockRejectedValueOnce(new Error('broadcast boom'));
+
+            await dispatchNativeObrRoll({
+                diceEngine: 'car',
+                obrPlayerName: 'Ash',
+                playerName: 'Pikachu',
+                playerId: 'player-1',
+                tokenId: 'tok-err',
+                finalLabel: 'Err Broadcast',
+                icon: 'icon.png',
+                rollType: 'roll',
+                targetVisibility: 'everyone',
+                diceData: [{ type: 6, result: 4 }],
+                executeStateIntercepts: vi.fn().mockResolvedValue('Done')
+            });
+
+            await vi.advanceTimersByTimeAsync(3500);
+            expect(errorSpy).toHaveBeenCalledWith(
+                '[DiceBroadcastOps] Delayed roll execution failed:',
+                expect.objectContaining({ message: 'broadcast boom' })
+            );
         });
     });
 });

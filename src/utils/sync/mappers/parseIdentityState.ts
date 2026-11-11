@@ -119,7 +119,6 @@ export function parseIdentity(
         (meta['rank'] as Rank) ||
         (meta['Rank'] as Rank) ||
         ((meta.identity as { rank?: Rank })?.rank as Rank) ||
-        state.identity.rank ||
         'Starter';
     const VALID_RANKS = new Set<string>([
         'Starter',

@@ -3,8 +3,8 @@ import { useCharacterStore } from '@/store/useCharacterStore';
 import { isStandaloneMode } from '@/utils/sync/storageAdapter';
 import { broadcastRollLog } from '@/utils/combat/rollLogSync';
 import { showDicePlusRetirementNotice } from '@/hooks/owlbearSync/owlbearSyncConstants';
-import { assignInitiative } from './dice/diceInitiativeOps';
 import { dispatchNativeObrRoll } from './dice/diceBroadcastOps';
+import { executePinnedStateIntercepts } from '@/utils/combat/dice/diceStateIntercepts';
 
 // Re-export submodules for clean modularity and backwards compatibility
 export type { StandaloneCombatant } from './dice/diceInitiativeOps';
@@ -74,6 +74,11 @@ export async function rollDicePlus(
     options?: { chanceDice?: number; chanceEffect?: string; chanceRolled?: boolean }
 ) {
     const state = useCharacterStore.getState();
+    const rollingTokenId = state.tokenId;
+    const rollingEntityId = state.identity.entityId || '';
+    const rollingTempHpMax = state.health.temporaryHitPointsMax || 0;
+    const rollingBankedAccDice = { ...state.trackers.bankedAccDice };
+    const rollingStatuses = state.statuses.map((s) => ({ ...s }));
     const rawEngine = (state.identity.diceEngine as unknown as string) || 'car';
     if (rawEngine === 'dice-plus') {
         showDicePlusRetirementNotice(
@@ -235,81 +240,22 @@ export async function rollDicePlus(
             popupMessage += '\nIt is a critical failure!';
         }
 
-        const executeStateIntercepts = async (messageAppendix: string = '') => {
-            let finalMsg = popupMessage + messageAppendix;
-
-            if (rollType === 'init' && state.tokenId) {
-                const baseInit = parseInt(payload) || 0;
-                const rollValue = isSuccessRoll ? finalSuccesses : finalSum;
-                await assignInitiative(state.tokenId, rollValue, baseInit);
-            } else if (rollType === 'damage' && payload && finalSuccesses > 0 && rawSuccesses > 0) {
-                const [flatStr, ratioStr] = payload.split('_');
-                const flatGained = parseInt(flatStr) || 0;
-
-                let ratio = 0;
-                if (ratioStr) {
-                    if (ratioStr.includes('%')) {
-                        ratio = parseFloat(ratioStr.replace('%', '')) / 100;
-                    } else if (ratioStr.includes('/')) {
-                        const [num, den] = ratioStr.split('/');
-                        ratio = parseFloat(num) / parseFloat(den);
-                    } else {
-                        ratio = parseFloat(ratioStr);
-                    }
-                }
-
-                let tempGained = flatGained;
-                if (!isNaN(ratio) && ratio > 0) {
-                    tempGained += Math.floor(finalSuccesses * ratio);
-                }
-
-                if (tempGained > 0) {
-                    const store = useCharacterStore.getState();
-                    const currentTempMax = store.health.temporaryHitPointsMax || 0;
-
-                    if (tempGained > currentTempMax) {
-                        store.updateHealth('temporaryHitPointsMax', tempGained);
-                        store.updateHealth('temporaryHitPoints', tempGained);
-                        finalMsg += `\nGained ${tempGained} Temp HP`;
-                    } else {
-                        finalMsg += `\nCurrent Shield Holds`;
-                    }
-                }
-            } else if (rollType === 'acc_face' && state.tokenId && payload) {
-                const [moveId, targetFaceStr, limitStr] = payload.split('_');
-                const targetFace = parseInt(targetFaceStr, 10) || 6;
-                const limit = parseInt(limitStr, 10) || 6;
-                const matches = diceData.filter((d) => d.result === targetFace).length;
-
-                if (matches > 0) {
-                    const store = useCharacterStore.getState();
-                    const newBank = { ...store.trackers.bankedAccDice };
-
-                    const currentBank = newBank[moveId] || 0;
-                    const spaceLeft = Math.max(0, limit - currentBank);
-                    const actualAdded = Math.min(matches, spaceLeft);
-
-                    if (actualAdded > 0) {
-                        newBank[moveId] = currentBank + actualAdded;
-                        store.updateTracker('bankedAccDice', newBank);
-
-                        const limitMsg = actualAdded < matches ? ` (Max ${limit})` : '';
-                        finalMsg += `\nBanked +${actualAdded} Damage Dice!${limitMsg}`;
-                    } else {
-                        finalMsg += `\nBank is full! (Max ${limit})`;
-                    }
-                }
-            } else if (rollType === 'status' && payload && finalSuccesses > 0) {
-                const statusId = payload;
-                const store = useCharacterStore.getState();
-                const targetStatus = store.statuses.find((s) => s.id === statusId);
-                if (targetStatus) {
-                    store.updateStatus(statusId, 'rounds', targetStatus.rounds + finalSuccesses);
-                }
-                finalMsg += `\nReduced Status by ${finalSuccesses}`;
-            }
-            return finalMsg;
-        };
+        const executeStateIntercepts = async (messageAppendix: string = '') =>
+            executePinnedStateIntercepts({
+                rollingTokenId,
+                rollingEntityId,
+                rollingTempHpMax,
+                rollingBankedAccDice,
+                rollingStatuses,
+                rollType,
+                payload,
+                isSuccessRoll,
+                finalSuccesses,
+                rawSuccesses,
+                finalSum,
+                diceData,
+                baseMessage: popupMessage + messageAppendix
+            });
 
         // --- STANDALONE MODE (no OBR connection) ---
         if (isStandaloneMode || !OBR.isAvailable) {
@@ -320,7 +266,7 @@ export async function rollDicePlus(
                 icon,
                 playerName,
                 playerName,
-                state.tokenId || undefined,
+                rollingTokenId || undefined,
                 rollType,
                 isCrit,
                 targetVisibility,
@@ -338,7 +284,7 @@ export async function rollDicePlus(
             obrPlayerName,
             playerName,
             playerId,
-            tokenId: state.tokenId || undefined,
+            tokenId: rollingTokenId || undefined,
             finalLabel,
             icon,
             rollType,

@@ -19,6 +19,7 @@ import { hydrateActiveSheet } from '../../../utils/sync/unifiedSheetHydration';
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
 import {
     hasCharacterSheetChanged,
+    hasSummaryStoreDrift,
     buildSummaryFromStore,
     resolvePcSheetThemeColors,
     restorePreviousCharacterState
@@ -50,6 +51,7 @@ export function usePcSheetSync({
     const isHydratingRef = useRef(false);
     const isUnmountingRef = useRef(false);
     const isDirtyRef = useRef(false);
+    const localHydrateGraceUntilRef = useRef<number>(0);
     const lastLocalSavedModRef = useRef<number>(0);
     const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const remoteHydrateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -76,9 +78,9 @@ export function usePcSheetSync({
     roomCustomTypesRef.current = roomCustomTypes;
 
     // Core two-way persistence: serializes active Zustand store into metadata and summaries
-    const syncNow = useCallback((targetSummary?: PcPokemonSummary) => {
-        // Guard against running sync during remote hydration unless this is a dirty local edit
-        if (getIsRemoteSyncActive()) {
+    const syncNow = useCallback((targetSummary?: PcPokemonSummary, force = false) => {
+        // Guard against running sync during remote hydration unless this is a dirty local edit or forced flush
+        if (!force && getIsRemoteSyncActive()) {
             if (isDirtyRef.current) {
                 if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
                 syncTimeoutRef.current = setTimeout(() => syncNow(targetSummary), 50);
@@ -201,8 +203,15 @@ export function usePcSheetSync({
 
     const flushSync = useCallback(
         (targetSummary?: PcPokemonSummary) => {
-            if (isDirtyRef.current || syncTimeoutRef.current || targetSummary) {
-                syncNow(targetSummary || currentSummaryRef.current);
+            const summary = targetSummary || currentSummaryRef.current;
+            const currentStore = useCharacterStore.getState();
+            if (
+                isDirtyRef.current ||
+                syncTimeoutRef.current ||
+                targetSummary ||
+                (!isHydratingRef.current && hasSummaryStoreDrift(currentStore, summary))
+            ) {
+                syncNow(summary, true);
             }
         },
         [syncNow]
@@ -245,13 +254,15 @@ export function usePcSheetSync({
 
             // Flush pending dirty local edits before restoring previous character state
             const storeAtUnmount = useCharacterStore.getState();
+            const hasDriftAtUnmount =
+                !isHydratingRef.current && hasSummaryStoreDrift(storeAtUnmount, currentSummaryRef.current);
             if (
-                (isDirtyRef.current || syncTimeoutRef.current) &&
+                (isDirtyRef.current || syncTimeoutRef.current || hasDriftAtUnmount) &&
                 currentSummaryRef.current?.entityId &&
                 (!storeAtUnmount.identity.entityId ||
                     storeAtUnmount.identity.entityId === currentSummaryRef.current.entityId)
             ) {
-                syncNow(currentSummaryRef.current);
+                syncNow(currentSummaryRef.current, true);
             }
 
             if (syncTimeoutRef.current) {
@@ -322,18 +333,18 @@ export function usePcSheetSync({
             }
 
             if (isCancelled) return;
+            // Clear hydrating guard before exposing interactive UI, and keep a short grace window
+            // so hydrateActiveSheet's 150ms remoteSyncTimer does not swallow immediate user edits.
+            localHydrateGraceUntilRef.current = Date.now() + 200;
+            isHydratingRef.current = false;
             setLoading(false);
-            setTimeout(() => {
-                if (!isCancelled) {
-                    isHydratingRef.current = false;
-                }
-            }, 100);
         };
 
         hydrateEntity();
 
         const unsub = useCharacterStore.subscribe((state, prevState) => {
-            if (getIsRemoteSyncActive() || isHydratingRef.current || isUnmountingRef.current) return;
+            if (isHydratingRef.current || isUnmountingRef.current) return;
+            if (getIsRemoteSyncActive() && Date.now() > localHydrateGraceUntilRef.current) return;
             if (hasCharacterSheetChanged(state, prevState)) {
                 isDirtyRef.current = true;
                 if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);

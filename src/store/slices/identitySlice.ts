@@ -268,8 +268,9 @@ export const createIdentitySlice: StateCreator<
                 const obrKey = OBR_KEY_MAP[field as string] || (field as string);
                 const newIdentity = { ...state.identity, [field]: value };
                 const updatesToSave: Record<string, unknown> = {};
-                const newHealth = { ...state.health };
-                const newWill = { ...state.will };
+                const updatesHealthOrWill = field === 'ruleset' || field === 'rank';
+                const newHealth = updatesHealthOrWill ? { ...state.health } : state.health;
+                const newWill = updatesHealthOrWill ? { ...state.will } : state.will;
 
                 if (field === 'ability') {
                     updateAbilityData(value, state.identity, newIdentity, state.roomCustomAbilities, updatesToSave);

@@ -185,24 +185,28 @@ export async function dispatchNativeObrRoll(params: NativeObrRollParams): Promis
 
     const delayMs = targetVisibility === 'gm_only' ? 250 : 3500;
     setTimeout(async () => {
-        const finalCompiledMsg = await executeStateIntercepts();
+        try {
+            const finalCompiledMsg = await executeStateIntercepts();
 
-        await broadcastRollEntry({
-            player: obrPlayerName,
-            characterName: playerName,
-            tokenId,
-            playerId,
-            label: finalLabel,
-            result: finalCompiledMsg,
-            icon,
-            rollType,
-            targetVisibility,
-            isCrit,
-            isCritFail,
-            chanceDice: options?.chanceDice,
-            chanceEffect: options?.chanceEffect,
-            chanceRolled: options?.chanceRolled
-        });
+            await broadcastRollEntry({
+                player: obrPlayerName,
+                characterName: playerName,
+                tokenId,
+                playerId,
+                label: finalLabel,
+                result: finalCompiledMsg,
+                icon,
+                rollType,
+                targetVisibility,
+                isCrit,
+                isCritFail,
+                chanceDice: options?.chanceDice,
+                chanceEffect: options?.chanceEffect,
+                chanceRolled: options?.chanceRolled
+            });
+        } catch (error) {
+            console.error('[DiceBroadcastOps] Delayed roll execution failed:', error);
+        }
     }, delayMs);
 }
 

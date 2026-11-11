@@ -1,17 +1,43 @@
 import OBR from '@owlbear-rodeo/sdk';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import type { TrainerRoster, PcPokemonSummary } from '../../types/pcStorageTypes';
-import { resolveEffectiveActiveTrainer } from '../../utils/pc/pcCampaignTrainerOps';
+import { useCharacterStore } from '@/store/useCharacterStore';
+import type { CharacterIdentity } from '@/store/storeTypes';
+import type { TrainerRoster, PcPokemonSummary, PcStorageData } from '@/types/pcStorageTypes';
+import { resolveEffectiveActiveTrainer } from '@/utils/pc/pcCampaignTrainerOps';
 import { EXTENSION_ID } from './owlbearSyncConstants';
 import { sendSafeBroadcastPayload } from './owlbearBroadcastUtils';
-import { LOCAL_CLIENT_ID, getIsPcSheetActive, getIsRemoteSyncActive } from '../../utils/sync/obr';
-import { hasCharacterSheetChanged, buildSummaryFromStore } from '../../components/modals/pcStorage/pcSheetSyncUtils';
+import { LOCAL_CLIENT_ID, getIsPcSheetActive, getIsRemoteSyncActive } from '@/utils/sync/obr';
+import { hasCharacterSheetChanged, buildSummaryFromStore } from '@/components/modals/pcStorage/pcSheetSyncUtils';
 import {
     type PlayerPcSyncPayload,
     type GmPcSyncPayload,
     sanitizeSummaryForSync,
     sanitizeTrainerForSync
 } from './owlbearPcSyncUtils';
+
+/**
+ * Resolves the target non-private campaign ID for PC broadcasts, preferring an explicit ID,
+ * then the room's designated campaign, then the local active campaign, then the first public campaign.
+ */
+export function resolveTargetCampaignId(
+    pcData: PcStorageData,
+    identity: CharacterIdentity,
+    explicitId?: string
+): string {
+    if (explicitId && pcData.campaigns[explicitId]) {
+        return explicitId;
+    }
+    const designatedId = identity.activeRoomCampaignId;
+    if (designatedId && pcData.campaigns[designatedId] && !pcData.campaigns[designatedId].isPrivate) {
+        return designatedId;
+    }
+    if (pcData.campaigns[pcData.activeCampaignId] && !pcData.campaigns[pcData.activeCampaignId].isPrivate) {
+        return pcData.activeCampaignId;
+    }
+    return (
+        Object.keys(pcData.campaigns || {}).find((k) => !pcData.campaigns[k]?.isPrivate) ||
+        pcData.activeCampaignId
+    );
+}
 
 /**
  * Broadcasts the active player's PC trainer, party, and Pokémon summaries to the GM.
@@ -28,22 +54,7 @@ export async function broadcastPlayerPc(params?: {
         const state = useCharacterStore.getState();
         const { pcData, identity } = state;
 
-        let targetCampId = params?.campaignId;
-        if (!targetCampId || !pcData.campaigns[targetCampId]) {
-            const designatedId = identity.activeRoomCampaignId;
-            if (designatedId && pcData.campaigns[designatedId] && !pcData.campaigns[designatedId].isPrivate) {
-                targetCampId = designatedId;
-            } else if (
-                pcData.campaigns[pcData.activeCampaignId] &&
-                !pcData.campaigns[pcData.activeCampaignId].isPrivate
-            ) {
-                targetCampId = pcData.activeCampaignId;
-            } else {
-                targetCampId =
-                    Object.keys(pcData.campaigns || {}).find((k) => !pcData.campaigns[k]?.isPrivate) ||
-                    pcData.activeCampaignId;
-            }
-        }
+        const targetCampId = resolveTargetCampaignId(pcData, identity, params?.campaignId);
 
         const campaign = pcData.campaigns[targetCampId];
         if (!campaign || campaign.isPrivate) return;
@@ -180,22 +191,7 @@ export async function broadcastGmPc(params?: {
         if (effectiveRole !== 'GM') return;
 
         const { pcData, identity } = state;
-        let targetCampId = params?.campaignId;
-        if (!targetCampId || !pcData.campaigns[targetCampId]) {
-            const designatedId = identity.activeRoomCampaignId;
-            if (designatedId && pcData.campaigns[designatedId] && !pcData.campaigns[designatedId].isPrivate) {
-                targetCampId = designatedId;
-            } else if (
-                pcData.campaigns[pcData.activeCampaignId] &&
-                !pcData.campaigns[pcData.activeCampaignId].isPrivate
-            ) {
-                targetCampId = pcData.activeCampaignId;
-            } else {
-                targetCampId =
-                    Object.keys(pcData.campaigns || {}).find((k) => !pcData.campaigns[k]?.isPrivate) ||
-                    pcData.activeCampaignId;
-            }
-        }
+        const targetCampId = resolveTargetCampaignId(pcData, identity, params?.campaignId);
         const campaign = pcData.campaigns[targetCampId];
         if (!campaign) return;
 

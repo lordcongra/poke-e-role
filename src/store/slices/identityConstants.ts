@@ -36,7 +36,11 @@ export const EXCLUDED_FROM_TOKEN_SAVE = new Set([
     'roomHideHudPlayersOnly',
     'roomHideHudEnemiesOnly',
     'roomTrackersRequireInitiative',
-    'isInitiativeActive'
+    'isInitiativeActive',
+    'coreLocked',
+    'socialLocked',
+    'hpLocked',
+    'willLocked'
 ]);
 
 export const OBR_KEY_MAP: Record<string, string> = {

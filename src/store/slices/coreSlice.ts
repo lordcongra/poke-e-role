@@ -1,10 +1,22 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState, CoreSlice } from '../storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
-import { saveToOwlbear, getIsRemoteSyncActive } from '../../utils/sync/obr';
+import { saveToOwlbear } from '../../utils/sync/obr';
 import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../../utils/combat/combatUtils';
 
-export const createCoreSlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], CoreSlice> = (set) => ({
+const DERIVED_OBR_KEYS: Record<string, string> = {
+    defBuff: 'def-buff',
+    defDebuff: 'def-debuff',
+    sdefBuff: 'spd-buff',
+    sdefDebuff: 'spd-debuff',
+    happy: 'happiness-curr',
+    loyal: 'loyalty-curr'
+};
+
+export const createCoreSlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], CoreSlice> = (
+    set,
+    get
+) => ({
     health: { hpCurr: 5, hpMax: 5, hpBase: 4, temporaryHitPoints: 0, temporaryHitPointsMax: 0 },
     will: { willCurr: 4, willMax: 4, willBase: 3, temporaryWill: 0, temporaryWillMax: 0 },
     derived: { defBuff: 0, defDebuff: 0, sdefBuff: 0, sdefDebuff: 0, happy: 0, loyal: 0 },
@@ -32,186 +44,183 @@ export const createCoreSlice: StateCreator<CharacterState, [['zustand/devtools',
         {} as Record<Skill, { base: number; buff: number; customName: string }>
     ),
 
-    setDerived: (field, value) =>
-        set(
-            (state) => {
-                const newDerived = { ...state.derived, [field]: value };
+    setDerived: (field, value) => {
+        const state = get();
+        const newDerived = { ...state.derived, [field]: value };
+        const obrKey = DERIVED_OBR_KEYS[field] ?? (field as string);
 
-                let obrKey = field as string;
-                if (field === 'defBuff') obrKey = 'def-buff';
-                else if (field === 'defDebuff') obrKey = 'def-debuff';
-                else if (field === 'sdefBuff') obrKey = 'spd-buff';
-                else if (field === 'sdefDebuff') obrKey = 'spd-debuff';
-                else if (field === 'happy') obrKey = 'happiness-curr';
-                else if (field === 'loyal') obrKey = 'loyalty-curr';
+        set({ derived: newDerived }, false, 'core/setDerived');
 
-                try {
-                    saveToOwlbear({ [obrKey]: value });
-                } catch (e) {
-                    console.warn(`[CoreSlice] Failed to save derived stat (${field}) to Owlbear.`, e);
-                }
-                return { derived: newDerived };
-            },
-            false,
-            'core/setDerived'
-        ),
+        try {
+            saveToOwlbear({ [obrKey]: value });
+        } catch (e) {
+            console.warn(`[CoreSlice] Failed to save derived stat (${field}) to Owlbear.`, e);
+        }
+    },
 
-    updateHealth: (field, value) =>
-        set((state) => {
-            let safeValue = value;
-            if (field === 'temporaryHitPoints' && state.health.temporaryHitPointsMax) {
-                safeValue = Math.min(Math.max(0, value), state.health.temporaryHitPointsMax);
+    updateHealth: (field, value) => {
+        const state = get();
+        let safeValue = value;
+        if (field === 'temporaryHitPoints' && state.health.temporaryHitPointsMax) {
+            safeValue = Math.min(Math.max(0, value), state.health.temporaryHitPointsMax);
+        }
+
+        const newHealth = { ...state.health, [field]: safeValue };
+
+        if (field === 'hpBase') {
+            const fakeState = { ...state, health: newHealth };
+            const oldMax = state.health.hpMax;
+            newHealth.hpMax = calculateMaxHp(fakeState);
+
+            if (newHealth.hpMax > oldMax) {
+                newHealth.hpCurr += newHealth.hpMax - oldMax;
+            } else if (newHealth.hpCurr > newHealth.hpMax) {
+                newHealth.hpCurr = newHealth.hpMax;
             }
+        }
 
-            const newHealth = { ...state.health, [field]: safeValue };
+        const updatesToSave: Record<string, unknown> = {
+            'hp-curr': newHealth.hpCurr,
+            'hp-max-display': newHealth.hpMax,
+            'temporary-hit-points': newHealth.temporaryHitPoints,
+            'temporary-hit-points-max': newHealth.temporaryHitPointsMax,
+            ...(field === 'hpBase' ? { 'hp-base': safeValue } : {})
+        };
 
-            if (field === 'hpBase') {
-                const fakeState = { ...state, health: newHealth };
-                const oldMax = state.health.hpMax;
-                newHealth.hpMax = calculateMaxHp(fakeState);
+        set({ health: newHealth }, false, 'core/updateHealth');
 
-                if (newHealth.hpMax > oldMax) {
-                    newHealth.hpCurr += newHealth.hpMax - oldMax;
-                } else if (newHealth.hpCurr > newHealth.hpMax) {
-                    newHealth.hpCurr = newHealth.hpMax;
-                }
+        try {
+            saveToOwlbear(updatesToSave);
+        } catch (e) {
+            console.warn(`[CoreSlice] Failed to save health update (${String(field)}) to Owlbear.`, e);
+        }
+    },
+
+    updateWill: (field, value) => {
+        const state = get();
+        let safeValue = value;
+        if (field === 'temporaryWill' && state.will.temporaryWillMax) {
+            safeValue = Math.min(Math.max(0, value), state.will.temporaryWillMax);
+        }
+
+        const newWill = { ...state.will, [field]: safeValue };
+
+        if (field === 'willBase') {
+            const fakeState = { ...state, will: newWill };
+            const oldMax = state.will.willMax;
+            newWill.willMax = calculateMaxWill(fakeState);
+
+            if (newWill.willMax > oldMax) {
+                newWill.willCurr += newWill.willMax - oldMax;
+            } else if (newWill.willCurr > newWill.willMax) {
+                newWill.willCurr = newWill.willMax;
             }
+        }
 
-            try {
-                saveToOwlbear({
-                    'hp-curr': newHealth.hpCurr,
-                    'hp-max-display': newHealth.hpMax,
-                    'temporary-hit-points': newHealth.temporaryHitPoints,
-                    'temporary-hit-points-max': newHealth.temporaryHitPointsMax,
-                    ...(field === 'hpBase' ? { 'hp-base': safeValue } : {})
-                });
-            } catch (e) {
-                console.warn(`[CoreSlice] Failed to save health update (${String(field)}) to Owlbear.`, e);
-            }
+        const updatesToSave: Record<string, unknown> = {
+            'will-curr': newWill.willCurr,
+            'will-max-display': newWill.willMax,
+            'temporary-will': newWill.temporaryWill,
+            'temporary-will-max': newWill.temporaryWillMax,
+            ...(field === 'willBase' ? { 'will-base': safeValue } : {})
+        };
 
-            return { health: newHealth };
-        }),
+        set({ will: newWill }, false, 'core/updateWill');
 
-    updateWill: (field, value) =>
-        set((state) => {
-            let safeValue = value;
-            if (field === 'temporaryWill' && state.will.temporaryWillMax) {
-                safeValue = Math.min(Math.max(0, value), state.will.temporaryWillMax);
-            }
+        try {
+            saveToOwlbear(updatesToSave);
+        } catch (e) {
+            console.warn(`[CoreSlice] Failed to save will update (${String(field)}) to Owlbear.`, e);
+        }
+    },
 
-            const newWill = { ...state.will, [field]: safeValue };
+    setExtra: (category, value) => {
+        const state = get();
+        const newExtras = { ...state.extras, [category]: value };
 
-            if (field === 'willBase') {
-                const fakeState = { ...state, will: newWill };
-                const oldMax = state.will.willMax;
-                newWill.willMax = calculateMaxWill(fakeState);
+        set({ extras: newExtras }, false, 'core/setExtra');
 
-                if (newWill.willMax > oldMax) {
-                    newWill.willCurr += newWill.willMax - oldMax;
-                } else if (newWill.willCurr > newWill.willMax) {
-                    newWill.willCurr = newWill.willMax;
-                }
-            }
+        try {
+            saveToOwlbear({ [`extra-${category}`]: value });
+        } catch (e) {
+            console.warn(`[CoreSlice] Failed to save extra stat (${category}) to Owlbear.`, e);
+        }
+    },
 
-            try {
-                saveToOwlbear({
-                    'will-curr': newWill.willCurr,
-                    'will-max-display': newWill.willMax,
-                    'temporary-will': newWill.temporaryWill,
-                    'temporary-will-max': newWill.temporaryWillMax,
-                    ...(field === 'willBase' ? { 'will-base': safeValue } : {})
-                });
-            } catch (e) {
-                console.warn(`[CoreSlice] Failed to save will update (${String(field)}) to Owlbear.`, e);
-            }
+    setStat: (stat, field, value) => {
+        const state = get();
+        if (state.stats[stat]?.[field] === value) return;
 
-            return { will: newWill };
-        }),
+        const newStats = { ...state.stats, [stat]: { ...state.stats[stat], [field]: value } };
+        const updatesToSave: Record<string, unknown> = { [`${stat}-${field}`]: value };
 
-    setExtra: (category, value) =>
-        set((state) => {
-            const newExtras = { ...state.extras, [category]: value };
-            try {
-                saveToOwlbear({ [`extra-${category}`]: value });
-            } catch (e) {
-                console.warn(`[CoreSlice] Failed to save extra stat (${category}) to Owlbear.`, e);
-            }
-            return { extras: newExtras };
-        }),
+        const newHealth = { ...state.health };
+        const newWill = { ...state.will };
 
-    setStat: (stat, field, value) =>
-        set((state) => {
-            if (state.stats[stat]?.[field] === value) return state;
+        if (stat === CombatStat.VIT || stat === CombatStat.INS) {
+            const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+            const invMods = parseCombatTags(
+                state.inventory,
+                state.extraCategories,
+                undefined,
+                abilityText,
+                state.passives
+            );
+            const fakeState = { ...state, stats: newStats, health: newHealth, will: newWill } as CharacterState;
 
-            const newStats = { ...state.stats, [stat]: { ...state.stats[stat], [field]: value } };
-            const updatesToSave: Record<string, unknown> = { [`${stat}-${field}`]: value };
+            const oldHpMax = newHealth.hpMax;
+            newHealth.hpMax = calculateMaxHp(fakeState, invMods);
+            if (newHealth.hpMax > oldHpMax) newHealth.hpCurr += newHealth.hpMax - oldHpMax;
+            else if (newHealth.hpCurr > newHealth.hpMax) newHealth.hpCurr = newHealth.hpMax;
 
-            const newHealth = { ...state.health };
-            const newWill = { ...state.will };
+            const oldWillMax = newWill.willMax;
+            newWill.willMax = calculateMaxWill(fakeState, invMods);
+            if (newWill.willMax > oldWillMax) newWill.willCurr += newWill.willMax - oldWillMax;
+            else if (newWill.willCurr > newWill.willMax) newWill.willCurr = newWill.willMax;
 
-            if (stat === CombatStat.VIT || stat === CombatStat.INS) {
-                const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-                const invMods = parseCombatTags(
-                    state.inventory,
-                    state.extraCategories,
-                    undefined,
-                    abilityText,
-                    state.passives
-                );
-                const fakeState = { ...state, stats: newStats, health: newHealth, will: newWill } as CharacterState;
+            updatesToSave['hp-curr'] = newHealth.hpCurr;
+            updatesToSave['hp-max-display'] = newHealth.hpMax;
+            updatesToSave['will-curr'] = newWill.willCurr;
+            updatesToSave['will-max-display'] = newWill.willMax;
+        }
 
-                const oldHpMax = newHealth.hpMax;
-                newHealth.hpMax = calculateMaxHp(fakeState, invMods);
-                if (newHealth.hpMax > oldHpMax) newHealth.hpCurr += newHealth.hpMax - oldHpMax;
-                else if (newHealth.hpCurr > newHealth.hpMax) newHealth.hpCurr = newHealth.hpMax;
+        set({ stats: newStats, health: newHealth, will: newWill }, false, 'core/setStat');
 
-                const oldWillMax = newWill.willMax;
-                newWill.willMax = calculateMaxWill(fakeState, invMods);
-                if (newWill.willMax > oldWillMax) newWill.willCurr += newWill.willMax - oldWillMax;
-                else if (newWill.willCurr > newWill.willMax) newWill.willCurr = newWill.willMax;
+        try {
+            saveToOwlbear(updatesToSave);
+        } catch (e) {
+            console.warn(`[CoreSlice] Failed to save stat update (${stat}) to Owlbear.`, e);
+        }
+    },
 
-                updatesToSave['hp-curr'] = newHealth.hpCurr;
-                updatesToSave['hp-max-display'] = newHealth.hpMax;
-                updatesToSave['will-curr'] = newWill.willCurr;
-                updatesToSave['will-max-display'] = newWill.willMax;
-            }
+    setSocialStat: (stat, field, value) => {
+        const state = get();
+        if (state.socials[stat]?.[field] === value) return;
 
-            if (!getIsRemoteSyncActive()) {
-                try {
-                    saveToOwlbear(updatesToSave);
-                } catch (e) {
-                    console.warn(`[CoreSlice] Failed to save stat update (${stat}) to Owlbear.`, e);
-                }
-            }
-            return { stats: newStats, health: newHealth, will: newWill };
-        }),
+        const newSocials = { ...state.socials, [stat]: { ...state.socials[stat], [field]: value } };
 
-    setSocialStat: (stat, field, value) =>
-        set((state) => {
-            if (state.socials[stat]?.[field] === value) return state;
-            const newSocials = { ...state.socials, [stat]: { ...state.socials[stat], [field]: value } };
-            if (!getIsRemoteSyncActive()) {
-                try {
-                    saveToOwlbear({ [`${stat}-${field}`]: value });
-                } catch (e) {
-                    console.warn(`[CoreSlice] Failed to save social stat (${stat}) to Owlbear.`, e);
-                }
-            }
-            return { socials: newSocials };
-        }),
+        set({ socials: newSocials }, false, 'core/setSocialStat');
 
-    setSkill: (skill, field, value) =>
-        set((state) => {
-            if (state.skills[skill]?.[field] === value) return state;
-            const newSkills = { ...state.skills, [skill]: { ...state.skills[skill], [field]: value } };
-            if (!getIsRemoteSyncActive()) {
-                try {
-                    if (field === 'customName') saveToOwlbear({ [`label-${skill}`]: value });
-                    else saveToOwlbear({ [`${skill}-${field}`]: value });
-                } catch (e) {
-                    console.warn(`[CoreSlice] Failed to save skill (${skill}) to Owlbear.`, e);
-                }
-            }
-            return { skills: newSkills };
-        })
+        try {
+            saveToOwlbear({ [`${stat}-${field}`]: value });
+        } catch (e) {
+            console.warn(`[CoreSlice] Failed to save social stat (${stat}) to Owlbear.`, e);
+        }
+    },
+
+    setSkill: (skill, field, value) => {
+        const state = get();
+        if (state.skills[skill]?.[field] === value) return;
+
+        const newSkills = { ...state.skills, [skill]: { ...state.skills[skill], [field]: value } };
+        const obrKey = field === 'customName' ? `label-${skill}` : `${skill}-${field}`;
+
+        set({ skills: newSkills }, false, 'core/setSkill');
+
+        try {
+            saveToOwlbear({ [obrKey]: value });
+        } catch (e) {
+            console.warn(`[CoreSlice] Failed to save skill (${skill}) to Owlbear.`, e);
+        }
+    }
 });

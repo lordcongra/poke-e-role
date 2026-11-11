@@ -367,12 +367,20 @@ export function saveIdentityToOwlbear(
     }
 }
 
+const UI_LOCK_FIELDS = new Set(['coreLocked', 'socialLocked', 'hpLocked', 'willLocked']);
+const UI_LOCK_OBR_KEYS = new Set(['core-locked', 'social-locked', 'hp-locked', 'will-locked']);
+
 export function syncPcStorage(
     field: string,
     value: unknown,
     state: CharacterState,
     updatesToSave: Record<string, unknown>
 ): CharacterState['pcData'] {
+    const nonLockUpdateKeys = Object.keys(updatesToSave).filter((k) => !UI_LOCK_OBR_KEYS.has(k));
+    if (UI_LOCK_FIELDS.has(field) && nonLockUpdateKeys.length === 0) {
+        return state.pcData;
+    }
+
     let nextPcData = state.pcData;
     if (
         state.pcData?.pokemonSummaries &&
@@ -382,7 +390,7 @@ export function syncPcStorage(
             field === 'species' ||
             field === 'rank' ||
             field === 'tokenImageUrl' ||
-            Object.keys(updatesToSave).length > 0)
+            nonLockUpdateKeys.length > 0)
     ) {
         const summaries = state.pcData.pokemonSummaries;
         const matchEntry = Object.entries(summaries).find(
@@ -402,6 +410,13 @@ export function syncPcStorage(
                     : (sum.fullMetadata?.nickname as string) || '';
             const nextSpecies = field === 'species' ? (value as string) : sum.species;
             const nextDisplayName = cleanNick || nextSpecies || sum.name;
+            const nextHp = typeof updatesToSave['hp-curr'] === 'number' ? updatesToSave['hp-curr'] : sum.hp;
+            const nextMaxHp =
+                typeof updatesToSave['hp-max-display'] === 'number' ? updatesToSave['hp-max-display'] : sum.maxHp;
+            const nextWill = typeof updatesToSave['will-curr'] === 'number' ? updatesToSave['will-curr'] : sum.will;
+            const nextMaxWill =
+                typeof updatesToSave['will-max-display'] === 'number' ? updatesToSave['will-max-display'] : sum.maxWill;
+            const nextLastModified = Math.max(Date.now(), (Number(sum.lastModified) || 0) + 1);
             const updatedSum = {
                 ...sum,
                 type1: field === 'type1' ? (value as string) : sum.type1,
@@ -409,7 +424,12 @@ export function syncPcStorage(
                 name: nextDisplayName,
                 species: nextSpecies,
                 rank: field === 'rank' ? (value as Rank) : sum.rank,
+                hp: nextHp,
+                maxHp: nextMaxHp,
+                will: nextWill,
+                maxWill: nextMaxWill,
                 tokenImageUrl: field === 'tokenImageUrl' ? (value as string) : sum.tokenImageUrl,
+                lastModified: nextLastModified,
                 fullMetadata: {
                     ...(sum.fullMetadata ?? {}),
                     ...updatesToSave,
@@ -418,7 +438,8 @@ export function syncPcStorage(
                     name: nextDisplayName,
                     type1: field === 'type1' ? (value as string) : sum.type1,
                     type2: field === 'type2' ? (value as string) : sum.type2,
-                    rank: field === 'rank' ? (value as Rank) : sum.rank
+                    rank: field === 'rank' ? (value as Rank) : sum.rank,
+                    lastModified: nextLastModified
                 }
             };
             nextPcData = {

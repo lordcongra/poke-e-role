@@ -305,6 +305,7 @@ export const storageAdapter = {
         const initialMetadata = {
             nickname: name.trim(),
             parentId: parentId,
+            rank: 'Starter',
             'v2-migrated': true
         };
 

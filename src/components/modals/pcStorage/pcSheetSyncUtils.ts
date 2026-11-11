@@ -5,9 +5,36 @@ import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
 import { resolveCharacterThemeColors, applyDynamicThemeColors } from '../../../utils/common/colorUtils';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 
+const COSMETIC_UI_LOCK_KEYS = new Set<keyof CharacterState['identity']>([
+    'coreLocked',
+    'socialLocked',
+    'hpLocked',
+    'willLocked'
+]);
+
+function hasIdentityChangedIgnoringUiLocks(
+    nextIdentity: CharacterState['identity'],
+    prevIdentity: CharacterState['identity']
+): boolean {
+    if (nextIdentity === prevIdentity) return false;
+
+    const allKeys = new Set([
+        ...Object.keys(nextIdentity),
+        ...Object.keys(prevIdentity)
+    ]) as Set<keyof CharacterState['identity']>;
+
+    for (const key of allKeys) {
+        if (COSMETIC_UI_LOCK_KEYS.has(key)) continue;
+        if (!Object.is(nextIdentity[key], prevIdentity[key])) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * Pure predicate checking if any persistent character sheet slice changed in Zustand.
- * Ignores non-character slices (pcData, homebrew, generatorConfig, etc.) to prevent infinite loops.
+ * Ignores non-character slices (pcData, homebrew, generatorConfig, etc.) and cosmetic UI lock toggles.
  */
 export function hasCharacterSheetChanged(state: CharacterState, prevState: CharacterState): boolean {
     return (
@@ -31,7 +58,7 @@ export function hasCharacterSheetChanged(state: CharacterState, prevState: Chara
         state.effects !== prevState.effects ||
         state.trackers !== prevState.trackers ||
         state.extraCategories !== prevState.extraCategories ||
-        state.identity !== prevState.identity
+        hasIdentityChangedIgnoringUiLocks(state.identity, prevState.identity)
     );
 }
 
@@ -52,6 +79,10 @@ export function buildSummaryFromStore(
     const nextMaxHp = currentStore.health.hpMax ?? curr.maxHp;
     const nextWill = currentStore.will.willCurr ?? curr.will;
     const nextMaxWill = currentStore.will.willMax ?? curr.maxWill;
+    nextMeta['hp-curr'] = nextHp;
+    nextMeta['hp-max-display'] = nextMaxHp;
+    nextMeta['will-curr'] = nextWill;
+    nextMeta['will-max-display'] = nextMaxWill;
     const cleanNick = (currentStore.identity.nickname || '').trim();
     const cleanSpecies = (currentStore.identity.species || curr.species || '').trim();
     const nextName = cleanNick || cleanSpecies || curr.name;
@@ -109,6 +140,36 @@ export function buildSummaryFromStore(
     };
 
     return { updatedSummary, nextMeta };
+}
+
+/**
+ * Checks whether top-level summary fields or fullMetadata HP/Will displays have drifted
+ * from the active Zustand store for the same entity.
+ */
+export function hasSummaryStoreDrift(store: CharacterState, summary: PcPokemonSummary | null | undefined): boolean {
+    if (!summary?.entityId) return false;
+    if (store.identity.entityId && store.identity.entityId !== summary.entityId) return false;
+
+    const cleanNick = (store.identity.nickname || '').trim();
+    const cleanSpecies = (store.identity.species || summary.species || '').trim();
+    const nextName = cleanNick || cleanSpecies || summary.name;
+    const nextType2 =
+        store.identity.type2 && store.identity.type2.toLowerCase() !== 'none' ? store.identity.type2 : undefined;
+
+    return (
+        summary.hp !== store.health.hpCurr ||
+        summary.maxHp !== store.health.hpMax ||
+        summary.will !== store.will.willCurr ||
+        summary.maxWill !== store.will.willMax ||
+        summary.fullMetadata?.['hp-max-display'] !== store.health.hpMax ||
+        summary.fullMetadata?.['will-max-display'] !== store.will.willMax ||
+        summary.rank !== store.identity.rank ||
+        summary.species !== cleanSpecies ||
+        summary.name !== nextName ||
+        summary.type1 !== (store.identity.type1 || summary.type1) ||
+        summary.type2 !== nextType2 ||
+        (Boolean(store.identity.tokenImageUrl) && summary.tokenImageUrl !== store.identity.tokenImageUrl)
+    );
 }
 
 /**

@@ -4,10 +4,14 @@ import {
     saveRoomSettingsToOwlbear,
     flushSceneSettingsToOwlbear,
     clearSceneScaleFromOwlbear,
-    clearSceneOffsetsFromOwlbear
+    clearSceneOffsetsFromOwlbear,
+    saveToOwlbear,
+    getIsRemoteSyncActive
 } from '../../utils/sync/obr';
 import OBR from '@owlbear-rodeo/sdk';
 import { isStandaloneMode } from '../../utils/sync/storageAdapter';
+import { syncHealthAndWill } from '../../utils/common/macroHelpers';
+import { syncPcStorage } from './identityUpdaters';
 
 export const ROOM_SETTINGS_KEYS: Array<keyof RoomSettings> = [
     'ruleset',
@@ -181,12 +185,23 @@ export const createRoomSettingsSlice: StateCreator<
             }
         }
         set(
-            (state) => ({
-                identity: {
+            (state) => {
+                const nextIdentity = {
                     ...state.identity,
                     ...cleanSettings
+                };
+                if (cleanSettings.ruleset !== undefined && cleanSettings.ruleset !== state.identity.ruleset) {
+                    const newHealth = { ...state.health };
+                    const newWill = { ...state.will };
+                    syncHealthAndWill(state, state.stats, nextIdentity, newHealth, newWill, {});
+                    return {
+                        identity: nextIdentity,
+                        health: newHealth,
+                        will: newWill
+                    };
                 }
-            }),
+                return { identity: nextIdentity };
+            },
             false,
             'roomSettings/applySettings'
         );
@@ -223,12 +238,33 @@ export const createRoomSettingsSlice: StateCreator<
             }
         }
         set(
-            (state) => ({
-                identity: {
+            (state) => {
+                const nextIdentity = {
                     ...state.identity,
                     [field]: value
+                };
+                if (field === 'ruleset' && state.identity.ruleset !== value) {
+                    const newHealth = { ...state.health };
+                    const newWill = { ...state.will };
+                    const updatesToSave: Record<string, unknown> = {};
+                    syncHealthAndWill(state, state.stats, nextIdentity, newHealth, newWill, updatesToSave);
+                    if (!getIsRemoteSyncActive() && Object.keys(updatesToSave).length > 0) {
+                        try {
+                            saveToOwlbear(updatesToSave);
+                        } catch (error) {
+                            console.warn('[RoomSettingsSlice] Failed to save recalculated HP/Will to Owlbear:', error);
+                        }
+                    }
+                    const nextPcData = syncPcStorage('ruleset', value, state, updatesToSave);
+                    return {
+                        identity: nextIdentity,
+                        health: newHealth,
+                        will: newWill,
+                        pcData: nextPcData
+                    };
                 }
-            }),
+                return { identity: nextIdentity };
+            },
             false,
             'roomSettings/updateSetting'
         );

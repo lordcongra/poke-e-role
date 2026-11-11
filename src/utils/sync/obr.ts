@@ -1,3 +1,4 @@
+import OBR from '@owlbear-rodeo/sdk';
 import { storageAdapter } from './storageAdapter';
 import { parseOptionalFiniteNumber } from '@/utils/sync/mappers/mapperHelpers';
 
@@ -25,6 +26,14 @@ export const LOCAL_CLIENT_ID =
 
 let isRemoteSyncActive = false;
 let remoteSyncTimer: ReturnType<typeof setTimeout> | null = null;
+let deferredRemoteUpdates: Record<string, unknown> = {};
+
+function flushDeferredRemoteUpdates() {
+    if (Object.keys(deferredRemoteUpdates).length === 0) return;
+    const queued = deferredRemoteUpdates;
+    deferredRemoteUpdates = {};
+    void saveToOwlbear(queued);
+}
 
 export function setIsRemoteSyncActive(active: boolean, timeoutMs = 0) {
     isRemoteSyncActive = active;
@@ -32,10 +41,13 @@ export function setIsRemoteSyncActive(active: boolean, timeoutMs = 0) {
         clearTimeout(remoteSyncTimer);
         remoteSyncTimer = null;
     }
-    if (active && timeoutMs > 0) {
+    if (!active) {
+        flushDeferredRemoteUpdates();
+    } else if (timeoutMs > 0) {
         remoteSyncTimer = setTimeout(() => {
             isRemoteSyncActive = false;
             remoteSyncTimer = null;
+            flushDeferredRemoteUpdates();
         }, timeoutMs);
     }
 }
@@ -46,6 +58,7 @@ export function getIsRemoteSyncActive() {
 
 export function setActiveTokenId(id: string | null) {
     if (activeTokenId !== id) {
+        deferredRemoteUpdates = {};
         if (activeTokenId && Object.keys(pendingUpdates).length > 0) {
             const tokenToFlush = pendingTokenId || activeTokenId;
             const updatesToPush = { ...pendingUpdates, lastModified: Date.now() };
@@ -76,7 +89,10 @@ export function getLastSaveTimestamp() {
 }
 
 export async function saveToOwlbear(updates: Record<string, unknown>) {
-    if (getIsRemoteSyncActive()) return;
+    if (getIsRemoteSyncActive()) {
+        Object.assign(deferredRemoteUpdates, updates);
+        return;
+    }
     const currentToken = activeTokenId;
     if (!currentToken) return;
 
@@ -110,8 +126,14 @@ export async function saveToOwlbear(updates: Record<string, unknown>) {
             await storageAdapter.saveCharacter(tokenToSave, updatesToPush, METADATA_ID);
         } catch (error) {
             console.warn('[OBR Engine] Failed to securely save data via adapter:', error);
-            pendingUpdates = {};
-            pendingTokenId = null;
+            pendingUpdates = { ...updatesToPush, ...pendingUpdates };
+            pendingTokenId = tokenToSave;
+            if (OBR.isAvailable) {
+                OBR.notification.show('Failed to save character changes. Retrying...', 'WARNING');
+            }
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('pkr-save-error', { detail: { tokenToSave, error } }));
+            }
         } finally {
             isSaveInFlight = false;
         }
@@ -140,28 +162,6 @@ export async function flushCharacterToOwlbear(updates?: Record<string, unknown>)
         await storageAdapter.saveCharacter(tokenToSave, updatesToPush, METADATA_ID);
     } catch (error) {
         console.error('[OBR Engine] Failed to immediately flush character updates:', error);
-        throw error;
-    } finally {
-        isSaveInFlight = false;
-    }
-}
-
-/**
- * Direct immediate save helper for a specific token ID without debouncing.
- */
-export async function saveCharacterImmediate(
-    tokenId: string,
-    updates: Record<string, unknown>,
-    metadataId: string = METADATA_ID
-): Promise<void> {
-    clearTimeout(saveTimeout);
-    pendingUpdates = {};
-    pendingTokenId = null;
-    isSaveInFlight = true;
-    try {
-        await storageAdapter.saveCharacter(tokenId, updates, metadataId);
-    } catch (error) {
-        console.error('[OBR Engine] Failed to save character immediately:', error);
         throw error;
     } finally {
         isSaveInFlight = false;
