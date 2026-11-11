@@ -2,6 +2,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { waitForObr } from './obrHelpers';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { setItemArt } from '../graphics/itemArtCatalog';
+import { parseOptionalFiniteNumber } from '@/utils/sync/mappers/mapperHelpers';
 
 export const isStandaloneMode = window.self === window.top;
 
@@ -131,12 +132,18 @@ export const hasUnbackedData = (characterCount: number, folderCount: number): bo
             // Data exists in directory, but no backup was ever performed
             return true;
         }
-        const lastBackup = Number(lastBackupStr);
+        const lastBackup = parseOptionalFiniteNumber(lastBackupStr);
+        if (lastBackup === undefined) {
+            return true;
+        }
         const lastChangeStr = localStorage.getItem(CHANGE_TIMESTAMP_KEY);
         if (!lastChangeStr) {
             return false;
         }
-        const lastChange = Number(lastChangeStr);
+        const lastChange = parseOptionalFiniteNumber(lastChangeStr);
+        if (lastChange === undefined) {
+            return false;
+        }
         return lastChange > lastBackup;
     } catch (e) {
         console.error('[storageAdapter] Error checking unbacked data status', e);

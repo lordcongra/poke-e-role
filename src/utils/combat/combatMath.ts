@@ -4,6 +4,7 @@ import { parseCombatTags, type CombatBonuses } from '@/utils/tagParser/index';
 import { getEffectsByCategory } from '@/utils/combat/fieldEffectsData';
 import { resolveCharacterSide, isFlowerGiftActiveForSide } from '@/utils/combat/combatantSideUtils';
 import { isAbilitySuppressedByField, isTargetUnderIntimidate, isTargetAffectedByAbility } from '@/utils/combat/abilityTargetingUtils';
+import { shouldShiftTypeForAbility } from '@/utils/combat/proteanLiberoUtils';
 
 // Sub-module math re-exports
 export * from './math/combatWeatherMath';
@@ -39,18 +40,26 @@ export function getAbilityText(abilityName: string, customAbilities?: CustomAbil
 }
 
 /**
- * Returns the effective ability text for a character, accounting for:
- * 1. User manual ability active toggle
- * 2. Neutralizing Gas suppression from opposing side
+ * Returns whether the character's ability is currently active (not manually toggled off
+ * and not suppressed by an active field effect like Neutralizing Gas).
  */
-export function getEffectiveAbilityText(state: CharacterState): string {
-    if (state.identity.abilityActive === false) return '';
+export function isCharacterAbilityActive(state: CharacterState): boolean {
+    if (state.identity.abilityActive === false) return false;
     const side = resolveCharacterSide(state);
     const effectiveSide: 'player' | 'foe' = side !== 'none' ? side : state.identity.isNPC ? 'foe' : 'player';
     const charIdentifiers = [
         state.identity.entityId, state.tokenId, state.identity.nickname, state.identity.species
     ].filter(Boolean) as string[];
-    if (isAbilitySuppressedByField(effectiveSide, state.activeBattlefield || null, charIdentifiers)) return '';
+    return !isAbilitySuppressedByField(effectiveSide, state.activeBattlefield || null, charIdentifiers);
+}
+
+/**
+ * Returns the effective ability text for a character, accounting for:
+ * 1. User manual ability active toggle
+ * 2. Neutralizing Gas suppression from opposing side
+ */
+export function getEffectiveAbilityText(state: CharacterState): string {
+    if (!isCharacterAbilityActive(state)) return '';
     return getAbilityText(state.identity.ability, state.roomCustomAbilities);
 }
 
@@ -228,10 +237,31 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState, itemB
     const normalizedDamageStatistic = (ATTRIBUTE_MAPPING[move.dmg1] || move.dmg1 || '').toLowerCase().trim();
     const scalingValue = normalizedDamageStatistic ? calculateStatTotal(normalizedDamageStatistic, state, invMods) : 0;
 
-    const abilityString = (state.identity.ability || '').toLowerCase();
-    const isProtean = abilityString.includes('protean') || abilityString.includes('libero');
-    const hasTypeMatch = move.type && `${state.identity.type1} / ${state.identity.type2}`.includes(move.type);
-    const sameTypeAttackBonus = hasTypeMatch || isProtean ? 1 : 0;
+    const normalizeType = (t?: string) => (t || '').trim().toLowerCase();
+    const moveTypeNorm = normalizeType(move.type);
+    const ignoredTypes = new Set(['', 'none', 'typeless']);
+    const type1Norm = normalizeType(state.identity.type1);
+    const type2Norm = normalizeType(state.identity.type2);
+    const hasTypeMatch =
+        !ignoredTypes.has(moveTypeNorm) &&
+        ((!ignoredTypes.has(type1Norm) && type1Norm === moveTypeNorm) ||
+            (!ignoredTypes.has(type2Norm) && type2Norm === moveTypeNorm));
+
+    const abilityIsActive = isCharacterAbilityActive(state);
+    const proteanResult = shouldShiftTypeForAbility(
+        state.identity.ability || '',
+        abilityIsActive,
+        move.category,
+        move.type,
+        state.identity.type1,
+        state.identity.type2
+    );
+    const hasProteanStab =
+        abilityIsActive &&
+        !ignoredTypes.has(moveTypeNorm) &&
+        (proteanResult.matchedAbility === 'Protean' || proteanResult.matchedAbility === 'Libero') &&
+        proteanResult.shouldShift;
+    const sameTypeAttackBonus = hasTypeMatch || hasProteanStab ? 1 : 0;
 
     let teraBonus = 0;
     if (state.identity.activeTransformation === 'Terastallize' && move.type === state.identity.terastallizeAffinity) {

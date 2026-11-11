@@ -2,6 +2,7 @@
  * Pure room settings metadata mapping and transformation utilities.
  * Completely decoupled from browser/OBR globals for testability and zero-side-effect imports.
  */
+import { parseOptionalFiniteNumber } from '@/utils/sync/mappers/mapperHelpers';
 
 export function applyRoomUpdatesToMeta(
     roomMeta: Record<string, unknown>,
@@ -22,9 +23,16 @@ export function applyRoomUpdatesToMeta(
         else if (k === 'defaultNpcInitiativeHidden') roomMeta.defaultNpcInitiativeHidden = Boolean(v);
         else if (k === 'pmdSkills') roomMeta.pmdSkills = Boolean(v);
         else if (k === 'gmDemoMode') roomMeta.gmDemoMode = Boolean(v);
-        else if (k === 'roomDefaultScale') roomMeta.roomDefaultScale = Number(v);
-        else if (k === 'roomDefaultOffsetX') roomMeta.roomDefaultOffsetX = Number(v);
-        else if (k === 'roomDefaultOffsetY') roomMeta.roomDefaultOffsetY = Number(v);
+        else if (k === 'roomDefaultScale') {
+            const parsed = parseOptionalFiniteNumber(v);
+            if (parsed !== undefined) roomMeta.roomDefaultScale = parsed;
+        } else if (k === 'roomDefaultOffsetX') {
+            const parsed = parseOptionalFiniteNumber(v);
+            if (parsed !== undefined) roomMeta.roomDefaultOffsetX = parsed;
+        } else if (k === 'roomDefaultOffsetY') {
+            const parsed = parseOptionalFiniteNumber(v);
+            if (parsed !== undefined) roomMeta.roomDefaultOffsetY = parsed;
+        }
         else if (k === 'roomHideHpBar') roomMeta.roomHideHpBar = Boolean(v);
         else if (k === 'roomHideHpText') roomMeta.roomHideHpText = Boolean(v);
         else if (k === 'roomHideWillBar') roomMeta.roomHideWillBar = Boolean(v);
@@ -66,9 +74,9 @@ export function mapRoomSettings(sData: Record<string, unknown>) {
             sData.defaultNpcInitiativeHidden !== undefined ? Boolean(sData.defaultNpcInitiativeHidden) : undefined,
         pmdSkills: sData.pmdSkills !== undefined ? Boolean(sData.pmdSkills) : undefined,
         gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined,
-        roomDefaultScale: sData.roomDefaultScale !== undefined ? Number(sData.roomDefaultScale) : undefined,
-        roomDefaultOffsetX: sData.roomDefaultOffsetX !== undefined ? Number(sData.roomDefaultOffsetX) : undefined,
-        roomDefaultOffsetY: sData.roomDefaultOffsetY !== undefined ? Number(sData.roomDefaultOffsetY) : undefined,
+        roomDefaultScale: parseOptionalFiniteNumber(sData.roomDefaultScale),
+        roomDefaultOffsetX: parseOptionalFiniteNumber(sData.roomDefaultOffsetX),
+        roomDefaultOffsetY: parseOptionalFiniteNumber(sData.roomDefaultOffsetY),
         activeRoomCampaignName:
             sData.activeRoomCampaignName !== undefined ? String(sData.activeRoomCampaignName) : undefined,
         activeRoomCampaignId: sData.activeRoomCampaignId !== undefined ? String(sData.activeRoomCampaignId) : undefined,

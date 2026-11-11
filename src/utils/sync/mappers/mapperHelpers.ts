@@ -1,6 +1,30 @@
 import type { ExtraCategory } from '@/store/storeTypes';
 import { Skill } from '@/types/enums';
 
+/**
+ * Parses an unknown metadata value as a finite number.
+ * Rejects null, booleans, empty/whitespace strings, NaN, and ±Infinity while preserving 0.
+ */
+export function parseOptionalFiniteNumber(value: unknown): number | undefined {
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? value : undefined;
+    }
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) return undefined;
+        const parsed = Number(trimmed);
+        return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+}
+
+/**
+ * Parses an unknown metadata value as a finite number with an explicit fallback.
+ */
+export function parseFiniteNumber(value: unknown, fallback: number): number {
+    return parseOptionalFiniteNumber(value) ?? fallback;
+}
+
 export const mapAttr = (val: string): string => {
     const rawParts = (val || '')
         .split(/[/,]|(?:\s+or\s+)/i)

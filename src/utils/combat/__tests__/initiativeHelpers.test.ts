@@ -5,6 +5,8 @@ import {
     sortCombatants,
     extractIsNpc,
     extractCharacterName,
+    resolveStalemateTiebreakers,
+    resolveInitiativeRolls,
     type Combatant
 } from '@/utils/combat/initiativeHelpers';
 
@@ -96,6 +98,66 @@ describe('initiativeHelpers', () => {
             expect(extractCharacterName({ species: 'Pikachu' })).toBe('Pikachu');
             expect(extractCharacterName({ name: 'Trainer Red' })).toBe('Trainer Red');
             expect(extractCharacterName(null, 'DefaultFallback')).toBe('DefaultFallback');
+        });
+    });
+
+    describe('resolveStalemateTiebreakers and resolveInitiativeRolls (B-18)', () => {
+        it('keeps existing unique non-zero opponent tiebreakers stable and repairs duplicates/zeros', () => {
+            const result = resolveStalemateTiebreakers('roller', [
+                { id: 'opp-1', tiebreaker: 4 },
+                { id: 'opp-2', tiebreaker: 4 }, // duplicate
+                { id: 'opp-3', tiebreaker: 0 }  // zero
+            ]);
+
+            expect(result.opponentTiebreakers['opp-1']).toBe(4);
+            const allTies = [
+                result.assignedTiebreaker,
+                result.opponentTiebreakers['opp-1'],
+                result.opponentTiebreakers['opp-2'],
+                result.opponentTiebreakers['opp-3']
+            ];
+            expect(new Set(allTies).size).toBe(4);
+            allTies.forEach((t) => {
+                expect(t).toBeGreaterThanOrEqual(1);
+                expect(t).toBeLessThanOrEqual(6);
+            });
+        });
+
+        it('handles >6 stalemate combatants in resolveStalemateTiebreakers without infinite loops', () => {
+            const opponents = Array.from({ length: 7 }, (_, i) => ({
+                id: `opp-${i + 1}`,
+                tiebreaker: i < 6 ? i + 1 : 0
+            }));
+            const result = resolveStalemateTiebreakers('roller', opponents);
+            const allTies = [result.assignedTiebreaker, ...Object.values(result.opponentTiebreakers)];
+            expect(new Set(allTies).size).toBe(8);
+            allTies.forEach((t) => expect(t).toBeGreaterThan(0));
+        });
+
+        it('resolves >6 participants in resolveInitiativeRolls without infinite loops', () => {
+            const participants = Array.from({ length: 12 }, (_, i) => ({
+                id: `p-${i + 1}`,
+                name: `Mon ${i + 1}`,
+                baseInit: 5
+            }));
+            const { rolledCombatants, logSummary } = resolveInitiativeRolls(participants);
+            expect(rolledCombatants).toHaveLength(12);
+            expect(logSummary).toContain('Mon 12');
+
+            // Verify every stalemate group has unique tiebreakers
+            const groups = new Map<string, number[]>();
+            for (const c of rolledCombatants) {
+                const key = `${c.total}_${c.baseInit}`;
+                const list = groups.get(key) || [];
+                list.push(c.tiebreaker);
+                groups.set(key, list);
+            }
+            for (const ties of groups.values()) {
+                if (ties.length > 1) {
+                    expect(new Set(ties).size).toBe(ties.length);
+                    ties.forEach((t) => expect(t).toBeGreaterThan(0));
+                }
+            }
         });
     });
 });

@@ -4,7 +4,8 @@ import {
     calculateMaxWill,
     getPainPenalty,
     getStatusPenalties,
-    calculateCriticalRequirement
+    calculateCriticalRequirement,
+    calculateBaseDamage
 } from '@/utils/combat/combatMath';
 import { createTestCharacterState } from '@/test/testStateHelpers';
 import { createEmptyBonuses } from '@/utils/tagParser/parseCombatTags';
@@ -259,6 +260,85 @@ describe('combatMath', () => {
             const heavyStackBuffs = { ...emptyBuffs, stackingHighCritStacks: 2 };
             const clampedRes = calculateCriticalRequirement(highCritMove, 0, superLuckState, heavyStackBuffs);
             expect(clampedRes.criticalRequirement).toBe(1);
+        });
+    });
+
+    describe('calculateBaseDamage STAB and Protean/Libero checks (B-13)', () => {
+        const makeMove = (type: string, category: 'Physical' | 'Special' = 'Physical'): MoveData => ({
+            id: 'm-stab',
+            active: true,
+            name: 'Test Move',
+            type,
+            category,
+            power: 2,
+            acc1: 'str',
+            acc2: 'brawl',
+            dmg1: 'str',
+            desc: ''
+        });
+
+        it('uses exact normalized type comparison and ignores None/Typeless/substrings', () => {
+            const state = createTestCharacterState({
+                identity: { type1: 'Spice', type2: 'None', ability: '' },
+                stats: { str: { base: 2, rank: 0, buff: 0, debuff: 0 } }
+            });
+            const buffs = createEmptyBonuses();
+
+            // Base: power (2) + str (2) = 4 (no STAB)
+            expect(calculateBaseDamage(makeMove('Ice'), state, buffs)).toBe(4);
+            expect(calculateBaseDamage(makeMove('None'), state, buffs)).toBe(4);
+            expect(calculateBaseDamage(makeMove('Typeless'), state, buffs)).toBe(4);
+            expect(calculateBaseDamage(makeMove(''), state, buffs)).toBe(4);
+
+            // Exact case-insensitive match grants +1 STAB -> 5
+            expect(calculateBaseDamage(makeMove('spice'), state, buffs)).toBe(5);
+        });
+
+        it('respects abilityActive and Neutralizing Gas suppression for Protean/Libero STAB', () => {
+            const proteanActive = createTestCharacterState({
+                identity: { type1: 'Water', type2: '', ability: 'Protean', abilityActive: true },
+                stats: { str: { base: 2, rank: 0, buff: 0, debuff: 0 } }
+            });
+            const buffs = createEmptyBonuses();
+
+            // Active Protean grants +1 STAB on non-STAB Fire move: 2 + 2 + 1 = 5
+            expect(calculateBaseDamage(makeMove('Fire'), proteanActive, buffs)).toBe(5);
+            // Typeless still does not get STAB
+            expect(calculateBaseDamage(makeMove('Typeless'), proteanActive, buffs)).toBe(4);
+
+            // Disabled abilityActive removes Protean STAB
+            const proteanDisabled = createTestCharacterState({
+                identity: { type1: 'Water', type2: '', ability: 'Protean', abilityActive: false },
+                stats: { str: { base: 2, rank: 0, buff: 0, debuff: 0 } }
+            });
+            expect(calculateBaseDamage(makeMove('Fire'), proteanDisabled, buffs)).toBe(4);
+
+            // Neutralizing Gas active on battlefield suppresses Protean/Libero STAB
+            const emptySide = {
+                forceFields: [
+                    { name: '', remainingRounds: 0 },
+                    { name: '', remainingRounds: 0 }
+                ] as [{ name: string; remainingRounds: number }, { name: string; remainingRounds: number }],
+                entryHazard: '',
+                cover: '',
+                other: ''
+            };
+            const proteanSuppressed = createTestCharacterState({
+                identity: { type1: 'Water', type2: '', ability: 'Libero', abilityActive: true, isNPC: false },
+                stats: { str: { base: 2, rank: 0, buff: 0, debuff: 0 } },
+                activeBattlefield: {
+                    location: '',
+                    weather: { name: 'None', remainingRounds: 0 },
+                    terrain: { name: 'None', remainingRounds: 0 },
+                    other: { name: 'Neutralizing Gas', remainingRounds: -1 },
+                    playerSide: emptySide,
+                    foeSide: emptySide,
+                    playerTargets: 0,
+                    foeTargets: 0,
+                    highlightedSide: 'all'
+                }
+            });
+            expect(calculateBaseDamage(makeMove('Fire'), proteanSuppressed, buffs)).toBe(4);
         });
     });
 });

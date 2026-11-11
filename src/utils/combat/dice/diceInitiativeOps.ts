@@ -7,7 +7,8 @@ import {
     calculateEncodedInitiative,
     calculateBaseInitFromCharacterData,
     sortCombatants,
-    extractIsNpc
+    extractIsNpc,
+    resolveStalemateTiebreakers
 } from '@/utils/combat/initiativeHelpers';
 import { addRollLogEntry } from '@/utils/combat/diceRoller';
 
@@ -51,7 +52,11 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
             const shouldHideStandalone = isStandaloneNpc && state.identity.defaultNpcInitiativeHidden !== false;
 
             if (stalemateOpponents.length > 0) {
-                assignedTiebreaker = Math.floor(Math.random() * 6) + 1;
+                const resolution = resolveStalemateTiebreakers(
+                    tokenId,
+                    stalemateOpponents.map((opponent) => ({ id: opponent.id, tiebreaker: opponent.tiebreaker }))
+                );
+                assignedTiebreaker = resolution.assignedTiebreaker;
                 const updatedList = parsedList.map((combatant) => {
                     if (combatant.id === tokenId) {
                         return {
@@ -64,17 +69,11 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
                             isNPC: combatant.isNPC !== undefined ? combatant.isNPC : isStandaloneNpc
                         };
                     }
-                    if (stalemateOpponents.some((opponent) => opponent.id === combatant.id)) {
-                        let opponentTiebreaker = combatant.tiebreaker;
-                        if (!opponentTiebreaker || opponentTiebreaker === 0) {
-                            opponentTiebreaker = Math.floor(Math.random() * 6) + 1;
-                        }
-                        while (opponentTiebreaker === assignedTiebreaker) {
-                            opponentTiebreaker = Math.floor(Math.random() * 6) + 1;
-                        }
+                    const nextOpponentTie = resolution.opponentTiebreakers[combatant.id];
+                    if (nextOpponentTie !== undefined) {
                         return {
                             ...combatant,
-                            tiebreaker: opponentTiebreaker
+                            tiebreaker: nextOpponentTie
                         };
                     }
                     return combatant;
@@ -141,29 +140,35 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
         });
 
         if (stalemateTokens.length > 0) {
-            assignedTiebreaker = Math.floor(Math.random() * 6) + 1;
+            const resolution = resolveStalemateTiebreakers(
+                tokenId,
+                stalemateTokens.map((opponent) => {
+                    const opponentMeta = opponent.metadata[INITIATIVE_KEY] as
+                        | { tiebreaker?: number }
+                        | undefined;
+                    return { id: opponent.id, tiebreaker: opponentMeta?.tiebreaker };
+                })
+            );
+            assignedTiebreaker = resolution.assignedTiebreaker;
 
-            // Also ensure stalemate opponents have unique non-zero tiebreakers
+            // Update only stalemate opponents whose tiebreaker changed (keeping existing unique non-zero tiebreakers stable)
             const opponentUpdates: { id: string; tiebreaker: number; value: number; base: number }[] = [];
             for (const opponent of stalemateTokens) {
                 const opponentMeta = opponent.metadata[INITIATIVE_KEY] as
                     | { value?: number; base?: number; tiebreaker?: number }
                     | undefined;
-                let opponentTiebreaker = opponentMeta?.tiebreaker || 0;
-                if (opponentTiebreaker === 0 || opponentTiebreaker === assignedTiebreaker) {
-                    opponentTiebreaker = Math.floor(Math.random() * 6) + 1;
-                    while (opponentTiebreaker === assignedTiebreaker) {
-                        opponentTiebreaker = Math.floor(Math.random() * 6) + 1;
-                    }
+                const nextTiebreaker = resolution.opponentTiebreakers[opponent.id];
+                if (opponentMeta?.tiebreaker === nextTiebreaker) {
+                    continue;
                 }
                 const opponentBase =
                     typeof opponentMeta?.base === 'number'
                         ? opponentMeta.base
                         : calculateBaseInitFromCharacterData(opponent.metadata, state);
-                const opponentValue = calculateEncodedInitiative(rollTotal, opponentBase, opponentTiebreaker);
+                const opponentValue = calculateEncodedInitiative(rollTotal, opponentBase, nextTiebreaker);
                 opponentUpdates.push({
                     id: opponent.id,
-                    tiebreaker: opponentTiebreaker,
+                    tiebreaker: nextTiebreaker,
                     value: opponentValue,
                     base: opponentBase
                 });

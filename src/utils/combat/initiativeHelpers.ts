@@ -265,10 +265,69 @@ export interface ResolvedInitiativeResult {
     logSummary: string;
 }
 
+function buildShuffledD6Pool(excluded: Set<number>): number[] {
+    const pool = [1, 2, 3, 4, 5, 6].filter((n) => !excluded.has(n));
+    for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    return pool;
+}
+
+/**
+ * Resolves unique positive tiebreakers for a newly rolling combatant and existing
+ * stalemate opponents. Preserves existing unique non-zero opponent tiebreakers,
+ * repairs zero or duplicate opponent tiebreakers without collisions, and uses
+ * deterministic integer fallbacks (7, 8, ...) if >6 combatants stalemate.
+ */
+export function resolveStalemateTiebreakers(
+    _rollerId: string,
+    existingOpponents: { id: string; tiebreaker?: number }[]
+): {
+    assignedTiebreaker: number;
+    opponentTiebreakers: Record<string, number>;
+} {
+    const used = new Set<number>();
+    const opponentTiebreakers: Record<string, number> = {};
+    const needsAssignment: string[] = [];
+
+    for (const opp of existingOpponents) {
+        const existing = opp.tiebreaker;
+        if (typeof existing === 'number' && Number.isFinite(existing) && existing > 0 && !used.has(existing)) {
+            used.add(existing);
+            opponentTiebreakers[opp.id] = existing;
+        } else {
+            needsAssignment.push(opp.id);
+        }
+    }
+
+    const availablePool = buildShuffledD6Pool(used);
+    let nextFallback = 7;
+    const drawUnique = (): number => {
+        if (availablePool.length > 0) {
+            const drawn = availablePool.pop()!;
+            used.add(drawn);
+            return drawn;
+        }
+        while (used.has(nextFallback)) {
+            nextFallback += 1;
+        }
+        used.add(nextFallback);
+        return nextFallback;
+    };
+
+    const assignedTiebreaker = drawUnique();
+    for (const oppId of needsAssignment) {
+        opponentTiebreakers[oppId] = drawUnique();
+    }
+
+    return { assignedTiebreaker, opponentTiebreakers };
+}
+
 export function resolveInitiativeRolls(participants: InitiativeParticipant[]): ResolvedInitiativeResult {
     let logSummary = 'All Combatants Rolled Initiative:\n\n';
 
-    const preliminaryCombatants = participants.map((p) => {
+    const preliminaryCombatants: Combatant[] = participants.map((p) => {
         const rolledD6 = Math.floor(Math.random() * 6) + 1;
         const total = rolledD6 + p.baseInit;
         return {
@@ -289,25 +348,18 @@ export function resolveInitiativeRolls(participants: InitiativeParticipant[]): R
         stalemateGroups[key].push(c);
     });
 
+    for (const group of Object.values(stalemateGroups)) {
+        if (group.length <= 1) continue;
+        const pool = buildShuffledD6Pool(new Set<number>());
+        group.forEach((member, idx) => {
+            member.tiebreaker = idx < pool.length ? pool[idx] : idx + 1;
+        });
+    }
+
     const finalCombatants: Combatant[] = preliminaryCombatants.map((c) => {
-        const key = `${c.total}_${c.baseInit}`;
-        const group = stalemateGroups[key];
-        let tiebreaker = 0;
-
-        if (group && group.length > 1) {
-            const existingTies = group.map((member) => member.tiebreaker).filter((t) => t > 0);
-            let roll = Math.floor(Math.random() * 6) + 1;
-            while (existingTies.includes(roll)) {
-                roll = Math.floor(Math.random() * 6) + 1;
-            }
-            c.tiebreaker = roll;
-            tiebreaker = roll;
-        }
-
-        const tiebreakerNote = tiebreaker > 0 ? ` (Tiebreaker: [${tiebreaker}])` : '';
+        const tiebreakerNote = c.tiebreaker > 0 ? ` (Tiebreaker: [${c.tiebreaker}])` : '';
         logSummary += `${c.name}: [${c.d6}] + Base ${c.baseInit} = ${c.total}${tiebreakerNote}\n`;
-
-        return { ...c, tiebreaker };
+        return { ...c };
     });
 
     return {

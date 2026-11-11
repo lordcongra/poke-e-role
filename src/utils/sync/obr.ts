@@ -1,4 +1,5 @@
 import { storageAdapter } from './storageAdapter';
+import { parseOptionalFiniteNumber } from '@/utils/sync/mappers/mapperHelpers';
 
 export const METADATA_ID = 'pokerole-extension/stats';
 
@@ -276,15 +277,28 @@ export async function flushSceneSettingsToOwlbear(updates: {
 }) {
     await updateSceneSettingsMetadata((sceneMeta) => {
         if (updates.sceneDefaultScale !== undefined) {
-            sceneMeta.sceneDefaultScale = updates.sceneDefaultScale === null ? null : Number(updates.sceneDefaultScale);
+            if (updates.sceneDefaultScale === null) {
+                sceneMeta.sceneDefaultScale = null;
+            } else {
+                const parsed = parseOptionalFiniteNumber(updates.sceneDefaultScale);
+                if (parsed !== undefined) sceneMeta.sceneDefaultScale = parsed;
+            }
         }
         if (updates.sceneDefaultOffsetX !== undefined) {
-            sceneMeta.sceneDefaultOffsetX =
-                updates.sceneDefaultOffsetX === null ? null : Number(updates.sceneDefaultOffsetX);
+            if (updates.sceneDefaultOffsetX === null) {
+                sceneMeta.sceneDefaultOffsetX = null;
+            } else {
+                const parsed = parseOptionalFiniteNumber(updates.sceneDefaultOffsetX);
+                if (parsed !== undefined) sceneMeta.sceneDefaultOffsetX = parsed;
+            }
         }
         if (updates.sceneDefaultOffsetY !== undefined) {
-            sceneMeta.sceneDefaultOffsetY =
-                updates.sceneDefaultOffsetY === null ? null : Number(updates.sceneDefaultOffsetY);
+            if (updates.sceneDefaultOffsetY === null) {
+                sceneMeta.sceneDefaultOffsetY = null;
+            } else {
+                const parsed = parseOptionalFiniteNumber(updates.sceneDefaultOffsetY);
+                if (parsed !== undefined) sceneMeta.sceneDefaultOffsetY = parsed;
+            }
         }
     }, 'flush scene settings');
 }

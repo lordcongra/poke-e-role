@@ -16,28 +16,38 @@ export function DemoRollModal() {
 
     const handleConfirm = () => {
         if (mode === 'exact') {
-            const parsed = exactDice
+            const tokens = exactDice
                 .split(',')
-                .map((s) => parseInt(s.trim(), 10))
-                .filter((n) => !isNaN(n));
+                .map((s) => s.trim())
+                .filter((s) => s.length > 0);
 
-            if (parsed.length !== numDice) {
-                alert(`Please enter exactly ${numDice} numbers separated by commas.`);
+            if (tokens.length !== numDice) {
+                alert(`Please enter exactly ${numDice} integers (1–6) separated by commas.`);
                 return;
+            }
+
+            const parsed: number[] = [];
+            for (const token of tokens) {
+                if (!/^[1-6]$/.test(token)) {
+                    alert(`Each die value must be an integer between 1 and 6 (invalid: "${token}").`);
+                    return;
+                }
+                parsed.push(Number(token));
             }
             resolve(parsed);
         } else {
             const dice: number[] = [];
             // Target is the number of raw dice successes we want, ignoring flat modifiers!
-            const cappedTarget = Math.min(Math.max(0, targetSuccesses), numDice);
+            const maxPassing = successThreshold >= 6 ? 0 : numDice;
+            const cappedTarget = Math.min(Math.max(0, targetSuccesses), maxPassing);
 
             for (let i = 0; i < cappedTarget; i++) {
                 // Generates a passing die (e.g. 4, 5, 6 for threshold 3)
-                dice.push(Math.floor(Math.random() * (6 - successThreshold)) + successThreshold + 1);
+                dice.push(Math.min(6, Math.floor(Math.random() * (6 - successThreshold)) + successThreshold + 1));
             }
             for (let i = 0; i < numDice - cappedTarget; i++) {
                 // Generates a failing die (e.g. 1, 2, 3 for threshold 3)
-                dice.push(Math.floor(Math.random() * successThreshold) + 1);
+                dice.push(Math.max(1, Math.min(6, Math.floor(Math.random() * successThreshold) + 1)));
             }
 
             // Randomize the order of the array so it looks authentic in 3D!

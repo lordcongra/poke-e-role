@@ -85,6 +85,33 @@ describe('Dice Roller & OBR Sync Ops Decomposition Suite', () => {
             expect(c2).toBeDefined();
             expect(c1?.tiebreaker).not.toBe(c2?.tiebreaker);
         });
+
+        it('keeps existing opponent tiebreakers stable and handles >6 stalemate combatants without spinning', async () => {
+            const initialList: StandaloneCombatant[] = Array.from({ length: 7 }, (_, i) => ({
+                id: `c-${i + 1}`,
+                name: `Fighter ${i + 1}`,
+                image: '',
+                d6: 4,
+                baseInit: 5,
+                total: 9,
+                tiebreaker: i < 6 ? i + 1 : 0
+            }));
+            localStorage.setItem('pkr_standalone_init_list', JSON.stringify(initialList));
+
+            const tiebreaker = await assignInitiative('c-7', 9, 5);
+            expect(tiebreaker).toBeGreaterThanOrEqual(7);
+
+            const updatedList: StandaloneCombatant[] = JSON.parse(
+                localStorage.getItem('pkr_standalone_init_list') || '[]'
+            );
+            // Existing unique tiebreakers 1..6 remain untouched
+            for (let i = 0; i < 6; i++) {
+                const member = updatedList.find((c) => c.id === `c-${i + 1}`);
+                expect(member?.tiebreaker).toBe(i + 1);
+            }
+            const ties = updatedList.map((c) => c.tiebreaker);
+            expect(new Set(ties).size).toBe(7);
+        });
     });
 
     describe('Chance Roller (chanceRoller)', () => {
@@ -132,6 +159,30 @@ describe('Dice Roller & OBR Sync Ops Decomposition Suite', () => {
             const log: RollSyncData[] = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
             expect(log[0].label).toContain('[PRIVATE] Hidden Roll');
             expect(log[0].targetVisibility).toBe('gm_only');
+        });
+    });
+
+    describe('Dice Notation Validation & Bounds (B-20)', () => {
+        it('rejects malformed or out-of-bounds dice notations without logging a roll', async () => {
+            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            const invalidNotations = ['invalid', '1d6xyz', '201d6>3', '2d6>0', '2d6>7', '1d20'];
+
+            for (const bad of invalidNotations) {
+                await rollDicePlus(bad, 'Bad Roll');
+            }
+
+            const log: RollSyncData[] = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+            expect(log.length).toBe(0);
+            expect(warnSpy).toHaveBeenCalledTimes(invalidNotations.length);
+            warnSpy.mockRestore();
+        });
+
+        it('accepts valid boundary dice notations such as 0d6>3 and 2d6>5+1', async () => {
+            await rollDicePlus('0d6>3+4', 'Direct Damage', 'damage');
+            await rollDicePlus('2d6>5+1', 'Chance Roll', 'chance');
+
+            const log: RollSyncData[] = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+            expect(log.length).toBe(2);
         });
     });
 });

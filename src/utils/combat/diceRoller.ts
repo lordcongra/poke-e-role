@@ -91,10 +91,23 @@ export async function rollDicePlus(
         const cleanNotation = notation.replace(/\s/g, '');
         const isSuccessRoll = cleanNotation.includes('>');
 
-        const match = cleanNotation.match(/(\d+)d6(?:>(\d+))?(?:([+-]\d+))?/);
-        const numDice = match ? parseInt(match[1], 10) : 1;
-        const successThreshold = match && match[2] ? parseInt(match[2], 10) : 3;
-        const flatMod = match && match[3] ? parseInt(match[3].replace(/\s/g, ''), 10) : 0;
+        const match = cleanNotation.match(/^(\d+)d6(?:>(\d+))?(?:([+-]\d+))?$/);
+        if (!match) {
+            console.warn('[DiceRoller] Invalid dice notation rejected:', notation);
+            return;
+        }
+        const numDice = parseInt(match[1], 10);
+        const successThreshold = match[2] ? parseInt(match[2], 10) : 3;
+        const flatMod = match[3] ? parseInt(match[3].replace(/\s/g, ''), 10) : 0;
+
+        if (!Number.isInteger(numDice) || numDice < 0 || numDice > 200) {
+            console.warn('[DiceRoller] Out-of-bounds dice count rejected:', notation);
+            return;
+        }
+        if (!Number.isInteger(successThreshold) || successThreshold < 1 || successThreshold > 6) {
+            console.warn('[DiceRoller] Out-of-bounds success threshold rejected:', notation);
+            return;
+        }
 
         // Parse SE Flat Mod injection to safely strip it if base dice roll completely fails
         let seFlatMod = 0;
@@ -119,6 +132,10 @@ export async function rollDicePlus(
             });
             useCharacterStore.getState().setPendingDemoRoll(null);
             if (!overrideDice) return;
+            if (!Array.isArray(overrideDice) || overrideDice.length !== numDice) {
+                console.warn('[DiceRoller] Invalid overrideDice length rejected:', overrideDice);
+                return;
+            }
         }
 
         const diceData: { type: number; result: number }[] = [];
@@ -129,7 +146,9 @@ export async function rollDicePlus(
         let rawSum = 0;
 
         for (let i = 0; i < numDice; i++) {
-            const result = overrideDice ? overrideDice[i] : Math.floor(Math.random() * 6) + 1;
+            const result = overrideDice
+                ? Math.min(6, Math.max(1, Math.round(Number.isFinite(overrideDice[i]) ? overrideDice[i] : 1)))
+                : Math.floor(Math.random() * 6) + 1;
             diceData.push({ type: 6, result });
             rawSum += result;
 

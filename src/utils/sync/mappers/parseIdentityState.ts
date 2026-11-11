@@ -9,7 +9,7 @@ import type {
     TransformationType
 } from '@/store/storeTypes';
 import { getKnownAbility } from '@/data/abilities/knownAbilities';
-import { mapAttr, mapSkill } from './mapperHelpers';
+import { mapAttr, mapSkill, parseFiniteNumber } from './mapperHelpers';
 import { parsePokedex } from './parseCharacterFeatures';
 
 export function parseExtraCategories(meta: Record<string, unknown>): ExtraCategory[] {
@@ -88,16 +88,16 @@ export function parseTrackers(meta: Record<string, unknown>) {
     }
 
     return {
-        actions: Number(meta['actions-used']) || 0,
+        actions: parseFiniteNumber(meta['actions-used'], 0),
         evade: meta['evasions-used'] === true || meta['evasions-used'] === 'true',
         clash: meta['clashes-used'] === true || meta['clashes-used'] === 'true',
-        chances: Number(meta['chances-used']) || 0,
-        fate: Number(meta['fate-used']) || 0,
-        globalAcc: Number(meta['global-acc-mod']) || 0,
-        globalDmg: Number(meta['global-dmg-mod']) || 0,
-        globalSucc: Number(meta['global-succ-mod']) || 0,
-        globalChance: Number(meta['global-chance-mod']) || 0,
-        ignoredPain: Number(meta['ignored-pain-mod']) || 0,
+        chances: parseFiniteNumber(meta['chances-used'], 0),
+        fate: parseFiniteNumber(meta['fate-used'], 0),
+        globalAcc: parseFiniteNumber(meta['global-acc-mod'], 0),
+        globalDmg: parseFiniteNumber(meta['global-dmg-mod'], 0),
+        globalSucc: parseFiniteNumber(meta['global-succ-mod'], 0),
+        globalChance: parseFiniteNumber(meta['global-chance-mod'], 0),
+        ignoredPain: parseFiniteNumber(meta['ignored-pain-mod'], 0),
         firstHitAcc: meta['first-hit-acc-active'] === true || meta['first-hit-acc-active'] === 'true',
         firstHitDmg: meta['first-hit-dmg-active'] === true || meta['first-hit-dmg-active'] === 'true',
         bankedAccDice: parsedBankedAccDice,
@@ -202,9 +202,8 @@ export function parseIdentity(
     }
 
     const loadedBoostActive = meta['ability-boost-active'] === true || meta['ability-boost-active'] === 'true';
-    const rawBoostLevel = meta['ability-boost-level'];
-    const loadedBoostLevel = rawBoostLevel !== undefined ? Number(rawBoostLevel) : loadedBoostActive ? 1 : 0;
-    const loadedChoiceIndex = Number(meta['ability-choice-index']) || 0;
+    const loadedBoostLevel = parseFiniteNumber(meta['ability-boost-level'], loadedBoostActive ? 1 : 0);
+    const loadedChoiceIndex = parseFiniteNumber(meta['ability-choice-index'], 0);
 
     return {
         ...state.identity,
@@ -317,22 +316,22 @@ export function parseIdentity(
         colorEva: String(meta['color-eva'] || '#c387fc'),
         colorCla: String(meta['color-cla'] || '#dfad43'),
 
-        trackerScale: meta['tracker-scale'] !== undefined ? Number(meta['tracker-scale']) : 100,
+        trackerScale: parseFiniteNumber(meta['tracker-scale'], 100),
         trackerLayer: (meta['tracker-layer'] as 'POPOVER' | 'ATTACHMENT' | 'CHARACTER' | 'MOUNT') || 'ATTACHMENT',
-        xOffset: Number(meta['x-offset']) || 0,
-        yOffset: Number(meta['y-offset']) || 0,
-        hpOffsetX: Number(meta['hp-offset-x']) || 0,
-        hpOffsetY: Number(meta['hp-offset-y']) || 0,
-        willOffsetX: Number(meta['will-offset-x']) || 0,
-        willOffsetY: Number(meta['will-offset-y']) || 0,
-        defOffsetX: Number(meta['def-offset-x']) || 0,
-        defOffsetY: Number(meta['def-offset-y']) || 0,
-        actOffsetX: Number(meta['act-offset-x']) || 0,
-        actOffsetY: Number(meta['act-offset-y']) || 0,
-        evaOffsetX: Number(meta['eva-offset-x']) || 0,
-        evaOffsetY: Number(meta['eva-offset-y']) || 0,
-        claOffsetX: Number(meta['cla-offset-x']) || 0,
-        claOffsetY: Number(meta['cla-offset-y']) || 0,
+        xOffset: parseFiniteNumber(meta['x-offset'], 0),
+        yOffset: parseFiniteNumber(meta['y-offset'], 0),
+        hpOffsetX: parseFiniteNumber(meta['hp-offset-x'], 0),
+        hpOffsetY: parseFiniteNumber(meta['hp-offset-y'], 0),
+        willOffsetX: parseFiniteNumber(meta['will-offset-x'], 0),
+        willOffsetY: parseFiniteNumber(meta['will-offset-y'], 0),
+        defOffsetX: parseFiniteNumber(meta['def-offset-x'], 0),
+        defOffsetY: parseFiniteNumber(meta['def-offset-y'], 0),
+        actOffsetX: parseFiniteNumber(meta['act-offset-x'], 0),
+        actOffsetY: parseFiniteNumber(meta['act-offset-y'], 0),
+        evaOffsetX: parseFiniteNumber(meta['eva-offset-x'], 0),
+        evaOffsetY: parseFiniteNumber(meta['eva-offset-y'], 0),
+        claOffsetX: parseFiniteNumber(meta['cla-offset-x'], 0),
+        claOffsetY: parseFiniteNumber(meta['cla-offset-y'], 0),
 
         // --- Hydrate overrides ---
         themePrimaryOverride: String(meta['theme-primary-override'] || ''),

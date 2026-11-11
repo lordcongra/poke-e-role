@@ -12,14 +12,33 @@ import type {
 } from '@/store/storeTypes';
 import { getItemArt } from '@/utils/graphics/itemArtCatalog';
 import { KNOWN_ITEMS } from '@/data/constants';
-import { mapAttr, mapSkill } from './mapperHelpers';
+import { mapAttr, mapSkill, parseFiniteNumber, parseOptionalFiniteNumber } from './mapperHelpers';
+
+function mapValidItems<T>(raw: unknown, mapItem: (item: Record<string, unknown>, index: number) => T): T[] {
+    if (!Array.isArray(raw)) return [];
+    const results: T[] = [];
+    for (let idx = 0; idx < raw.length; idx++) {
+        const entry = raw[idx];
+        if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+        try {
+            results.push(mapItem(entry as Record<string, unknown>, idx));
+        } catch (e) {
+            console.warn('[StateMapper] Skipped malformed feature item at index', idx, e);
+        }
+    }
+    return results;
+}
+
+function resolveItemId(rawId: unknown, prefix: string, index: number): string {
+    if (typeof rawId === 'string' && rawId.trim() !== '') return rawId;
+    if (typeof rawId === 'number' && Number.isFinite(rawId)) return String(rawId);
+    return `${prefix}-${index}`;
+}
 
 export function parseMoves(meta: Record<string, unknown>, parsedExtraCats: ExtraCategory[]): MoveData[] {
     try {
         const rawMoves = meta['moves-data'] ? JSON.parse(String(meta['moves-data'])) : [];
-        if (!Array.isArray(rawMoves)) return [];
-
-        return rawMoves.map((m: Record<string, unknown>) => {
+        return mapValidItems(rawMoves, (m, idx) => {
             const rawCat = String(m.category || m.Category || 'Physical');
             const cat = rawCat.startsWith('Phys') ? 'Physical' : rawCat.startsWith('Spec') ? 'Special' : 'Status';
 
@@ -28,7 +47,7 @@ export function parseMoves(meta: Record<string, unknown>, parsedExtraCats: Extra
                 .join('/');
 
             return {
-                id: (m.id as string) || crypto.randomUUID(),
+                id: resolveItemId(m.id, 'move', idx),
                 active: m.active === true || m.active === 'true',
                 name: String(m.name || m.Name || ''),
                 type: String(m.type || m.Type || 'Normal'),
@@ -36,7 +55,7 @@ export function parseMoves(meta: Record<string, unknown>, parsedExtraCats: Extra
                 acc1: mapAttr(String(m.acc1 !== undefined ? m.acc1 : m.Accuracy1 || 'none')) || 'none',
                 acc2: mapSkill(String(m.acc2 || m.Accuracy2 || 'none'), parsedExtraCats),
                 dmg1: mapAttr(rawDmgCandidate),
-                power: Number(m.power !== undefined ? m.power : m.Power || 0),
+                power: parseFiniteNumber(m.power !== undefined ? m.power : m.Power, 0),
                 desc: String(m.desc || m.Description || m.Effect || ''),
                 marker: String(m.marker || m.Marker || ''),
                 ...(m.mimicBackup ? { mimicBackup: m.mimicBackup as MoveData } : {}),
@@ -54,9 +73,7 @@ export function parseMoves(meta: Record<string, unknown>, parsedExtraCats: Extra
 export function parseInventory(meta: Record<string, unknown>): InventoryItem[] {
     try {
         const rawInv = meta['inv-data'] ? JSON.parse(String(meta['inv-data'])) : [];
-        if (!Array.isArray(rawInv)) return [];
-
-        return rawInv.map((i: Record<string, unknown>) => {
+        return mapValidItems(rawInv, (i, idx) => {
             const rawName = String(i.name || i.Name || '');
             let imageUrl = typeof i.imageUrl === 'string' ? i.imageUrl : undefined;
             if ((!imageUrl || imageUrl === 'none') && rawName) {
@@ -67,18 +84,17 @@ export function parseInventory(meta: Record<string, unknown>): InventoryItem[] {
             let tags = typeof i.tags === 'string' ? i.tags : '';
             let cleanDesc = rawDesc;
 
-            // Legacy compatibility: If desc contains bracket tags [ ... ],
-            // extract them into tags and clean up desc!
-            const legacyMatches = Array.from(rawDesc.matchAll(/\[(.*?)\]/g)).map((m) => `[${m[1].trim()}]`);
-            if (legacyMatches.length > 0) {
-                const currentTagList = tags
-                    ? Array.from(tags.matchAll(/\[(.*?)\]/g)).map((m) => `[${m[1].trim()}]`)
-                    : [];
-                tags = Array.from(new Set([...currentTagList, ...legacyMatches])).join(' ');
-                cleanDesc = rawDesc
-                    .replace(/\[.*?\]/g, '')
-                    .replace(/\n\s*\n+/g, '\n')
-                    .trim();
+            // Legacy compatibility: Only extract [ ... ] bracket tags when i.tags is undefined,
+            // preserving bracketed notes inside modern items that explicitly define tags (even "").
+            if (i.tags === undefined) {
+                const legacyMatches = Array.from(rawDesc.matchAll(/\[(.*?)\]/g)).map((m) => `[${m[1].trim()}]`);
+                if (legacyMatches.length > 0) {
+                    tags = Array.from(new Set(legacyMatches)).join(' ');
+                    cleanDesc = rawDesc
+                        .replace(/\[.*?\]/g, '')
+                        .replace(/\n\s*\n+/g, '\n')
+                        .trim();
+                }
             }
 
             // Auto-tag known items if tags are empty!
@@ -90,20 +106,20 @@ export function parseInventory(meta: Record<string, unknown>): InventoryItem[] {
             }
 
             return {
-                id: (i.id as string) || crypto.randomUUID(),
-                qty: Number(i.qty !== undefined ? i.qty : 1),
+                id: resolveItemId(i.id, 'inv', idx),
+                qty: parseFiniteNumber(i.qty, 1),
                 name: rawName,
                 desc: cleanDesc,
                 tags: tags || undefined,
                 active: i.active === true || i.active === 'true',
                 imageUrl,
                 showInRollLog: i.showInRollLog !== false && i.showInRollLog !== 'false',
-                boostLevel: typeof i.boostLevel === 'number' && !isNaN(i.boostLevel) ? i.boostLevel : undefined,
-                charges: typeof i.charges === 'number' && !isNaN(i.charges) ? i.charges : undefined,
-                maxCharges: typeof i.maxCharges === 'number' && !isNaN(i.maxCharges) ? i.maxCharges : undefined,
+                boostLevel: parseOptionalFiniteNumber(i.boostLevel),
+                charges: parseOptionalFiniteNumber(i.charges),
+                maxCharges: parseOptionalFiniteNumber(i.maxCharges),
                 destroyOnDepletion: typeof i.destroyOnDepletion === 'boolean' ? i.destroyOnDepletion : undefined,
-                healHp: typeof i.healHp === 'number' && !isNaN(i.healHp) ? i.healHp : undefined,
-                healWill: typeof i.healWill === 'number' && !isNaN(i.healWill) ? i.healWill : undefined,
+                healHp: parseOptionalFiniteNumber(i.healHp),
+                healWill: parseOptionalFiniteNumber(i.healWill),
                 cures: Array.isArray(i.cures) ? (i.cures as string[]) : undefined,
                 permanentStatBoost: (i.permanentStatBoost as InventoryItem['permanentStatBoost']) || undefined,
                 permanentStatBoosts: Array.isArray(i.permanentStatBoosts)
@@ -113,8 +129,8 @@ export function parseInventory(meta: Record<string, unknown>): InventoryItem[] {
                 statBuffs: Array.isArray(i.statBuffs) ? (i.statBuffs as InventoryItem['statBuffs']) : undefined,
                 statDebuff: (i.statDebuff as InventoryItem['statDebuff']) || undefined,
                 statDebuffs: Array.isArray(i.statDebuffs) ? (i.statDebuffs as InventoryItem['statDebuffs']) : undefined,
-                gainTempHp: typeof i.gainTempHp === 'number' && !isNaN(i.gainTempHp) ? i.gainTempHp : undefined,
-                gainTempWill: typeof i.gainTempWill === 'number' && !isNaN(i.gainTempWill) ? i.gainTempWill : undefined,
+                gainTempHp: parseOptionalFiniteNumber(i.gainTempHp),
+                gainTempWill: parseOptionalFiniteNumber(i.gainTempWill),
                 dungeonPassive: typeof i.dungeonPassive === 'string' ? i.dungeonPassive : undefined,
                 dungeonPassives: Array.isArray(i.dungeonPassives) ? (i.dungeonPassives as string[]) : undefined,
                 inflictsStatus: Array.isArray(i.inflictsStatus) ? (i.inflictsStatus as string[]) : undefined,
@@ -130,16 +146,14 @@ export function parseInventory(meta: Record<string, unknown>): InventoryItem[] {
 export function parsePassives(meta: Record<string, unknown>): PassiveItem[] {
     try {
         const rawPassives = meta['passives-data'] ? JSON.parse(String(meta['passives-data'])) : [];
-        if (!Array.isArray(rawPassives)) return [];
-
-        return rawPassives.map((p: Record<string, unknown>) => ({
-            id: (p.id as string) || crypto.randomUUID(),
+        return mapValidItems(rawPassives, (p, idx) => ({
+            id: resolveItemId(p.id, 'passive', idx),
             name: String(p.name || ''),
             desc: String(p.desc || p.description || p.effect || ''),
             active: p.active !== false && p.active !== 'false',
             showInConditions: p.showInConditions === true || p.showInConditions === 'true',
             showInRollLog: p.showInRollLog !== false && p.showInRollLog !== 'false',
-            boostLevel: typeof p.boostLevel === 'number' ? p.boostLevel : undefined
+            boostLevel: parseOptionalFiniteNumber(p.boostLevel)
         }));
     } catch (e) {
         console.warn('[StateMapper] Failed to parse passives from metadata:', e);
@@ -150,29 +164,26 @@ export function parsePassives(meta: Record<string, unknown>): PassiveItem[] {
 export function parseStatuses(meta: Record<string, unknown>): StatusItem[] {
     try {
         const rawStatuses = meta['status-list'] ? JSON.parse(String(meta['status-list'])) : [];
-        if (Array.isArray(rawStatuses) && rawStatuses.length > 0) {
-            return rawStatuses.map((s: Record<string, unknown>) => ({
-                id: (s.id as string) || crypto.randomUUID(),
-                name: String(s.name || s.Name || 'Healthy'),
-                customName: String(s.customName || s.CustomName || ''),
-                rounds: Number(s.rounds || 0)
-            }));
-        }
+        const parsed = mapValidItems(rawStatuses, (s, idx) => ({
+            id: resolveItemId(s.id, 'status', idx),
+            name: String(s.name || s.Name || 'Healthy'),
+            customName: String(s.customName || s.CustomName || ''),
+            rounds: parseFiniteNumber(s.rounds, 0)
+        }));
+        if (parsed.length > 0) return parsed;
     } catch (e) {
         console.warn('[StateMapper] Failed to parse statuses from metadata:', e);
     }
-    return [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
+    return [{ id: 'status-default-healthy', name: 'Healthy', customName: '', rounds: 0 }];
 }
 
 export function parseEffects(meta: Record<string, unknown>): EffectItem[] {
     try {
         const rawEffects = meta['effects-data'] ? JSON.parse(String(meta['effects-data'])) : [];
-        if (!Array.isArray(rawEffects)) return [];
-
-        return rawEffects.map((e: Record<string, unknown>) => ({
-            id: (e.id as string) || crypto.randomUUID(),
+        return mapValidItems(rawEffects, (e, idx) => ({
+            id: resolveItemId(e.id, 'effect', idx),
             name: String(e.name || e.Name || ''),
-            rounds: Number(e.rounds || 0)
+            rounds: parseFiniteNumber(e.rounds, 0)
         }));
     } catch (e) {
         console.warn('[StateMapper] Failed to parse effects from metadata:', e);
@@ -183,10 +194,8 @@ export function parseEffects(meta: Record<string, unknown>): EffectItem[] {
 export function parseCustomInfo(meta: Record<string, unknown>): CustomInfo[] {
     try {
         const rawCustomInfo = meta['custom-info-data'] ? JSON.parse(String(meta['custom-info-data'])) : [];
-        if (!Array.isArray(rawCustomInfo)) return [];
-
-        return rawCustomInfo.map((c: Record<string, unknown>) => ({
-            id: (c.id as string) || crypto.randomUUID(),
+        return mapValidItems(rawCustomInfo, (c, idx) => ({
+            id: resolveItemId(c.id, 'custom-info', idx),
             label: String(c.label || c.Label || ''),
             value: String(c.value || c.Value || '')
         }));
@@ -199,10 +208,8 @@ export function parseCustomInfo(meta: Record<string, unknown>): CustomInfo[] {
 export function parseBadges(meta: Record<string, unknown>): Badge[] {
     try {
         const rawBadges = meta['badges-data'] ? JSON.parse(String(meta['badges-data'])) : [];
-        if (!Array.isArray(rawBadges)) return [];
-
-        return rawBadges.map((b: Record<string, unknown>) => ({
-            id: String(b.id || crypto.randomUUID()),
+        return mapValidItems(rawBadges, (b, idx) => ({
+            id: resolveItemId(b.id, 'badge', idx),
             name: String(b.name || ''),
             emoji: String(b.emoji || '🏅'),
             imageUrl: b.imageUrl ? String(b.imageUrl) : undefined
@@ -242,17 +249,18 @@ export function parsePokedex(meta: Record<string, unknown>): TrainerPokedexData 
                     };
                 } else {
                     const existingKey = lowerToKeyMap[lower];
+                    const prevEntry = result[existingKey];
                     let activeKey = existingKey;
                     if (existingKey === lower && cleanKey !== lower) {
                         delete result[existingKey];
                         lowerToKeyMap[lower] = cleanKey;
                         activeKey = cleanKey;
                     }
-                    const mergedBall = entryBall || result[activeKey]?.ball;
+                    const mergedBall = entryBall || prevEntry?.ball;
                     result[activeKey] = {
-                        seen: Boolean(result[activeKey]?.seen || entrySeen),
-                        caught: Boolean(result[activeKey]?.caught || entryCaught),
-                        shiny: Boolean(result[activeKey]?.shiny || entryShiny),
+                        seen: Boolean(prevEntry?.seen || entrySeen),
+                        caught: Boolean(prevEntry?.caught || entryCaught),
+                        shiny: Boolean(prevEntry?.shiny || entryShiny),
                         ...(mergedBall ? { ball: mergedBall } : {})
                     };
                 }

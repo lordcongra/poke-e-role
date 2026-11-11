@@ -2360,4 +2360,137 @@ it('findMatchingTrainerEntries prioritizes IDs and ignores empty or default Trai
     assert.equal(redByName.length, 1);
     assert.equal(redByName[0][0], 't-red', 'Matches unlinked trainer by distinct non-default name');
 });
+
+it('S-07: NaN, empty string, and non-finite metadata values never propagate into hydrated state or settings', () => {
+    const baseState = createTestCharacterState();
+    const corruptMeta: Record<string, unknown> = {
+        'str-base': '',
+        'dex-rank': '   ',
+        'vit-buff': null,
+        'spe-debuff': 'not-a-number',
+        'ins-limit': Infinity,
+        'hp-curr': NaN,
+        'hp-max-display': '',
+        'will-curr': 'NaN',
+        'def-buff': 'Infinity',
+        'extra-core': '',
+        'tracker-scale': 'abc',
+        'x-offset': '',
+        'y-offset': null,
+        'ability-boost-level': '',
+        'moves-data': JSON.stringify([{ id: 'm1', name: 'Tackle', power: '' }]),
+        'inv-data': JSON.stringify([{ id: 'i1', name: 'Potion', qty: 'bad', charges: NaN }]),
+        'status-list': JSON.stringify([{ id: 's1', name: 'Burn', rounds: '' }]),
+        'effects-data': JSON.stringify([{ id: 'e1', name: 'Tailwind', rounds: 'oops' }])
+    };
+
+    const hydrated = hydrateStateFromMetadata(corruptMeta, baseState);
+    assert.equal(hydrated.stats?.str.base, 2, 'Empty str-base falls back cleanly');
+    assert.equal(hydrated.stats?.dex.rank, 0, 'Whitespace dex-rank falls back to 0');
+    assert.equal(hydrated.stats?.vit.buff, 0, 'Null vit-buff falls back to 0');
+    assert.equal(hydrated.stats?.spe.debuff, 0, 'Non-numeric spe-debuff falls back to 0');
+    assert.equal(hydrated.stats?.ins.limit, 5, 'Infinity ins-limit falls back to 5');
+    assert.equal(hydrated.health?.hpCurr, 5, 'NaN hp-curr falls back instead of propagating NaN');
+    assert.equal(hydrated.will?.willCurr, 4, 'String NaN will-curr falls back cleanly');
+    assert.equal(hydrated.derived?.defBuff, 0, 'Infinity def-buff falls back to 0');
+    assert.equal(hydrated.extras?.core, 0, 'Empty extra-core falls back to 0');
+    assert.equal(hydrated.identity?.trackerScale, 100, 'Invalid tracker-scale falls back to 100');
+    assert.equal(hydrated.identity?.xOffset, 0, 'Empty x-offset falls back to 0');
+    assert.equal(hydrated.identity?.yOffset, 0, 'Null y-offset falls back to 0');
+    assert.equal(hydrated.identity?.abilityBoostLevel, 0, 'Empty ability-boost-level falls back to 0');
+    assert.equal(hydrated.moves?.[0].power, 0, 'Empty move power falls back to 0');
+    assert.equal(hydrated.inventory?.[0].qty, 1, 'Invalid item qty falls back to 1');
+    assert.equal(hydrated.inventory?.[0].charges, undefined, 'NaN item charges becomes undefined');
+    assert.equal(hydrated.statuses?.[0].rounds, 0, 'Empty status rounds falls back to 0');
+    assert.equal(hydrated.effects?.[0].rounds, 0, 'Invalid effect rounds falls back to 0');
+
+    const roomMeta: Record<string, unknown> = { roomDefaultScale: 100, roomDefaultOffsetX: 5 };
+    applyRoomUpdatesToMeta(roomMeta, { roomDefaultScale: '', roomDefaultOffsetX: Number.NaN, roomDefaultOffsetY: 0 });
+    assert.equal(roomMeta.roomDefaultScale, 100, 'Empty roomDefaultScale update is ignored');
+    assert.equal(roomMeta.roomDefaultOffsetX, 5, 'NaN roomDefaultOffsetX update is ignored');
+    assert.equal(roomMeta.roomDefaultOffsetY, 0, 'Explicit 0 roomDefaultOffsetY is preserved');
+
+    const mappedRoom = mapRoomSettings({ roomDefaultScale: 'bad', roomDefaultOffsetX: '', roomDefaultOffsetY: 0 });
+    assert.equal(mappedRoom.roomDefaultScale, undefined, 'Non-numeric roomDefaultScale maps to undefined');
+    assert.equal(mappedRoom.roomDefaultOffsetX, undefined, 'Empty roomDefaultOffsetX maps to undefined');
+    assert.equal(mappedRoom.roomDefaultOffsetY, 0, 'Explicit 0 roomDefaultOffsetY maps to 0');
+});
+
+it('B-11: parsePokedex preserves seen, caught, shiny, and ball when upgrading lowercase keys', () => {
+    const baseState = createTestCharacterState();
+    const meta = {
+        'pokedex-data': JSON.stringify({
+            pikachu: { seen: true, caught: true, shiny: true, ball: 'Ultra Ball' },
+            Pikachu: { seen: true, caught: false, shiny: false }
+        })
+    };
+
+    const hydrated = hydrateStateFromMetadata(meta, baseState);
+    const dex = hydrated.identity?.pokedex || {};
+    assert.equal(dex['pikachu'], undefined, 'Lowercase key should be upgraded to mixed-case key');
+    assert.deepEqual(dex['Pikachu'], {
+        seen: true,
+        caught: true,
+        shiny: true,
+        ball: 'Ultra Ball'
+    });
+});
+
+it('B-14: parseInventory migrates [tags] only for legacy items with tags === undefined', () => {
+    const baseState = createTestCharacterState();
+    const meta = {
+        'inv-data': JSON.stringify([
+            { id: 'legacy', name: 'Old Charm', desc: 'Boosts attack [Atk +1] in combat' },
+            { id: 'modern-empty', name: 'Journal', desc: 'Notes [Session 1] reminders', tags: '' },
+            { id: 'modern-tagged', name: 'Amulet', desc: 'Keep [Flavor Note] intact', tags: '[Def +1]' }
+        ])
+    };
+
+    const hydrated = hydrateStateFromMetadata(meta, baseState);
+    const inv = hydrated.inventory || [];
+    assert.equal(inv[0].tags, '[Atk +1]', 'Legacy item extracts bracket tag');
+    assert.equal(inv[0].desc, 'Boosts attack  in combat', 'Legacy item strips bracket tag from desc');
+    assert.equal(inv[1].desc, 'Notes [Session 1] reminders', 'Modern item with tags="" keeps brackets in desc');
+    assert.equal(inv[2].desc, 'Keep [Flavor Note] intact', 'Modern item with defined tags keeps brackets in desc');
+    assert.equal(inv[2].tags, '[Def +1]', 'Modern item keeps its explicit tags');
+});
+
+it('B-15: feature parsers skip null/non-object items without dropping siblings and use deterministic fallback IDs', () => {
+    const baseState = createTestCharacterState();
+    const meta = {
+        'moves-data': JSON.stringify([null, 'bad', { name: 'Tackle', type: 'Normal', category: 'Physical' }]),
+        'inv-data': JSON.stringify([42, null, { name: 'Oran Berry', qty: 2 }]),
+        'passives-data': JSON.stringify([null, { name: 'Tough Claws', desc: 'Boosts contact' }]),
+        'status-list': JSON.stringify([null, { name: 'Burn', rounds: 2 }]),
+        'effects-data': JSON.stringify([false, { name: 'Reflect', rounds: 3 }]),
+        'custom-info-data': JSON.stringify([null, { label: 'Bond', value: 'High' }]),
+        'badges-data': JSON.stringify(['invalid', { name: 'Boulder Badge' }])
+    };
+
+    const first = hydrateStateFromMetadata(meta, baseState);
+    const second = hydrateStateFromMetadata(meta, baseState);
+
+    assert.equal(first.moves?.length, 1);
+    assert.equal(first.moves?.[0].name, 'Tackle');
+    assert.equal(first.moves?.[0].id, second.moves?.[0].id, 'Move fallback ID is deterministic');
+
+    assert.equal(first.inventory?.length, 1);
+    assert.equal(first.inventory?.[0].name, 'Oran Berry');
+    assert.equal(first.inventory?.[0].id, second.inventory?.[0].id, 'Inventory fallback ID is deterministic');
+
+    assert.equal(first.passives?.length, 1);
+    assert.equal(first.passives?.[0].id, second.passives?.[0].id, 'Passive fallback ID is deterministic');
+
+    assert.equal(first.statuses?.length, 1);
+    assert.equal(first.statuses?.[0].id, second.statuses?.[0].id, 'Status fallback ID is deterministic');
+
+    assert.equal(first.effects?.length, 1);
+    assert.equal(first.effects?.[0].id, second.effects?.[0].id, 'Effect fallback ID is deterministic');
+
+    assert.equal(first.customInfo?.length, 1);
+    assert.equal(first.customInfo?.[0].id, second.customInfo?.[0].id, 'CustomInfo fallback ID is deterministic');
+
+    assert.equal(first.identity?.badges?.length, 1);
+    assert.equal(first.identity?.badges?.[0].id, second.identity?.badges?.[0].id, 'Badge fallback ID is deterministic');
+});
 });
