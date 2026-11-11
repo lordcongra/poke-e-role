@@ -1,6 +1,7 @@
 import OBR from '@owlbear-rodeo/sdk';
 import { isStandaloneMode } from '../sync/storageAdapter';
 import { removeSettingFromIndexedDB } from '../sync/userPreferences';
+import { getRollLogChannelName, getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import { isBattleOrganizerOpen } from '../../components/modals/battleOrganizer/battleOrganizerSettingsHelper';
 import { applyRollToBattleOrganizerStorage } from '../../components/modals/battleOrganizer/battleOrganizerStorageSync';
 import { EXTENSION_ID, type RollSyncData } from '../../hooks/owlbearSync/owlbearSyncConstants';
@@ -29,16 +30,17 @@ export async function broadcastRollLog(rollLogData: RollSyncData): Promise<void>
             }
         }
 
+        const rollLogKey = getRollLogStorageKey();
         let existingLog: RollSyncData[] = [];
         try {
-            const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+            const storedLog = JSON.parse(localStorage.getItem(rollLogKey) || '[]');
             existingLog = Array.isArray(storedLog) ? storedLog : [];
         } catch (parseError) {
             console.warn('[RollLogSync] Roll log cache corrupted', parseError);
         }
 
         if (!existingLog.find((r) => r.id === rollLogData.id)) {
-            localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
+            localStorage.setItem(rollLogKey, JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
         }
 
         // Apply roll to Battle Organizer storage if organizer is closed so entries persist even if roll log is cleared
@@ -52,7 +54,7 @@ export async function broadcastRollLog(rollLogData: RollSyncData): Promise<void>
         // Broadcast to same-origin BroadcastChannel for instant popover synchronization
         if (typeof BroadcastChannel !== 'undefined') {
             try {
-                const channel = new BroadcastChannel('pkr_roll_log_channel');
+                const channel = new BroadcastChannel(getRollLogChannelName());
                 channel.postMessage({ type: 'roll-log-sync', roll: rollLogData });
                 channel.close();
             } catch (chanErr) {
@@ -93,9 +95,10 @@ export async function broadcastRollLog(rollLogData: RollSyncData): Promise<void>
  * iframes, BroadcastChannels, and OBR popovers.
  */
 export function clearRollLogCache(): void {
+    const rollLogKey = getRollLogStorageKey();
     try {
-        localStorage.setItem('pkr_roll_log', '[]');
-        removeSettingFromIndexedDB('pkr_roll_log').catch(() => {});
+        localStorage.setItem(rollLogKey, '[]');
+        removeSettingFromIndexedDB(rollLogKey).catch(() => {});
     } catch (e) {
         console.warn('[RollLogSync] Failed to clear roll log in localStorage:', e);
     }
@@ -109,7 +112,7 @@ export function clearRollLogCache(): void {
 
     if (typeof BroadcastChannel !== 'undefined') {
         try {
-            const channel = new BroadcastChannel('pkr_roll_log_channel');
+            const channel = new BroadcastChannel(getRollLogChannelName());
             channel.postMessage({ type: 'roll-log-clear' });
             channel.close();
         } catch (chanErr) {

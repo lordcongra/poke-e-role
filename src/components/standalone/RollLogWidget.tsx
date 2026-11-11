@@ -4,6 +4,7 @@ import { cropImageTransparencyUrl } from '../../utils/graphics/imageCropUtils';
 import { Dices, Trash2, ChevronDown, ChevronUp, X, Info, Sparkles, Check } from 'lucide-react';
 import { parseRollLabel } from '../../utils/combat/rollLogParser';
 import { clearRollLogCache } from '../../utils/combat/rollLogSync';
+import { getRollLogChannelName, getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import { executeChanceRoll } from '../../utils/combat/diceRoller';
 import type { RollSyncData } from '../../hooks/owlbearSync/owlbearSyncConstants';
 import { RollFactorsModal } from '../modals/rollFactors';
@@ -30,7 +31,7 @@ interface RollLogWidgetProps {
 export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
     const [rolls, setRolls] = useState<RollData[]>(() => {
         try {
-            const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+            const data = JSON.parse(localStorage.getItem(getRollLogStorageKey()) || '[]');
             return Array.isArray(data) ? data : [];
         } catch (error) {
             console.error('[RollLogWidget] Failed to parse roll log from local storage.', error);
@@ -91,7 +92,7 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
 
         const handleUpdate = () => {
             try {
-                const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+                const data = JSON.parse(localStorage.getItem(getRollLogStorageKey()) || '[]');
                 const rawRolls: RollData[] = Array.isArray(data) ? data : [];
                 if (isMounted) setRolls(rawRolls);
             } catch (error) {
@@ -106,7 +107,7 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
         let channel: BroadcastChannel | null = null;
         if (typeof BroadcastChannel !== 'undefined') {
             try {
-                channel = new BroadcastChannel('pkr_roll_log_channel');
+                channel = new BroadcastChannel(getRollLogChannelName());
                 channel.onmessage = (event) => {
                     if (event.data?.type === 'roll-log-clear') {
                         if (isMounted) setRolls([]);
@@ -138,11 +139,11 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
             if (newRolls.length === 0) {
                 clearRollLogCache();
             } else {
-                localStorage.setItem('pkr_roll_log', JSON.stringify(newRolls));
+                localStorage.setItem(getRollLogStorageKey(), JSON.stringify(newRolls));
                 window.dispatchEvent(new Event('pkr-roll-log-update'));
                 if (typeof BroadcastChannel !== 'undefined') {
                     try {
-                        const channel = new BroadcastChannel('pkr_roll_log_channel');
+                        const channel = new BroadcastChannel(getRollLogChannelName());
                         channel.postMessage({ type: 'roll-log-update' });
                         channel.close();
                     } catch {}

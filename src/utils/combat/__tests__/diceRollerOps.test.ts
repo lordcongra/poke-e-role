@@ -4,6 +4,7 @@ import { assignInitiative, type StandaloneCombatant } from '../dice/diceInitiati
 import { executeChanceRoll } from '../dice/chanceRoller';
 import { broadcastInfo } from '../dice/diceBroadcastOps';
 import { addRollLogEntry, rollDicePlus, rollDice } from '../diceRoller';
+import { getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import type { RollSyncData } from '@/hooks/owlbearSync/owlbearSyncConstants';
 
 vi.mock('@/utils/sync/storageAdapter', () => ({
@@ -127,11 +128,11 @@ describe('Dice Roller & OBR Sync Ops Decomposition Suite', () => {
                 chanceEffect: 'Paralysis',
                 chanceRolled: false
             };
-            localStorage.setItem('pkr_roll_log', JSON.stringify([mockRoll]));
+            localStorage.setItem(getRollLogStorageKey(), JSON.stringify([mockRoll]));
 
             await executeChanceRoll(mockRoll);
 
-            const updatedLog: RollSyncData[] = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+            const updatedLog: RollSyncData[] = JSON.parse(localStorage.getItem(getRollLogStorageKey()) || '[]');
             const originalRoll = updatedLog.find((r) => r.id === mockRoll.id);
             expect(originalRoll?.chanceRolled).toBe(true);
         });
@@ -141,7 +142,7 @@ describe('Dice Roller & OBR Sync Ops Decomposition Suite', () => {
         it('broadcastInfo records info log into roll log in standalone mode', async () => {
             await broadcastInfo('Battle Announcement', 'A wild Pokemon appeared!');
 
-            const log: RollSyncData[] = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+            const log: RollSyncData[] = JSON.parse(localStorage.getItem(getRollLogStorageKey()) || '[]');
             expect(log.length).toBeGreaterThan(0);
             expect(log[0].label).toContain('Battle Announcement');
             expect(log[0].result).toBe('A wild Pokemon appeared!');
@@ -156,7 +157,7 @@ describe('Dice Roller & OBR Sync Ops Decomposition Suite', () => {
 
             addRollLogEntry('Hidden Roll', '1 Success', '', 'Red');
 
-            const log: RollSyncData[] = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+            const log: RollSyncData[] = JSON.parse(localStorage.getItem(getRollLogStorageKey()) || '[]');
             expect(log[0].label).toContain('[PRIVATE] Hidden Roll');
             expect(log[0].targetVisibility).toBe('gm_only');
         });
@@ -171,7 +172,7 @@ describe('Dice Roller & OBR Sync Ops Decomposition Suite', () => {
                 await rollDicePlus(bad, 'Bad Roll');
             }
 
-            const log: RollSyncData[] = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+            const log: RollSyncData[] = JSON.parse(localStorage.getItem(getRollLogStorageKey()) || '[]');
             expect(log.length).toBe(0);
             expect(warnSpy).toHaveBeenCalledTimes(invalidNotations.length);
             warnSpy.mockRestore();
@@ -181,7 +182,7 @@ describe('Dice Roller & OBR Sync Ops Decomposition Suite', () => {
             await rollDicePlus('0d6>3+4', 'Direct Damage', 'damage');
             await rollDicePlus('2d6>5+1', 'Chance Roll', 'chance');
 
-            const log: RollSyncData[] = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+            const log: RollSyncData[] = JSON.parse(localStorage.getItem(getRollLogStorageKey()) || '[]');
             expect(log.length).toBe(2);
         });
     });

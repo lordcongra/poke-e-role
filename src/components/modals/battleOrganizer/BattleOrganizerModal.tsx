@@ -17,6 +17,7 @@ import { SceneSwapPromptModal } from './SceneSwapPromptModal';
 import { useSceneSwapDetection } from './useSceneSwapDetection';
 import { BattleOrganizerAdvisoryBanner } from './BattleOrganizerAdvisoryBanner';
 import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
+import { getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import { BattleOrganizerFooter } from './BattleOrganizerFooter';
 import { BattleOrganizerSettingsModal } from './BattleOrganizerSettingsModal';
 import { CombatantSheetModal } from './CombatantSheetModal';
@@ -131,7 +132,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
 
             if (OBR.isAvailable && !isStandaloneMode) {
                 try {
-                    const stored = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+                    const stored = JSON.parse(localStorage.getItem(getRollLogStorageKey()) || '[]');
                     if (Array.isArray(stored) && stored.length > 0) {
                         const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
                         OBR.popover

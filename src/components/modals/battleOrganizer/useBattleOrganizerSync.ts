@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
+import { getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { extractTokenImage, extractCharacterName } from '../../../utils/combat/initiativeHelpers';
 import { getBattleOrganizerSettings } from './battleOrganizerSettingsHelper';
@@ -394,7 +395,7 @@ export function useBattleOrganizerSync({
 
         // Listen to cross-window roll log events in Standalone mode
         const handleCrossWindowRoll = (e: StorageEvent) => {
-            if (e.key === 'pkr_roll_log' && e.newValue) {
+            if (e.key === getRollLogStorageKey() && e.newValue) {
                 try {
                     const parsed = JSON.parse(e.newValue);
                     if (Array.isArray(parsed) && parsed.length > 0) {

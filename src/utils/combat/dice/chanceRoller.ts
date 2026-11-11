@@ -1,4 +1,5 @@
 import { rollDicePlus } from '@/utils/combat/diceRoller';
+import { getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import type { RollSyncData } from '@/hooks/owlbearSync/owlbearSyncConstants';
 
 /**
@@ -14,12 +15,13 @@ export async function executeChanceRoll(roll: RollSyncData): Promise<void> {
     const label = `[Chance Roll] ${charName} rolled Chance Dice${effectLabel}! (Need 6)`;
 
     try {
-        const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+        const rollLogKey = getRollLogStorageKey();
+        const storedLog = JSON.parse(localStorage.getItem(rollLogKey) || '[]');
         if (Array.isArray(storedLog)) {
             const updatedLog = storedLog.map((r: RollSyncData) =>
                 r.id === roll.id ? { ...r, chanceRolled: true } : r
             );
-            localStorage.setItem('pkr_roll_log', JSON.stringify(updatedLog));
+            localStorage.setItem(rollLogKey, JSON.stringify(updatedLog));
             window.dispatchEvent(new Event('pkr-roll-log-update'));
             window.dispatchEvent(new Event('storage'));
         }

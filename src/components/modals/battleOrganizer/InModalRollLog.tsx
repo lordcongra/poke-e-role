@@ -24,6 +24,7 @@ import { parseRollLogEntry } from './battleOrganizerUtils';
 import { parseRollLabel } from '../../../utils/combat/rollLogParser';
 import { detectMoveFieldEffect } from '../../../utils/combat/fieldEffectsData';
 import { clearRollLogCache } from '../../../utils/combat/rollLogSync';
+import { getRollLogChannelName, getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import { executeChanceRoll } from '../../../utils/combat/diceRoller';
 import { RollFactorsModal } from '../rollFactors';
 import './InModalRollLog.css';
@@ -68,7 +69,7 @@ export function InModalRollLog({
     const [sideOverrides, setSideOverrides] = useState<Record<string, boolean>>({});
     const [rolls, setRolls] = useState<RollLogEntry[]>(() => {
         try {
-            const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+            const data = JSON.parse(localStorage.getItem(getRollLogStorageKey()) || '[]');
             return Array.isArray(data) ? data : [];
         } catch {
             return [];
@@ -196,7 +197,7 @@ export function InModalRollLog({
 
         const handleReload = () => {
             try {
-                const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+                const data = JSON.parse(localStorage.getItem(getRollLogStorageKey()) || '[]');
                 const rawRolls: RollLogEntry[] = Array.isArray(data) ? data : [];
                 if (isMounted) setRolls(rawRolls);
             } catch {
@@ -217,7 +218,7 @@ export function InModalRollLog({
         let channel: BroadcastChannel | null = null;
         if (typeof BroadcastChannel !== 'undefined') {
             try {
-                channel = new BroadcastChannel('pkr_roll_log_channel');
+                channel = new BroadcastChannel(getRollLogChannelName());
                 channel.onmessage = (event) => {
                     if (event.data?.type === 'roll-log-clear') {
                         if (isMounted) setRolls([]);
@@ -277,11 +278,11 @@ export function InModalRollLog({
             if (newRolls.length === 0) {
                 clearRollLogCache();
             } else {
-                localStorage.setItem('pkr_roll_log', JSON.stringify(newRolls));
+                localStorage.setItem(getRollLogStorageKey(), JSON.stringify(newRolls));
                 window.dispatchEvent(new Event('pkr-roll-log-update'));
                 if (typeof BroadcastChannel !== 'undefined') {
                     try {
-                        const channel = new BroadcastChannel('pkr_roll_log_channel');
+                        const channel = new BroadcastChannel(getRollLogChannelName());
                         channel.postMessage({ type: 'roll-log-update' });
                         channel.close();
                     } catch (e) {

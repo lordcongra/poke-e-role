@@ -8,6 +8,7 @@ import {
     setBattleOrganizerOpen
 } from './components/modals/battleOrganizer/battleOrganizerSettingsHelper';
 import { isStandaloneMode } from './utils/sync/storageAdapter';
+import { getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import { useCharacterStore } from './store/useCharacterStore';
 import { homebrewStorage, initHomebrewBroadcastSync } from './utils/sync/homebrewStorage';
 import { setupOwlbearHomebrewSync } from './hooks/owlbearSync/setupOwlbearHomebrewSync';
@@ -145,7 +146,7 @@ export function BattleOrganizerApp() {
             setBattleOrganizerOpen(false);
             if (OBR.isAvailable && !isStandaloneMode) {
                 try {
-                    const stored = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+                    const stored = JSON.parse(localStorage.getItem(getRollLogStorageKey()) || '[]');
                     if (Array.isArray(stored) && stored.length > 0) {
                         const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
                         OBR.popover

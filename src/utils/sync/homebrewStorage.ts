@@ -1,4 +1,4 @@
-import OBR from '@owlbear-rodeo/sdk';
+import { getEffectiveRoomId } from '@/utils/sync/roomScopedStorage';
 import type {
     CustomType,
     CustomAbility,
@@ -45,7 +45,6 @@ interface HomebrewBroadcastMessage {
 const DB_NAME = 'pkr_homebrew_db';
 const STORE_NAME = 'homebrew';
 const DB_VERSION = 1;
-const OFFLINE_ROOM_ID = 'offline';
 const STORAGE_PREFIX = 'pkr_homebrew_';
 const BROADCAST_CHANNEL_NAME = 'pkr_homebrew_sync';
 const MIGRATION_DONE_KEY = 'pkr_homebrew_idb_migrated';
@@ -62,16 +61,7 @@ const broadcastListeners = new Set<BroadcastListener>();
 type StorageChangeListener = () => void;
 const changeListeners = new Set<StorageChangeListener>();
 
-export function getEffectiveRoomId(): string {
-    try {
-        if (OBR.isAvailable && OBR.room && OBR.room.id) {
-            return OBR.room.id;
-        }
-    } catch (e) {
-        console.warn('[HomebrewStorage] Failed to retrieve OBR room ID.', e);
-    }
-    return OFFLINE_ROOM_ID;
-}
+export { getEffectiveRoomId };
 
 export function getHomebrewStorageKey(roomId?: string): string {
     const id = roomId || getEffectiveRoomId();

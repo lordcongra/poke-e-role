@@ -4,12 +4,13 @@ import { imageManager } from '../utils/graphics/imageManager';
 import { cropImageTransparencyUrl } from '../utils/graphics/imageCropUtils';
 import { updateThemeColorMeta } from '../utils/common/colorUtils';
 import { clearRollLogCache } from '../utils/combat/rollLogSync';
+import { getRollLogChannelName, getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import type { RollSyncData } from './owlbearSync/owlbearSyncConstants';
 
 export function useRollLogSync() {
     const [rolls, setRolls] = useState<RollSyncData[]>(() => {
         try {
-            const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+            const data = JSON.parse(localStorage.getItem(getRollLogStorageKey()) || '[]');
             return Array.isArray(data) ? data : [];
         } catch (error) {
             console.error('[useRollLogSync] Failed to parse roll log from local storage. Resetting log.', error);
@@ -108,7 +109,7 @@ export function useRollLogSync() {
 
         const handleReload = () => {
             try {
-                const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+                const data = JSON.parse(localStorage.getItem(getRollLogStorageKey()) || '[]');
                 const rawRolls: RollSyncData[] = Array.isArray(data) ? data : [];
                 if (isMounted) setRolls(rawRolls);
             } catch (error) {
@@ -118,7 +119,7 @@ export function useRollLogSync() {
         };
 
         const handleStorage = (e: StorageEvent) => {
-            if (e.key === 'pkr_roll_log') {
+            if (e.key === getRollLogStorageKey()) {
                 handleReload();
             }
             if (e.key === 'pkr_active_theme_colors') {
@@ -134,9 +135,20 @@ export function useRollLogSync() {
 
         // Same-origin fast broadcast channel (instant cross-iframe sync)
         let channel: BroadcastChannel | null = null;
-        if (typeof BroadcastChannel !== 'undefined') {
+        let boundChannelName = '';
+        const bindBroadcastChannel = () => {
+            if (typeof BroadcastChannel === 'undefined') return;
+            const nextChannelName = getRollLogChannelName();
+            if (channel && boundChannelName === nextChannelName) return;
+            if (channel) {
+                try {
+                    channel.close();
+                } catch {}
+                channel = null;
+            }
             try {
-                channel = new BroadcastChannel('pkr_roll_log_channel');
+                boundChannelName = nextChannelName;
+                channel = new BroadcastChannel(nextChannelName);
                 channel.onmessage = (event) => {
                     if (event.data?.type === 'roll-log-clear') {
                         if (isMounted) setRolls([]);
@@ -148,7 +160,7 @@ export function useRollLogSync() {
                             if (prev.some((r) => r.id === roll.id)) return prev;
                             const next = [roll, ...prev].slice(0, 50);
                             try {
-                                localStorage.setItem('pkr_roll_log', JSON.stringify(next));
+                                localStorage.setItem(getRollLogStorageKey(), JSON.stringify(next));
                             } catch (e) {
                                 console.error('[useRollLogSync] Failed to persist synced roll:', e);
                             }
@@ -159,12 +171,15 @@ export function useRollLogSync() {
             } catch (chanErr) {
                 console.warn('[useRollLogSync] BroadcastChannel setup failed:', chanErr);
             }
-        }
+        };
+        bindBroadcastChannel();
 
         const unsubs: Array<() => void> = [];
         if (OBR.isAvailable) {
             OBR.onReady(() => {
                 if (!isMounted) return;
+                handleReload();
+                bindBroadcastChannel();
                 try {
                     unsubs.push(
                         OBR.broadcast.onMessage('pokerole-pmd-extension/roll-log-update', () => {
@@ -191,7 +206,7 @@ export function useRollLogSync() {
                                     if (prev.some((r) => r.id === roll.id)) return prev;
                                     const next = [roll, ...prev].slice(0, 50);
                                     try {
-                                        localStorage.setItem('pkr_roll_log', JSON.stringify(next));
+                                        localStorage.setItem(getRollLogStorageKey(), JSON.stringify(next));
                                     } catch (e) {
                                         console.error('[useRollLogSync] Failed to persist synced roll:', e);
                                     }
@@ -246,7 +261,7 @@ export function useRollLogSync() {
             setRolls([]);
         } else {
             try {
-                localStorage.setItem('pkr_roll_log', JSON.stringify(next));
+                localStorage.setItem(getRollLogStorageKey(), JSON.stringify(next));
             } catch (error) {
                 console.error('[useRollLogSync] Failed to save to localStorage', error);
             }
@@ -254,7 +269,7 @@ export function useRollLogSync() {
             window.dispatchEvent(new Event('pkr-roll-log-update'));
             if (typeof BroadcastChannel !== 'undefined') {
                 try {
-                    const channel = new BroadcastChannel('pkr_roll_log_channel');
+                    const channel = new BroadcastChannel(getRollLogChannelName());
                     channel.postMessage({ type: 'roll-log-update' });
                     channel.close();
                 } catch {}

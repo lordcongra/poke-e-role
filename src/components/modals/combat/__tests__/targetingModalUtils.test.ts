@@ -8,6 +8,7 @@ import {
 import { getTargetOptions } from '@/components/modals/items/tagBuilder/tagBuilderConstants';
 import { executeMultiTargetDamageRoll } from '@/utils/combat/multiTargetDamageRoller';
 import { executeDamageRoll } from '@/utils/combat/combatRoller';
+import { getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import type { CharacterState, MoveData } from '@/store/storeTypes';
 import { useCharacterStore } from '@/store/useCharacterStore';
 
@@ -165,7 +166,7 @@ describe('targetingModalUtils', () => {
             await executeMultiTargetDamageRoll(normalMove, state, 5, false, selections, override);
 
             const logs: Array<{ label: string; result: string }> = JSON.parse(
-                localStorage.getItem('pkr_roll_log') || '[]'
+                localStorage.getItem(getRollLogStorageKey()) || '[]'
             );
             const gengarLog = logs.find((l) => l.label.includes('vs Gengar'));
             const rattataLog = logs.find((l) => l.label.includes('vs Rattata'));
@@ -198,7 +199,7 @@ describe('targetingModalUtils', () => {
             await executeMultiTargetDamageRoll(normalMove, state, 5, false, selections, override);
 
             const logs: Array<{ label: string; result: string }> = JSON.parse(
-                localStorage.getItem('pkr_roll_log') || '[]'
+                localStorage.getItem(getRollLogStorageKey()) || '[]'
             );
             const gengarLog = logs.find((l) => l.label.includes('vs Gengar'));
 

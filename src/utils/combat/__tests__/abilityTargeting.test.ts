@@ -23,6 +23,7 @@ import { createTestCharacterState } from '../../../test/testStateHelpers';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { buildTrackerConditions } from '../../../components/board/trackerConditionUtils';
 import { createDefaultBattlefield } from '../../../components/modals/battleOrganizer/battleOrganizerUtils';
+import { getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import type {
     CombatantRowData,
     BattleOrganizerState,
@@ -1259,7 +1260,7 @@ describe('Ability Targeting System', () => {
             const override = { active: false, type: 'dice' as const, value: 0 };
             await executeMultiTargetDamageRoll(move, state, 5, false, selections, override);
 
-            const logs: Array<{ label: string }> = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+            const logs: Array<{ label: string }> = JSON.parse(localStorage.getItem(getRollLogStorageKey()) || '[]');
             const gumshoosLog = logs.find((l) => l.label.includes('vs Gumshoos'));
             const rattataLog = logs.find((l) => l.label.includes('vs Rattata'));
 

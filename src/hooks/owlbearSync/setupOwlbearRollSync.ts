@@ -4,6 +4,7 @@ import { isBattleOrganizerOpen } from '../../components/modals/battleOrganizer/b
 import { parseRollLogEntry } from '../../components/modals/battleOrganizer/battleOrganizerRollParser';
 import { applyRollToBattleOrganizerStorage } from '../../components/modals/battleOrganizer/battleOrganizerStorageSync';
 import { isStandaloneMode, storageAdapter, LOCAL_STORAGE_PREFIX } from '../../utils/sync/storageAdapter';
+import { getRollLogChannelName, getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import { idbGetCharacter } from '../../utils/sync/standaloneIdb';
 import { EXTENSION_ID, type RollSyncData, showDicePlusRetirementNotice } from './owlbearSyncConstants';
 
@@ -276,9 +277,10 @@ export function setupOwlbearRollSync(): OwlbearRollSyncResult {
             }
 
             // Defensive parsing
+            const rollLogKey = getRollLogStorageKey();
             let existing: RollSyncData[] = [];
             try {
-                const stored = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+                const stored = JSON.parse(localStorage.getItem(rollLogKey) || '[]');
                 existing = Array.isArray(stored) ? stored : [];
             } catch (error) {
                 console.error('[SyncEngine] Failed to parse roll log on sync. Resetting cache.', error);
@@ -287,7 +289,7 @@ export function setupOwlbearRollSync(): OwlbearRollSyncResult {
 
             if (!existing.find((r) => r.id === rollData.id)) {
                 try {
-                    localStorage.setItem('pkr_roll_log', JSON.stringify([rollData, ...existing].slice(0, 50)));
+                    localStorage.setItem(rollLogKey, JSON.stringify([rollData, ...existing].slice(0, 50)));
                 } catch (error) {
                     console.error('[SyncEngine] Failed to save synced roll to cache.', error);
                 }
@@ -306,7 +308,7 @@ export function setupOwlbearRollSync(): OwlbearRollSyncResult {
 
             if (typeof BroadcastChannel !== 'undefined') {
                 try {
-                    const channel = new BroadcastChannel('pkr_roll_log_channel');
+                    const channel = new BroadcastChannel(getRollLogChannelName());
                     channel.postMessage({ type: 'roll-log-sync', roll: rollData });
                     channel.close();
                 } catch (chanErr) {
