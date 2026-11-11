@@ -246,11 +246,10 @@ export async function flushRoomSettingsToOwlbear(updates?: Record<string, unknow
 
 export const SCENE_SETTINGS_META_ID = 'pokerole-pmd-extension/scene-settings';
 
-export async function flushSceneSettingsToOwlbear(updates: {
-    sceneDefaultScale?: number | null;
-    sceneDefaultOffsetX?: number | null;
-    sceneDefaultOffsetY?: number | null;
-}) {
+async function updateSceneSettingsMetadata(
+    updater: (sceneMeta: Record<string, unknown>) => void,
+    errorContext: string
+): Promise<void> {
     try {
         const { default: OBR } = await import('@owlbear-rodeo/sdk');
         if (!OBR.isAvailable) return;
@@ -260,7 +259,22 @@ export async function flushSceneSettingsToOwlbear(updates: {
         if (!isReady) return;
 
         const meta = await OBR.scene.getMetadata();
-        const sceneMeta = (meta[SCENE_SETTINGS_META_ID] as Record<string, unknown>) || {};
+        const existing = meta[SCENE_SETTINGS_META_ID];
+        const sceneMeta =
+            existing && typeof existing === 'object' ? { ...(existing as Record<string, unknown>) } : {};
+        updater(sceneMeta);
+        await OBR.scene.setMetadata({ [SCENE_SETTINGS_META_ID]: sceneMeta });
+    } catch (error) {
+        console.error(`[OBR Engine] Failed to ${errorContext}:`, error);
+    }
+}
+
+export async function flushSceneSettingsToOwlbear(updates: {
+    sceneDefaultScale?: number | null;
+    sceneDefaultOffsetX?: number | null;
+    sceneDefaultOffsetY?: number | null;
+}) {
+    await updateSceneSettingsMetadata((sceneMeta) => {
         if (updates.sceneDefaultScale !== undefined) {
             sceneMeta.sceneDefaultScale = updates.sceneDefaultScale === null ? null : Number(updates.sceneDefaultScale);
         }
@@ -272,43 +286,18 @@ export async function flushSceneSettingsToOwlbear(updates: {
             sceneMeta.sceneDefaultOffsetY =
                 updates.sceneDefaultOffsetY === null ? null : Number(updates.sceneDefaultOffsetY);
         }
-
-        await OBR.scene.setMetadata({ [SCENE_SETTINGS_META_ID]: sceneMeta });
-    } catch (error) {
-        console.error('[OBR Engine] Failed to flush scene settings:', error);
-    }
+    }, 'flush scene settings');
 }
 
 export async function clearSceneScaleFromOwlbear() {
-    try {
-        const { default: OBR } = await import('@owlbear-rodeo/sdk');
-        if (!OBR.isAvailable) return;
-        const role = await OBR.player.getRole();
-        if (role !== 'GM') return;
-        const isReady = await OBR.scene.isReady();
-        if (!isReady) return;
-
-        await OBR.scene.setMetadata({ [SCENE_SETTINGS_META_ID]: { sceneDefaultScale: null } });
-    } catch (error) {
-        console.error('[OBR Engine] Failed to clear scene scale:', error);
-    }
+    await updateSceneSettingsMetadata((sceneMeta) => {
+        sceneMeta.sceneDefaultScale = null;
+    }, 'clear scene scale');
 }
 
 export async function clearSceneOffsetsFromOwlbear() {
-    try {
-        const { default: OBR } = await import('@owlbear-rodeo/sdk');
-        if (!OBR.isAvailable) return;
-        const role = await OBR.player.getRole();
-        if (role !== 'GM') return;
-        const isReady = await OBR.scene.isReady();
-        if (!isReady) return;
-
-        const meta = await OBR.scene.getMetadata();
-        const sceneMeta = (meta[SCENE_SETTINGS_META_ID] as Record<string, unknown>) || {};
+    await updateSceneSettingsMetadata((sceneMeta) => {
         sceneMeta.sceneDefaultOffsetX = null;
         sceneMeta.sceneDefaultOffsetY = null;
-        await OBR.scene.setMetadata({ [SCENE_SETTINGS_META_ID]: sceneMeta });
-    } catch (error) {
-        console.error('[OBR Engine] Failed to clear scene offsets:', error);
-    }
+    }, 'clear scene offsets');
 }

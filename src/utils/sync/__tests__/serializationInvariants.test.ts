@@ -39,6 +39,15 @@ import {
     findCanonicalSpeciesName
 } from '../../../components/board/trainerPokedexUtils';
 import { resolvePokeballUrl, POKEBALL_PRESETS } from '../../graphics/pokeballConstants';
+import OBR from '@owlbear-rodeo/sdk';
+import type { Item } from '@owlbear-rodeo/sdk';
+import {
+    SCENE_SETTINGS_META_ID,
+    clearSceneScaleFromOwlbear,
+    clearSceneOffsetsFromOwlbear
+} from '@/utils/sync/obr';
+import { findMatchingTrainerEntries } from '@/hooks/owlbearSync/owlbearPcSyncUtils';
+import type { TrainerRoster } from '@/types/pcStorageTypes';
 
 describe('Token Metadata & Serialization Invariants', () => {
 // -----------------------------------------------------------------------------
@@ -2261,5 +2270,94 @@ it('Explicitly serializes type2 as empty string when empty or none for shallow d
     });
     const metaVal = flattenStateToMetadata(stateValType2);
     assert.equal(metaVal['type2'], 'Dark', 'type2 serializes as "Dark" when provided');
+});
+
+it('clearSceneScaleFromOwlbear preserves scene offsets in SCENE_SETTINGS_META_ID', async () => {
+    const origGetRole = OBR.player.getRole;
+    const origScene = OBR.scene as unknown as {
+        getMetadata?: () => Promise<Record<string, unknown>>;
+        setMetadata?: (meta: Record<string, unknown>) => Promise<void>;
+    };
+    const origGetMeta = origScene.getMetadata;
+    const origSetMeta = origScene.setMetadata;
+
+    let currentSceneMeta: Record<string, unknown> = {
+        [SCENE_SETTINGS_META_ID]: {
+            sceneDefaultScale: 1.5,
+            sceneDefaultOffsetX: 12,
+            sceneDefaultOffsetY: -8
+        }
+    };
+
+    try {
+        OBR.player.getRole = async () => 'GM';
+        origScene.getMetadata = async () => currentSceneMeta;
+        origScene.setMetadata = async (update: Record<string, unknown>) => {
+            currentSceneMeta = { ...currentSceneMeta, ...update };
+        };
+
+        await clearSceneScaleFromOwlbear();
+        const afterScaleClear = currentSceneMeta[SCENE_SETTINGS_META_ID] as Record<string, unknown>;
+        assert.equal(afterScaleClear.sceneDefaultScale, null, 'sceneDefaultScale cleared to null');
+        assert.equal(afterScaleClear.sceneDefaultOffsetX, 12, 'sceneDefaultOffsetX preserved');
+        assert.equal(afterScaleClear.sceneDefaultOffsetY, -8, 'sceneDefaultOffsetY preserved');
+
+        currentSceneMeta = {
+            [SCENE_SETTINGS_META_ID]: {
+                sceneDefaultScale: 2,
+                sceneDefaultOffsetX: 5,
+                sceneDefaultOffsetY: 10
+            }
+        };
+        await clearSceneOffsetsFromOwlbear();
+        const afterOffsetClear = currentSceneMeta[SCENE_SETTINGS_META_ID] as Record<string, unknown>;
+        assert.equal(afterOffsetClear.sceneDefaultScale, 2, 'sceneDefaultScale preserved when clearing offsets');
+        assert.equal(afterOffsetClear.sceneDefaultOffsetX, null, 'sceneDefaultOffsetX cleared to null');
+        assert.equal(afterOffsetClear.sceneDefaultOffsetY, null, 'sceneDefaultOffsetY cleared to null');
+    } finally {
+        OBR.player.getRole = origGetRole;
+        origScene.getMetadata = origGetMeta;
+        origScene.setMetadata = origSetMeta;
+    }
+});
+
+it('findMatchingTrainerEntries prioritizes IDs and ignores empty or default Trainer names', () => {
+    const trainers: Record<string, TrainerRoster> = {
+        't-default': { id: 't-default', name: 'Trainer', party: [] },
+        't-blank': { id: 't-blank', name: '   ', party: [] },
+        't-red': { id: 't-red', name: 'Red', party: [] },
+        't-blue': { id: 't-blue', name: 'Blue', mapTokenId: 'tok-blue-existing', party: [] }
+    };
+
+    const defaultNamedToken = { id: 'tok-1', name: 'Trainer', metadata: {} } as unknown as Item;
+    assert.equal(
+        findMatchingTrainerEntries(trainers, defaultNamedToken, { name: 'Trainer', nickname: 'trainer' }).length,
+        0,
+        'Must not match default Trainer name'
+    );
+
+    const blankToken = { id: 'tok-2', name: '  ', metadata: {} } as unknown as Item;
+    assert.equal(
+        findMatchingTrainerEntries(trainers, blankToken, { name: '', nickname: '   ' }).length,
+        0,
+        'Must not match empty/whitespace name'
+    );
+
+    const linkedBlueToken = { id: 'tok-blue-existing', name: 'Red', metadata: {} } as unknown as Item;
+    const blueByTokenId = findMatchingTrainerEntries(trainers, linkedBlueToken, { name: 'Red' });
+    assert.equal(blueByTokenId.length, 1);
+    assert.equal(blueByTokenId[0][0], 't-blue', 'Prioritizes mapTokenId over name match');
+
+    const unlinkedTokenWithBlueName = { id: 'tok-other', name: 'Blue', metadata: {} } as unknown as Item;
+    assert.equal(
+        findMatchingTrainerEntries(trainers, unlinkedTokenWithBlueName, { name: 'Blue' }).length,
+        0,
+        'Does not match by name when trainer already has mapTokenId set'
+    );
+
+    const unlinkedRedToken = { id: 'tok-red-new', name: 'Red', metadata: {} } as unknown as Item;
+    const redByName = findMatchingTrainerEntries(trainers, unlinkedRedToken, { name: 'Red' });
+    assert.equal(redByName.length, 1);
+    assert.equal(redByName[0][0], 't-red', 'Matches unlinked trainer by distinct non-default name');
 });
 });

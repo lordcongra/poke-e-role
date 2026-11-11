@@ -1,4 +1,5 @@
-import type { GmCheatItem } from '../../../data/gmScreenData';
+import type { GmCheatItem } from '@/data/gmScreenData';
+import { escapeRegExp } from '@/utils/common/helper';
 
 /**
  * Filters and ranks GM cheat sheet items based on active tab and search query with weighted relevance scoring.
@@ -30,7 +31,7 @@ export function filterAndScoreCheatItems(items: GmCheatItem[], searchQuery: stri
                 score += 2000;
             } else if (titleLower.startsWith(rawQuery)) {
                 score += 1000;
-            } else if (new RegExp(`\\b${rawQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(titleLower)) {
+            } else if (new RegExp(`\\b${escapeRegExp(rawQuery)}\\b`, 'i').test(titleLower)) {
                 score += 700;
             } else if (titleLower.includes(rawQuery)) {
                 score += 400;

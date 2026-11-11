@@ -22,7 +22,8 @@ import {
 } from './tagExtractors';
 import { extractActiveEffectSummary } from './tagSummaries';
 import { isAbilitySuppressedByField } from '../combat/abilityTargetingUtils';
-import { resolveCharacterSide } from '../combat/combatantSideUtils';
+import { resolveCharacterSide } from '@/utils/combat/combatantSideUtils';
+import { escapeRegExp } from '@/utils/common/helper';
 
 export function resolveChoiceTags(desc: string, choiceIndex: number = 0): string {
     if (!desc || !desc.includes('Choice:')) return desc;
@@ -141,7 +142,7 @@ export function parseCombatTags(
         .flatMap((category) => category.skills.map((skill) => (skill.name || '').toLowerCase()))
         .filter(Boolean);
     const skillsList = [...Object.values(Skill), ...customSkillNames];
-    const escapedSkills = skillsList.map((skill) => skill.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+    const escapedSkills = skillsList.map((skill) => escapeRegExp(skill)).join('|');
 
     const itemsToParse: ParsableEntity[] = [];
 

@@ -9,6 +9,10 @@ export function isItemHiddenFromPlayer(isGmOnly: boolean | undefined, role: stri
     return isGmOnly === true;
 }
 
+export function escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export function getBaseShareUrl(): string {
     const origin = window.location.origin;
     let pathname = window.location.pathname;

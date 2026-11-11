@@ -18,7 +18,8 @@ import {
     Snowflake,
     Mountain
 } from 'lucide-react';
-import { categorizeFactor, consolidateFactors, type ParsedFactor } from '../../../utils/combat/rollLogParser';
+import { categorizeFactor, consolidateFactors, type ParsedFactor } from '@/utils/combat/rollLogParser';
+import { escapeRegExp } from '@/utils/common/helper';
 import './RollFactorsModal.css';
 
 export interface RollFactorsModalProps {
@@ -92,7 +93,7 @@ export const RollFactorsModal: React.FC<RollFactorsModalProps> = ({
     };
 
     const cleanActionName = characterName
-        ? title.replace(new RegExp(`^${characterName}\\s+rolled\\s+`, 'i'), 'Rolled ')
+        ? title.replace(new RegExp(`^${escapeRegExp(characterName)}\\s+rolled\\s+`, 'i'), 'Rolled ')
         : title;
 
     return (

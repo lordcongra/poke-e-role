@@ -6,6 +6,9 @@ import {
     isStackingBoostCondition,
     getBoostMultiplier
 } from '@/utils/tagParser/conditionChecker';
+import { escapeRegExp } from '@/utils/common/helper';
+import { escapeRegExp as escapeRegExpFromIndex } from '@/utils/common';
+import { isStatOrSkillMatch } from '@/utils/tagParser/tagSummaries';
 
 describe('conditionChecker', () => {
     beforeEach(() => {
@@ -284,6 +287,25 @@ describe('conditionChecker', () => {
                 }
             });
             expect(checkCondition('reflect', false)).toBe(true);
+        });
+    });
+
+    describe('escapeRegExp & isStatOrSkillMatch regex safety', () => {
+        it('escapes regex metacharacters safely and re-exports from common index', () => {
+            expect(escapeRegExpFromIndex).toBe(escapeRegExp);
+            const raw = 'Mr. Mime [Custom] (A+B)?*^{}|\\';
+            const escaped = escapeRegExp(raw);
+            const re = new RegExp(`^${escaped}$`);
+            expect(re.test(raw)).toBe(true);
+            expect(re.test('MrX Mime [Custom] (A+B)?*^{}|\\')).toBe(false);
+        });
+
+        it('handles regex metacharacters in isStatOrSkillMatch without throwing', () => {
+            expect(() => isStatOrSkillMatch('Brawl +1', 'Skill (Custom)+')).not.toThrow();
+            expect(isStatOrSkillMatch('Brawl +1', 'Skill (Custom)+')).toBe(false);
+            expect(isStatOrSkillMatch('Skill (Custom)+ +1', 'Skill (Custom)+')).toBe(true);
+            expect(isStatOrSkillMatch('Mr. Mime +2', 'Mr. Mime')).toBe(true);
+            expect(isStatOrSkillMatch('MrX Mime +2', 'Mr. Mime')).toBe(false);
         });
     });
 });

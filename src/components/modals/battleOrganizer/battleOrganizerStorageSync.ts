@@ -4,7 +4,8 @@ import { getBattleOrganizerSettings, isBattleOrganizerOpen } from './battleOrgan
 import { STORAGE_KEY } from './battleOrganizerUtils';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import OBR from '@owlbear-rodeo/sdk';
-import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
+import { isStandaloneMode } from '@/utils/sync/storageAdapter';
+import { escapeRegExp } from '@/utils/common/helper';
 
 /**
  * Pure function to apply a parsed roll to combatants in a BattleOrganizerState.
@@ -46,7 +47,7 @@ export function applyRollToBattleOrganizerState(
     const newCombatants = currentRound.combatants.map((c) => {
         if (!c.tokenId && !c.name.trim()) return c;
 
-        const safeName = c.name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const safeName = escapeRegExp(c.name.trim());
         const isMatch =
             (rollTokenId && c.tokenId && rollTokenId === c.tokenId) ||
             (charName && c.name.trim() && charName.trim().toLowerCase() === c.name.trim().toLowerCase()) ||

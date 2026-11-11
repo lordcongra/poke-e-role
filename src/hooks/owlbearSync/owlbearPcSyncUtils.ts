@@ -263,3 +263,33 @@ export async function rehydrateActivePcCharacter(
         fetchSpecies: false
     });
 }
+
+/**
+ * Matches a Trainer scene token against campaign trainer profiles.
+ * Prioritizes explicit `mapTokenId` / `entityId` matches and never matches by empty/default `'Trainer'` name.
+ */
+export function findMatchingTrainerEntries(
+    trainers: Record<string, TrainerRoster>,
+    item: import('@owlbear-rodeo/sdk').Item,
+    meta: Record<string, unknown>,
+    entityId?: string
+): Array<[string, TrainerRoster]> {
+    const entries = Object.entries(trainers);
+    const idMatches = entries.filter(([tId, tr]) => {
+        if (tr.mapTokenId === item.id) return true;
+        if (entityId && (tId === entityId || tr.fullMetadata?.entityId === entityId)) return true;
+        return false;
+    });
+    if (idMatches.length > 0) return idMatches;
+
+    const tokenNames = [meta.name, meta.nickname, item.name]
+        .map((n) => (typeof n === 'string' ? n.trim().toLowerCase() : ''))
+        .filter((n) => n.length > 0 && n !== 'trainer');
+    if (tokenNames.length === 0) return [];
+
+    return entries.filter(([, tr]) => {
+        if (tr.mapTokenId) return false;
+        const normalizedName = (tr.name || '').trim().toLowerCase();
+        return normalizedName.length > 0 && normalizedName !== 'trainer' && tokenNames.includes(normalizedName);
+    });
+}

@@ -2,6 +2,7 @@ import type { MoveData, PassiveItem, InventoryItem } from '../../store/storeType
 import type { BoostTrackerSource } from './tagTypes';
 import { getMaxBoost } from '../../data/abilities/knownAbilities';
 import { KNOWN_ITEMS } from '../../data/constants';
+import { escapeRegExp } from '@/utils/common/helper';
 
 export function isStatOrSkillMatch(tagText: string, attrOrSkill?: string): boolean {
     if (!attrOrSkill || attrOrSkill.toLowerCase() === 'none') return false;
@@ -22,7 +23,7 @@ export function isStatOrSkillMatch(tagText: string, attrOrSkill?: string): boole
     const shortCode = map[cleanTarget] || cleanTarget;
 
     if (lowerTag.includes(cleanTarget)) return true;
-    const regex = new RegExp(`\\b${shortCode}\\b|\\b${cleanTarget}\\b`, 'i');
+    const regex = new RegExp(`\\b${escapeRegExp(shortCode)}\\b|\\b${escapeRegExp(cleanTarget)}\\b`, 'i');
     return regex.test(lowerTag);
 }
 

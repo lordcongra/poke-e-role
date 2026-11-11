@@ -14,7 +14,10 @@ import {
     extractLiveAccessoryBundles,
     hasAttachmentDiff,
     sanitizeAttachmentBundles
-} from '../../utils/pc/pcAttachmentOps';
+} from '@/utils/pc/pcAttachmentOps';
+import { findMatchingTrainerEntries } from '@/hooks/owlbearSync/owlbearPcSyncUtils';
+
+export { findMatchingTrainerEntries };
 
 export interface OwlbearTokenSyncResult {
     renderAllTokens: (forceRebuild?: boolean | 'badges-only') => Promise<void>;
@@ -148,7 +151,7 @@ export async function setupOwlbearTokenSync(params: {
         // Follow-up render to catch late-arriving tokens on scene ready
         if (sceneFollowupTimeout) clearTimeout(sceneFollowupTimeout);
         sceneFollowupTimeout = setTimeout(async () => {
-            if (!isMounted()) return;
+            if (!isMounted() || isSceneTransitioning) return;
             try {
                 const lateItems = await OBR.scene.items.getItems();
                 await reconcileSceneTokens(lateItems, role);
@@ -159,17 +162,19 @@ export async function setupOwlbearTokenSync(params: {
         // Targeted badge-only refresh: only rebuilds the Evade and Clash text glyphs once fonts are warm.
         if (sceneBadgeRefreshTimeout) clearTimeout(sceneBadgeRefreshTimeout);
         sceneBadgeRefreshTimeout = setTimeout(async () => {
-            if (!isMounted()) return;
+            if (!isMounted() || isSceneTransitioning) return;
             await renderAllTokens('badges-only');
         }, 1200);
 
         if (typeof document !== 'undefined' && document.fonts) {
             document.fonts.ready
                 .then(() => {
-                    if (!isMounted()) return;
-                    renderAllTokens('badges-only');
+                    if (!isMounted() || isSceneTransitioning) return;
+                    return renderAllTokens('badges-only');
                 })
-                .catch(() => {});
+                .catch((err) => {
+                    console.error('[SyncEngine] Failed badge refresh after fonts ready:', err);
+                });
         }
     };
 
@@ -294,7 +299,7 @@ export async function setupOwlbearTokenSync(params: {
                             effectiveOffsetY
                         );
                         const currentRole = storeState.role || role;
-                        renderTokenGraphics(item, gData, currentRole);
+                        await renderTokenGraphics(item, gData, currentRole);
                     }
 
                     if (item.id === storeState.tokenId && !getIsPcSheetActive()) {
@@ -432,29 +437,23 @@ export async function setupOwlbearTokenSync(params: {
                         }
                     }
 
-                    // Sync live Trainer scale, item, and stats if this token belongs to the active campaign trainer
+                    // Sync live Trainer scale, item, and stats if this token belongs to a campaign trainer
                     const isTrainerMode = meta.mode === 'Trainer' || meta.mode === 'Trainer (Special)';
                     if (isTrainerMode) {
                         const camp = storeState.pcData.campaigns[storeState.pcData.activeCampaignId];
                         if (camp && camp.trainers) {
-                            for (const [tId, tr] of Object.entries(camp.trainers)) {
-                                const isMatch =
-                                    tr.mapTokenId === item.id ||
-                                    tr.name === meta.name ||
-                                    tr.name === meta.nickname ||
-                                    tr.name === item.name;
-                                if (isMatch) {
-                                    const scaleChanged =
-                                        tr.savedTokenItem?.scale?.x !== item.scale?.x ||
-                                        tr.savedTokenItem?.scale?.y !== item.scale?.y;
-                                    const metaChanged = tr.mapTokenId !== item.id || scaleChanged;
-                                    if (metaChanged) {
-                                        storeState.updateTrainerProfile(tId, {
-                                            mapTokenId: item.id,
-                                            savedTokenItem: item,
-                                            fullMetadata: { ...(tr.fullMetadata || {}), ...meta }
-                                        });
-                                    }
+                            const matchedEntries = findMatchingTrainerEntries(camp.trainers, item, meta, eId);
+                            for (const [tId, tr] of matchedEntries) {
+                                const scaleChanged =
+                                    tr.savedTokenItem?.scale?.x !== item.scale?.x ||
+                                    tr.savedTokenItem?.scale?.y !== item.scale?.y;
+                                const metaChanged = tr.mapTokenId !== item.id || scaleChanged;
+                                if (metaChanged) {
+                                    storeState.updateTrainerProfile(tId, {
+                                        mapTokenId: item.id,
+                                        savedTokenItem: item,
+                                        fullMetadata: { ...(tr.fullMetadata || {}), ...meta }
+                                    });
                                 }
                             }
                         }
