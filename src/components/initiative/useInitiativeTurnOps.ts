@@ -31,6 +31,11 @@ export function useInitiativeTurnOps({
 }: UseInitiativeTurnOpsProps) {
     // Lock to prevent rapid-fire clicking from breaking the smooth scroll animation
     const scrollLock = useRef(false);
+    const combatantsRef = useRef(combatants);
+
+    useEffect(() => {
+        combatantsRef.current = combatants;
+    }, [combatants]);
 
     const updateInit = async (id: string, d6Value: number, baseInitiative: number, forceTiebreaker: number = 0) => {
         const total = d6Value + baseInitiative;
@@ -277,9 +282,10 @@ export function useInitiativeTurnOps({
         }
     };
 
-    const handleAddStandaloneCombatant = useCallback((char: StandaloneCharOption) => {
-        setCombatants((prevCombatants) => {
-            if (prevCombatants.find((c) => c.id === char.id)) return prevCombatants;
+    const handleAddStandaloneCombatant = useCallback(
+        (char: StandaloneCharOption) => {
+            const prevCombatants = combatantsRef.current;
+            if (prevCombatants.find((c) => c.id === char.id)) return;
 
             const store = useCharacterStore.getState();
             const baseInit = calculateBaseInitFromCharacterData(char.rawMetadata, store);
@@ -301,15 +307,17 @@ export function useInitiativeTurnOps({
                 }
             ]);
 
+            combatantsRef.current = newList;
+            setCombatants(newList);
             try {
                 localStorage.setItem('pkr_standalone_init_list', JSON.stringify(newList));
                 window.dispatchEvent(new Event('pkr-standalone-init-update'));
             } catch (error) {
                 console.error('[InitiativeEngine] Failed to add standalone combatant to localStorage:', error);
             }
-            return newList;
-        });
-    }, [setCombatants]);
+        },
+        [setCombatants]
+    );
 
     const handleAddObrCombatant = async (item: Item) => {
         if (!OBR.isAvailable) return;

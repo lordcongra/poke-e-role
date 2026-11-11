@@ -86,6 +86,64 @@ export function extractTokenImage(meta: Record<string, unknown> | null | undefin
     return '';
 }
 
+export function isDefaultPokeballImage(url: string | null | undefined): boolean {
+    if (!url) return false;
+    const trimmed = url.trim();
+    return trimmed.endsWith('pokeball-token.svg') || trimmed.endsWith('pokeball.svg');
+}
+
+/**
+ * Resolves the active standalone combatant image consistently with `extractTokenImage(meta)`.
+ * Avoids replacing metadata-extracted or empty combatant images with the sheet's default
+ * pokeball-token.svg placeholder, while still honoring custom images and explicit deletions.
+ */
+export function resolveActiveTokenImage(
+    storeImage: string | null | undefined,
+    fallbackImage: string | null | undefined,
+    wasCleared: boolean = false
+): string {
+    if (wasCleared) return '';
+    if (typeof storeImage === 'string' && storeImage && !isDefaultPokeballImage(storeImage)) {
+        return storeImage;
+    }
+    return fallbackImage || '';
+}
+
+export function resolveActiveCombatantFields(
+    store: CharacterState,
+    fallback: { name: string; image: string },
+    wasImageCleared: boolean = false
+): { baseInit: number; image: string; name: string } {
+    const baseInit = calculateBaseInitFromCharacterData(store, store);
+    const image = resolveActiveTokenImage(store.identity?.tokenImageUrl, fallback.image, wasImageCleared);
+    const name = store.identity?.nickname?.trim() || store.identity?.species?.trim() || fallback.name;
+    return { baseInit, image, name };
+}
+
+export function areCombatantListsEqual(a: Combatant[], b: Combatant[]): boolean {
+    if (a === b) return true;
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        const ca = a[i];
+        const cb = b[i];
+        if (
+            ca.id !== cb.id ||
+            ca.entityId !== cb.entityId ||
+            ca.name !== cb.name ||
+            ca.image !== cb.image ||
+            ca.d6 !== cb.d6 ||
+            ca.baseInit !== cb.baseInit ||
+            ca.total !== cb.total ||
+            ca.tiebreaker !== cb.tiebreaker ||
+            ca.hidden !== cb.hidden ||
+            ca.isNPC !== cb.isNPC
+        ) {
+            return false;
+        }
+    }
+    return true;
+}
+
 export function extractIsNpc(meta: Record<string, unknown> | null | undefined, fallbackIsNpc?: boolean): boolean {
     if (fallbackIsNpc) return true;
     if (!meta) return false;

@@ -5,10 +5,16 @@ import {
     sortCombatants,
     extractIsNpc,
     extractCharacterName,
+    extractTokenImage,
+    isDefaultPokeballImage,
+    resolveActiveTokenImage,
+    resolveActiveCombatantFields,
+    areCombatantListsEqual,
     resolveStalemateTiebreakers,
     resolveInitiativeRolls,
     type Combatant
 } from '@/utils/combat/initiativeHelpers';
+import { createTestCharacterState } from '@/test/testStateHelpers';
 
 describe('initiativeHelpers', () => {
     describe('calculateEncodedInitiative', () => {
@@ -158,6 +164,76 @@ describe('initiativeHelpers', () => {
                     ties.forEach((t) => expect(t).toBeGreaterThan(0));
                 }
             }
+        });
+    });
+
+    describe('extractTokenImage and resolveActiveTokenImage', () => {
+        it('extracts images from flat, OBR image.url, nested stats, and state.identity', () => {
+            expect(extractTokenImage({ 'token-image-url': 'https://a.png' })).toBe('https://a.png');
+            expect(extractTokenImage({ tokenImageUrl: 'https://b.png' })).toBe('https://b.png');
+            expect(extractTokenImage({ image: { url: 'https://c.png' } })).toBe('https://c.png');
+            expect(extractTokenImage({ 'pokerole-pmd-extension/stats': { 'token-image-url': 'https://d.png' } })).toBe(
+                'https://d.png'
+            );
+            expect(extractTokenImage({ state: { identity: { tokenImageUrl: 'https://e.png' } } })).toBe(
+                'https://e.png'
+            );
+            expect(extractTokenImage({})).toBe('');
+            expect(extractTokenImage(null)).toBe('');
+        });
+
+        it('identifies default pokeball fallback images', () => {
+            expect(isDefaultPokeballImage('/poke-e-role/pokeball-token.svg')).toBe(true);
+            expect(isDefaultPokeballImage('/pokeball.svg')).toBe(true);
+            expect(isDefaultPokeballImage('https://example.com/custom.png')).toBe(false);
+            expect(isDefaultPokeballImage('')).toBe(false);
+        });
+
+        it('resolves store image consistently with extractTokenImage fallback', () => {
+            // Default pokeball placeholder in store must not override empty metadata image
+            expect(resolveActiveTokenImage('/poke-e-role/pokeball-token.svg', '')).toBe('');
+            // Default pokeball placeholder must not override OBR image.url extracted from metadata
+            expect(resolveActiveTokenImage('/poke-e-role/pokeball-token.svg', 'https://obr.png')).toBe(
+                'https://obr.png'
+            );
+            // Explicitly saved pokeball-token.svg in metadata stays intact
+            expect(
+                resolveActiveTokenImage('/poke-e-role/pokeball-token.svg', '/poke-e-role/pokeball-token.svg')
+            ).toBe('/poke-e-role/pokeball-token.svg');
+            // Custom image in store overrides empty/stale metadata image
+            expect(resolveActiveTokenImage('local-img:123', 'https://old.png')).toBe('local-img:123');
+            // Empty store image preserves metadata fallback unless explicitly cleared
+            expect(resolveActiveTokenImage('', 'https://obr.png', false)).toBe('https://obr.png');
+            expect(resolveActiveTokenImage('', 'https://obr.png', true)).toBe('');
+        });
+
+        it('resolves active combatant fields consistently and compares combatant lists', () => {
+            const state = createTestCharacterState({
+                identity: {
+                    nickname: 'Sparky',
+                    species: 'Pikachu',
+                    tokenImageUrl: '/poke-e-role/pokeball-token.svg'
+                },
+                skills: {
+                    alert: { base: 1, buff: 0, customName: '' }
+                }
+            });
+            const fields = resolveActiveCombatantFields(state, { name: 'Old', image: '' }, false);
+            expect(fields.name).toBe('Sparky');
+            expect(fields.image).toBe('');
+            expect(fields.baseInit).toBe(3);
+
+            const listA: Combatant[] = [
+                { id: '1', name: 'Sparky', image: '', d6: 3, baseInit: 4, total: 7, tiebreaker: 0 }
+            ];
+            const listB: Combatant[] = [
+                { id: '1', name: 'Sparky', image: '', d6: 3, baseInit: 4, total: 7, tiebreaker: 0 }
+            ];
+            const listC: Combatant[] = [
+                { id: '1', name: 'Sparky', image: 'https://a.png', d6: 3, baseInit: 4, total: 7, tiebreaker: 0 }
+            ];
+            expect(areCombatantListsEqual(listA, listB)).toBe(true);
+            expect(areCombatantListsEqual(listA, listC)).toBe(false);
         });
     });
 });

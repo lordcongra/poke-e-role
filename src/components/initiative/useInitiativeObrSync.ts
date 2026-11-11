@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import type { Item, Image } from '@owlbear-rodeo/sdk';
 import { isStandaloneMode, storageAdapter } from '@/utils/sync/storageAdapter';
@@ -8,7 +8,10 @@ import {
     sortCombatants,
     extractTokenImage,
     extractCharacterName,
-    extractIsNpc
+    extractIsNpc,
+    isDefaultPokeballImage,
+    resolveActiveCombatantFields,
+    areCombatantListsEqual
 } from '@/utils/combat/initiativeHelpers';
 import { extractEntityId } from '@/hooks/owlbearSync/setupOwlbearTokenSync';
 import { BATTLEFIELD_META_ID, ROOM_META_ID } from '@/hooks/owlbearSync/owlbearSyncConstants';
@@ -57,17 +60,42 @@ export function useInitiativeObrSync({
     const [isGM, setIsGM] = useState(() => isStandaloneMode);
     const [availableChars, setAvailableChars] = useState<StandaloneCharOption[]>([]);
     const [availableObrChars, setAvailableObrChars] = useState<ObrCharOption[]>([]);
+    const isSelfInitDispatchRef = useRef(false);
+    const prevActiveTokenImageRef = useRef<{ tokenId: string | null; url: string }>({
+        tokenId: null,
+        url: ''
+    });
+    const tokenImageClearedRef = useRef(false);
 
     // Adjust active character initiative if stats change in standalone
     useEffect(() => {
-        if (!isStandaloneMode || !activeTokenId || combatants.length === 0) return;
+        if (!isStandaloneMode) return;
+
+        const currentUrl = tokenImageUrl || '';
+        const prevImg = prevActiveTokenImageRef.current;
+        if (prevImg.tokenId !== activeTokenId) {
+            tokenImageClearedRef.current = false;
+        } else if (currentUrl !== '') {
+            tokenImageClearedRef.current = false;
+        } else if (Boolean(prevImg.url) && !isDefaultPokeballImage(prevImg.url)) {
+            tokenImageClearedRef.current = true;
+        }
+        prevActiveTokenImageRef.current = { tokenId: activeTokenId, url: currentUrl };
+
+        if (!activeTokenId || combatants.length === 0) return;
         const activeCombatant = combatants.find((c) => c.id === activeTokenId);
         if (!activeCombatant) return;
 
         const store = useCharacterStore.getState();
-        const newBase = calculateBaseInitFromCharacterData(store, store);
-        const newImage = tokenImageUrl || '';
-        const newName = storeIdentity?.nickname?.trim() || storeIdentity?.species?.trim() || activeCombatant.name;
+        const {
+            baseInit: newBase,
+            image: newImage,
+            name: newName
+        } = resolveActiveCombatantFields(
+            store,
+            { name: activeCombatant.name, image: activeCombatant.image },
+            tokenImageClearedRef.current
+        );
 
         if (
             newBase !== activeCombatant.baseInit ||
@@ -85,7 +113,12 @@ export function useInitiativeObrSync({
             setCombatants(sorted);
             try {
                 localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
-                window.dispatchEvent(new Event('pkr-standalone-init-update'));
+                isSelfInitDispatchRef.current = true;
+                try {
+                    window.dispatchEvent(new Event('pkr-standalone-init-update'));
+                } finally {
+                    isSelfInitDispatchRef.current = false;
+                }
             } catch (error) {
                 console.error(
                     '[InitiativeEngine] Failed to update active character initiative in localStorage:',
@@ -146,6 +179,9 @@ export function useInitiativeObrSync({
                     if (savedList) {
                         const parsedList = JSON.parse(savedList);
                         if (Array.isArray(parsedList)) {
+                            const store = useCharacterStore.getState();
+                            const currentActiveTokenId = store.tokenId;
+
                             const normalizedList: Combatant[] = parsedList.map((item: Record<string, unknown>) => {
                                 const charId = String(item.id || '');
                                 const matchingChar = localChars.find((c) => c.id === charId);
@@ -156,12 +192,20 @@ export function useInitiativeObrSync({
 
                                 if (matchingChar && matchingChar.metadata) {
                                     const meta = matchingChar.metadata as Record<string, unknown>;
-                                    baseInitiative = calculateBaseInitFromCharacterData(
-                                        meta,
-                                        useCharacterStore.getState()
-                                    );
+                                    baseInitiative = calculateBaseInitFromCharacterData(meta, store);
                                     resolvedImage = extractTokenImage(meta);
                                     resolvedName = extractCharacterName(meta, matchingChar.name || resolvedName);
+                                }
+
+                                if (currentActiveTokenId && charId === currentActiveTokenId) {
+                                    const activeFields = resolveActiveCombatantFields(
+                                        store,
+                                        { name: resolvedName, image: resolvedImage },
+                                        tokenImageClearedRef.current
+                                    );
+                                    baseInitiative = activeFields.baseInit;
+                                    resolvedImage = activeFields.image;
+                                    resolvedName = activeFields.name;
                                 }
 
                                 const d6Value = typeof item.d6 === 'number' ? item.d6 : 0;
@@ -186,7 +230,12 @@ export function useInitiativeObrSync({
                                     isNPC: item.isNPC !== undefined ? Boolean(item.isNPC) : undefined
                                 };
                             });
-                            if (isMounted) setCombatants(sortCombatants(normalizedList));
+                            const sortedList = sortCombatants(normalizedList);
+                            if (isMounted) {
+                                setCombatants((prev) =>
+                                    areCombatantListsEqual(prev, sortedList) ? prev : sortedList
+                                );
+                            }
                         }
                     }
                     if (savedTurn && isMounted) setActiveTurnId(savedTurn);
@@ -214,6 +263,11 @@ export function useInitiativeObrSync({
                 }
             };
 
+            const handleStandaloneInitUpdate = () => {
+                if (isSelfInitDispatchRef.current) return;
+                loadLocalEncounter();
+            };
+
             const handleLocalDataChange = () => {
                 loadLocalChars();
                 loadLocalEncounter();
@@ -222,14 +276,14 @@ export function useInitiativeObrSync({
             loadLocalEncounter();
             loadLocalChars();
 
-            window.addEventListener('pkr-standalone-init-update', loadLocalEncounter);
+            window.addEventListener('pkr-standalone-init-update', handleStandaloneInitUpdate);
             window.addEventListener('pkr-character-list-update', loadLocalChars);
             window.addEventListener('pkr-local-data-changed', handleLocalDataChange);
             window.addEventListener('storage', handleLocalDataChange);
 
             return () => {
                 isMounted = false;
-                window.removeEventListener('pkr-standalone-init-update', loadLocalEncounter);
+                window.removeEventListener('pkr-standalone-init-update', handleStandaloneInitUpdate);
                 window.removeEventListener('pkr-character-list-update', loadLocalChars);
                 window.removeEventListener('pkr-local-data-changed', handleLocalDataChange);
                 window.removeEventListener('storage', handleLocalDataChange);
