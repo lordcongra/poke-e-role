@@ -2,7 +2,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import type { BattleOrganizerState, CombatantRowData } from '@/types/battleOrganizerTypes';
 import type { PcPokemonSummary, PcStorageData } from '@/types/pcStorageTypes';
 import { useCharacterStore } from '@/store/useCharacterStore';
-import { EXTENSION_ID } from '@/hooks/owlbearSync/owlbearSyncConstants';
+import { sendBattleOrganizerFullSync } from '@/components/modals/battleOrganizer/battleOrganizerSyncHelpers';
 import { STATS_META_ID } from '@/utils/graphics/graphicsManager';
 import { matchesTarget } from './abilityTargetStances';
 import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
@@ -208,11 +208,7 @@ export async function syncCombatantSentToPc(entityId: string, pcData?: PcStorage
 
         if (boChanged) {
             localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(bo));
-            if (OBR.isAvailable) {
-                OBR.broadcast
-                    .sendMessage(`${EXTENSION_ID}/battle-organizer-sync`, bo, { destination: 'REMOTE' })
-                    .catch(() => {});
-            }
+            void sendBattleOrganizerFullSync(bo);
         }
 
         // Sync active Zustand store if an affected source or deposited Pokémon is currently loaded
@@ -376,11 +372,7 @@ export async function syncCombatantSentToMap(entityId: string, pcData?: PcStorag
 
         if (boChanged) {
             localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(bo));
-            if (OBR.isAvailable) {
-                OBR.broadcast
-                    .sendMessage(`${EXTENSION_ID}/battle-organizer-sync`, bo, { destination: 'REMOTE' })
-                    .catch(() => {});
-            }
+            void sendBattleOrganizerFullSync(bo);
         }
     } catch (err) {
         console.warn('[abilityTargetingUtils] Failed to sync combatant sent to map:', err);

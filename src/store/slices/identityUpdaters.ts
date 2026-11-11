@@ -11,6 +11,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { syncHealthAndWill } from '../../utils/common/macroHelpers';
 import { getKnownAbility } from '../../data/abilities/knownAbilities';
 import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
+import { sendBattleOrganizerFullSync } from '@/components/modals/battleOrganizer/battleOrganizerSyncHelpers';
 
 export function handleInitiativeTrackerSetting(
     field: string,
@@ -134,15 +135,7 @@ export function updateSpeciesAndNameData(
                     if (hasChanged) {
                         boData.rounds = updatedRounds;
                         localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
-                        if (OBR.isAvailable) {
-                            OBR.broadcast
-                                .sendMessage(
-                                    'pokerole-pmd-extension/battle-organizer-sync',
-                                    boData,
-                                    { destination: 'REMOTE' }
-                                )
-                                .catch(() => {});
-                        }
+                        void sendBattleOrganizerFullSync(boData);
                     }
                 }
             }
@@ -306,15 +299,7 @@ export function syncAbilityAndTargetState(
             if (hasChanged) {
                 boData.rounds = updatedRounds;
                 localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
-                if (OBR.isAvailable) {
-                    OBR.broadcast
-                        .sendMessage(
-                            'pokerole-pmd-extension/battle-organizer-sync',
-                            boData,
-                            { destination: 'REMOTE' }
-                        )
-                        .catch(() => {});
-                }
+                void sendBattleOrganizerFullSync(boData);
             }
         } catch (e) {
             console.warn('[IdentitySlice] Failed to sync ability boost/choice to battle organizer localStorage:', e);

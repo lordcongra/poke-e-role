@@ -293,18 +293,26 @@ export const createDefaultCombatant = (name = '', image = '', isPlayer = true): 
 });
 
 export function parseCombatantInitiativeHierarchy(
-    initiativeStr: string,
+    initiativeStr: string | number | null | undefined,
     baseInitFallback?: number
 ): {
     total: number;
     baseInit: number;
     tiebreaker: number;
 } {
-    if (!initiativeStr || initiativeStr === '0') {
+    const raw =
+        typeof initiativeStr === 'number'
+            ? Number.isFinite(initiativeStr)
+                ? String(initiativeStr)
+                : ''
+            : typeof initiativeStr === 'string'
+              ? initiativeStr.trim()
+              : '';
+    if (!raw || raw === '0') {
         return { total: 0, baseInit: baseInitFallback ?? 0, tiebreaker: 0 };
     }
 
-    const parts = initiativeStr.split('.');
+    const parts = raw.split('.');
     const total = parseInt(parts[0], 10) || 0;
 
     let base = typeof baseInitFallback === 'number' ? baseInitFallback : 0;

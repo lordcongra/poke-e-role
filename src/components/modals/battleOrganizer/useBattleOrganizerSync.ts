@@ -1,25 +1,31 @@
 import { useEffect, useCallback, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
-import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
+import { isStandaloneMode, storageAdapter } from '@/utils/sync/storageAdapter';
 import {
     getBattleOrganizerStorageKey,
     getEffectiveRoomId,
-    getRollLogStorageKey,
-    readBattleOrganizerStateRaw
+    getRollLogStorageKey
 } from '@/utils/sync/roomScopedStorage';
-import { useCharacterStore } from '../../../store/useCharacterStore';
-import { extractTokenImage, extractCharacterName } from '../../../utils/combat/initiativeHelpers';
-import { getBattleOrganizerSettings } from './battleOrganizerSettingsHelper';
-import type { BattleOrganizerState, BattleRoundData } from '../../../types/battleOrganizerTypes';
+import { useCharacterStore } from '@/store/useCharacterStore';
+import { EXTENSION_ID } from '@/hooks/owlbearSync/owlbearSyncConstants';
+import { registerSafeBroadcastListener } from '@/hooks/owlbearSync/owlbearBroadcastUtils';
+import { getBattleOrganizerSettings } from '@/components/modals/battleOrganizer/battleOrganizerSettingsHelper';
+import type { BattleOrganizerState } from '@/types/battleOrganizerTypes';
+import { sanitizeBattlefield } from '@/components/modals/battleOrganizer/battleOrganizerUtils';
+import { parseRollLogEntry } from '@/components/modals/battleOrganizer/battleOrganizerRollParser';
+import { applyRollToBattleOrganizerState } from '@/components/modals/battleOrganizer/battleOrganizerStorageSync';
 import {
-    LEGACY_OBR_SCENE_META_KEY,
-    parseStatusesFromMetadata,
-    parseHealthAndWillFromMetadata,
-    sanitizeBattlefield,
-    createDefaultState
-} from './battleOrganizerUtils';
-import { parseRollLogEntry } from './battleOrganizerRollParser';
-import { applyRollToBattleOrganizerState } from './battleOrganizerStorageSync';
+    BATTLE_ORGANIZER_COMBATANT_PATCH_CHANNEL,
+    BATTLE_ORGANIZER_SYNC_CHANNEL,
+    type BattleOrganizerCombatantPatchPayload,
+    applyCombatantPatchToState,
+    canBroadcastFullBattleOrganizerState,
+    sendBattleOrganizerFullSync
+} from '@/components/modals/battleOrganizer/battleOrganizerSyncHelpers';
+import {
+    applyStandaloneCharsToBattleOrganizerState,
+    syncRoomBattleOrganizerOnReady
+} from '@/components/modals/battleOrganizer/battleOrganizerSyncLifecycle';
 
 export interface UseBattleOrganizerSyncProps {
     state: BattleOrganizerState;
@@ -35,6 +41,7 @@ export interface UseBattleOrganizerSyncProps {
 }
 
 export function useBattleOrganizerSync({
+    state,
     setState,
     lastSavedJsonRef,
     saveTimerRef,
@@ -44,10 +51,13 @@ export function useBattleOrganizerSync({
     pendingTokenSyncRef
 }: UseBattleOrganizerSyncProps) {
     const initialRoomIdRef = useRef<string>(getEffectiveRoomId());
+    const latestStateRef = useRef<BattleOrganizerState>(state);
+    latestStateRef.current = state;
 
-    // 1. Debounced persistence to localStorage & OBR peer broadcast (0 bytes scene metadata quota!)
+    // 1. Debounced persistence to localStorage & GM-authoritative OBR peer broadcast
     const persistState = useCallback(
         (newState: BattleOrganizerState, immediate = false, _skipBroadcast = false) => {
+            latestStateRef.current = newState;
             let json = '';
             try {
                 json = JSON.stringify(newState);
@@ -56,7 +66,6 @@ export function useBattleOrganizerSync({
                 return;
             }
 
-            // Loop & echo guard: Do not persist or broadcast if data is identical to current state
             if (json === lastSavedJsonRef.current) {
                 return;
             }
@@ -69,14 +78,12 @@ export function useBattleOrganizerSync({
             const executeSave = () => {
                 lastSavedJsonRef.current = json;
 
-                // 1. Save to local storage (offline-first, zero OBR scene quota used)
                 try {
                     localStorage.setItem(getBattleOrganizerStorageKey(), json);
                 } catch (e) {
                     console.error('[BattleOrganizer] Failed to save state to localStorage:', e);
                 }
 
-                // Update active battlefield in character store
                 useCharacterStore.getState().setActiveBattlefield(newState.battlefield);
 
                 if (isStandaloneMode) {
@@ -88,38 +95,32 @@ export function useBattleOrganizerSync({
                     } catch {}
                 }
 
-                // 2. Broadcast to peers in room (remote clients, guest players, etc.)
                 if (!_skipBroadcast && OBR.isAvailable && !isStandaloneMode) {
-                    try {
-                        OBR.broadcast.sendMessage('pokerole-pmd-extension/battle-organizer-sync', newState, {
-                            destination: 'REMOTE'
-                        });
-                    } catch (broadcastErr) {
-                        console.warn('[BattleOrganizer] Failed to broadcast battle organizer state:', broadcastErr);
-                    }
+                    void sendBattleOrganizerFullSync(newState);
 
-                    // 3. Persist battlefield to OBR Scene Metadata if GM
-                    OBR.player
-                        .getRole()
-                        .then((role) => {
-                            if (role === 'GM') {
-                                OBR.scene.isReady().then((ready) => {
-                                    if (ready) {
-                                        OBR.scene
-                                            .setMetadata({
-                                                'pokerole-pmd-extension/battlefield': newState.battlefield
-                                            })
-                                            .catch((err) => {
-                                                console.warn(
-                                                    '[BattleOrganizer] Failed to save battlefield to scene metadata:',
-                                                    err
-                                                );
-                                            });
-                                    }
-                                });
-                            }
-                        })
-                        .catch(() => {});
+                    if (canBroadcastFullBattleOrganizerState()) {
+                        OBR.player
+                            .getRole()
+                            .then((role) => {
+                                if (role === 'GM') {
+                                    OBR.scene.isReady().then((ready) => {
+                                        if (ready) {
+                                            OBR.scene
+                                                .setMetadata({
+                                                    'pokerole-pmd-extension/battlefield': newState.battlefield
+                                                })
+                                                .catch((err) => {
+                                                    console.warn(
+                                                        '[BattleOrganizer] Failed to save battlefield to scene metadata:',
+                                                        err
+                                                    );
+                                                });
+                                        }
+                                    });
+                                }
+                            })
+                            .catch(() => {});
+                    }
                 }
             };
 
@@ -146,7 +147,6 @@ export function useBattleOrganizerSync({
         [persistState, setState]
     );
 
-    // Unmount cleanup for any pending debounce timer
     useEffect(() => {
         return () => {
             if (saveTimerRef.current) {
@@ -157,77 +157,19 @@ export function useBattleOrganizerSync({
         };
     }, [saveTimerRef, tokenSyncTimersRef]);
 
-    // 2. Offline-First Migration from legacy scene metadata (READ-ONLY, ZERO writes to OBR scene metadata)
+    // 2. Room-scoped reload & offline-first legacy scene metadata migration on OBR ready
     useEffect(() => {
         if (!OBR.isAvailable || isStandaloneMode) return;
 
         let isMounted = true;
-
-        OBR.onReady(async () => {
-            if (!isMounted) return;
-
-            try {
-                const resolvedRoomId = getEffectiveRoomId();
-                const roomChangedSinceMount = resolvedRoomId !== initialRoomIdRef.current;
-                initialRoomIdRef.current = resolvedRoomId;
-
-                // Reload room-scoped state if OBR.room.id was not yet populated during useState initialization
-                const currentLocal = readBattleOrganizerStateRaw(resolvedRoomId);
-                if (currentLocal) {
-                    if (roomChangedSinceMount) {
-                        try {
-                            const parsed = JSON.parse(currentLocal);
-                            if (parsed && Array.isArray(parsed.rounds) && parsed.rounds.length > 0) {
-                                const sanitized = {
-                                    ...parsed,
-                                    battlefield: sanitizeBattlefield(parsed.battlefield)
-                                };
-                                lastSavedJsonRef.current = JSON.stringify(sanitized);
-                                if (sanitized.battlefield) {
-                                    useCharacterStore.getState().setActiveBattlefield(sanitized.battlefield);
-                                }
-                                if (isMounted) setState(sanitized);
-                            }
-                        } catch (reloadErr) {
-                            console.warn('[BattleOrganizer] Failed to reload room-scoped state on OBR ready:', reloadErr);
-                        }
-                    }
-                    return;
-                }
-
-                let migratedFromScene = false;
-                const isReady = await OBR.scene.isReady();
-                if (isReady) {
-                    const metadata = await OBR.scene.getMetadata();
-                    const rawLegacySceneData = metadata[LEGACY_OBR_SCENE_META_KEY];
-                    if (typeof rawLegacySceneData === 'string' && rawLegacySceneData.trim()) {
-                        try {
-                            const parsed = JSON.parse(rawLegacySceneData);
-                            if (parsed && Array.isArray(parsed.rounds) && parsed.rounds.length > 0) {
-                                localStorage.setItem(getBattleOrganizerStorageKey(resolvedRoomId), rawLegacySceneData);
-                                lastSavedJsonRef.current = rawLegacySceneData;
-                                migratedFromScene = true;
-                                if (isMounted) setState(parsed);
-                            }
-                        } catch (migErr) {
-                            console.warn('[BattleOrganizer] Failed to read legacy scene data:', migErr);
-                        }
-                    }
-                }
-                if (!migratedFromScene && roomChangedSinceMount) {
-                    const fresh = createDefaultState();
-                    try {
-                        lastSavedJsonRef.current = JSON.stringify(fresh);
-                    } catch {
-                        lastSavedJsonRef.current = '';
-                    }
-                    useCharacterStore.getState().setActiveBattlefield(fresh.battlefield);
-                    if (isMounted) setState(fresh);
-                }
-            } catch (e) {
-                console.warn('[BattleOrganizer] Legacy scene read skipped:', e);
-            }
-        });
+        OBR.onReady(() =>
+            syncRoomBattleOrganizerOnReady({
+                initialRoomIdRef,
+                lastSavedJsonRef,
+                setState,
+                isMounted: () => isMounted
+            })
+        );
 
         return () => {
             isMounted = false;
@@ -242,17 +184,18 @@ export function useBattleOrganizerSync({
                     if (e.newValue === lastSavedJsonRef.current) {
                         return;
                     }
-                    const parsed = JSON.parse(e.newValue);
+                    const parsed = JSON.parse(e.newValue) as BattleOrganizerState;
                     if (parsed && Array.isArray(parsed.rounds)) {
                         if (saveTimerRef.current) {
                             clearTimeout(saveTimerRef.current);
                             saveTimerRef.current = null;
                         }
-                        const sanitized = {
+                        const sanitized: BattleOrganizerState = {
                             ...parsed,
                             battlefield: sanitizeBattlefield(parsed.battlefield)
                         };
                         lastSavedJsonRef.current = e.newValue;
+                        latestStateRef.current = sanitized;
                         if (sanitized.battlefield) {
                             useCharacterStore.getState().setActiveBattlefield(sanitized.battlefield);
                         }
@@ -271,8 +214,8 @@ export function useBattleOrganizerSync({
                     clearTimeout(saveTimerRef.current);
                     saveTimerRef.current = null;
                 }
-                const serialized = JSON.stringify(custom.detail);
-                lastSavedJsonRef.current = serialized;
+                lastSavedJsonRef.current = JSON.stringify(custom.detail);
+                latestStateRef.current = custom.detail;
                 setState(custom.detail);
             }
         };
@@ -285,68 +228,105 @@ export function useBattleOrganizerSync({
         };
     }, [lastSavedJsonRef, saveTimerRef, setState]);
 
-    // 4. Peer-to-peer sync via OBR broadcast (syncs across private windows, guest accounts, & remote players)
+    // 4. Peer-to-peer sync via OBR broadcast (chunk-safe; GM ignores full-state & merges patches)
     useEffect(() => {
         if (!OBR.isAvailable || isStandaloneMode) return;
 
         let isMounted = true;
 
-        const unsubSync = OBR.broadcast.onMessage('pokerole-pmd-extension/battle-organizer-sync', (event) => {
-            if (!isMounted) return;
-            const incoming = event.data as BattleOrganizerState;
-            if (incoming && Array.isArray(incoming.rounds) && incoming.rounds.length > 0) {
-                try {
-                    const incomingJson = JSON.stringify(incoming);
-                    if (incomingJson === lastSavedJsonRef.current) {
-                        return; // Echo guard
-                    }
-
-                    if (saveTimerRef.current) {
-                        clearTimeout(saveTimerRef.current);
-                        saveTimerRef.current = null;
-                    }
-
-                    lastSavedJsonRef.current = incomingJson;
+        const unsubSync = registerSafeBroadcastListener<BattleOrganizerState>(
+            BATTLE_ORGANIZER_SYNC_CHANNEL,
+            (incoming) => {
+                if (!isMounted) return;
+                if (useCharacterStore.getState().role === 'GM') {
+                    return;
+                }
+                if (incoming && Array.isArray(incoming.rounds) && incoming.rounds.length > 0) {
                     try {
-                        localStorage.setItem(getBattleOrganizerStorageKey(), incomingJson);
-                    } catch (e) {
-                        console.warn('[BattleOrganizer] Failed to cache synced state in localStorage:', e);
-                    }
-
-                    let processedIncoming = incoming;
-                    const currentRole = useCharacterStore.getState().role;
-                    const gmOnlyPullEnemies = useCharacterStore.getState().identity.gmOnlyPullEnemies;
-                    const shouldFilterEnemies = currentRole !== 'GM' && gmOnlyPullEnemies !== false;
-
-                    if (shouldFilterEnemies && processedIncoming.rounds) {
-                        processedIncoming = {
-                            ...processedIncoming,
-                            rounds: processedIncoming.rounds.map((r) => ({
-                                ...r,
-                                combatants: r.combatants.filter((c) => !c.isNPC && !c.hidden)
-                            }))
-                        };
-                    }
-
-                    if (processedIncoming.battlefield) {
-                        processedIncoming = {
-                            ...processedIncoming,
-                            battlefield: sanitizeBattlefield(processedIncoming.battlefield)
-                        };
-                        if (currentRole !== 'GM' && processedIncoming.battlefield.broadcastToPlayers === false) {
-                            useCharacterStore.getState().setActiveBattlefield(null);
-                        } else {
-                            useCharacterStore.getState().setActiveBattlefield(processedIncoming.battlefield);
+                        const incomingJson = JSON.stringify(incoming);
+                        if (incomingJson === lastSavedJsonRef.current) {
+                            return;
                         }
+
+                        if (saveTimerRef.current) {
+                            clearTimeout(saveTimerRef.current);
+                            saveTimerRef.current = null;
+                        }
+
+                        lastSavedJsonRef.current = incomingJson;
+                        try {
+                            localStorage.setItem(getBattleOrganizerStorageKey(), incomingJson);
+                        } catch (e) {
+                            console.warn('[BattleOrganizer] Failed to cache synced state in localStorage:', e);
+                        }
+
+                        let processedIncoming = incoming;
+                        const currentRole = useCharacterStore.getState().role;
+                        const gmOnlyPullEnemies = useCharacterStore.getState().identity.gmOnlyPullEnemies;
+                        const shouldFilterEnemies = currentRole !== 'GM' && gmOnlyPullEnemies !== false;
+
+                        if (shouldFilterEnemies && processedIncoming.rounds) {
+                            processedIncoming = {
+                                ...processedIncoming,
+                                rounds: processedIncoming.rounds.map((r) => ({
+                                    ...r,
+                                    combatants: r.combatants.filter((c) => !c.isNPC && !c.hidden)
+                                }))
+                            };
+                        }
+
+                        if (processedIncoming.battlefield) {
+                            processedIncoming = {
+                                ...processedIncoming,
+                                battlefield: sanitizeBattlefield(processedIncoming.battlefield)
+                            };
+                            if (currentRole !== 'GM' && processedIncoming.battlefield.broadcastToPlayers === false) {
+                                useCharacterStore.getState().setActiveBattlefield(null);
+                            } else {
+                                useCharacterStore.getState().setActiveBattlefield(processedIncoming.battlefield);
+                            }
+                        }
+                        latestStateRef.current = processedIncoming;
+                        setState(processedIncoming);
+                    } catch (err) {
+                        console.error('[BattleOrganizer] Failed to apply broadcast sync:', err);
                     }
-                    setState(processedIncoming);
-                } catch (err) {
-                    console.error('[BattleOrganizer] Failed to apply broadcast sync:', err);
                 }
             }
-        });
+        );
 
-        // Sync role from OBR if available
+        const unsubPatch = registerSafeBroadcastListener<BattleOrganizerCombatantPatchPayload>(
+            BATTLE_ORGANIZER_COMBATANT_PATCH_CHANNEL,
+            (payload) => {
+                if (!isMounted) return;
+                if (useCharacterStore.getState().role !== 'GM') return;
+                if (!payload) return;
+
+                const { nextState, changed } = applyCombatantPatchToState(latestStateRef.current, payload);
+                if (!changed) return;
+
+                if (saveTimerRef.current) {
+                    clearTimeout(saveTimerRef.current);
+                    saveTimerRef.current = null;
+                }
+
+                latestStateRef.current = nextState;
+                try {
+                    const nextJson = JSON.stringify(nextState);
+                    lastSavedJsonRef.current = nextJson;
+                    localStorage.setItem(getBattleOrganizerStorageKey(), nextJson);
+                } catch (e) {
+                    console.warn('[BattleOrganizer] Failed to persist patched state:', e);
+                }
+
+                if (nextState.battlefield) {
+                    useCharacterStore.getState().setActiveBattlefield(nextState.battlefield);
+                }
+                setState(nextState);
+                void sendBattleOrganizerFullSync(nextState);
+            }
+        );
+
         OBR.player
             .getRole()
             .then((r) => {
@@ -356,18 +336,16 @@ export function useBattleOrganizerSync({
             })
             .catch(() => {});
 
-        // Request initial state from peers/GM on mount
-        OBR.broadcast.sendMessage(
-            'pokerole-pmd-extension/battle-organizer-request',
-            {},
-            {
-                destination: 'REMOTE'
-            }
-        );
+        if (useCharacterStore.getState().role !== 'GM') {
+            OBR.broadcast
+                .sendMessage(`${EXTENSION_ID}/battle-organizer-request`, {}, { destination: 'REMOTE' })
+                .catch(() => {});
+        }
 
         return () => {
             isMounted = false;
             unsubSync();
+            unsubPatch();
         };
     }, [lastSavedJsonRef, saveTimerRef, setState]);
 
@@ -375,7 +353,6 @@ export function useBattleOrganizerSync({
     useEffect(() => {
         const unsubs: Array<() => void> = [];
 
-        // Helper to apply incoming roll to the active round
         const applyRollToCombatants = (logData: Record<string, unknown>) => {
             const settings = getBattleOrganizerSettings();
             if (!settings.autoSyncActions || !logData) return;
@@ -392,7 +369,7 @@ export function useBattleOrganizerSync({
 
             if (rollId) {
                 if (processedRollIdsRef.current.has(rollId)) {
-                    return; // Ignore duplicate local / broadcast event
+                    return;
                 }
                 processedRollIdsRef.current.add(rollId);
                 if (processedRollIdsRef.current.size > 200) {
@@ -401,7 +378,6 @@ export function useBattleOrganizerSync({
                 }
             }
 
-            // Throttle rapid duplicate rolls of the exact same action for the same combatant within 1.2s
             const throttleKey = `${rollTokenId || charName}|${moveName.toLowerCase().trim()}|${parsedRoll.rollKind}`;
             const lastTime = lastMoveRollTimestampRef.current.get(throttleKey);
             const now = Date.now();
@@ -416,17 +392,15 @@ export function useBattleOrganizerSync({
             });
         };
 
-        // Listen to OBR roll-log-sync broadcast (remote and local)
         if (OBR.isAvailable) {
             OBR.onReady(() => {
-                const unsubRollLog = OBR.broadcast.onMessage('pokerole-pmd-extension/roll-log-sync', (event) =>
+                const unsubRollLog = OBR.broadcast.onMessage(`${EXTENSION_ID}/roll-log-sync`, (event) =>
                     applyRollToCombatants(event.data as Record<string, unknown>)
                 );
                 unsubs.push(unsubRollLog);
             });
         }
 
-        // Listen to local window roll event (both OBR and Standalone)
         const handleLocalRollEvent = (e: Event) => {
             const customEvent = e as CustomEvent<Record<string, unknown>>;
             if (customEvent.detail) {
@@ -436,7 +410,6 @@ export function useBattleOrganizerSync({
         window.addEventListener('pkr-roll-log-event', handleLocalRollEvent);
         unsubs.push(() => window.removeEventListener('pkr-roll-log-event', handleLocalRollEvent));
 
-        // Listen to cross-window roll log events in Standalone mode
         const handleCrossWindowRoll = (e: StorageEvent) => {
             if (e.key === getRollLogStorageKey() && e.newValue) {
                 try {
@@ -458,207 +431,13 @@ export function useBattleOrganizerSync({
                 const localChars = await storageAdapter.getLocalCharacters();
 
                 updateState(
-                    (prev) => {
-                        const currentRound = prev.rounds[prev.activeRoundIndex];
-                        if (!currentRound) return prev;
-
-                        let hasChanges = false;
-                        const newCombatants = currentRound.combatants.map((combatant) => {
-                            const matchingChar = localChars.find((c) => {
-                                if (combatant.tokenId && c.id === combatant.tokenId) return true;
-                                if (!combatant.tokenId && combatant.name.trim()) {
-                                    const meta = (c.metadata || {}) as Record<string, unknown>;
-                                    const resolvedName = extractCharacterName(meta, c.name);
-                                    if (resolvedName.toLowerCase().trim() === combatant.name.toLowerCase().trim()) {
-                                        return true;
-                                    }
-                                    if (c.name.toLowerCase().trim() === combatant.name.toLowerCase().trim()) {
-                                        return true;
-                                    }
-                                }
-                                return false;
-                            });
-
-                            if (!matchingChar) return combatant;
-                            const pending = pendingTokenSyncRef.current.get(matchingChar.id);
-                            if (pending) {
-                                if (Date.now() < pending.until) {
-                                    return combatant;
-                                }
-                                pendingTokenSyncRef.current.delete(matchingChar.id);
-                            }
-                            const meta = (matchingChar.metadata || {}) as Record<string, unknown>;
-
-                            const resolvedName = extractCharacterName(meta, matchingChar.name);
-                            const resolvedImg = extractTokenImage(meta) || combatant.image;
-                            const { statusText, isFainted: statusFainted } = parseStatusesFromMetadata(meta);
-                            const { hpCurr, hpMax, willCurr, willMax, tempHp, tempWill, activeTransformation } =
-                                parseHealthAndWillFromMetadata(meta);
-
-                            const stateObj = (meta.state || meta) as Record<string, unknown>;
-                            const identityObj = (stateObj?.identity || meta.identity || {}) as Record<string, unknown>;
-                            const metaAbility = String(identityObj.ability || meta.ability || '');
-                            const metaAbilityActive =
-                                meta['ability-active'] !== undefined
-                                    ? Boolean(meta['ability-active'])
-                                    : identityObj.abilityActive !== false;
-                            const metaAbilityBoostLevel =
-                                meta['ability-boost-level'] !== undefined
-                                    ? Number(meta['ability-boost-level'])
-                                    : typeof identityObj.abilityBoostLevel === 'number'
-                                      ? identityObj.abilityBoostLevel
-                                      : undefined;
-                            const metaAbilityBoostActive =
-                                meta['ability-boost-active'] !== undefined
-                                    ? Boolean(meta['ability-boost-active'])
-                                    : typeof identityObj.abilityBoostActive === 'boolean'
-                                      ? identityObj.abilityBoostActive
-                                      : undefined;
-                            const metaAbilityChoiceIndex =
-                                meta['ability-choice-index'] !== undefined
-                                    ? Number(meta['ability-choice-index'])
-                                    : typeof identityObj.abilityChoiceIndex === 'number'
-                                      ? identityObj.abilityChoiceIndex
-                                      : undefined;
-
-                            let updated = false;
-
-                            let nextName = combatant.name;
-                            if (resolvedName && resolvedName !== combatant.name) {
-                                nextName = resolvedName;
-                                updated = true;
-                            }
-
-                            let nextImage = combatant.image;
-                            if (resolvedImg && resolvedImg !== combatant.image) {
-                                nextImage = resolvedImg;
-                                updated = true;
-                            }
-
-                            let nextStatus = combatant.status;
-                            if (statusText && statusText !== combatant.status) {
-                                nextStatus = statusText;
-                                updated = true;
-                            }
-
-                            let nextIsFainted = combatant.isFainted;
-                            if (statusFainted || (hpCurr <= 0 && hpMax > 0)) {
-                                if (!nextIsFainted) {
-                                    nextIsFainted = true;
-                                    updated = true;
-                                }
-                            } else if (hpCurr > 0 && !statusFainted && nextIsFainted) {
-                                nextIsFainted = false;
-                                updated = true;
-                            }
-
-                            let nextHpCurr = combatant.hpCurr;
-                            let nextHpMax = combatant.hpMax;
-                            if (hpCurr !== combatant.hpCurr || hpMax !== combatant.hpMax) {
-                                nextHpCurr = hpCurr;
-                                nextHpMax = hpMax;
-                                updated = true;
-                            }
-
-                            let nextWillCurr = combatant.willCurr;
-                            let nextWillMax = combatant.willMax;
-                            if (willCurr !== combatant.willCurr || willMax !== combatant.willMax) {
-                                nextWillCurr = willCurr;
-                                nextWillMax = willMax;
-                                updated = true;
-                            }
-
-                            let nextTrans = combatant.activeTransformation;
-                            if (activeTransformation !== combatant.activeTransformation) {
-                                nextTrans = activeTransformation;
-                                updated = true;
-                            }
-
-                            let nextEvade = combatant.evadeUsed;
-                            let nextClash = combatant.clashUsed;
-
-                            // Reaction sync (only if autoSyncActions is enabled)
-                            if (settings.autoSyncActions) {
-                                const evadeUsed = meta['evasions-used'] === true || meta['evasions-used'] === 'true';
-                                const clashUsed = meta['clashes-used'] === true || meta['clashes-used'] === 'true';
-
-                                if (combatant.evadeUsed !== evadeUsed || combatant.clashUsed !== clashUsed) {
-                                    nextEvade = evadeUsed;
-                                    nextClash = clashUsed;
-                                    updated = true;
-                                }
-                            }
-
-                            let nextAbility = combatant.ability;
-                            if (metaAbility && metaAbility !== combatant.ability) {
-                                nextAbility = metaAbility;
-                                updated = true;
-                            }
-
-                            let nextAbilityActive = combatant.abilityActive;
-                            if (metaAbilityActive !== combatant.abilityActive) {
-                                nextAbilityActive = metaAbilityActive;
-                                updated = true;
-                            }
-
-                            let nextAbilityBoostLevel = combatant.abilityBoostLevel;
-                            if (metaAbilityBoostLevel !== undefined && metaAbilityBoostLevel !== combatant.abilityBoostLevel) {
-                                nextAbilityBoostLevel = metaAbilityBoostLevel;
-                                updated = true;
-                            }
-
-                            let nextAbilityBoostActive = combatant.abilityBoostActive;
-                            if (metaAbilityBoostActive !== undefined && metaAbilityBoostActive !== combatant.abilityBoostActive) {
-                                nextAbilityBoostActive = metaAbilityBoostActive;
-                                updated = true;
-                            }
-
-                            let nextAbilityChoiceIndex = combatant.abilityChoiceIndex;
-                            if (metaAbilityChoiceIndex !== undefined && metaAbilityChoiceIndex !== combatant.abilityChoiceIndex) {
-                                nextAbilityChoiceIndex = metaAbilityChoiceIndex;
-                                updated = true;
-                            }
-
-                            if (updated || (!combatant.tokenId && matchingChar.id)) {
-                                hasChanges = true;
-                                return {
-                                    ...combatant,
-                                    name: nextName,
-                                    image: nextImage,
-                                    status: nextStatus,
-                                    isFainted: nextIsFainted,
-                                    hpCurr: nextHpCurr,
-                                    hpMax: nextHpMax,
-                                    willCurr: nextWillCurr,
-                                    willMax: nextWillMax,
-                                    tempHp,
-                                    tempWill,
-                                    activeTransformation: nextTrans,
-                                    ability: nextAbility,
-                                    abilityActive: nextAbilityActive,
-                                    abilityBoostLevel: nextAbilityBoostLevel,
-                                    abilityBoostActive: nextAbilityBoostActive,
-                                    abilityChoiceIndex: nextAbilityChoiceIndex,
-                                    tokenId: matchingChar.id,
-                                    evadeUsed: nextEvade,
-                                    clashUsed: nextClash
-                                };
-                            }
-
-                            return combatant;
-                        });
-
-                        if (!hasChanges) return prev;
-
-                        const updatedRound: BattleRoundData = {
-                            ...currentRound,
-                            combatants: newCombatants
-                        };
-                        return {
-                            ...prev,
-                            rounds: prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r))
-                        };
-                    },
+                    (prev) =>
+                        applyStandaloneCharsToBattleOrganizerState(
+                            prev,
+                            localChars,
+                            settings,
+                            pendingTokenSyncRef.current
+                        ),
                     false,
                     true
                 );

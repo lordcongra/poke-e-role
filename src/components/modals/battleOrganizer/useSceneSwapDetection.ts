@@ -61,21 +61,28 @@ export function useSceneSwapDetection({
 
         let isMounted = true;
 
-        // Check scene ID on mount
-        getOrCreateSceneId().then((currentSid) => {
-            if (!isMounted || !currentSid) return;
-            if (!battlefield.sceneId) {
-                updateBattlefield('sceneId', currentSid);
-            } else if (battlefield.sceneId !== currentSid) {
-                const hasCombatants = rounds.some((r) => r.combatants.length > 0);
-                if (hasCombatants) {
-                    pendingSceneIdRef.current = currentSid;
-                    setShowSceneSwapModal(true);
-                } else {
+        // Check scene ID on mount (GM only)
+        OBR.player
+            .getRole()
+            .then((role) => {
+                if (!isMounted || role !== 'GM') return null;
+                return getOrCreateSceneId();
+            })
+            .then((currentSid) => {
+                if (!isMounted || !currentSid) return;
+                if (!battlefield.sceneId) {
                     updateBattlefield('sceneId', currentSid);
+                } else if (battlefield.sceneId !== currentSid) {
+                    const hasCombatants = rounds.some((r) => r.combatants.length > 0);
+                    if (hasCombatants) {
+                        pendingSceneIdRef.current = currentSid;
+                        setShowSceneSwapModal(true);
+                    } else {
+                        updateBattlefield('sceneId', currentSid);
+                    }
                 }
-            }
-        });
+            })
+            .catch(() => {});
 
         const unsubReady = OBR.scene.onReadyChange(async (ready) => {
             if (!isMounted || !ready) return;

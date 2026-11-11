@@ -5,6 +5,7 @@ import type { BattleOrganizerState } from '../../types/battleOrganizerTypes';
 import { STATS_META_ID } from '../../utils/graphics/graphicsManager';
 import { matchesTarget, isCombatantInPc } from '../../utils/combat/abilityTargetingUtils';
 import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
+import { sendBattleOrganizerFullSync } from '@/components/modals/battleOrganizer/battleOrganizerSyncHelpers';
 
 /**
  * Removes the current character from an attacker's `abilityTargetIds` in Battle Organizer
@@ -72,11 +73,7 @@ export async function removeCharacterFromAuraSources(
 
                 if (boChanged) {
                     localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(data));
-                    if (OBR.isAvailable) {
-                        OBR.broadcast
-                            .sendMessage('pokerole-pmd-extension/battle-organizer-sync', data, { destination: 'REMOTE' })
-                            .catch(() => {});
-                    }
+                    void sendBattleOrganizerFullSync(data);
                 }
             }
         }
@@ -151,11 +148,7 @@ export async function refreshAndCleanAuraAssociations(
 
                 if (boChanged) {
                     localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(data));
-                    if (OBR.isAvailable) {
-                        OBR.broadcast
-                            .sendMessage('pokerole-pmd-extension/battle-organizer-sync', data, { destination: 'REMOTE' })
-                            .catch(() => {});
-                    }
+                    void sendBattleOrganizerFullSync(data);
                 }
 
                 if (data.battlefield) {

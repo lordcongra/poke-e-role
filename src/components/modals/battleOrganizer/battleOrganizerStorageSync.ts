@@ -2,10 +2,9 @@ import type { BattleOrganizerState, CombatantRowData, BattleRoundData } from '..
 import { parseRollLogEntry, type RollLogDataInput } from './battleOrganizerRollParser';
 import { getBattleOrganizerSettings, isBattleOrganizerOpen } from './battleOrganizerSettingsHelper';
 import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
-import { useCharacterStore } from '../../../store/useCharacterStore';
-import OBR from '@owlbear-rodeo/sdk';
-import { isStandaloneMode } from '@/utils/sync/storageAdapter';
+import { useCharacterStore } from '@/store/useCharacterStore';
 import { escapeRegExp } from '@/utils/common/helper';
+import { sendBattleOrganizerFullSync } from '@/components/modals/battleOrganizer/battleOrganizerSyncHelpers';
 
 /**
  * Pure function to apply a parsed roll to combatants in a BattleOrganizerState.
@@ -170,21 +169,8 @@ export function applyRollToBattleOrganizerStorage(logData: RollLogDataInput): bo
         // Dispatch storage event so any listeners (popouts/widgets) update
         window.dispatchEvent(new StorageEvent('storage', { key: storageKey, newValue: nextJson }));
 
-        // If in OBR mode and user is GM, broadcast state to other peers
-        if (OBR.isAvailable && !isStandaloneMode) {
-            OBR.player
-                .getRole()
-                .then((role) => {
-                    if (role === 'GM') {
-                        OBR.broadcast
-                            .sendMessage('pokerole-pmd-extension/battle-organizer-sync', nextState, {
-                                destination: 'REMOTE'
-                            })
-                            .catch(() => {});
-                    }
-                })
-                .catch(() => {});
-        }
+        // Broadcast full state only when GM-authoritative (no-op for non-GM OBR clients)
+        void sendBattleOrganizerFullSync(nextState);
 
         return true;
     } catch (e) {

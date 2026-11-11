@@ -1,8 +1,12 @@
 import OBR from '@owlbear-rodeo/sdk';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { isStandaloneMode } from '../sync/storageAdapter';
+import { useCharacterStore } from '@/store/useCharacterStore';
+import { isStandaloneMode } from '@/utils/sync/storageAdapter';
 import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
-import type { BattlefieldData, BattleOrganizerState } from '../../types/battleOrganizerTypes';
+import {
+    canBroadcastFullBattleOrganizerState,
+    sendBattleOrganizerFullSync
+} from '@/components/modals/battleOrganizer/battleOrganizerSyncHelpers';
+import type { BattlefieldData, BattleOrganizerState } from '@/types/battleOrganizerTypes';
 import type { ActiveFieldEffectItem } from './fieldEffectsData';
 
 export const BATTLEFIELD_STORAGE_KEY = 'pokerole-pmd-extension/battlefield';
@@ -135,9 +139,11 @@ export function syncBattlefieldUpdate(newBattlefield: BattlefieldData): void {
         console.error('[battlefieldSyncUtils] Failed to persist battlefield to localStorage:', e);
     }
 
-    // 3. OBR Synchronization (Broadcast & Scene Metadata)
-    if (OBR.isAvailable && !isStandaloneMode) {
-        let broadcastPayload: unknown = { battlefield: newBattlefield };
+    // 3. OBR Synchronization (Broadcast & Scene Metadata, GM-authoritative)
+    if (OBR.isAvailable && !isStandaloneMode && canBroadcastFullBattleOrganizerState()) {
+        let broadcastPayload: BattleOrganizerState | { battlefield: BattlefieldData } = {
+            battlefield: newBattlefield
+        };
         try {
             const rawSaved = readBattleOrganizerStateRaw();
             if (rawSaved) {
@@ -149,17 +155,7 @@ export function syncBattlefieldUpdate(newBattlefield: BattlefieldData): void {
             // Fallback to { battlefield: newBattlefield }
         }
 
-        try {
-            OBR.broadcast
-                .sendMessage(BATTLE_ORGANIZER_SYNC_BROADCAST, broadcastPayload, {
-                    destination: 'REMOTE'
-                })
-                .catch((err) => {
-                    console.warn('[battlefieldSyncUtils] Failed to broadcast battle-organizer-sync:', err);
-                });
-        } catch (broadcastErr) {
-            console.warn('[battlefieldSyncUtils] Broadcast send error:', broadcastErr);
-        }
+        void sendBattleOrganizerFullSync(broadcastPayload);
 
         OBR.player
             .getRole()

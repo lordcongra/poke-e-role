@@ -3,7 +3,13 @@ import OBR from '@owlbear-rodeo/sdk';
 import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { setActiveTokenId } from '../../../utils/sync/obr';
-import { EXTENSION_ID } from '../../../hooks/owlbearSync/owlbearSyncConstants';
+import {
+    computeCombatantHpUpdate,
+    computeCombatantWillUpdate,
+    pickAllowlistedCombatantPatch,
+    sendBattleOrganizerCombatantPatch,
+    sendBattleOrganizerFullSync
+} from '@/components/modals/battleOrganizer/battleOrganizerSyncHelpers';
 import {
     extractTokenImage,
     extractCharacterName,
@@ -222,6 +228,19 @@ export function useBattleOrganizer() {
                         syncAbilityTargets: abilityTargetsChanged,
                         syncAbilityBoost: abilityBoostChanged,
                         syncAbilityChoice: abilityChoiceChanged
+                    });
+                }
+            }
+
+            if (!isStandaloneMode && OBR.isAvailable && useCharacterStore.getState().role !== 'GM') {
+                const patch = pickAllowlistedCombatantPatch(updated, prevCombatant);
+                if (Object.keys(patch).length > 0) {
+                    void sendBattleOrganizerCombatantPatch({
+                        roundIndex: state.activeRoundIndex,
+                        combatantId: updated.id,
+                        tokenId: updated.tokenId,
+                        entityId: updated.entityId,
+                        patch
                     });
                 }
             }
@@ -470,13 +489,7 @@ export function useBattleOrganizer() {
         setState(fresh);
 
         if (OBR.isAvailable) {
-            OBR.broadcast
-                .sendMessage(
-                    `${EXTENSION_ID}/battle-organizer-sync`,
-                    fresh,
-                    { destination: 'REMOTE' }
-                )
-                .catch(() => {});
+            void sendBattleOrganizerFullSync(fresh);
 
             OBR.scene.items
                 .updateItems(
@@ -534,6 +547,9 @@ export function useBattleOrganizer() {
 
     const updateCombatantHp = useCallback(
         (combatantId: string, delta: number) => {
+            const currentRoundSnapshot = state.rounds[state.activeRoundIndex];
+            const targetBefore = currentRoundSnapshot?.combatants.find((c) => c.id === combatantId);
+
             updateState((prev) => {
                 const currentRound = prev.rounds[prev.activeRoundIndex];
                 if (!currentRound) return prev;
@@ -541,46 +557,12 @@ export function useBattleOrganizer() {
                 let updatedCombatant: CombatantRowData | null = null;
                 const newCombatants = currentRound.combatants.map((c) => {
                     if (c.id !== combatantId) return c;
-
-                    const curr = c.hpCurr ?? 0;
-                    const max = c.hpMax && c.hpMax > 0 ? c.hpMax : 999;
-                    let nextHp = curr;
-                    let nextTempHp = c.tempHp ?? 0;
-
-                    if (delta < 0) {
-                        const damage = Math.abs(delta);
-                        if (nextTempHp > 0) {
-                            const absorbed = Math.min(nextTempHp, damage);
-                            const remainingDamage = damage - absorbed;
-                            nextTempHp = nextTempHp - absorbed;
-                            nextHp = Math.max(0, curr - remainingDamage);
-                        } else {
-                            nextHp = Math.max(0, curr - damage);
-                        }
-                    } else if (delta > 0) {
-                        nextHp = Math.max(0, Math.min(max, curr + delta));
-                    }
-
-                    const nextFainted = nextHp <= 0 ? true : c.isFainted;
-                    let nextStatus = c.status || 'Healthy';
-                    if (nextHp <= 0 && !nextStatus.toLowerCase().includes('faint')) {
-                        nextStatus = nextStatus === 'Healthy' ? 'Fainted' : `${nextStatus}, Fainted`;
-                    }
-
-                    const updated: CombatantRowData = {
-                        ...c,
-                        hpCurr: nextHp,
-                        tempHp: nextTempHp,
-                        isFainted: nextFainted,
-                        status: nextStatus
-                    };
-                    updatedCombatant = updated;
-                    return updated;
+                    updatedCombatant = computeCombatantHpUpdate(c, delta);
+                    return updatedCombatant;
                 });
 
                 if (!updatedCombatant) return prev;
 
-                // Sync to OBR or Standalone character
                 const combatantToSync: CombatantRowData = updatedCombatant;
                 const originalCombatant = currentRound.combatants.find((c) => c.id === combatantId);
                 const statusChanged =
@@ -598,12 +580,29 @@ export function useBattleOrganizer() {
                     rounds: prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r))
                 };
             });
+
+            if (targetBefore && !isStandaloneMode && OBR.isAvailable && useCharacterStore.getState().role !== 'GM') {
+                const updatedSnapshot = computeCombatantHpUpdate(targetBefore, delta);
+                const patch = pickAllowlistedCombatantPatch(updatedSnapshot, targetBefore);
+                if (Object.keys(patch).length > 0) {
+                    void sendBattleOrganizerCombatantPatch({
+                        roundIndex: state.activeRoundIndex,
+                        combatantId: updatedSnapshot.id,
+                        tokenId: updatedSnapshot.tokenId,
+                        entityId: updatedSnapshot.entityId,
+                        patch
+                    });
+                }
+            }
         },
-        [updateState, syncCombatantToToken]
+        [state.rounds, state.activeRoundIndex, updateState, syncCombatantToToken]
     );
 
     const updateCombatantWill = useCallback(
         (combatantId: string, delta: number) => {
+            const currentRoundSnapshot = state.rounds[state.activeRoundIndex];
+            const targetBefore = currentRoundSnapshot?.combatants.find((c) => c.id === combatantId);
+
             updateState((prev) => {
                 const currentRound = prev.rounds[prev.activeRoundIndex];
                 if (!currentRound) return prev;
@@ -611,38 +610,12 @@ export function useBattleOrganizer() {
                 let updatedCombatant: CombatantRowData | null = null;
                 const newCombatants = currentRound.combatants.map((c) => {
                     if (c.id !== combatantId) return c;
-
-                    const curr = c.willCurr ?? 0;
-                    const max = c.willMax && c.willMax > 0 ? c.willMax : 999;
-                    let nextWill = curr;
-                    let nextTempWill = c.tempWill ?? 0;
-
-                    if (delta < 0) {
-                        const drain = Math.abs(delta);
-                        if (nextTempWill > 0) {
-                            const absorbed = Math.min(nextTempWill, drain);
-                            const remainingDrain = drain - absorbed;
-                            nextTempWill = nextTempWill - absorbed;
-                            nextWill = Math.max(0, curr - remainingDrain);
-                        } else {
-                            nextWill = Math.max(0, curr - drain);
-                        }
-                    } else if (delta > 0) {
-                        nextWill = Math.max(0, Math.min(max, curr + delta));
-                    }
-
-                    const updated: CombatantRowData = {
-                        ...c,
-                        willCurr: nextWill,
-                        tempWill: nextTempWill
-                    };
-                    updatedCombatant = updated;
-                    return updated;
+                    updatedCombatant = computeCombatantWillUpdate(c, delta);
+                    return updatedCombatant;
                 });
 
                 if (!updatedCombatant) return prev;
 
-                // Sync to OBR or Standalone character
                 const combatantToSync: CombatantRowData = updatedCombatant;
                 syncCombatantToToken(combatantToSync, {
                     syncWill: true
@@ -654,8 +627,22 @@ export function useBattleOrganizer() {
                     rounds: prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r))
                 };
             });
+
+            if (targetBefore && !isStandaloneMode && OBR.isAvailable && useCharacterStore.getState().role !== 'GM') {
+                const updatedSnapshot = computeCombatantWillUpdate(targetBefore, delta);
+                const patch = pickAllowlistedCombatantPatch(updatedSnapshot, targetBefore);
+                if (Object.keys(patch).length > 0) {
+                    void sendBattleOrganizerCombatantPatch({
+                        roundIndex: state.activeRoundIndex,
+                        combatantId: updatedSnapshot.id,
+                        tokenId: updatedSnapshot.tokenId,
+                        entityId: updatedSnapshot.entityId,
+                        patch
+                    });
+                }
+            }
         },
-        [updateState, syncCombatantToToken]
+        [state.rounds, state.activeRoundIndex, updateState, syncCombatantToToken]
     );
 
     return {

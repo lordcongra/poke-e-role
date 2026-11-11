@@ -15,6 +15,7 @@ import { addRollLogEntry } from '../../../utils/combat/diceRoller';
 import { resolveCharacterSide } from '../../../utils/combat/combatantSideUtils';
 import { STATS_META_ID } from '../../../utils/graphics/graphicsManager';
 import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
+import { sendBattleOrganizerFullSync } from '@/components/modals/battleOrganizer/battleOrganizerSyncHelpers';
 import type { CombatantRowData, BattleOrganizerState } from '../../../types/battleOrganizerTypes';
 import type { CharacterState } from '../../../store/storeTypes';
 import './AbilityTargetSelectorModal.css';
@@ -219,11 +220,7 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
                             });
                             if (boChanged) {
                                 localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(data));
-                                if (OBR.isAvailable) {
-                                    OBR.broadcast
-                                        .sendMessage('pokerole-pmd-extension/battle-organizer-sync', data, { destination: 'REMOTE' })
-                                        .catch(() => {});
-                                }
+                                void sendBattleOrganizerFullSync(data);
                             }
                         }
                     }
@@ -311,11 +308,7 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
 
                     if (boChanged) {
                         localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(data));
-                        if (OBR.isAvailable) {
-                            OBR.broadcast
-                                .sendMessage('pokerole-pmd-extension/battle-organizer-sync', data, { destination: 'REMOTE' })
-                                .catch(() => {});
-                        }
+                        void sendBattleOrganizerFullSync(data);
                     }
                 }
             }

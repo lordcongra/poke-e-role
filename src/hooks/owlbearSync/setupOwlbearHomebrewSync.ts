@@ -5,6 +5,14 @@ import type { BattleOrganizerState } from '../../types/battleOrganizerTypes';
 import { EXTENSION_ID } from './owlbearSyncConstants';
 import { sendSafeBroadcastPayload, registerSafeBroadcastListener } from './owlbearBroadcastUtils';
 import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
+import { isBattleOrganizerOpen } from '@/components/modals/battleOrganizer/battleOrganizerSettingsHelper';
+import {
+    BATTLE_ORGANIZER_COMBATANT_PATCH_CHANNEL,
+    BATTLE_ORGANIZER_SYNC_CHANNEL,
+    type BattleOrganizerCombatantPatchPayload,
+    applyCombatantPatchToState,
+    sendBattleOrganizerFullSync
+} from '@/components/modals/battleOrganizer/battleOrganizerSyncHelpers';
 
 export interface OwlbearHomebrewSyncResult {
     unsubs: Array<() => void>;
@@ -88,28 +96,67 @@ export function setupOwlbearHomebrewSync(role: 'PLAYER' | 'GM'): OwlbearHomebrew
     unsubs.push(unsubBattleOrganizerRequest);
 
     // Global listener for battle organizer sync to hydrate active battlefield (even when modal is closed)
-    const unsubBattleOrganizerSync = OBR.broadcast.onMessage(`${EXTENSION_ID}/battle-organizer-sync`, (event) => {
-        try {
-            const incoming = event.data as BattleOrganizerState;
-            if (incoming) {
-                try {
-                    localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(incoming));
-                } catch (storageErr) {
-                    console.warn('[SyncEngine] Failed to cache battle organizer data:', storageErr);
-                }
+    // GM is authoritative and ignores incoming full-state battle-organizer-sync payloads
+    const unsubBattleOrganizerSync = registerSafeBroadcastListener<BattleOrganizerState>(
+        BATTLE_ORGANIZER_SYNC_CHANNEL,
+        (incoming) => {
+            if (role === 'GM' || useCharacterStore.getState().role === 'GM') {
+                return;
             }
-            if (incoming && incoming.battlefield) {
-                if (role !== 'GM' && incoming.battlefield.broadcastToPlayers === false) {
-                    useCharacterStore.getState().setActiveBattlefield(null);
-                } else {
-                    useCharacterStore.getState().setActiveBattlefield(incoming.battlefield);
+            try {
+                if (incoming) {
+                    try {
+                        localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(incoming));
+                    } catch (storageErr) {
+                        console.warn('[SyncEngine] Failed to cache battle organizer data:', storageErr);
+                    }
                 }
+                if (incoming && incoming.battlefield) {
+                    if (incoming.battlefield.broadcastToPlayers === false) {
+                        useCharacterStore.getState().setActiveBattlefield(null);
+                    } else {
+                        useCharacterStore.getState().setActiveBattlefield(incoming.battlefield);
+                    }
+                }
+            } catch (e) {
+                console.warn('[SyncEngine] Failed to process incoming battlefield from battle-organizer-sync:', e);
             }
-        } catch (e) {
-            console.warn('[SyncEngine] Failed to process incoming battlefield from battle-organizer-sync:', e);
         }
-    });
+    );
     unsubs.push(unsubBattleOrganizerSync);
+
+    // GM merges lightweight player combatant patches when Battle Organizer is closed (when open, useBattleOrganizerSync handles it)
+    const unsubBattleOrganizerPatch = registerSafeBroadcastListener<BattleOrganizerCombatantPatchPayload>(
+        BATTLE_ORGANIZER_COMBATANT_PATCH_CHANNEL,
+        (payload) => {
+            if (role !== 'GM' && useCharacterStore.getState().role !== 'GM') {
+                return;
+            }
+            if (isBattleOrganizerOpen() || !payload) {
+                return;
+            }
+            try {
+                const rawSaved = readBattleOrganizerStateRaw();
+                if (!rawSaved) return;
+                const parsed = JSON.parse(rawSaved) as BattleOrganizerState;
+                const { nextState, changed } = applyCombatantPatchToState(parsed, payload);
+                if (!changed) return;
+
+                const nextJson = JSON.stringify(nextState);
+                const storageKey = getBattleOrganizerStorageKey();
+                localStorage.setItem(storageKey, nextJson);
+                if (nextState.battlefield) {
+                    useCharacterStore.getState().setActiveBattlefield(nextState.battlefield);
+                }
+                window.dispatchEvent(new StorageEvent('storage', { key: storageKey, newValue: nextJson }));
+                window.dispatchEvent(new CustomEvent('pkr-battle-organizer-update', { detail: nextState }));
+                void sendBattleOrganizerFullSync(nextState);
+            } catch (e) {
+                console.warn('[SyncEngine] Failed to apply combatant patch to battle organizer storage:', e);
+            }
+        }
+    );
+    unsubs.push(unsubBattleOrganizerPatch);
 
     // Fire the homebrew and battle organizer requests if we are a player
     if (role !== 'GM') {
