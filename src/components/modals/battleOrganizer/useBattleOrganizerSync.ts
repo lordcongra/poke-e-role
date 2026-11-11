@@ -1,17 +1,22 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
-import { getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
+import {
+    getBattleOrganizerStorageKey,
+    getEffectiveRoomId,
+    getRollLogStorageKey,
+    readBattleOrganizerStateRaw
+} from '@/utils/sync/roomScopedStorage';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { extractTokenImage, extractCharacterName } from '../../../utils/combat/initiativeHelpers';
 import { getBattleOrganizerSettings } from './battleOrganizerSettingsHelper';
 import type { BattleOrganizerState, BattleRoundData } from '../../../types/battleOrganizerTypes';
 import {
-    STORAGE_KEY,
     LEGACY_OBR_SCENE_META_KEY,
     parseStatusesFromMetadata,
     parseHealthAndWillFromMetadata,
-    sanitizeBattlefield
+    sanitizeBattlefield,
+    createDefaultState
 } from './battleOrganizerUtils';
 import { parseRollLogEntry } from './battleOrganizerRollParser';
 import { applyRollToBattleOrganizerState } from './battleOrganizerStorageSync';
@@ -38,6 +43,8 @@ export function useBattleOrganizerSync({
     tokenSyncTimersRef,
     pendingTokenSyncRef
 }: UseBattleOrganizerSyncProps) {
+    const initialRoomIdRef = useRef<string>(getEffectiveRoomId());
+
     // 1. Debounced persistence to localStorage & OBR peer broadcast (0 bytes scene metadata quota!)
     const persistState = useCallback(
         (newState: BattleOrganizerState, immediate = false, _skipBroadcast = false) => {
@@ -64,7 +71,7 @@ export function useBattleOrganizerSync({
 
                 // 1. Save to local storage (offline-first, zero OBR scene quota used)
                 try {
-                    localStorage.setItem(STORAGE_KEY, json);
+                    localStorage.setItem(getBattleOrganizerStorageKey(), json);
                 } catch (e) {
                     console.error('[BattleOrganizer] Failed to save state to localStorage:', e);
                 }
@@ -160,10 +167,35 @@ export function useBattleOrganizerSync({
             if (!isMounted) return;
 
             try {
-                // If localStorage already has battle state, no migration needed
-                const currentLocal = localStorage.getItem(STORAGE_KEY);
-                if (currentLocal) return;
+                const resolvedRoomId = getEffectiveRoomId();
+                const roomChangedSinceMount = resolvedRoomId !== initialRoomIdRef.current;
+                initialRoomIdRef.current = resolvedRoomId;
 
+                // Reload room-scoped state if OBR.room.id was not yet populated during useState initialization
+                const currentLocal = readBattleOrganizerStateRaw(resolvedRoomId);
+                if (currentLocal) {
+                    if (roomChangedSinceMount) {
+                        try {
+                            const parsed = JSON.parse(currentLocal);
+                            if (parsed && Array.isArray(parsed.rounds) && parsed.rounds.length > 0) {
+                                const sanitized = {
+                                    ...parsed,
+                                    battlefield: sanitizeBattlefield(parsed.battlefield)
+                                };
+                                lastSavedJsonRef.current = JSON.stringify(sanitized);
+                                if (sanitized.battlefield) {
+                                    useCharacterStore.getState().setActiveBattlefield(sanitized.battlefield);
+                                }
+                                if (isMounted) setState(sanitized);
+                            }
+                        } catch (reloadErr) {
+                            console.warn('[BattleOrganizer] Failed to reload room-scoped state on OBR ready:', reloadErr);
+                        }
+                    }
+                    return;
+                }
+
+                let migratedFromScene = false;
                 const isReady = await OBR.scene.isReady();
                 if (isReady) {
                     const metadata = await OBR.scene.getMetadata();
@@ -172,14 +204,25 @@ export function useBattleOrganizerSync({
                         try {
                             const parsed = JSON.parse(rawLegacySceneData);
                             if (parsed && Array.isArray(parsed.rounds) && parsed.rounds.length > 0) {
-                                localStorage.setItem(STORAGE_KEY, rawLegacySceneData);
+                                localStorage.setItem(getBattleOrganizerStorageKey(resolvedRoomId), rawLegacySceneData);
                                 lastSavedJsonRef.current = rawLegacySceneData;
+                                migratedFromScene = true;
                                 if (isMounted) setState(parsed);
                             }
                         } catch (migErr) {
                             console.warn('[BattleOrganizer] Failed to read legacy scene data:', migErr);
                         }
                     }
+                }
+                if (!migratedFromScene && roomChangedSinceMount) {
+                    const fresh = createDefaultState();
+                    try {
+                        lastSavedJsonRef.current = JSON.stringify(fresh);
+                    } catch {
+                        lastSavedJsonRef.current = '';
+                    }
+                    useCharacterStore.getState().setActiveBattlefield(fresh.battlefield);
+                    if (isMounted) setState(fresh);
                 }
             } catch (e) {
                 console.warn('[BattleOrganizer] Legacy scene read skipped:', e);
@@ -194,7 +237,7 @@ export function useBattleOrganizerSync({
     // 3. Listen to local storage changes (multi-tab / popout windows on same computer)
     useEffect(() => {
         const handleStorage = (e: StorageEvent) => {
-            if (e.key === STORAGE_KEY && e.newValue) {
+            if (e.key === getBattleOrganizerStorageKey() && e.newValue) {
                 try {
                     if (e.newValue === lastSavedJsonRef.current) {
                         return;
@@ -265,7 +308,7 @@ export function useBattleOrganizerSync({
 
                     lastSavedJsonRef.current = incomingJson;
                     try {
-                        localStorage.setItem(STORAGE_KEY, incomingJson);
+                        localStorage.setItem(getBattleOrganizerStorageKey(), incomingJson);
                     } catch (e) {
                         console.warn('[BattleOrganizer] Failed to cache synced state in localStorage:', e);
                     }

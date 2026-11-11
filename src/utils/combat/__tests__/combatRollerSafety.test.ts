@@ -13,6 +13,7 @@ import { hasTailwindActive } from '../rollers/rollerCommon';
 import type { MoveData, StatusItem, SkillCheck } from '@/store/storeTypes';
 import { CombatStat, Skill } from '@/types/enums';
 import { createDefaultBattlefield } from '@/components/modals/battleOrganizer/battleOrganizerUtils';
+import { getBattleOrganizerStorageKey } from '@/utils/sync/roomScopedStorage';
 
 // Mock rollDicePlus
 vi.mock('../diceRoller', () => ({
@@ -583,7 +584,7 @@ describe('combatRoller Safety Test Suite', () => {
 
         it('returns false when character resolves to "none" (non-combatant on bench)', () => {
             localStorage.setItem(
-                'pkr_battle_organizer_data',
+                getBattleOrganizerStorageKey(),
                 JSON.stringify({
                     activeRoundIndex: 0,
                     rounds: [{ combatants: [{ name: 'ActiveCharizard', isPlayerSide: true }] }]

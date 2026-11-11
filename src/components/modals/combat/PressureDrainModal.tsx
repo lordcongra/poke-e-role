@@ -6,6 +6,7 @@ import { getMaxTargetsForRank } from './targetingModalUtils';
 import { adjustCombatantWill } from '../battleOrganizer/battleOrganizerUtils';
 import { addRollLogEntry } from '../../../utils/combat/diceRoller';
 import { resolveCharacterSide } from '../../../utils/combat/combatantSideUtils';
+import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 import type { CombatantRowData, BattleOrganizerState } from '../../../types/battleOrganizerTypes';
 import './EntryAbilityModals.css';
 
@@ -63,7 +64,7 @@ export const PressureDrainModal: React.FC<PressureDrainModalProps> = ({
         if (!isOpen || typeof window === 'undefined' || !window.localStorage) return [];
 
         try {
-            const raw = localStorage.getItem('pkr_battle_organizer_data');
+            const raw = readBattleOrganizerStateRaw();
             if (!raw) return [];
             const data = JSON.parse(raw) as BattleOrganizerState;
             const activeRound = data.rounds?.[data.activeRoundIndex ?? 0] || data.rounds?.[0];
@@ -133,7 +134,7 @@ export const PressureDrainModal: React.FC<PressureDrainModalProps> = ({
         }
 
         try {
-            const raw = localStorage.getItem('pkr_battle_organizer_data');
+            const raw = readBattleOrganizerStateRaw();
             if (raw) {
                 const data = JSON.parse(raw) as BattleOrganizerState;
                 const roundIndex = data.activeRoundIndex ?? 0;
@@ -171,10 +172,11 @@ export const PressureDrainModal: React.FC<PressureDrainModalProps> = ({
                     }
 
                     const serialized = JSON.stringify(data);
-                    localStorage.setItem('pkr_battle_organizer_data', serialized);
+                    const storageKey = getBattleOrganizerStorageKey();
+                    localStorage.setItem(storageKey, serialized);
                     window.dispatchEvent(
                         new StorageEvent('storage', {
-                            key: 'pkr_battle_organizer_data',
+                            key: storageKey,
                             newValue: serialized
                         })
                     );
@@ -236,9 +238,8 @@ export const PressureDrainModal: React.FC<PressureDrainModalProps> = ({
                             return (
                                 <div
                                     key={foe.id}
-                                    className={`ability-entry-modal__row ${
-                                        isSelected ? 'ability-entry-modal__row--selected' : ''
-                                    } ${isDisabled ? 'ability-entry-modal__row--disabled' : ''}`}
+                                    className={`ability-entry-modal__row ${isSelected ? 'ability-entry-modal__row--selected' : ''
+                                        } ${isDisabled ? 'ability-entry-modal__row--disabled' : ''}`}
                                     onClick={() => handleToggle(foe.id)}
                                 >
                                     <div className="ability-entry-modal__row-left">

@@ -11,7 +11,7 @@ import { isStandaloneMode } from './utils/sync/storageAdapter';
 import { getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import { useCharacterStore } from './store/useCharacterStore';
 import { homebrewStorage, initHomebrewBroadcastSync } from './utils/sync/homebrewStorage';
-import { setupOwlbearHomebrewSync } from './hooks/owlbearSync/setupOwlbearHomebrewSync';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import './style.css';
 
 // Strictly type the custom Window property for HMR to avoid 'any'
@@ -90,9 +90,9 @@ export function resolveThemeColors(): { primary: string; secondary: string } {
 // Immediately apply theme and dynamic colors on script load to prevent any flash of default red
 try {
     const params = new URLSearchParams(window.location.search);
-    const roleParam = params.get('role') as 'GM' | 'PLAYER' | null;
-    if (roleParam) {
-        useCharacterStore.setState({ role: roleParam });
+    const rawRoleParam = params.get('role');
+    if (rawRoleParam === 'GM' || rawRoleParam === 'PLAYER') {
+        useCharacterStore.setState({ role: rawRoleParam });
     }
     const initialTheme = params.get('theme') || localStorage.getItem('pokerole-theme') || 'dark';
     if (initialTheme === 'dark') {
@@ -135,6 +135,12 @@ export function BattleOrganizerApp() {
     // Apply colors on mount & track BO open status
     useEffect(() => {
         setBattleOrganizerOpen(true);
+        const handleUnload = () => {
+            setBattleOrganizerOpen(false);
+        };
+        window.addEventListener('pagehide', handleUnload);
+        window.addEventListener('beforeunload', handleUnload);
+
         if (OBR.isAvailable) {
             OBR.popover.close('pkr-roll-log').catch(() => {});
         }
@@ -143,6 +149,8 @@ export function BattleOrganizerApp() {
         applyDynamicColors(colors.primary, colors.secondary);
 
         return () => {
+            window.removeEventListener('pagehide', handleUnload);
+            window.removeEventListener('beforeunload', handleUnload);
             setBattleOrganizerOpen(false);
             if (OBR.isAvailable && !isStandaloneMode) {
                 try {
@@ -267,16 +275,15 @@ export function BattleOrganizerApp() {
             OBR.player
                 .getRole()
                 .then((role) => {
-                    const resolvedRole = role || useCharacterStore.getState().role || 'GM';
+                    const resolvedRole = role || useCharacterStore.getState().role || 'PLAYER';
                     useCharacterStore.setState({ role: resolvedRole });
                     useCharacterStore.getState().loadHomebrewLocal();
-                    const homebrewSync = setupOwlbearHomebrewSync(resolvedRole);
-                    unsubs.push(...homebrewSync.unsubs);
                 })
-                .catch(() => {
-                    const fallbackRole = useCharacterStore.getState().role || 'GM';
-                    const homebrewSync = setupOwlbearHomebrewSync(fallbackRole);
-                    unsubs.push(...homebrewSync.unsubs);
+                .catch((err) => {
+                    console.warn('[BattleOrganizer] Failed to retrieve OBR player role, falling back to PLAYER:', err);
+                    const fallbackRole = useCharacterStore.getState().role || 'PLAYER';
+                    useCharacterStore.setState({ role: fallbackRole });
+                    useCharacterStore.getState().loadHomebrewLocal();
                 });
 
             const unsubTheme = OBR.broadcast.onMessage('pkr-theme-update', (event) => {
@@ -357,6 +364,8 @@ if (!win.__REACT_ROOT__) {
 
 win.__REACT_ROOT__.render(
     <StrictMode>
-        <BattleOrganizerApp />
+        <ErrorBoundary>
+            <BattleOrganizerApp />
+        </ErrorBoundary>
     </StrictMode>
 );

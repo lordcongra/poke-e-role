@@ -23,6 +23,7 @@ import { createTestCharacterState } from '../../../test/testStateHelpers';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { buildTrackerConditions } from '../../../components/board/trackerConditionUtils';
 import { createDefaultBattlefield } from '../../../components/modals/battleOrganizer/battleOrganizerUtils';
+import { getBattleOrganizerStorageKey } from '@/utils/sync/roomScopedStorage';
 import { getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import type {
     CombatantRowData,
@@ -176,20 +177,20 @@ describe('Ability Targeting System', () => {
                 activeRoundIndex: 0,
                 battlefield: createDefaultBattlefield()
             };
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(battleState));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(battleState));
 
             expect(isTargetAffectedByAbility('foe-1', 'player', 'Neutralizing Gas', null)).toBe(false);
 
             battleState.rounds[0].combatants[0].abilityTargetIds = [];
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(battleState));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(battleState));
             expect(isTargetAffectedByAbility('foe-1', 'player', 'Neutralizing Gas', null)).toBe(false);
 
             battleState.rounds[0].combatants[0].abilityTargetIds = ['foe-other'];
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(battleState));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(battleState));
             expect(isTargetAffectedByAbility('foe-1', 'player', 'Neutralizing Gas', null)).toBe(false);
 
             battleState.rounds[0].combatants[0].abilityTargetIds = ['foe-1'];
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(battleState));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(battleState));
             expect(isTargetAffectedByAbility('foe-1', 'player', 'Neutralizing Gas', null)).toBe(true);
         });
 
@@ -238,7 +239,7 @@ describe('Ability Targeting System', () => {
                 activeRoundIndex: 0,
                 battlefield: createDefaultBattlefield()
             };
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(multiCombatState));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(multiCombatState));
 
             expect(isTargetAffectedByAbility('growlithe-1', 'player', 'Neutralizing Gas', null)).toBe(true);
             expect(isTargetAffectedByAbility('milcery-1', 'player', 'Neutralizing Gas', null)).toBe(false);
@@ -302,7 +303,7 @@ describe('Ability Targeting System', () => {
                 activeRoundIndex: 0,
                 battlefield: createDefaultBattlefield()
             };
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(dualWeezingState));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(dualWeezingState));
 
             expect(isTargetAffectedByAbility('player-weezing', 'player', 'Neutralizing Gas', null)).toBe(false);
             expect(isTargetAffectedByAbility('foe-weezing', 'foe', 'Neutralizing Gas', null)).toBe(false);
@@ -478,11 +479,11 @@ describe('Ability Targeting System', () => {
                 battlefield: createDefaultBattlefield()
             };
             testPcData.pokemonSummaries['box-mon-1'].savedTokenItem = { id: 'saved-tok-99' };
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(initialBoState));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(initialBoState));
 
             await syncCombatantSentToMap('box-mon-1', testPcData as any);
 
-            const updatedBo = JSON.parse(localStorage.getItem('pkr_battle_organizer_data') || '{}');
+            const updatedBo = JSON.parse(localStorage.getItem(getBattleOrganizerStorageKey()) || '{}');
             expect(updatedBo.rounds[0].combatants[0].isInPc).toBe(false);
             expect(updatedBo.rounds[0].combatants[1].isInPc).toBe(false);
         });
@@ -551,11 +552,11 @@ describe('Ability Targeting System', () => {
                 activeRoundIndex: 0,
                 battlefield: createDefaultBattlefield()
             };
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(initialBo));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(initialBo));
 
             await syncCombatantSentToPc('mon-pc-deposit', depositPcData as any);
 
-            const boAfterDeposit = JSON.parse(localStorage.getItem('pkr_battle_organizer_data') || '{}');
+            const boAfterDeposit = JSON.parse(localStorage.getItem(getBattleOrganizerStorageKey()) || '{}');
             const round1 = boAfterDeposit.rounds[0];
             const ninetales = round1.combatants.find((c: any) => c.id === 'c-ninetales');
             const vulpix = round1.combatants.find((c: any) => c.id === 'c-vulpix');
@@ -573,7 +574,7 @@ describe('Ability Targeting System', () => {
             depositPcData.pokemonSummaries['mon-pc-deposit'].isOnMap = true;
             await syncCombatantSentToMap('mon-pc-deposit', depositPcData as any);
 
-            const boAfterMap = JSON.parse(localStorage.getItem('pkr_battle_organizer_data') || '{}');
+            const boAfterMap = JSON.parse(localStorage.getItem(getBattleOrganizerStorageKey()) || '{}');
             const round1AfterMap = boAfterMap.rounds[0];
             const ninetalesAfterMap = round1AfterMap.combatants.find((c: any) => c.id === 'c-ninetales');
             const vulpixAfterMap = round1AfterMap.combatants.find((c: any) => c.id === 'c-vulpix');
@@ -637,7 +638,7 @@ describe('Ability Targeting System', () => {
                 ],
                 activeRoundIndex: 0
             };
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
 
             expect(isTargetAffectedByAbility('dondozo-1', 'player', 'commander')).toBe(true);
             expect(isTargetAffectedByAbility('chien-pao-1', 'foe', 'tablets of ruin')).toBe(false);
@@ -831,7 +832,7 @@ describe('Ability Targeting System', () => {
                 activeRoundIndex: 0,
                 battlefield: createTestBattlefield({ playerTargets: 1, foeTargets: 2 })
             };
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
 
             // Target 1 is explicitly in Gengar's abilityTargetIds -> affected
             expect(isTargetAffectedByAbility('foe-target-1', 'foe', 'Cursed Mist')).toBe(true);
@@ -879,7 +880,7 @@ describe('Ability Targeting System', () => {
                 activeRoundIndex: 0,
                 battlefield: createTestBattlefield({ playerTargets: 1, foeTargets: 1 })
             };
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
 
             const playerPcData = {
                 pokemonSummaries: {
@@ -896,7 +897,7 @@ describe('Ability Targeting System', () => {
             // Deposit player Pikachu to PC
             await syncCombatantSentToPc('ent-pika-player', playerPcData as any);
 
-            const afterPcRaw = localStorage.getItem('pkr_battle_organizer_data');
+            const afterPcRaw = localStorage.getItem(getBattleOrganizerStorageKey());
             const afterPcBo = JSON.parse(afterPcRaw!) as BattleOrganizerState;
             const combatants = afterPcBo.rounds[0].combatants;
 
@@ -915,7 +916,7 @@ describe('Ability Targeting System', () => {
             playerPcData.pokemonSummaries['ent-pika-player'].isOnMap = true;
             syncCombatantSentToMap('ent-pika-player', playerPcData as any);
 
-            const afterMapRaw = localStorage.getItem('pkr_battle_organizer_data');
+            const afterMapRaw = localStorage.getItem(getBattleOrganizerStorageKey());
             const afterMapBo = JSON.parse(afterMapRaw!) as BattleOrganizerState;
             const restoredCombatants = afterMapBo.rounds[0].combatants;
 
@@ -995,7 +996,7 @@ describe('Ability Targeting System', () => {
                 activeRoundIndex: 0,
                 battlefield: createTestBattlefield({ playerTargets: 2, foeTargets: 4 })
             };
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
 
             const testState = createTestCharacterState();
             testState.identity.entityId = 'test-dondozo';
@@ -1330,7 +1331,7 @@ describe('Ability Targeting System', () => {
                 activeRoundIndex: 0,
                 battlefield: createDefaultBattlefield()
             };
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
 
             const resolvedWithItem = resolveTargetHeldItemInfo('foe-gengar');
             expect(resolvedWithItem.targetName).toBe('Gengar');
@@ -1338,7 +1339,7 @@ describe('Ability Targeting System', () => {
 
             // When combatant held item is empty, returns "None"
             boData.rounds[0].combatants[0].heldItem = '';
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
 
             const resolvedEmpty = resolveTargetHeldItemInfo('foe-gengar');
             expect(resolvedEmpty.targetName).toBe('Gengar');
@@ -1380,7 +1381,7 @@ describe('Ability Targeting System', () => {
                 activeRoundIndex: 0,
                 battlefield: createDefaultBattlefield()
             };
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
 
             const testState = createTestCharacterState();
             testState.pcData = {
@@ -1404,7 +1405,7 @@ describe('Ability Targeting System', () => {
         });
 
         it('resolveTargetHeldItemInfoAsync resolves equipped bag items from live OBR scene tokens without Battle Organizer', async () => {
-            localStorage.removeItem('pkr_battle_organizer_data');
+            localStorage.removeItem(getBattleOrganizerStorageKey());
 
             const originalIsAvailable = OBR.isAvailable;
             const originalGetItems = OBR.scene?.items?.getItems;
@@ -1482,7 +1483,7 @@ describe('Ability Targeting System', () => {
                     activeRoundIndex: 0,
                     battlefield: createDefaultBattlefield()
                 };
-                localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+                localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
 
                 Object.defineProperty(OBR, 'isAvailable', { value: true, configurable: true, writable: true });
                 // Live scene token has empty nickname, species 'Ditto', stale name 'The Spunch', and held item 'Metal Powder'
@@ -1575,7 +1576,7 @@ describe('Ability Targeting System', () => {
                 activeRoundIndex: 0,
                 battlefield: createDefaultBattlefield()
             };
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
 
             const result = resolveTargetHeldItemInfo('token-ditto-2');
             expect(result.targetName).toBe('Ditto');
@@ -1613,7 +1614,7 @@ describe('Ability Targeting System', () => {
                 activeRoundIndex: 0,
                 battlefield: createDefaultBattlefield()
             };
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
 
             const updateItemsMock = vi.fn(async (_ids: string[], updater: (items: Array<{ name: string }>) => void) => {
                 const dummyItem = { name: 'Old Nickname' };
@@ -1640,7 +1641,7 @@ describe('Ability Targeting System', () => {
                 store.setIdentity('nickname', 'New Nickname');
 
                 const updatedBo: BattleOrganizerState = JSON.parse(
-                    localStorage.getItem('pkr_battle_organizer_data') || '{}'
+                    localStorage.getItem(getBattleOrganizerStorageKey()) || '{}'
                 );
                 expect(updatedBo.rounds[0].combatants[0].name).toBe('New Nickname');
                 expect(updateItemsMock).toHaveBeenCalledWith(['my-token-123'], expect.any(Function));
@@ -1648,7 +1649,7 @@ describe('Ability Targeting System', () => {
                 // Clearing nickname should fallback to species
                 store.setIdentity('nickname', '');
                 const updatedBoAfterClear: BattleOrganizerState = JSON.parse(
-                    localStorage.getItem('pkr_battle_organizer_data') || '{}'
+                    localStorage.getItem(getBattleOrganizerStorageKey()) || '{}'
                 );
                 expect(updatedBoAfterClear.rounds[0].combatants[0].name).toBe('Ditto');
             } finally {

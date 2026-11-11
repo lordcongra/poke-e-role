@@ -4,6 +4,7 @@ import type { CharacterState } from '../../store/storeTypes';
 import type { BattleOrganizerState } from '../../types/battleOrganizerTypes';
 import { STATS_META_ID } from '../../utils/graphics/graphicsManager';
 import { matchesTarget, isCombatantInPc } from '../../utils/combat/abilityTargetingUtils';
+import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 
 /**
  * Removes the current character from an attacker's `abilityTargetIds` in Battle Organizer
@@ -33,7 +34,7 @@ export async function removeCharacterFromAuraSources(
     const tokensToUpdate: { tokenId: string; targetIds: string[] }[] = [];
 
     try {
-        const raw = localStorage.getItem('pkr_battle_organizer_data');
+        const raw = readBattleOrganizerStateRaw();
         if (raw) {
             const data = JSON.parse(raw) as BattleOrganizerState;
             const activeRound = data.rounds?.[data.activeRoundIndex ?? 0] || data.rounds?.[0];
@@ -70,7 +71,7 @@ export async function removeCharacterFromAuraSources(
                 });
 
                 if (boChanged) {
-                    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(data));
+                    localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(data));
                     if (OBR.isAvailable) {
                         OBR.broadcast
                             .sendMessage('pokerole-pmd-extension/battle-organizer-sync', data, { destination: 'REMOTE' })
@@ -115,7 +116,7 @@ export async function refreshAndCleanAuraAssociations(
     const tokensToUpdate: { tokenId: string; targetIds: string[] }[] = [];
 
     try {
-        const raw = localStorage.getItem('pkr_battle_organizer_data');
+        const raw = readBattleOrganizerStateRaw();
         if (raw) {
             const data = JSON.parse(raw) as BattleOrganizerState;
             const activeRound = data.rounds?.[data.activeRoundIndex ?? 0] || data.rounds?.[0];
@@ -149,7 +150,7 @@ export async function refreshAndCleanAuraAssociations(
                 });
 
                 if (boChanged) {
-                    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(data));
+                    localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(data));
                     if (OBR.isAvailable) {
                         OBR.broadcast
                             .sendMessage('pokerole-pmd-extension/battle-organizer-sync', data, { destination: 'REMOTE' })

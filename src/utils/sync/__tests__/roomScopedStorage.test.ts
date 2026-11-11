@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import OBR from '@owlbear-rodeo/sdk';
 import {
     getEffectiveRoomId,
@@ -8,6 +8,11 @@ import {
     getBattleOrganizerOpenKey,
     readBattleOrganizerStateRaw
 } from '@/utils/sync/roomScopedStorage';
+import { isPersistentSettingKey } from '@/utils/sync/userPreferences';
+import {
+    isBattleOrganizerOpen,
+    setBattleOrganizerOpen
+} from '@/components/modals/battleOrganizer/battleOrganizerSettingsHelper';
 
 function setMockRoomId(id: string): void {
     Object.defineProperty(OBR.room, 'id', {
@@ -23,6 +28,7 @@ describe('roomScopedStorage', () => {
 
     beforeEach(() => {
         localStorage.clear();
+        if (typeof sessionStorage !== 'undefined') sessionStorage.clear();
         OBR.isAvailable = originalIsAvailable;
         setMockRoomId(originalRoomId);
     });
@@ -87,5 +93,49 @@ describe('roomScopedStorage', () => {
         // If offline key is later removed, legacy data does not re-migrate (one-time migration)
         localStorage.removeItem('pkr_battle_organizer_data_offline');
         expect(readBattleOrganizerStateRaw()).toBeNull();
+    });
+
+    it('excludes Battle Organizer state and open-window presence keys from userPreferences persistence', () => {
+        expect(isPersistentSettingKey('pkr_battle_organizer_data')).toBe(false);
+        expect(isPersistentSettingKey('pkr_battle_organizer_data_room-alpha')).toBe(false);
+        expect(isPersistentSettingKey('pkr_battle_organizer_open')).toBe(false);
+        expect(isPersistentSettingKey('pkr_battle_organizer_open_room-alpha')).toBe(false);
+        expect(isPersistentSettingKey('pkr_battle_organizer_offline_migrated')).toBe(false);
+        expect(isPersistentSettingKey('pkr_bo_show_battlefield')).toBe(true);
+    });
+
+    it('manages room-scoped BO open-window presence with heartbeat lease and clean close', () => {
+        vi.useFakeTimers();
+        try {
+            OBR.isAvailable = true;
+            setMockRoomId('room-presence-1');
+
+            setBattleOrganizerOpen(true);
+            expect(isBattleOrganizerOpen()).toBe(true);
+            expect(localStorage.getItem('pkr_battle_organizer_open_room-presence-1')).not.toBeNull();
+
+            // Switching to another room does not report open
+            setMockRoomId('room-presence-2');
+            // Clear in-memory flag by simulating another window via localStorage check on room-presence-2
+            expect(localStorage.getItem('pkr_battle_organizer_open_room-presence-2')).toBeNull();
+
+            // Switch back and close cleanly
+            setMockRoomId('room-presence-1');
+            setBattleOrganizerOpen(false);
+            expect(localStorage.getItem('pkr_battle_organizer_open_room-presence-1')).toBeNull();
+            expect(isBattleOrganizerOpen()).toBe(false);
+
+            // Simulate stale timestamp > 12000ms from crashed window
+            localStorage.setItem('pkr_battle_organizer_open_room-presence-1', (Date.now() - 13000).toString());
+            expect(isBattleOrganizerOpen()).toBe(false);
+            expect(localStorage.getItem('pkr_battle_organizer_open_room-presence-1')).toBeNull();
+
+            // Simulate fresh heartbeat timestamp < 12000ms from another window
+            localStorage.setItem('pkr_battle_organizer_open_room-presence-1', Date.now().toString());
+            expect(isBattleOrganizerOpen()).toBe(true);
+        } finally {
+            setBattleOrganizerOpen(false);
+            vi.useRealTimers();
+        }
     });
 });

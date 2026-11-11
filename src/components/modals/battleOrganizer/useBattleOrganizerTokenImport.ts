@@ -11,14 +11,14 @@ import {
 } from '../../../utils/combat/initiativeHelpers';
 import { extractEntityId } from '../../../hooks/owlbearSync/setupOwlbearTokenSync';
 import type { BattleOrganizerState, BattleRoundData, CombatantRowData } from '../../../types/battleOrganizerTypes';
+import { readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 import {
     parseStatusesFromMetadata,
     parseHealthAndWillFromMetadata,
     parseHeldItemsFromMetadata,
     parseTokenPrivacyFlags,
     createDefaultActions,
-    compareCombatantsByInitiative,
-    STORAGE_KEY
+    compareCombatantsByInitiative
 } from './battleOrganizerUtils';
 
 export interface UseBattleOrganizerTokenImportProps {
@@ -43,7 +43,7 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                 }
                 if (existingRoundCombatants.length === 0) {
                     try {
-                        const raw = localStorage.getItem(STORAGE_KEY);
+                        const raw = readBattleOrganizerStateRaw();
                         if (raw) {
                             const parsed = JSON.parse(raw) as BattleOrganizerState;
                             existingRoundCombatants = parsed.rounds?.[parsed.activeRoundIndex ?? 0]?.combatants || [];

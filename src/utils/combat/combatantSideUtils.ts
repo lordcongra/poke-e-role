@@ -1,11 +1,12 @@
 import type { CharacterState } from '../../store/storeTypes';
 import type { BattlefieldData, BattleOrganizerState } from '../../types/battleOrganizerTypes';
 import { isTargetAffectedByAbility } from './abilityTargetingUtils';
+import { readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 
 /**
  * Resolves whether a given CharacterState belongs to the 'player' (Ally) side or 'foe' side.
  * Checks in order:
- * 1. Active round combatant entries in `localStorage['pkr_battle_organizer_data']`:
+ * 1. Active round combatant entries in room-scoped Battle Organizer storage:
  *    - Matched combatants return their resolved side ('player' or 'foe').
  *    - Unmatched characters return 'none' when active round combatants exist.
  * 2. Fallback (no active combatants in round):
@@ -16,7 +17,7 @@ export function resolveCharacterSide(state: CharacterState): 'player' | 'foe' | 
 
     if (typeof window !== 'undefined' && window.localStorage) {
         try {
-            const raw = localStorage.getItem('pkr_battle_organizer_data');
+            const raw = readBattleOrganizerStateRaw();
             if (raw) {
                 const data = JSON.parse(raw) as BattleOrganizerState;
                 const activeRound = data.rounds?.[data.activeRoundIndex ?? 0] || data.rounds?.[0];

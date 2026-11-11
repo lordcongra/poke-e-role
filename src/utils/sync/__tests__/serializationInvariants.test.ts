@@ -3,6 +3,7 @@ import { createTestCharacterState } from '../../../test/testStateHelpers';
 
 import { flattenStateToMetadata } from '../flattenStateToMetadata';
 import { hydrateStateFromMetadata } from '../stateMapper';
+import { getBattleOrganizerStorageKey } from '@/utils/sync/roomScopedStorage';
 import { applyRoomUpdatesToMeta, mapRoomSettings } from '../roomSettingsMeta';
 import {
     BASE_ITEM_CHARGES,
@@ -2239,9 +2240,9 @@ it('battleOrganizer: combatants are never automatically deleted from organizer w
         ],
         activeRoundIndex: 0
     };
-    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+    localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
 
-    const raw = localStorage.getItem('pkr_battle_organizer_data');
+    const raw = localStorage.getItem(getBattleOrganizerStorageKey());
     const parsed = JSON.parse(raw || '{}');
     assert.equal(parsed.rounds[0].combatants.length, 2, 'All combatants remain preserved in round 1');
     const pika = parsed.rounds[0].combatants.find((c: any) => c.id === 'c-wild-pika');

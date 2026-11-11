@@ -2,6 +2,7 @@ import type { CharacterState } from '@/store/storeTypes';
 import { useCharacterStore } from '@/store/useCharacterStore';
 import { resolveCharacterSide } from '@/utils/combat/combatantSideUtils';
 import { isTargetAffectedByAbility } from '@/utils/combat/abilityTargetingUtils';
+import { readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 
 export interface FieldAuraDamageBonusResult {
     diceBonus: number;
@@ -67,7 +68,7 @@ export function getFieldAuraDamageBonus(
         // 3. Check active combatants from battle organizer storage
         if (typeof window !== 'undefined' && window.localStorage) {
             try {
-                const raw = localStorage.getItem('pkr_battle_organizer_data');
+                const raw = readBattleOrganizerStateRaw();
                 if (raw) {
                     const data = JSON.parse(raw);
                     const activeRound = data.rounds?.[data.activeRoundIndex ?? 0] || data.rounds?.[0];

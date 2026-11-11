@@ -6,6 +6,7 @@ import { getEffectsByCategory } from '@/utils/combat/fieldEffectsData';
 import { resolveCharacterSide } from '@/utils/combat/combatantSideUtils';
 import { matchesTarget, isTargetInList, getAbilityTargetStance } from './abilityTargetStances';
 import { isCombatantInPc } from './abilityTargetPcResolution';
+import { readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 
 export const RUIN_ABILITIES = new Set([
     'tablets of ruin',
@@ -39,7 +40,7 @@ export function isTargetCombatantActiveNeutralizingGas(
     let combatants = allCombatants;
     if (!combatants && typeof window !== 'undefined' && window.localStorage) {
         try {
-            const raw = localStorage.getItem('pkr_battle_organizer_data');
+            const raw = readBattleOrganizerStateRaw();
             if (raw) {
                 const bo = JSON.parse(raw) as BattleOrganizerState;
                 const activeRound = bo.rounds?.[bo.activeRoundIndex ?? 0] || bo.rounds?.[0];
@@ -117,7 +118,7 @@ export function isTargetCombatantImmuneToRuin(
     let combatants = allCombatants;
     if (!combatants && typeof window !== 'undefined' && window.localStorage) {
         try {
-            const raw = localStorage.getItem('pkr_battle_organizer_data');
+            const raw = readBattleOrganizerStateRaw();
             if (raw) {
                 const bo = JSON.parse(raw) as BattleOrganizerState;
                 const activeRound = bo.rounds?.[bo.activeRoundIndex ?? 0] || bo.rounds?.[0];
@@ -244,7 +245,7 @@ export function isTargetAffectedByAbility(
     // 3. Check active round combatants in localStorage
     if (typeof window !== 'undefined' && window.localStorage) {
         try {
-            const raw = localStorage.getItem('pkr_battle_organizer_data');
+            const raw = readBattleOrganizerStateRaw();
             if (raw) {
                 const data = JSON.parse(raw) as BattleOrganizerState;
                 const activeRound = data.rounds?.[data.activeRoundIndex ?? 0] || data.rounds?.[0];

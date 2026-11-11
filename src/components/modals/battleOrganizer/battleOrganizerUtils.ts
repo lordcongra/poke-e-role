@@ -12,7 +12,6 @@ import type {
     BattleOrganizerSettings
 } from '../../../types/battleOrganizerTypes';
 
-export const STORAGE_KEY = 'pkr_battle_organizer_data';
 export const LEGACY_OBR_SCENE_META_KEY = 'pokerole-pmd-extension/battle-organizer';
 
 export function parseStatusesFromMetadata(meta: Record<string, unknown>): { statusText: string; isFainted: boolean } {

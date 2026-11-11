@@ -1,7 +1,7 @@
 import type { BattleOrganizerState, CombatantRowData, BattleRoundData } from '../../../types/battleOrganizerTypes';
 import { parseRollLogEntry, type RollLogDataInput } from './battleOrganizerRollParser';
 import { getBattleOrganizerSettings, isBattleOrganizerOpen } from './battleOrganizerSettingsHelper';
-import { STORAGE_KEY } from './battleOrganizerUtils';
+import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import OBR from '@owlbear-rodeo/sdk';
 import { isStandaloneMode } from '@/utils/sync/storageAdapter';
@@ -149,7 +149,7 @@ export function applyRollToBattleOrganizerStorage(logData: RollLogDataInput): bo
     lastStorageRollTimes.set(throttleKey, now);
 
     try {
-        const rawSaved = localStorage.getItem(STORAGE_KEY);
+        const rawSaved = readBattleOrganizerStateRaw();
         if (!rawSaved) return false;
 
         const parsed = JSON.parse(rawSaved) as BattleOrganizerState;
@@ -161,13 +161,14 @@ export function applyRollToBattleOrganizerStorage(logData: RollLogDataInput): bo
         if (!changed) return false;
 
         const nextJson = JSON.stringify(nextState);
-        localStorage.setItem(STORAGE_KEY, nextJson);
+        const storageKey = getBattleOrganizerStorageKey();
+        localStorage.setItem(storageKey, nextJson);
 
         // Update active battlefield in character store if modified
         useCharacterStore.getState().setActiveBattlefield(nextState.battlefield);
 
         // Dispatch storage event so any listeners (popouts/widgets) update
-        window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY, newValue: nextJson }));
+        window.dispatchEvent(new StorageEvent('storage', { key: storageKey, newValue: nextJson }));
 
         // If in OBR mode and user is GM, broadcast state to other peers
         if (OBR.isAvailable && !isStandaloneMode) {

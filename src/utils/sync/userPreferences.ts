@@ -56,7 +56,12 @@ function isLegacyEntityKey(key: string): boolean {
         key === 'pkr_last_master_backup_time' ||
         key === 'pkr_last_local_change_time' ||
         key === 'pkr_roll_log' ||
-        key.startsWith('pkr_roll_log_')
+        key.startsWith('pkr_roll_log_') ||
+        key === 'pkr_battle_organizer_data' ||
+        key.startsWith('pkr_battle_organizer_data_') ||
+        key === 'pkr_battle_organizer_open' ||
+        key.startsWith('pkr_battle_organizer_open_') ||
+        key === 'pkr_battle_organizer_offline_migrated'
     );
 }
 
@@ -67,6 +72,14 @@ export function isPersistentSettingKey(key: string): boolean {
     if (!key || typeof key !== 'string') return false;
     if (key.startsWith('pkr_char_temp') || key.startsWith('_pkr_temp')) return false;
     if (key === 'pkr_roll_log' || key.startsWith('pkr_roll_log_')) return false;
+    if (
+        key === 'pkr_battle_organizer_data' ||
+        key.startsWith('pkr_battle_organizer_data_') ||
+        key === 'pkr_battle_organizer_open' ||
+        key.startsWith('pkr_battle_organizer_open_') ||
+        key === 'pkr_battle_organizer_offline_migrated'
+    )
+        return false;
     if (
         key.startsWith('pkr_char_') ||
         key.startsWith('pkr_pc_') ||

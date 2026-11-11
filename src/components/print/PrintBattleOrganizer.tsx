@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import type { BattleOrganizerState } from '../../types/battleOrganizerTypes';
 import { isStandaloneMode } from '../../utils/sync/storageAdapter';
+import { readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 import { imageManager } from '../../utils/graphics/imageManager';
 import './PrintBattleOrganizer.css';
 
@@ -10,13 +11,11 @@ interface PrintBattleOrganizerProps {
     stateOverride?: BattleOrganizerState;
 }
 
-const STORAGE_KEY = 'pkr_battle_organizer_data';
-
 export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrganizerProps) {
     const [battleState, setBattleState] = useState<BattleOrganizerState | null>(() => {
         if (stateOverride) return stateOverride;
         try {
-            const raw = localStorage.getItem(STORAGE_KEY);
+            const raw = readBattleOrganizerStateRaw();
             if (raw) return JSON.parse(raw);
         } catch (e) {
             console.warn('[PrintBattleOrganizer] Failed to read initial state from localStorage:', e);

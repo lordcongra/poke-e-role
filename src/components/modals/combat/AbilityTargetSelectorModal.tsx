@@ -14,6 +14,7 @@ import {
 import { addRollLogEntry } from '../../../utils/combat/diceRoller';
 import { resolveCharacterSide } from '../../../utils/combat/combatantSideUtils';
 import { STATS_META_ID } from '../../../utils/graphics/graphicsManager';
+import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 import type { CombatantRowData, BattleOrganizerState } from '../../../types/battleOrganizerTypes';
 import type { CharacterState } from '../../../store/storeTypes';
 import './AbilityTargetSelectorModal.css';
@@ -75,7 +76,7 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
         if (!isOpen || typeof window === 'undefined' || !window.localStorage) return [];
 
         try {
-            const raw = localStorage.getItem('pkr_battle_organizer_data');
+            const raw = readBattleOrganizerStateRaw();
             if (!raw) return [];
             const data = JSON.parse(raw) as BattleOrganizerState;
             const activeRound = data.rounds?.[data.activeRoundIndex ?? 0] || data.rounds?.[0];
@@ -196,7 +197,7 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
                 }
 
                 try {
-                    const raw = localStorage.getItem('pkr_battle_organizer_data');
+                    const raw = readBattleOrganizerStateRaw();
                     if (raw) {
                         const data = JSON.parse(raw) as BattleOrganizerState;
                         const activeRound = data.rounds?.[data.activeRoundIndex ?? 0] || data.rounds?.[0];
@@ -217,7 +218,7 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
                                 }
                             });
                             if (boChanged) {
-                                localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(data));
+                                localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(data));
                                 if (OBR.isAvailable) {
                                     OBR.broadcast
                                         .sendMessage('pokerole-pmd-extension/battle-organizer-sync', data, { destination: 'REMOTE' })
@@ -287,7 +288,7 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
 
         // 2. Persist to Battle Organizer local storage regardless of whether sourceCombatant is passed
         try {
-            const raw = localStorage.getItem('pkr_battle_organizer_data');
+            const raw = readBattleOrganizerStateRaw();
             if (raw) {
                 const data = JSON.parse(raw) as BattleOrganizerState;
                 const activeRound = data.rounds?.[data.activeRoundIndex ?? 0] || data.rounds?.[0];
@@ -309,7 +310,7 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
                     });
 
                     if (boChanged) {
-                        localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(data));
+                        localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(data));
                         if (OBR.isAvailable) {
                             OBR.broadcast
                                 .sendMessage('pokerole-pmd-extension/battle-organizer-sync', data, { destination: 'REMOTE' })

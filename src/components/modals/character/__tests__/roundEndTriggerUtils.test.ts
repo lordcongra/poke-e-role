@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { findRoundEndTriggers } from '../roundEndTriggerUtils';
 import type { CharacterState, CharacterIdentity } from '../../../../store/storeTypes';
 import type { BattlefieldData } from '../../../../types/battleOrganizerTypes';
+import { getBattleOrganizerStorageKey } from '@/utils/sync/roomScopedStorage';
 
 function createMockCharacterState(
     overrides: Partial<CharacterState> = {},
@@ -418,7 +419,7 @@ describe('findRoundEndTriggers', () => {
         it('skips battlefield side triggers and weather damage for non-combatant sheets', () => {
             // Set battle organizer in localStorage with combatants not including our Pikachu
             localStorage.setItem(
-                'pkr_battle_organizer_data',
+                getBattleOrganizerStorageKey(),
                 JSON.stringify({
                     activeRoundIndex: 0,
                     rounds: [{ combatants: [{ name: 'Charizard', isPlayerSide: true }] }]

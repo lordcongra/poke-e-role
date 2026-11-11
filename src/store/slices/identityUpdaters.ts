@@ -10,6 +10,7 @@ import { saveToOwlbear, getIsRemoteSyncActive } from '../../utils/sync/obr';
 import OBR from '@owlbear-rodeo/sdk';
 import { syncHealthAndWill } from '../../utils/common/macroHelpers';
 import { getKnownAbility } from '../../data/abilities/knownAbilities';
+import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 
 export function handleInitiativeTrackerSetting(
     field: string,
@@ -105,7 +106,7 @@ export function updateSpeciesAndNameData(
 
     if (typeof window !== 'undefined' && window.localStorage) {
         try {
-            const raw = localStorage.getItem('pkr_battle_organizer_data');
+            const raw = readBattleOrganizerStateRaw();
             if (raw) {
                 const boData = JSON.parse(raw);
                 if (boData && Array.isArray(boData.rounds)) {
@@ -132,7 +133,7 @@ export function updateSpeciesAndNameData(
 
                     if (hasChanged) {
                         boData.rounds = updatedRounds;
-                        localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+                        localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
                         if (OBR.isAvailable) {
                             OBR.broadcast
                                 .sendMessage(
@@ -210,7 +211,7 @@ export function syncAbilityAndTargetState(
     ) {
         if (typeof window === 'undefined' || !window.localStorage) return;
         try {
-            const raw = localStorage.getItem('pkr_battle_organizer_data');
+            const raw = readBattleOrganizerStateRaw();
             if (!raw) return;
             const boData = JSON.parse(raw);
             if (!boData || !Array.isArray(boData.rounds)) return;
@@ -304,7 +305,7 @@ export function syncAbilityAndTargetState(
 
             if (hasChanged) {
                 boData.rounds = updatedRounds;
-                localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(boData));
+                localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
                 if (OBR.isAvailable) {
                     OBR.broadcast
                         .sendMessage(

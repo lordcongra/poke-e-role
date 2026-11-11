@@ -12,6 +12,7 @@ import type {
 import type { BattlefieldData } from '../../types/battleOrganizerTypes';
 import { SCENE_SETTINGS_META_ID } from '../../utils/sync/obr';
 import { isStandaloneMode } from '../../utils/sync/storageAdapter';
+import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 import {
     ROOM_META_ID,
     BATTLEFIELD_META_ID,
@@ -249,7 +250,7 @@ export async function setupOwlbearRoomSync(
                 if (localBattlefield) {
                     store.setActiveBattlefield(JSON.parse(localBattlefield) as BattlefieldData);
                 } else {
-                    const rawBo = localStorage.getItem('pkr_battle_organizer_data');
+                    const rawBo = readBattleOrganizerStateRaw();
                     if (rawBo) {
                         const parsedBo = JSON.parse(rawBo);
                         if (parsedBo?.battlefield) {
@@ -512,7 +513,7 @@ export async function setupOwlbearRoomSync(
                 try {
                     useCharacterStore.getState().setActiveBattlefield(JSON.parse(e.newValue));
                 } catch {}
-            } else if (e.key === 'pkr_battle_organizer_data' && e.newValue) {
+            } else if (e.key === getBattleOrganizerStorageKey() && e.newValue) {
                 try {
                     const parsed = JSON.parse(e.newValue);
                     if (parsed?.battlefield) {

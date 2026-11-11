@@ -5,6 +5,7 @@ import { useCharacterStore } from '@/store/useCharacterStore';
 import { EXTENSION_ID } from '@/hooks/owlbearSync/owlbearSyncConstants';
 import { STATS_META_ID } from '@/utils/graphics/graphicsManager';
 import { matchesTarget } from './abilityTargetStances';
+import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 
 /**
  * Checks if a combatant is currently deposited or recalled to the PC.
@@ -101,7 +102,7 @@ export function isCombatantInPc(c: CombatantRowData, pcData?: PcStorageData | nu
 export async function syncCombatantSentToPc(entityId: string, pcData?: PcStorageData): Promise<void> {
     if (typeof window === 'undefined' || !window.localStorage || !entityId) return;
     try {
-        const raw = localStorage.getItem('pkr_battle_organizer_data');
+        const raw = readBattleOrganizerStateRaw();
         if (!raw) return;
         const bo = JSON.parse(raw) as BattleOrganizerState;
         if (!bo || !Array.isArray(bo.rounds)) return;
@@ -206,7 +207,7 @@ export async function syncCombatantSentToPc(entityId: string, pcData?: PcStorage
         });
 
         if (boChanged) {
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(bo));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(bo));
             if (OBR.isAvailable) {
                 OBR.broadcast
                     .sendMessage(`${EXTENSION_ID}/battle-organizer-sync`, bo, { destination: 'REMOTE' })
@@ -318,7 +319,7 @@ export async function syncCombatantSentToPc(entityId: string, pcData?: PcStorage
 export async function syncCombatantSentToMap(entityId: string, pcData?: PcStorageData): Promise<void> {
     if (typeof window === 'undefined' || !window.localStorage || !entityId) return;
     try {
-        const raw = localStorage.getItem('pkr_battle_organizer_data');
+        const raw = readBattleOrganizerStateRaw();
         if (!raw) return;
         const bo = JSON.parse(raw) as BattleOrganizerState;
         if (!bo || !Array.isArray(bo.rounds)) return;
@@ -374,7 +375,7 @@ export async function syncCombatantSentToMap(entityId: string, pcData?: PcStorag
         });
 
         if (boChanged) {
-            localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(bo));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(bo));
             if (OBR.isAvailable) {
                 OBR.broadcast
                     .sendMessage(`${EXTENSION_ID}/battle-organizer-sync`, bo, { destination: 'REMOTE' })

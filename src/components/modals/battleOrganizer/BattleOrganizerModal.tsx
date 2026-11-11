@@ -117,6 +117,12 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
     // Lock background scrolling on document body while modal is open & track BO open status
     useEffect(() => {
         setBattleOrganizerOpen(true);
+        const handleUnload = () => {
+            setBattleOrganizerOpen(false);
+        };
+        window.addEventListener('pagehide', handleUnload);
+        window.addEventListener('beforeunload', handleUnload);
+
         if (OBR.isAvailable) {
             OBR.popover.close('pkr-roll-log').catch(() => {});
         }
@@ -126,6 +132,8 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         document.body.style.overflow = 'hidden';
         document.documentElement.style.overflow = 'hidden';
         return () => {
+            window.removeEventListener('pagehide', handleUnload);
+            window.removeEventListener('beforeunload', handleUnload);
             setBattleOrganizerOpen(false);
             document.body.style.overflow = prevBodyOverflow;
             document.documentElement.style.overflow = prevHtmlOverflow;

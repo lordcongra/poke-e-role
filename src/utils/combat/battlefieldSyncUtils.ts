@@ -1,11 +1,11 @@
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { isStandaloneMode } from '../sync/storageAdapter';
+import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 import type { BattlefieldData, BattleOrganizerState } from '../../types/battleOrganizerTypes';
 import type { ActiveFieldEffectItem } from './fieldEffectsData';
 
 export const BATTLEFIELD_STORAGE_KEY = 'pokerole-pmd-extension/battlefield';
-export const BATTLE_ORGANIZER_STORAGE_KEY = 'pkr_battle_organizer_data';
 export const BATTLE_ORGANIZER_SYNC_BROADCAST = 'pokerole-pmd-extension/battle-organizer-sync';
 
 /**
@@ -114,7 +114,7 @@ export function deleteBattlefieldEffect(
 /**
  * Real-time synchronization helper:
  * 1. Mutates Zustand `activeBattlefield`
- * 2. Updates localStorage ('pokerole-pmd-extension/battlefield' and 'pkr_battle_organizer_data')
+ * 2. Updates localStorage ('pokerole-pmd-extension/battlefield' and room-scoped Battle Organizer state)
  * 3. Updates OBR scene metadata ('pokerole-pmd-extension/battlefield') if GM
  * 4. Broadcasts 'pokerole-pmd-extension/battle-organizer-sync'
  */
@@ -125,11 +125,11 @@ export function syncBattlefieldUpdate(newBattlefield: BattlefieldData): void {
     // 2. Persist to localStorage
     try {
         localStorage.setItem(BATTLEFIELD_STORAGE_KEY, JSON.stringify(newBattlefield));
-        const rawSaved = localStorage.getItem(BATTLE_ORGANIZER_STORAGE_KEY);
+        const rawSaved = readBattleOrganizerStateRaw();
         if (rawSaved) {
             const parsed = JSON.parse(rawSaved) as BattleOrganizerState;
             parsed.battlefield = newBattlefield;
-            localStorage.setItem(BATTLE_ORGANIZER_STORAGE_KEY, JSON.stringify(parsed));
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(parsed));
         }
     } catch (e) {
         console.error('[battlefieldSyncUtils] Failed to persist battlefield to localStorage:', e);
@@ -139,7 +139,7 @@ export function syncBattlefieldUpdate(newBattlefield: BattlefieldData): void {
     if (OBR.isAvailable && !isStandaloneMode) {
         let broadcastPayload: unknown = { battlefield: newBattlefield };
         try {
-            const rawSaved = localStorage.getItem(BATTLE_ORGANIZER_STORAGE_KEY);
+            const rawSaved = readBattleOrganizerStateRaw();
             if (rawSaved) {
                 const parsed = JSON.parse(rawSaved) as BattleOrganizerState;
                 parsed.battlefield = newBattlefield;

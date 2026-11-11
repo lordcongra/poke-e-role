@@ -12,8 +12,8 @@ import {
 } from '../../../utils/combat/initiativeHelpers';
 import { addRollLogEntry, assignInitiative } from '../../../utils/combat/diceRoller';
 import type { BattleOrganizerState, BattleRoundData, CombatantRowData } from '../../../types/battleOrganizerTypes';
+import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 import {
-    STORAGE_KEY,
     LEGACY_OBR_SCENE_META_KEY,
     parseStatusesFromMetadata,
     mapStatusTextToStatusItems,
@@ -35,7 +35,6 @@ import { useBattleOrganizerRoundOps } from './useBattleOrganizerRoundOps';
 import { useBattleOrganizerTokenOps } from './useBattleOrganizerTokenOps';
 
 export {
-    STORAGE_KEY,
     LEGACY_OBR_SCENE_META_KEY,
     parseStatusesFromMetadata,
     mapStatusTextToStatusItems,
@@ -55,7 +54,7 @@ export {
 export function useBattleOrganizer() {
     const [state, setState] = useState<BattleOrganizerState>(() => {
         try {
-            const saved = localStorage.getItem(STORAGE_KEY);
+            const saved = readBattleOrganizerStateRaw();
             if (saved) {
                 const parsed = JSON.parse(saved);
                 if (parsed && Array.isArray(parsed.rounds) && parsed.rounds.length > 0) {
@@ -463,7 +462,7 @@ export function useBattleOrganizer() {
         lastSavedJsonRef.current = freshJson;
 
         try {
-            localStorage.setItem(STORAGE_KEY, freshJson);
+            localStorage.setItem(getBattleOrganizerStorageKey(), freshJson);
         } catch (e) {
             console.error('[BattleOrganizer] Failed to reset localStorage:', e);
         }

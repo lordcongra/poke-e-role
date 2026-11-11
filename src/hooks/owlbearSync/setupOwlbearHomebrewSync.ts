@@ -4,6 +4,7 @@ import type { HomebrewPayload } from '../../store/storeTypes';
 import type { BattleOrganizerState } from '../../types/battleOrganizerTypes';
 import { EXTENSION_ID } from './owlbearSyncConstants';
 import { sendSafeBroadcastPayload, registerSafeBroadcastListener } from './owlbearBroadcastUtils';
+import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 
 export interface OwlbearHomebrewSyncResult {
     unsubs: Array<() => void>;
@@ -70,7 +71,7 @@ export function setupOwlbearHomebrewSync(role: 'PLAYER' | 'GM'): OwlbearHomebrew
         `${EXTENSION_ID}/battle-organizer-request`,
         async () => {
             if (role === 'GM') {
-                const saved = localStorage.getItem('pkr_battle_organizer_data');
+                const saved = readBattleOrganizerStateRaw();
                 if (saved) {
                     try {
                         const parsed = JSON.parse(saved);
@@ -92,7 +93,7 @@ export function setupOwlbearHomebrewSync(role: 'PLAYER' | 'GM'): OwlbearHomebrew
             const incoming = event.data as BattleOrganizerState;
             if (incoming) {
                 try {
-                    localStorage.setItem('pkr_battle_organizer_data', JSON.stringify(incoming));
+                    localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(incoming));
                 } catch (storageErr) {
                     console.warn('[SyncEngine] Failed to cache battle organizer data:', storageErr);
                 }

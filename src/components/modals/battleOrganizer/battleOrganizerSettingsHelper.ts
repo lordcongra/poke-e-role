@@ -3,6 +3,7 @@ import type {
     BattleOrganizerWindowMode,
     RollLogLayoutMode
 } from '../../../types/battleOrganizerTypes';
+import { getBattleOrganizerOpenKey, getEffectiveRoomId } from '@/utils/sync/roomScopedStorage';
 
 export const BO_SHOW_BATTLEFIELD_KEY = 'pkr_bo_show_battlefield';
 export const BO_SHOW_ROUND_TRACKER_KEY = 'pkr_bo_show_round_tracker';
@@ -15,15 +16,83 @@ export const BO_SHOW_COMBATANT_CHIPS_KEY = 'pkr_bo_show_combatant_chips';
 export const BO_IS_OPEN_KEY = 'pkr_battle_organizer_open';
 export const BO_SETTINGS_UPDATE_EVENT = 'pkr-bo-settings-update';
 
-let isBoModalOpenInMemory = false;
+const BO_HEARTBEAT_INTERVAL_MS = 4000;
+const BO_PRESENCE_TTL_MS = 12000;
 
-// Proactively clear any legacy persistent localStorage key from prior versions
-try {
-    if (typeof localStorage !== 'undefined') {
-        localStorage.removeItem(BO_IS_OPEN_KEY);
+interface BoPresenceMessage {
+    type: 'open' | 'heartbeat' | 'close';
+    roomId: string;
+    ts: number;
+}
+
+let isBoModalOpenInMemory = false;
+let boHeartbeatTimer: ReturnType<typeof setInterval> | null = null;
+let activePresenceChannel: BroadcastChannel | null = null;
+let activePresenceChannelName = '';
+let activeOpenRoomId: string | null = null;
+const remotePresenceTimestamps = new Map<string, number>();
+
+function ensurePresenceChannel(roomId: string): BroadcastChannel | null {
+    if (typeof BroadcastChannel === 'undefined') return null;
+    const channelName = `pkr_bo_presence_${roomId}`;
+    if (activePresenceChannel && activePresenceChannelName === channelName) {
+        return activePresenceChannel;
     }
-} catch {
-    // Ignore storage restrictions
+    if (activePresenceChannel) {
+        try {
+            activePresenceChannel.close();
+        } catch {
+            // Ignore close errors
+        }
+        activePresenceChannel = null;
+        activePresenceChannelName = '';
+    }
+    try {
+        const channel = new BroadcastChannel(channelName);
+        channel.onmessage = (event: MessageEvent<BoPresenceMessage>) => {
+            const msg = event.data;
+            if (!msg || typeof msg !== 'object') return;
+            const msgRoomId = msg.roomId || roomId;
+            if (msg.type === 'open' || msg.type === 'heartbeat') {
+                remotePresenceTimestamps.set(msgRoomId, typeof msg.ts === 'number' ? msg.ts : Date.now());
+            } else if (msg.type === 'close') {
+                remotePresenceTimestamps.delete(msgRoomId);
+            }
+        };
+        activePresenceChannel = channel;
+        activePresenceChannelName = channelName;
+        return channel;
+    } catch {
+        return null;
+    }
+}
+
+function broadcastBoPresence(type: BoPresenceMessage['type'], roomId: string, ts: number): void {
+    const channel = ensurePresenceChannel(roomId);
+    if (!channel) return;
+    try {
+        channel.postMessage({ type, roomId, ts } satisfies BoPresenceMessage);
+    } catch {
+        // Ignore BroadcastChannel post errors
+    }
+}
+
+function refreshHeartbeat(): void {
+    const roomId = getEffectiveRoomId();
+    const openKey = getBattleOrganizerOpenKey(roomId);
+    const now = Date.now();
+    try {
+        if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem(openKey, 'true');
+        }
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(openKey, now.toString());
+        }
+    } catch (e) {
+        console.warn('[BattleOrganizerSettings] Failed to refresh BO open heartbeat:', e);
+    }
+    activeOpenRoomId = roomId;
+    broadcastBoPresence('heartbeat', roomId, now);
 }
 
 export function isBattleOrganizerOpen(): boolean {
@@ -43,15 +112,33 @@ export function isBattleOrganizerOpen(): boolean {
             return true;
         }
     }
-    try {
-        if (sessionStorage.getItem(BO_IS_OPEN_KEY) === 'true') {
+
+    const roomId = getEffectiveRoomId();
+    const openKey = getBattleOrganizerOpenKey(roomId);
+    ensurePresenceChannel(roomId);
+
+    const remoteTs = remotePresenceTimestamps.get(roomId);
+    if (remoteTs !== undefined) {
+        if (Date.now() - remoteTs < BO_PRESENCE_TTL_MS) {
             return true;
         }
-        const boTs = localStorage.getItem(BO_IS_OPEN_KEY);
-        if (boTs) {
-            const age = Date.now() - parseInt(boTs, 10);
-            if (!isNaN(age) && age < 30 * 60 * 1000) {
-                return true;
+        remotePresenceTimestamps.delete(roomId);
+    }
+
+    try {
+        if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(openKey) === 'true') {
+            return true;
+        }
+        if (typeof localStorage !== 'undefined') {
+            const boTs = localStorage.getItem(openKey);
+            if (boTs) {
+                const age = Date.now() - parseInt(boTs, 10);
+                if (!isNaN(age) && age < BO_PRESENCE_TTL_MS) {
+                    return true;
+                }
+                if (!isNaN(age) && age >= BO_PRESENCE_TTL_MS) {
+                    localStorage.removeItem(openKey);
+                }
             }
         }
         return false;
@@ -62,13 +149,46 @@ export function isBattleOrganizerOpen(): boolean {
 
 export function setBattleOrganizerOpen(isOpen: boolean): void {
     isBoModalOpenInMemory = isOpen;
+    const roomId = getEffectiveRoomId();
+    const openKey = getBattleOrganizerOpenKey(roomId);
+
+    if (boHeartbeatTimer !== null) {
+        clearInterval(boHeartbeatTimer);
+        boHeartbeatTimer = null;
+    }
+
     try {
         if (isOpen) {
-            sessionStorage.setItem(BO_IS_OPEN_KEY, 'true');
-            localStorage.setItem(BO_IS_OPEN_KEY, Date.now().toString());
+            const now = Date.now();
+            activeOpenRoomId = roomId;
+            if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.setItem(openKey, 'true');
+            }
+            if (typeof localStorage !== 'undefined') {
+                localStorage.setItem(openKey, now.toString());
+            }
+            broadcastBoPresence('open', roomId, now);
+            boHeartbeatTimer = setInterval(refreshHeartbeat, BO_HEARTBEAT_INTERVAL_MS);
         } else {
-            sessionStorage.removeItem(BO_IS_OPEN_KEY);
-            localStorage.removeItem(BO_IS_OPEN_KEY);
+            const keysToRemove = new Set<string>([openKey, BO_IS_OPEN_KEY]);
+            if (activeOpenRoomId && activeOpenRoomId !== roomId) {
+                keysToRemove.add(getBattleOrganizerOpenKey(activeOpenRoomId));
+            }
+            keysToRemove.forEach((key) => {
+                if (typeof sessionStorage !== 'undefined') {
+                    sessionStorage.removeItem(key);
+                }
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.removeItem(key);
+                }
+            });
+            remotePresenceTimestamps.delete(roomId);
+            broadcastBoPresence('close', roomId, Date.now());
+            if (activeOpenRoomId && activeOpenRoomId !== roomId) {
+                remotePresenceTimestamps.delete(activeOpenRoomId);
+                broadcastBoPresence('close', activeOpenRoomId, Date.now());
+            }
+            activeOpenRoomId = null;
         }
     } catch (e) {
         console.warn('[BattleOrganizerSettings] Failed to set BO open state:', e);

@@ -6,6 +6,7 @@ import { parseHeldItemsFromMetadata } from '@/components/modals/battleOrganizer/
 import { STATS_META_ID } from '@/utils/graphics/graphicsManager';
 import { extractCharacterName } from '@/utils/combat/initiativeHelpers';
 import { matchesTarget } from './abilityTargetStances';
+import { readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 
 /**
  * Resolves target combatant name and held items for item-detecting abilities like Frisk.
@@ -69,10 +70,10 @@ export function resolveTargetHeldItemInfo(
 
     let fallbackTargetName = '';
 
-    // 2) Battle Organizer combatants in pkr_battle_organizer_data
+    // 2) Battle Organizer combatants in room-scoped storage
     if (typeof window !== 'undefined' && window.localStorage) {
         try {
-            const rawBo = window.localStorage.getItem('pkr_battle_organizer_data');
+            const rawBo = readBattleOrganizerStateRaw();
             if (rawBo) {
                 const bo = JSON.parse(rawBo) as BattleOrganizerState;
                 const activeRound = bo.rounds?.[bo.activeRoundIndex ?? 0] || bo.rounds?.[0];

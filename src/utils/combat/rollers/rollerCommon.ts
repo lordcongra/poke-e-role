@@ -5,6 +5,7 @@ import { ATTRIBUTE_MAPPING, getStatusPenalties, calculateBaseInitiative } from '
 import { isAbilitySuppressedByField, matchesTarget } from '@/utils/combat/abilityTargetingUtils';
 import { resolveCharacterSide } from '@/utils/combat/combatantSideUtils';
 import { STATS_META_ID } from '@/utils/graphics/graphicsManager';
+import { readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 
 export function getCharacterNickname(state: CharacterState): string {
     return state.identity.nickname || state.identity.species || 'Someone';
@@ -112,7 +113,7 @@ export async function resolveAnalyticBonus(
     const targetFoeId = state.identity.abilityTargetIds?.[0];
 
     try {
-        const rawBo = typeof window !== 'undefined' && window.localStorage ? localStorage.getItem('pkr_battle_organizer_data') : null;
+        const rawBo = readBattleOrganizerStateRaw();
         if (rawBo) {
             const bo = JSON.parse(rawBo);
             const activeRound = bo.rounds?.[bo.activeRoundIndex ?? 0] || bo.rounds?.[0];

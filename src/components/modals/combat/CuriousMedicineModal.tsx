@@ -6,6 +6,7 @@ import { CombatStat } from '../../../types/enums';
 import { getMaxTargetsForRank } from './targetingModalUtils';
 import { addRollLogEntry } from '../../../utils/combat/diceRoller';
 import { resolveCharacterSide } from '../../../utils/combat/combatantSideUtils';
+import { readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 import type { CombatantRowData, BattleOrganizerState } from '../../../types/battleOrganizerTypes';
 import './EntryAbilityModals.css';
 
@@ -64,7 +65,7 @@ export const CuriousMedicineModal: React.FC<CuriousMedicineModalProps> = ({
         // Check Battle Organizer active round combatants
         if (typeof window !== 'undefined' && window.localStorage) {
             try {
-                const raw = localStorage.getItem('pkr_battle_organizer_data');
+                const raw = readBattleOrganizerStateRaw();
                 if (raw) {
                     const data = JSON.parse(raw) as BattleOrganizerState;
                     const activeRound = data.rounds?.[data.activeRoundIndex ?? 0] || data.rounds?.[0];
