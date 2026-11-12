@@ -7,6 +7,7 @@ import { resolveCharacterThemeColors, applyDynamicThemeColors } from '../common/
 import { harvestTokensItemArt, setItemArt } from '../graphics/itemArtCatalog';
 import { fetchPokemonData } from '../api/api';
 import { extractTokenImage } from '../combat/initiativeHelpers';
+import { parseCombatPoolsFromMeta } from '@/utils/sync/tokenMetaUtils';
 
 export interface HydrateSheetParams {
     targetId: string;
@@ -166,14 +167,12 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
             OBR.scene.items
                 .updateItems([tokenItem.id], (items) => {
                     for (const item of items) {
-                        if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
-                        Object.assign(item.metadata[METADATA_ID] as Record<string, unknown>, summaryMeta);
-                        if (item.metadata['pokerole-pmd-extension/stats']) {
-                            Object.assign(
-                                item.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>,
-                                summaryMeta
-                            );
+                        if (!item.metadata[METADATA_ID]) {
+                            const legacy = item.metadata['pokerole-pmd-extension/stats'];
+                            item.metadata[METADATA_ID] =
+                                legacy && typeof legacy === 'object' ? { ...(legacy as Record<string, unknown>) } : {};
                         }
+                        Object.assign(item.metadata[METADATA_ID] as Record<string, unknown>, summaryMeta);
                     }
                 })
                 .catch(() => {});
@@ -226,30 +225,17 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
 
         // If live token is strictly newer than PC storage, update PC summary to reflect live combat stats
         if (existingSum && tMod > pMod) {
-            const curHp =
-                typeof tokenItemMeta['hp-curr'] === 'number'
-                    ? tokenItemMeta['hp-curr']
-                    : !isNaN(Number(tokenItemMeta['hp-curr'])) && tokenItemMeta['hp-curr'] !== ''
-                      ? Number(tokenItemMeta['hp-curr'])
-                      : existingSum.hp;
-            const curMaxHp =
-                typeof tokenItemMeta['hp-max-display'] === 'number'
-                    ? tokenItemMeta['hp-max-display']
-                    : !isNaN(Number(tokenItemMeta['hp-max-display'])) && tokenItemMeta['hp-max-display'] !== ''
-                      ? Number(tokenItemMeta['hp-max-display'])
-                      : existingSum.maxHp;
-            const curWill =
-                typeof tokenItemMeta['will-curr'] === 'number'
-                    ? tokenItemMeta['will-curr']
-                    : !isNaN(Number(tokenItemMeta['will-curr'])) && tokenItemMeta['will-curr'] !== ''
-                      ? Number(tokenItemMeta['will-curr'])
-                      : existingSum.will;
-            const curMaxWill =
-                typeof tokenItemMeta['will-max-display'] === 'number'
-                    ? tokenItemMeta['will-max-display']
-                    : !isNaN(Number(tokenItemMeta['will-max-display'])) && tokenItemMeta['will-max-display'] !== ''
-                      ? Number(tokenItemMeta['will-max-display'])
-                      : existingSum.maxWill;
+            const {
+                hp: curHp,
+                maxHp: curMaxHp,
+                will: curWill,
+                maxWill: curMaxWill
+            } = parseCombatPoolsFromMeta(tokenItemMeta, {
+                hp: existingSum.hp,
+                maxHp: existingSum.maxHp,
+                will: existingSum.will,
+                maxWill: existingSum.maxWill
+            });
 
             store.updatePokemonSummary({
                 ...existingSum,

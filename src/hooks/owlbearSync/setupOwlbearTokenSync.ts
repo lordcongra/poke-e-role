@@ -16,6 +16,7 @@ import {
     sanitizeAttachmentBundles
 } from '@/utils/pc/pcAttachmentOps';
 import { findMatchingTrainerEntries } from '@/hooks/owlbearSync/owlbearPcSyncUtils';
+import { parseCombatPoolsFromMeta } from '@/utils/sync/tokenMetaUtils';
 
 export { findMatchingTrainerEntries };
 
@@ -65,6 +66,7 @@ export async function setupOwlbearTokenSync(params: {
     let sceneFollowupTimeout: ReturnType<typeof setTimeout> | null = null;
     let sceneBadgeRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
     let ghostCleanupTimeout: ReturnType<typeof setTimeout> | null = null;
+    let itemArtHarvestTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const clearKnownTransforms = () => {
         for (const key of Object.keys(knownTransforms)) {
@@ -193,6 +195,7 @@ export async function setupOwlbearTokenSync(params: {
             if (sceneFollowupTimeout) clearTimeout(sceneFollowupTimeout);
             if (sceneBadgeRefreshTimeout) clearTimeout(sceneBadgeRefreshTimeout);
             if (ghostCleanupTimeout) clearTimeout(ghostCleanupTimeout);
+            if (itemArtHarvestTimeout) clearTimeout(itemArtHarvestTimeout);
             resetSceneSyncState();
         }
     });
@@ -233,14 +236,26 @@ export async function setupOwlbearTokenSync(params: {
             );
         }
 
-        // Harvest item art from updated scene items
-        harvestTokensItemArt(items).catch(() => {});
+        // Harvest item art from updated scene items (debounced to avoid parsing inventory on every drag tick)
+        if (itemArtHarvestTimeout) clearTimeout(itemArtHarvestTimeout);
+        itemArtHarvestTimeout = setTimeout(async () => {
+            if (!isMounted() || isSceneTransitioning) return;
+            try {
+                const liveItems = await OBR.scene.items.getItems();
+                if (!isMounted() || isSceneTransitioning) return;
+                await harvestTokensItemArt(liveItems);
+            } catch {}
+        }, 800);
 
         // Reconcile cross-scene token sheets and prune duplicates on active scene (debounced)
         if (ghostCleanupTimeout) clearTimeout(ghostCleanupTimeout);
-        ghostCleanupTimeout = setTimeout(() => {
-            if (!isMounted()) return;
-            reconcileSceneTokens(items, role).catch(() => {});
+        ghostCleanupTimeout = setTimeout(async () => {
+            if (!isMounted() || isSceneTransitioning) return;
+            try {
+                const liveItems = await OBR.scene.items.getItems();
+                if (!isMounted() || isSceneTransitioning) return;
+                await reconcileSceneTokens(liveItems, role);
+            } catch {}
         }, 800);
 
         for (const item of items) {
@@ -279,7 +294,23 @@ export async function setupOwlbearTokenSync(params: {
                         }
                     }
 
+                    const isPurePositionDrag = Boolean(
+                        lastTransform && !needsGraphicsUpdate && lastTransform.metaStr === metaStr
+                    );
                     const storeState = useCharacterStore.getState();
+
+                    // Pure position drags leave metadata, scale, rotation, and visibility unchanged:
+                    // skip graphics rebuild, accessory BFS extraction, moves JSON stringification, and trainer scanning.
+                    if (isPurePositionDrag) {
+                        if (item.id === storeState.tokenId && !getIsPcSheetActive()) {
+                            const imgItem = item as Image;
+                            if (imgItem.image?.url && imgItem.image.url !== storeState.identity.tokenImageUrl) {
+                                storeState.setIdentity('tokenImageUrl', imgItem.image.url);
+                            }
+                        }
+                        continue;
+                    }
+
                     const eId = extractEntityId(item);
                     const existingSum = eId ? storeState.pcData.pokemonSummaries[eId] : undefined;
                     const tMod = Number(meta.lastModified) || 0;
@@ -332,30 +363,17 @@ export async function setupOwlbearTokenSync(params: {
                             if (pcLastMod > tokenLastMod) {
                                 continue;
                             }
-                            const curHp =
-                                typeof meta['hp-curr'] === 'number'
-                                    ? meta['hp-curr']
-                                    : !isNaN(Number(meta['hp-curr'])) && meta['hp-curr'] !== ''
-                                      ? Number(meta['hp-curr'])
-                                      : pcSummary.hp;
-                            const mHp =
-                                typeof meta['hp-max-display'] === 'number'
-                                    ? meta['hp-max-display']
-                                    : !isNaN(Number(meta['hp-max-display'])) && meta['hp-max-display'] !== ''
-                                      ? Number(meta['hp-max-display'])
-                                      : pcSummary.maxHp;
-                            const curWill =
-                                typeof meta['will-curr'] === 'number'
-                                    ? meta['will-curr']
-                                    : !isNaN(Number(meta['will-curr'])) && meta['will-curr'] !== ''
-                                      ? Number(meta['will-curr'])
-                                      : pcSummary.will;
-                            const mWill =
-                                typeof meta['will-max-display'] === 'number'
-                                    ? meta['will-max-display']
-                                    : !isNaN(Number(meta['will-max-display'])) && meta['will-max-display'] !== ''
-                                      ? Number(meta['will-max-display'])
-                                      : pcSummary.maxWill;
+                            const {
+                                hp: curHp,
+                                maxHp: mHp,
+                                will: curWill,
+                                maxWill: mWill
+                            } = parseCombatPoolsFromMeta(meta, {
+                                hp: pcSummary.hp,
+                                maxHp: pcSummary.maxHp,
+                                will: pcSummary.will,
+                                maxWill: pcSummary.maxWill
+                            });
                             const pokeName =
                                 (meta.name as string) || (meta.nickname as string) || item.name || pcSummary.name;
                             const scaleChanged =
@@ -471,6 +489,7 @@ export async function setupOwlbearTokenSync(params: {
         if (sceneFollowupTimeout) clearTimeout(sceneFollowupTimeout);
         if (sceneBadgeRefreshTimeout) clearTimeout(sceneBadgeRefreshTimeout);
         if (ghostCleanupTimeout) clearTimeout(ghostCleanupTimeout);
+        if (itemArtHarvestTimeout) clearTimeout(itemArtHarvestTimeout);
         unsubs.forEach((unsub) => unsub());
     };
 

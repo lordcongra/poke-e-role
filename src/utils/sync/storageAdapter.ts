@@ -3,6 +3,7 @@ import { waitForObr } from './obrHelpers';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { setItemArt } from '../graphics/itemArtCatalog';
 import { parseOptionalFiniteNumber } from '@/utils/sync/mappers/mapperHelpers';
+import { METADATA_ID } from '@/hooks/owlbearSync/owlbearSyncConstants';
 
 export const isStandaloneMode = window.self === window.top;
 
@@ -170,7 +171,7 @@ const notifyChange = () => {
 };
 
 export const storageAdapter = {
-    async saveCharacter(id: string, updates: Record<string, unknown>, metadataId: string): Promise<void> {
+    async saveCharacter(id: string, updates: Record<string, unknown>, _metadataId: string): Promise<void> {
         if (isStandaloneMode) {
             try {
                 let existingChar = await idbGetCharacter(id).catch(() => undefined);
@@ -245,17 +246,12 @@ export const storageAdapter = {
                 };
                 await OBR.scene.items.updateItems([id], (items) => {
                     for (const item of items) {
-                        if (!item.metadata[metadataId]) item.metadata[metadataId] = {};
-                        Object.assign(item.metadata[metadataId] as Record<string, unknown>, safeUpdates);
-                        if (metadataId !== 'pokerole-pmd-extension/stats') {
-                            if (!item.metadata['pokerole-pmd-extension/stats']) {
-                                item.metadata['pokerole-pmd-extension/stats'] = {};
-                            }
-                            Object.assign(
-                                item.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>,
-                                safeUpdates
-                            );
+                        if (!item.metadata[METADATA_ID]) {
+                            const legacy = item.metadata['pokerole-pmd-extension/stats'];
+                            item.metadata[METADATA_ID] =
+                                legacy && typeof legacy === 'object' ? { ...(legacy as Record<string, unknown>) } : {};
                         }
+                        Object.assign(item.metadata[METADATA_ID] as Record<string, unknown>, safeUpdates);
                     }
                 });
             } catch (error) {
