@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useCharacterStore } from '@/store/useCharacterStore';
 import { setActiveTokenId } from '@/utils/sync/obr';
-import { hydrateActiveSheet } from '@/utils/sync/unifiedSheetHydration';
+import { hydrateActiveSheet, isTrainerSheetMeta } from '@/utils/sync/unifiedSheetHydration';
 import { fetchPokemonData } from '@/utils/api/api';
 import { setItemArt } from '@/utils/graphics/itemArtCatalog';
 import { storageAdapter } from '@/utils/sync/storageAdapter';
@@ -78,7 +78,7 @@ export function useSidebarNavigation() {
             }
         }
 
-        if (meta['species']) {
+        if (meta['species'] && !isTrainerSheetMeta(meta, store.identity.mode)) {
             try {
                 const data = await fetchPokemonData(String(meta['species']));
                 if (data) store.refreshSpeciesData(data as Record<string, unknown>, false);

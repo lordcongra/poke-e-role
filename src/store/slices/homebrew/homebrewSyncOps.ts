@@ -12,7 +12,7 @@ export type HomebrewGet = Parameters<
     StateCreator<CharacterState, [['zustand/devtools', never]], [], HomebrewSlice>
 >[1];
 
-export const saveHomebrewLocal = (state: CharacterState): void => {
+export const saveHomebrewLocal = (state: CharacterState, options?: { allowEmpty?: boolean }): void => {
     if (!state.isHomebrewInitialized) return;
     try {
         const data: HomebrewStorageData = {
@@ -26,7 +26,7 @@ export const saveHomebrewLocal = (state: CharacterState): void => {
             customFieldEffects: state.roomCustomFieldEffects,
             needsBackup: state.needsBackup
         };
-        homebrewStorage.saveHomebrew(data).catch((error) => {
+        homebrewStorage.saveHomebrew(data, undefined, options).catch((error) => {
             console.error('[HomebrewSlice] Failed to save homebrew data to storage.', error);
         });
     } catch (error) {

@@ -289,11 +289,11 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         return false;
     };
 
-    const handleClonePokemon = (entityId: string) => {
+    const handleClonePokemon = async (entityId: string) => {
         const summary = pcData.pokemonSummaries[entityId];
         if (!summary || guardLockedSummary(summary)) return;
 
-        const { clonedSummary, clonedId } = clonePokemonSummaryOps(summary);
+        const { clonedSummary, clonedId } = await clonePokemonSummaryOps(summary);
         updatePokemonSummary(clonedSummary);
         depositPokemonToBox(clonedId, activeBoxIndex);
     };

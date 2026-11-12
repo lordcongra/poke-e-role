@@ -8,8 +8,9 @@ import type {
     CustomForm,
     CustomStatus,
     CustomFieldEffect
-} from '../../store/storeTypes';
-import { isStandaloneMode } from './storageAdapter';
+} from '@/store/storeTypes';
+import { isStandaloneMode } from '@/utils/sync/storageAdapter';
+import { openIdbDatabase, runIdbTransaction } from '@/utils/sync/idbHelpers';
 
 export interface HomebrewStorageData {
     customTypes: CustomType[];
@@ -48,10 +49,10 @@ const DB_VERSION = 1;
 const STORAGE_PREFIX = 'pkr_homebrew_';
 const BROADCAST_CHANNEL_NAME = 'pkr_homebrew_sync';
 const MIGRATION_DONE_KEY = 'pkr_homebrew_idb_migrated';
+const UI_MAXIMIZED_KEY = 'pkr_homebrew_standalone_maximized';
 
 const TAB_ID = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `tab_${Math.random()}`;
 
-let dbInstance: IDBDatabase | null = null;
 let isIdbSupported: boolean | null = null;
 let broadcastChannel: BroadcastChannel | null = null;
 
@@ -113,43 +114,19 @@ function isEmptyHomebrew(data: HomebrewStorageData): boolean {
     );
 }
 
-function getDB(): Promise<IDBDatabase> {
-    if (dbInstance) return Promise.resolve(dbInstance);
-    if (typeof indexedDB === 'undefined') {
+async function getDB(): Promise<IDBDatabase> {
+    try {
+        const db = await openIdbDatabase(DB_NAME, DB_VERSION, (upgradeDb) => {
+            if (!upgradeDb.objectStoreNames.contains(STORE_NAME)) {
+                upgradeDb.createObjectStore(STORE_NAME);
+            }
+        });
+        isIdbSupported = true;
+        return db;
+    } catch (err) {
         isIdbSupported = false;
-        return Promise.reject(new Error('IndexedDB is not supported'));
+        throw err;
     }
-
-    return new Promise((resolve, reject) => {
-        try {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-            request.onupgradeneeded = (event) => {
-                const db = (event.target as IDBOpenDBRequest).result;
-                if (!db.objectStoreNames.contains(STORE_NAME)) {
-                    db.createObjectStore(STORE_NAME);
-                }
-            };
-
-            request.onsuccess = () => {
-                dbInstance = request.result;
-                isIdbSupported = true;
-                dbInstance.onversionchange = () => {
-                    dbInstance?.close();
-                    dbInstance = null;
-                };
-                resolve(dbInstance);
-            };
-
-            request.onerror = () => {
-                isIdbSupported = false;
-                reject(request.error || new Error('Failed to open IndexedDB'));
-            };
-        } catch (e) {
-            isIdbSupported = false;
-            reject(e);
-        }
-    });
 }
 
 function loadFromLocalStorage(key: string): HomebrewStorageData | null {
@@ -174,46 +151,22 @@ function saveToLocalStorage(key: string, data: HomebrewStorageData): void {
     }
 }
 
-function readFromIndexedDB(key: string): Promise<HomebrewStorageData | null> {
-    return getDB().then(
-        (db) =>
-            new Promise((resolve, reject) => {
-                try {
-                    const tx = db.transaction(STORE_NAME, 'readonly');
-                    const store = tx.objectStore(STORE_NAME);
-                    const request = store.get(key);
-
-                    request.onsuccess = () => {
-                        if (request.result) {
-                            resolve(sanitizeHomebrewData(request.result));
-                        } else {
-                            resolve(null);
-                        }
-                    };
-                    request.onerror = () => reject(request.error);
-                } catch (e) {
-                    reject(e);
-                }
-            })
+async function readFromIndexedDB(key: string): Promise<HomebrewStorageData | null> {
+    const db = await getDB();
+    const raw = await runIdbTransaction(
+        db,
+        STORE_NAME,
+        'readonly',
+        (tx) => tx.objectStore(STORE_NAME).get(key) as IDBRequest<unknown>
     );
+    return raw ? sanitizeHomebrewData(raw) : null;
 }
 
-function writeToIndexedDB(key: string, data: HomebrewStorageData): Promise<void> {
-    return getDB().then(
-        (db) =>
-            new Promise((resolve, reject) => {
-                try {
-                    const tx = db.transaction(STORE_NAME, 'readwrite');
-                    const store = tx.objectStore(STORE_NAME);
-                    const request = store.put(data, key);
-
-                    request.onsuccess = () => resolve();
-                    request.onerror = () => reject(request.error);
-                } catch (e) {
-                    reject(e);
-                }
-            })
-    );
+async function writeToIndexedDB(key: string, data: HomebrewStorageData): Promise<void> {
+    const db = await getDB();
+    await runIdbTransaction(db, STORE_NAME, 'readwrite', (tx) => {
+        tx.objectStore(STORE_NAME).put(data, key);
+    });
 }
 
 function getChannel(): BroadcastChannel | null {
@@ -257,11 +210,13 @@ export const homebrewStorage = {
 
     async runLocalStorageMigration(): Promise<void> {
         if (typeof localStorage === 'undefined') return;
+        if (localStorage.getItem(MIGRATION_DONE_KEY) === 'true') return;
+
         try {
             const candidateKeys: string[] = [];
             for (let i = 0; i < localStorage.length; i++) {
                 const k = localStorage.key(i);
-                if (k && k.startsWith(STORAGE_PREFIX) && k !== MIGRATION_DONE_KEY) {
+                if (k && k.startsWith(STORAGE_PREFIX) && k !== MIGRATION_DONE_KEY && k !== UI_MAXIMIZED_KEY) {
                     candidateKeys.push(k);
                 }
             }
@@ -271,21 +226,34 @@ export const homebrewStorage = {
                 return;
             }
 
+            let migrationHadError = false;
+            const keysToRemove: string[] = [];
+
             for (const key of candidateKeys) {
                 const localData = loadFromLocalStorage(key);
-                if (!localData || isEmptyHomebrew(localData)) continue;
+                if (!localData || isEmptyHomebrew(localData)) {
+                    keysToRemove.push(key);
+                    continue;
+                }
 
                 try {
                     const existing = await readFromIndexedDB(key);
                     if (!existing || isEmptyHomebrew(existing)) {
                         await writeToIndexedDB(key, localData);
                     }
+                    keysToRemove.push(key);
                 } catch (err) {
+                    migrationHadError = true;
                     console.warn(`[HomebrewStorage] Migration error for ${key}:`, err);
                 }
             }
 
-            localStorage.setItem(MIGRATION_DONE_KEY, 'true');
+            if (!migrationHadError) {
+                localStorage.setItem(MIGRATION_DONE_KEY, 'true');
+            }
+            for (const key of keysToRemove) {
+                localStorage.removeItem(key);
+            }
         } catch (e) {
             console.warn('[HomebrewStorage] Migration check failed:', e);
         }
@@ -296,25 +264,31 @@ export const homebrewStorage = {
 
         try {
             const idbData = await readFromIndexedDB(key);
-            if (idbData && !isEmptyHomebrew(idbData)) {
+            if (idbData !== null) {
                 memoryCache.set(key, idbData);
                 return idbData;
             }
 
-            // Check if there is data in localStorage to migrate seamlessly
-            const localData = loadFromLocalStorage(key);
-            if (localData && !isEmptyHomebrew(localData)) {
-                writeToIndexedDB(key, localData).catch((err) => {
-                    console.warn('[HomebrewStorage] Failed to cache migrated data to IDB:', err);
-                });
-                memoryCache.set(key, localData);
-                return localData;
+            // Only migrate from localStorage when IDB has no record at all and migration hasn't completed
+            if (typeof localStorage !== 'undefined' && localStorage.getItem(MIGRATION_DONE_KEY) !== 'true') {
+                const localData = loadFromLocalStorage(key);
+                if (localData && !isEmptyHomebrew(localData)) {
+                    writeToIndexedDB(key, localData)
+                        .then(() => {
+                            try {
+                                localStorage.removeItem(key);
+                            } catch {
+                                // Ignore localStorage cleanup errors
+                            }
+                        })
+                        .catch((err) => {
+                            console.warn('[HomebrewStorage] Failed to cache migrated data to IDB:', err);
+                        });
+                    memoryCache.set(key, localData);
+                    return localData;
+                }
             }
 
-            if (idbData) {
-                memoryCache.set(key, idbData);
-                return idbData;
-            }
             return null;
         } catch (e) {
             // Defensive fallback to localStorage
@@ -344,7 +318,10 @@ export const homebrewStorage = {
                 } catch {
                     existing = null;
                 }
-                if (!existing || isEmptyHomebrew(existing)) {
+                if (
+                    (!existing || isEmptyHomebrew(existing)) &&
+                    (typeof localStorage === 'undefined' || localStorage.getItem(MIGRATION_DONE_KEY) !== 'true')
+                ) {
                     existing = loadFromLocalStorage(key);
                 }
             }
@@ -360,6 +337,13 @@ export const homebrewStorage = {
 
         try {
             await writeToIndexedDB(key, sanitized);
+            if (typeof localStorage !== 'undefined') {
+                try {
+                    localStorage.removeItem(key);
+                } catch {
+                    // Ignore localStorage cleanup errors
+                }
+            }
         } catch (e) {
             console.warn('[HomebrewStorage] IndexedDB write failed; falling back to localStorage:', e);
             saveToLocalStorage(key, sanitized);

@@ -1,10 +1,12 @@
 import OBR, { buildImage, isImage, type Item } from '@owlbear-rodeo/sdk';
-import { METADATA_ID } from '../sync/obr';
-import { getAbsolutePokeballUrl, resolveImageDimensions } from '../generators/trainerTokenSpawner';
-import { imageManager } from '../graphics/imageManager';
-import { updateSceneItemImage } from '../graphics/tokenImageService';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import type { PcPokemonSummary } from '../../types/pcStorageTypes';
+import { METADATA_ID } from '@/utils/sync/obr';
+import { isStandaloneMode, storageAdapter } from '@/utils/sync/storageAdapter';
+import { idbGetCharacter } from '@/utils/sync/standaloneIdb';
+import { getAbsolutePokeballUrl, resolveImageDimensions } from '@/utils/generators/trainerTokenSpawner';
+import { imageManager } from '@/utils/graphics/imageManager';
+import { updateSceneItemImage } from '@/utils/graphics/tokenImageService';
+import { useCharacterStore } from '@/store/useCharacterStore';
+import type { PcPokemonSummary } from '@/types/pcStorageTypes';
 
 export interface ResolvedTokenImage {
     url: string;
@@ -359,19 +361,19 @@ export async function relinkPokemonArtworkOps(
         console.warn('[pcTokenImageOps] Failed to sync to character store:', e);
     }
 
-    // 5. Update standalone localStorage if exists
-    if (typeof window !== 'undefined' && window.localStorage && summary.entityId) {
+    // 5. Update standalone IndexedDB character sheet if exists
+    if (isStandaloneMode && summary.entityId) {
         try {
-            const key = `pkr_char_${summary.entityId}`;
-            const raw = localStorage.getItem(key);
-            if (raw) {
-                const parsed = JSON.parse(raw);
-                parsed.tokenImageUrl = selectedUrl;
-                parsed['token-image-url'] = selectedUrl;
-                localStorage.setItem(key, JSON.stringify(parsed));
+            const existing = await idbGetCharacter(summary.entityId);
+            if (existing) {
+                await storageAdapter.saveCharacter(
+                    summary.entityId,
+                    { tokenImageUrl: selectedUrl, 'token-image-url': selectedUrl },
+                    METADATA_ID
+                );
             }
         } catch (e) {
-            console.warn('[pcTokenImageOps] Failed to sync to localStorage:', e);
+            console.warn('[pcTokenImageOps] Failed to sync to standalone storage:', e);
         }
     }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
-import { isStandaloneMode } from '../sync/storageAdapter';
+import { isStandaloneMode, storageAdapter } from '@/utils/sync/storageAdapter';
+import { openIdbDatabase, runIdbTransaction } from '@/utils/sync/idbHelpers';
 
 const DB_NAME = 'pkr_item_catalog';
 const STORE_NAME = 'item_art';
@@ -77,60 +78,43 @@ export const isShareableImageUrl = isRemoteShareableUrl;
  * Initializes the IndexedDB database for item artwork catalog.
  */
 function getDB(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-        if (typeof indexedDB === 'undefined') {
-            return reject(new Error('IndexedDB is not supported'));
+    return openIdbDatabase(DB_NAME, DB_VERSION, (db) => {
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
         }
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-        request.onupgradeneeded = (event) => {
-            const db = (event.target as IDBOpenDBRequest).result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                db.createObjectStore(STORE_NAME);
-            }
-        };
-
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
     });
 }
 
 /**
- * Scans all local character sheets saved in localStorage to harvest item artwork.
+ * Scans all local character sheets saved in IndexedDB to harvest item artwork.
  */
 export async function harvestLocalCharactersItemArt(): Promise<void> {
     try {
-        if (typeof localStorage === 'undefined') return;
+        const characters = await storageAdapter.getLocalCharacters();
         const foundEntries: Record<string, string> = {};
 
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('pkr_char_')) {
-                const raw = localStorage.getItem(key);
-                if (raw) {
-                    try {
-                        const meta = JSON.parse(raw) as Record<string, unknown>;
-                        const rawInv = meta?.['inv-data'];
-                        let items: Array<{ name?: string; imageUrl?: string }> = [];
+        for (const char of characters) {
+            try {
+                const meta = char.metadata;
+                const rawInv = meta?.['inv-data'];
+                let items: Array<{ name?: string; imageUrl?: string }> = [];
 
-                        if (typeof rawInv === 'string') {
-                            items = JSON.parse(rawInv);
-                        } else if (Array.isArray(meta?.inventory)) {
-                            items = meta.inventory as Array<{ name?: string; imageUrl?: string }>;
-                        }
+                if (typeof rawInv === 'string') {
+                    items = JSON.parse(rawInv);
+                } else if (Array.isArray(meta?.inventory)) {
+                    items = meta.inventory as Array<{ name?: string; imageUrl?: string }>;
+                }
 
-                        if (Array.isArray(items)) {
-                            for (const inv of items) {
-                                if (inv && inv.name && isValidItemArtUrl(inv.imageUrl)) {
-                                    const k = normalizeItemName(inv.name);
-                                    if (k) foundEntries[k] = inv.imageUrl.trim();
-                                }
-                            }
+                if (Array.isArray(items)) {
+                    for (const inv of items) {
+                        if (inv && inv.name && isValidItemArtUrl(inv.imageUrl)) {
+                            const k = normalizeItemName(inv.name);
+                            if (k) foundEntries[k] = inv.imageUrl.trim();
                         }
-                    } catch {
-                        // Ignore individual parse errors
                     }
                 }
+            } catch {
+                // Ignore individual parse errors
             }
         }
 
@@ -150,24 +134,23 @@ export async function initItemArtCatalog(): Promise<void> {
     if (isInitialized) return;
     try {
         const db = await getDB();
-        await new Promise<void>((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readonly');
+        await runIdbTransaction(db, STORE_NAME, 'readonly', (tx) => {
             const store = tx.objectStore(STORE_NAME);
-            const request = store.openCursor();
-
-            request.onsuccess = (e) => {
-                const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result;
-                if (cursor) {
-                    if (typeof cursor.key === 'string' && typeof cursor.value === 'string') {
-                        memoryCatalog.set(cursor.key, cursor.value);
+            return new Promise<void>((resolve, reject) => {
+                const request = store.openCursor();
+                request.onsuccess = (e) => {
+                    const cursor = (e.target as IDBRequest<IDBCursorWithValue | null>).result;
+                    if (cursor) {
+                        if (typeof cursor.key === 'string' && typeof cursor.value === 'string') {
+                            memoryCatalog.set(cursor.key, cursor.value);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve();
                     }
-                    cursor.continue();
-                } else {
-                    resolve();
-                }
-            };
-
-            request.onerror = () => reject(request.error);
+                };
+                request.onerror = () => reject(request.error);
+            });
         });
 
         isInitialized = true;
@@ -211,8 +194,9 @@ export async function setItemArt(
     // Async write to IndexedDB
     try {
         const db = await getDB();
-        const tx = db.transaction(STORE_NAME, 'readwrite');
-        tx.objectStore(STORE_NAME).put(trimmedUrl, key);
+        await runIdbTransaction(db, STORE_NAME, 'readwrite', (tx) => {
+            tx.objectStore(STORE_NAME).put(trimmedUrl, key);
+        });
     } catch (e) {
         console.warn('[ItemArtCatalog] Failed to write item art to IndexedDB:', e);
     }
@@ -284,11 +268,12 @@ export async function mergeItemArt(entries: Record<string, string>, skipBroadcas
 
     try {
         const db = await getDB();
-        const tx = db.transaction(STORE_NAME, 'readwrite');
-        const store = tx.objectStore(STORE_NAME);
-        for (const item of toPersist) {
-            store.put(item.url, item.key);
-        }
+        await runIdbTransaction(db, STORE_NAME, 'readwrite', (tx) => {
+            const store = tx.objectStore(STORE_NAME);
+            for (const item of toPersist) {
+                store.put(item.url, item.key);
+            }
+        });
     } catch (e) {
         console.warn('[ItemArtCatalog] Failed to batch persist entries to IndexedDB:', e);
     }

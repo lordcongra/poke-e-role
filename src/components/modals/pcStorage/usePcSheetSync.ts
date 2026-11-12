@@ -15,7 +15,7 @@ import {
 import { applyDynamicThemeColors } from '../../../utils/common/colorUtils';
 import { extractEntityId, renderTokenGraphicsForMeta } from '../../../hooks/owlbearSync/setupOwlbearTokenSync';
 import { broadcastGmPc, broadcastPlayerPc } from '../../../hooks/owlbearSync/setupOwlbearPcSync';
-import { hydrateActiveSheet } from '../../../utils/sync/unifiedSheetHydration';
+import { hydrateActiveSheet, isTrainerSheetMeta } from '@/utils/sync/unifiedSheetHydration';
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
 import {
     hasCharacterSheetChanged,
@@ -326,7 +326,14 @@ export function usePcSheetSync({
                     tokenItem,
                     saveIfNewer: true,
                     applyTheme: true,
-                    fetchSpecies: true
+                    fetchSpecies: !isTrainerSheetMeta(
+                        {
+                            ...(activeEntity.fullMetadata || {}),
+                            rank: activeEntity.fullMetadata?.rank ?? activeEntity.rank,
+                            species: activeEntity.fullMetadata?.species ?? activeEntity.species
+                        },
+                        mode
+                    )
                 });
             } catch (e) {
                 console.error('[usePcSheetSync] Error during unified sheet hydration:', e);

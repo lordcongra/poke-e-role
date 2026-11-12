@@ -1,5 +1,6 @@
-import { LOCAL_STORAGE_PREFIX } from '../sync/storageAdapter';
-import { useCharacterStore } from '../../store/useCharacterStore';
+import { useCharacterStore } from '@/store/useCharacterStore';
+import { openIdbDatabase, runIdbTransaction } from '@/utils/sync/idbHelpers';
+import { idbGetAllCharacters } from '@/utils/sync/standaloneIdb';
 
 const DB_NAME = 'pkr_local_images';
 const STORE_NAME = 'images';
@@ -9,18 +10,10 @@ const DB_VERSION = 1;
  * Initializes the IndexedDB database for storing local character images.
  */
 function getDB(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-        request.onupgradeneeded = (event) => {
-            const db = (event.target as IDBOpenDBRequest).result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                db.createObjectStore(STORE_NAME);
-            }
-        };
-
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
+    return openIdbDatabase(DB_NAME, DB_VERSION, (db) => {
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+        }
     });
 }
 
@@ -117,16 +110,10 @@ export const imageManager = {
         const id = crypto.randomUUID();
         const db = await getDB();
 
-        return new Promise((resolve, reject) => {
-            const transaction = db.transaction(STORE_NAME, 'readwrite');
-            const store = transaction.objectStore(STORE_NAME);
-            const request = store.put(file, id);
-
-            request.onsuccess = () => {
-                resolve(`local-img:${id}`);
-            };
-            request.onerror = () => reject(request.error);
+        await runIdbTransaction(db, STORE_NAME, 'readwrite', (tx) => {
+            tx.objectStore(STORE_NAME).put(file, id);
         });
+        return `local-img:${id}`;
     },
 
     /**
@@ -139,47 +126,37 @@ export const imageManager = {
         const id = formattedId.replace('local-img:', '');
         const db = await getDB();
 
-        return new Promise((resolve, reject) => {
-            const transaction = db.transaction(STORE_NAME, 'readonly');
-            const store = transaction.objectStore(STORE_NAME);
-            const request = store.get(id);
-
-            request.onsuccess = () => {
-                if (request.result) {
-                    const blobUrl = URL.createObjectURL(request.result as Blob);
-                    resolve(blobUrl);
-                } else {
-                    resolve(null);
-                }
-            };
-            request.onerror = () => reject(request.error);
-        });
+        const blob = await runIdbTransaction(
+            db,
+            STORE_NAME,
+            'readonly',
+            (tx) => tx.objectStore(STORE_NAME).get(id) as IDBRequest<Blob | undefined>
+        );
+        return blob ? URL.createObjectURL(blob) : null;
     },
 
     /**
      * Deletes an image record from IndexedDB.
-     * Safely verifies if any other character in localStorage still references this image
+     * Safely verifies if any other character in IndexedDB or PC storage still references this image
      * before deleting it, preventing accidental deletions across duplicated or shared characters.
      */
     async deleteImage(formattedId: string, excludeCharacterId?: string): Promise<void> {
         if (!formattedId.startsWith('local-img:')) return;
 
         try {
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith(LOCAL_STORAGE_PREFIX)) {
-                    if (excludeCharacterId && key === `${LOCAL_STORAGE_PREFIX}${excludeCharacterId}`) {
-                        continue;
-                    }
-                    const raw = localStorage.getItem(key);
-                    if (raw && raw.includes(formattedId)) {
-                        // Image is still in use by another character in localStorage!
-                        return;
-                    }
+            const characters = await idbGetAllCharacters();
+            for (const char of characters) {
+                if (excludeCharacterId && char.id === excludeCharacterId) {
+                    continue;
+                }
+                const serialized = JSON.stringify(char.metadata ?? {});
+                if (serialized.includes(formattedId)) {
+                    // Image is still in use by another character in IndexedDB!
+                    return;
                 }
             }
         } catch (e) {
-            console.warn('[imageManager] Failed to check image references in storage:', e);
+            console.warn('[imageManager] Failed to check image references in IndexedDB:', e);
         }
 
         try {
@@ -214,13 +191,8 @@ export const imageManager = {
         const id = formattedId.replace('local-img:', '');
         const db = await getDB();
 
-        return new Promise((resolve, reject) => {
-            const transaction = db.transaction(STORE_NAME, 'readwrite');
-            const store = transaction.objectStore(STORE_NAME);
-            const request = store.delete(id);
-
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
+        await runIdbTransaction(db, STORE_NAME, 'readwrite', (tx) => {
+            tx.objectStore(STORE_NAME).delete(id);
         });
     }
 };

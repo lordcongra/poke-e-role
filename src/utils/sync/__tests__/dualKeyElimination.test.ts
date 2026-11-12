@@ -44,6 +44,7 @@ vi.mock('@/hooks/owlbearSync/setupOwlbearTokenSync', () => ({
 
 import { storageAdapter, isStandaloneMode } from '@/utils/sync/storageAdapter';
 import { hydrateActiveSheet } from '@/utils/sync/unifiedSheetHydration';
+import * as apiModule from '@/utils/api/api';
 import { METADATA_ID } from '@/hooks/owlbearSync/owlbearSyncConstants';
 import { useCharacterStore } from '@/store/useCharacterStore';
 
@@ -219,5 +220,39 @@ describe('Dual-key elimination & METADATA_ID exclusivity', () => {
         const updated = useCharacterStore.getState().pcData.pokemonSummaries['ent-zero-1'];
         expect(updated.hp).toBe(0);
         expect(updated.will).toBe(0);
+    });
+
+    it('hydrateActiveSheet skips fetchPokemonData for Trainer-mode sheets and Trainer species', async () => {
+        const fetchSpy = vi.spyOn(apiModule, 'fetchPokemonData').mockResolvedValue(null);
+
+        await hydrateActiveSheet({
+            targetId: 'trainer-1',
+            sourceMeta: {
+                entityId: 'trainer-1',
+                name: 'Trainer',
+                nickname: 'Trainer',
+                species: 'Trainer',
+                mode: 'Trainer',
+                rank: 'Starter'
+            },
+            applyTheme: false,
+            fetchSpecies: true
+        });
+
+        await hydrateActiveSheet({
+            targetId: 'trainer-2',
+            sourceMeta: {
+                entityId: 'trainer-2',
+                name: 'Red',
+                nickname: 'Red',
+                species: 'Ace Trainer',
+                mode: 'Trainer (Special)',
+                rank: 'Ace'
+            },
+            applyTheme: false,
+            fetchSpecies: true
+        });
+
+        expect(fetchSpy).not.toHaveBeenCalled();
     });
 });

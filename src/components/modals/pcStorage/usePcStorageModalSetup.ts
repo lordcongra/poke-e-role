@@ -112,13 +112,20 @@ export function usePcStorageModalSetup(
     // Sanitize PC data on mount once initialized
     useEffect(() => {
         if (!isInitialized) return;
-        const sanitized = sanitizePcData(pcData);
-        const { updated, hasChanges } = refreshSummariesFromLocalStorage(sanitized.pokemonSummaries || {});
-        if (hasChanges || JSON.stringify(sanitized) !== JSON.stringify(pcData)) {
-            const nextData = { ...sanitized, pokemonSummaries: updated };
-            useCharacterStore.setState({ pcData: nextData });
-            savePcStorage(nextData);
-        }
+        let cancelled = false;
+        (async () => {
+            const sanitized = sanitizePcData(pcData);
+            const { updated, hasChanges } = await refreshSummariesFromLocalStorage(sanitized.pokemonSummaries || {});
+            if (cancelled) return;
+            if (hasChanges || JSON.stringify(sanitized) !== JSON.stringify(pcData)) {
+                const nextData = { ...sanitized, pokemonSummaries: updated };
+                useCharacterStore.setState({ pcData: nextData });
+                savePcStorage(nextData);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
     }, [isInitialized]);
 
     return {

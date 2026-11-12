@@ -75,21 +75,8 @@ async function ensurePokemonSummaryInPc(characterId: string, trainerId?: string)
     if (pcData.pokemonSummaries[characterId]) return;
 
     try {
-        let parsed: Record<string, unknown> | null = null;
-        if (typeof window !== 'undefined' && window.localStorage) {
-            const raw = window.localStorage.getItem(`pkr_char_${characterId}`);
-            if (raw) {
-                parsed = JSON.parse(raw);
-            }
-        }
-
-        if (!parsed) {
-            const idbChar = await idbGetCharacter(characterId).catch(() => undefined);
-            if (idbChar?.metadata) {
-                parsed = idbChar.metadata as Record<string, unknown>;
-            }
-        }
-
+        const idbChar = await idbGetCharacter(characterId);
+        const parsed = (idbChar?.metadata as Record<string, unknown> | undefined) || null;
         if (!parsed) return;
 
         const isTrainerEntity = parsed.mode === 'Trainer' || parsed.mode === 'Trainer (Special)';

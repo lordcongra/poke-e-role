@@ -28,6 +28,17 @@ export interface HydrateSheetResult {
 }
 
 /**
+ * Returns true when metadata or mode represents a Trainer-mode character or default "Trainer" species,
+ * indicating that Pokémon species dataset JSON fetching should be skipped.
+ */
+export function isTrainerSheetMeta(meta?: Record<string, unknown>, fallbackMode?: string): boolean {
+    const mode = String(meta?.['mode'] || fallbackMode || '');
+    const rank = String(meta?.['rank'] || '');
+    const species = String(meta?.['species'] || '').trim().toLowerCase();
+    return mode === 'Trainer' || mode === 'Trainer (Special)' || rank === 'Trainer' || species === 'trainer';
+}
+
+/**
  * Single source of truth for opening, inspecting, or hydrating character sheets
  * across canvas tokens, PC storage, Battle Organizer, and Standalone sidebar.
  * Harmonizes timestamp comparisons, PC summary fallback, token updates, and theming.
@@ -347,7 +358,8 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
     // 9. Fetch species data and learnsets asynchronously if requested
     if (fetchSpecies) {
         const speciesName = String(finalMeta['species'] || '');
-        if (speciesName) {
+        const isTrainer = isTrainerSheetMeta(finalMeta, useCharacterStore.getState().identity.mode);
+        if (speciesName && !isTrainer) {
             fetchPokemonData(speciesName)
                 .then((data) => {
                     if (data && useCharacterStore.getState().tokenId === targetId) {

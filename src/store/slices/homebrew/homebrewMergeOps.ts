@@ -17,47 +17,47 @@ import { normalizeCustomForm, mergeNamedEntityList } from './homebrewEntityUtils
 
 export function overwriteCustomTypeData(set: HomebrewSet, get: HomebrewGet, types: CustomType[]): void {
     set({ roomCustomTypes: types, needsBackup: true }, false, 'homebrew/overwriteCustomTypeData');
-    saveHomebrewLocal(get());
+    saveHomebrewLocal(get(), { allowEmpty: true });
 }
 
 export function overwriteCustomAbilityData(set: HomebrewSet, get: HomebrewGet, abilities: CustomAbility[]): void {
     set({ roomCustomAbilities: abilities, needsBackup: true }, false, 'homebrew/overwriteCustomAbilityData');
     syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, abilities, get().roomCustomItems);
-    saveHomebrewLocal(get());
+    saveHomebrewLocal(get(), { allowEmpty: true });
 }
 
 export function overwriteCustomMoveData(set: HomebrewSet, get: HomebrewGet, moves: CustomMove[]): void {
     set({ roomCustomMoves: moves, needsBackup: true }, false, 'homebrew/overwriteCustomMoveData');
     syncHomebrewToApi(get().roomCustomPokemon, moves, get().roomCustomAbilities, get().roomCustomItems);
-    saveHomebrewLocal(get());
+    saveHomebrewLocal(get(), { allowEmpty: true });
 }
 
 export function overwriteCustomPokemonData(set: HomebrewSet, get: HomebrewGet, pokemon: CustomPokemon[]): void {
     set({ roomCustomPokemon: pokemon, needsBackup: true }, false, 'homebrew/overwriteCustomPokemonData');
     syncHomebrewToApi(pokemon, get().roomCustomMoves, get().roomCustomAbilities, get().roomCustomItems);
-    saveHomebrewLocal(get());
+    saveHomebrewLocal(get(), { allowEmpty: true });
 }
 
 export function overwriteCustomItemData(set: HomebrewSet, get: HomebrewGet, items: CustomItem[]): void {
     set({ roomCustomItems: items, needsBackup: true }, false, 'homebrew/overwriteCustomItemData');
     syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, items);
-    saveHomebrewLocal(get());
+    saveHomebrewLocal(get(), { allowEmpty: true });
 }
 
 export function overwriteCustomFormData(set: HomebrewSet, get: HomebrewGet, forms: CustomForm[]): void {
     const safeForms = forms.map(normalizeCustomForm);
     set({ roomCustomForms: safeForms, needsBackup: true }, false, 'homebrew/overwriteCustomFormData');
-    saveHomebrewLocal(get());
+    saveHomebrewLocal(get(), { allowEmpty: true });
 }
 
 export function overwriteCustomStatusData(set: HomebrewSet, get: HomebrewGet, statuses: CustomStatus[]): void {
     set({ roomCustomStatuses: statuses, needsBackup: true }, false, 'homebrew/overwriteCustomStatusData');
-    saveHomebrewLocal(get());
+    saveHomebrewLocal(get(), { allowEmpty: true });
 }
 
 export function overwriteCustomFieldEffectData(set: HomebrewSet, get: HomebrewGet, effects: CustomFieldEffect[]): void {
     set({ roomCustomFieldEffects: effects, needsBackup: true }, false, 'homebrew/overwriteCustomFieldEffectData');
-    saveHomebrewLocal(get());
+    saveHomebrewLocal(get(), { allowEmpty: true });
 }
 
 export function overwriteAllHomebrewData(
@@ -89,7 +89,7 @@ export function overwriteAllHomebrewData(
         'homebrew/overwriteAllHomebrewData'
     );
     syncHomebrewToApi(pokemon, moves, abilities, items);
-    saveHomebrewLocal(get());
+    saveHomebrewLocal(get(), { allowEmpty: true });
 
     if (OBR.isAvailable) OBR.notification.show('[ ✓ ] Homebrew Workshop fully restored!', 'SUCCESS');
 }

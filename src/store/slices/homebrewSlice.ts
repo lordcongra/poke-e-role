@@ -88,35 +88,35 @@ export const createHomebrewSlice: StateCreator<
 
     setRoomCustomTypes: (types) => {
         set({ roomCustomTypes: types, needsBackup: true }, false, 'homebrew/setRoomCustomTypes');
-        saveHomebrewLocal(get());
+        saveHomebrewLocal(get(), { allowEmpty: true });
     },
     setRoomCustomAbilities: (abilities) => {
         set({ roomCustomAbilities: abilities, needsBackup: true }, false, 'homebrew/setRoomCustomAbilities');
-        saveHomebrewLocal(get());
+        saveHomebrewLocal(get(), { allowEmpty: true });
     },
     setRoomCustomMoves: (moves) => {
         set({ roomCustomMoves: moves, needsBackup: true }, false, 'homebrew/setRoomCustomMoves');
-        saveHomebrewLocal(get());
+        saveHomebrewLocal(get(), { allowEmpty: true });
     },
     setRoomCustomPokemon: (pokemon) => {
         set({ roomCustomPokemon: pokemon, needsBackup: true }, false, 'homebrew/setRoomCustomPokemon');
-        saveHomebrewLocal(get());
+        saveHomebrewLocal(get(), { allowEmpty: true });
     },
     setRoomCustomItems: (items) => {
         set({ roomCustomItems: items, needsBackup: true }, false, 'homebrew/setRoomCustomItems');
-        saveHomebrewLocal(get());
+        saveHomebrewLocal(get(), { allowEmpty: true });
     },
     setRoomCustomForms: (forms) => {
         set({ roomCustomForms: forms, needsBackup: true }, false, 'homebrew/setRoomCustomForms');
-        saveHomebrewLocal(get());
+        saveHomebrewLocal(get(), { allowEmpty: true });
     },
     setRoomCustomStatuses: (statuses) => {
         set({ roomCustomStatuses: statuses, needsBackup: true }, false, 'homebrew/setRoomCustomStatuses');
-        saveHomebrewLocal(get());
+        saveHomebrewLocal(get(), { allowEmpty: true });
     },
     setRoomCustomFieldEffects: (effects) => {
         set({ roomCustomFieldEffects: effects, needsBackup: true }, false, 'homebrew/setRoomCustomFieldEffects');
-        saveHomebrewLocal(get());
+        saveHomebrewLocal(get(), { allowEmpty: true });
     },
 
     addCustomType: (typeObject) => addCustomType(set, get, typeObject),

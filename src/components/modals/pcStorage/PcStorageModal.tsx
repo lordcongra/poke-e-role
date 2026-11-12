@@ -13,8 +13,8 @@ import {
     filterTrainerPokemonSummaries,
     findOtherLinkedTrainer
 } from '../../../utils/pc/pcModalOps';
-import { createDefaultBox } from '../../../utils/pc/pcStorageAdapter';
-import { buildTrainerSummary } from '../../../utils/pc/pcTrainerOps';
+import { createDefaultBox } from '@/utils/pc/pcStorageAdapter';
+import { usePcTrainerSummary } from '@/components/modals/pcStorage/usePcTrainerSummary';
 import { broadcastPlayerPc, broadcastGmPc, requestPlayerPcSync } from '../../../hooks/owlbearSync/setupOwlbearPcSync';
 import { buildSheetAvailableSummaries, isEntityLockedByGm } from '../../../utils/pc/pcCandidateMatching';
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
@@ -252,10 +252,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         }
     };
 
-    const trainerSummary: PcPokemonSummary | null = useMemo(
-        () => (!isPmdMode && trainer ? buildTrainerSummary(trainer) : null),
-        [trainer, isPmdMode]
-    );
+    const trainerSummary = usePcTrainerSummary(trainer, isPmdMode);
     const rawActiveSheetSummary =
         (sheetViewEntityId && pcData.pokemonSummaries[sheetViewEntityId]) ||
         (sheetViewEntityId === trainer?.id ? trainerSummary : null);

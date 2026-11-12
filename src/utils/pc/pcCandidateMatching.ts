@@ -359,81 +359,91 @@ export async function scanStandaloneCandidates(
 }
 
 /**
- * Refreshes pokemon summaries from local storage on Standalone so changes to typing,
+ * Refreshes pokemon summaries from IndexedDB on Standalone so changes to typing,
  * nicknames, HP, or artwork made in the main sheet viewer immediately reflect in PC boxes.
  */
-export function refreshSummariesFromLocalStorage(summaries: Record<string, PcPokemonSummary>): {
+export async function refreshSummariesFromLocalStorage(summaries: Record<string, PcPokemonSummary>): Promise<{
     updated: Record<string, PcPokemonSummary>;
     hasChanges: boolean;
-} {
-    if (typeof window === 'undefined' || !window.localStorage) {
+}> {
+    if (typeof indexedDB === 'undefined') {
         return { updated: summaries, hasChanges: false };
     }
 
     let hasChanges = false;
     const nextSummaries: Record<string, PcPokemonSummary> = { ...summaries };
 
-    for (const [id, summary] of Object.entries(summaries)) {
-        try {
-            const raw = localStorage.getItem(`pkr_char_${id}`);
-            if (!raw) continue;
-            const meta = JSON.parse(raw);
-            if (!meta || typeof meta !== 'object') continue;
-
-            const newType1 = (meta.type1 as string) ?? summary.type1;
-            const rawType2 = (meta.type2 as string) ?? summary.type2;
-            const newType2 = rawType2 && rawType2.toLowerCase() !== 'none' ? rawType2 : undefined;
-            const newName = (meta.nickname as string) || (meta.species as string) || summary.name;
-            const newSpecies = (meta.species as string) || summary.species;
-            const newRank = (meta.rank as string) || summary.rank;
-            const rawHp = meta['hp-curr'] ?? meta.hpCurr ?? meta.hp;
-            const newHp = rawHp !== undefined && rawHp !== '' && !isNaN(Number(rawHp)) ? Number(rawHp) : summary.hp;
-            const rawMaxHp = meta['hp-max-display'] ?? meta.hpMax;
-            const newMaxHp =
-                rawMaxHp !== undefined && rawMaxHp !== '' && !isNaN(Number(rawMaxHp))
-                    ? Number(rawMaxHp)
-                    : summary.maxHp;
-            const rawWill = meta['will-curr'] ?? meta.willCurr ?? meta.will;
-            const newWill =
-                rawWill !== undefined && rawWill !== '' && !isNaN(Number(rawWill)) ? Number(rawWill) : summary.will;
-            const rawMaxWill = meta['will-max-display'] ?? meta.willMax;
-            const newMaxWill =
-                rawMaxWill !== undefined && rawMaxWill !== '' && !isNaN(Number(rawMaxWill))
-                    ? Number(rawMaxWill)
-                    : summary.maxWill;
-            const newAvatar = (meta['token-image-url'] as string) || summary.tokenImageUrl;
-
-            if (
-                newType1 !== summary.type1 ||
-                newType2 !== summary.type2 ||
-                newName !== summary.name ||
-                newSpecies !== summary.species ||
-                newRank !== summary.rank ||
-                newHp !== summary.hp ||
-                newMaxHp !== summary.maxHp ||
-                newWill !== summary.will ||
-                newMaxWill !== summary.maxWill ||
-                newAvatar !== summary.tokenImageUrl
-            ) {
-                nextSummaries[id] = {
-                    ...summary,
-                    type1: newType1,
-                    type2: newType2,
-                    name: newName,
-                    species: newSpecies,
-                    rank: newRank,
-                    hp: newHp,
-                    maxHp: newMaxHp,
-                    will: newWill,
-                    maxWill: newMaxWill,
-                    tokenImageUrl: newAvatar,
-                    fullMetadata: { ...(summary.fullMetadata || {}), ...meta }
-                };
-                hasChanges = true;
+    try {
+        const localChars = await storageAdapter.getLocalCharacters();
+        const metaById = new Map<string, Record<string, unknown>>();
+        for (const char of localChars) {
+            if (char.metadata && typeof char.metadata === 'object') {
+                metaById.set(char.id, char.metadata);
             }
-        } catch {
-            // Ignore parse errors on corrupted keys
         }
+
+        for (const [id, summary] of Object.entries(summaries)) {
+            try {
+                const meta = metaById.get(id);
+                if (!meta) continue;
+
+                const newType1 = (meta.type1 as string) ?? summary.type1;
+                const rawType2 = (meta.type2 as string) ?? summary.type2;
+                const newType2 = rawType2 && rawType2.toLowerCase() !== 'none' ? rawType2 : undefined;
+                const newName = (meta.nickname as string) || (meta.species as string) || summary.name;
+                const newSpecies = (meta.species as string) || summary.species;
+                const newRank = (meta.rank as string) || summary.rank;
+                const rawHp = meta['hp-curr'] ?? meta.hpCurr ?? meta.hp;
+                const newHp = rawHp !== undefined && rawHp !== '' && !isNaN(Number(rawHp)) ? Number(rawHp) : summary.hp;
+                const rawMaxHp = meta['hp-max-display'] ?? meta.hpMax;
+                const newMaxHp =
+                    rawMaxHp !== undefined && rawMaxHp !== '' && !isNaN(Number(rawMaxHp))
+                        ? Number(rawMaxHp)
+                        : summary.maxHp;
+                const rawWill = meta['will-curr'] ?? meta.willCurr ?? meta.will;
+                const newWill =
+                    rawWill !== undefined && rawWill !== '' && !isNaN(Number(rawWill)) ? Number(rawWill) : summary.will;
+                const rawMaxWill = meta['will-max-display'] ?? meta.willMax;
+                const newMaxWill =
+                    rawMaxWill !== undefined && rawMaxWill !== '' && !isNaN(Number(rawMaxWill))
+                        ? Number(rawMaxWill)
+                        : summary.maxWill;
+                const newAvatar = (meta['token-image-url'] as string) || summary.tokenImageUrl;
+
+                if (
+                    newType1 !== summary.type1 ||
+                    newType2 !== summary.type2 ||
+                    newName !== summary.name ||
+                    newSpecies !== summary.species ||
+                    newRank !== summary.rank ||
+                    newHp !== summary.hp ||
+                    newMaxHp !== summary.maxHp ||
+                    newWill !== summary.will ||
+                    newMaxWill !== summary.maxWill ||
+                    newAvatar !== summary.tokenImageUrl
+                ) {
+                    nextSummaries[id] = {
+                        ...summary,
+                        type1: newType1,
+                        type2: newType2,
+                        name: newName,
+                        species: newSpecies,
+                        rank: newRank,
+                        hp: newHp,
+                        maxHp: newMaxHp,
+                        will: newWill,
+                        maxWill: newMaxWill,
+                        tokenImageUrl: newAvatar,
+                        fullMetadata: { ...(summary.fullMetadata || {}), ...meta }
+                    };
+                    hasChanges = true;
+                }
+            } catch {
+                // Ignore individual summary merge errors
+            }
+        }
+    } catch (e) {
+        console.warn('[pcCandidateMatching] Failed to refresh summaries from IndexedDB:', e);
     }
 
     return { updated: nextSummaries, hasChanges };

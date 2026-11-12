@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 import { storageAdapter, markDataChanged } from '@/utils/sync/storageAdapter';
+import { idbGetCharacter } from '@/utils/sync/standaloneIdb';
 import { METADATA_ID } from '@/utils/sync/obr';
 import { imageManager } from '@/utils/graphics/imageManager';
-import type { TreeItem } from './sidebarTypes';
+import type { TreeItem } from '@/components/standalone/sidebarTypes';
 
 interface UseSidebarTreeCrudProps {
     items: TreeItem[];
@@ -77,14 +78,20 @@ export function useSidebarTreeCrud({
             onCloseContextMenu();
             if (item.type === 'folder') return;
             try {
-                const charData = localStorage.getItem(`pkr_char_${item.id}`);
-                if (charData) {
-                    const meta = JSON.parse(charData);
+                const existingChar = await idbGetCharacter(item.id);
+                const sourceMeta = (existingChar?.metadata as Record<string, unknown> | undefined) || item.meta;
+                if (sourceMeta) {
                     const duplicatedName = `${item.name} (Copy)`;
-                    meta.nickname = duplicatedName;
                     const newId = await storageAdapter.createLocalCharacter(duplicatedName, item.parentId);
-                    localStorage.setItem(`pkr_char_${newId}`, JSON.stringify(meta));
-                    window.dispatchEvent(new Event('pkr-local-data-changed'));
+                    await storageAdapter.saveCharacter(
+                        newId,
+                        {
+                            ...sourceMeta,
+                            nickname: duplicatedName,
+                            parentId: item.parentId
+                        },
+                        METADATA_ID
+                    );
                 }
             } catch (error) {
                 console.error('[SidebarEngine] Failed to duplicate character:', error);

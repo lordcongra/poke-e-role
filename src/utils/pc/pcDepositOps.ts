@@ -6,7 +6,9 @@ import { calculateRelativeAttachment } from './rehomeEngine';
 import { isEntityLockedByGm } from './pcCandidateMatching';
 import { isItemTrainer } from './pcItemMatching';
 import { separateAttachments, detachTokensFromParent, sanitizeAttachmentBundles } from './pcAttachmentOps';
-import { storageAdapter } from '../sync/storageAdapter';
+import { storageAdapter, isStandaloneMode } from '@/utils/sync/storageAdapter';
+import { idbGetCharacter } from '@/utils/sync/standaloneIdb';
+import { METADATA_ID } from '@/hooks/owlbearSync/owlbearSyncConstants';
 
 /**
  * Resolves ownership status of a Pokémon entityId within the current campaign and across other campaigns.
@@ -443,13 +445,13 @@ export async function prepareDepositSummary(
 /**
  * Creates a duplicate clone summary of an existing stored Pokémon with a fresh entityId.
  */
-export function clonePokemonSummaryOps(summary: PcPokemonSummary): {
+export async function clonePokemonSummaryOps(summary: PcPokemonSummary): Promise<{
     clonedSummary: PcPokemonSummary;
     clonedId: string;
-} {
+}> {
     const clonedId = crypto.randomUUID();
     const cloneName = `${summary.name || summary.species} (Clone)`;
-    const cloneMeta = { ...(summary.fullMetadata || {}) };
+    const cloneMeta: Record<string, unknown> = { ...(summary.fullMetadata || {}) };
     cloneMeta.nickname = cloneName;
     cloneMeta.name = cloneName;
     cloneMeta.entityId = clonedId;
@@ -465,31 +467,20 @@ export function clonePokemonSummaryOps(summary: PcPokemonSummary): {
         savedTokenItem: undefined
     };
 
-    if (typeof window !== 'undefined' && window.localStorage) {
+    if (isStandaloneMode) {
         try {
-            const origRaw =
-                localStorage.getItem(`pkr_char_${summary.entityId}`) ||
-                (summary.savedTokenItem?.id ? localStorage.getItem(`pkr_char_${summary.savedTokenItem.id}`) : null);
-            let storedCloneMeta: Record<string, unknown> | undefined;
-            if (origRaw) {
-                const parsed = JSON.parse(origRaw);
-                if (parsed && typeof parsed === 'object') {
-                    storedCloneMeta = parsed as Record<string, unknown>;
-                    storedCloneMeta.nickname = cloneName;
-                    storedCloneMeta.name = cloneName;
-                    storedCloneMeta.entityId = clonedId;
-                    delete storedCloneMeta.parentId;
-                    localStorage.setItem(`pkr_char_${clonedId}`, JSON.stringify(storedCloneMeta));
-                    clonedSummary.fullMetadata = storedCloneMeta as unknown as PcPokemonSummary['fullMetadata'];
-                }
-            }
-            if (!storedCloneMeta) {
-                localStorage.setItem(`pkr_char_${clonedId}`, JSON.stringify(cloneMeta));
-            }
-            storageAdapter
-                .saveCharacter(clonedId, storedCloneMeta || cloneMeta, 'pokerole-pmd-extension/stats')
-                .catch(() => {});
-            window.dispatchEvent(new Event('pkr-local-data-changed'));
+            const origChar =
+                (await idbGetCharacter(summary.entityId)) ||
+                (summary.savedTokenItem?.id ? await idbGetCharacter(summary.savedTokenItem.id) : undefined);
+            const origMeta = origChar?.metadata as Record<string, unknown> | undefined;
+            const storedCloneMeta: Record<string, unknown> = origMeta ? { ...origMeta } : { ...cloneMeta };
+            storedCloneMeta.nickname = cloneName;
+            storedCloneMeta.name = cloneName;
+            storedCloneMeta.entityId = clonedId;
+            delete storedCloneMeta.parentId;
+            clonedSummary.fullMetadata = storedCloneMeta as unknown as PcPokemonSummary['fullMetadata'];
+
+            await storageAdapter.saveCharacter(clonedId, storedCloneMeta, METADATA_ID);
         } catch (e) {
             console.warn('[pcDepositOps] Failed to create local clone sheet:', e);
         }

@@ -48,7 +48,7 @@ export function updateCustomType(
 export function removeCustomType(set: HomebrewSet, get: HomebrewGet, name: string): void {
     const newTypes = get().roomCustomTypes.filter((customType) => customType.name !== name);
     set({ roomCustomTypes: newTypes, needsBackup: true }, false, 'homebrew/removeCustomType');
-    saveHomebrewLocal(get());
+    saveHomebrewLocal(get(), { allowEmpty: true });
 }
 
 export function duplicateCustomType(set: HomebrewSet, get: HomebrewGet, name: string): void {
@@ -100,7 +100,7 @@ export function removeCustomAbility(set: HomebrewSet, get: HomebrewGet, id: stri
     const newAbilities = filterOutById(get().roomCustomAbilities, id);
     set({ roomCustomAbilities: newAbilities, needsBackup: true }, false, 'homebrew/removeCustomAbility');
     syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, newAbilities, get().roomCustomItems);
-    saveHomebrewLocal(get());
+    saveHomebrewLocal(get(), { allowEmpty: true });
 }
 
 export function duplicateCustomAbility(set: HomebrewSet, get: HomebrewGet, id: string): void {
@@ -142,7 +142,7 @@ export function removeCustomMove(set: HomebrewSet, get: HomebrewGet, id: string)
     const newMoves = filterOutById(get().roomCustomMoves, id);
     set({ roomCustomMoves: newMoves, needsBackup: true }, false, 'homebrew/removeCustomMove');
     syncHomebrewToApi(get().roomCustomPokemon, newMoves, get().roomCustomAbilities, get().roomCustomItems);
-    saveHomebrewLocal(get());
+    saveHomebrewLocal(get(), { allowEmpty: true });
 }
 
 export function duplicateCustomMove(set: HomebrewSet, get: HomebrewGet, id: string): void {
@@ -189,7 +189,7 @@ export function removeCustomPokemon(set: HomebrewSet, get: HomebrewGet, id: stri
     const newPokemon = filterOutById(get().roomCustomPokemon, id);
     set({ roomCustomPokemon: newPokemon, needsBackup: true }, false, 'homebrew/removeCustomPokemon');
     syncHomebrewToApi(newPokemon, get().roomCustomMoves, get().roomCustomAbilities, get().roomCustomItems);
-    saveHomebrewLocal(get());
+    saveHomebrewLocal(get(), { allowEmpty: true });
 }
 
 export function duplicateCustomPokemon(set: HomebrewSet, get: HomebrewGet, id: string): void {
@@ -234,7 +234,7 @@ export function removeCustomItem(set: HomebrewSet, get: HomebrewGet, id: string)
     const newItems = filterOutById(get().roomCustomItems, id);
     set({ roomCustomItems: newItems, needsBackup: true }, false, 'homebrew/removeCustomItem');
     syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, newItems);
-    saveHomebrewLocal(get());
+    saveHomebrewLocal(get(), { allowEmpty: true });
 }
 
 export function duplicateCustomItem(set: HomebrewSet, get: HomebrewGet, id: string): void {
@@ -277,7 +277,7 @@ export function updateCustomForm<K extends keyof CustomForm>(
 export function removeCustomForm(set: HomebrewSet, get: HomebrewGet, id: string): void {
     const newForms = filterOutById(get().roomCustomForms, id);
     set({ roomCustomForms: newForms, needsBackup: true }, false, 'homebrew/removeCustomForm');
-    saveHomebrewLocal(get());
+    saveHomebrewLocal(get(), { allowEmpty: true });
 }
 
 export function duplicateCustomForm(set: HomebrewSet, get: HomebrewGet, id: string): void {
@@ -315,7 +315,7 @@ export function updateCustomStatus<K extends keyof CustomStatus>(
 export function removeCustomStatus(set: HomebrewSet, get: HomebrewGet, id: string): void {
     const newStatuses = filterOutById(get().roomCustomStatuses, id);
     set({ roomCustomStatuses: newStatuses, needsBackup: true }, false, 'homebrew/removeCustomStatus');
-    saveHomebrewLocal(get());
+    saveHomebrewLocal(get(), { allowEmpty: true });
 }
 
 export function duplicateCustomStatus(set: HomebrewSet, get: HomebrewGet, id: string): void {
@@ -358,7 +358,7 @@ export function updateCustomFieldEffect<K extends keyof CustomFieldEffect>(
 export function removeCustomFieldEffect(set: HomebrewSet, get: HomebrewGet, id: string): void {
     const newEffects = filterOutById(get().roomCustomFieldEffects, id);
     set({ roomCustomFieldEffects: newEffects, needsBackup: true }, false, 'homebrew/removeCustomFieldEffect');
-    saveHomebrewLocal(get());
+    saveHomebrewLocal(get(), { allowEmpty: true });
 }
 
 export function duplicateCustomFieldEffect(set: HomebrewSet, get: HomebrewGet, id: string): void {

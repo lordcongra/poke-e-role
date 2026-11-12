@@ -35,19 +35,12 @@ export function parseNumericMeta(
 /**
  * Builds a PcPokemonSummary representation of a Trainer profile for sheet viewing.
  */
-export function buildTrainerSummary(trainer: TrainerRoster): PcPokemonSummary | null {
+export function buildTrainerSummary(
+    trainer: TrainerRoster,
+    localMetaOverride?: Record<string, unknown> | null
+): PcPokemonSummary | null {
     if (trainer.profileType === 'storage' || trainer.id.startsWith('__pmd_')) return null;
-    let localMeta: Record<string, unknown> | null = null;
-    if (typeof window !== 'undefined' && window.localStorage) {
-        try {
-            const raw = window.localStorage.getItem(`pkr_char_${trainer.id}`);
-            if (raw) localMeta = JSON.parse(raw);
-            if (!localMeta && trainer.savedTokenItem?.id) {
-                const rawTok = window.localStorage.getItem(`pkr_char_${trainer.savedTokenItem.id}`);
-                if (rawTok) localMeta = JSON.parse(rawTok);
-            }
-        } catch {}
-    }
+    const localMeta: Record<string, unknown> | null = localMetaOverride ?? null;
 
     const tokenMeta =
         (trainer.savedTokenItem?.metadata?.[METADATA_ID] as Record<string, unknown>) ||
