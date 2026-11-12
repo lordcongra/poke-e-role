@@ -51,6 +51,32 @@ if (typeof window !== 'undefined') {
 }
 
 // 3. Polyfill / Mock for @owlbear-rodeo/sdk
+function createBuilderProxy<T extends object>(instance: T, item: Record<string, unknown>): T {
+    const target = instance as Record<string, unknown>;
+    const proxy: T = new Proxy(instance, {
+        get(obj, prop: string | symbol) {
+            if (typeof prop === 'symbol') {
+                return Reflect.get(obj, prop);
+            }
+            if (prop in target) {
+                const val = target[prop];
+                if (typeof val === 'function') {
+                    return (...args: unknown[]) => {
+                        const res = (val as (...a: unknown[]) => unknown).apply(obj, args);
+                        return res === obj ? proxy : res;
+                    };
+                }
+                return val;
+            }
+            return (val: unknown) => {
+                item[prop] = val;
+                return proxy;
+            };
+        }
+    });
+    return proxy;
+}
+
 class MockImageBuilder {
     private item: Record<string, unknown>;
     constructor(image: unknown, grid: unknown) {
@@ -68,25 +94,7 @@ class MockImageBuilder {
             visible: true,
             locked: false
         };
-        const proxy: any = new Proxy(this, {
-            get(target: any, prop: string) {
-                if (prop in target) {
-                    const val = target[prop];
-                    if (typeof val === 'function') {
-                        return (...args: any[]) => {
-                            const res = val.apply(target, args);
-                            return res === target ? proxy : res;
-                        };
-                    }
-                    return val;
-                }
-                return (val: any) => {
-                    target.item[prop] = val;
-                    return proxy;
-                };
-            }
-        });
-        return proxy;
+        return createBuilderProxy(this, this.item);
     }
     id(val: string) {
         this.item.id = val;
@@ -150,25 +158,7 @@ class MockGenericBuilder {
             style: {},
             text: { style: {}, plainText: '' }
         };
-        const proxy: any = new Proxy(this, {
-            get(target: any, prop: string) {
-                if (prop in target) {
-                    const val = target[prop];
-                    if (typeof val === 'function') {
-                        return (...args: any[]) => {
-                            const res = val.apply(target, args);
-                            return res === target ? proxy : res;
-                        };
-                    }
-                    return val;
-                }
-                return (val: any) => {
-                    target.item[prop] = val;
-                    return proxy;
-                };
-            }
-        });
-        return proxy;
+        return createBuilderProxy(this, this.item);
     }
     id(val: string) {
         this.item.id = val;

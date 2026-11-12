@@ -1,20 +1,31 @@
-import React from 'react';
-import { HomebrewModal } from '../homebrew/HomebrewModal';
+import React, { lazy, Suspense } from 'react';
 import { RulesModal } from '../modals/settings/RulesModal';
-import { ItemGeneratorModal } from '../modals/itemGenerator';
 import { ChangelogModal } from '../modals/settings/ChangelogModal';
 import { InitiativeSettingsModal } from '../modals/trackers/InitiativeSettingsModal';
-import { GeneratorModal } from '../modals/pokemonGenerator';
 import { PrintSettingsModal } from '../modals/settings/PrintSettingsModal';
 import { ThemeSettingsModal } from '../modals/settings/ThemeSettingsModal';
 import { AccessibilityModal } from '../modals/settings/AccessibilityModal';
-import { GmScreenModal } from '../modals/gmScreen/GmScreenModal';
 import { BattleOrganizerModal } from '../modals/battleOrganizer/BattleOrganizerModal';
 import { BattleOrganizerSettingsModal } from '../modals/battleOrganizer/BattleOrganizerSettingsModal';
-import { PrintBattleOrganizer } from '../print/PrintBattleOrganizer';
-import { TrainerGeneratorModal } from '../modals/trainerGenerator';
 import { BugReportModal, PlatformGuideModal } from '../modals/settings';
 import { PcStorageModal } from '../modals/pcStorage/PcStorageModal';
+
+const HomebrewModal = lazy(() => import('../homebrew/HomebrewModal').then((m) => ({ default: m.HomebrewModal })));
+const ItemGeneratorModal = lazy(() =>
+    import('../modals/itemGenerator').then((m) => ({ default: m.ItemGeneratorModal }))
+);
+const GeneratorModal = lazy(() =>
+    import('../modals/pokemonGenerator').then((m) => ({ default: m.GeneratorModal }))
+);
+const TrainerGeneratorModal = lazy(() =>
+    import('../modals/trainerGenerator').then((m) => ({ default: m.TrainerGeneratorModal }))
+);
+const GmScreenModal = lazy(() =>
+    import('../modals/gmScreen/GmScreenModal').then((m) => ({ default: m.GmScreenModal }))
+);
+const PrintBattleOrganizer = lazy(() =>
+    import('../print/PrintBattleOrganizer').then((m) => ({ default: m.PrintBattleOrganizer }))
+);
 
 export type ActiveModal =
     | 'homebrew'
@@ -55,7 +66,7 @@ export const ToolbarModals: React.FC<ToolbarModalsProps> = ({
     onDonePrintingBattleOrganizer
 }) => {
     return (
-        <>
+        <Suspense fallback={null}>
             {activeModal === 'homebrew' && <HomebrewModal onClose={onClose} />}
             {activeModal === 'rules' && <RulesModal onClose={onClose} />}
             {activeModal === 'loot' && <ItemGeneratorModal onClose={onClose} />}
@@ -83,6 +94,6 @@ export const ToolbarModals: React.FC<ToolbarModalsProps> = ({
             {activeModal === 'platform-guide' && <PlatformGuideModal onClose={onClose} />}
 
             {isPrintingBattleOrganizer && <PrintBattleOrganizer onDone={onDonePrintingBattleOrganizer} />}
-        </>
+        </Suspense>
     );
 };

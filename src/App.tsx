@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useOwlbearSync } from '@/hooks/useOwlbearSync';
 import { useDynamicThemeSync } from '@/hooks/useDynamicThemeSync';
 import { useCharacterStore } from '@/store/useCharacterStore';
@@ -14,7 +14,7 @@ import { InventoryTable } from './components/tables/InventoryTable';
 import { TrackerSection } from './components/board/TrackerSection';
 import { TrainerBadges } from './components/board/TrainerBadges';
 import { TrainerPokedex } from './components/board/TrainerPokedex';
-import { PrintSheet } from './components/print/PrintSheet';
+const PrintSheet = lazy(() => import('./components/print/PrintSheet').then((m) => ({ default: m.PrintSheet })));
 import { DemoRollModal } from './components/modals/combat/DemoRollModal';
 import { GlobalToolbar } from './components/ui/GlobalToolbar';
 import { Sidebar } from './components/standalone/Sidebar';
@@ -131,7 +131,11 @@ function App() {
                 </div>
 
                 <DemoRollModal />
-                {isPrinting && <PrintSheet />}
+                {isPrinting && (
+                    <Suspense fallback={null}>
+                        <PrintSheet />
+                    </Suspense>
+                )}
                 <PersistentTokensWarningModal
                     isOpen={showInitialPersistenceNotice}
                     onClose={() => setShowInitialPersistenceNotice(false)}
@@ -173,7 +177,11 @@ function App() {
                 </div>
 
                 <DemoRollModal />
-                {isPrinting && <PrintSheet />}
+                {isPrinting && (
+                    <Suspense fallback={null}>
+                        <PrintSheet />
+                    </Suspense>
+                )}
             </div>
         </div>
     );

@@ -17,8 +17,7 @@ export default defineConfig({
         react(),
         VitePWA({
             registerType: 'autoUpdate',
-            // Added manifest.json to include assets so the Service Worker knows it exists
-            includeAssets: ['pokeball-token.svg', 'favicon.ico', 'robots.txt', 'manifest.json'],
+            includeAssets: ['pokeball-token.svg', 'manifest.json'],
             manifest: {
                 name: 'PokéRole Character Sheet',
                 short_name: 'PokéRole',
@@ -30,17 +29,49 @@ export default defineConfig({
                 start_url: '/poke-e-role/',
                 icons: [
                     {
-                        src: 'pokeball-token.svg',
+                        src: 'pokeball-192.png',
                         sizes: '192x192',
-                        type: 'image/svg+xml',
+                        type: 'image/png',
                         purpose: 'any maskable'
+                    },
+                    {
+                        src: 'pokeball-512.png',
+                        sizes: '512x512',
+                        type: 'image/png',
+                        purpose: 'any maskable'
+                    },
+                    {
+                        src: 'pokeball-token.svg',
+                        sizes: 'any',
+                        type: 'image/svg+xml',
+                        purpose: 'any'
                     }
                 ]
             },
             workbox: {
-                // CRITICAL FIX: Added 'json' to the globPatterns!
-                // Without this, your offline Pokemon/Move database will fail to load without internet.
-                globPatterns: ['**/*.{js,css,html,ico,png,svg,json}']
+                globPatterns: [
+                    '**/*.{js,css,html,svg,png}',
+                    'manifest.json',
+                    'dataset/index.json',
+                    'dataset/moves-lookup.json',
+                    'dataset/pokedex-lookup.json'
+                ],
+                runtimeCaching: [
+                    {
+                        urlPattern: /\/poke-e-role\/dataset\/.*\.json$/i,
+                        handler: 'StaleWhileRevalidate',
+                        options: {
+                            cacheName: 'dataset-json-cache',
+                            expiration: {
+                                maxEntries: 500,
+                                maxAgeSeconds: 60 * 60 * 24 * 30
+                            },
+                            cacheableResponse: {
+                                statuses: [0, 200]
+                            }
+                        }
+                    }
+                ]
             }
         }),
         visualizer({
@@ -65,7 +96,6 @@ export default defineConfig({
     server: {
         port: 5173,
         cors: true,
-        host: true,
         headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
