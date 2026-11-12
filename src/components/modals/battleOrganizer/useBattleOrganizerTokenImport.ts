@@ -394,7 +394,6 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                         }
 
                         const currentRoundCombatants = currentRound.combatants;
-                        const matchedExistingIds = new Set<string>();
 
                         const preservedCombatantRows = combatantRows.map((row) => {
                             const existing = currentRoundCombatants.find((c) => {
@@ -410,7 +409,6 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                             });
 
                             if (existing) {
-                                matchedExistingIds.add(existing.id);
                                 return {
                                     ...row,
                                     isPlayerSide: existing.isPlayerSide !== undefined ? existing.isPlayerSide : row.isPlayerSide,
@@ -424,17 +422,9 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                             return row;
                         });
 
-                        // Preserve any combatants from currentRoundCombatants where c.isInPc === true
-                        // (or orphaned combatants not in combatantRows), appending them to the preserved list
-                        const unmappedCombatants = currentRoundCombatants
-                            .filter((c) => !matchedExistingIds.has(c.id))
-                            .map((c) => ({
-                                ...c,
-                                abilityTargetIds: shouldReset ? [] : (c.abilityTargetIds ?? [])
-                            }));
-
-                        preservedCombatantRows.push(...unmappedCombatants);
-
+                        // In "Replace All" (!isMergeOnly), strictly use preservedCombatantRows
+                        // (fresh initiative combatants with preserved player-side/target flags)
+                        // without appending unmapped combatants from the prior round.
                         targetCombatantsToReset = preservedCombatantRows;
                         const updatedRound: BattleRoundData = {
                             ...currentRound,

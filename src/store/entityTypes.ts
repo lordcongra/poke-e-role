@@ -53,6 +53,9 @@ export interface MoveData {
     dmg1: string;
     power: number;
     desc?: string;
+    effect?: string;
+    description?: string;
+    attributes?: Record<string, boolean>;
     marker?: string;
     dualScaleSelected?: boolean;
     attackAction?: ItemAttackAction;

@@ -9,7 +9,7 @@ import { addRollLogEntry } from './diceRoller';
 import { broadcastRollLog } from './rollLogSync';
 import { showDicePlusRetirementNotice } from '../../hooks/owlbearSync/owlbearSyncConstants';
 import { matchesTarget } from './abilityTargetingUtils';
-import { calculateBaseDamage } from './combatMath';
+import { calculateBaseDamage, parseMissingHpHurtModifier } from './combatMath';
 
 async function emitRollLogEntry(params: {
     title: string;
@@ -192,6 +192,11 @@ export async function executeMultiTargetDamageRoll(
 
     if (state.trackers.globalSucc !== 0) {
         tags.push(`Tracker Mod: ${state.trackers.globalSucc > 0 ? '+' : ''}${state.trackers.globalSucc} Succ`);
+    }
+
+    const hurtMod = parseMissingHpHurtModifier(move, state);
+    if (hurtMod.tag) {
+        tags.push(hurtMod.tag);
     }
 
     if (itemBuffs.firstHitDmg !== 0 && state.trackers.firstHitDmg) {

@@ -7,7 +7,8 @@ import {
     getPainPenalty,
     getWeatherDamageBonus,
     getFieldAuraDamageBonus,
-    calculateBaseDamage
+    calculateBaseDamage,
+    parseMissingHpHurtModifier
 } from '@/utils/combat/combatMath';
 import { parseCombatTags } from '@/utils/tagParser/index';
 import { rollDicePlus } from '@/utils/combat/diceRoller';
@@ -137,6 +138,11 @@ export async function executeDamageRoll(
         const diceWord = Math.abs(dmg1Stage.stage) === 1 ? 'Die' : 'Dice';
         const label = dmg1Stage.stage > 0 ? `${dmg1Stage.name} Buff` : `${dmg1Stage.name} Debuff`;
         tags.push(`${label} (${sign}${dmg1Stage.stage} ${diceWord})`);
+    }
+
+    const hurtMod = parseMissingHpHurtModifier(move, state);
+    if (hurtMod.tag) {
+        tags.push(hurtMod.tag);
     }
 
     if (isImmune) {

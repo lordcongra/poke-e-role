@@ -11,10 +11,12 @@ export * from './math/combatWeatherMath';
 export * from './math/combatAuraMath';
 export * from './math/combatCritMath';
 export * from './math/combatDefenseMath';
+export * from './math/combatHurtModifierMath';
 
 import { getWeatherDamageBonus } from './math/combatWeatherMath';
 import { getFieldAuraDamageBonus } from './math/combatAuraMath';
 import { getRankBonusStats } from './math/combatDefenseMath';
+import { parseMissingHpHurtModifier } from './math/combatHurtModifierMath';
 
 // Backward compatibility proxy exports
 export {
@@ -277,8 +279,9 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState, itemB
     const cleanAbility = (state.identity.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
     const stakeoutBonus = (cleanAbility === 'stakeout' && state.identity.abilityActive !== false && Boolean(state.identity.abilityTargetIds?.[0])) ? 1 : 0;
     const paralysisPenalty = normalizedDamageStatistic === 'dex' ? statuses.paralysisDexterityPenalty : 0;
+    const hurtMod = parseMissingHpHurtModifier(move, state);
 
-    return Math.max(1, move.power + scalingValue + extraDice + sameTypeAttackBonus + teraBonus + customFirstHitTag + paralysisPenalty + stakeoutBonus);
+    return Math.max(1, move.power + scalingValue + extraDice + sameTypeAttackBonus + teraBonus + customFirstHitTag + paralysisPenalty + stakeoutBonus + hurtMod.diceModifier);
 }
 
 export function calculateTotalDamage(move: MoveData, state: CharacterState, itemBuffs?: CombatBonuses): number {
