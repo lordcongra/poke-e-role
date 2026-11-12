@@ -1,6 +1,19 @@
 const memoryCache = new Map<string, unknown>();
 const inFlightRequests = new Map<string, Promise<unknown>>();
-const activeControllers = new Map<string, AbortController>();
+const MAX_NEGATIVE_CACHE_SIZE = 250;
+const negativeCache = new Set<string>();
+
+function addToNegativeCache(cacheKey: string): void {
+    if (negativeCache.has(cacheKey)) {
+        negativeCache.delete(cacheKey);
+    } else if (negativeCache.size >= MAX_NEGATIVE_CACHE_SIZE) {
+        const oldestKey = negativeCache.values().next().value;
+        if (oldestKey !== undefined) {
+            negativeCache.delete(oldestKey);
+        }
+    }
+    negativeCache.add(cacheKey);
+}
 
 /**
  * Automatically purges legacy `pkr_cache_*` and `pkr_cache_time_*` entries from
@@ -36,14 +49,16 @@ clearLegacyLocalStorageCache();
  */
 export function clearMemoryCache(): void {
     memoryCache.clear();
+    negativeCache.clear();
 }
 
 /**
  * Fetches dataset JSON files efficiently:
  * 1. Checks in-memory session cache first (<1ms instant retrieval).
- * 2. Deduplicates simultaneous requests (single-flighting).
- * 3. Uses standard HTTP fetch (the browser's native HTTP disk cache manages ETags & 304 Not Modified).
- * 4. Never pollutes or competes for the browser's 5MB localStorage quota.
+ * 2. Checks bounded negative cache for previously failed/404 lookups.
+ * 3. Deduplicates simultaneous requests (single-flighting).
+ * 4. Uses standard HTTP fetch (the browser's native HTTP disk cache manages ETags & 304 Not Modified).
+ * 5. Never pollutes or competes for the browser's 5MB localStorage quota.
  */
 export async function fetchWithCache<T>(url: string, cacheKey: string, itemName: string): Promise<T | null> {
     // 1. Instant RAM Cache hit
@@ -51,23 +66,21 @@ export async function fetchWithCache<T>(url: string, cacheKey: string, itemName:
         return memoryCache.get(cacheKey) as T;
     }
 
-    // 2. Single-flight deduplication: return running request if active
+    // 2. Bounded Negative Cache hit (avoid repeating 404/failed fetches)
+    if (negativeCache.has(cacheKey)) {
+        return null;
+    }
+
+    // 3. Single-flight deduplication: return running request if active
     if (inFlightRequests.has(cacheKey)) {
         return (await inFlightRequests.get(cacheKey)) as T | null;
     }
 
-    // Abort any previous controller if present
-    if (activeControllers.has(cacheKey)) {
-        activeControllers.get(cacheKey)?.abort();
-    }
-
-    const controller = new AbortController();
-    activeControllers.set(cacheKey, controller);
-
     const requestPromise = (async (): Promise<T | null> => {
         try {
-            const response = await fetch(url, { signal: controller.signal });
+            const response = await fetch(url);
             if (!response.ok) {
+                addToNegativeCache(cacheKey);
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
@@ -75,13 +88,10 @@ export async function fetchWithCache<T>(url: string, cacheKey: string, itemName:
             memoryCache.set(cacheKey, data);
             return data;
         } catch (error) {
-            if (error instanceof Error && error.name === 'AbortError') {
-                return null;
-            }
+            addToNegativeCache(cacheKey);
             console.error(`[ApiClient] Failed to load ${itemName}:`, error);
             return null;
         } finally {
-            activeControllers.delete(cacheKey);
             inFlightRequests.delete(cacheKey);
         }
     })();

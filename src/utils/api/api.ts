@@ -210,7 +210,9 @@ export async function fetchBasePokemonData(speciesName: string): Promise<Pokemon
     const cleanName = speciesName.trim().toLowerCase();
 
     await loadLocalDataset();
-    const selectedUrl = SPECIES_URLS[cleanName] || formatLocalPath(`/dataset/pokedex/${speciesName.trim()}.json`);
+    const selectedUrl =
+        SPECIES_URLS[cleanName] ||
+        (isDatasetLoaded ? null : formatLocalPath(`/dataset/pokedex/${speciesName.trim()}.json`));
 
     if (!selectedUrl) {
         console.warn(`[Local Fetch] Failed to find base species ${speciesName} in local dataset.`);
@@ -241,7 +243,9 @@ export async function fetchPokemonData(speciesName: string): Promise<PokemonApiR
 
     // 2. Check Local Dataset
     await loadLocalDataset();
-    const selectedUrl = SPECIES_URLS[cleanName] || formatLocalPath(`/dataset/pokedex/${speciesName.trim()}.json`);
+    const selectedUrl =
+        SPECIES_URLS[cleanName] ||
+        (isDatasetLoaded ? null : formatLocalPath(`/dataset/pokedex/${speciesName.trim()}.json`));
 
     // 3. Prevent Fetching non-existent Data
     if (!selectedUrl) {
@@ -267,7 +271,9 @@ export async function fetchAbilityData(abilityName: string): Promise<AbilityApiR
 
     // 2. Check Local Dataset
     await loadLocalDataset();
-    const selectedUrl = ABILITIES_URLS[cleanName] || formatLocalPath(`/dataset/abilities/${baseName}.json`);
+    const selectedUrl =
+        ABILITIES_URLS[cleanName] ||
+        (isDatasetLoaded ? null : formatLocalPath(`/dataset/abilities/${baseName}.json`));
 
     // 3. Prevent Fetching non-existent Data
     if (!selectedUrl) {
@@ -389,7 +395,9 @@ export async function fetchNatureData(natureName: string): Promise<NatureApiResp
 
     // 1. Check Local Dataset
     await loadLocalDataset();
-    const selectedUrl = NATURES_URLS[cleanName] || formatLocalPath(`/dataset/natures/${natureName.trim()}.json`);
+    const selectedUrl =
+        NATURES_URLS[cleanName] ||
+        (isDatasetLoaded ? null : formatLocalPath(`/dataset/natures/${natureName.trim()}.json`));
 
     // 2. Prevent Fetching non-existent Data
     if (!selectedUrl) {

@@ -4,7 +4,21 @@
  * This makes character sprites with large transparent margins fill their icon containers cleanly.
  */
 
+const MAX_CROP_CACHE_SIZE = 100;
+const MAX_CROP_SCAN_DIMENSION = 1024;
 const croppedCache = new Map<string, Promise<string>>();
+
+function setCroppedCache(key: string, value: Promise<string>): void {
+    if (croppedCache.has(key)) {
+        croppedCache.delete(key);
+    } else if (croppedCache.size >= MAX_CROP_CACHE_SIZE) {
+        const oldestKey = croppedCache.keys().next().value;
+        if (oldestKey !== undefined) {
+            croppedCache.delete(oldestKey);
+        }
+    }
+    croppedCache.set(key, value);
+}
 
 export async function cropImageTransparencyUrl(url: string, square = true): Promise<string> {
     if (!url || typeof document === 'undefined') return url;
@@ -20,7 +34,10 @@ export async function cropImageTransparencyUrl(url: string, square = true): Prom
     }
 
     if (croppedCache.has(url)) {
-        return croppedCache.get(url)!;
+        const cached = croppedCache.get(url)!;
+        croppedCache.delete(url);
+        croppedCache.set(url, cached);
+        return cached;
     }
 
     const promise = new Promise<string>((resolve) => {
@@ -36,12 +53,16 @@ export async function cropImageTransparencyUrl(url: string, square = true): Prom
             img.onload = () => {
                 clearTimeout(timer);
                 try {
-                    const width = img.naturalWidth || img.width;
-                    const height = img.naturalHeight || img.height;
-                    if (!width || !height) {
+                    const srcWidth = img.naturalWidth || img.width;
+                    const srcHeight = img.naturalHeight || img.height;
+                    if (!srcWidth || !srcHeight) {
                         resolve(url);
                         return;
                     }
+
+                    const scale = Math.min(1, MAX_CROP_SCAN_DIMENSION / Math.max(srcWidth, srcHeight));
+                    const width = Math.max(1, Math.round(srcWidth * scale));
+                    const height = Math.max(1, Math.round(srcHeight * scale));
 
                     const canvas = document.createElement('canvas');
                     canvas.width = width;
@@ -52,7 +73,7 @@ export async function cropImageTransparencyUrl(url: string, square = true): Prom
                         return;
                     }
 
-                    ctx.drawImage(img, 0, 0);
+                    ctx.drawImage(img, 0, 0, width, height);
                     const imageData = ctx.getImageData(0, 0, width, height);
                     const data = imageData.data;
 
@@ -150,6 +171,6 @@ export async function cropImageTransparencyUrl(url: string, square = true): Prom
         }
     });
 
-    croppedCache.set(url, promise);
+    setCroppedCache(url, promise);
     return promise;
 }

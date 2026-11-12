@@ -5,8 +5,8 @@ import OBR from '@owlbear-rodeo/sdk';
 // Default bug report proxy hosted on Cloudflare Workers (keeps Discord webhook secure & unexposed)
 const DEFAULT_BUG_REPORT_ENDPOINT = 'https://pkr-bug-reporter.lordcongra.workers.dev';
 
-export function getDirectDiscordWebhookUrl(): string {
-    const envUrl = import.meta.env.VITE_BUG_REPORT_ENDPOINT || import.meta.env.VITE_DISCORD_WEBHOOK_URL;
+export function getBugReportEndpoint(): string {
+    const envUrl = import.meta.env.VITE_BUG_REPORT_ENDPOINT;
     if (typeof envUrl === 'string' && envUrl.trim().length > 0) {
         return envUrl.trim();
     }
@@ -14,7 +14,7 @@ export function getDirectDiscordWebhookUrl(): string {
 }
 
 export function getDiscordWebhookUrl(): string {
-    return getDirectDiscordWebhookUrl();
+    return getBugReportEndpoint();
 }
 
 export interface BugReportDiagnostics {
@@ -23,13 +23,9 @@ export interface BugReportDiagnostics {
     characterName: string;
     characterSpecies: string;
     characterRank: string;
-    characterMode: string;
-    activeTokenId: string | null;
-    role: string;
     browser: string;
     os: string;
     resolution: string;
-    timestamp: string;
 }
 
 export function formatActiveSheet(diagnostics: {
@@ -58,10 +54,7 @@ export function collectDiagnostics(characterState?: {
         nickname?: string;
         species?: string;
         rank?: string;
-        mode?: string;
     };
-    role?: string;
-    tokenId?: string | null;
 }): BugReportDiagnostics {
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
     let os = 'Unknown OS';
@@ -95,13 +88,9 @@ export function collectDiagnostics(characterState?: {
         characterName: characterState?.identity?.nickname || '',
         characterSpecies: characterState?.identity?.species || '',
         characterRank: characterState?.identity?.rank || '',
-        characterMode: characterState?.identity?.mode || 'Pokémon',
-        activeTokenId: characterState?.tokenId || null,
-        role: characterState?.role || 'PLAYER',
         browser,
         os,
-        resolution,
-        timestamp: new Date().toISOString()
+        resolution
     };
 }
 
@@ -110,11 +99,10 @@ export async function submitBugReportToDiscord(params: {
     reporterDiscord?: string;
     diagnostics: BugReportDiagnostics;
 }): Promise<{ success: boolean; error?: string }> {
-    const webhookUrl = getDiscordWebhookUrl();
-    const directUrl = getDirectDiscordWebhookUrl();
+    const endpointUrl = getBugReportEndpoint();
 
-    if (!webhookUrl && !directUrl) {
-        return { success: false, error: 'No Discord webhook URL configured.' };
+    if (!endpointUrl) {
+        return { success: false, error: 'No bug report endpoint configured.' };
     }
 
     const { description, reporterDiscord, diagnostics } = params;
@@ -163,25 +151,11 @@ export async function submitBugReportToDiscord(params: {
     });
 
     try {
-        let response: Response;
-        try {
-            response = await fetch(webhookUrl || directUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: payload
-            });
-        } catch (initialErr) {
-            // Fallback to direct URL if dev proxy wasn't reached or vice versa
-            if (webhookUrl && directUrl && webhookUrl !== directUrl) {
-                response = await fetch(directUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: payload
-                });
-            } else {
-                throw initialErr;
-            }
-        }
+        const response = await fetch(endpointUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload
+        });
 
         if (!response.ok) {
             const errText = await response.text();

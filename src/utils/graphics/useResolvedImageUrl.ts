@@ -21,6 +21,13 @@ export function useResolvedImageUrl(rawUrl?: string | null, fallback?: string, a
 
     useEffect(() => {
         let mounted = true;
+        let activeBlobUrl: string | null = null;
+
+        const revokeBlobUrl = (url: string | null) => {
+            if (url && url.startsWith('blob:')) {
+                URL.revokeObjectURL(url);
+            }
+        };
 
         const processUrl = async (url: string) => {
             if (!url) {
@@ -36,7 +43,14 @@ export function useResolvedImageUrl(rawUrl?: string | null, fallback?: string, a
             ) {
                 try {
                     const cropped = await cropImageTransparencyUrl(url, true);
-                    if (mounted) setResolvedUrl(cropped || url);
+                    if (mounted) {
+                        const nextUrl = cropped || url;
+                        setResolvedUrl(nextUrl);
+                        if (nextUrl !== url && url.startsWith('blob:')) {
+                            revokeBlobUrl(url);
+                            if (activeBlobUrl === url) activeBlobUrl = null;
+                        }
+                    }
                     return;
                 } catch {
                     // Fallback to uncropped url on error
@@ -54,12 +68,18 @@ export function useResolvedImageUrl(rawUrl?: string | null, fallback?: string, a
             imageManager
                 .getImageUrl(rawUrl!)
                 .then((url) => {
-                    if (mounted) {
-                        if (url) {
-                            processUrl(url);
-                        } else {
-                            setResolvedUrl(fallback || '');
+                    if (!mounted) {
+                        revokeBlobUrl(url);
+                        return;
+                    }
+                    if (url) {
+                        if (activeBlobUrl && activeBlobUrl !== url) {
+                            revokeBlobUrl(activeBlobUrl);
                         }
+                        activeBlobUrl = url.startsWith('blob:') ? url : null;
+                        processUrl(url);
+                    } else {
+                        setResolvedUrl(fallback || '');
                     }
                 })
                 .catch(() => {
@@ -73,6 +93,8 @@ export function useResolvedImageUrl(rawUrl?: string | null, fallback?: string, a
 
         return () => {
             mounted = false;
+            revokeBlobUrl(activeBlobUrl);
+            activeBlobUrl = null;
         };
     }, [rawUrl, fallback, autoCrop]);
 

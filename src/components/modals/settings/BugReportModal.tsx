@@ -18,8 +18,6 @@ interface BugReportModalProps {
 
 export function BugReportModal({ onClose }: BugReportModalProps) {
     const identity = useCharacterStore((state) => state.identity);
-    const role = useCharacterStore((state) => state.role);
-    const tokenId = useCharacterStore((state) => state.tokenId);
 
     const [description, setDescription] = useState('');
     const [reporterDiscord, setReporterDiscord] = useState(() => {
@@ -38,7 +36,7 @@ export function BugReportModal({ onClose }: BugReportModalProps) {
 
     // Initial diagnostic snapshot
     const [diagnostics, setDiagnostics] = useState<BugReportDiagnostics>(() =>
-        collectDiagnostics({ identity, role, tokenId })
+        collectDiagnostics({ identity })
     );
 
     // Fetch freshest diagnostics and check OBR scene selection if store hasn't populated yet
@@ -48,9 +46,7 @@ export function BugReportModal({ onClose }: BugReportModalProps) {
         async function resolveDiagnostics() {
             const currentStore = useCharacterStore.getState();
             let currentDiag = collectDiagnostics({
-                identity: currentStore.identity,
-                role: currentStore.role,
-                tokenId: currentStore.tokenId
+                identity: currentStore.identity
             });
 
             // If character identity is empty and OBR is available, check selected token on scene
@@ -74,8 +70,7 @@ export function BugReportModal({ onClose }: BugReportModalProps) {
                                     ...currentDiag,
                                     characterName: name,
                                     characterSpecies: species,
-                                    characterRank: rank,
-                                    activeTokenId: item.id
+                                    characterRank: rank
                                 };
                             }
                         }
@@ -94,7 +89,7 @@ export function BugReportModal({ onClose }: BugReportModalProps) {
         return () => {
             isCancelled = true;
         };
-    }, [identity, role, tokenId]);
+    }, [identity]);
 
     // Escape key listener to close modal
     useEffect(() => {
@@ -292,12 +287,18 @@ export function BugReportModal({ onClose }: BugReportModalProps) {
                                     className="bug-report-modal__diag-toggle"
                                     onClick={() => setShowDiagnostics(!showDiagnostics)}
                                 >
-                                    <span>Auto-Collected Diagnostics (v{diagnostics.version})</span>
+                                    <span>Included Report Fields &amp; Diagnostics (v{diagnostics.version})</span>
                                     {showDiagnostics ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                 </button>
 
                                 {showDiagnostics && (
                                     <div className="bug-report-modal__diag-content">
+                                        <div className="bug-report-modal__diag-row">
+                                            <span>Reporter Contact:</span>
+                                            <span className="bug-report-modal__diag-val">
+                                                {reporterDiscord.trim() || 'Anonymous'}
+                                            </span>
+                                        </div>
                                         <div className="bug-report-modal__diag-row">
                                             <span>Sheet Version:</span>
                                             <span className="bug-report-modal__diag-val">v{diagnostics.version}</span>
