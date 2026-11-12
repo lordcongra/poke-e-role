@@ -120,7 +120,7 @@ export function usePcStorageModalSetup(
             if (hasChanges || JSON.stringify(sanitized) !== JSON.stringify(pcData)) {
                 const nextData = { ...sanitized, pokemonSummaries: updated };
                 useCharacterStore.setState({ pcData: nextData });
-                savePcStorage(nextData);
+                savePcStorage(nextData).catch(console.warn);
             }
         })();
         return () => {

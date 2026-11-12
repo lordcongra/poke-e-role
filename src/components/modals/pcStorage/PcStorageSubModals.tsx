@@ -189,7 +189,7 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
                     onImportCloudScene={handleDownloadBox}
                     onImportJsonSuccess={(nextData, _count, _campCount, targetTrainerId) => {
                         useCharacterStore.setState({ pcData: nextData, activeBoxIndex: 0 });
-                        savePcStorage(nextData);
+                        savePcStorage(nextData).catch(console.warn);
                         if (targetTrainerId) {
                             useCharacterStore.getState().switchTrainer(targetTrainerId);
                         }
@@ -211,7 +211,7 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
                     }}
                     onScanSceneSuccess={(nextData, count, beltCount, boxCount) => {
                         useCharacterStore.setState({ pcData: nextData });
-                        savePcStorage(nextData);
+                        savePcStorage(nextData).catch(console.warn);
                         if (typeof window !== 'undefined') {
                             window.dispatchEvent(new Event('pkr-local-data-changed'));
                         }

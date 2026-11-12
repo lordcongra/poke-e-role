@@ -250,7 +250,7 @@ describe('Dice Roller & OBR Sync Ops Decomposition Suite', () => {
 
         it('persists delayed intercepts to rolling token and PC summary when active token switched during delay', async () => {
             vi.useFakeTimers();
-            const savePcSpy = vi.spyOn(pcStorageAdapter, 'savePcStorage').mockResolvedValue(undefined);
+            const saveDeltaSpy = vi.spyOn(pcStorageAdapter, 'savePcSummaryDelta').mockResolvedValue(undefined);
 
             useCharacterStore.setState((s) => ({
                 ...s,
@@ -332,7 +332,7 @@ describe('Dice Roller & OBR Sync Ops Decomposition Suite', () => {
             expect(updatedSummary.fullMetadata?.['status-list']).toBe(
                 JSON.stringify([{ id: 'st-burn', name: 'Burn', customName: '', rounds: 3 }])
             );
-            expect(savePcSpy).toHaveBeenCalled();
+            expect(saveDeltaSpy).toHaveBeenCalledWith(expect.objectContaining({ entityId: 'ent-a' }));
         });
 
         it('catches errors from executeStateIntercepts and broadcastRollEntry inside delayed timeout without unhandled rejection', async () => {

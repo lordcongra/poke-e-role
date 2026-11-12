@@ -450,9 +450,7 @@ export function syncPcStorage(
                 }
             };
             import('../../utils/pc/pcStorageAdapter')
-                .then(({ savePcStorage }) => {
-                    savePcStorage(nextPcData);
-                })
+                .then(({ savePcStorage }) => savePcStorage(nextPcData))
                 .catch(() => {});
         }
     }

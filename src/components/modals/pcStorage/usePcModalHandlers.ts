@@ -114,7 +114,7 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
             }
         };
         useCharacterStore.setState({ pcData: nextData });
-        savePcStorage(nextData);
+        savePcStorage(nextData).catch(console.warn);
     };
 
     // Detect if the trainer token is currently placed on the active battle scene
@@ -474,7 +474,9 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
             setBoxSlot,
             depositPokemonToBox,
             prepareDepositSummaryFn: prepareDepositSummary,
-            savePcStorageFn: savePcStorage,
+            savePcStorageFn: (data) => {
+                savePcStorage(data).catch(console.warn);
+            },
             broadcastPlayerPcFn: broadcastPlayerPc,
             broadcastGmPcFn: broadcastGmPc
         });

@@ -28,6 +28,7 @@ export function Sidebar() {
         isBackupModalOpen,
         setIsBackupModalOpen,
         hasUnbackedChanges,
+        backupReminderReason,
         restoreInputRef,
         pendingRestoreData,
         handleCreate,
@@ -136,12 +137,19 @@ export function Sidebar() {
                         onClick={handleExportMasterBackup}
                         title={
                             hasUnbackedChanges
-                                ? 'Unbacked changes! Click to backup directory.'
+                                ? backupReminderReason === 'stale'
+                                    ? 'Over 7 days since last backup! Click to export a backup.'
+                                    : 'Unbacked changes! Click to backup directory.'
                                 : 'Export all folders and characters'
                         }
                     >
                         <Save size={14} /> Backup
-                        {hasUnbackedChanges && <span className="sidebar__backup-badge" title="Unbacked changes" />}
+                        {hasUnbackedChanges && (
+                            <span
+                                className="sidebar__backup-badge"
+                                title={backupReminderReason === 'stale' ? 'Backup overdue (7+ days)' : 'Unbacked changes'}
+                            />
+                        )}
                     </button>
                     <button
                         className="action-button action-button--secondary sidebar__btn text-theme-header"
@@ -164,7 +172,11 @@ export function Sidebar() {
                         <div
                             className="sidebar__backup-prompt-main"
                             onClick={handleExportMasterBackup}
-                            title="Click to backup your data"
+                            title={
+                                backupReminderReason === 'stale'
+                                    ? 'Browser storage (especially Safari) may be evicted after 7 days. Export a backup to stay safe.'
+                                    : 'Click to backup your data'
+                            }
                             role="button"
                             tabIndex={0}
                             onKeyDown={(e) => {
@@ -175,7 +187,13 @@ export function Sidebar() {
                             }}
                         >
                             <AlertTriangle size={13} className="sidebar__backup-prompt-icon" />
-                            <span>Unsaved changes! Backup recommended.</span>
+                            <span>
+                                {backupReminderReason === 'stale'
+                                    ? '7+ days since backup! Export recommended.'
+                                    : backupReminderReason === 'never'
+                                      ? 'No backup yet! Export recommended.'
+                                      : 'Unsaved changes! Backup recommended.'}
+                            </span>
                         </div>
                         <button
                             type="button"

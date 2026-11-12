@@ -105,7 +105,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
     onOpenGuide,
     onClose
 }) => {
-    const hasUnbackedChanges = usePcHeaderBackupStatus();
+    const { hasUnbackedChanges, reminderReason } = usePcHeaderBackupStatus();
 
     const [deleteTarget, setDeleteTarget] = useState<{
         type: 'trainer' | 'campaign' | 'storage';
@@ -341,7 +341,9 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                             onClick={onUploadCloud}
                             title={
                                 hasUnbackedChanges
-                                    ? 'Unbacked changes detected! Backup now.'
+                                    ? reminderReason === 'stale'
+                                        ? 'Over 7 days since last backup! Export a backup to protect against browser storage eviction.'
+                                        : 'Unbacked changes detected! Backup now.'
                                     : OBR.isAvailable
                                       ? 'Backup PC Storage (Cloud Scene Asset, Open Scene Sync, or JSON)'
                                       : 'Download JSON backup of PC storage'
@@ -349,15 +351,26 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                         >
                             {OBR.isAvailable ? <CloudUpload size={14} /> : <Download size={14} />} Backup
                             {hasUnbackedChanges && (
-                                <span className="pc-header__backup-badge" title="Unbacked changes" />
+                                <span
+                                    className="pc-header__backup-badge"
+                                    title={
+                                        reminderReason === 'stale'
+                                            ? 'Backup overdue (7+ days)'
+                                            : 'Unbacked changes'
+                                    }
+                                />
                             )}
                         </button>
                         {hasUnbackedChanges && (
                             <span
                                 className="pc-header__backup-reminder-text text-subtext"
-                                title="New or unbacked Pokémon changes present"
+                                title={
+                                    reminderReason === 'stale'
+                                        ? 'Browser storage (Safari / third-party iframes) may be evicted after 7 days. Export a backup to stay safe.'
+                                        : 'New or unbacked Pokémon changes present'
+                                }
                             >
-                                Backup recommended
+                                {reminderReason === 'stale' ? '7d+ since backup' : 'Backup recommended'}
                             </span>
                         )}
                     </div>

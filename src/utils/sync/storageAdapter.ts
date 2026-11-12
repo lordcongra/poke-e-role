@@ -24,6 +24,59 @@ export const FOLDER_STORAGE_KEY = 'pkr_folders';
 export const BACKUP_TIMESTAMP_KEY = 'pkr_last_master_backup_time';
 export const CHANGE_TIMESTAMP_KEY = 'pkr_last_local_change_time';
 export const BACKUP_STATUS_EVENT = 'pkr-backup-status-changed';
+export const BACKUP_STALE_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
+
+export type BackupReminderReason = 'never' | 'changes' | 'stale' | null;
+
+let persistentStoragePromise: Promise<boolean> | null = null;
+let cachedPersistentStatus: boolean | null = null;
+
+/**
+ * Requests browser persistent storage (`navigator.storage.persist()`) once if not already persisted,
+ * caching the outcome to mitigate Safari/browser eviction pressure.
+ */
+export async function requestPersistentStorage(): Promise<boolean> {
+    if (cachedPersistentStatus !== null) {
+        return cachedPersistentStatus;
+    }
+    if (persistentStoragePromise) {
+        return persistentStoragePromise;
+    }
+
+    persistentStoragePromise = (async () => {
+        try {
+            if (typeof navigator === 'undefined' || !navigator.storage) {
+                cachedPersistentStatus = false;
+                return false;
+            }
+            if (typeof navigator.storage.persisted === 'function') {
+                const alreadyPersisted = await navigator.storage.persisted();
+                if (alreadyPersisted) {
+                    cachedPersistentStatus = true;
+                    return true;
+                }
+            }
+            if (typeof navigator.storage.persist === 'function') {
+                const granted = await navigator.storage.persist();
+                cachedPersistentStatus = Boolean(granted);
+                return cachedPersistentStatus;
+            }
+            cachedPersistentStatus = false;
+            return false;
+        } catch (err) {
+            console.warn('[storageAdapter] Failed to request persistent storage:', err);
+            cachedPersistentStatus = false;
+            return false;
+        }
+    })();
+
+    return persistentStoragePromise;
+}
+
+export function resetPersistentStorageCacheForTests(): void {
+    persistentStoragePromise = null;
+    cachedPersistentStatus = null;
+}
 
 export interface LocalFolder {
     id: string;
@@ -113,54 +166,67 @@ export function isTrackedBackupChange(updates: Record<string, unknown>, existing
 }
 
 export const markDataChanged = () => {
-    if (isStandaloneMode) {
-        try {
-            localStorage.setItem(CHANGE_TIMESTAMP_KEY, Date.now().toString());
-            window.dispatchEvent(new Event(BACKUP_STATUS_EVENT));
-        } catch (e) {
-            console.error('[storageAdapter] Failed to mark local data changed', e);
-        }
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    try {
+        localStorage.setItem(CHANGE_TIMESTAMP_KEY, Date.now().toString());
+        window.dispatchEvent(new Event(BACKUP_STATUS_EVENT));
+    } catch (e) {
+        console.error('[storageAdapter] Failed to mark local data changed', e);
     }
 };
 
 export const markBackupComplete = () => {
-    if (isStandaloneMode) {
-        try {
-            localStorage.setItem(BACKUP_TIMESTAMP_KEY, Date.now().toString());
-            window.dispatchEvent(new Event(BACKUP_STATUS_EVENT));
-        } catch (e) {
-            console.error('[storageAdapter] Failed to mark backup complete', e);
-        }
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    try {
+        localStorage.setItem(BACKUP_TIMESTAMP_KEY, Date.now().toString());
+        window.dispatchEvent(new Event(BACKUP_STATUS_EVENT));
+    } catch (e) {
+        console.error('[storageAdapter] Failed to mark backup complete', e);
     }
 };
 
-export const hasUnbackedData = (characterCount: number, folderCount: number): boolean => {
-    if (!isStandaloneMode) return false;
-    if (characterCount === 0 && folderCount === 0) return false;
+export const getBackupReminderReason = (
+    characterCount: number,
+    folderCount: number,
+    pcSummaryCount = 0,
+    now = Date.now()
+): BackupReminderReason => {
+    if (characterCount <= 0 && folderCount <= 0 && pcSummaryCount <= 0) return null;
 
     try {
         const lastBackupStr = localStorage.getItem(BACKUP_TIMESTAMP_KEY);
         if (!lastBackupStr) {
-            // Data exists in directory, but no backup was ever performed
-            return true;
+            return 'never';
         }
         const lastBackup = parseOptionalFiniteNumber(lastBackupStr);
         if (lastBackup === undefined) {
-            return true;
+            return 'never';
+        }
+        if (now - lastBackup > BACKUP_STALE_THRESHOLD_MS) {
+            return 'stale';
         }
         const lastChangeStr = localStorage.getItem(CHANGE_TIMESTAMP_KEY);
         if (!lastChangeStr) {
-            return false;
+            return null;
         }
         const lastChange = parseOptionalFiniteNumber(lastChangeStr);
         if (lastChange === undefined) {
-            return false;
+            return null;
         }
-        return lastChange > lastBackup;
+        return lastChange > lastBackup ? 'changes' : null;
     } catch (e) {
         console.error('[storageAdapter] Error checking unbacked data status', e);
-        return false;
+        return null;
     }
+};
+
+export const hasUnbackedData = (
+    characterCount: number,
+    folderCount: number,
+    pcSummaryCount = 0,
+    now = Date.now()
+): boolean => {
+    return getBackupReminderReason(characterCount, folderCount, pcSummaryCount, now) !== null;
 };
 
 // Emits an event so the Sidebar instantly updates when data changes!

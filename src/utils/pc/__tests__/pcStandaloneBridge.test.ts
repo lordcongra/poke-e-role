@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 describe('PC Storage Standalone Bridge', () => {
     // 1. Test QuotaExceededError resilience in storageAdapter
@@ -187,6 +187,105 @@ describe('PC Storage Standalone Bridge', () => {
         expect(simulatedSidebarChars[1].parentId).toBe(beltFolder.id);
         expect(simulatedSidebarChars[2].name).toBe('Charizard');
         expect(simulatedSidebarChars[2].parentId).toBe(beltFolder.id);
+    });
+});
+
+describe('Persistent storage & 7-day backup reminders (P-03)', () => {
+    const originalTop = typeof window !== 'undefined' ? Object.getOwnPropertyDescriptor(window, 'top') : undefined;
+    const originalStorage = typeof navigator !== 'undefined' ? Object.getOwnPropertyDescriptor(navigator, 'storage') : undefined;
+
+    beforeEach(() => {
+        localStorage.clear();
+        vi.resetModules();
+    });
+
+    afterEach(() => {
+        localStorage.clear();
+        vi.restoreAllMocks();
+        if (typeof window !== 'undefined' && originalTop) {
+            Object.defineProperty(window, 'top', originalTop);
+        }
+        if (typeof navigator !== 'undefined') {
+            if (originalStorage) {
+                Object.defineProperty(navigator, 'storage', originalStorage);
+            } else {
+                delete (navigator as unknown as { storage?: unknown }).storage;
+            }
+        }
+    });
+
+    it('requestPersistentStorage calls persist() once when persisted() is false and caches the result', async () => {
+        const persistedMock = vi.fn().mockResolvedValue(false);
+        const persistMock = vi.fn().mockResolvedValue(true);
+        Object.defineProperty(navigator, 'storage', {
+            value: { persisted: persistedMock, persist: persistMock },
+            configurable: true
+        });
+
+        const { requestPersistentStorage, resetPersistentStorageCacheForTests } = await import(
+            '@/utils/sync/storageAdapter'
+        );
+        resetPersistentStorageCacheForTests();
+
+        expect(await requestPersistentStorage()).toBe(true);
+        expect(await requestPersistentStorage()).toBe(true);
+        expect(persistedMock).toHaveBeenCalledTimes(1);
+        expect(persistMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('hasUnbackedData & 7-day reminder trigger in both standalone and OBR iframe modes', async () => {
+        // Standalone mode
+        Object.defineProperty(window, 'top', { value: window.self, configurable: true });
+        let mod = await import('@/utils/sync/storageAdapter');
+        expect(mod.isStandaloneMode).toBe(true);
+
+        expect(mod.hasUnbackedData(0, 0, 0)).toBe(false);
+        expect(mod.hasUnbackedData(0, 0, 2)).toBe(true);
+        expect(mod.getBackupReminderReason(0, 0, 2)).toBe('never');
+
+        const baseNow = 1_700_000_000_000;
+        vi.spyOn(Date, 'now').mockReturnValue(baseNow);
+        mod.markBackupComplete();
+        expect(mod.hasUnbackedData(1, 0, 0, baseNow + 1000)).toBe(false);
+
+        vi.spyOn(Date, 'now').mockReturnValue(baseNow + 5000);
+        mod.markDataChanged();
+        expect(mod.getBackupReminderReason(1, 0, 0, baseNow + 6000)).toBe('changes');
+
+        vi.spyOn(Date, 'now').mockReturnValue(baseNow + 10000);
+        mod.markBackupComplete();
+        expect(mod.hasUnbackedData(1, 0, 0, baseNow + 10001)).toBe(false);
+        expect(
+            mod.getBackupReminderReason(1, 0, 0, baseNow + 10000 + mod.BACKUP_STALE_THRESHOLD_MS + 1)
+        ).toBe('stale');
+
+        // OBR third-party iframe mode
+        vi.resetModules();
+        localStorage.clear();
+        Object.defineProperty(window, 'top', { value: {}, configurable: true });
+        mod = await import('@/utils/sync/storageAdapter');
+        expect(mod.isStandaloneMode).toBe(false);
+
+        expect(mod.hasUnbackedData(0, 0, 1)).toBe(true);
+        expect(mod.getBackupReminderReason(0, 0, 1)).toBe('never');
+
+        vi.spyOn(Date, 'now').mockReturnValue(baseNow);
+        mod.markBackupComplete();
+        expect(mod.hasUnbackedData(0, 0, 1, baseNow + 1000)).toBe(false);
+
+        vi.spyOn(Date, 'now').mockReturnValue(baseNow + 2000);
+        mod.markDataChanged();
+        expect(mod.hasUnbackedData(0, 0, 1, baseNow + 3000)).toBe(true);
+        expect(mod.getBackupReminderReason(0, 0, 1, baseNow + 3000)).toBe('changes');
+
+        vi.spyOn(Date, 'now').mockReturnValue(baseNow + 4000);
+        mod.markBackupComplete();
+        expect(
+            mod.hasUnbackedData(0, 0, 1, baseNow + 4000 + mod.BACKUP_STALE_THRESHOLD_MS + 1)
+        ).toBe(true);
+        expect(
+            mod.getBackupReminderReason(0, 0, 1, baseNow + 4000 + mod.BACKUP_STALE_THRESHOLD_MS + 1)
+        ).toBe('stale');
     });
 });
 

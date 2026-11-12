@@ -5,8 +5,10 @@ import {
     createInitialPcStorageData,
     createDefaultCampaign,
     loadPcStorage,
-    savePcStorage
-} from '../../utils/pc/pcStorageAdapter';
+    savePcStorage,
+    savePcSummaryDelta,
+    deletePcSummaryDelta
+} from '@/utils/pc/pcStorageAdapter';
 import {
     applySetPartySlot,
     applySetBoxSlot,
@@ -55,7 +57,9 @@ export const createPcSlice: StateCreator<CharacterState, [['zustand/devtools', n
             console.warn('[PcSlice] Prevented premature save: PC storage is not yet initialized.');
             return;
         }
-        savePcStorage(data);
+        savePcStorage(data).catch((e) => {
+            console.error('[PcSlice] Failed to save PC storage:', e);
+        });
     };
 
     return {
@@ -377,6 +381,7 @@ export const createPcSlice: StateCreator<CharacterState, [['zustand/devtools', n
                 if (!options?.existingCharacterId && isLinked) initStandaloneTrainerSheet(newId, name);
                 set({ pcData: nextData });
                 safeSavePc(nextData);
+                markDataChanged();
                 if (OBR.isAvailable) triggerDebouncedPcBroadcast();
             } catch (e) {
                 console.error('[PcSlice] Failed to add trainer:', e);
@@ -395,6 +400,7 @@ export const createPcSlice: StateCreator<CharacterState, [['zustand/devtools', n
                 }
                 set({ pcData: res.nextData });
                 safeSavePc(res.nextData);
+                markDataChanged();
                 if (OBR.isAvailable) {
                     OBR.broadcast
                         .sendMessage(
@@ -472,6 +478,7 @@ export const createPcSlice: StateCreator<CharacterState, [['zustand/devtools', n
                 const { nextData, newId } = applyAddCampaign(pcData, name, options);
                 set({ pcData: nextData, activeBoxIndex: 0 });
                 safeSavePc(nextData);
+                markDataChanged();
 
                 if (OBR.isAvailable && role === 'GM' && options?.isRoomActive && !options.isPrivate) {
                     get().updateRoomSetting('activeRoomCampaignId', newId);
@@ -515,6 +522,7 @@ export const createPcSlice: StateCreator<CharacterState, [['zustand/devtools', n
                 }
                 set({ pcData: res.nextData, activeBoxIndex: 0 });
                 safeSavePc(res.nextData);
+                markDataChanged();
 
                 if (
                     OBR.isAvailable &&
@@ -535,7 +543,14 @@ export const createPcSlice: StateCreator<CharacterState, [['zustand/devtools', n
             try {
                 const nextData = applyUpdateSummary(get().pcData, summary);
                 set({ pcData: nextData });
-                safeSavePc(nextData);
+                if (get().isInitialized) {
+                    const savedSummary = nextData.pokemonSummaries[summary.entityId] || summary;
+                    savePcSummaryDelta(savedSummary).catch((e) => {
+                        console.error('[PcSlice] Failed to save pokemon summary delta:', e);
+                    });
+                } else {
+                    console.warn('[PcSlice] Prevented premature summary save: PC storage is not yet initialized.');
+                }
                 syncStandaloneSummaryUpdate(summary);
             } catch (e) {
                 console.error('[PcSlice] Failed to update pokemon summary:', e);
@@ -558,6 +573,7 @@ export const createPcSlice: StateCreator<CharacterState, [['zustand/devtools', n
                 };
                 set({ pcData: nextData });
                 safeSavePc(nextData);
+                markDataChanged();
                 if (OBR.isAvailable) triggerDebouncedPcBroadcast();
             } catch (e) {
                 console.error('[PcSlice] Failed to update trainer profile:', e);
@@ -566,11 +582,17 @@ export const createPcSlice: StateCreator<CharacterState, [['zustand/devtools', n
 
         deletePokemonFromPc: (entityId: string, options?: { wasUnlinked?: boolean; pokemonName?: string }) => {
             try {
-                const { pcData } = get();
+                const { pcData, isInitialized } = get();
                 const summary = pcData.pokemonSummaries[entityId];
                 const nextData = applyDeleteSummary(pcData, entityId);
                 set({ pcData: nextData, selectedPcSlot: null });
                 safeSavePc(nextData);
+                if (isInitialized) {
+                    deletePcSummaryDelta(entityId).catch((e) => {
+                        console.error('[PcSlice] Failed to delete pokemon summary delta:', e);
+                    });
+                }
+                markDataChanged();
                 broadcastPcPokemonDelete(pcData.activeCampaignId, entityId, options, summary);
             } catch (e) {
                 console.error('[PcSlice] Failed to delete pokemon from PC:', e);

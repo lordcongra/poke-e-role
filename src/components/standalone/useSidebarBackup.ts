@@ -1,10 +1,15 @@
 import { useState, useRef } from 'react';
-import { storageAdapter, markBackupComplete, type LocalFolder } from '../../utils/sync/storageAdapter';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { getAllItemArt, mergeItemArt } from '../../utils/graphics/itemArtCatalog';
-import { downloadJson } from '../../utils/common/fileSystemHelpers';
-import { savePcStorage } from '../../utils/pc/pcStorageAdapter';
-import type { PcStorageData } from '../../types/pcStorageTypes';
+import {
+    storageAdapter,
+    markBackupComplete,
+    type LocalFolder,
+    type BackupReminderReason
+} from '@/utils/sync/storageAdapter';
+import { useCharacterStore } from '@/store/useCharacterStore';
+import { getAllItemArt, mergeItemArt } from '@/utils/graphics/itemArtCatalog';
+import { downloadJson } from '@/utils/common/fileSystemHelpers';
+import { savePcStorage } from '@/utils/pc/pcStorageAdapter';
+import type { PcStorageData } from '@/types/pcStorageTypes';
 
 export interface MasterBackupData {
     type?: string;
@@ -16,9 +21,10 @@ export interface MasterBackupData {
 
 export function useSidebarBackup() {
     const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
-    const [hasUnbackedChanges, setHasUnbackedChanges] = useState(false);
+    const [backupReminderReason, setBackupReminderReason] = useState<BackupReminderReason>(null);
     const [pendingRestoreData, setPendingRestoreData] = useState<MasterBackupData | null>(null);
     const restoreInputRef = useRef<HTMLInputElement>(null);
+    const hasUnbackedChanges = backupReminderReason !== null;
 
     const handleExportMasterBackup = () => {
         setIsBackupModalOpen(true);
@@ -161,7 +167,8 @@ export function useSidebarBackup() {
         isBackupModalOpen,
         setIsBackupModalOpen,
         hasUnbackedChanges,
-        setHasUnbackedChanges,
+        backupReminderReason,
+        setBackupReminderReason,
         pendingRestoreData,
         restoreInputRef,
         handleExportMasterBackup,

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { storageAdapter, hasUnbackedData, BACKUP_STATUS_EVENT } from '@/utils/sync/storageAdapter';
+import { storageAdapter, getBackupReminderReason, BACKUP_STATUS_EVENT } from '@/utils/sync/storageAdapter';
+import { useCharacterStore } from '@/store/useCharacterStore';
 import { useSidebarBackup } from './useSidebarBackup';
 import { useLegacyNestingModal } from './useLegacyNestingModal';
 import { useSidebarPcOps } from './useSidebarPcOps';
@@ -23,7 +24,7 @@ export function useSidebarEngine() {
 
     const { autoHealBelt } = pcOps;
     const { checkLegacyNesting, resetLegacyCheck } = legacyNesting;
-    const { setHasUnbackedChanges } = backup;
+    const { setBackupReminderReason } = backup;
 
     const loadData = useCallback(async () => {
         try {
@@ -34,11 +35,12 @@ export function useSidebarEngine() {
 
             const customOrder = JSON.parse(localStorage.getItem('pkr_sidebar_order') || '[]') as string[];
             setItems(buildTreeItems(chars, flds, customOrder));
-            setHasUnbackedChanges(hasUnbackedData(chars.length, flds.length));
+            const pcSummaryCount = Object.keys(useCharacterStore.getState().pcData.pokemonSummaries || {}).length;
+            setBackupReminderReason(getBackupReminderReason(chars.length, flds.length, pcSummaryCount));
         } catch (error) {
             console.error('[SidebarEngine] Failed to load data:', error);
         }
-    }, [autoHealBelt, checkLegacyNesting, setHasUnbackedChanges]);
+    }, [autoHealBelt, checkLegacyNesting, setBackupReminderReason]);
 
     const dragOps = useSidebarDragOps({
         items,
@@ -107,21 +109,33 @@ export function useSidebarEngine() {
             try {
                 const chars = await storageAdapter.getLocalCharacters();
                 const flds = await storageAdapter.getFolders();
-                backup.setHasUnbackedChanges(hasUnbackedData(chars.length, flds.length));
+                const pcSummaryCount = Object.keys(useCharacterStore.getState().pcData.pokemonSummaries || {}).length;
+                setBackupReminderReason(getBackupReminderReason(chars.length, flds.length, pcSummaryCount));
             } catch (err) {
                 console.error('[SidebarEngine] Failed to check backup status:', err);
             }
         };
+        const handleVisibility = () => {
+            if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+                handleBackupStatus();
+            }
+        };
         window.addEventListener(BACKUP_STATUS_EVENT, handleBackupStatus);
+        if (typeof document !== 'undefined') {
+            document.addEventListener('visibilitychange', handleVisibility);
+        }
 
         return () => {
             window.removeEventListener('pkr-local-data-changed', handleDataChange);
             window.removeEventListener('pkr-backup-restored', handleBackupRestored);
             window.removeEventListener('pkr-standalone-init-update', updateInitTags);
             window.removeEventListener(BACKUP_STATUS_EVENT, handleBackupStatus);
+            if (typeof document !== 'undefined') {
+                document.removeEventListener('visibilitychange', handleVisibility);
+            }
             localStorage.setItem = originalSetItem;
         };
-    }, [loadData, updateInitTags, resetLegacyCheck, setHasUnbackedChanges]);
+    }, [loadData, updateInitTags, resetLegacyCheck, setBackupReminderReason]);
 
     const handleOrganizeTrainerFolders = useCallback(
         (item: TreeItem) => {
@@ -161,6 +175,7 @@ export function useSidebarEngine() {
         isBackupModalOpen: backup.isBackupModalOpen,
         setIsBackupModalOpen: backup.setIsBackupModalOpen,
         hasUnbackedChanges: backup.hasUnbackedChanges,
+        backupReminderReason: backup.backupReminderReason,
         restoreInputRef: backup.restoreInputRef,
         pendingRestoreData: backup.pendingRestoreData,
         handleCreate: treeCrud.handleCreate,

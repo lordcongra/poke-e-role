@@ -20,7 +20,7 @@ import { GlobalToolbar } from './components/ui/GlobalToolbar';
 import { Sidebar } from './components/standalone/Sidebar';
 import { InitiativeTracker } from './components/initiative/InitiativeTracker';
 import { RollLogWidget } from './components/standalone/RollLogWidget';
-import { isStandaloneMode } from './utils/sync/storageAdapter';
+import { isStandaloneMode, requestPersistentStorage } from './utils/sync/storageAdapter';
 import { Lock } from 'lucide-react';
 import { TokenEmptyState } from './components/ui/TokenEmptyState';
 import { initSettingsBackupSync } from './utils/sync/userPreferences';
@@ -66,6 +66,7 @@ function App() {
     useEffect(() => {
         const handleToggle = () => setShowStandaloneTracker((prev) => !prev);
         window.addEventListener('toggle-standalone-tracker', handleToggle);
+        requestPersistentStorage().catch(() => {});
         initSettingsBackupSync().catch((err) => console.warn('[App] Settings backup sync error:', err));
         useCharacterStore
             .getState()

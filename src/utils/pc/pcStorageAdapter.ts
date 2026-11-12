@@ -1,53 +1,54 @@
 import OBR, { buildSceneUpload } from '@owlbear-rodeo/sdk';
 import type { Item, SceneDownload } from '@owlbear-rodeo/sdk';
-import type {
-    PcStorageData,
-    PcBox,
-    CampaignProfile,
-    PcPokemonSummary,
-    TrainerRoster
-} from '../../types/pcStorageTypes';
+import type { PcStorageData, PcPokemonSummary } from '@/types/pcStorageTypes';
+import { openIdbDatabase, runIdbTransaction } from '@/utils/sync/idbHelpers';
+import { createDefaultBox, createDefaultCampaign, sanitizePcData } from '@/utils/pc/pcDataSanitizer';
 
-const DB_NAME = 'pkr_pc_db';
-const DB_VERSION = 1;
-const STORE_NAME = 'pc_storage';
+export { createDefaultBox, createDefaultCampaign, sanitizePcData };
+
+export const DB_NAME = 'pkr_pc_db';
+export const DB_VERSION = 2;
+export const STORE_NAME = 'pc_storage';
+export const SUMMARY_STORE_NAME = 'pokemon_summaries';
+const MASTER_RECORD_KEY = 'master_record';
 const STORAGE_KEY = 'pkr_pc_storage_v1';
+const LEGACY_DEFAULT_KEY = 'pkr_pc_storage_default';
+const LEGACY_STORAGE_PREFIX = 'pkr_pc_storage_';
+const SAVE_COALESCE_MS = 150;
 
-export function createDefaultBox(index: number): PcBox {
-    return {
-        id: `box-${index + 1}-${crypto.randomUUID().slice(0, 8)}`,
-        name: `Box ${index + 1}`,
-        themeColor: '#3b82f6',
-        wallpaper: 'default',
-        slots: Array(30).fill(null)
-    };
+function openPcDatabase(): Promise<IDBDatabase> {
+    return openIdbDatabase(DB_NAME, DB_VERSION, (db) => {
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+        }
+        if (!db.objectStoreNames.contains(SUMMARY_STORE_NAME)) {
+            db.createObjectStore(SUMMARY_STORE_NAME, { keyPath: 'entityId' });
+        }
+    });
 }
 
-export function createDefaultCampaign(id = 'default', name = 'Main Adventure'): CampaignProfile {
-    const trainerId = `trainer-${crypto.randomUUID().slice(0, 8)}`;
-    const boxes = Array.from({ length: 8 }, (_, i) => createDefaultBox(i));
-    return {
-        id,
-        name,
-        activeTrainerId: trainerId,
-        trainers: {
-            [trainerId]: {
-                id: trainerId,
-                name: 'Trainer',
-                party: Array(6).fill(null),
-                boxes: Array.from({ length: 8 }, (_, i) => createDefaultBox(i))
+function clearLegacyPcLocalStorageKeys(): void {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(LEGACY_STORAGE_PREFIX)) {
+                keysToRemove.push(key);
             }
-        },
-        boxes,
-        teamParty: Array(6).fill(null),
-        lastSynced: Date.now()
-    };
+        }
+        for (const key of keysToRemove) {
+            localStorage.removeItem(key);
+        }
+    } catch {
+        // Ignore localStorage cleanup errors
+    }
 }
 
 export function createInitialPcStorageData(): PcStorageData {
     if (typeof window !== 'undefined' && window.localStorage) {
         try {
-            const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('pkr_pc_storage_default');
+            const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_DEFAULT_KEY);
             if (raw) {
                 const parsed = JSON.parse(raw) as PcStorageData;
                 if (
@@ -73,63 +74,104 @@ export function createInitialPcStorageData(): PcStorageData {
     };
 }
 
-function withTimeout<T>(promise: Promise<T>, ms: number, errorMsg: string): Promise<T> {
-    return Promise.race([
-        promise,
-        new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`Timeout (${ms}ms): ${errorMsg}`)), ms))
-    ]);
+function normalizeSummaryRecord(id: string, summary: PcPokemonSummary): PcPokemonSummary {
+    return summary.entityId === id ? summary : { ...summary, entityId: id };
 }
 
-function openDatabase(): Promise<IDBDatabase> {
-    if (typeof indexedDB === 'undefined') {
-        return Promise.reject(new Error('IndexedDB not supported'));
-    }
-    const openPromise = new Promise<IDBDatabase>((resolve, reject) => {
-        try {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
-            request.onupgradeneeded = () => {
-                const db = request.result;
-                if (!db.objectStoreNames.contains(STORE_NAME)) {
-                    db.createObjectStore(STORE_NAME);
-                }
-            };
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error || new Error('Failed to open IndexedDB for PC'));
-            request.onblocked = () => reject(new Error('IndexedDB open blocked'));
-        } catch (e) {
-            reject(e);
+async function executePcWrite(data: PcStorageData): Promise<void> {
+    const db = await openPcDatabase();
+    const masterPayload: PcStorageData = {
+        ...data,
+        pokemonSummaries: {}
+    };
+    const summaryEntries = Object.entries(data.pokemonSummaries || {});
+
+    await runIdbTransaction(db, [STORE_NAME, SUMMARY_STORE_NAME], 'readwrite', (tx) => {
+        tx.objectStore(STORE_NAME).put(masterPayload, MASTER_RECORD_KEY);
+        const summaryStore = tx.objectStore(SUMMARY_STORE_NAME);
+        summaryStore.clear();
+        for (const [id, summary] of summaryEntries) {
+            if (!summary || typeof summary !== 'object') continue;
+            summaryStore.put(normalizeSummaryRecord(id, summary));
         }
     });
-
-    return withTimeout(openPromise, 8000, 'IndexedDB openDatabase timed out');
 }
 
 export async function loadPcStorage(): Promise<PcStorageData> {
     let idbReadSucceeded = false;
 
     try {
-        const db = await openDatabase();
-        const dataPromise = new Promise<PcStorageData | undefined>((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readonly');
-            const store = tx.objectStore(STORE_NAME);
-            const req = store.get('master_record');
-            req.onsuccess = () => resolve(req.result as PcStorageData | undefined);
-            req.onerror = () => reject(req.error);
-        });
+        const db = await openPcDatabase();
+        const { masterData, summaryList } = await runIdbTransaction(
+            db,
+            [STORE_NAME, SUMMARY_STORE_NAME],
+            'readonly',
+            (tx) => {
+                const masterReq = tx.objectStore(STORE_NAME).get(MASTER_RECORD_KEY) as IDBRequest<
+                    PcStorageData | undefined
+                >;
+                const summaryReq = tx.objectStore(SUMMARY_STORE_NAME).getAll() as IDBRequest<PcPokemonSummary[]>;
+                return Promise.all([
+                    new Promise<PcStorageData | undefined>((resolve, reject) => {
+                        masterReq.onsuccess = () => resolve(masterReq.result);
+                        masterReq.onerror = () => reject(masterReq.error || new Error('Failed to read master_record'));
+                    }),
+                    new Promise<PcPokemonSummary[]>((resolve, reject) => {
+                        summaryReq.onsuccess = () => resolve(summaryReq.result || []);
+                        summaryReq.onerror = () =>
+                            reject(summaryReq.error || new Error('Failed to read pokemon_summaries'));
+                    })
+                ]).then(([master, summaries]) => ({ masterData: master, summaryList: summaries }));
+            }
+        );
 
-        const data = await withTimeout(dataPromise, 8000, 'IndexedDB get master_record timed out');
         idbReadSucceeded = true;
 
-        if (data && data.campaigns && typeof data.campaigns === 'object' && Object.keys(data.campaigns).length > 0) {
-            const sanitized = sanitizePcData(data);
+        if (
+            masterData &&
+            masterData.campaigns &&
+            typeof masterData.campaigns === 'object' &&
+            Object.keys(masterData.campaigns).length > 0
+        ) {
+            const legacySummaries = masterData.pokemonSummaries || {};
+            const hasLegacyEmbeddedSummaries = Object.keys(legacySummaries).length > 0;
+
+            const mergedSummaries: Record<string, PcPokemonSummary> = {};
+            for (const [id, sum] of Object.entries(legacySummaries)) {
+                if (sum && typeof sum === 'object') {
+                    mergedSummaries[id] = normalizeSummaryRecord(id, sum);
+                }
+            }
+            for (const sum of summaryList) {
+                if (sum && typeof sum === 'object' && sum.entityId) {
+                    mergedSummaries[sum.entityId] = sum;
+                }
+            }
+
+            const sanitized = sanitizePcData({
+                ...masterData,
+                pokemonSummaries: mergedSummaries
+            });
+
+            if (hasLegacyEmbeddedSummaries) {
+                try {
+                    await executePcWrite(sanitized);
+                    clearLegacyPcLocalStorageKeys();
+                } catch (migrationErr) {
+                    console.warn('[PcStorageAdapter] Failed to migrate legacy embedded summaries:', migrationErr);
+                }
+            } else {
+                clearLegacyPcLocalStorageKeys();
+            }
+
             return sanitized;
         }
     } catch (e) {
-        console.warn('[PcStorageAdapter] IndexedDB read failed or timed out, trying localStorage fallback:', e);
+        console.warn('[PcStorageAdapter] IndexedDB read failed, trying localStorage fallback:', e);
     }
 
     try {
-        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('pkr_pc_storage_default');
+        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_DEFAULT_KEY);
         if (raw) {
             const parsed = JSON.parse(raw) as PcStorageData;
             if (
@@ -140,7 +182,12 @@ export async function loadPcStorage(): Promise<PcStorageData> {
             ) {
                 const sanitized = sanitizePcData(parsed);
                 if (idbReadSucceeded) {
-                    savePcStorage(sanitized);
+                    try {
+                        await executePcWrite(sanitized);
+                        clearLegacyPcLocalStorageKeys();
+                    } catch (migrationErr) {
+                        console.warn('[PcStorageAdapter] Failed to migrate localStorage PC data to IDB:', migrationErr);
+                    }
                 }
                 return sanitized;
             }
@@ -149,8 +196,7 @@ export async function loadPcStorage(): Promise<PcStorageData> {
         console.warn('[PcStorageAdapter] localStorage read failed:', e);
     }
 
-    // SAFE HANDLING: If IndexedDB read failed or timed out, NEVER overwrite the record with an empty campaign!
-    // Overwriting master_record on read timeout or startup lag wipes the user's data.
+    // SAFE HANDLING: If IndexedDB read failed, NEVER overwrite the record with an empty campaign!
     const initial = createInitialPcStorageData();
     if (!idbReadSucceeded) {
         console.warn(
@@ -160,11 +206,176 @@ export async function loadPcStorage(): Promise<PcStorageData> {
     return initial;
 }
 
+let debouncedSaveTimer: ReturnType<typeof setTimeout> | null = null;
+let latestDataToSave: PcStorageData | null = null;
+let pendingWaiters: Array<{ resolve: () => void; reject: (err: unknown) => void }> = [];
+const inFlightWrites = new Set<Promise<void>>();
+
+function trackInFlightWrite(promise: Promise<void>): void {
+    inFlightWrites.add(promise);
+    const cleanup = () => {
+        inFlightWrites.delete(promise);
+    };
+    promise.then(cleanup, cleanup);
+}
+
+function commitPendingPcSave(): Promise<void> {
+    if (debouncedSaveTimer) {
+        clearTimeout(debouncedSaveTimer);
+        debouncedSaveTimer = null;
+    }
+
+    const payload = latestDataToSave;
+    const waiters = pendingWaiters;
+    latestDataToSave = null;
+    pendingWaiters = [];
+
+    if (!payload) {
+        for (const w of waiters) w.resolve();
+        return Promise.resolve();
+    }
+
+    const commitPromise = executePcWrite(payload).then(
+        () => {
+            for (const w of waiters) w.resolve();
+        },
+        (err) => {
+            console.warn('[PcStorageAdapter] IndexedDB write failed:', err);
+            for (const w of waiters) w.reject(err);
+            throw err;
+        }
+    );
+
+    trackInFlightWrite(commitPromise);
+    return commitPromise;
+}
+
+export function savePcStorage(data: PcStorageData): Promise<void> {
+    latestDataToSave = data;
+    if (debouncedSaveTimer) {
+        clearTimeout(debouncedSaveTimer);
+    }
+
+    return new Promise<void>((resolve, reject) => {
+        pendingWaiters.push({ resolve, reject });
+        debouncedSaveTimer = setTimeout(() => {
+            debouncedSaveTimer = null;
+            commitPendingPcSave().catch(() => {
+                // Individual caller rejections are handled via pendingWaiters
+            });
+        }, SAVE_COALESCE_MS);
+    });
+}
+
+export async function flushPcStorage(): Promise<void> {
+    const errors: unknown[] = [];
+
+    if (latestDataToSave || debouncedSaveTimer) {
+        try {
+            await commitPendingPcSave();
+        } catch (err) {
+            errors.push(err);
+        }
+    }
+
+    if (inFlightWrites.size > 0) {
+        const results = await Promise.allSettled(Array.from(inFlightWrites));
+        for (const res of results) {
+            if (res.status === 'rejected') {
+                errors.push(res.reason);
+            }
+        }
+    }
+
+    if (errors.length > 0) {
+        throw errors[0];
+    }
+}
+
+export async function savePcSummaryDelta(summary: PcPokemonSummary): Promise<void> {
+    if (!summary || !summary.entityId) return;
+    const record: PcPokemonSummary = {
+        ...summary,
+        lastModified: summary.lastModified || Date.now()
+    };
+
+    if (latestDataToSave) {
+        latestDataToSave = {
+            ...latestDataToSave,
+            pokemonSummaries: {
+                ...latestDataToSave.pokemonSummaries,
+                [record.entityId]: record
+            }
+        };
+    }
+
+    const writePromise = (async () => {
+        const db = await openPcDatabase();
+        await runIdbTransaction(db, SUMMARY_STORE_NAME, 'readwrite', (tx) => {
+            tx.objectStore(SUMMARY_STORE_NAME).put(record);
+        });
+    })();
+
+    trackInFlightWrite(writePromise);
+    return writePromise;
+}
+
+export async function deletePcSummaryDelta(entityId: string): Promise<void> {
+    if (!entityId) return;
+
+    if (latestDataToSave) {
+        const nextSummaries = { ...latestDataToSave.pokemonSummaries };
+        delete nextSummaries[entityId];
+        latestDataToSave = {
+            ...latestDataToSave,
+            pokemonSummaries: nextSummaries
+        };
+    }
+
+    const writePromise = (async () => {
+        const db = await openPcDatabase();
+        await runIdbTransaction(db, SUMMARY_STORE_NAME, 'readwrite', (tx) => {
+            tx.objectStore(SUMMARY_STORE_NAME).delete(entityId);
+        });
+    })();
+
+    trackInFlightWrite(writePromise);
+    return writePromise;
+}
+
+let lifecycleHooksRegistered = false;
+
+export function registerPcStorageLifecycleHooks(): void {
+    if (lifecycleHooksRegistered || typeof window === 'undefined') return;
+    lifecycleHooksRegistered = true;
+
+    window.addEventListener('beforeunload', () => {
+        flushPcStorage().catch(() => {});
+    });
+
+    if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                flushPcStorage().catch(() => {});
+            }
+        });
+    }
+}
+
+registerPcStorageLifecycleHooks();
+
 export function emergencyClearPcStorage(): void {
-    try {
-        localStorage.removeItem(STORAGE_KEY);
-        console.log('[PcStorageAdapter] Cleared localStorage PC storage key.');
-    } catch {}
+    if (debouncedSaveTimer) {
+        clearTimeout(debouncedSaveTimer);
+        debouncedSaveTimer = null;
+    }
+    latestDataToSave = null;
+    const waiters = pendingWaiters;
+    pendingWaiters = [];
+    for (const w of waiters) w.resolve();
+
+    clearLegacyPcLocalStorageKeys();
+    console.log('[PcStorageAdapter] Cleared localStorage PC storage keys.');
     try {
         if (typeof indexedDB !== 'undefined') {
             indexedDB.deleteDatabase(DB_NAME);
@@ -175,339 +386,6 @@ export function emergencyClearPcStorage(): void {
 
 if (typeof window !== 'undefined') {
     (window as unknown as Record<string, unknown>).pkrClearPcStorage = emergencyClearPcStorage;
-}
-
-export function sanitizePcData(data: PcStorageData): PcStorageData {
-    if (!data.pokemonSummaries || typeof data.pokemonSummaries !== 'object') {
-        data.pokemonSummaries = {};
-    }
-    if (!data.campaigns || typeof data.campaigns !== 'object') {
-        data.campaigns = {};
-    }
-
-    if (Object.keys(data.campaigns).length === 0) {
-        const defaultCamp = createDefaultCampaign();
-        data.campaigns[defaultCamp.id] = defaultCamp;
-        data.activeCampaignId = defaultCamp.id;
-    } else if (!data.activeCampaignId || !data.campaigns[data.activeCampaignId]) {
-        data.activeCampaignId = Object.keys(data.campaigns)[0];
-    }
-
-    const referencedIds = new Set<string>();
-
-    for (const camp of Object.values(data.campaigns)) {
-        if (!camp.trainers || typeof camp.trainers !== 'object') {
-            camp.trainers = {};
-        }
-        if (!Array.isArray(camp.teamParty)) {
-            camp.teamParty = Array(6).fill(null);
-        }
-        if (!Array.isArray(camp.boxes)) {
-            camp.boxes = Array.from({ length: 8 }, (_, i) => createDefaultBox(i));
-        }
-
-        const claimedByTrainer = new Map<string, string>();
-
-        // Helper to check and resolve valid Pokémon summary or attempt localStorage restoration
-        const resolveValidPokemonId = (pid: string | null, targetTrainerId?: string): string | null => {
-            if (!pid) return null;
-            const existingTrainer = claimedByTrainer.get(pid);
-            if (existingTrainer && targetTrainerId && existingTrainer !== targetTrainerId) return null;
-
-            let sum = data.pokemonSummaries[pid];
-            if (!sum && typeof window !== 'undefined' && window.localStorage) {
-                try {
-                    const raw = window.localStorage.getItem(`pkr_char_${pid}`);
-                    if (raw) {
-                        const parsed = JSON.parse(raw);
-                        if (parsed && (parsed.nickname || parsed.species || parsed.name)) {
-                            const rawSpecies = (parsed.species as string) || (parsed.name as string) || 'Unknown';
-                            const rawNick = (
-                                (parsed.nickname as string) ||
-                                (parsed['nickname'] as string) ||
-                                ''
-                            ).trim();
-                            const cleanNick =
-                                rawNick && rawNick.toLowerCase() !== rawSpecies.toLowerCase() ? rawNick : '';
-                            const displayName = cleanNick || rawSpecies || 'Recovered Pokémon';
-                            const isTrainerEntity = parsed.mode === 'Trainer' || parsed.mode === 'Trainer (Special)';
-                            const defaultHp = isTrainerEntity ? 5 : 10;
-                            const defaultWill = isTrainerEntity ? 4 : 5;
-                            sum = {
-                                entityId: pid,
-                                trainerId: targetTrainerId,
-                                name: displayName,
-                                species: rawSpecies,
-                                rank: parsed.rank || 'Starter',
-                                type1: parsed.type1 || 'Normal',
-                                type2: parsed.type2,
-                                hp:
-                                    parsed['hp-curr'] !== undefined &&
-                                    parsed['hp-curr'] !== '' &&
-                                    !isNaN(Number(parsed['hp-curr']))
-                                        ? Number(parsed['hp-curr'])
-                                        : Number(parsed.hp) || defaultHp,
-                                maxHp: Number(parsed['hp-max-display']) || Number(parsed.hpMax) || defaultHp,
-                                will:
-                                    parsed['will-curr'] !== undefined &&
-                                    parsed['will-curr'] !== '' &&
-                                    !isNaN(Number(parsed['will-curr']))
-                                        ? Number(parsed['will-curr'])
-                                        : Number(parsed.will) || defaultWill,
-                                maxWill: Number(parsed['will-max-display']) || Number(parsed.willMax) || defaultWill,
-                                tokenImageUrl: parsed['token-image-url'] || parsed.tokenImageUrl,
-                                isOnMap: false,
-                                fullMetadata: {
-                                    ...parsed,
-                                    nickname: cleanNick,
-                                    name: displayName,
-                                    species: rawSpecies
-                                },
-                                lastModified: Date.now()
-                            };
-                            data.pokemonSummaries[pid] = sum;
-                        }
-                    }
-                } catch {}
-            }
-
-            if (!sum) {
-                // If sum is missing and localStorage is null, do NOT immediately force the slot
-                // to null if the slot has a valid entity ID string; avoid aggressively clearing
-                // party/box slots when offline, during lag, or before IDB finishes hydrating.
-                if (typeof pid === 'string' && pid.trim().length > 0) {
-                    if (targetTrainerId) {
-                        claimedByTrainer.set(pid, targetTrainerId);
-                    }
-                    return pid;
-                }
-                return null;
-            }
-            if (targetTrainerId) {
-                sum.trainerId = targetTrainerId;
-                claimedByTrainer.set(pid, targetTrainerId);
-            }
-            return pid;
-        };
-
-        for (const [tid, t] of Object.entries(camp.trainers)) {
-            if (!t || typeof t !== 'object' || !t.id) {
-                delete camp.trainers[tid];
-                continue;
-            }
-
-            // Convert player PMD profiles and storage rosters into valid storage profiles without pruning
-            if (tid.startsWith('__pmd_') || t.profileType === 'storage') {
-                t.profileType = 'storage';
-                if (!t.name || !t.name.trim() || t.name === 'Trainer') {
-                    t.name = t.playerName ? `${t.playerName}'s Storage` : 'PMD Storage';
-                }
-            }
-
-            // Prune pseudo "None / PMD" placeholder if it slipped into camp.trainers
-            const isPmdPseudo =
-                tid === '__none__' ||
-                (t.profileType !== 'storage' &&
-                    !tid.startsWith('__pmd_') &&
-                    t.name &&
-                    t.name.trim().toLowerCase().startsWith('none (pmd'));
-
-            if (isPmdPseudo) {
-                if (Array.isArray(t.party)) {
-                    for (const pid of t.party) {
-                        if (pid && !camp.teamParty.includes(pid)) {
-                            const emptyIdx = camp.teamParty.findIndex((s) => s === null);
-                            if (emptyIdx !== -1) camp.teamParty[emptyIdx] = pid;
-                            else if (camp.boxes[0]) camp.boxes[0].slots.push(pid);
-                        }
-                    }
-                }
-                if (Array.isArray(t.boxes)) {
-                    for (const b of t.boxes) {
-                        for (const pid of b.slots || []) {
-                            if (pid && camp.boxes[0]) camp.boxes[0].slots.push(pid);
-                        }
-                    }
-                }
-                delete camp.trainers[tid];
-                continue;
-            }
-
-            let localCharMeta: Record<string, unknown> | null = null;
-            if (typeof window !== 'undefined' && window.localStorage) {
-                try {
-                    const rawChar = window.localStorage.getItem(`pkr_char_${t.id}`);
-                    if (rawChar) {
-                        const parsedChar = JSON.parse(rawChar);
-                        if (parsedChar && typeof parsedChar === 'object') localCharMeta = parsedChar;
-                    }
-                } catch {}
-            }
-
-            if (localCharMeta) {
-                t.fullMetadata = { ...(t.fullMetadata || {}), ...localCharMeta };
-            }
-
-            if (!t.name || !t.name.trim()) t.name = 'Trainer';
-
-            if (t.avatarUrl && (t.avatarUrl.startsWith('file:') || t.avatarUrl.startsWith('file:///'))) {
-                t.avatarUrl = undefined;
-            }
-            if (!Array.isArray(t.party)) {
-                t.party = Array(6).fill(null);
-            }
-            if (!Array.isArray(t.boxes) || t.boxes.length === 0) {
-                const isSingleLegacyTrainer =
-                    Object.keys(camp.trainers).length === 1 &&
-                    Array.isArray(camp.boxes) &&
-                    camp.boxes.some((b) => b.slots.some(Boolean));
-                t.boxes = isSingleLegacyTrainer
-                    ? JSON.parse(JSON.stringify(camp.boxes))
-                    : Array.from({ length: 8 }, (_, i) => createDefaultBox(i));
-            }
-
-            t.party = t.party.map((pid) => resolveValidPokemonId(pid, t.id));
-
-            for (const b of t.boxes || []) {
-                if (Array.isArray(b.slots)) {
-                    b.slots = b.slots.map((pid) => resolveValidPokemonId(pid, t.id));
-                    while (b.slots.length < 30) b.slots.push(null);
-                } else {
-                    b.slots = Array(30).fill(null);
-                }
-            }
-        }
-
-        if (Object.keys(camp.trainers).length > 0) {
-            for (const b of camp.boxes) {
-                if (Array.isArray(b.slots)) {
-                    b.slots = b.slots.map((pid) =>
-                        pid && claimedByTrainer.has(pid) ? null : resolveValidPokemonId(pid)
-                    );
-                    while (b.slots.length < 30) b.slots.push(null);
-                } else {
-                    b.slots = Array(30).fill(null);
-                }
-            }
-            camp.teamParty = camp.teamParty.map((pid) =>
-                pid && claimedByTrainer.has(pid) ? null : resolveValidPokemonId(pid)
-            );
-        }
-
-        // Active trainer sanity check
-        if (camp.activeTrainerId !== '__none__') {
-            if (!camp.trainers[camp.activeTrainerId]) {
-                const firstId = Object.keys(camp.trainers)[0];
-                camp.activeTrainerId = firstId || '__none__';
-            }
-        }
-
-        for (const t of Object.values(camp.trainers)) {
-            for (const pid of t.party) {
-                if (pid) referencedIds.add(pid);
-            }
-            for (const b of t.boxes || []) {
-                for (const pid of b.slots || []) {
-                    if (pid) referencedIds.add(pid);
-                }
-            }
-        }
-        for (const b of camp.boxes) {
-            for (const pid of b.slots || []) {
-                if (pid) referencedIds.add(pid);
-            }
-        }
-        for (const pid of camp.teamParty) {
-            if (pid) referencedIds.add(pid);
-        }
-    }
-
-    // Prune invalid or corrupted Pokémon summaries
-    for (const [id, s] of Object.entries(data.pokemonSummaries)) {
-        if (!s || typeof s !== 'object' || (!s.name && !s.species)) {
-            delete data.pokemonSummaries[id];
-        }
-    }
-
-    // Sanitize any file:/// URLs from stored Pokémon summaries
-    for (const summary of Object.values(data.pokemonSummaries)) {
-        if (
-            summary.tokenImageUrl &&
-            (summary.tokenImageUrl.startsWith('file:') || summary.tokenImageUrl.startsWith('file:///'))
-        ) {
-            summary.tokenImageUrl = undefined;
-        }
-    }
-
-    // Auto-recovery: If any valid Pokémon summary in data.pokemonSummaries has a trainerId matching a trainer,
-    // but was accidentally unreferenced from slots due to prior cross-claim conflicts, recover it into their boxes.
-    for (const [id, summary] of Object.entries(data.pokemonSummaries)) {
-        if (!summary || referencedIds.has(id) || summary.isOnMap) continue;
-        if (summary.trainerId) {
-            for (const camp of Object.values(data.campaigns)) {
-                const tr: TrainerRoster | undefined = camp.trainers?.[summary.trainerId];
-                if (tr && Array.isArray(tr.boxes) && tr.boxes.length > 0) {
-                    for (const b of tr.boxes) {
-                        const emptyIdx = b.slots.findIndex((s: string | null) => s === null);
-                        if (emptyIdx !== -1) {
-                            b.slots[emptyIdx] = id;
-                            referencedIds.add(id);
-                            break;
-                        }
-                    }
-                    if (referencedIds.has(id)) break;
-                }
-            }
-        }
-    }
-
-    // Auto-cleansing: prune unreferenced orphan summaries that are not in any party/box and not on the map
-    const pruned: Record<string, PcPokemonSummary> = {};
-    for (const [id, summary] of Object.entries(data.pokemonSummaries)) {
-        if (referencedIds.has(id) || summary.isOnMap) {
-            pruned[id] = summary;
-        }
-    }
-    data.pokemonSummaries = pruned;
-
-    return data;
-}
-
-let debouncedSaveTimer: ReturnType<typeof setTimeout> | null = null;
-let latestDataToSave: PcStorageData | null = null;
-
-export async function savePcStorage(data: PcStorageData): Promise<void> {
-    latestDataToSave = data;
-    if (debouncedSaveTimer) {
-        clearTimeout(debouncedSaveTimer);
-    }
-
-    debouncedSaveTimer = setTimeout(async () => {
-        const payload = latestDataToSave;
-        if (!payload) return;
-
-        try {
-            const db = await openDatabase();
-            await new Promise<void>((resolve, reject) => {
-                const tx = db.transaction(STORE_NAME, 'readwrite');
-                const store = tx.objectStore(STORE_NAME);
-                const req = store.put(payload, 'master_record');
-                req.onsuccess = () => resolve();
-                req.onerror = () => reject(req.error);
-            });
-        } catch (e) {
-            console.warn('[PcStorageAdapter] IndexedDB write failed:', e);
-        }
-
-        try {
-            const serialized = JSON.stringify(payload);
-            if (serialized.length < 2_500_000) {
-                localStorage.setItem(STORAGE_KEY, serialized);
-            }
-        } catch (e) {
-            console.warn('[PcStorageAdapter] localStorage fallback write skipped or exceeded quota:', e);
-        }
-    }, 150);
 }
 
 /**

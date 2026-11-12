@@ -75,7 +75,7 @@ export async function linkAndSpawnTrainerToken(
     };
 
     useCharacterStore.setState({ pcData: nextPcData });
-    savePcStorage(nextPcData);
+    savePcStorage(nextPcData).catch(console.warn);
 
     if (typeof window !== 'undefined') {
         try {
