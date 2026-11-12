@@ -1,3 +1,5 @@
+import type { Item } from '@owlbear-rodeo/sdk';
+import type { PcPokemonSummary } from '@/types/pcStorageTypes';
 import { parseFiniteNumber } from '@/utils/sync/mappers/mapperHelpers';
 
 /**
@@ -67,5 +69,50 @@ export function isTokenSpeciesCompatible(
     }
 
     return true;
+}
+
+/** Resolves the display nickname for a PC Pokemon summary. */
+export function resolveSummaryNickname(sum: PcPokemonSummary): unknown {
+    const explicitNick = sum.fullMetadata?.nickname ?? sum.fullMetadata?.['nickname'];
+    if (explicitNick !== undefined) return explicitNick;
+    if (sum.name && sum.species && sum.name !== sum.species) return sum.name;
+    return '';
+}
+
+/** Merges live token metadata with authoritative PC summary identity and move fields. */
+export function buildMergedSummaryMeta(sum: PcPokemonSummary, tMeta: Record<string, unknown>): Record<string, unknown> {
+    const mergedMeta: Record<string, unknown> = { ...(sum.fullMetadata || {}), ...tMeta };
+    if (sum.species) mergedMeta['species'] = sum.species;
+    mergedMeta['nickname'] = resolveSummaryNickname(sum);
+    if (sum.rank) mergedMeta['rank'] = sum.rank;
+    if (sum.fullMetadata?.['moves-data'] && sum.fullMetadata['moves-data'] !== '[]') {
+        mergedMeta['moves-data'] = sum.fullMetadata['moves-data'];
+    }
+    if (sum.type1) mergedMeta['type1'] = sum.type1;
+    if (sum.type2 !== undefined) mergedMeta['type2'] = sum.type2;
+    if (sum.fullMetadata?.['ability']) mergedMeta['ability'] = sum.fullMetadata['ability'];
+    return mergedMeta;
+}
+
+/** Returns a shallow-cloned item metadata object with a fresh entityId applied to all present slots. */
+export function buildClonedTokenMetadata(
+    metadata: Item['metadata'],
+    metadataId: string,
+    newEntityId: string
+): Item['metadata'] {
+    const nextMeta: Item['metadata'] = { ...metadata };
+    if (nextMeta[metadataId] && typeof nextMeta[metadataId] === 'object') {
+        nextMeta[metadataId] = { ...(nextMeta[metadataId] as Record<string, unknown>), entityId: newEntityId };
+    }
+    if (nextMeta['pokerole-pmd-extension/stats'] && typeof nextMeta['pokerole-pmd-extension/stats'] === 'object') {
+        nextMeta['pokerole-pmd-extension/stats'] = {
+            ...(nextMeta['pokerole-pmd-extension/stats'] as Record<string, unknown>),
+            entityId: newEntityId
+        };
+    }
+    if ('entityId' in nextMeta) {
+        nextMeta['entityId'] = newEntityId;
+    }
+    return nextMeta;
 }
 

@@ -1,16 +1,86 @@
 import OBR, { type Item } from '@owlbear-rodeo/sdk';
-import { METADATA_ID } from './owlbearSyncConstants';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { isBackupScene, syncBackupSceneTokens } from '../../utils/pc/pcBackupSceneSync';
-import { recentlySpawnedTokenIds } from '../../utils/pc/pcModalOps';
-import { renderTokenGraphicsForMeta, extractEntityId } from './setupOwlbearTokenSync';
+import { METADATA_ID } from '@/hooks/owlbearSync/owlbearSyncConstants';
+import { renderTokenGraphicsForMeta, extractEntityId } from '@/hooks/owlbearSync/setupOwlbearTokenSync';
+import { useCharacterStore } from '@/store/useCharacterStore';
+import type { PcPokemonSummary } from '@/types/pcStorageTypes';
+import { isBackupScene, syncBackupSceneTokens } from '@/utils/pc/pcBackupSceneSync';
+import { recentlySpawnedTokenIds } from '@/utils/pc/pcModalOps';
 import {
     separateAttachments,
     detachTokensFromParent,
     reconcileTokenAttachmentsOnScene
-} from '../../utils/pc/pcAttachmentOps';
+} from '@/utils/pc/pcAttachmentOps';
+import {
+    parseCombatPoolsFromMeta,
+    isTokenSpeciesCompatible,
+    resolveSummaryNickname,
+    buildMergedSummaryMeta,
+    buildClonedTokenMetadata
+} from '@/utils/sync/tokenMetaUtils';
 
 let isReconciling = false;
+let hasPendingReconciliation = false;
+let pendingReconcileRole: 'PLAYER' | 'GM' = 'PLAYER';
+
+function getTokenMeta(item: Item): Record<string, unknown> {
+    return (
+        ((item.metadata[METADATA_ID] || item.metadata['pokerole-pmd-extension/stats']) as Record<string, unknown>) || {}
+    );
+}
+
+function queueTokenDeletionWithAttachments(
+    token: Item,
+    sceneItems: Item[],
+    duplicateIdsToDelete: string[]
+): void {
+    duplicateIdsToDelete.push(token.id);
+    const { characterTokens: attachedChars, allAttachedChildren } = separateAttachments(sceneItems, token.id);
+    if (attachedChars.length > 0) {
+        detachTokensFromParent(attachedChars, sceneItems).catch(() => {});
+    }
+    const attachedCharIds = new Set(attachedChars.map((c) => c.id));
+    const nonCharAttached = allAttachedChildren.filter((a) => !attachedCharIds.has(a.id));
+    duplicateIdsToDelete.push(...nonCharAttached.map((a) => a.id));
+}
+
+function syncLiveTokenToSummary(
+    item: Item,
+    sum: PcPokemonSummary,
+    tMeta: Record<string, unknown>,
+    tokenLastMod: number,
+    updateSummary: (summary: PcPokemonSummary) => void,
+    requireOnMapSync: boolean
+): void {
+    const { hp: curHp, maxHp: curMaxHp, will: curWill, maxWill: curMaxWill } = parseCombatPoolsFromMeta(tMeta, {
+        hp: sum.hp,
+        maxHp: sum.maxHp,
+        will: sum.will,
+        maxWill: sum.maxWill
+    });
+    const mergedMeta = buildMergedSummaryMeta(sum, tMeta);
+    const changed =
+        sum.hp !== curHp ||
+        sum.maxHp !== curMaxHp ||
+        sum.will !== curWill ||
+        sum.maxWill !== curMaxWill ||
+        sum.mapTokenId !== item.id ||
+        (requireOnMapSync && !sum.isOnMap);
+
+    if (changed) {
+        updateSummary({
+            ...sum,
+            hp: curHp,
+            maxHp: curMaxHp,
+            will: curWill,
+            maxWill: curMaxWill,
+            isOnMap: true,
+            mapTokenId: item.id,
+            savedTokenItem: item,
+            fullMetadata: mergedMeta,
+            lastModified: tokenLastMod
+        });
+    }
+}
 
 /**
  * Cross-Scene Token Reconciliation & Persistence Engine:
@@ -18,7 +88,7 @@ let isReconciling = false;
  * Instead, they are recognized by entityId, re-linked to PC storage, and their
  * metadata (HP, Will, statuses, moves, inventory, stats) is synchronized with
  * the latest character sheet data IF AND ONLY IF PC storage is genuinely newer.
- * Duplicate tokens on the SAME active scene are pruned.
+ * Duplicate cloned tokens on the SAME active scene are assigned fresh UUIDs.
  *
  * Gameplay Authority:
  * - Only the GM may mutate, update, or delete scene tokens.
@@ -26,8 +96,14 @@ let isReconciling = false;
  * - Live canvas tokens are the source of truth during gameplay (HP loss, Will usage, Temp HP, Statuses).
  */
 export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 'GM'): Promise<void> {
-    if (!OBR.isAvailable || isReconciling) return;
+    if (!OBR.isAvailable) return;
+    if (isReconciling) {
+        hasPendingReconciliation = true;
+        pendingReconcileRole = role;
+        return;
+    }
 
+    isReconciling = true;
     try {
         if (await isBackupScene()) {
             await syncBackupSceneTokens(sceneItems);
@@ -35,119 +111,41 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
         }
 
         // NON-GM PLAYERS: Passive local store synchronization only.
-        // Never call updateItems or deleteItems on the scene from background reconciliation.
         if (role !== 'GM') {
             const freshStore = useCharacterStore.getState();
             const summaries = freshStore.pcData.pokemonSummaries || {};
 
             for (const item of sceneItems) {
-                if (item.layer === 'CHARACTER' && !recentlySpawnedTokenIds.has(item.id)) {
-                    const entityId = extractEntityId(item);
-                    if (entityId && summaries[entityId]) {
-                        const sum = summaries[entityId];
-                        const tMeta =
-                            ((item.metadata[METADATA_ID] || item.metadata['pokerole-pmd-extension/stats']) as Record<
-                                string,
-                                unknown
-                            >) || {};
+                if (item.layer !== 'CHARACTER' || recentlySpawnedTokenIds.has(item.id)) continue;
+                const entityId = extractEntityId(item);
+                if (!entityId || !summaries[entityId]) continue;
 
-                        // Anti-Contamination Check: Ensure token species / name matches summary species / name
-                        const tokenSpecies = String(tMeta['species'] || item.name || '').toLowerCase();
-                        const sumSpecies = String(sum.species || sum.name || '').toLowerCase();
-                        const isSpeciesCompatible =
-                            !tokenSpecies ||
-                            !sumSpecies ||
-                            tokenSpecies.includes(sumSpecies) ||
-                            sumSpecies.includes(tokenSpecies);
+                const sum = summaries[entityId];
+                const tMeta = getTokenMeta(item);
+                const compatible = isTokenSpeciesCompatible(
+                    tMeta['species'] as string | undefined,
+                    (tMeta['nickname'] as string | undefined) || item.name,
+                    sum.species,
+                    sum.fullMetadata?.nickname as string | undefined,
+                    sum.name
+                );
+                if (!compatible) continue;
 
-                        if (!isSpeciesCompatible) {
-                            continue;
-                        }
+                const tokenLastMod = Number(tMeta.lastModified) || 0;
+                const sumLastMod = Number(sum.lastModified) || 0;
+                if (sumLastMod >= tokenLastMod || !tokenLastMod) continue;
 
-                        const tokenLastMod = Number(tMeta.lastModified) || 0;
-                        const sumLastMod = Number(sum.lastModified) || 0;
-
-                        // Anti-Reversion Guard: If local PC storage is strictly newer than the scene token
-                        // (or token has no timestamp), NEVER let the older scene token overwrite the newer PC summary!
-                        if (sumLastMod >= tokenLastMod || !tokenLastMod) {
-                            continue;
-                        }
-
-                        const curHp =
-                            typeof tMeta['hp-curr'] === 'number'
-                                ? tMeta['hp-curr']
-                                : !isNaN(Number(tMeta['hp-curr'])) && tMeta['hp-curr'] !== ''
-                                  ? Number(tMeta['hp-curr'])
-                                  : sum.hp;
-                        const curMaxHp =
-                            typeof tMeta['hp-max-display'] === 'number'
-                                ? tMeta['hp-max-display']
-                                : !isNaN(Number(tMeta['hp-max-display'])) && tMeta['hp-max-display'] !== ''
-                                  ? Number(tMeta['hp-max-display'])
-                                  : sum.maxHp;
-                        const curWill =
-                            typeof tMeta['will-curr'] === 'number'
-                                ? tMeta['will-curr']
-                                : !isNaN(Number(tMeta['will-curr'])) && tMeta['will-curr'] !== ''
-                                  ? Number(tMeta['will-curr'])
-                                  : sum.will;
-                        const curMaxWill =
-                            typeof tMeta['will-max-display'] === 'number'
-                                ? tMeta['will-max-display']
-                                : !isNaN(Number(tMeta['will-max-display'])) && tMeta['will-max-display'] !== ''
-                                  ? Number(tMeta['will-max-display'])
-                                  : sum.maxWill;
-
-                        // Authoritative fields from summary must NEVER be wiped out by live token:
-                        const mergedMeta = { ...(sum.fullMetadata || {}), ...tMeta };
-                        if (sum.species) mergedMeta['species'] = sum.species;
-                        const explicitNick = sum.fullMetadata?.nickname ?? sum.fullMetadata?.['nickname'];
-                        if (explicitNick !== undefined) mergedMeta['nickname'] = explicitNick;
-                        else if (sum.name && sum.species && sum.name !== sum.species) mergedMeta['nickname'] = sum.name;
-                        else mergedMeta['nickname'] = '';
-                        if (sum.rank) mergedMeta['rank'] = sum.rank;
-                        if (sum.fullMetadata?.['moves-data'] && sum.fullMetadata['moves-data'] !== '[]') {
-                            mergedMeta['moves-data'] = sum.fullMetadata['moves-data'];
-                        }
-                        if (sum.type1) mergedMeta['type1'] = sum.type1;
-                        if (sum.type2 !== undefined) mergedMeta['type2'] = sum.type2;
-                        if (sum.fullMetadata?.['ability']) mergedMeta['ability'] = sum.fullMetadata['ability'];
-
-                        if (
-                            sum.hp !== curHp ||
-                            sum.maxHp !== curMaxHp ||
-                            sum.will !== curWill ||
-                            sum.maxWill !== curMaxWill ||
-                            sum.mapTokenId !== item.id ||
-                            !sum.isOnMap
-                        ) {
-                            freshStore.updatePokemonSummary({
-                                ...sum,
-                                hp: curHp,
-                                maxHp: curMaxHp,
-                                will: curWill,
-                                maxWill: curMaxWill,
-                                isOnMap: true,
-                                mapTokenId: item.id,
-                                savedTokenItem: item,
-                                fullMetadata: mergedMeta,
-                                lastModified: tokenLastMod
-                            });
-                        }
-                    }
-                }
+                syncLiveTokenToSummary(item, sum, tMeta, tokenLastMod, freshStore.updatePokemonSummary, true);
             }
             return;
         }
 
         // GM AUTHORITY ONLY BELOW THIS POINT
-        isReconciling = true;
         const freshStore = useCharacterStore.getState();
         const summaries = freshStore.pcData.pokemonSummaries || {};
         const activeCamp = freshStore.pcData.campaigns[freshStore.pcData.activeCampaignId];
         const trainers = activeCamp?.trainers || {};
 
-        // 1. Group character tokens on the active scene by entityId
         const tokensByEntity = new Map<string, Item[]>();
         for (const item of sceneItems) {
             if (item.layer === 'CHARACTER' && !recentlySpawnedTokenIds.has(item.id)) {
@@ -162,39 +160,31 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
 
         const duplicateIdsToDelete: string[] = [];
         const attachmentsToAdd: Item[] = [];
-        const tokensToUpdate: Array<{ id: string; metadata: Item['metadata']; name: string }> = [];
+        const tokensToUpdate: Array<{ id: string; metadata: Item['metadata']; name?: string; skipRender?: boolean }> =
+            [];
 
         for (const [entityId, tokens] of tokensByEntity.entries()) {
-            const sum = summaries[entityId];
+            let sum = summaries[entityId];
             const tr = trainers[entityId];
+            if (!sum && !tr) continue;
 
-            if (!sum && !tr) {
-                // Wild encounter or external NPC not managed by GM PC storage; do not delete or alter
-                continue;
-            }
-
-            // Anti-Contamination Check: Ensure token species / name matches summary species / name
+            // Anti-Contamination Check: Ensure token species / nickname matches summary
             if (sum && tokens[0]) {
-                const tMeta =
-                    ((tokens[0].metadata[METADATA_ID] || tokens[0].metadata['pokerole-pmd-extension/stats']) as Record<
-                        string,
-                        unknown
-                    >) || {};
-                const tokenSpecies = String(tMeta['species'] || tokens[0].name || '').toLowerCase();
-                const sumSpecies = String(sum.species || sum.name || '').toLowerCase();
-                const isSpeciesCompatible =
-                    !tokenSpecies ||
-                    !sumSpecies ||
-                    tokenSpecies.includes(sumSpecies) ||
-                    sumSpecies.includes(tokenSpecies);
-
-                if (!isSpeciesCompatible) {
-                    // Contaminated token stole another entity's ID! Strip it from token and do not reconcile!
+                const tMeta = getTokenMeta(tokens[0]);
+                const compatible = isTokenSpeciesCompatible(
+                    tMeta['species'] as string | undefined,
+                    (tMeta['nickname'] as string | undefined) || tokens[0].name,
+                    sum.species,
+                    sum.fullMetadata?.nickname as string | undefined,
+                    sum.name
+                );
+                if (!compatible) {
                     OBR.scene.items
                         .updateItems([tokens[0].id], (items) => {
                             for (const it of items) {
-                                if (it.metadata[METADATA_ID])
+                                if (it.metadata[METADATA_ID]) {
                                     delete (it.metadata[METADATA_ID] as Record<string, unknown>).entityId;
+                                }
                                 if (it.metadata['pokerole-pmd-extension/stats']) {
                                     delete (it.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>)
                                         .entityId;
@@ -207,96 +197,66 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                 }
             }
 
-            // 2. If Pokémon is stored away in PC boxes or belt, purge any ghost tokens on the scene!
-            if (sum && !sum.isOnMap) {
-                for (const t of tokens) {
-                    duplicateIdsToDelete.push(t.id);
-                    const { characterTokens: attachedChars, allAttachedChildren } = separateAttachments(
-                        sceneItems,
-                        t.id
-                    );
-                    if (attachedChars.length > 0) {
-                        detachTokensFromParent(attachedChars, sceneItems).catch(() => {});
-                    }
-                    const attachedCharIds = new Set(attachedChars.map((c) => c.id));
-                    const nonCharAttached = allAttachedChildren.filter((a) => !attachedCharIds.has(a.id));
-                    duplicateIdsToDelete.push(...nonCharAttached.map((a) => a.id));
-                }
-                continue;
-            }
+            // Assign fresh UUIDs to copy-pasted clones so they act as independent combatants
+            const preferred =
+                (sum && tokens.find((t) => t.id === sum.mapTokenId)) ||
+                (tr && tokens.find((t) => t.id === tr.mapTokenId)) ||
+                tokens[0];
 
-            // 3. Prune duplicate clones on the SAME active scene if more than one exists
-            let primaryToken: Item;
             if (tokens.length > 1) {
-                const preferred = (sum && tokens.find((t) => t.id === sum.mapTokenId)) || tokens[0];
-                primaryToken = preferred;
                 for (const t of tokens) {
                     if (t.id !== preferred.id) {
-                        duplicateIdsToDelete.push(t.id);
-                        const { characterTokens: attachedChars, allAttachedChildren } = separateAttachments(
-                            sceneItems,
-                            t.id
-                        );
-                        if (attachedChars.length > 0) {
-                            detachTokensFromParent(attachedChars, sceneItems).catch(() => {});
-                        }
-                        const attachedCharIds = new Set(attachedChars.map((c) => c.id));
-                        const nonCharAttached = allAttachedChildren.filter((a) => !attachedCharIds.has(a.id));
-                        duplicateIdsToDelete.push(...nonCharAttached.map((a) => a.id));
+                        tokensToUpdate.push({
+                            id: t.id,
+                            metadata: buildClonedTokenMetadata(t.metadata, METADATA_ID, crypto.randomUUID()),
+                            skipRender: true
+                        });
                     }
                 }
-            } else {
-                primaryToken = tokens[0];
+            }
+            const primaryToken = preferred;
+
+            // If Pokémon is marked off-map in PC storage, only purge when PC storage is strictly newer
+            if (sum && !sum.isOnMap) {
+                const primaryMeta = getTokenMeta(primaryToken);
+                const tokenLastMod = Number(primaryMeta.lastModified) || 0;
+                const sumLastMod = Number(sum.lastModified) || 0;
+
+                if (sumLastMod > tokenLastMod) {
+                    queueTokenDeletionWithAttachments(primaryToken, sceneItems, duplicateIdsToDelete);
+                    continue;
+                }
+
+                sum = { ...sum, isOnMap: true, mapTokenId: primaryToken.id };
+                freshStore.updatePokemonSummary(sum);
             }
 
-            // 4. Reconcile Pokémon tokens left sent out on the map with latest PC storage data
+            // Reconcile Pokémon tokens left sent out on the map with latest PC storage data
             if (sum && sum.isOnMap) {
-                const tMeta =
-                    ((primaryToken.metadata[METADATA_ID] ||
-                        primaryToken.metadata['pokerole-pmd-extension/stats']) as Record<string, unknown>) || {};
-
+                const tMeta = getTokenMeta(primaryToken);
                 const tokenLastMod = Number(tMeta.lastModified) || 0;
                 const sumLastMod = Number(sum.lastModified) || 0;
                 const hasValidFullMeta = Boolean(sum.fullMetadata && Object.keys(sum.fullMetadata).length > 5);
-
-                // A token on the map is ONLY outdated if PC storage was explicitly modified
-                // AFTER the token (e.g. edited in PcSheetModal or cross-scene return from another map,
-                // or legacy tokens where tokenLastMod is 0 or undefined)
-                // AND PC storage has valid sheet data.
                 const isOutdated = (sumLastMod > tokenLastMod || !tokenLastMod) && hasValidFullMeta;
 
-                // Always reconcile attachments to self-heal and prune any live scene duplicate accessories
                 const { itemsToAdd: attachToAdd, idsToDelete: attachToDelete } = reconcileTokenAttachmentsOnScene(
                     primaryToken,
                     sum.attachedItems,
                     sceneItems,
                     false
                 );
-                if (attachToDelete.length > 0) {
-                    duplicateIdsToDelete.push(...attachToDelete);
-                }
-                if (isOutdated && attachToAdd.length > 0) {
-                    attachmentsToAdd.push(...attachToAdd);
-                }
+                if (attachToDelete.length > 0) duplicateIdsToDelete.push(...attachToDelete);
+                if (isOutdated && attachToAdd.length > 0) attachmentsToAdd.push(...attachToAdd);
 
                 if (isOutdated) {
                     const sumTempHp = Number(sum.fullMetadata?.['temporary-hit-points']) || 0;
                     const sumTempWill = Number(sum.fullMetadata?.['temporary-will']) || 0;
-
-                    const explicitNick = sum.fullMetadata?.nickname ?? sum.fullMetadata?.['nickname'];
-                    const resolvedNick =
-                        explicitNick !== undefined
-                            ? explicitNick
-                            : sum.name && sum.species && sum.name !== sum.species
-                              ? sum.name
-                              : '';
-
                     const nextMeta: Record<string, unknown> = {
                         ...tMeta,
                         ...(sum.fullMetadata || {}),
                         entityId,
                         name: sum.name,
-                        nickname: resolvedNick,
+                        nickname: resolveSummaryNickname(sum),
                         species: sum.species,
                         'hp-curr': sum.hp,
                         'hp-max-display': sum.maxHp,
@@ -309,7 +269,6 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                         'token-image-url': sum.tokenImageUrl || (tMeta['token-image-url'] as string),
                         lastModified: sum.lastModified || Date.now()
                     };
-
                     tokensToUpdate.push({
                         id: primaryToken.id,
                         name: sum.name || sum.species,
@@ -320,84 +279,16 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                         }
                     });
                 } else if (tokenLastMod > sumLastMod && tokenLastMod > 0) {
-                    // Token on the map is live or newer: update local GM PC storage to mirror live combat stats!
-                    const curHp =
-                        typeof tMeta['hp-curr'] === 'number'
-                            ? tMeta['hp-curr']
-                            : !isNaN(Number(tMeta['hp-curr'])) && tMeta['hp-curr'] !== ''
-                              ? Number(tMeta['hp-curr'])
-                              : sum.hp;
-                    const curMaxHp =
-                        typeof tMeta['hp-max-display'] === 'number'
-                            ? tMeta['hp-max-display']
-                            : !isNaN(Number(tMeta['hp-max-display'])) && tMeta['hp-max-display'] !== ''
-                              ? Number(tMeta['hp-max-display'])
-                              : sum.maxHp;
-                    const curWill =
-                        typeof tMeta['will-curr'] === 'number'
-                            ? tMeta['will-curr']
-                            : !isNaN(Number(tMeta['will-curr'])) && tMeta['will-curr'] !== ''
-                              ? Number(tMeta['will-curr'])
-                              : sum.will;
-                    const curMaxWill =
-                        typeof tMeta['will-max-display'] === 'number'
-                            ? tMeta['will-max-display']
-                            : !isNaN(Number(tMeta['will-max-display'])) && tMeta['will-max-display'] !== ''
-                              ? Number(tMeta['will-max-display'])
-                              : sum.maxWill;
-
-                    const mergedMeta = { ...(sum.fullMetadata || {}), ...tMeta };
-                    if (sum.species) mergedMeta['species'] = sum.species;
-                    const explicitNick = sum.fullMetadata?.nickname ?? sum.fullMetadata?.['nickname'];
-                    if (explicitNick !== undefined) mergedMeta['nickname'] = explicitNick;
-                    else if (sum.name && sum.species && sum.name !== sum.species) mergedMeta['nickname'] = sum.name;
-                    else mergedMeta['nickname'] = '';
-                    if (sum.rank) mergedMeta['rank'] = sum.rank;
-                    if (sum.fullMetadata?.['moves-data'] && sum.fullMetadata['moves-data'] !== '[]') {
-                        mergedMeta['moves-data'] = sum.fullMetadata['moves-data'];
-                    }
-                    if (sum.type1) mergedMeta['type1'] = sum.type1;
-                    if (sum.type2 !== undefined) mergedMeta['type2'] = sum.type2;
-                    if (sum.fullMetadata?.['ability']) mergedMeta['ability'] = sum.fullMetadata['ability'];
-
-                    if (
-                        sum.hp !== curHp ||
-                        sum.maxHp !== curMaxHp ||
-                        sum.will !== curWill ||
-                        sum.maxWill !== curMaxWill ||
-                        sum.mapTokenId !== primaryToken.id
-                    ) {
-                        freshStore.updatePokemonSummary({
-                            ...sum,
-                            hp: curHp,
-                            maxHp: curMaxHp,
-                            will: curWill,
-                            maxWill: curMaxWill,
-                            mapTokenId: primaryToken.id,
-                            savedTokenItem: primaryToken,
-                            fullMetadata: mergedMeta,
-                            lastModified: tokenLastMod
-                        });
-                    }
+                    syncLiveTokenToSummary(primaryToken, sum, tMeta, tokenLastMod, freshStore.updatePokemonSummary, false);
                 }
 
-                // Ensure the "Recall" button on the UI works for this token on this scene
                 if (sum.mapTokenId !== primaryToken.id) {
-                    freshStore.updatePokemonSummary({
-                        ...sum,
-                        isOnMap: true,
-                        mapTokenId: primaryToken.id
-                    });
+                    freshStore.updatePokemonSummary({ ...sum, isOnMap: true, mapTokenId: primaryToken.id });
                 }
             } else if (tr && tr.fullMetadata) {
-                // Reconcile Trainer tokens with latest roster data
-                const tMeta =
-                    ((primaryToken.metadata[METADATA_ID] ||
-                        primaryToken.metadata['pokerole-pmd-extension/stats']) as Record<string, unknown>) || {};
-
+                const tMeta = getTokenMeta(primaryToken);
                 const isOutdated =
                     tMeta.name !== tr.name || (tr.avatarUrl && tMeta['token-image-url'] !== tr.avatarUrl);
-
                 if (isOutdated) {
                     const nextMeta: Record<string, unknown> = {
                         ...tMeta,
@@ -407,7 +298,6 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                         nickname: tr.name,
                         'token-image-url': tr.avatarUrl || (tMeta['token-image-url'] as string)
                     };
-
                     tokensToUpdate.push({
                         id: primaryToken.id,
                         name: tr.name,
@@ -421,18 +311,12 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
             }
         }
 
-        // 5. Delete intra-scene duplicates & ghost tokens (GM only)
         if (duplicateIdsToDelete.length > 0) {
-            const unique = Array.from(new Set(duplicateIdsToDelete));
-            await OBR.scene.items.deleteItems(unique);
+            await OBR.scene.items.deleteItems(Array.from(new Set(duplicateIdsToDelete)));
         }
-
-        // 5.1 Add reconciled accessories for outdated tokens (GM only)
         if (attachmentsToAdd.length > 0) {
             await OBR.scene.items.addItems(attachmentsToAdd);
         }
-
-        // 6. Update genuinely outdated tokens on the scene & refresh their HUD graphics (GM only)
         if (tokensToUpdate.length > 0) {
             const updateMap = new Map(tokensToUpdate.map((t) => [t.id, t]));
             await OBR.scene.items.updateItems(
@@ -442,26 +326,34 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                         const match = updateMap.get(item.id);
                         if (match) {
                             item.metadata = match.metadata;
-                            item.name = match.name;
+                            if (match.name !== undefined) item.name = match.name;
                         }
                     }
                 }
             );
 
-            // Refresh token HUD graphics for each updated token
             for (const upd of tokensToUpdate) {
+                if (upd.skipRender) continue;
                 const meta = upd.metadata[METADATA_ID] as Record<string, unknown>;
                 const item = sceneItems.find((i) => i.id === upd.id);
-                if (item && meta) {
-                    renderTokenGraphicsForMeta(item, meta, role, false).catch(() => {});
-                }
+                if (item && meta) renderTokenGraphicsForMeta(item, meta, role, false).catch(() => {});
             }
         }
     } catch (e) {
         console.warn('[SyncEngine] Failed during scene token reconciliation:', e);
     } finally {
-        setTimeout(() => {
-            isReconciling = false;
-        }, 300);
+        isReconciling = false;
+        if (hasPendingReconciliation) {
+            hasPendingReconciliation = false;
+            const nextRole = pendingReconcileRole;
+            try {
+                if (OBR.isAvailable && (await OBR.scene.isReady())) {
+                    const freshItems = await OBR.scene.items.getItems();
+                    await reconcileSceneTokens(freshItems, nextRole);
+                }
+            } catch (err) {
+                console.warn('[SyncEngine] Failed during trailing scene token reconciliation:', err);
+            }
+        }
     }
 }

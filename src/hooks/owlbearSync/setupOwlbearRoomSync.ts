@@ -28,6 +28,17 @@ export interface OwlbearRoomSyncResult {
     unsubs: Array<() => void>;
 }
 
+function resolveBattlefieldForRole(raw: unknown, role: 'PLAYER' | 'GM'): BattlefieldData | null {
+    const rawBattlefield = raw as BattlefieldData | undefined;
+    if (rawBattlefield && typeof rawBattlefield === 'object') {
+        if (role !== 'GM' && rawBattlefield.broadcastToPlayers === false) {
+            return null;
+        }
+        return rawBattlefield;
+    }
+    return null;
+}
+
 export async function setupOwlbearRoomSync(
     role: 'PLAYER' | 'GM',
     onTokensNeedRender: (forceRebuild: boolean | 'badges-only') => Promise<void>
@@ -236,14 +247,7 @@ export async function setupOwlbearRoomSync(
         }
 
         if (sceneMetaResult && BATTLEFIELD_META_ID in sceneMetaResult) {
-            const rawBattlefield = sceneMetaResult[BATTLEFIELD_META_ID] as BattlefieldData | undefined;
-            if (rawBattlefield && typeof rawBattlefield === 'object') {
-                if (role !== 'GM' && rawBattlefield.broadcastToPlayers === false) {
-                    store.setActiveBattlefield(null);
-                } else {
-                    store.setActiveBattlefield(rawBattlefield);
-                }
-            }
+            store.setActiveBattlefield(resolveBattlefieldForRole(sceneMetaResult[BATTLEFIELD_META_ID], role));
         } else if (isStandaloneMode || !OBR.isAvailable) {
             try {
                 const localBattlefield = localStorage.getItem(BATTLEFIELD_META_ID);
@@ -426,16 +430,9 @@ export async function setupOwlbearRoomSync(
             }
 
             if (BATTLEFIELD_META_ID in sceneMeta) {
-                const rawBattlefield = sceneMeta[BATTLEFIELD_META_ID] as BattlefieldData | undefined;
-                if (rawBattlefield && typeof rawBattlefield === 'object') {
-                    if (role !== 'GM' && rawBattlefield.broadcastToPlayers === false) {
-                        store.setActiveBattlefield(null);
-                    } else {
-                        store.setActiveBattlefield(rawBattlefield);
-                    }
-                } else {
-                    store.setActiveBattlefield(null);
-                }
+                store.setActiveBattlefield(resolveBattlefieldForRole(sceneMeta[BATTLEFIELD_META_ID], role));
+            } else {
+                store.setActiveBattlefield(null);
             }
         } catch (e) {
             console.error('[SyncEngine] Error syncing scene metadata on ready:', e);
@@ -487,19 +484,20 @@ export async function setupOwlbearRoomSync(
                         );
                     }
                 }
+            } else if (lastSyncedInitiativeActive !== false) {
+                lastSyncedInitiativeActive = false;
+                useCharacterStore.getState().setIsInitiativeActive(false);
+                if (useCharacterStore.getState().identity.roomTrackersRequireInitiative) {
+                    onTokensNeedRender(true).catch((err) =>
+                        console.warn('[SyncEngine] Error re-rendering tokens on initiative active removal:', err)
+                    );
+                }
             }
 
             if (BATTLEFIELD_META_ID in meta) {
-                const rawBattlefield = meta[BATTLEFIELD_META_ID] as BattlefieldData | undefined;
-                if (rawBattlefield && typeof rawBattlefield === 'object') {
-                    if (role !== 'GM' && rawBattlefield.broadcastToPlayers === false) {
-                        useCharacterStore.getState().setActiveBattlefield(null);
-                    } else {
-                        useCharacterStore.getState().setActiveBattlefield(rawBattlefield);
-                    }
-                } else {
-                    useCharacterStore.getState().setActiveBattlefield(null);
-                }
+                useCharacterStore.getState().setActiveBattlefield(resolveBattlefieldForRole(meta[BATTLEFIELD_META_ID], role));
+            } else {
+                useCharacterStore.getState().setActiveBattlefield(null);
             }
         } catch (e) {
             console.error('[SyncEngine] Error in scene metadata change listener:', e);
