@@ -6,7 +6,7 @@ import { hydrateActiveSheet } from '../../utils/sync/unifiedSheetHydration';
 export interface PlayerPcSyncPayload {
     campaignId: string;
     campaignName?: string;
-    trainer: TrainerRoster;
+    trainer?: TrainerRoster;
     summaries: PcPokemonSummary[];
     chunkIndex?: number;
     totalChunks?: number;

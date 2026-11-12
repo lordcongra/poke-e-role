@@ -155,7 +155,7 @@ export async function broadcastPlayerPc(params?: {
             const payload: PlayerPcSyncPayload = {
                 campaignId: targetCampId,
                 campaignName: campaign.name,
-                trainer,
+                trainer: i === 0 ? trainer : undefined,
                 summaries: chunkSlice,
                 chunkIndex: i,
                 totalChunks,
@@ -256,7 +256,7 @@ export async function broadcastGmPc(params?: {
             const payload: GmPcSyncPayload = {
                 campaignId: targetCampId,
                 campaignName: campaign.name,
-                trainer: cleanTrainer,
+                trainer: i === 0 ? cleanTrainer : undefined,
                 summaries: chunkSlice,
                 chunkIndex: i,
                 totalChunks,
