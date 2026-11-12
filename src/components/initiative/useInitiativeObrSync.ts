@@ -276,17 +276,30 @@ export function useInitiativeObrSync({
             loadLocalEncounter();
             loadLocalChars();
 
+            const handleStorage = (e: StorageEvent) => {
+                if (
+                    e.key === null ||
+                    e.key === 'pkr_standalone_init_list' ||
+                    e.key === 'pkr_standalone_init_turn' ||
+                    e.key.startsWith('pkr_char_') ||
+                    e.key === 'pkr_folders' ||
+                    e.key.includes('pkr_pc_storage')
+                ) {
+                    handleLocalDataChange();
+                }
+            };
+
             window.addEventListener('pkr-standalone-init-update', handleStandaloneInitUpdate);
             window.addEventListener('pkr-character-list-update', loadLocalChars);
             window.addEventListener('pkr-local-data-changed', handleLocalDataChange);
-            window.addEventListener('storage', handleLocalDataChange);
+            window.addEventListener('storage', handleStorage);
 
             return () => {
                 isMounted = false;
                 window.removeEventListener('pkr-standalone-init-update', handleStandaloneInitUpdate);
                 window.removeEventListener('pkr-character-list-update', loadLocalChars);
                 window.removeEventListener('pkr-local-data-changed', handleLocalDataChange);
-                window.removeEventListener('storage', handleLocalDataChange);
+                window.removeEventListener('storage', handleStorage);
             };
         }
 

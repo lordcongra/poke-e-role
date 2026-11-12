@@ -55,8 +55,15 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
 
     const referencedIds = new Set<string>();
 
-    for (const camp of Object.values(data.campaigns)) {
-        if (!camp.trainers || typeof camp.trainers !== 'object') {
+    for (const [cid, camp] of Object.entries(data.campaigns)) {
+        if (!camp || typeof camp !== 'object' || Array.isArray(camp)) {
+            delete data.campaigns[cid];
+            continue;
+        }
+        if (typeof camp.name !== 'string' || !camp.name.trim()) {
+            camp.name = 'Main Adventure';
+        }
+        if (!camp.trainers || typeof camp.trainers !== 'object' || Array.isArray(camp.trainers)) {
             camp.trainers = {};
         }
         if (!Array.isArray(camp.teamParty)) {
@@ -97,11 +104,13 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
                 continue;
             }
 
+            const rawTrainerName = typeof t.name === 'string' ? t.name : '';
+
             // Convert player PMD profiles and storage rosters into valid storage profiles without pruning
             if (tid.startsWith('__pmd_') || t.profileType === 'storage') {
                 t.profileType = 'storage';
-                if (!t.name || !t.name.trim() || t.name === 'Trainer') {
-                    t.name = t.playerName ? `${t.playerName}'s Storage` : 'PMD Storage';
+                if (!rawTrainerName.trim() || rawTrainerName === 'Trainer') {
+                    t.name = typeof t.playerName === 'string' && t.playerName.trim() ? `${t.playerName}'s Storage` : 'PMD Storage';
                 }
             }
 
@@ -110,8 +119,7 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
                 tid === '__none__' ||
                 (t.profileType !== 'storage' &&
                     !tid.startsWith('__pmd_') &&
-                    t.name &&
-                    t.name.trim().toLowerCase().startsWith('none (pmd'));
+                    rawTrainerName.trim().toLowerCase().startsWith('none (pmd'));
 
             if (isPmdPseudo) {
                 if (Array.isArray(t.party)) {
@@ -134,7 +142,7 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
                 continue;
             }
 
-            if (!t.name || !t.name.trim()) t.name = 'Trainer';
+            if (typeof t.name !== 'string' || !t.name.trim()) t.name = 'Trainer';
 
             if (t.avatarUrl && (t.avatarUrl.startsWith('file:') || t.avatarUrl.startsWith('file:///'))) {
                 t.avatarUrl = undefined;

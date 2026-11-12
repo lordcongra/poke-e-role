@@ -101,8 +101,14 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
             }
         };
 
+        const handleStorage = (e: StorageEvent) => {
+            if (e.key === getRollLogStorageKey() || e.key === null) {
+                handleUpdate();
+            }
+        };
+
         window.addEventListener('pkr-roll-log-update', handleUpdate);
-        window.addEventListener('storage', handleUpdate);
+        window.addEventListener('storage', handleStorage);
 
         let channel: BroadcastChannel | null = null;
         if (typeof BroadcastChannel !== 'undefined') {
@@ -123,7 +129,7 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
         return () => {
             isMounted = false;
             window.removeEventListener('pkr-roll-log-update', handleUpdate);
-            window.removeEventListener('storage', handleUpdate);
+            window.removeEventListener('storage', handleStorage);
             if (channel) {
                 try {
                     channel.close();

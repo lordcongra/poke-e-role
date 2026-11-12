@@ -97,14 +97,6 @@ export function useSidebarEngine() {
         window.addEventListener('pkr-backup-restored', handleBackupRestored);
         window.addEventListener('pkr-standalone-init-update', updateInitTags);
 
-        const originalSetItem = localStorage.setItem;
-        localStorage.setItem = function (key, value) {
-            originalSetItem.call(this, key, value);
-            if (key.startsWith('pkr_char_') || key === 'pkr_folders' || key.includes('pkr_pc_storage')) {
-                window.dispatchEvent(new Event('pkr-local-data-changed'));
-            }
-        };
-
         const handleBackupStatus = async () => {
             try {
                 const chars = await storageAdapter.getLocalCharacters();
@@ -133,7 +125,6 @@ export function useSidebarEngine() {
             if (typeof document !== 'undefined') {
                 document.removeEventListener('visibilitychange', handleVisibility);
             }
-            localStorage.setItem = originalSetItem;
         };
     }, [loadData, updateInitTags, resetLegacyCheck, setBackupReminderReason]);
 

@@ -211,9 +211,15 @@ export function InModalRollLog({
             if (isMounted) setIsCollapsed(false);
         };
 
+        const handleStorage = (e: StorageEvent) => {
+            if (e.key === getRollLogStorageKey() || e.key === null) {
+                handleReload();
+            }
+        };
+
         window.addEventListener('pkr-roll-log-event', handleNewRoll);
         window.addEventListener('pkr-roll-log-update', handleReload);
-        window.addEventListener('storage', handleReload);
+        window.addEventListener('storage', handleStorage);
 
         let channel: BroadcastChannel | null = null;
         if (typeof BroadcastChannel !== 'undefined') {
@@ -261,7 +267,7 @@ export function InModalRollLog({
             isMounted = false;
             window.removeEventListener('pkr-roll-log-event', handleNewRoll);
             window.removeEventListener('pkr-roll-log-update', handleReload);
-            window.removeEventListener('storage', handleReload);
+            window.removeEventListener('storage', handleStorage);
             if (channel) {
                 try {
                     channel.close();

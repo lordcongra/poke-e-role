@@ -503,8 +503,20 @@ export function useBattleOrganizerTokenWatch({
 
         // 2. Standalone / cross-tab events
         const handleLocalChange = () => triggerRefresh(100);
+        const handleStorageChange = (e: StorageEvent) => {
+            if (
+                e.key === null ||
+                e.key === 'pkr_standalone_init_list' ||
+                e.key === 'pkr_standalone_init_turn' ||
+                e.key.startsWith('pkr_char_') ||
+                e.key === 'pkr_folders' ||
+                e.key.includes('pkr_pc_storage')
+            ) {
+                triggerRefresh(100);
+            }
+        };
         window.addEventListener('pkr-local-data-changed', handleLocalChange);
-        window.addEventListener('storage', handleLocalChange);
+        window.addEventListener('storage', handleStorageChange);
         window.addEventListener('pkr-standalone-init-update', handleLocalChange);
 
         // 3. In-memory useCharacterStore changes (when user edits a sheet in the same window)
@@ -747,7 +759,7 @@ export function useBattleOrganizerTokenWatch({
             clearInterval(intervalId);
             if (unsubObr) unsubObr();
             window.removeEventListener('pkr-local-data-changed', handleLocalChange);
-            window.removeEventListener('storage', handleLocalChange);
+            window.removeEventListener('storage', handleStorageChange);
             window.removeEventListener('pkr-standalone-init-update', handleLocalChange);
             unsubStore();
         };

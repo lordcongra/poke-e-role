@@ -12,6 +12,8 @@ import {
     emergencyClearPcStorage
 } from '@/utils/pc/pcStorageAdapter';
 import { useCharacterStore } from '@/store/useCharacterStore';
+import { importPcBackupJson, MAX_PC_IMPORT_FILE_BYTES } from '@/utils/pc/pcJsonImportOps';
+import { buildSingleCharacterSummary, unpackBackupData } from '@/utils/pc/pcImportRoutingOps';
 import type { PcPokemonSummary, PcStorageData } from '@/types/pcStorageTypes';
 
 const STORAGE_KEY = 'pkr_pc_storage_v1';
@@ -409,4 +411,135 @@ describe('pkr_pc_db v2, delta persistence & async flush', () => {
         expect(mockIdb.getStoreData(SUMMARY_STORE_NAME)?.get('mon-1')).toBeDefined();
     });
 });
+
+describe('PC JSON import & sanitization guards (S-07)', () => {
+    const makeJsonFile = (content: string, size?: number) =>
+        ({
+            text: async () => content,
+            size: size ?? content.length
+        }) as unknown as File;
+
+    it('rejects malformed JSON, array roots, and oversized backup files', async () => {
+        const base = sanitizePcData({
+            activeCampaignId: 'c1',
+            campaigns: {},
+            pokemonSummaries: {},
+            version: 1
+        });
+
+        const malformed = await importPcBackupJson(makeJsonFile('{bad json'), base);
+        expect(malformed.success).toBe(false);
+
+        const arrayRoot = await importPcBackupJson(makeJsonFile('[1, 2, 3]'), base);
+        expect(arrayRoot.success).toBe(false);
+        expect(arrayRoot.error).toContain('root is not an object');
+
+        const oversized = await importPcBackupJson(
+            makeJsonFile('{}', MAX_PC_IMPORT_FILE_BYTES + 1),
+            base
+        );
+        expect(oversized.success).toBe(false);
+        expect(oversized.error).toContain('size limit');
+    });
+
+    it('handles non-string campaign/trainer names and non-object campaigns/pokemonSummaries without crashing', async () => {
+        const current = sanitizePcData({
+            activeCampaignId: 'camp-1',
+            campaigns: {
+                'camp-1': {
+                    id: 'camp-1',
+                    name: 'Kanto',
+                    activeTrainerId: 'tr-1',
+                    trainers: {
+                        'tr-1': { id: 'tr-1', name: 'Ash', party: Array(6).fill(null), boxes: [] }
+                    },
+                    boxes: [],
+                    teamParty: Array(6).fill(null)
+                }
+            },
+            pokemonSummaries: {},
+            version: 1
+        });
+
+        const unpacked = unpackBackupData({
+            campaigns: 'corrupt-string' as unknown as Record<string, unknown>,
+            pokemonSummaries: ['not-an-object'] as unknown as Record<string, unknown>
+        });
+        expect(unpacked.rawCampaigns).toEqual({});
+        expect(unpacked.rawSummaries).toEqual({});
+
+        const payload = JSON.stringify({
+            campaigns: {
+                'camp-other': {
+                    id: 'camp-other',
+                    name: 12345,
+                    activeTrainerId: 'tr-in',
+                    trainers: {
+                        'tr-in': {
+                            id: 'tr-in',
+                            name: { bad: true },
+                            party: ['mon-x'],
+                            boxes: [{ id: 'b-1', name: 999, slots: Array(30).fill(null) }]
+                        }
+                    },
+                    boxes: [],
+                    teamParty: []
+                },
+                'camp-1': {
+                    id: 'camp-1',
+                    name: 67890,
+                    activeTrainerId: 'tr-in-2',
+                    trainers: {
+                        'tr-in-2': {
+                            id: 'tr-in-2',
+                            name: { bad: true },
+                            party: ['mon-x'],
+                            boxes: [{ id: 'b-2', name: 999, slots: Array(30).fill(null) }]
+                        }
+                    },
+                    boxes: [],
+                    teamParty: []
+                }
+            },
+            pokemonSummaries: {
+                'mon-x': {
+                    entityId: 'mon-x',
+                    name: 'Sparky',
+                    species: 'Pikachu',
+                    rank: 'Starter',
+                    type1: 'Electric',
+                    hp: 6,
+                    maxHp: 6,
+                    will: 3,
+                    maxWill: 3
+                }
+            }
+        });
+
+        const res = await importPcBackupJson(makeJsonFile(payload), current, {
+            importMode: 'new-trainer',
+            targetCampaignId: 'camp-1'
+        });
+        expect(res.success).toBe(true);
+        expect(Object.values(res.nextData?.pokemonSummaries || {})[0]?.species).toBe('Pikachu');
+    });
+
+    it('buildSingleCharacterSummary falls back safely on NaN, Infinity, and non-numeric stats', () => {
+        const summary = buildSingleCharacterSummary({
+            species: 'Eevee',
+            'hp-curr': 'not-a-number',
+            'hp-max-display': Number.NaN,
+            'will-curr': Number.POSITIVE_INFINITY,
+            'will-max-display': {},
+            type2: 42
+        });
+
+        expect(summary.hp).toBe(4);
+        expect(summary.maxHp).toBe(4);
+        expect(summary.will).toBe(2);
+        expect(summary.maxWill).toBe(2);
+        expect(summary.type2).toBeUndefined();
+    });
+});
+
 

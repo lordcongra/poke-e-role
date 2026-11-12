@@ -49,7 +49,6 @@ export async function broadcastRollLog(rollLogData: RollSyncData): Promise<void>
         // 1. Dispatch local window events so all in-page subscribers immediately update
         window.dispatchEvent(new CustomEvent('pkr-roll-log-event', { detail: rollLogData }));
         window.dispatchEvent(new Event('pkr-roll-log-update'));
-        window.dispatchEvent(new Event('storage'));
 
         // Broadcast to same-origin BroadcastChannel for instant popover synchronization
         if (typeof BroadcastChannel !== 'undefined') {
@@ -105,7 +104,6 @@ export function clearRollLogCache(): void {
 
     try {
         window.dispatchEvent(new Event('pkr-roll-log-update'));
-        window.dispatchEvent(new Event('storage'));
     } catch (e) {
         console.warn('[RollLogSync] Failed to dispatch local roll log update events:', e);
     }

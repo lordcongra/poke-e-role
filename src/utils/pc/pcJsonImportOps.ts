@@ -13,10 +13,15 @@ import {
     handleSingleCharacterImport,
     unpackBackupData,
     depositUnassignedSummaries,
-    depositCampaignPokemonIntoBoxes
+    depositCampaignPokemonIntoBoxes,
+    isPlainRecord,
+    safeNonEmptyString,
+    safeTrimLower
 } from './pcImportRoutingOps';
 
 export { depositEntityIntoBoxes } from './pcImportRoutingOps';
+
+export const MAX_PC_IMPORT_FILE_BYTES = 20 * 1024 * 1024;
 
 export interface ImportPcJsonOptions {
     targetCampaignId?: string;
@@ -45,10 +50,14 @@ export async function importPcBackupJson(
     options?: ImportPcJsonOptions
 ): Promise<ImportPcJsonResult> {
     try {
-        const text = await file.text();
-        const parsed = JSON.parse(text) as Record<string, unknown>;
+        if (typeof file.size === 'number' && file.size > MAX_PC_IMPORT_FILE_BYTES) {
+            return { success: false, error: 'Backup file exceeds the 20 MB size limit.' };
+        }
 
-        if (!parsed || typeof parsed !== 'object') {
+        const text = await file.text();
+        const parsed = JSON.parse(text) as unknown;
+
+        if (!isPlainRecord(parsed)) {
             return { success: false, error: 'Invalid JSON file: root is not an object.' };
         }
 
@@ -57,8 +66,8 @@ export async function importPcBackupJson(
         const isSingleCharacter = Boolean(
             parsed['species'] ||
             parsed['moves-data'] ||
-            parsed['hp-curr'] ||
-            (parsed['identity'] && typeof parsed['identity'] === 'object')
+            parsed['hp-curr'] !== undefined ||
+            isPlainRecord(parsed['identity'])
         );
 
         const mergedCampaigns = JSON.parse(JSON.stringify(currentData.campaigns || {})) as Record<
@@ -178,29 +187,29 @@ export async function importPcBackupJson(
             const depositedIds = new Set<string>();
 
             for (const inCamp of Object.values(rawCampaigns)) {
+                if (!isPlainRecord(inCamp)) continue;
+                const inTrainers = isPlainRecord(inCamp.trainers) ? inCamp.trainers : {};
                 // Collect from incoming trainers
-                for (const inTr of Object.values(inCamp.trainers || {})) {
-                    if (!inTr) continue;
-                    for (const s of inTr.party || []) {
-                        if (s) {
+                for (const inTr of Object.values(inTrainers)) {
+                    if (!isPlainRecord(inTr)) continue;
+                    const inTrName = safeNonEmptyString(inTr.name, 'Trainer');
+                    for (const s of Array.isArray(inTr.party) ? inTr.party : []) {
+                        if (typeof s === 'string' && s) {
                             const resolvedId = resolveEntityId(s, targetTrainer.id);
                             if (!depositedIds.has(resolvedId)) {
-                                depositEntityIntoTrainer(targetTrainer, resolvedId, true, `${inTr.name}'s Belt`);
+                                depositEntityIntoTrainer(targetTrainer, resolvedId, true, `${inTrName}'s Belt`);
                                 depositedIds.add(resolvedId);
                             }
                         }
                     }
-                    for (const b of inTr.boxes || []) {
-                        for (const s of b.slots || []) {
-                            if (s) {
+                    for (const b of Array.isArray(inTr.boxes) ? inTr.boxes : []) {
+                        if (!isPlainRecord(b)) continue;
+                        const boxName = safeNonEmptyString(b.name, 'Imported Box');
+                        for (const s of Array.isArray(b.slots) ? b.slots : []) {
+                            if (typeof s === 'string' && s) {
                                 const resolvedId = resolveEntityId(s, targetTrainer.id);
                                 if (!depositedIds.has(resolvedId)) {
-                                    depositEntityIntoTrainer(
-                                        targetTrainer,
-                                        resolvedId,
-                                        false,
-                                        b.name || 'Imported Box'
-                                    );
+                                    depositEntityIntoTrainer(targetTrainer, resolvedId, false, boxName);
                                     depositedIds.add(resolvedId);
                                 }
                             }
@@ -209,12 +218,14 @@ export async function importPcBackupJson(
                 }
 
                 // Collect from incoming campaign-level boxes
-                for (const b of inCamp.boxes || []) {
-                    for (const s of b.slots || []) {
-                        if (s) {
+                for (const b of Array.isArray(inCamp.boxes) ? inCamp.boxes : []) {
+                    if (!isPlainRecord(b)) continue;
+                    const boxName = safeNonEmptyString(b.name, 'Imported Box');
+                    for (const s of Array.isArray(b.slots) ? b.slots : []) {
+                        if (typeof s === 'string' && s) {
                             const resolvedId = resolveEntityId(s, targetTrainer.id);
                             if (!depositedIds.has(resolvedId)) {
-                                depositEntityIntoTrainer(targetTrainer, resolvedId, false, b.name || 'Imported Box');
+                                depositEntityIntoTrainer(targetTrainer, resolvedId, false, boxName);
                                 depositedIds.add(resolvedId);
                             }
                         }
@@ -222,8 +233,8 @@ export async function importPcBackupJson(
                 }
 
                 // Collect from incoming teamParty
-                for (const s of inCamp.teamParty || []) {
-                    if (s) {
+                for (const s of Array.isArray(inCamp.teamParty) ? inCamp.teamParty : []) {
+                    if (typeof s === 'string' && s) {
                         const resolvedId = resolveEntityId(s, targetTrainer.id);
                         if (!depositedIds.has(resolvedId)) {
                             depositEntityIntoTrainer(targetTrainer, resolvedId, true, 'Imported Team');
@@ -259,80 +270,98 @@ export async function importPcBackupJson(
         } else {
             // 'new-trainer' or 'merge-by-name': standard multi-campaign merge
             for (const [cId, incomingCamp] of Object.entries(rawCampaigns)) {
-                if (!incomingCamp) continue;
+                if (!isPlainRecord(incomingCamp)) continue;
 
+                const incomingCampLower = safeTrimLower(incomingCamp.name);
                 const existingCamp =
                     mergedCampaigns[cId] ||
-                    Object.values(mergedCampaigns).find(
-                        (c) => c.name.trim().toLowerCase() === incomingCamp.name.trim().toLowerCase()
-                    );
+                    (incomingCampLower
+                        ? Object.values(mergedCampaigns).find((c) => safeTrimLower(c.name) === incomingCampLower)
+                        : undefined);
 
                 if (!existingCamp) {
+                    const campTrainers = isPlainRecord(incomingCamp.trainers) ? incomingCamp.trainers : {};
                     const hasAnyPokemon =
-                        (incomingCamp.teamParty || []).some(Boolean) ||
-                        (incomingCamp.boxes || []).some((b) => (b.slots || []).some(Boolean)) ||
-                        Object.values(incomingCamp.trainers || {}).some(
+                        (Array.isArray(incomingCamp.teamParty) && incomingCamp.teamParty.some(Boolean)) ||
+                        (Array.isArray(incomingCamp.boxes) &&
+                            incomingCamp.boxes.some((b) => isPlainRecord(b) && Array.isArray(b.slots) && b.slots.some(Boolean))) ||
+                        Object.values(campTrainers).some(
                             (tr) =>
-                                (tr.party || []).some(Boolean) ||
-                                (tr.boxes || []).some((b) => (b.slots || []).some(Boolean))
+                                isPlainRecord(tr) &&
+                                ((Array.isArray(tr.party) && tr.party.some(Boolean)) ||
+                                    (Array.isArray(tr.boxes) &&
+                                        tr.boxes.some((b) => isPlainRecord(b) && Array.isArray(b.slots) && b.slots.some(Boolean))))
                         );
 
                     if (!hasAnyPokemon && Object.keys(mergedCampaigns).length > 0) {
                         continue;
                     }
 
-                    mergedCampaigns[cId] = incomingCamp;
+                    mergedCampaigns[cId] = {
+                        ...incomingCamp,
+                        name: safeNonEmptyString(incomingCamp.name, 'Imported Campaign')
+                    };
                     importedCampaignCount++;
                     continue;
                 }
 
                 // Merge trainers into existing campaign
                 const currentTrainers = existingCamp.trainers || {};
-                const incomingTrainers = incomingCamp.trainers || {};
+                const incomingTrainers = isPlainRecord(incomingCamp.trainers) ? incomingCamp.trainers : {};
 
                 for (const [tId, inTr] of Object.entries(incomingTrainers)) {
-                    if (!inTr) continue;
+                    if (!isPlainRecord(inTr)) continue;
 
+                    const inTrLower = safeTrimLower(inTr.name);
                     const isPmdPseudo =
-                        tId === '__none__' ||
-                        tId.startsWith('__pmd_') ||
-                        (inTr.name && inTr.name.trim().toLowerCase().startsWith('none (pmd'));
+                        tId === '__none__' || tId.startsWith('__pmd_') || inTrLower.startsWith('none (pmd');
 
                     if (isPmdPseudo) {
-                        for (const s of inTr.party || []) {
-                            if (s)
+                        for (const s of Array.isArray(inTr.party) ? inTr.party : []) {
+                            if (typeof s === 'string' && s)
                                 depositEntityIntoBoxes(
                                     existingCamp.boxes,
                                     resolveEntityId(s, undefined),
                                     'Imported PMD'
                                 );
                         }
-                        for (const b of inTr.boxes || []) {
-                            for (const s of b.slots || []) {
-                                if (s)
+                        for (const b of Array.isArray(inTr.boxes) ? inTr.boxes : []) {
+                            if (!isPlainRecord(b)) continue;
+                            const boxName = safeNonEmptyString(b.name, 'PMD Box');
+                            for (const s of Array.isArray(b.slots) ? b.slots : []) {
+                                if (typeof s === 'string' && s)
                                     depositEntityIntoBoxes(
                                         existingCamp.boxes,
                                         resolveEntityId(s, undefined),
-                                        b.name || 'PMD Box'
+                                        boxName
                                     );
                             }
                         }
                         continue;
                     }
 
+                    const inTrSafeName = safeNonEmptyString(inTr.name, 'Trainer');
+                    const inTrSafeLower = safeTrimLower(inTrSafeName);
+
                     if (importMode === 'new-trainer') {
                         // Always create a new trainer profile so existing trainers are untouched
                         const newId = `trainer-${crypto.randomUUID().slice(0, 8)}`;
                         const nameExists = Object.values(currentTrainers).some(
-                            (tr) => tr.name.trim().toLowerCase() === inTr.name.trim().toLowerCase()
+                            (tr) => safeTrimLower(tr.name) === inTrSafeLower
                         );
-                        const newName = nameExists ? `${inTr.name} (Imported)` : inTr.name;
+                        const newName = nameExists ? `${inTrSafeName} (Imported)` : inTrSafeName;
 
-                        const nextParty = (inTr.party || []).map((id) => (id ? resolveEntityId(id, newId) : null));
-                        const nextBoxes = (inTr.boxes || []).map((b) => ({
-                            ...b,
-                            slots: (b.slots || []).map((id) => (id ? resolveEntityId(id, newId) : null))
-                        }));
+                        const nextParty = (Array.isArray(inTr.party) ? inTr.party : []).map((id) =>
+                            typeof id === 'string' && id ? resolveEntityId(id, newId) : null
+                        );
+                        const nextBoxes = (Array.isArray(inTr.boxes) ? inTr.boxes : [])
+                            .filter(isPlainRecord)
+                            .map((b) => ({
+                                ...b,
+                                slots: (Array.isArray(b.slots) ? b.slots : []).map((id) =>
+                                    typeof id === 'string' && id ? resolveEntityId(id, newId) : null
+                                )
+                            }));
 
                         currentTrainers[newId] = {
                             ...inTr,
@@ -356,18 +385,21 @@ export async function importPcBackupJson(
                     // merge-by-name
                     const existingTrKey = currentTrainers[tId]
                         ? tId
-                        : Object.keys(currentTrainers).find(
-                              (k) => currentTrainers[k].name.trim().toLowerCase() === inTr.name.trim().toLowerCase()
-                          );
+                        : inTrLower
+                          ? Object.keys(currentTrainers).find(
+                                (k) => safeTrimLower(currentTrainers[k]?.name) === inTrLower
+                            )
+                          : undefined;
 
                     if (!existingTrKey) {
-                        currentTrainers[tId] = inTr;
-                        for (const s of inTr.party || []) {
-                            if (s && mergedSummaries[s]) mergedSummaries[s].trainerId = tId;
+                        currentTrainers[tId] = { ...inTr, name: inTrSafeName };
+                        for (const s of Array.isArray(inTr.party) ? inTr.party : []) {
+                            if (typeof s === 'string' && s && mergedSummaries[s]) mergedSummaries[s].trainerId = tId;
                         }
-                        for (const b of inTr.boxes || []) {
-                            for (const s of b.slots || []) {
-                                if (s && mergedSummaries[s]) mergedSummaries[s].trainerId = tId;
+                        for (const b of Array.isArray(inTr.boxes) ? inTr.boxes : []) {
+                            if (!isPlainRecord(b)) continue;
+                            for (const s of Array.isArray(b.slots) ? b.slots : []) {
+                                if (typeof s === 'string' && s && mergedSummaries[s]) mergedSummaries[s].trainerId = tId;
                             }
                         }
                     } else {
@@ -380,8 +412,8 @@ export async function importPcBackupJson(
 
                         const existingPartySet = new Set((existingTr.party || []).filter(Boolean) as string[]);
 
-                        for (const partyEntityId of inTr.party || []) {
-                            if (partyEntityId) {
+                        for (const partyEntityId of Array.isArray(inTr.party) ? inTr.party : []) {
+                            if (typeof partyEntityId === 'string' && partyEntityId) {
                                 const resolvedId = resolveEntityId(partyEntityId, existingTr.id);
                                 if (!existingPartySet.has(resolvedId)) {
                                     depositEntityIntoTrainer(existingTr, resolvedId, true, 'Imported Party');
@@ -389,25 +421,22 @@ export async function importPcBackupJson(
                             }
                         }
 
-                        const incomingBoxes = inTr.boxes || [];
+                        const incomingBoxes = Array.isArray(inTr.boxes) ? inTr.boxes : [];
                         for (let bIdx = 0; bIdx < incomingBoxes.length; bIdx++) {
                             const inBox = incomingBoxes[bIdx];
-                            for (const sId of inBox.slots || []) {
-                                if (sId) {
+                            if (!isPlainRecord(inBox)) continue;
+                            const boxName = safeNonEmptyString(inBox.name, `Imported Box ${bIdx + 1}`);
+                            for (const sId of Array.isArray(inBox.slots) ? inBox.slots : []) {
+                                if (typeof sId === 'string' && sId) {
                                     const resolvedId = resolveEntityId(sId, existingTr.id);
                                     if (!existingPartySet.has(resolvedId)) {
-                                        depositEntityIntoTrainer(
-                                            existingTr,
-                                            resolvedId,
-                                            false,
-                                            inBox.name || `Imported Box ${bIdx + 1}`
-                                        );
+                                        depositEntityIntoTrainer(existingTr, resolvedId, false, boxName);
                                     }
                                 }
                             }
                         }
 
-                        if (!existingTr.avatarUrl && inTr.avatarUrl) {
+                        if (!existingTr.avatarUrl && typeof inTr.avatarUrl === 'string') {
                             existingTr.avatarUrl = inTr.avatarUrl;
                         }
                         if (!existingTr.savedTokenItem && inTr.savedTokenItem) {
@@ -418,19 +447,17 @@ export async function importPcBackupJson(
 
                 // Merge campaign boxes
                 existingCamp.boxes = existingCamp.boxes || [];
-                if (existingCamp.boxes.length === 0 && incomingCamp.boxes && incomingCamp.boxes.length > 0) {
+                if (existingCamp.boxes.length === 0 && Array.isArray(incomingCamp.boxes) && incomingCamp.boxes.length > 0) {
                     existingCamp.boxes = incomingCamp.boxes;
-                } else if (incomingCamp.boxes && incomingCamp.boxes.length > 0) {
+                } else if (Array.isArray(incomingCamp.boxes) && incomingCamp.boxes.length > 0) {
                     for (let bIdx = 0; bIdx < incomingCamp.boxes.length; bIdx++) {
                         const inBox = incomingCamp.boxes[bIdx];
-                        for (const sId of inBox.slots || []) {
-                            if (sId) {
+                        if (!isPlainRecord(inBox)) continue;
+                        const boxName = safeNonEmptyString(inBox.name, `Imported Box ${bIdx + 1}`);
+                        for (const sId of Array.isArray(inBox.slots) ? inBox.slots : []) {
+                            if (typeof sId === 'string' && sId) {
                                 const resolvedId = resolveEntityId(sId, undefined);
-                                depositEntityIntoBoxes(
-                                    existingCamp.boxes,
-                                    resolvedId,
-                                    inBox.name || `Imported Box ${bIdx + 1}`
-                                );
+                                depositEntityIntoBoxes(existingCamp.boxes, resolvedId, boxName);
                             }
                         }
                     }

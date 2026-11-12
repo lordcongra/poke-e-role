@@ -59,7 +59,6 @@ export function setupOwlbearRollSync(): OwlbearRollSyncResult {
             }
             window.dispatchEvent(new CustomEvent('pkr-roll-log-event', { detail: rollData }));
             window.dispatchEvent(new Event('pkr-roll-log-update'));
-            window.dispatchEvent(new Event('storage'));
 
             // Notify local popover instances
             OBR.broadcast.sendMessage(`${EXTENSION_ID}/roll-log-update`, {}, { destination: 'LOCAL' }).catch(() => {});

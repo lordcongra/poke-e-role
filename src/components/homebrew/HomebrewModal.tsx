@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
-import { useCharacterStore } from '../../store/useCharacterStore';
+import { useCharacterStore } from '@/store/useCharacterStore';
 import { HomebrewTypes } from './HomebrewTypes';
 import { HomebrewAbilities } from './HomebrewAbilities';
 import { HomebrewMoves } from './HomebrewMoves';
@@ -9,20 +9,12 @@ import { HomebrewItems } from './HomebrewItems';
 import { HomebrewForms } from './HomebrewForms';
 import { HomebrewStatuses } from './HomebrewStatuses';
 import { HomebrewFieldEffects } from './HomebrewFieldEffects';
-import type {
-    CustomType,
-    CustomAbility,
-    CustomMove,
-    CustomPokemon,
-    CustomItem,
-    CustomForm,
-    CustomStatus,
-    CustomFieldEffect
-} from '../../store/storeTypes';
-import { isStandaloneMode } from '../../utils/sync/storageAdapter';
-import { downloadJson } from '../../utils/common/fileSystemHelpers';
+import { isStandaloneMode } from '@/utils/sync/storageAdapter';
+import { validateAndSanitizeHomebrewBackup } from '@/utils/sync/homebrewSanitizer';
+import { downloadJson } from '@/utils/common/fileSystemHelpers';
 import { Hammer, X, Radio, Save, FolderOpen, AlertTriangle, Maximize2, Minimize2 } from 'lucide-react';
 import { HomebrewStorageTracker } from './HomebrewStorageTracker';
+import { HomebrewImportConfirmModal, type HomebrewImportPayload } from './HomebrewImportConfirmModal';
 import './Homebrew.css';
 
 export function HomebrewModal({ onClose }: { onClose: () => void }) {
@@ -61,16 +53,8 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
     const markHomebrewBackedUp = useCharacterStore((state) => state.markHomebrewBackedUp);
 
     const fileRef = useRef<HTMLInputElement>(null);
-    const [importAllData, setImportAllData] = useState<{
-        types: CustomType[];
-        abs: CustomAbility[];
-        moves: CustomMove[];
-        mons: CustomPokemon[];
-        items: CustomItem[];
-        forms: CustomForm[];
-        statuses: CustomStatus[];
-        fieldEffects: CustomFieldEffect[];
-    } | null>(null);
+    const [importError, setImportError] = useState<string | null>(null);
+    const [importAllData, setImportAllData] = useState<HomebrewImportPayload | null>(null);
 
     const handleBroadcastSync = () => {
         if (!OBR.isAvailable) return;
@@ -107,38 +91,33 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
     const handleImportAll = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        setImportError(null);
+        const showError = (message: string) => {
+            setImportError(message);
+            if (OBR.isAvailable) OBR.notification.show(message, 'ERROR');
+        };
         const reader = new FileReader();
         reader.onload = (ev) => {
             try {
                 const imported = JSON.parse(ev.target?.result as string);
-                if (
-                    imported &&
-                    typeof imported === 'object' &&
-                    (imported.customTypes ||
-                        imported.customAbilities ||
-                        imported.customMoves ||
-                        imported.customPokemon ||
-                        imported.customItems ||
-                        imported.customForms ||
-                        imported.customStatuses ||
-                        imported.customFieldEffects)
-                ) {
+                const sanitized = validateAndSanitizeHomebrewBackup(imported);
+                if (sanitized) {
                     setImportAllData({
-                        types: imported.customTypes || [],
-                        abs: imported.customAbilities || [],
-                        moves: imported.customMoves || [],
-                        mons: imported.customPokemon || [],
-                        items: imported.customItems || [],
-                        forms: imported.customForms || [],
-                        statuses: imported.customStatuses || [],
-                        fieldEffects: imported.customFieldEffects || []
+                        types: sanitized.customTypes,
+                        abs: sanitized.customAbilities,
+                        moves: sanitized.customMoves,
+                        mons: sanitized.customPokemon,
+                        items: sanitized.customItems,
+                        forms: sanitized.customForms,
+                        statuses: sanitized.customStatuses,
+                        fieldEffects: sanitized.customFieldEffects || []
                     });
                 } else {
-                    if (OBR.isAvailable) OBR.notification.show('Invalid Homebrew Backup file.', 'ERROR');
+                    showError('Invalid Homebrew Backup file.');
                 }
             } catch (err) {
                 console.error('[HomebrewModal] Failed to parse homebrew backup JSON:', err);
-                if (OBR.isAvailable) OBR.notification.show('Failed to parse JSON.', 'ERROR');
+                showError('Failed to parse JSON.');
             }
             if (fileRef.current) fileRef.current.value = '';
         };
@@ -254,6 +233,21 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                     className="homebrew-modal__footer"
                     style={{ flexDirection: 'column', alignItems: 'stretch', gap: '10px' }}
                 >
+                    {importError && (
+                        <div role="alert" className="homebrew-modal__import-error">
+                            <span className="homebrew-modal__import-error-text">
+                                <AlertTriangle size={14} /> {importError}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setImportError(null)}
+                                aria-label="Dismiss import error"
+                                className="homebrew-modal__import-error-dismiss"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    )}
                     <HomebrewStorageTracker />
 
                     <div
@@ -324,70 +318,37 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
             </div>
 
             {importAllData && (
-                <div className="homebrew-import__overlay">
-                    <div className="homebrew-import__content">
-                        <h3
-                            className="homebrew-import__title text-title-primary"
-                            style={{
-                                color: 'var(--semantic-danger)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px'
-                            }}
-                        >
-                            <AlertTriangle size={20} /> Confirm Restore
-                        </h3>
-                        <p className="homebrew-import__text text-subtext">
-                            How would you like to import this data? <b>Overwrite</b> will delete all existing Workshop
-                            items. <b>Add / Merge</b> will safely combine them, updating any items with matching names.
-                        </p>
-                        <div className="homebrew-import__actions">
-                            <button
-                                onClick={() => setImportAllData(null)}
-                                className="action-button action-button--dark homebrew-import__btn"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => {
-                                    mergeAllHomebrewData(
-                                        importAllData.types,
-                                        importAllData.abs,
-                                        importAllData.moves,
-                                        importAllData.mons,
-                                        importAllData.items,
-                                        importAllData.forms,
-                                        importAllData.statuses,
-                                        false,
-                                        importAllData.fieldEffects
-                                    );
-                                    setImportAllData(null);
-                                }}
-                                className="action-button action-button--secondary homebrew-import__btn"
-                            >
-                                Add / Merge
-                            </button>
-                            <button
-                                onClick={() => {
-                                    overwriteAllHomebrewData(
-                                        importAllData.types,
-                                        importAllData.abs,
-                                        importAllData.moves,
-                                        importAllData.mons,
-                                        importAllData.items,
-                                        importAllData.forms,
-                                        importAllData.statuses,
-                                        importAllData.fieldEffects
-                                    );
-                                    setImportAllData(null);
-                                }}
-                                className="action-button action-button--red homebrew-import__btn"
-                            >
-                                Overwrite
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <HomebrewImportConfirmModal
+                    data={importAllData}
+                    onCancel={() => setImportAllData(null)}
+                    onMerge={(data) => {
+                        mergeAllHomebrewData(
+                            data.types,
+                            data.abs,
+                            data.moves,
+                            data.mons,
+                            data.items,
+                            data.forms,
+                            data.statuses,
+                            false,
+                            data.fieldEffects
+                        );
+                        setImportAllData(null);
+                    }}
+                    onOverwrite={(data) => {
+                        overwriteAllHomebrewData(
+                            data.types,
+                            data.abs,
+                            data.moves,
+                            data.mons,
+                            data.items,
+                            data.forms,
+                            data.statuses,
+                            data.fieldEffects
+                        );
+                        setImportAllData(null);
+                    }}
+                />
             )}
         </div>
     );

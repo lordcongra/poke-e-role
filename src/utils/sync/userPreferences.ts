@@ -311,7 +311,6 @@ export async function restoreSettingsFromIndexedDB(): Promise<number> {
             if (typeof window !== 'undefined') {
                 window.dispatchEvent(new Event('theme-override-updated'));
                 window.dispatchEvent(new Event('accessibility-settings-updated'));
-                window.dispatchEvent(new Event('storage'));
             }
         }
 

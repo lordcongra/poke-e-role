@@ -130,8 +130,17 @@ export function useRollLogSync() {
                 }
             }
         };
+        const handleThemeOverride = () => {
+            try {
+                const raw = localStorage.getItem('pkr_active_theme_colors');
+                applyDynamicColors(raw ? JSON.parse(raw) : undefined);
+            } catch (err) {
+                console.warn('[useRollLogSync] Failed to parse dynamic colors on theme update:', err);
+            }
+        };
         window.addEventListener('storage', handleStorage);
         window.addEventListener('pkr-roll-log-update', handleReload);
+        window.addEventListener('theme-override-updated', handleThemeOverride);
 
         // Same-origin fast broadcast channel (instant cross-iframe sync)
         let channel: BroadcastChannel | null = null;
@@ -239,6 +248,7 @@ export function useRollLogSync() {
             isMounted = false;
             window.removeEventListener('storage', handleStorage);
             window.removeEventListener('pkr-roll-log-update', handleReload);
+            window.removeEventListener('theme-override-updated', handleThemeOverride);
             if (channel) {
                 try {
                     channel.close();

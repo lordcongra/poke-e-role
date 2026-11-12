@@ -1,29 +1,10 @@
 import { getEffectiveRoomId } from '@/utils/sync/roomScopedStorage';
-import type {
-    CustomType,
-    CustomAbility,
-    CustomMove,
-    CustomPokemon,
-    CustomItem,
-    CustomForm,
-    CustomStatus,
-    CustomFieldEffect
-} from '@/store/storeTypes';
 import { isStandaloneMode } from '@/utils/sync/storageAdapter';
 import { openIdbDatabase, runIdbTransaction } from '@/utils/sync/idbHelpers';
+import { sanitizeHomebrewData, type HomebrewStorageData } from '@/utils/sync/homebrewSanitizer';
 
-export interface HomebrewStorageData {
-    customTypes: CustomType[];
-    customAbilities: CustomAbility[];
-    customMoves: CustomMove[];
-    customPokemon: CustomPokemon[];
-    customItems: CustomItem[];
-    customForms: CustomForm[];
-    customStatuses: CustomStatus[];
-    customFieldEffects?: CustomFieldEffect[];
-    needsBackup?: boolean;
-    updatedAt?: number;
-}
+export type { HomebrewStorageData };
+export { sanitizeHomebrewData };
 
 export interface HomebrewStorageStats {
     isIndexedDB: boolean;
@@ -67,38 +48,6 @@ export { getEffectiveRoomId };
 export function getHomebrewStorageKey(roomId?: string): string {
     const id = roomId || getEffectiveRoomId();
     return `${STORAGE_PREFIX}${id}`;
-}
-
-export function sanitizeHomebrewData(raw: unknown): HomebrewStorageData {
-    if (!raw || typeof raw !== 'object') {
-        return {
-            customTypes: [],
-            customAbilities: [],
-            customMoves: [],
-            customPokemon: [],
-            customItems: [],
-            customForms: [],
-            customStatuses: [],
-            customFieldEffects: [],
-            needsBackup: false,
-            updatedAt: Date.now()
-        };
-    }
-    const obj = raw as Record<string, unknown>;
-    return {
-        customTypes: Array.isArray(obj.customTypes) ? (obj.customTypes as CustomType[]) : [],
-        customAbilities: Array.isArray(obj.customAbilities) ? (obj.customAbilities as CustomAbility[]) : [],
-        customMoves: Array.isArray(obj.customMoves) ? (obj.customMoves as CustomMove[]) : [],
-        customPokemon: Array.isArray(obj.customPokemon) ? (obj.customPokemon as CustomPokemon[]) : [],
-        customItems: Array.isArray(obj.customItems) ? (obj.customItems as CustomItem[]) : [],
-        customForms: Array.isArray(obj.customForms) ? (obj.customForms as CustomForm[]) : [],
-        customStatuses: Array.isArray(obj.customStatuses) ? (obj.customStatuses as CustomStatus[]) : [],
-        customFieldEffects: Array.isArray(obj.customFieldEffects)
-            ? (obj.customFieldEffects as CustomFieldEffect[])
-            : [],
-        needsBackup: Boolean(obj.needsBackup),
-        updatedAt: typeof obj.updatedAt === 'number' ? obj.updatedAt : Date.now()
-    };
 }
 
 function isEmptyHomebrew(data: HomebrewStorageData): boolean {

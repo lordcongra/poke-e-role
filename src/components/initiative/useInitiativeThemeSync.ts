@@ -52,8 +52,20 @@ export function useInitiativeThemeSync({ theme, isStandalone }: UseInitiativeThe
                 }
             }
         };
+        const handleThemeOverride = () => {
+            try {
+                const rawColors = localStorage.getItem('pkr_active_theme_colors');
+                applyDynamicColors(rawColors ? JSON.parse(rawColors) : undefined);
+            } catch (err) {
+                console.warn('[useInitiativeThemeSync] Failed to parse dynamic colors on theme update:', err);
+            }
+        };
         window.addEventListener('storage', handleStorage);
-        return () => window.removeEventListener('storage', handleStorage);
+        window.addEventListener('theme-override-updated', handleThemeOverride);
+        return () => {
+            window.removeEventListener('storage', handleStorage);
+            window.removeEventListener('theme-override-updated', handleThemeOverride);
+        };
     }, [isStandalone, applyDynamicColors]);
 
     // Theme (light/dark mode) DOM attribute & class toggle

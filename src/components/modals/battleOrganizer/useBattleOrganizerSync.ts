@@ -443,11 +443,22 @@ export function useBattleOrganizerSync({
                 );
             };
 
+            const handleStandaloneStorage = (e: StorageEvent) => {
+                if (
+                    e.key === null ||
+                    e.key.startsWith('pkr_char_') ||
+                    e.key === 'pkr_folders' ||
+                    e.key.includes('pkr_pc_storage')
+                ) {
+                    handleStandaloneChange();
+                }
+            };
+
             window.addEventListener('pkr-local-data-changed', handleStandaloneChange);
-            window.addEventListener('storage', handleStandaloneChange);
+            window.addEventListener('storage', handleStandaloneStorage);
             unsubs.push(() => {
                 window.removeEventListener('pkr-local-data-changed', handleStandaloneChange);
-                window.removeEventListener('storage', handleStandaloneChange);
+                window.removeEventListener('storage', handleStandaloneStorage);
             });
         }
 

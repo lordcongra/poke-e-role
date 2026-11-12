@@ -23,7 +23,6 @@ export async function executeChanceRoll(roll: RollSyncData): Promise<void> {
             );
             localStorage.setItem(rollLogKey, JSON.stringify(updatedLog));
             window.dispatchEvent(new Event('pkr-roll-log-update'));
-            window.dispatchEvent(new Event('storage'));
         }
     } catch (e) {
         console.warn('[executeChanceRoll] Failed to update chanceRolled in roll log:', e);
