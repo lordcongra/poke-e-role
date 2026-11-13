@@ -146,6 +146,40 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
         const activeCamp = freshStore.pcData.campaigns[freshStore.pcData.activeCampaignId];
         const trainers = activeCamp?.trainers || {};
 
+        // Token Cleansing: Strip legacy ruleset metadata so room settings dictate ruleset
+        const tokensWithRuleset: string[] = [];
+        for (const item of sceneItems) {
+            if (item.layer === 'CHARACTER') {
+                const pmdMeta = item.metadata[METADATA_ID] as Record<string, unknown> | undefined;
+                const statsMeta = item.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown> | undefined;
+                if (
+                    (pmdMeta && 'ruleset' in pmdMeta) ||
+                    (statsMeta && 'ruleset' in statsMeta) ||
+                    'ruleset' in item.metadata
+                ) {
+                    tokensWithRuleset.push(item.id);
+                    if (pmdMeta) delete pmdMeta.ruleset;
+                    if (statsMeta) delete statsMeta.ruleset;
+                    delete item.metadata['ruleset'];
+                }
+            }
+        }
+        if (tokensWithRuleset.length > 0) {
+            OBR.scene.items
+                .updateItems(tokensWithRuleset, (items) => {
+                    for (const it of items) {
+                        if (it.metadata[METADATA_ID]) {
+                            delete (it.metadata[METADATA_ID] as Record<string, unknown>).ruleset;
+                        }
+                        if (it.metadata['pokerole-pmd-extension/stats']) {
+                            delete (it.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>).ruleset;
+                        }
+                        delete it.metadata['ruleset'];
+                    }
+                })
+                .catch(() => {});
+        }
+
         const tokensByEntity = new Map<string, Item[]>();
         for (const item of sceneItems) {
             if (item.layer === 'CHARACTER' && !recentlySpawnedTokenIds.has(item.id)) {
@@ -269,6 +303,7 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                         'token-image-url': sum.tokenImageUrl || (tMeta['token-image-url'] as string),
                         lastModified: sum.lastModified || Date.now()
                     };
+                    delete nextMeta.ruleset;
                     tokensToUpdate.push({
                         id: primaryToken.id,
                         name: sum.name || sum.species,
@@ -298,6 +333,7 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                         nickname: tr.name,
                         'token-image-url': tr.avatarUrl || (tMeta['token-image-url'] as string)
                     };
+                    delete nextMeta.ruleset;
                     tokensToUpdate.push({
                         id: primaryToken.id,
                         name: tr.name,

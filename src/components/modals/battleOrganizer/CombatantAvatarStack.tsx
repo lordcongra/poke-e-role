@@ -1,6 +1,8 @@
 import React from 'react';
 import { Minus, Plus, User } from 'lucide-react';
 import type { CombatantRowData } from '../../../types/battleOrganizerTypes';
+import { useCharacterStore } from '@/store/useCharacterStore';
+import { isCombatantInPc } from '@/utils/combat/targeting/abilityTargetPcResolution';
 
 export interface CombatantAvatarStackProps {
     combatant: CombatantRowData;
@@ -33,6 +35,9 @@ export const CombatantAvatarStack: React.FC<CombatantAvatarStackProps> = ({
     handleAdjustWill,
     onOpenSheet
 }) => {
+    const pcData = useCharacterStore((s) => s.pcData);
+    const inPc = Boolean(combatant.isInPc || isCombatantInPc(combatant, pcData));
+
     return (
         <div className="bo-avatar-stat-stack">
             {/* Top: HP Stepper */}
@@ -75,24 +80,26 @@ export const CombatantAvatarStack: React.FC<CombatantAvatarStackProps> = ({
 
             {/* Center: Avatar Thumbnail */}
             <div
-                className={`bo-avatar-thumb ${onOpenSheet && !isLocked ? 'bo-avatar-thumb--clickable' : ''}`}
+                className={`bo-avatar-thumb ${onOpenSheet && !isLocked && !inPc ? 'bo-avatar-thumb--clickable' : ''}`}
                 onClick={() => {
-                    if (isLocked) return;
+                    if (isLocked || inPc) return;
                     onOpenSheet?.(combatant);
                 }}
                 title={
                     isLocked
                         ? 'This sheet is hidden by the GM'
-                        : onOpenSheet
-                          ? hasToken
-                              ? `Open sheet for ${combatant.name || 'combatant'}`
-                              : `No token linked for ${combatant.name || 'combatant'} - click to view instructions`
-                          : undefined
+                        : inPc
+                          ? 'Stored in PC — Send out to battle to view sheet'
+                          : onOpenSheet
+                            ? hasToken
+                                ? `Open sheet for ${combatant.name || 'combatant'}`
+                                : `No token linked for ${combatant.name || 'combatant'} - click to view instructions`
+                            : undefined
                 }
-                role={onOpenSheet && !isLocked ? 'button' : undefined}
-                tabIndex={onOpenSheet && !isLocked ? 0 : undefined}
+                role={onOpenSheet && !isLocked && !inPc ? 'button' : undefined}
+                tabIndex={onOpenSheet && !isLocked && !inPc ? 0 : undefined}
                 onKeyDown={(e) => {
-                    if (onOpenSheet && !isLocked && (e.key === 'Enter' || e.key === ' ')) {
+                    if (onOpenSheet && !isLocked && !inPc && (e.key === 'Enter' || e.key === ' ')) {
                         onOpenSheet(combatant);
                     }
                 }}

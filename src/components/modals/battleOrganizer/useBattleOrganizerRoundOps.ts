@@ -177,14 +177,41 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
                 });
             } else if (newRounds[nextIndex]) {
                 // If advancing into an existing round, ensure reactions and action slots start fresh
+                // while synchronizing combatants' vitals from current round
                 newRounds[nextIndex] = {
                     ...newRounds[nextIndex],
-                    combatants: newRounds[nextIndex].combatants.map((c) => ({
-                        ...c,
-                        actions: createDefaultActions(),
-                        evadeUsed: false,
-                        clashUsed: false
-                    }))
+                    combatants: newRounds[nextIndex].combatants.map((c) => {
+                        const matched = currentRound?.combatants.find((cur) => {
+                            if (c.tokenId && cur.tokenId && c.tokenId === cur.tokenId) return true;
+                            if (c.entityId && cur.entityId && c.entityId === cur.entityId) return true;
+                            if (
+                                c.name.trim() &&
+                                cur.name.trim() &&
+                                c.name.trim().toLowerCase() === cur.name.trim().toLowerCase()
+                            )
+                                return true;
+                            return false;
+                        });
+
+                        return {
+                            ...c,
+                            ...(matched
+                                ? {
+                                      hpCurr: matched.hpCurr,
+                                      hpMax: matched.hpMax,
+                                      willCurr: matched.willCurr,
+                                      willMax: matched.willMax,
+                                      tempHp: matched.tempHp,
+                                      tempWill: matched.tempWill,
+                                      status: matched.status,
+                                      isFainted: matched.isFainted
+                                  }
+                                : {}),
+                            actions: createDefaultActions(),
+                            evadeUsed: false,
+                            clashUsed: false
+                        };
+                    })
                 };
             }
 
@@ -219,6 +246,7 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
                                 });
 
                                 if (combatant) {
+                                    const now = Date.now();
                                     if (!item.metadata['pokerole-extension/stats']) {
                                         item.metadata['pokerole-extension/stats'] = {};
                                     }
@@ -226,6 +254,7 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
                                     stats['actions-used'] = 0;
                                     stats['evasions-used'] = false;
                                     stats['clashes-used'] = false;
+                                    stats['lastModified'] = now;
 
                                     if (!item.metadata['pokerole-pmd-extension/stats']) {
                                         item.metadata['pokerole-pmd-extension/stats'] = {};
@@ -237,10 +266,12 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
                                     pmdStats['actions-used'] = 0;
                                     pmdStats['evasions-used'] = false;
                                     pmdStats['clashes-used'] = false;
+                                    pmdStats['lastModified'] = now;
 
                                     item.metadata['actions-used'] = 0;
                                     item.metadata['evasions-used'] = false;
                                     item.metadata['clashes-used'] = false;
+                                    item.metadata['lastModified'] = now;
                                 }
                             });
                         }
@@ -267,7 +298,8 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
                                     {
                                         'actions-used': 0,
                                         'evasions-used': false,
-                                        'clashes-used': false
+                                        'clashes-used': false,
+                                        lastModified: Date.now()
                                     },
                                     'pokerole-extension/stats'
                                 );

@@ -576,11 +576,12 @@ export function useBattleOrganizerTokenWatch({
                             const currentRound = prev.rounds[prev.activeRoundIndex];
                             if (!currentRound) return prev;
 
-                            const targetCombatant = currentRound.combatants.find(
-                                (c) =>
-                                    (targetTokenId && c.tokenId === targetTokenId) ||
-                                    (charName && c.name.toLowerCase().trim() === charName)
-                            );
+                            const targetCombatant = currentRound.combatants.find((c) => {
+                                if (targetTokenId && c.tokenId === targetTokenId) return true;
+                                if (currState.identity.entityId && c.entityId === currState.identity.entityId) return true;
+                                if (!targetTokenId && !currState.identity.entityId && charName && c.name.toLowerCase().trim() === charName) return true;
+                                return false;
+                            });
                             if (!targetCombatant) return prev;
 
                             const { statusText, isFainted } = parseStatusesFromMetadata({

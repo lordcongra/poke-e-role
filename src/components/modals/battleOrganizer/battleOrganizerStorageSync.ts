@@ -43,17 +43,24 @@ export function applyRollToBattleOrganizerState(
     }
 
     let changed = false;
+    let matchedCombatant = false;
     const newCombatants = currentRound.combatants.map((c) => {
         if (!c.tokenId && !c.name.trim()) return c;
+        if (matchedCombatant) return c;
 
-        const safeName = escapeRegExp(c.name.trim());
-        const isMatch =
-            (rollTokenId && c.tokenId && rollTokenId === c.tokenId) ||
-            (charName && c.name.trim() && charName.trim().toLowerCase() === c.name.trim().toLowerCase()) ||
-            (c.name.trim() && new RegExp(`\\b${safeName}\\b`, 'i').test(cleanLabel));
+        let isMatch = false;
+        if (rollTokenId && c.tokenId) {
+            isMatch = rollTokenId === c.tokenId;
+        } else if (!rollTokenId) {
+            const safeName = escapeRegExp(c.name.trim());
+            isMatch =
+                (Boolean(charName && c.name.trim()) && charName.trim().toLowerCase() === c.name.trim().toLowerCase()) ||
+                (Boolean(c.name.trim()) && new RegExp(`\\b${safeName}\\b`, 'i').test(cleanLabel));
+        }
 
         if (!isMatch) return c;
 
+        matchedCombatant = true;
         const updatedCombatant = { ...c };
 
         if (isEvade && !updatedCombatant.evadeUsed) {
@@ -71,7 +78,7 @@ export function applyRollToBattleOrganizerState(
         }
 
         const newActions = [...updatedCombatant.actions] as CombatantRowData['actions'];
-        const targetIdx = newActions.findIndex((a) => !a.text.trim());
+        const targetIdx = newActions.findIndex((a) => !a.text?.trim());
         if (targetIdx !== -1) {
             const isCrit = Boolean(logData.isCrit);
             const isCritFail = Boolean(logData.isCritFail);

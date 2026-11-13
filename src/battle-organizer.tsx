@@ -181,6 +181,7 @@ export function BattleOrganizerApp() {
 
     // Load local homebrew & multi-tab BroadcastChannel sync on mount
     useEffect(() => {
+        useCharacterStore.getState().initPcStorage();
         useCharacterStore.getState().loadHomebrewLocal();
         homebrewStorage.runLocalStorageMigration().catch(() => {});
 
@@ -273,6 +274,8 @@ export function BattleOrganizerApp() {
             // Re-apply latest theme colors on OBR ready
             const colors = resolveThemeColors();
             applyDynamicColors(colors.primary, colors.secondary);
+
+            useCharacterStore.getState().initPcStorage();
 
             OBR.room
                 .getMetadata()

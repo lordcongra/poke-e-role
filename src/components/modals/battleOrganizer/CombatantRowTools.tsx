@@ -7,6 +7,8 @@ import { AbilityTargetSelectorModal } from '../combat/AbilityTargetSelectorModal
 import { getAbilityTargetStance, getAbilityMaxTargets } from '../../../utils/combat/abilityTargetingUtils';
 import { getKnownAbility, getMaxBoost } from '../../../data/abilities/knownAbilities';
 import { getCombatantAbilityChoice, cycleCombatantAbilityChoice } from './battleOrganizerUtils';
+import { useCharacterStore } from '@/store/useCharacterStore';
+import { isCombatantInPc } from '@/utils/combat/targeting/abilityTargetPcResolution';
 
 export interface CombatantRowToolsProps {
     combatant: CombatantRowData;
@@ -33,6 +35,9 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
     onUpdate,
     onDelete
 }) => {
+    const pcData = useCharacterStore((s) => s.pcData);
+    const inPc = Boolean(combatant.isInPc || isCombatantInPc(combatant, pcData));
+
     const [showPressureModal, setShowPressureModal] = useState(false);
     const [showMedicineModal, setShowMedicineModal] = useState(false);
     const [showTargetModal, setShowTargetModal] = useState(false);
@@ -277,6 +282,16 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
                         aria-label="Sheet locked by GM"
                     >
                         <Lock size={12} />
+                    </button>
+                ) : inPc ? (
+                    <button
+                        type="button"
+                        className="bo-reaction-toggle bo-sheet-toggle bo-sheet-toggle--locked"
+                        disabled
+                        title="Stored in PC — Send out to battle to view sheet"
+                        aria-label="Stored in PC — Send out to battle to view sheet"
+                    >
+                        <FileText size={12} />
                     </button>
                 ) : (
                     onOpenSheet && (

@@ -78,9 +78,11 @@ export function useBattleOrganizerTokenSync({
                                     item.metadata['pokerole-extension/stats'] = {};
                                 }
                                 const stats = item.metadata['pokerole-extension/stats'] as Record<string, unknown>;
+                                const now = Date.now();
                                 stats['actions-used'] = usedActionsCount;
                                 stats['evasions-used'] = combatant.evadeUsed;
                                 stats['clashes-used'] = combatant.clashUsed;
+                                stats['lastModified'] = now;
 
                                 if (!item.metadata['pokerole-pmd-extension/stats']) {
                                     item.metadata['pokerole-pmd-extension/stats'] = {};
@@ -92,11 +94,13 @@ export function useBattleOrganizerTokenSync({
                                 pmdStats['actions-used'] = usedActionsCount;
                                 pmdStats['evasions-used'] = combatant.evadeUsed;
                                 pmdStats['clashes-used'] = combatant.clashUsed;
+                                pmdStats['lastModified'] = now;
 
                                 // Also mirror to root metadata for backward compatibility
                                 item.metadata['actions-used'] = usedActionsCount;
                                 item.metadata['evasions-used'] = combatant.evadeUsed;
                                 item.metadata['clashes-used'] = combatant.clashUsed;
+                                item.metadata['lastModified'] = now;
 
                                 updatedCount++;
                             }
@@ -126,7 +130,8 @@ export function useBattleOrganizerTokenSync({
                                 {
                                     'actions-used': usedActionsCount,
                                     'evasions-used': combatant.evadeUsed,
-                                    'clashes-used': combatant.clashUsed
+                                    'clashes-used': combatant.clashUsed,
+                                    lastModified: Date.now()
                                 },
                                 'pokerole-extension/stats'
                             );

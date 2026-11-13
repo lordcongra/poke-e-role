@@ -165,6 +165,25 @@ describe('reconcileSceneTokens & room/scene sync hardening', () => {
         expect(cloneA.name).toBe('Sparky Copy 1');
     });
 
+    it('strips legacy ruleset metadata from canvas tokens without altering stats or entity ids', async () => {
+        const legacyToken = makeToken('tok-legacy', 'ent-legacy', 1000);
+        legacyToken.metadata['ruleset'] = 'vg-vit-hp';
+        (legacyToken.metadata[METADATA_ID] as Record<string, unknown>)['ruleset'] = 'vg-vit-hp';
+        (legacyToken.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>)['ruleset'] = 'vg-vit-hp';
+
+        itemsUpdateItemsMock.mockImplementation(async (_ids: string[], updater: (items: Item[]) => void) => {
+            updater([legacyToken]);
+        });
+
+        await reconcileSceneTokens([legacyToken], 'GM');
+
+        expect(itemsUpdateItemsMock).toHaveBeenCalledWith(['tok-legacy'], expect.any(Function));
+        expect('ruleset' in legacyToken.metadata).toBe(false);
+        expect('ruleset' in (legacyToken.metadata[METADATA_ID] as Record<string, unknown>)).toBe(false);
+        expect('ruleset' in (legacyToken.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>)).toBe(false);
+        expect((legacyToken.metadata[METADATA_ID] as Record<string, unknown>)['hp-curr']).toBe(5);
+    });
+
     it('runs a trailing reconciliation with fresh items when called re-entrantly while isReconciling', async () => {
         let releaseBackupCheck: (val: boolean) => void = () => {};
         isBackupSceneMock.mockImplementationOnce(

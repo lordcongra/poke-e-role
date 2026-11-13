@@ -464,6 +464,7 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                     items.forEach((item) => {
                                         const matched = targetCombatantsToReset.find((c) => c.tokenId === item.id);
                                         if (matched) {
+                                            const now = Date.now();
                                             if (!item.metadata['pokerole-extension/stats']) {
                                                 item.metadata['pokerole-extension/stats'] = {};
                                             }
@@ -477,6 +478,7 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                             stats['ability-boost-active'] = false;
                                             stats['ability-boost-level'] = 0;
                                             stats['ability-target-ids'] = '';
+                                            stats['lastModified'] = now;
 
                                             if (!item.metadata['pokerole-pmd-extension/stats']) {
                                                 item.metadata['pokerole-pmd-extension/stats'] = {};
@@ -491,6 +493,7 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                             pmdStats['ability-boost-active'] = false;
                                             pmdStats['ability-boost-level'] = 0;
                                             pmdStats['ability-target-ids'] = '';
+                                            pmdStats['lastModified'] = now;
 
                                             item.metadata['actions-used'] = 0;
                                             item.metadata['evasions-used'] = false;
@@ -498,6 +501,7 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                             item.metadata['ability-boost-active'] = false;
                                             item.metadata['ability-boost-level'] = 0;
                                             item.metadata['ability-target-ids'] = '';
+                                            item.metadata['lastModified'] = now;
                                         }
                                     });
                                 }
@@ -514,7 +518,8 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                                 'clashes-used': false,
                                                 'ability-boost-active': false,
                                                 'ability-boost-level': 0,
-                                                'ability-target-ids': ''
+                                                'ability-target-ids': '',
+                                                lastModified: Date.now()
                                             },
                                             'pokerole-extension/stats'
                                         );

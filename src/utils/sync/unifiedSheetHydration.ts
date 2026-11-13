@@ -310,6 +310,9 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
         finalMeta['tokenImageUrl'] = resolvedImgUrl;
     }
 
+    // Ruleset alignment: room settings dictate ruleset, not token metadata
+    delete finalMeta['ruleset'];
+
     store.loadFromOwlbear(finalMeta);
 
     // 5. Reconcile token image

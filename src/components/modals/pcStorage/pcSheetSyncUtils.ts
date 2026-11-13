@@ -4,6 +4,7 @@ import { METADATA_ID, setActiveTokenId } from '../../../utils/sync/obr';
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
 import { resolveCharacterThemeColors, applyDynamicThemeColors } from '../../../utils/common/colorUtils';
 import { useCharacterStore } from '../../../store/useCharacterStore';
+import { hydrateActiveSheet } from '@/utils/sync/unifiedSheetHydration';
 
 const COSMETIC_UI_LOCK_KEYS = new Set<keyof CharacterState['identity']>([
     'coreLocked',
@@ -298,13 +299,15 @@ export function restorePreviousCharacterState(params: RestorePreviousCharacterPa
             applyDynamicThemeColors('', '');
         }
     } else if (!isSameEntity) {
-        // A different token was selected prior to opening PC: restore it
-        setActiveTokenId(prevTokenId);
-        const s = useCharacterStore.getState();
-        s.setTokenData(prevTokenId, s.role || 'PLAYER');
-        if (prevMeta) {
-            s.loadFromOwlbear(prevMeta);
-        }
+        // A different token was selected prior to opening PC: restore it via live token hydration
+        hydrateActiveSheet({ targetId: prevTokenId, saveIfNewer: false }).catch(() => {
+            setActiveTokenId(prevTokenId);
+            const s = useCharacterStore.getState();
+            s.setTokenData(prevTokenId, s.role || 'PLAYER');
+            if (prevMeta) {
+                s.loadFromOwlbear(prevMeta);
+            }
+        });
         if (prevTheme) {
             applyDynamicThemeColors(prevTheme.primary, prevTheme.secondary);
         }

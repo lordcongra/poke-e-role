@@ -15,6 +15,7 @@ import { hasCharacterSheetChanged } from '../pcStorage/pcSheetSyncUtils';
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
 import { extractTokenImage } from '../../../utils/combat/initiativeHelpers';
 import { resolveCombatantLiveToken } from './battleOrganizerUtils';
+import { isCombatantInPc } from '@/utils/combat/targeting/abilityTargetPcResolution';
 import { resolveCharacterThemeColors, applyDynamicThemeColors } from '../../../utils/common/colorUtils';
 import { IdentityHeader } from '../../identity/IdentityHeader';
 import { DerivedBoard } from '../../board/DerivedBoard';
@@ -60,6 +61,8 @@ export function CombatantSheetModal({
     const role = useCharacterStore((state) => state.role);
     const isNPC = useCharacterStore((state) => state.identity.isNPC);
     const gmOnlyMatchups = useCharacterStore((state) => state.identity.gmOnlyMatchups);
+    const pcData = useCharacterStore((state) => state.pcData);
+    const isInPc = Boolean(combatant.isInPc || isCombatantInPc(combatant, pcData));
     const isLocked = !isStandaloneMode && role === 'PLAYER' && (Boolean(combatant.isNPC) || Boolean(isNPC));
 
     // Save previous character state and window theme colors to restore when CombatantSheetModal is closed
@@ -113,12 +116,14 @@ export function CombatantSheetModal({
                 s.setTokenData(combatant.tokenId!, currentRole);
             } else if (prevId) {
                 // A different token was selected prior to opening modal: restore it
-                setActiveTokenId(prevId);
-                const s = useCharacterStore.getState();
-                s.setTokenData(prevId, currentRole);
-                if (prevMeta) {
-                    s.loadFromOwlbear(prevMeta);
-                }
+                hydrateActiveSheet({ targetId: prevId, saveIfNewer: false }).catch(() => {
+                    setActiveTokenId(prevId);
+                    const s = useCharacterStore.getState();
+                    s.setTokenData(prevId, currentRole);
+                    if (prevMeta) {
+                        s.loadFromOwlbear(prevMeta);
+                    }
+                });
                 if (prevTheme) {
                     applyDynamicThemeColors(prevTheme.primary, prevTheme.secondary);
                 }
@@ -168,6 +173,10 @@ export function CombatantSheetModal({
     useEffect(() => {
         let isMounted = true;
         const loadCharacter = async () => {
+            if (isInPc) {
+                setLoading(false);
+                return;
+            }
             setLoading(true);
             setNoTokenLinked(false);
             isHydratingRef.current = true;
@@ -371,6 +380,26 @@ export function CombatantSheetModal({
                         <div className="bo-sheet-modal__loading text-subtext">
                             <Loader2 size={24} className="bo-spin-anim" color="var(--primary)" />
                             <span>Loading Pokémon sheet data...</span>
+                        </div>
+                    ) : isInPc ? (
+                        <div className="bo-sheet-modal__no-token">
+                            <div className="bo-sheet-modal__no-token-icon">
+                                <AlertCircle size={36} color="var(--primary)" />
+                            </div>
+                            <h3 className="bo-sheet-modal__no-token-title text-title-primary">
+                                &ldquo;{combatant.name || 'Pokémon'}&rdquo; is Stored in the PC
+                            </h3>
+                            <p className="bo-sheet-modal__no-token-desc text-subtext">
+                                Pokémon stored in the PC cannot be inspected or edited while a battle is in progress.
+                                Send this Pokémon out to the battlefield from PC storage to open and view its character sheet.
+                            </p>
+                            <button
+                                type="button"
+                                className="action-button action-button--primary bo-sheet-modal__no-token-btn"
+                                onClick={handleClose}
+                            >
+                                Got It
+                            </button>
                         </div>
                     ) : noTokenLinked ? (
                         <div className="bo-sheet-modal__no-token">

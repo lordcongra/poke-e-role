@@ -1,4 +1,5 @@
 import type { InventoryItem, PassiveItem } from '@/store/storeTypes';
+import { useCharacterStore } from '@/store/useCharacterStore';
 import { parseCombatTags } from '@/utils/tagParser/index';
 
 export interface TargetDefensesResult {
@@ -117,7 +118,7 @@ export function calculateTargetDefensesFromMeta(meta: Record<string, unknown>): 
         ) || 0;
 
     const identityObj = (stateObj?.identity || meta.identity || {}) as Record<string, unknown>;
-    const ruleset = String(meta['ruleset'] || identityObj.ruleset || 'vg-vit-hp');
+    const ruleset = useCharacterStore.getState().identity.ruleset || 'vg-vit-hp';
     const charRank = String(meta['rank'] || identityObj.rank || '');
     const rankDefBonus = getRankBonusStats(charRank).def;
 

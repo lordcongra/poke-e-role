@@ -337,7 +337,7 @@ function getSharedHighestResource(
 
 export function calculateMaxHp(state: CharacterState, itemBuffs?: CombatBonuses): number {
     const abilityText = getEffectiveAbilityText(state);
-    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
     const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
     const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
 
@@ -352,7 +352,7 @@ export function calculateMaxHp(state: CharacterState, itemBuffs?: CombatBonuses)
 
 export function calculateMaxWill(state: CharacterState, itemBuffs?: CombatBonuses): number {
     const abilityText = getEffectiveAbilityText(state);
-    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
     const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
 
     const rankBonus = getRankBonusStats(state.identity.rank).will;
@@ -363,7 +363,7 @@ export function calculateMaxWill(state: CharacterState, itemBuffs?: CombatBonuse
 
 export function calculateDefTotal(state: CharacterState, itemBuffs?: CombatBonuses): number {
     const abilityText = getEffectiveAbilityText(state);
-    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
     const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
     const rankBonus = getRankBonusStats(state.identity.rank).def;
 
@@ -392,7 +392,7 @@ export function calculateDefTotal(state: CharacterState, itemBuffs?: CombatBonus
 
 export function calculateSDefTotal(state: CharacterState, itemBuffs?: CombatBonuses): number {
     const abilityText = getEffectiveAbilityText(state);
-    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
     const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
     const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
 

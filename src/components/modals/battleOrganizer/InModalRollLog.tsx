@@ -414,12 +414,12 @@ export function InModalRollLog({
                             const moveName = parsed?.moveName || '';
                             const charName = parsed?.charName || r.characterName || r.player;
 
-                            const matchedCombatant = combatants.find(
-                                (c) =>
-                                    (r.tokenId && c.tokenId && r.tokenId === c.tokenId) ||
-                                    (charName && c.name.toLowerCase().trim() === charName.toLowerCase().trim()) ||
-                                    (c.name.trim() && r.label.toLowerCase().includes(c.name.toLowerCase().trim()))
-                            );
+                            const matchedCombatant = combatants.find((c) => {
+                                if (r.tokenId && c.tokenId && r.tokenId === c.tokenId) return true;
+                                if (!r.tokenId && charName && c.name.toLowerCase().trim() === charName.toLowerCase().trim()) return true;
+                                if (!r.tokenId && c.name.trim() && r.label.toLowerCase().includes(c.name.toLowerCase().trim())) return true;
+                                return false;
+                            });
 
                             const currentStatus = markedStatus[r.id];
                             let effectiveIcon = resolvedIcons[r.id] || r.icon;

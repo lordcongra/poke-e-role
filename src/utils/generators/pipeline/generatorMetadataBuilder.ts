@@ -1,4 +1,5 @@
 import type { TempBuild, CharacterState } from '@/store/storeTypes';
+import { useCharacterStore } from '@/store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '@/types/enums';
 import { getBase, getLimit, extractAbilities } from '@/utils/common/macroHelpers';
 import { calculateMaxHp, calculateMaxWill } from '@/utils/combat/combatMath';
@@ -23,8 +24,10 @@ export function buildTokenMetadataFromBuild(
     const hpBase = Number(pd.BaseHP) || 4;
     const willBase = Number(pd.BaseWill) || 3;
 
+    const roomRuleset = useCharacterStore.getState().identity.ruleset || 'vg-vit-hp';
+
     const fakeState = {
-        identity: { rank: rank, ruleset: 'vg-vit-hp', ability: '' },
+        identity: { rank: rank, ruleset: roomRuleset, ability: '' },
         health: { hpBase: hpBase },
         will: { willBase: willBase },
         stats: {
@@ -64,7 +67,6 @@ export function buildTokenMetadataFromBuild(
         age: '',
         mode: 'Pokémon',
         'show-trackers': true,
-        ruleset: 'vg-vit-hp',
         'token-image-url': imageUrl,
         'v2-migrated': true,
         'hp-base': hpBase,

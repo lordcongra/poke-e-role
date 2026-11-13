@@ -104,7 +104,7 @@ describe('Generator Pipeline Modules', () => {
             expect(metadata.nature).toBe('Brave');
             expect(metadata.gender).toBe('Male');
             expect(metadata['token-image-url']).toBe('https://example.com/sparky.png');
-            expect(metadata['ruleset']).toBe('vg-vit-hp');
+            expect(metadata['ruleset']).toBeUndefined();
             expect(metadata['v2-migrated']).toBe(true);
 
             // Health & Will calculations

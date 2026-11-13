@@ -30,6 +30,7 @@ import {
     setBattleOrganizerOpen
 } from './battleOrganizerSettingsHelper';
 import { openBattleOrganizerPopout, markCombatantActionStatus } from './battleOrganizerUtils';
+import { isCombatantInPc } from '@/utils/combat/targeting/abilityTargetPcResolution';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import type { BattleOrganizerSettings, CombatantRowData, RollLogLayoutMode } from '../../../types/battleOrganizerTypes';
 import { useRoundAdvanceModal } from './useRoundAdvanceModal';
@@ -209,7 +210,18 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
     };
 
     const handleOpenCombatantSheet = (combatant: CombatantRowData) => {
-        const role = useCharacterStore.getState().role;
+        const store = useCharacterStore.getState();
+        if (isCombatantInPc(combatant, store.pcData) || combatant.isInPc || !combatant.tokenId) {
+            if (OBR.isAvailable) {
+                OBR.notification.show(
+                    `${combatant.name || 'Pokémon'} is stored in the PC and cannot be opened during battle. Send it out to battle to open its sheet.`,
+                    'WARNING'
+                );
+            }
+            return;
+        }
+
+        const role = store.role;
         if (!isStandaloneMode && role === 'PLAYER' && combatant.isNPC) {
             return;
         }
