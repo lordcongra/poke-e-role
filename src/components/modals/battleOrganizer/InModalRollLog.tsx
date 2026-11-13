@@ -230,6 +230,8 @@ export function InModalRollLog({
                         if (isMounted) setRolls([]);
                     } else if (event.data?.type === 'roll-log-update') {
                         handleReload();
+                    } else if (event.data?.type === 'roll-log-sync') {
+                        handleNewRoll();
                     }
                 };
             } catch (chanErr) {
@@ -239,6 +241,9 @@ export function InModalRollLog({
 
         const unsubs: Array<() => void> = [];
         if (OBR.isAvailable) {
+            OBR.onReady(() => {
+                if (isMounted) handleReload();
+            });
             unsubs.push(
                 OBR.broadcast.onMessage('pokerole-pmd-extension/roll-log-sync', async (event) => {
                     const roll = event.data as { targetVisibility?: string; playerId?: string };

@@ -9,6 +9,8 @@ import {
 } from './components/modals/battleOrganizer/battleOrganizerSettingsHelper';
 import { isStandaloneMode } from './utils/sync/storageAdapter';
 import { getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
+import { ROOM_META_ID } from './hooks/owlbearSync/owlbearSyncConstants';
+import { mapRoomSettings } from './utils/sync/roomSettingsMeta';
 import { useCharacterStore } from './store/useCharacterStore';
 import { homebrewStorage, initHomebrewBroadcastSync } from './utils/sync/homebrewStorage';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
@@ -271,6 +273,30 @@ export function BattleOrganizerApp() {
             // Re-apply latest theme colors on OBR ready
             const colors = resolveThemeColors();
             applyDynamicColors(colors.primary, colors.secondary);
+
+            OBR.room
+                .getMetadata()
+                .then((meta) => {
+                    if (ROOM_META_ID in meta) {
+                        const data = meta[ROOM_META_ID] as Record<string, unknown> | undefined;
+                        if (data) {
+                            useCharacterStore.getState().applyRoomSettings(mapRoomSettings(data));
+                        }
+                    }
+                })
+                .catch((err) => {
+                    console.warn('[BattleOrganizer] Failed to fetch room metadata:', err);
+                });
+
+            const unsubRoomMeta = OBR.room.onMetadataChange((meta) => {
+                if (ROOM_META_ID in meta) {
+                    const data = meta[ROOM_META_ID] as Record<string, unknown> | undefined;
+                    if (data) {
+                        useCharacterStore.getState().applyRoomSettings(mapRoomSettings(data));
+                    }
+                }
+            });
+            unsubs.push(unsubRoomMeta);
 
             OBR.player
                 .getRole()

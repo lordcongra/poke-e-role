@@ -36,6 +36,20 @@ describe('roomScopedStorage', () => {
     afterEach(() => {
         OBR.isAvailable = originalIsAvailable;
         setMockRoomId(originalRoomId);
+        window.history.pushState({}, '', '/');
+    });
+
+    it('resolves roomId from window.location.search when present in popout mode', () => {
+        window.history.pushState({}, '', '/?roomId=popout-room-xyz');
+        OBR.isAvailable = true;
+        setMockRoomId('fallback-room');
+
+        expect(getEffectiveRoomId()).toBe('popout-room-xyz');
+        expect(getBattleOrganizerStorageKey()).toBe('pkr_battle_organizer_data_popout-room-xyz');
+        expect(getRollLogStorageKey()).toBe('pkr_roll_log_popout-room-xyz');
+        expect(getRollLogChannelName()).toBe('pkr_roll_log_channel_popout-room-xyz');
+
+        window.history.pushState({}, '', '/');
     });
 
     it('resolves OBR.room.id when available and produces distinct keys per room', () => {

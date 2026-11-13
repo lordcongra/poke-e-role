@@ -9,6 +9,13 @@ const BO_OFFLINE_MIGRATED_KEY = 'pkr_battle_organizer_offline_migrated';
  */
 export function getEffectiveRoomId(): string {
     try {
+        if (typeof window !== 'undefined' && window.location?.search) {
+            const params = new URLSearchParams(window.location.search);
+            const urlRoomId = params.get('roomId');
+            if (urlRoomId && urlRoomId.trim()) {
+                return urlRoomId.trim();
+            }
+        }
         if (OBR.isAvailable && OBR.room && OBR.room.id) {
             return OBR.room.id;
         }

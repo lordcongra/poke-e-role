@@ -11,6 +11,7 @@ import type {
     RollLogLayoutMode,
     BattleOrganizerSettings
 } from '../../../types/battleOrganizerTypes';
+import { getEffectiveRoomId } from '@/utils/sync/roomScopedStorage';
 
 export const LEGACY_OBR_SCENE_META_KEY = 'pokerole-pmd-extension/battle-organizer';
 
@@ -558,6 +559,10 @@ export function openBattleOrganizerPopout(boSettings: BattleOrganizerSettings): 
     if (currentRole) urlParams.set('role', currentRole);
     if (primaryColor.trim()) urlParams.set('primary', primaryColor.trim());
     if (secondaryColor.trim()) urlParams.set('secondary', secondaryColor.trim());
+    const effectiveRoomId = getEffectiveRoomId();
+    if (effectiveRoomId && effectiveRoomId !== 'offline') {
+        urlParams.set('roomId', effectiveRoomId);
+    }
 
     if (primaryColor.trim()) {
         try {
