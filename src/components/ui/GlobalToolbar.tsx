@@ -409,6 +409,7 @@ export function GlobalToolbar() {
             if (storeRole) urlParams.set('role', storeRole);
             if (currentPrimary.trim()) urlParams.set('primary', currentPrimary.trim());
             if (currentSecondary.trim()) urlParams.set('secondary', currentSecondary.trim());
+            if (OBR.room.id) urlParams.set('roomId', OBR.room.id);
             const url = `${baseUrl}/battle-organizer.html?${urlParams.toString()}`;
 
             // Try opening in requested mode (always passing width & height)

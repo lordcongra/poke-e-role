@@ -74,7 +74,7 @@ export async function broadcastRollLog(rollLogData: RollSyncData): Promise<void>
                 await OBR.popover
                     .open({
                         id: 'pkr-roll-log',
-                        url: `${baseUrl}/roll-log.html`,
+                        url: `${baseUrl}/roll-log.html?roomId=${encodeURIComponent(OBR.room.id || '')}`,
                         height: 380,
                         width: 320,
                         disableClickAway: true,

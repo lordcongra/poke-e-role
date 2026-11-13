@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useBattleOrganizer } from './useBattleOrganizer';
 import { BattleOrganizerHeader } from './BattleOrganizerHeader';
@@ -20,7 +20,9 @@ import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import { getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import { BattleOrganizerFooter } from './BattleOrganizerFooter';
 import { BattleOrganizerSettingsModal } from './BattleOrganizerSettingsModal';
-import { CombatantSheetModal } from './CombatantSheetModal';
+const CombatantSheetModal = lazy(() =>
+    import('./CombatantSheetModal').then((m) => ({ default: m.CombatantSheetModal }))
+);
 import { InModalRollLog } from './InModalRollLog';
 import { RoundWeatherDamageModal } from './RoundWeatherDamageModal';
 import {
@@ -147,7 +149,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                         OBR.popover
                             .open({
                                 id: 'pkr-roll-log',
-                                url: `${baseUrl}/roll-log.html`,
+                                url: `${baseUrl}/roll-log.html?roomId=${encodeURIComponent(OBR.room.id || '')}`,
                                 height: 380,
                                 width: 320,
                                 disableClickAway: true,
@@ -481,18 +483,20 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                 )}
 
                 {activeSheetCombatant && (
-                    <CombatantSheetModal
-                        key={activeSheetCombatant.id}
-                        combatant={activeSheetCombatant}
-                        allCombatants={currentRound?.combatants || []}
-                        onSelectCombatant={(c) => {
-                            const role = useCharacterStore.getState().role;
-                            if (!isStandaloneMode && role === 'PLAYER' && c.isNPC) return;
-                            setActiveSheetCombatant(c);
-                        }}
-                        onClose={() => setActiveSheetCombatant(null)}
-                        onMarkAction={handleMarkActionFromRoll}
-                    />
+                    <Suspense fallback={null}>
+                        <CombatantSheetModal
+                            key={activeSheetCombatant.id}
+                            combatant={activeSheetCombatant}
+                            allCombatants={currentRound?.combatants || []}
+                            onSelectCombatant={(c) => {
+                                const role = useCharacterStore.getState().role;
+                                if (!isStandaloneMode && role === 'PLAYER' && c.isNPC) return;
+                                setActiveSheetCombatant(c);
+                            }}
+                            onClose={() => setActiveSheetCombatant(null)}
+                            onMarkAction={handleMarkActionFromRoll}
+                        />
+                    </Suspense>
                 )}
 
                 {/* Built-in live Roll Log display with quick action marking (Floating or Fallback) */}

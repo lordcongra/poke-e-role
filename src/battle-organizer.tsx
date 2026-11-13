@@ -1,8 +1,11 @@
-import { StrictMode, useEffect, useRef, useState } from 'react';
+import { StrictMode, useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import OBR from '@owlbear-rodeo/sdk';
 import { BattleOrganizerModal } from './components/modals/battleOrganizer/BattleOrganizerModal';
-import { PrintBattleOrganizer } from './components/print/PrintBattleOrganizer';
+
+const PrintBattleOrganizer = lazy(() =>
+    import('./components/print/PrintBattleOrganizer').then((m) => ({ default: m.PrintBattleOrganizer }))
+);
 import {
     subscribeBattleOrganizerSettings,
     setBattleOrganizerOpen
@@ -162,7 +165,7 @@ export function BattleOrganizerApp() {
                         OBR.popover
                             .open({
                                 id: 'pkr-roll-log',
-                                url: `${baseUrl}/roll-log.html`,
+                                url: `${baseUrl}/roll-log.html?roomId=${encodeURIComponent(OBR.room.id || '')}`,
                                 height: 380,
                                 width: 320,
                                 disableClickAway: true,
@@ -379,7 +382,11 @@ export function BattleOrganizerApp() {
             }}
         >
             <BattleOrganizerModal isPopout={true} onClose={handleClose} onPrint={() => setIsPrinting(true)} />
-            {isPrinting && <PrintBattleOrganizer onDone={() => setIsPrinting(false)} />}
+            {isPrinting && (
+                <Suspense fallback={null}>
+                    <PrintBattleOrganizer onDone={() => setIsPrinting(false)} />
+                </Suspense>
+            )}
         </div>
     );
 }

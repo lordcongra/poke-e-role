@@ -295,11 +295,6 @@ export function useRollLogSync() {
     const clearAll = () => {
         clearRollLogCache();
         setRolls([]);
-        if (OBR.isAvailable) {
-            OBR.onReady(() => {
-                OBR.popover.close('pkr-roll-log').catch(() => {});
-            });
-        }
     };
 
     return {

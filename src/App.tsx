@@ -167,6 +167,11 @@ function App() {
                             tabIndex={-1}
                             title="Warmup Initiative Tracker"
                         />
+                        <iframe
+                            src={`${(import.meta.env.BASE_URL || '/').replace(/\/$/, '')}/battle-organizer.html`}
+                            tabIndex={-1}
+                            title="Warmup Battle Organizer"
+                        />
                     </div>
                 )}
             </>
