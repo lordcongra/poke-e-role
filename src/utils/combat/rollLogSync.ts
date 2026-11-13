@@ -3,7 +3,6 @@ import { isStandaloneMode } from '../sync/storageAdapter';
 import { removeSettingFromIndexedDB } from '../sync/userPreferences';
 import { getRollLogChannelName, getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import { isBattleOrganizerOpen } from '../../components/modals/battleOrganizer/battleOrganizerSettingsHelper';
-import { applyRollToBattleOrganizerStorage } from '../../components/modals/battleOrganizer/battleOrganizerStorageSync';
 import { EXTENSION_ID, type RollSyncData } from '../../hooks/owlbearSync/owlbearSyncConstants';
 
 /**
@@ -44,7 +43,9 @@ export async function broadcastRollLog(rollLogData: RollSyncData): Promise<void>
         }
 
         // Apply roll to Battle Organizer storage if organizer is closed so entries persist even if roll log is cleared
-        applyRollToBattleOrganizerStorage(rollLogData);
+        import('../../components/modals/battleOrganizer/battleOrganizerStorageSync')
+            .then(({ applyRollToBattleOrganizerStorage }) => applyRollToBattleOrganizerStorage(rollLogData))
+            .catch((boErr) => console.warn('[RollLogSync] Failed to sync roll to Battle Organizer:', boErr));
 
         // 1. Dispatch local window events so all in-page subscribers immediately update
         window.dispatchEvent(new CustomEvent('pkr-roll-log-event', { detail: rollLogData }));

@@ -1,4 +1,3 @@
-import { useCharacterStore } from '@/store/useCharacterStore';
 import { openIdbDatabase, runIdbTransaction } from '@/utils/sync/idbHelpers';
 import { idbGetAllCharacters } from '@/utils/sync/standaloneIdb';
 
@@ -195,6 +194,7 @@ export const imageManager = {
         }
 
         try {
+            const { useCharacterStore } = await import('@/store/useCharacterStore');
             const pcData = useCharacterStore.getState().pcData;
             if (pcData) {
                 if (pcData.pokemonSummaries) {

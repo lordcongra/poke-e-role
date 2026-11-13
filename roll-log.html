@@ -12,7 +12,62 @@
         data-theme="dark"
         style="margin: 0; padding: 0; background: transparent; overflow: hidden; height: 100%; width: 100%"
     >
-        <div id="root"></div>
+        <div id="root">
+            <div
+                style="
+                    background-color: #1e1e1e;
+                    color: #e0e0e0;
+                    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    padding: 12px;
+                    box-sizing: border-box;
+                    gap: 8px;
+                "
+            >
+                <div style="font-weight: 600; font-size: 14px; opacity: 0.8; display: flex; align-items: center; gap: 8px;">
+                    Roll Log
+                </div>
+                <div id="fallback-rolls" style="display: flex; flex-direction: column; gap: 6px; overflow: hidden;"></div>
+            </div>
+        </div>
+        <script>
+            (function() {
+                try {
+                    var key = '';
+                    for (var i = 0; i < localStorage.length; i++) {
+                        var k = localStorage.key(i);
+                        if (k && k.indexOf('pkr_roll_log_') === 0 && k.indexOf('pkr_roll_log_channel') === -1) {
+                            key = k;
+                            break;
+                        }
+                    }
+                    if (key) {
+                        var raw = localStorage.getItem(key);
+                        var rolls = raw ? JSON.parse(raw) : [];
+                        if (rolls && rolls.length > 0) {
+                            var container = document.getElementById('fallback-rolls');
+                            if (container) {
+                                var html = '';
+                                for (var j = 0; j < Math.min(rolls.length, 4); j++) {
+                                    var r = rolls[j];
+                                    var player = (r.player || 'Trainer').replace(/</g, '&lt;');
+                                    var label = (r.label || '').replace(/</g, '&lt;');
+                                    var result = (r.result || '').replace(/</g, '&lt;');
+                                    html += '<div style="background: #252525; border-radius: 6px; padding: 6px 10px; font-size: 12px; border-left: 3px solid #ff5555; display: flex; flex-direction: column; gap: 2px;">' +
+                                        '<div style="font-weight: 600; color: #fff;">' + player + '</div>' +
+                                        '<div style="color: #aaa; font-size: 11px;">' + label + '</div>' +
+                                        '<div style="font-weight: bold; color: #4ade80; font-size: 13px;">' + result + '</div>' +
+                                    '</div>';
+                                }
+                                container.innerHTML = html;
+                            }
+                        }
+                    }
+                } catch (e) {}
+            })();
+        </script>
         <script type="module" src="/src/roll-log.tsx"></script>
     </body>
 </html>

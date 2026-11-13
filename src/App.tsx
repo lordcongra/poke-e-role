@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
+import OBR from '@owlbear-rodeo/sdk';
 import { useOwlbearSync } from '@/hooks/useOwlbearSync';
 import { useDynamicThemeSync } from '@/hooks/useDynamicThemeSync';
 import { useCharacterStore } from '@/store/useCharacterStore';
@@ -141,6 +142,33 @@ function App() {
                     onClose={() => setShowInitialPersistenceNotice(false)}
                     contextScope="initial"
                 />
+
+                {/* Background pre-warm iframes so OBR popovers load instantly on first use */}
+                {OBR.isAvailable && !isStandaloneMode && (
+                    <div
+                        aria-hidden="true"
+                        style={{
+                            position: 'fixed',
+                            top: -9999,
+                            left: -9999,
+                            width: 1,
+                            height: 1,
+                            opacity: 0,
+                            pointerEvents: 'none'
+                        }}
+                    >
+                        <iframe
+                            src={`${(import.meta.env.BASE_URL || '/').replace(/\/$/, '')}/roll-log.html`}
+                            tabIndex={-1}
+                            title="Warmup Roll Log"
+                        />
+                        <iframe
+                            src={`${(import.meta.env.BASE_URL || '/').replace(/\/$/, '')}/initiative-tracker.html`}
+                            tabIndex={-1}
+                            title="Warmup Initiative Tracker"
+                        />
+                    </div>
+                )}
             </>
         );
     }

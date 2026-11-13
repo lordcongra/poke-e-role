@@ -1,7 +1,6 @@
 import React from 'react';
 import { X, Info, Dices, Check } from 'lucide-react';
 import { parseRollLabel } from '../../utils/combat/rollLogParser';
-import { executeChanceRoll } from '../../utils/combat/diceRoller';
 import type { RollSyncData } from '../../hooks/owlbearSync/owlbearSyncConstants';
 
 export interface RollLogEntryItemProps {
@@ -89,9 +88,14 @@ export const RollLogEntryItem: React.FC<RollLogEntryItemProps> = ({ roll, resolv
                         type="button"
                         className="roll-log__chance-btn"
                         disabled={roll.chanceRolled}
-                        onClick={(e) => {
+                        onClick={async (e) => {
                             e.stopPropagation();
-                            executeChanceRoll(roll);
+                            try {
+                                const { executeChanceRoll } = await import('../../utils/combat/diceRoller');
+                                executeChanceRoll(roll);
+                            } catch (err) {
+                                console.error('[RollLogEntryItem] Failed to load chance roller:', err);
+                            }
                         }}
                         title={
                             roll.chanceRolled
