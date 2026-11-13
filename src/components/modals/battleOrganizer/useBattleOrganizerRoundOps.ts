@@ -308,6 +308,13 @@ export function useBattleOrganizerRoundOps({ updateState }: UseBattleOrganizerRo
     // --- Battlefield Direct Updates ---
     const updateBattlefield = useCallback(
         <K extends keyof BattlefieldData>(field: K, value: BattlefieldData[K]) => {
+            if (field === 'broadcastToPlayers') {
+                const role = useCharacterStore.getState().role;
+                if (!isStandaloneMode && role !== 'GM') {
+                    console.warn('[BattleOrganizer] Non-GM player cannot toggle broadcastToPlayers');
+                    return;
+                }
+            }
             updateState((prev) => ({
                 ...prev,
                 battlefield: {

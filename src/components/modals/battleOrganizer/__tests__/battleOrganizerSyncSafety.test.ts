@@ -1,3 +1,5 @@
+import React, { act } from 'react';
+import { createRoot } from 'react-dom/client';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '@/store/useCharacterStore';
@@ -22,6 +24,8 @@ import { syncBattlefieldUpdate } from '@/utils/combat/battlefieldSyncUtils';
 import { syncCombatantSentToMap, syncCombatantSentToPc } from '@/utils/combat/targeting/abilityTargetPcResolution';
 import { setupOwlbearHomebrewSync } from '@/hooks/owlbearSync/setupOwlbearHomebrewSync';
 import { setBattleOrganizerOpen } from '@/components/modals/battleOrganizer/battleOrganizerSettingsHelper';
+import { useBattleOrganizerRoundOps } from '@/components/modals/battleOrganizer/useBattleOrganizerRoundOps';
+import { BattlefieldSection } from '@/components/modals/battleOrganizer/BattlefieldSection';
 import type { BattleOrganizerState, CombatantRowData } from '@/types/battleOrganizerTypes';
 
 function buildFixtureState(): BattleOrganizerState {
@@ -283,5 +287,89 @@ describe('battleOrganizerSyncSafety (B-01)', () => {
         );
 
         unsubs.forEach((u) => u());
+    });
+
+    it('blocks non-GM from modifying broadcastToPlayers via updateBattlefield', async () => {
+        (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+        useCharacterStore.setState({ role: 'PLAYER' });
+        const updateStateMock = vi.fn();
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+        let roundOps: ReturnType<typeof useBattleOrganizerRoundOps> | null = null;
+        function TestHarness() {
+            roundOps = useBattleOrganizerRoundOps({ updateState: updateStateMock });
+            return null;
+        }
+
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+        const root = createRoot(container);
+
+        await act(async () => {
+            root.render(React.createElement(TestHarness));
+        });
+
+        expect(roundOps).not.toBeNull();
+        roundOps!.updateBattlefield('broadcastToPlayers', true);
+        expect(updateStateMock).not.toHaveBeenCalled();
+        expect(warnSpy).toHaveBeenCalledWith('[BattleOrganizer] Non-GM player cannot toggle broadcastToPlayers');
+
+        // As GM, modifying broadcastToPlayers succeeds
+        useCharacterStore.setState({ role: 'GM' });
+        roundOps!.updateBattlefield('broadcastToPlayers', true);
+        expect(updateStateMock).toHaveBeenCalledTimes(1);
+
+        await act(async () => {
+            root.unmount();
+        });
+        container.remove();
+        warnSpy.mockRestore();
+    });
+
+    it('renders Live to Players / GM Only visibility button for GM but completely hides it for non-GM', async () => {
+        (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+        const root = createRoot(container);
+
+        const dummyProps = {
+            battlefield: createDefaultBattlefield(),
+            isBattlefieldOpen: false,
+            onToggleBattlefieldOpen: vi.fn(),
+            updateBattlefield: vi.fn(),
+            updateBattlefieldWeather: vi.fn(),
+            updateBattlefieldTerrain: vi.fn(),
+            updateBattlefieldOther: vi.fn(),
+            updatePlayerSide: vi.fn(),
+            updateFoeSide: vi.fn()
+        };
+
+        // 1. Non-GM (Player in OBR)
+        await act(async () => {
+            useCharacterStore.setState({ role: 'PLAYER' });
+            root.render(React.createElement(BattlefieldSection, dummyProps));
+        });
+        expect(container.querySelector('.bo-pill-visibility-btn')).toBeNull();
+
+        // 2. GM
+        await act(async () => {
+            useCharacterStore.setState({ role: 'GM' });
+            root.render(React.createElement(BattlefieldSection, dummyProps));
+        });
+        const gmBtn = container.querySelector('.bo-pill-visibility-btn');
+        expect(gmBtn).not.toBeNull();
+        expect(gmBtn?.textContent).toContain('GM Only');
+
+        // 3. Explicit isGM prop override
+        await act(async () => {
+            useCharacterStore.setState({ role: 'PLAYER' });
+            root.render(React.createElement(BattlefieldSection, { ...dummyProps, isGM: true }));
+        });
+        expect(container.querySelector('.bo-pill-visibility-btn')).not.toBeNull();
+
+        await act(async () => {
+            root.unmount();
+        });
+        container.remove();
     });
 });

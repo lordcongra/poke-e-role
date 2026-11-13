@@ -1,5 +1,7 @@
 import React from 'react';
 import { ChevronDown, MapPin, CloudSun, Mountain, Sparkles, Eye, EyeOff, Info } from 'lucide-react';
+import { useCharacterStore } from '@/store/useCharacterStore';
+import { isStandaloneMode } from '@/utils/sync/storageAdapter';
 import { BattlefieldPitch } from './BattlefieldPitch';
 import { BattlefieldEffectCard } from './BattlefieldEffectCard';
 import { BattlefieldSidePanel } from './BattlefieldSidePanel';
@@ -36,6 +38,7 @@ export interface BattlefieldSectionProps {
     updateFoeSide: <K extends keyof BattlefieldData['foeSide']>(key: K, value: BattlefieldData['foeSide'][K]) => void;
     rollLogMode?: RollLogLayoutMode;
     renderRollLog?: (mode: RollLogLayoutMode) => React.ReactNode;
+    isGM?: boolean;
 }
 
 export function BattlefieldSection({
@@ -49,8 +52,11 @@ export function BattlefieldSection({
     updatePlayerSide,
     updateFoeSide,
     rollLogMode,
-    renderRollLog
+    renderRollLog,
+    isGM: isGMProp
 }: BattlefieldSectionProps) {
+    const role = useCharacterStore((state) => state.role);
+    const isGM = isGMProp ?? (isStandaloneMode || role === 'GM');
     const [isGrassyModalOpen, setIsGrassyModalOpen] = React.useState(false);
 
     const handleApplyGrassyTerrain = (sideChoice: GrassySideChoice) => {
@@ -146,23 +152,25 @@ export function BattlefieldSection({
                         }}
                     >
                         <span className="bo-pill-header__text text-theme-header">Battlefield</span>
-                        <button
-                            type="button"
-                            className={`bo-pill-visibility-btn ${battlefield.broadcastToPlayers ? 'is-broadcast' : 'is-hidden'}`}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                updateBattlefield('broadcastToPlayers', !battlefield.broadcastToPlayers);
-                            }}
-                            title={
-                                battlefield.broadcastToPlayers
-                                    ? 'Visible to players (Click to hide from player sheets)'
-                                    : 'Hidden from players (Click to broadcast active weather/terrain/fields to player sheets)'
-                            }
-                            aria-label={battlefield.broadcastToPlayers ? 'Broadcast to players' : 'Hidden from players'}
-                        >
-                            {battlefield.broadcastToPlayers ? <Eye size={12} /> : <EyeOff size={12} />}
-                            <span>{battlefield.broadcastToPlayers ? 'Live to Players' : 'GM Only'}</span>
-                        </button>
+                        {isGM && (
+                            <button
+                                type="button"
+                                className={`bo-pill-visibility-btn ${battlefield.broadcastToPlayers ? 'is-broadcast' : 'is-hidden'}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    updateBattlefield('broadcastToPlayers', !battlefield.broadcastToPlayers);
+                                }}
+                                title={
+                                    battlefield.broadcastToPlayers
+                                        ? 'Visible to players (Click to hide from player sheets)'
+                                        : 'Hidden from players (Click to broadcast active weather/terrain/fields to player sheets)'
+                                }
+                                aria-label={battlefield.broadcastToPlayers ? 'Broadcast to players' : 'Hidden from players'}
+                            >
+                                {battlefield.broadcastToPlayers ? <Eye size={12} /> : <EyeOff size={12} />}
+                                <span>{battlefield.broadcastToPlayers ? 'Live to Players' : 'GM Only'}</span>
+                            </button>
+                        )}
                         <ChevronDown
                             size={16}
                             className={`bo-pill-header__chevron ${!isBattlefieldOpen ? 'bo-pill-header__chevron--collapsed' : ''}`}
