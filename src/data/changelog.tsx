@@ -29,7 +29,7 @@ import {
     Target
 } from 'lucide-react';
 
-export const CURRENT_VERSION = '3.7.6';
+export const CURRENT_VERSION = '3.7.7';
 
 export interface ChangelogHighlight {
     id: string;
@@ -130,6 +130,99 @@ export function getChangelogDiff(lastSeenVersion: string | null): ChangelogDiffR
 }
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
+    {
+        version: '3.7.7',
+        date: 'November 2026',
+        changes: [
+            <strong
+                key="hp-scaling-moves-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Swords size={16} /> Dynamic HP-Centric Move Scaling & Tag Builder Support
+            </strong>,
+            <ul
+                key="hp-scaling-moves-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>HP-Centric Move Scaling:</strong> Moves that scale in power based on current HP
+                    (such as <em>Eruption</em>, <em>Water Spout</em>, <em>Dragon Energy</em>, <em>Hard Press</em>,{' '}
+                    <em>Flail</em>, and <em>Reversal</em>) now automatically calculate their dice pool adjustments!
+                    Damaged Pokémon using Eruption or Water Spout will have dice removed from their damage pool
+                    (1 die per missing HP, up to a maximum reduction of 5 dice), while moves like Flail will add
+                    bonus dice as their health drops.
+                </li>
+                <li>
+                    <strong>Tag Builder Support:</strong> Custom and homebrew moves can now easily use these new
+                    hurt-penalty and hurt-bonus modifiers directly through the Tag Builder.
+                </li>
+            </ul>,
+            <strong
+                key="roll-log-controls-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Dices size={16} /> Roll Log Minimize & Close Options
+            </strong>,
+            <ul
+                key="roll-log-controls-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Minimize & Close Controls:</strong> You can now minimize or close the roll log window
+                    instead of having to clear all rolls to get rid of it. Minimizing collapses the roll log into a
+                    little bar with an unread roll count badge so you can easily expand it whenever needed.
+                </li>
+            </ul>,
+            <strong
+                key="fixes-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Target size={16} /> Bug Fixes & Improvements
+            </strong>,
+            <ul
+                key="fixes-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Battle Organizer &quot;Replace All&quot; Sync:</strong> Fixed an issue where clicking
+                    &quot;Replace All&quot; when pulling scene tokens would keep old combatants around. It now
+                    cleanly removes departed tokens while preserving all existing player-side designations,
+                    ability targets, and round actions.
+                </li>
+                <li>
+                    <strong>Homebrew Import Confirmation:</strong> Added a confirmation modal previewing the count
+                    of incoming moves, abilities, and items before importing to prevent accidental overwrites.
+                </li>
+            </ul>
+        ]
+    },
     {
         version: '3.7.6',
         date: 'November 2026',
