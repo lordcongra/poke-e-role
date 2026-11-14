@@ -1,4 +1,5 @@
 import type { CharacterState } from '@/store/storeTypes';
+import type { CombatantRowData } from '@/types/battleOrganizerTypes';
 import { useCharacterStore } from '@/store/useCharacterStore';
 import { resolveCharacterSide } from '@/utils/combat/combatantSideUtils';
 import { isTargetAffectedByAbility } from '@/utils/combat/abilityTargetingUtils';
@@ -73,12 +74,12 @@ export function getFieldAuraDamageBonus(
                     const data = JSON.parse(raw);
                     const activeRound = data.rounds?.[data.activeRoundIndex ?? 0] || data.rounds?.[0];
                     if (activeRound?.combatants && Array.isArray(activeRound.combatants)) {
-                        const hasActive = activeRound.combatants.some((c: any) => {
+                        const hasActive = activeRound.combatants.some((c: CombatantRowData) => {
                             if (c.isFainted || c.abilityActive === false) return false;
                             const ab = (c.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
                             if (ab !== auraName) return false;
                             const cSide = (typeof c.isPlayerSide === 'boolean' ? c.isPlayerSide : !c.isNPC) ? 'player' : 'foe';
-                            const cIdentifiers = [c.id, c.tokenId, c.entityId, c.name].filter(Boolean);
+                            const cIdentifiers = [c.id, c.tokenId, c.entityId, c.name].filter((val): val is string => Boolean(val));
                             return !isTargetAffectedByAbility(cIdentifiers, cSide, AURA_NAMES.NEUTRALIZING_GAS, battlefield);
                         });
                         if (hasActive) return true;

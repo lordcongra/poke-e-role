@@ -328,7 +328,7 @@ export function buildTrackerConditions({
             const rawTags = (passive.desc || '').match(/\[.*?\]/g);
             let label = `Passive: ${passive.name || 'Passive'}`;
             if (rawTags && rawTags.length > 0) {
-                const cleanedTags = rawTags.map((t) => t.replace(/[\[\]]/g, '').trim()).filter(Boolean);
+                const cleanedTags = rawTags.map((t) => t.replace(/[[\]]/g, '').trim()).filter(Boolean);
                 if (cleanedTags.length > 0 && !passive.name.toLowerCase().includes(cleanedTags[0].toLowerCase())) {
                     label = `Passive: ${passive.name || 'Passive'} (${cleanedTags.join(', ')})`;
                 }

@@ -34,8 +34,6 @@ export function openIdbDatabase(
         return existing.promise;
     }
 
-    let entry: CachedDatabaseEntry;
-
     const promise = new Promise<IDBDatabase>((resolve, reject) => {
         const clearIfCurrent = () => {
             const current = dbCache.get(name);
@@ -81,7 +79,7 @@ export function openIdbDatabase(
         }
     });
 
-    entry = { version, promise };
+    const entry: CachedDatabaseEntry = { version, promise };
     dbCache.set(name, entry);
     return promise;
 }

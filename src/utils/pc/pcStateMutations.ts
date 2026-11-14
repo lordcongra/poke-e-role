@@ -134,7 +134,7 @@ export function applySetBoxSlot(
     const trainerBoxes = getTrainerBoxes(activeTrainer, camp);
     if (boxIndex < 0 || boxIndex >= trainerBoxes.length) return pcData;
 
-    let nextTrainers = { ...camp.trainers };
+    const nextTrainers = { ...camp.trainers };
     let nextBoxes = [...trainerBoxes];
 
     if (entityId) {

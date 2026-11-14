@@ -57,7 +57,7 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                     const currentCamp = pcData.campaigns[targetCampId];
                     if (!currentCamp) return;
 
-                    let updatedTrainers = { ...currentCamp.trainers };
+                    const updatedTrainers = { ...currentCamp.trainers };
                     let trainersChanged = false;
 
                     if (payload.trainer && payload.trainer.id && !payload.trainer.id.startsWith('__player_')) {
@@ -215,7 +215,7 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                         identity.activeRoomCampaignId,
                         identity.activeRoomCampaignName
                     );
-                    let currentCamp = pcData.campaigns[targetCampId];
+                    const currentCamp = pcData.campaigns[targetCampId];
                     if (!currentCamp) return;
 
                     let campChanged = false;

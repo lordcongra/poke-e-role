@@ -57,7 +57,7 @@ export function resetBatchAnchor() {
  * for an item in Owlbear Rodeo.
  */
 export function getAbsoluteItemPosition(item: Item, sceneItems: Item[]): { x: number; y: number } {
-    let curr = item;
+    const curr = item;
     let x = curr.position?.x ?? 0;
     let y = curr.position?.y ?? 0;
 

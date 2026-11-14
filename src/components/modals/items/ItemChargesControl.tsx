@@ -26,7 +26,7 @@ interface ItemChargesControlProps {
 
 export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps) {
     const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
-    const useInventoryItem = useCharacterStore((state) => state.useInventoryItem);
+    const consumeInventoryItem = useCharacterStore((state) => state.useInventoryItem);
     const roomCustomStatuses = useCharacterStore((state) => state.roomCustomStatuses);
     const roomCustomItems = useCharacterStore((state) => state.roomCustomItems);
     const attackAction = resolveItemAttackAction(item, roomCustomItems);
@@ -89,7 +89,7 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
         } else if (hasPlayerChoice(item)) {
             setStatChoicePrompt({ item });
         } else {
-            useInventoryItem(item.id);
+            consumeInventoryItem(item.id);
         }
     };
 
@@ -100,7 +100,7 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
             return;
         }
         if (target.isTrainer) {
-            useInventoryItem(item.id);
+            consumeInventoryItem(item.id);
         } else {
             const store = useCharacterStore.getState();
             await applyItemToPokemonTarget(store, item, target);
@@ -112,7 +112,7 @@ export function ItemChargesControl({ item, onUseItem }: ItemChargesControlProps)
         const { item: targetItem, target } = statChoicePrompt;
         setStatChoicePrompt(null);
         if (!target || target.isTrainer) {
-            useInventoryItem(targetItem.id, { chosenStat });
+            consumeInventoryItem(targetItem.id, { chosenStat });
         } else {
             const store = useCharacterStore.getState();
             await applyItemToPokemonTarget(store, targetItem, target, { chosenStat });

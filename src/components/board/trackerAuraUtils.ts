@@ -65,7 +65,7 @@ export async function removeCharacterFromAuraSources(
                                 (c.tokenId && c.tokenId === state.tokenId) ||
                                 (c.entityId && c.entityId === state.identity.entityId)
                             ) {
-                                useCharacterStore.getState().setIdentity('abilityTargetIds' as any, filtered);
+                                useCharacterStore.getState().setIdentity('abilityTargetIds', filtered);
                             }
                         }
                     }
@@ -140,7 +140,7 @@ export async function refreshAndCleanAuraAssociations(
                                 (c.tokenId && c.tokenId === currentState.tokenId) ||
                                 (c.entityId && c.entityId === currentState.identity.entityId)
                             ) {
-                                useCharacterStore.getState().setIdentity('abilityTargetIds' as any, validTargets);
+                                useCharacterStore.getState().setIdentity('abilityTargetIds', validTargets);
                             }
                         }
                     }

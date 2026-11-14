@@ -542,7 +542,7 @@ export function useBattleOrganizer() {
         globalStore.updateTracker('actions', 0);
         globalStore.updateTracker('evade', false);
         globalStore.updateTracker('clash', false);
-        globalStore.setIdentity('abilityTargetIds' as any, []);
+        globalStore.setIdentity('abilityTargetIds', []);
     }, []);
 
     const updateCombatantHp = useCallback(

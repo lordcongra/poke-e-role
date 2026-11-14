@@ -1,5 +1,6 @@
 import OBR from '@owlbear-rodeo/sdk';
 import type { CharacterState } from '@/store/storeTypes';
+import type { CombatantRowData } from '@/types/battleOrganizerTypes';
 import { CombatStat, SocialStat, Skill } from '@/types/enums';
 import { ATTRIBUTE_MAPPING, getStatusPenalties, calculateBaseInitiative } from '@/utils/combat/combatMath';
 import { isAbilitySuppressedByField, matchesTarget } from '@/utils/combat/abilityTargetingUtils';
@@ -119,12 +120,12 @@ export async function resolveAnalyticBonus(
             const activeRound = bo.rounds?.[bo.activeRoundIndex ?? 0] || bo.rounds?.[0];
             if (activeRound?.combatants) {
                 const allC = activeRound.combatants;
-                const attackerC = allC.find((c: any) => matchesTarget(c, rollerId));
+                const attackerC = allC.find((c: CombatantRowData) => matchesTarget(c, rollerId));
                 if (attackerC) {
                     attackerInit = Number(attackerC.initiative) || attackerC.baseInit || 0;
                 }
                 if (targetFoeId) {
-                    const targetC = allC.find((c: any) => matchesTarget(c, targetFoeId));
+                    const targetC = allC.find((c: CombatantRowData) => matchesTarget(c, targetFoeId));
                     if (targetC) {
                         targetInit = Number(targetC.initiative) || targetC.baseInit || 0;
                     }

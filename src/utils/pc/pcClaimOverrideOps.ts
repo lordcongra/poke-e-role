@@ -1,5 +1,6 @@
 import OBR from '@owlbear-rodeo/sdk';
-import type { PcStorageData, PcPokemonSummary } from '../../types/pcStorageTypes';
+import type { PcStorageData, PcPokemonSummary, TrainerRoster } from '../../types/pcStorageTypes';
+import type { CharacterState } from '../../store/storeTypes';
 import { METADATA_ID } from '../../hooks/owlbearSync/owlbearSyncConstants';
 import { stripEntityFromTrainer, stripEntityFromBoxes } from './pcStateMutations';
 
@@ -136,7 +137,7 @@ export async function forceClaimSceneToken(
 export async function executeGmClaimOverride(params: {
     conflict: GmClaimConflict;
     campaign: { id: string; name: string; activeTrainerId?: string };
-    trainer?: { id: string; name: string };
+    trainer?: TrainerRoster;
     role?: 'PLAYER' | 'GM';
     activeBoxIndex: number;
     updatePokemonSummary: (summary: PcPokemonSummary) => void;
@@ -145,14 +146,14 @@ export async function executeGmClaimOverride(params: {
     depositPokemonToBox: (entityId: string, boxIndex?: number) => boolean;
     prepareDepositSummaryFn: (
         summary: PcPokemonSummary,
-        trainer: any,
+        trainer: TrainerRoster | undefined,
         summaries: Record<string, PcPokemonSummary>,
-        storeState: any,
+        storeState: CharacterState,
         campaignId?: string
     ) => Promise<PcPokemonSummary>;
     savePcStorageFn: (data: PcStorageData) => void;
     broadcastPlayerPcFn: () => void;
-    broadcastGmPcFn: (payload: { campaignId?: string; trainer?: any; summaries?: PcPokemonSummary[] }) => void;
+    broadcastGmPcFn: (payload: { campaignId?: string; trainer?: TrainerRoster; summaries?: PcPokemonSummary[] }) => void;
 }): Promise<void> {
     const {
         conflict,

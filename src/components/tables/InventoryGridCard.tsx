@@ -26,7 +26,7 @@ export const InventoryGridCard = memo(function InventoryGridCard({
     onUseItem
 }: InventoryGridCardProps) {
     const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
-    const useInventoryItem = useCharacterStore((state) => state.useInventoryItem);
+    const consumeInventoryItem = useCharacterStore((state) => state.useInventoryItem);
     const [resolvedImg, setResolvedImg] = useState<string | null>(null);
 
     const effectiveCharges = getItemEffectiveCharges(item);
@@ -104,7 +104,7 @@ export const InventoryGridCard = memo(function InventoryGridCard({
                                 e.stopPropagation();
                                 if (effectiveCharges.hasCharges && effectiveCharges.charges <= 0) return;
                                 if (onUseItem) onUseItem(item);
-                                else useInventoryItem(item.id);
+                                else consumeInventoryItem(item.id);
                             }}
                             title={
                                 effectiveCharges.hasCharges && effectiveCharges.charges <= 0

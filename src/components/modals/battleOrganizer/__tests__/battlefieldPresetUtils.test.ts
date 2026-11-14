@@ -36,7 +36,7 @@ describe('battlefieldPresetUtils: force field management', () => {
     });
 
     it('removes matching force field from extraForceFields', () => {
-        let side = createMockSide();
+        const side = createMockSide();
         side.forceFields = [
             { name: 'Reflect', remainingRounds: 3 },
             { name: 'Light Screen', remainingRounds: 3 }

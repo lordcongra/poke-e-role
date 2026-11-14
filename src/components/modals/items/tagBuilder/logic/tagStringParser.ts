@@ -372,7 +372,7 @@ export function parseTagStringToConfig(tagStr: string, isMoveContext = false): P
     }
 
     // Stats and Skills: Target +X / -X
-    const statSkillMatch = clean.match(/^([A-Za-z\.\s]+?)\s*([+-]\s*\d+)$/);
+    const statSkillMatch = clean.match(/^([A-Za-z.\s]+?)\s*([+-]\s*\d+)$/);
     if (statSkillMatch) {
         const rawName = statSkillMatch[1].trim();
         const val = parseInt(statSkillMatch[2].replace(/\s+/g, ''), 10) || 1;

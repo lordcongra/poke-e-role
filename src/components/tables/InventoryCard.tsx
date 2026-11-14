@@ -41,7 +41,7 @@ export const InventoryCard = memo(function InventoryCard({
 }: InventoryCardProps) {
     const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
     const updateInventoryItemMultiple = useCharacterStore((state) => state.updateInventoryItemMultiple);
-    const useInventoryItem = useCharacterStore((state) => state.useInventoryItem);
+    const consumeInventoryItem = useCharacterStore((state) => state.useInventoryItem);
     const moveUpInventoryItem = useCharacterStore((state) => state.moveUpInventoryItem);
     const moveDownInventoryItem = useCharacterStore((state) => state.moveDownInventoryItem);
 
@@ -255,7 +255,7 @@ export const InventoryCard = memo(function InventoryCard({
                         type="button"
                         className="action-button action-button--dark inventory-card__action-btn inventory-card__action-btn--use"
                         disabled={effectiveCharges.hasCharges && effectiveCharges.charges <= 0}
-                        onClick={() => (onUseItem ? onUseItem(item) : useInventoryItem(item.id))}
+                        onClick={() => (onUseItem ? onUseItem(item) : consumeInventoryItem(item.id))}
                         title={
                             effectiveCharges.hasCharges && effectiveCharges.charges <= 0
                                 ? 'Item depleted (0 charges remaining)'

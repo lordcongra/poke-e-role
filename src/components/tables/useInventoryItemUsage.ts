@@ -8,7 +8,7 @@ import {
 import type { InventoryItem } from '../../store/storeTypes';
 
 export function useInventoryItemUsage() {
-    const useInventoryItem = useCharacterStore((state) => state.useInventoryItem);
+    const consumeInventoryItem = useCharacterStore((state) => state.useInventoryItem);
 
     const [targetPrompt, setTargetPrompt] = useState<{
         item: InventoryItem;
@@ -32,7 +32,7 @@ export function useInventoryItemUsage() {
         } else if (hasPlayerChoice(item)) {
             setStatChoicePrompt({ item });
         } else {
-            useInventoryItem(item.id);
+            consumeInventoryItem(item.id);
         }
     };
 
@@ -45,7 +45,7 @@ export function useInventoryItemUsage() {
             return;
         }
         if (target.isTrainer) {
-            useInventoryItem(item.id);
+            consumeInventoryItem(item.id);
         } else {
             const store = useCharacterStore.getState();
             await applyItemToPokemonTarget(store, item, target);
@@ -57,7 +57,7 @@ export function useInventoryItemUsage() {
         const { item, target } = statChoicePrompt;
         setStatChoicePrompt(null);
         if (!target || target.isTrainer) {
-            useInventoryItem(item.id, { chosenStat });
+            consumeInventoryItem(item.id, { chosenStat });
         } else {
             const store = useCharacterStore.getState();
             await applyItemToPokemonTarget(store, item, target, { chosenStat });

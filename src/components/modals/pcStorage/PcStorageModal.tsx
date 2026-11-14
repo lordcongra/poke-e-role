@@ -120,7 +120,11 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     const handleModalClose = () => {
         cancelPointPlacement().catch(() => {});
         if (OBR.isAvailable) {
-            !isGm ? broadcastPlayerPc() : broadcastGmPc({ campaignId: campaign?.id, trainer });
+            if (!isGm) {
+                broadcastPlayerPc();
+            } else {
+                broadcastGmPc({ campaignId: campaign?.id, trainer });
+            }
         }
         onClose();
     };

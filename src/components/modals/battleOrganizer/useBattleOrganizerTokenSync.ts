@@ -314,7 +314,7 @@ export function useBattleOrganizerTokenSync({
                         globalStore.setIdentity('abilityActive', combatant.abilityActive !== false);
                     }
                     if (syncOptions.syncAbilityTargets) {
-                        globalStore.setIdentity('abilityTargetIds' as any, combatant.abilityTargetIds);
+                        globalStore.setIdentity('abilityTargetIds', combatant.abilityTargetIds);
                     }
                     if (syncOptions.syncAbilityBoost) {
                         if (combatant.abilityBoostActive !== undefined) {
@@ -328,7 +328,7 @@ export function useBattleOrganizerTokenSync({
                         globalStore.setIdentity('abilityChoiceIndex', combatant.abilityChoiceIndex);
                     }
                     if (combatant.isPlayerSide !== undefined) {
-                        globalStore.setIdentity('isPlayerSide' as any, Boolean(combatant.isPlayerSide));
+                        globalStore.setIdentity('isPlayerSide', Boolean(combatant.isPlayerSide));
                     }
                     if (typeof updates['hp-curr'] === 'number') {
                         globalStore.updateHealth('hpCurr', updates['hp-curr']);

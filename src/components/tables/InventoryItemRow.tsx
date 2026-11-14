@@ -41,7 +41,7 @@ export function InventoryItemRow({
 }: InventoryItemRowProps) {
     const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
     const updateInventoryItemMultiple = useCharacterStore((state) => state.updateInventoryItemMultiple);
-    const useInventoryItem = useCharacterStore((state) => state.useInventoryItem);
+    const consumeInventoryItem = useCharacterStore((state) => state.useInventoryItem);
     const moveUpInventoryItem = useCharacterStore((state) => state.moveUpInventoryItem);
     const moveDownInventoryItem = useCharacterStore((state) => state.moveDownInventoryItem);
 
@@ -218,7 +218,7 @@ export function InventoryItemRow({
                             type="button"
                             className="action-button action-button--ghost action-button--xs inventory-item__icon-btn inventory-item__icon-btn--use"
                             disabled={effectiveCharges.hasCharges && effectiveCharges.charges <= 0}
-                            onClick={() => (onUseItem ? onUseItem(item) : useInventoryItem(item.id))}
+                            onClick={() => (onUseItem ? onUseItem(item) : consumeInventoryItem(item.id))}
                             title={
                                 effectiveCharges.hasCharges && effectiveCharges.charges <= 0
                                     ? 'Item depleted (0 charges remaining)'

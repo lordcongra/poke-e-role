@@ -539,9 +539,9 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                 globalStore.updateTracker('actions', 0);
                                 globalStore.updateTracker('evade', false);
                                 globalStore.updateTracker('clash', false);
-                                globalStore.setIdentity('abilityBoostActive' as any, false);
-                                globalStore.setIdentity('abilityBoostLevel' as any, 0);
-                                globalStore.setIdentity('abilityTargetIds' as any, []);
+                                globalStore.setIdentity('abilityBoostActive', false);
+                                globalStore.setIdentity('abilityBoostLevel', 0);
+                                globalStore.setIdentity('abilityTargetIds', []);
                             }
                         }
                     }

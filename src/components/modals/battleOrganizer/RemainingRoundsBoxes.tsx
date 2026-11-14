@@ -1,4 +1,4 @@
-import { Plus, Minus, Infinity } from 'lucide-react';
+import { Plus, Minus, Infinity as InfinityIcon } from 'lucide-react';
 
 interface RemainingRoundsBoxesProps {
     value: number;
@@ -50,7 +50,7 @@ export function RemainingRoundsBoxes({
                 }
                 aria-label="Toggle Whole Scene Duration"
             >
-                <Infinity size={13} />
+                <InfinityIcon size={13} />
             </button>
 
             <div className="bo-rounds-boxes__row">

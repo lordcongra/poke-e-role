@@ -456,7 +456,7 @@ export function calculateBaseAccuracy(move: MoveData, state: CharacterState, ite
 
     const attributeTotal = calculateStatTotal(move.acc1, state, invMods);
     const skillTotal = calculateSkillTotal(move.acc2, state, invMods);
-    const rankSkillBonus = Boolean(move.acc2 && move.acc2.toLowerCase() !== 'none') ? getRankBonusStats(state.identity.rank).skillDice : 0;
+    const rankSkillBonus = (move.acc2 && move.acc2.toLowerCase() !== 'none') ? getRankBonusStats(state.identity.rank).skillDice : 0;
     const customFirstHitAccTag = (invMods.firstHitAcc !== 0 && state.trackers.firstHitAcc) ? invMods.firstHitAcc : 0;
     const normalizedAcc1 = (ATTRIBUTE_MAPPING[move.acc1] || move.acc1 || '').toLowerCase().trim();
     const paralysisPenalty = normalizedAcc1 === 'dex' ? statuses.paralysisDexterityPenalty : 0;

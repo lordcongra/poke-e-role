@@ -20,7 +20,29 @@ export default defineConfig([
             globals: globals.browser
         },
         rules: {
-            '@typescript-eslint/no-explicit-any': 'error'
+            '@typescript-eslint/no-explicit-any': 'error',
+            '@typescript-eslint/no-unused-vars': [
+                'error',
+                { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
+            ],
+            'no-empty': ['error', { allowEmptyCatch: true }],
+            'react-hooks/rules-of-hooks': 'error',
+            'react-hooks/exhaustive-deps': 'warn',
+            'react-hooks/set-state-in-effect': 'off',
+            'react-hooks/refs': 'off',
+            'react-hooks/purity': 'off',
+            'react-hooks/globals': 'off',
+            'react-hooks/preserve-manual-memoization': 'off',
+            'react-refresh/only-export-components': [
+                'warn',
+                { allowConstantExport: true }
+            ]
+        }
+    },
+    {
+        files: ['**/*.test.{ts,tsx}'],
+        rules: {
+            '@typescript-eslint/no-explicit-any': 'off'
         }
     }
 ]);
