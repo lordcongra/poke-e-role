@@ -134,6 +134,21 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
         version: '3.7.7',
         date: 'November 2026',
         changes: [
+            <div
+                key="under-the-hood-notice"
+                style={{
+                    backgroundColor: 'var(--panel-alt, #242427)',
+                    borderLeft: '3px solid var(--primary, #ef4444)',
+                    padding: '8px 12px',
+                    borderRadius: '4px',
+                    marginBottom: '14px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.4',
+                    color: 'var(--text-main, #e4e4e7)'
+                }}
+            >
+                <strong>Under-the-Hood Bug Fixes:</strong> A large pass of internal stability, storage, and synchronization bug fixes was completed in this update (far too many to list!). Please keep an eye out for any unexpected quirks and be sure to use the <strong>Bug Report</strong> button in the settings/toolbar if anything crops up!
+            </div>,
             <strong
                 key="hp-scaling-moves-title"
                 className="text-title-primary"
