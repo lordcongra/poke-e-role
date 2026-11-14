@@ -90,7 +90,7 @@ export function BattleOrganizerSettingsModal({ onClose }: BattleOrganizerSetting
                 {/* Header */}
                 <div className="bo-settings__header-row">
                     <h3 className="bo-settings__title text-title-primary">
-                        <Settings size={20} color="var(--primary)" /> Battle Organizer Settings
+                        <Settings size={20} /> Battle Organizer Settings
                     </h3>
                     <button
                         type="button"

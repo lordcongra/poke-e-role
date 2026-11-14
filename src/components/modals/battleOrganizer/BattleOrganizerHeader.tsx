@@ -104,7 +104,7 @@ export function BattleOrganizerHeader({
                         title="Battle Organizer Settings"
                         aria-label="Battle Organizer Settings"
                     >
-                        <Settings size={14} color="var(--primary)" />
+                        <Settings size={14} />
                         <span className="bo-header-collapse-label">Settings</span>
                     </button>
 
