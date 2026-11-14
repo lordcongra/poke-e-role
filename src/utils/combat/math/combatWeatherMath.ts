@@ -3,6 +3,7 @@ import { useCharacterStore } from '@/store/useCharacterStore';
 import { getEffectsByCategory, getAllActiveFieldEffects } from '@/utils/combat/fieldEffectsData';
 import { checkCondition } from '@/utils/tagParser/conditionChecker';
 import { resolveCharacterSide } from '@/utils/combat/combatantSideUtils';
+import { getKnownAbility } from '@/data/abilities/knownAbilities';
 
 export interface WeatherDamageBonusResult {
     diceBonus: number;
@@ -45,12 +46,42 @@ export function getWeatherDamageBonus(
     isNPC?: boolean,
     state?: CharacterState
 ): WeatherDamageBonusResult {
-    if (!moveType || !battlefield) return { diceBonus: 0, flatPenalty: 0, tag: '' };
+    if (!moveType) return { diceBonus: 0, flatPenalty: 0, tag: '' };
+
+    let currentState = state;
+    if (!currentState) {
+        try {
+            currentState = useCharacterStore.getState();
+        } catch {
+            currentState = undefined;
+        }
+    }
+
+    const rawAbility = (currentState?.identity?.ability || '').replace(/\s*\(HA\)$/i, '').trim();
+    const abilityTags = currentState?.identity?.abilityTags || '';
+    const known = getKnownAbility(rawAbility, currentState?.identity?.rank);
+    const customAbility = currentState?.roomCustomAbilities?.find(
+        (ca) => ca.name.trim().toLowerCase() === rawAbility.toLowerCase()
+    );
+    const allAbilityTags = `${abilityTags} ${known?.tags || ''} ${customAbility?.effect || ''} ${customAbility?.description || ''}`;
+    const hasSelfSunAbility =
+        currentState?.identity?.abilityActive !== false &&
+        (rawAbility.toLowerCase() === 'mega sol' || /\[\s*self\s+weather\s*:\s*sun\s*\]/i.test(allAbilityTags));
+    const hasSelfSunPassive =
+        currentState?.passives?.some((p) => p.active !== false && /\[\s*self\s+weather\s*:\s*sun\s*\]/i.test(p.desc || '')) ||
+        currentState?.inventory?.some(
+            (i) =>
+                i.active !== false &&
+                /\[\s*self\s+weather\s*:\s*sun\s*\]/i.test(`${i.desc || ''} ${i.tags || ''}`)
+        );
+    const hasSelfSun = Boolean(hasSelfSunAbility || hasSelfSunPassive);
+
+    if (!battlefield && !hasSelfSun) return { diceBonus: 0, flatPenalty: 0, tag: '' };
 
     let effectiveHalfHp = isHalfHp;
     if (effectiveHalfHp === undefined) {
         try {
-            const st = useCharacterStore.getState();
+            const st = currentState || useCharacterStore.getState();
             effectiveHalfHp = st.health.hpCurr <= Math.floor(st.health.hpMax / 2);
         } catch {
             effectiveHalfHp = false;
@@ -63,7 +94,7 @@ export function getWeatherDamageBonus(
     const tagDescriptions: string[] = [];
 
     // 1. Weather bonuses across all active weathers
-    const activeWeathers = getEffectsByCategory(battlefield, 'weather');
+    const activeWeathers = battlefield ? getEffectsByCategory(battlefield, 'weather') : [];
     for (const w of activeWeathers) {
         const cleanName = (w.name || '').trim().toLowerCase();
         // Extreme weather (+2 dice)
@@ -118,8 +149,21 @@ export function getWeatherDamageBonus(
         }
     }
 
+    // Beneficial Sunny Weather via [Self Weather: Sun] or Mega Sol
+    const hasSunWeather = tagDescriptions.some((d) => d.includes('Sun') || d.includes('Desolate'));
+    if (hasSelfSun && !hasSunWeather) {
+        const sourceName = rawAbility.toLowerCase() === 'mega sol' ? 'Mega Sol' : 'Self Weather: Sun';
+        if (cleanType === 'fire') {
+            diceBonus += 1;
+            tagDescriptions.push(`${sourceName} (+1 Dice to Fire Damage Pool)`);
+        } else if (cleanType === 'water') {
+            flatPenalty += 1;
+            tagDescriptions.push(`${sourceName} (-1 Flat Damage from Water Moves)`);
+        }
+    }
+
     // 2. Terrain damage bonuses (+1 die to matching moves for Electric and Psychic Terrain)
-    const activeTerrains = getEffectsByCategory(battlefield, 'terrain');
+    const activeTerrains = battlefield ? getEffectsByCategory(battlefield, 'terrain') : [];
     for (const t of activeTerrains) {
         const cleanTerrain = (t.name || '').trim().toLowerCase();
         if (cleanTerrain.includes('electric')) {
@@ -140,14 +184,6 @@ export function getWeatherDamageBonus(
         }
     }
 
-    let currentState = state;
-    if (!currentState) {
-        try {
-            currentState = useCharacterStore.getState();
-        } catch {
-            currentState = undefined;
-        }
-    }
     const resolvedSide = currentState ? resolveCharacterSide(currentState) : (isNPC ? 'foe' : 'player');
 
     // Side Grassy Terrain check: In Pokerole, Grassy Terrain (+1 Grass Damage) ONLY applies to the side it is on

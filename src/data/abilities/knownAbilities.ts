@@ -835,6 +835,56 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
         autoActive: true,
         summary: 'When entering battle, removes all attribute increases and reductions on all allies in range.',
         benefitDisplay: "Entry: Reset Allies' Buffs/Debuffs"
+    },
+    'Aura Guard': {
+        name: 'Aura Guard',
+        tags: '[Def Dmg -2: Non-Ranged Physical]',
+        autoActive: true,
+        summary: 'Reduces damage dealt to this Pokémon by Non-Ranged Physical moves by 2.',
+        benefitDisplay: '-2 Dmg: Non-Ranged Physical'
+    },
+    Dragonize: {
+        name: 'Dragonize',
+        tags: '[Dmg +1: Dragon]',
+        autoActive: true,
+        summary: 'Increases damage of Dragon-type moves by 1 die. Normal-type moves deal damage as Dragon-type.',
+        benefitDisplay: '+1 Dragon Dmg'
+    },
+    Eelevate: {
+        name: 'Eelevate',
+        tags: '[Immune: Ground] [Choice: [Str +1 @ Stacking Boost] | [Dex +1 @ Stacking Boost] | [Vit +1 @ Stacking Boost] | [Spe +1 @ Stacking Boost] | [Ins +1 @ Stacking Boost]]',
+        autoActive: true,
+        maxBoost: 3,
+        summary: 'Immunity to Ground moves and battlefield effects. Scoring a KO increases an Attribute of choice (up to +3).',
+        benefitDisplay: 'Immune: Ground (+1 Stat on KO)'
+    },
+    'Fire Mane': {
+        name: 'Fire Mane',
+        tags: '[Dmg +2: Fire] [Ignore Pain: Fire]',
+        autoActive: true,
+        summary: 'Fire-Type moves get 2 extra damage dice and ignore pain penalization.',
+        benefitDisplay: '+2 Fire Dmg & Ignore Pain'
+    },
+    'Mega Sol': {
+        name: 'Mega Sol',
+        tags: '[Self Weather: Sun]',
+        autoActive: true,
+        summary: 'Gains all beneficial effects of Sunny weather (+1 Fire Dmg die, -1 Water Dmg taken, charge move bypass) without Sunny weather being active.',
+        benefitDisplay: 'Beneficial Sunny Weather'
+    },
+    'Piercing Drill': {
+        name: 'Piercing Drill',
+        tags: '[Bypass: Screens: Non-Ranged Physical] [Bypass: Shields: Non-Ranged Physical]',
+        autoActive: true,
+        summary: 'Non-Ranged Physical moves ignore Shields, Force Fields, Substitutes, and Cover on the foe\'s side.',
+        benefitDisplay: 'Bypass Shields & Screens'
+    },
+    'Spicy Spray': {
+        name: 'Spicy Spray',
+        tags: '[Contact Retaliation: 1st Degree Burn: Physical or Special]',
+        autoActive: true,
+        summary: 'Inflicts 1st degree Burn on the attacker when hit by a Physical or Special move.',
+        benefitDisplay: 'Inflict Burn on Hit'
     }
 };
 

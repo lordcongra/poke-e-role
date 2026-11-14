@@ -1,0 +1,6 @@
+{
+    "Name": "Piercing Drill",
+    "Effect": "When this Pokémon hits with a Non-Ranged Physical Move, ignore all Shield Moves, Force Fields, Substitutes and Cover active on the foe's side of the field.",
+    "Description": "The Pokémon comes in and out of the ground at great speed, it can dig a tunnel in an instant and come out from behind almost as if it teleported.",
+    "_id": "piercing-drill"
+}

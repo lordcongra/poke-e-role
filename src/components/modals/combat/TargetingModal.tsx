@@ -154,7 +154,8 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll, onMultiRoll 
             const { targetDef, flatReduction, factors, forceNeutralFlying } = calculateTargetDefAndFactors(
                 sel,
                 isPhysicalMove,
-                activeBattlefield
+                activeBattlefield,
+                move
             );
             const effResult =
                 activeTransformation === 'Terastallize' && sel.isTera

@@ -1,6 +1,7 @@
 import { useCharacterStore } from '@/store/useCharacterStore';
 import { getEffectsByCategory, getAllActiveFieldEffects } from '@/utils/combat/fieldEffectsData';
 import { resolveCharacterSide } from '@/utils/combat/combatantSideUtils';
+import { getKnownAbility } from '@/data/abilities/knownAbilities';
 
 export const safeParseInt = (value: string | undefined): number => parseInt((value || '0').replace(/\s/g, ''), 10) || 0;
 
@@ -144,6 +145,45 @@ export function checkCondition(
     }
 
     // 4. Weather & Terrain evaluations (strictly checking remainingRounds > 0 across primary and extra slots)
+    const isSunCondition =
+        cond === 'sun' ||
+        cond === 'sunny' ||
+        cond === 'sunlight' ||
+        cond === 'harsh sun' ||
+        cond === 'harsh sunlight' ||
+        cond === 'desolate' ||
+        cond === 'desolate weather' ||
+        cond === 'desolate land';
+
+    if (isSunCondition) {
+        if (state.identity?.abilityActive !== false) {
+            const rawAbility = (state.identity?.ability || '').replace(/\s*\(HA\)$/i, '').trim();
+            const known = getKnownAbility(rawAbility, state.identity?.rank);
+            const customAbility = state.roomCustomAbilities?.find(
+                (ca) => ca.name.trim().toLowerCase() === rawAbility.toLowerCase()
+            );
+            const allAbilityTags = `${state.identity?.abilityTags || ''} ${known?.tags || ''} ${customAbility?.effect || ''} ${customAbility?.description || ''}`;
+            if (
+                rawAbility.toLowerCase() === 'mega sol' ||
+                /\[\s*self\s+weather\s*:\s*sun\s*\]/i.test(allAbilityTags)
+            ) {
+                return true;
+            }
+        }
+        if (state.passives?.some((p) => p.active !== false && /\[\s*self\s+weather\s*:\s*sun\s*\]/i.test(p.desc || ''))) {
+            return true;
+        }
+        if (
+            state.inventory?.some(
+                (i) =>
+                    i.active !== false &&
+                    /\[\s*self\s+weather\s*:\s*sun\s*\]/i.test(`${i.desc || ''} ${i.tags || ''}`)
+            )
+        ) {
+            return true;
+        }
+    }
+
     const activeBattlefield = state.activeBattlefield;
     if (activeBattlefield) {
         const activeWeathers = getEffectsByCategory(activeBattlefield, 'weather');

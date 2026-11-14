@@ -6021,6 +6021,34 @@
         "zero to hero": {
             "name": "Zero to Hero",
             "path": "/dataset/abilities/Zero to Hero.json"
+        },
+        "aura guard": {
+            "name": "Aura Guard",
+            "path": "/dataset/abilities/Aura Guard.json"
+        },
+        "dragonize": {
+            "name": "Dragonize",
+            "path": "/dataset/abilities/Dragonize.json"
+        },
+        "eelevate": {
+            "name": "Eelevate",
+            "path": "/dataset/abilities/Eelevate.json"
+        },
+        "fire mane": {
+            "name": "Fire Mane",
+            "path": "/dataset/abilities/Fire Mane.json"
+        },
+        "mega sol": {
+            "name": "Mega Sol",
+            "path": "/dataset/abilities/Mega Sol.json"
+        },
+        "piercing drill": {
+            "name": "Piercing Drill",
+            "path": "/dataset/abilities/Piercing Drill.json"
+        },
+        "spicy spray": {
+            "name": "Spicy Spray",
+            "path": "/dataset/abilities/Spicy Spray.json"
         }
     },
     "natures": {

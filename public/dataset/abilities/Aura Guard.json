@@ -1,0 +1,6 @@
+{
+    "Name": "Aura Guard",
+    "Effect": "Reduce by 2 the Damage dealt to this Pokémon by All Non-Ranged Physical Moves.",
+    "Description": "The Pokémon emits an aura of energy every time it powers up to fight. This Aura dispels negative intentions, so others unconsciously soften their blows.",
+    "_id": "aura-guard"
+}

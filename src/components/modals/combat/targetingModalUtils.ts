@@ -8,6 +8,8 @@ import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAda
 import { extractIsNpc } from '../../../utils/combat/initiativeHelpers';
 import { getEffectsByCategory } from '../../../utils/combat/fieldEffectsData';
 import { isFlowerGiftActiveForSide } from '../../../utils/combat/combatantSideUtils';
+import { getKnownAbility } from '../../../data/abilities/knownAbilities';
+import { useCharacterStore } from '../../../store/useCharacterStore';
 
 export const RANK_TARGET_LIMITS: Record<string, number> = {
     Starter: 1,
@@ -120,7 +122,7 @@ export function initializeMultiTargetRows(
     move?: MoveData | string
 ): MultiTargetRowData[] {
     const rows: MultiTargetRowData[] = targets.map((t) => {
-        const { targetDef, flatReduction } = calculateTargetDefAndFactors(t, isPhysicalMove, activeBattlefield);
+        const { targetDef, flatReduction } = calculateTargetDefAndFactors(t, isPhysicalMove, activeBattlefield, move);
         const isTera = activeTransformation === 'Terastallize' && t.isTera;
         const effResult = isTera
             ? { modifier: 1, isImmune: false }
@@ -354,15 +356,73 @@ export async function loadAvailableTargets(isPhysicalMove: boolean): Promise<Tar
     });
 }
 
+export function isNonRangedPhysicalMove(isPhysicalMove: boolean, move?: MoveData | string): boolean {
+    if (!isPhysicalMove) return false;
+    if (!move) return true;
+    const desc = (
+        typeof move === 'string'
+            ? move
+            : `${move.name || ''} ${move.desc || ''} ${move.description || ''} ${move.marker || ''} ${move.attackAction?.tags || ''}`
+    ).toLowerCase();
+    const isRanged =
+        desc.includes('ranged move') ||
+        /\[\s*ranged(?:\s*move)?\s*\]/i.test(desc) ||
+        /\branged\s+move\b/i.test(desc);
+    return !isRanged;
+}
+
 export function calculateTargetDefAndFactors(
     target: TargetOption,
     isPhysicalMove: boolean,
-    activeBattlefield?: BattlefieldData | null
+    activeBattlefield?: BattlefieldData | null,
+    move?: MoveData | string,
+    attackerAbility?: string
 ): { targetDef: number; flatReduction: number; factors: string[]; forceNeutralFlying: boolean } {
     let targetDef = target.def;
     let flatReduction = 0;
     const factors: string[] = [];
     let forceNeutralFlying = false;
+
+    const isNonRangedPhysical = isNonRangedPhysicalMove(isPhysicalMove, move);
+
+    // Aura Guard (or [Def Dmg -2: Non-Ranged Physical]):
+    // Reduces damage dealt to this Pokémon by All Non-Ranged Physical Moves by 2.
+    const targetAbilityName = (target.ability || '').replace(/\s*\(HA\)$/i, '').trim();
+    const targetKnown = getKnownAbility(targetAbilityName);
+    const targetTags = targetKnown?.tags || '';
+    const hasAuraGuard =
+        target.abilityActive !== false &&
+        (targetAbilityName.toLowerCase() === 'aura guard' ||
+            /\[\s*def\s*dmg\s*-2\s*:\s*non-ranged\s*physical\s*\]/i.test(targetTags));
+
+    if (hasAuraGuard && isNonRangedPhysical) {
+        flatReduction += 2;
+        factors.push('Aura Guard (-2 Damage)');
+    }
+
+    // Piercing Drill (or [Bypass: Screens: Non-Ranged Physical]):
+    // Non-Ranged Physical moves ignore Reflect, Light Screen, Aurora Veil.
+    let currentAttackerAbility = attackerAbility;
+    let currentAttackerTags = '';
+    if (!currentAttackerAbility) {
+        try {
+            const charStore = useCharacterStore.getState();
+            if (charStore.identity?.abilityActive !== false) {
+                currentAttackerAbility = charStore.identity?.ability;
+                currentAttackerTags = charStore.identity?.abilityTags || '';
+            }
+        } catch {
+            // Safe fallback
+        }
+    }
+    const cleanAttackerAbility = (currentAttackerAbility || '').replace(/\s*\(HA\)$/i, '').trim();
+    const attackerKnown = getKnownAbility(cleanAttackerAbility);
+    const allAttackerTags = `${currentAttackerTags} ${attackerKnown?.tags || ''}`;
+    const hasPiercingDrill =
+        cleanAttackerAbility.toLowerCase() === 'piercing drill' ||
+        /\[\s*bypass\s*:\s*screens\s*:\s*non-ranged\s*physical\s*\]/i.test(allAttackerTags);
+
+    const bypassScreens = hasPiercingDrill && isNonRangedPhysical;
 
     if (activeBattlefield) {
         const activeWeathers = getEffectsByCategory(activeBattlefield, 'weather');
@@ -409,17 +469,26 @@ export function calculateTargetDefAndFactors(
             const hasLightScreen = activeFields.some((ff) => ff.name.toLowerCase().includes('light screen'));
             const hasAuroraVeil = activeFields.some((ff) => ff.name.toLowerCase().includes('aurora veil'));
 
-            if (hasReflect && isPhysicalMove) {
-                flatReduction += 1;
-                factors.push('Reflect (-1 Damage)');
-            }
-            if (hasLightScreen && !isPhysicalMove) {
-                flatReduction += 1;
-                factors.push('Light Screen (-1 Damage)');
-            }
-            if (hasAuroraVeil) {
-                flatReduction += 1;
-                factors.push('Aurora Veil (-1 Damage)');
+            const hasActiveScreen =
+                (hasReflect && isPhysicalMove) ||
+                (hasLightScreen && !isPhysicalMove) ||
+                hasAuroraVeil;
+
+            if (bypassScreens && hasActiveScreen) {
+                factors.push('Piercing Drill (Ignored Screens)');
+            } else {
+                if (hasReflect && isPhysicalMove) {
+                    flatReduction += 1;
+                    factors.push('Reflect (-1 Damage)');
+                }
+                if (hasLightScreen && !isPhysicalMove) {
+                    flatReduction += 1;
+                    factors.push('Light Screen (-1 Damage)');
+                }
+                if (hasAuroraVeil) {
+                    flatReduction += 1;
+                    factors.push('Aurora Veil (-1 Damage)');
+                }
             }
         }
     }
