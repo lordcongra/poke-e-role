@@ -4,6 +4,9 @@ import {
     getAbilityTargetStance,
     getAbilityMaxTargets,
     isTargetAffectedByAbility,
+    isTargetCombatantImmuneToStatDrops,
+    isTargetCombatantImmuneToRuin,
+    STAT_LOWERING_AURA_ABILITIES,
     isCombatantInPc,
     syncCombatantSentToMap,
     syncCombatantSentToPc,
@@ -734,6 +737,309 @@ describe('Ability Targeting System', () => {
             expect(calculateDefTotal(dondozoState, dummyInvMods)).toBe(7);
             // SpD: ins (3) + commander (2) = 5
             expect(calculateSDefTotal(dondozoState, dummyInvMods)).toBe(5);
+        });
+    });
+
+    describe('Flower Veil & Stat-Reduction Immunity Protection', () => {
+        const auraAbilities = ['tablets of ruin', 'sword of ruin', 'vessel of ruin', 'beads of ruin', 'intimidate'];
+
+        it('verifies STAT_LOWERING_AURA_ABILITIES contains all 5 stat-reducing auras', () => {
+            expect(STAT_LOWERING_AURA_ABILITIES.has('tablets of ruin')).toBe(true);
+            expect(STAT_LOWERING_AURA_ABILITIES.has('sword of ruin')).toBe(true);
+            expect(STAT_LOWERING_AURA_ABILITIES.has('vessel of ruin')).toBe(true);
+            expect(STAT_LOWERING_AURA_ABILITIES.has('beads of ruin')).toBe(true);
+            expect(STAT_LOWERING_AURA_ABILITIES.has('intimidate')).toBe(true);
+            expect(STAT_LOWERING_AURA_ABILITIES.has('flower gift')).toBe(false);
+            expect(STAT_LOWERING_AURA_ABILITIES.has('neutralizing gas')).toBe(false);
+        });
+
+        it('protects combatants affected by Flower Veil against Beads of Ruin, Sword of Ruin, Tablets of Ruin, Vessel of Ruin, and Intimidate', () => {
+            const boData = {
+                battlefield: createDefaultBattlefield(),
+                rounds: [
+                    {
+                        id: 'r1',
+                        roundNumber: 1,
+                        combatants: [
+                            {
+                                id: 'florges-1',
+                                name: 'Florges',
+                                ability: 'Flower Veil',
+                                abilityActive: true,
+                                abilityTargetIds: ['florges-1', 'ally-guarded'],
+                                isPlayerSide: true,
+                                isNPC: false
+                            },
+                            {
+                                id: 'ally-guarded',
+                                name: 'Bellsprout',
+                                ability: 'Chlorophyll',
+                                abilityActive: true,
+                                isPlayerSide: true,
+                                isNPC: false
+                            },
+                            {
+                                id: 'ally-unguarded',
+                                name: 'Pikachu',
+                                ability: 'Static',
+                                abilityActive: true,
+                                isPlayerSide: true,
+                                isNPC: false
+                            },
+                            {
+                                id: 'wo-chien-1',
+                                name: 'Wo-Chien',
+                                ability: 'Tablets of Ruin',
+                                abilityActive: true,
+                                abilityTargetIds: ['florges-1', 'ally-guarded', 'ally-unguarded'],
+                                isPlayerSide: false,
+                                isNPC: true
+                            },
+                            {
+                                id: 'chien-pao-1',
+                                name: 'Chien-Pao',
+                                ability: 'Sword of Ruin',
+                                abilityActive: true,
+                                abilityTargetIds: ['florges-1', 'ally-guarded', 'ally-unguarded'],
+                                isPlayerSide: false,
+                                isNPC: true
+                            },
+                            {
+                                id: 'ting-lu-1',
+                                name: 'Ting-Lu',
+                                ability: 'Vessel of Ruin',
+                                abilityActive: true,
+                                abilityTargetIds: ['florges-1', 'ally-guarded', 'ally-unguarded'],
+                                isPlayerSide: false,
+                                isNPC: true
+                            },
+                            {
+                                id: 'chi-yu-1',
+                                name: 'Chi-Yu',
+                                ability: 'Beads of Ruin',
+                                abilityActive: true,
+                                abilityTargetIds: ['florges-1', 'ally-guarded', 'ally-unguarded'],
+                                isPlayerSide: false,
+                                isNPC: true
+                            },
+                            {
+                                id: 'incineroar-1',
+                                name: 'Incineroar',
+                                ability: 'Intimidate',
+                                abilityActive: true,
+                                abilityTargetIds: ['florges-1', 'ally-guarded', 'ally-unguarded'],
+                                isPlayerSide: false,
+                                isNPC: true
+                            }
+                        ]
+                    }
+                ],
+                activeRoundIndex: 0
+            };
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
+
+            // Ally protected by Flower Veil returns false for all 5 stat-lowering auras
+            for (const ab of auraAbilities) {
+                expect(isTargetAffectedByAbility('ally-guarded', 'player', ab)).toBe(false);
+            }
+
+            // Florges itself (Flower Veil bearer protecting itself) returns false for all 5 stat-lowering auras
+            for (const ab of auraAbilities) {
+                expect(isTargetAffectedByAbility('florges-1', 'player', ab)).toBe(false);
+            }
+
+            // Unguarded ally (not targeted by Flower Veil) returns true for all 5 stat-lowering auras
+            for (const ab of auraAbilities) {
+                expect(isTargetAffectedByAbility('ally-unguarded', 'player', ab)).toBe(true);
+            }
+        });
+
+        it('protects combatants with Clear Body, White Smoke, or Full Metal Body from stat-lowering auras', () => {
+            const boData = {
+                battlefield: createDefaultBattlefield(),
+                rounds: [
+                    {
+                        id: 'r1',
+                        roundNumber: 1,
+                        combatants: [
+                            {
+                                id: 'metagross-1',
+                                name: 'Metagross',
+                                ability: 'Clear Body',
+                                abilityActive: true,
+                                isPlayerSide: true,
+                                isNPC: false
+                            },
+                            {
+                                id: 'torkoal-1',
+                                name: 'Torkoal',
+                                ability: 'White Smoke',
+                                abilityActive: true,
+                                isPlayerSide: true,
+                                isNPC: false
+                            },
+                            {
+                                id: 'solgaleo-1',
+                                name: 'Solgaleo',
+                                ability: 'Full Metal Body',
+                                abilityActive: true,
+                                isPlayerSide: true,
+                                isNPC: false
+                            },
+                            {
+                                id: 'metagross-inactive',
+                                name: 'Metagross Inactive',
+                                ability: 'Clear Body',
+                                abilityActive: false,
+                                isPlayerSide: true,
+                                isNPC: false
+                            },
+                            {
+                                id: 'metagross-fainted',
+                                name: 'Metagross Fainted',
+                                ability: 'Clear Body',
+                                abilityActive: true,
+                                isFainted: true,
+                                isPlayerSide: true,
+                                isNPC: false
+                            },
+                            {
+                                id: 'standard-foe-1',
+                                name: 'Incineroar',
+                                ability: 'Intimidate',
+                                abilityActive: true,
+                                abilityTargetIds: ['metagross-1', 'torkoal-1', 'solgaleo-1', 'metagross-inactive', 'metagross-fainted'],
+                                isPlayerSide: false,
+                                isNPC: true
+                            },
+                            {
+                                id: 'ruin-foe-1',
+                                name: 'Tablets of Ruin User',
+                                ability: 'Tablets of Ruin',
+                                abilityActive: true,
+                                abilityTargetIds: ['metagross-1', 'torkoal-1', 'solgaleo-1', 'metagross-inactive', 'metagross-fainted'],
+                                isPlayerSide: false,
+                                isNPC: true
+                            }
+                        ]
+                    }
+                ],
+                activeRoundIndex: 0
+            };
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
+
+            // Helper verifies immunity detection
+            expect(isTargetCombatantImmuneToStatDrops('metagross-1')).toBe(true);
+            expect(isTargetCombatantImmuneToStatDrops('torkoal-1')).toBe(true);
+            expect(isTargetCombatantImmuneToStatDrops('solgaleo-1')).toBe(true);
+            expect(isTargetCombatantImmuneToStatDrops('metagross-inactive')).toBe(false);
+            expect(isTargetCombatantImmuneToStatDrops('metagross-fainted')).toBe(false);
+
+            // Active Clear Body / White Smoke / Full Metal Body combatants are not affected by auras
+            for (const ab of auraAbilities) {
+                expect(isTargetAffectedByAbility('metagross-1', 'player', ab)).toBe(false);
+                expect(isTargetAffectedByAbility('torkoal-1', 'player', ab)).toBe(false);
+                expect(isTargetAffectedByAbility('solgaleo-1', 'player', ab)).toBe(false);
+            }
+
+            // Inactive ability is affected normally
+            expect(isTargetAffectedByAbility('metagross-inactive', 'player', 'intimidate')).toBe(true);
+            expect(isTargetAffectedByAbility('metagross-inactive', 'player', 'tablets of ruin')).toBe(true);
+        });
+
+        it('protects combatants when Flower Veil is active on battlefield ForceField or Notes', () => {
+            const bfWithFf = createDefaultBattlefield();
+            bfWithFf.playerSide.forceFields[0] = { name: 'Flower Veil', remainingRounds: 3 };
+
+            const boData = {
+                battlefield: bfWithFf,
+                rounds: [
+                    {
+                        id: 'r1',
+                        roundNumber: 1,
+                        combatants: [
+                            {
+                                id: 'pikachu-1',
+                                name: 'Pikachu',
+                                ability: 'Static',
+                                abilityActive: true,
+                                isPlayerSide: true,
+                                isNPC: false
+                            },
+                            {
+                                id: 'incineroar-1',
+                                name: 'Incineroar',
+                                ability: 'Intimidate',
+                                abilityActive: true,
+                                abilityTargetIds: ['pikachu-1'],
+                                isPlayerSide: false,
+                                isNPC: true
+                            }
+                        ]
+                    }
+                ],
+                activeRoundIndex: 0
+            };
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
+
+            // Field-level Flower Veil protects all combatants on the player side
+            expect(isTargetAffectedByAbility('pikachu-1', 'player', 'intimidate', bfWithFf)).toBe(false);
+            expect(isTargetAffectedByAbility('pikachu-1', 'player', 'tablets of ruin', bfWithFf)).toBe(false);
+        });
+
+        it('preserves Ruin mutual immunity regardless of stat drop immunities', () => {
+            const boData = {
+                battlefield: createDefaultBattlefield(),
+                rounds: [
+                    {
+                        id: 'r1',
+                        roundNumber: 1,
+                        combatants: [
+                            {
+                                id: 'wo-chien-1',
+                                name: 'Wo-Chien',
+                                ability: 'Tablets of Ruin',
+                                abilityActive: true,
+                                abilityTargetIds: ['chien-pao-1', 'regular-foe-1'],
+                                isPlayerSide: false,
+                                isNPC: true
+                            },
+                            {
+                                id: 'chien-pao-1',
+                                name: 'Chien-Pao',
+                                ability: 'Sword of Ruin',
+                                abilityActive: true,
+                                abilityTargetIds: ['wo-chien-1', 'regular-foe-1'],
+                                isPlayerSide: false,
+                                isNPC: true
+                            },
+                            {
+                                id: 'regular-foe-1',
+                                name: 'Tyranitar',
+                                ability: 'Sand Stream',
+                                abilityActive: true,
+                                isPlayerSide: false,
+                                isNPC: true
+                            }
+                        ]
+                    }
+                ],
+                activeRoundIndex: 0
+            };
+            localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
+
+            // Ruin immunity helper check
+            expect(isTargetCombatantImmuneToRuin('chien-pao-1')).toBe(true);
+            expect(isTargetCombatantImmuneToRuin('wo-chien-1')).toBe(true);
+            expect(isTargetCombatantImmuneToRuin('regular-foe-1')).toBe(false);
+
+            // Chien-Pao (Sword of Ruin) is immune to Tablets of Ruin
+            expect(isTargetAffectedByAbility('chien-pao-1', 'foe', 'tablets of ruin')).toBe(false);
+            // Wo-Chien (Tablets of Ruin) is immune to Sword of Ruin
+            expect(isTargetAffectedByAbility('wo-chien-1', 'foe', 'sword of ruin')).toBe(false);
+            // Tyranitar (Sand Stream) is affected by both Ruin abilities
+            expect(isTargetAffectedByAbility('regular-foe-1', 'foe', 'tablets of ruin')).toBe(true);
+            expect(isTargetAffectedByAbility('regular-foe-1', 'foe', 'sword of ruin')).toBe(true);
         });
     });
 

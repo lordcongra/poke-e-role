@@ -15,12 +15,28 @@ export const RUIN_ABILITIES = new Set([
     'beads of ruin'
 ]);
 
+export const STAT_LOWERING_AURA_ABILITIES = new Set([
+    'tablets of ruin',
+    'sword of ruin',
+    'vessel of ruin',
+    'beads of ruin',
+    'intimidate'
+]);
+
+export const STAT_DROPS_IMMUNITY_ABILITIES = new Set([
+    'clear body',
+    'white smoke',
+    'full metal body'
+]);
+
+export const STAT_LOWERING_IMMUNITY_ABILITIES = STAT_DROPS_IMMUNITY_ABILITIES;
+
 /**
- * Checks whether a target combatant has active Neutralizing Gas.
- * In canonical rules, Neutralizing Gas cannot negate another Neutralizing Gas.
+ * Helper to inspect active combatant or store character for an ability matching a predicate.
  */
-export function isTargetCombatantActiveNeutralizingGas(
+function checkTargetActiveAbility(
     targetId: string | string[],
+    predicate: (cleanAbility: string) => boolean,
     allCombatants?: CombatantRowData[],
     activeCharState?: CharacterState | null
 ): boolean {
@@ -71,7 +87,7 @@ export function isTargetCombatantActiveNeutralizingGas(
                 }
             }
             const clean = (ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
-            return clean === 'neutralizing gas' && active;
+            return predicate(clean) && active;
         }
     }
 
@@ -87,11 +103,28 @@ export function isTargetCombatantActiveNeutralizingGas(
         ) {
             const clean = (resolvedChar.identity?.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
             const active = resolvedChar.identity?.abilityActive !== false;
-            return clean === 'neutralizing gas' && active;
+            return predicate(clean) && active;
         }
     }
 
     return false;
+}
+
+/**
+ * Checks whether a target combatant has active Neutralizing Gas.
+ * In canonical rules, Neutralizing Gas cannot negate another Neutralizing Gas.
+ */
+export function isTargetCombatantActiveNeutralizingGas(
+    targetId: string | string[],
+    allCombatants?: CombatantRowData[],
+    activeCharState?: CharacterState | null
+): boolean {
+    return checkTargetActiveAbility(
+        targetId,
+        (clean) => clean === 'neutralizing gas',
+        allCombatants,
+        activeCharState
+    );
 }
 
 /**
@@ -102,74 +135,28 @@ export function isTargetCombatantImmuneToRuin(
     allCombatants?: CombatantRowData[],
     activeCharState?: CharacterState | null
 ): boolean {
-    if (!targetId) return false;
-    const targetIds = Array.isArray(targetId) ? targetId.filter(Boolean) : [targetId];
-    if (targetIds.length === 0) return false;
+    return checkTargetActiveAbility(
+        targetId,
+        (clean) => RUIN_ABILITIES.has(clean),
+        allCombatants,
+        activeCharState
+    );
+}
 
-    let resolvedChar = activeCharState;
-    if (resolvedChar === undefined) {
-        try {
-            resolvedChar = useCharacterStore.getState();
-        } catch {
-            resolvedChar = null;
-        }
-    }
-
-    let combatants = allCombatants;
-    if (!combatants && typeof window !== 'undefined' && window.localStorage) {
-        try {
-            const raw = readBattleOrganizerStateRaw();
-            if (raw) {
-                const bo = JSON.parse(raw) as BattleOrganizerState;
-                const activeRound = bo.rounds?.[bo.activeRoundIndex ?? 0] || bo.rounds?.[0];
-                combatants = activeRound?.combatants;
-            }
-        } catch {
-            // ignore
-        }
-    }
-
-    if (combatants && combatants.length > 0) {
-        const matched = combatants.find((c) => matchesTarget(c, targetIds));
-        if (matched) {
-            if (isCombatantInPc(matched, resolvedChar?.pcData) || matched.isFainted) {
-                return false;
-            }
-            let ability = matched.ability;
-            let active = matched.abilityActive !== false;
-            if (resolvedChar) {
-                const activeTokenId = resolvedChar.tokenId;
-                const activeEntityId = resolvedChar.identity?.entityId;
-                if (
-                    (activeTokenId && (matched.tokenId === activeTokenId || matched.id === activeTokenId)) ||
-                    (activeEntityId && (matched.entityId === activeEntityId || matched.id === activeEntityId))
-                ) {
-                    if (resolvedChar.identity?.ability) ability = resolvedChar.identity.ability;
-                    if (resolvedChar.identity?.abilityActive !== undefined) active = resolvedChar.identity.abilityActive;
-                }
-            }
-            const clean = (ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
-            return RUIN_ABILITIES.has(clean) && active;
-        }
-    }
-
-    if (resolvedChar) {
-        const activeTokenId = resolvedChar.tokenId;
-        const activeEntityId = resolvedChar.identity?.entityId;
-        const activeName = resolvedChar.identity?.nickname || resolvedChar.identity?.species;
-        if (
-            matchesTarget(
-                { id: activeEntityId, tokenId: activeTokenId || undefined, entityId: activeEntityId, name: activeName },
-                targetIds
-            )
-        ) {
-            const clean = (resolvedChar.identity?.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
-            const active = resolvedChar.identity?.abilityActive !== false;
-            return RUIN_ABILITIES.has(clean) && active;
-        }
-    }
-
-    return false;
+/**
+ * Checks whether a target combatant is immune to stat drops (has active Clear Body, White Smoke, or Full Metal Body).
+ */
+export function isTargetCombatantImmuneToStatDrops(
+    targetId: string | string[],
+    allCombatants?: CombatantRowData[],
+    activeCharState?: CharacterState | null
+): boolean {
+    return checkTargetActiveAbility(
+        targetId,
+        (clean) => STAT_DROPS_IMMUNITY_ABILITIES.has(clean),
+        allCombatants,
+        activeCharState
+    );
 }
 
 /**
@@ -196,6 +183,18 @@ export function isTargetAffectedByAbility(
     // Ruin Quartet mutual immunity: A combatant with a Ruin ability is immune to all Ruin abilities
     if (RUIN_ABILITIES.has(cleanAbility) && isTargetCombatantImmuneToRuin(targetId)) {
         return false;
+    }
+
+    // Stat-lowering aura protection:
+    // Combatants immune to stat drops (Clear Body, White Smoke, Full Metal Body) or protected by Flower Veil
+    // are immune to stat-lowering auras (Tablets/Sword/Vessel/Beads of Ruin, Intimidate).
+    if (STAT_LOWERING_AURA_ABILITIES.has(cleanAbility)) {
+        if (isTargetCombatantImmuneToStatDrops(targetId)) {
+            return false;
+        }
+        if (isTargetAffectedByAbility(targetId, targetSide, 'flower veil', battlefield)) {
+            return false;
+        }
     }
 
     // 1. Flower Gift requires Sunny / Harsh Sunlight / Desolate weather

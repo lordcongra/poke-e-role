@@ -27,8 +27,12 @@ export {
 
 export {
     RUIN_ABILITIES,
+    STAT_LOWERING_AURA_ABILITIES,
+    STAT_DROPS_IMMUNITY_ABILITIES,
+    STAT_LOWERING_IMMUNITY_ABILITIES,
     isTargetCombatantActiveNeutralizingGas,
     isTargetCombatantImmuneToRuin,
+    isTargetCombatantImmuneToStatDrops,
     isTargetAffectedByAbility,
     isAbilitySuppressedByField,
     isTargetUnderIntimidate,
