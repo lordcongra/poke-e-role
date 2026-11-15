@@ -41,7 +41,7 @@ export const HOMEBREW_DAMAGE_TAG_REGEX =
  */
 export function getWeatherDamageBonus(
     moveType: string | undefined,
-    battlefield: CharacterState['activeBattlefield'],
+    battlefield: CharacterState['activeBattlefield'] | undefined,
     isHalfHp?: boolean,
     isNPC?: boolean,
     state?: CharacterState

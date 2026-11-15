@@ -8,6 +8,7 @@ import {
     type TargetOption
 } from '@/components/modals/combat/targetingModalUtils';
 import { getKnownAbility, KNOWN_ABILITIES } from '@/data/abilities/knownAbilities';
+import { createDefaultBattlefield } from '@/components/modals/battleOrganizer/battleOrganizerUtils';
 import type { MoveData } from '@/store/storeTypes';
 import type { BattlefieldData } from '@/types/battleOrganizerTypes';
 
@@ -83,12 +84,12 @@ describe('New Abilities Errata & Integrations', () => {
                 activeBattlefield: undefined
             });
 
-            const fireBonus = getWeatherDamageBonus('Fire', undefined);
+            const fireBonus = getWeatherDamageBonus('Fire', null);
             expect(fireBonus.diceBonus).toBe(1);
             expect(fireBonus.flatPenalty).toBe(0);
             expect(fireBonus.tag).toContain('Mega Sol (+1 Dice to Fire Damage Pool)');
 
-            const waterBonus = getWeatherDamageBonus('Water', undefined);
+            const waterBonus = getWeatherDamageBonus('Water', null);
             expect(waterBonus.diceBonus).toBe(0);
             expect(waterBonus.flatPenalty).toBe(1);
             expect(waterBonus.tag).toContain('Mega Sol (-1 Flat Damage from Water Moves)');
@@ -96,15 +97,8 @@ describe('New Abilities Errata & Integrations', () => {
 
         it('does not duplicate sunny bonus if battlefield already has Sun active', () => {
             const sunBattlefield: BattlefieldData = {
-                location: '',
-                weather: { name: 'Sun', remainingRounds: 3 },
-                terrain: { name: '', remainingRounds: 0 },
-                other: { name: '', remainingRounds: 0 },
-                playerSide: { forceFields: [], entryHazard: '', cover: '', other: '' },
-                foeSide: { forceFields: [], entryHazard: '', cover: '', other: '' },
-                playerTargets: '',
-                foeTargets: '',
-                highlightedSide: 'all'
+                ...createDefaultBattlefield(),
+                weather: { name: 'Sun', remainingRounds: 3 }
             };
 
             useCharacterStore.setState({
@@ -198,23 +192,14 @@ describe('New Abilities Errata & Integrations', () => {
 
         it('Piercing Drill bypasses Reflect, Light Screen, and Aurora Veil on Non-Ranged Physical moves', () => {
             const screenedBattlefield: BattlefieldData = {
-                location: '',
-                weather: { name: '', remainingRounds: 0 },
-                terrain: { name: '', remainingRounds: 0 },
-                other: { name: '', remainingRounds: 0 },
-                playerSide: { forceFields: [], entryHazard: '', cover: '', other: '' },
+                ...createDefaultBattlefield(),
                 foeSide: {
+                    ...createDefaultBattlefield().foeSide,
                     forceFields: [
                         { name: 'Reflect', remainingRounds: 4 },
                         { name: 'Aurora Veil', remainingRounds: 4 }
-                    ],
-                    entryHazard: '',
-                    cover: '',
-                    other: ''
-                },
-                playerTargets: '',
-                foeTargets: '',
-                highlightedSide: 'all'
+                    ]
+                }
             };
 
             const normalFoe: TargetOption = {
