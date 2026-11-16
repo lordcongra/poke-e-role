@@ -835,4 +835,51 @@ export function extractMechanics(
             triggers.accuracy = true;
         }
     }
+
+    // [Unique] or [Unique Ability]
+    const uniqueMatches = description.matchAll(/\[\s*unique(?:\s+ability)?\s*\]/gi);
+    for (const _match of uniqueMatches) {
+        bonuses.isUnique = true;
+        triggers.general = true;
+    }
+
+    // [Ignore Stat Reductions] / [Ignore All Stat Reductions]
+    const ignoreAllStatMatches = description.matchAll(/\[\s*ignore\s+(?:all\s+)?stat\s+reductions?\s*\]/gi);
+    for (const _match of ignoreAllStatMatches) {
+        bonuses.ignoreAllStatReductions = true;
+        triggers.general = true;
+    }
+
+    // Generic: [Ignore <Stat> Reduction]
+    const ignoreStatMatches = description.matchAll(
+        /\[\s*ignore\s+([a-zA-Z0-9_\s/.-]+?)\s+reductions?\s*(?:@\s*([^\]]+))?\]/gi
+    );
+    for (const match of ignoreStatMatches) {
+        if (!checkCondition(match[2], isHalfHp, sourceBoostActive)) continue;
+        const rawStat = match[1]?.trim().toLowerCase();
+        if (!rawStat) continue;
+        if (rawStat === 'stat' || rawStat === 'stats' || rawStat === 'all stat' || rawStat === 'all stats') {
+            bonuses.ignoreAllStatReductions = true;
+        } else {
+            const normalized = normalizeStatKey(rawStat);
+            if (!bonuses.ignoredStatReductions) {
+                bonuses.ignoredStatReductions = new Set<string>();
+            }
+            bonuses.ignoredStatReductions.add(normalized);
+        }
+        triggers.general = true;
+    }
+}
+
+export function normalizeStatKey(stat: string): string {
+    const s = stat.trim().toLowerCase();
+    if (s === 'str' || s === 'strength') return 'str';
+    if (s === 'def' || s === 'defense') return 'def';
+    if (s === 'spd' || s === 'special defense' || s === 'sp. def' || s === 'sp def' || s === 'sp.def') return 'spd';
+    if (s === 'spe' || s === 'special') return 'spe';
+    if (s === 'dex' || s === 'dexterity') return 'dex';
+    if (s === 'vit' || s === 'vitality') return 'vit';
+    if (s === 'ins' || s === 'insight') return 'ins';
+    if (s === 'acc' || s === 'accuracy') return 'acc';
+    return s;
 }

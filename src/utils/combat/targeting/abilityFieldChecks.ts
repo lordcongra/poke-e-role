@@ -7,6 +7,14 @@ import { resolveCharacterSide } from '@/utils/combat/combatantSideUtils';
 import { matchesTarget, isTargetInList, getAbilityTargetStance } from './abilityTargetStances';
 import { isCombatantInPc } from './abilityTargetPcResolution';
 import { readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
+import {
+    AURA_LOWERED_STAT,
+    resolveTargetProtection,
+    evaluateStatAuraContest,
+    getCombatantWill
+} from './abilityStatProtection';
+
+export { AURA_LOWERED_STAT };
 
 export const RUIN_ABILITIES = new Set([
     'tablets of ruin',
@@ -185,18 +193,6 @@ export function isTargetAffectedByAbility(
         return false;
     }
 
-    // Stat-lowering aura protection:
-    // Combatants immune to stat drops (Clear Body, White Smoke, Full Metal Body) or protected by Flower Veil
-    // are immune to stat-lowering auras (Tablets/Sword/Vessel/Beads of Ruin, Intimidate).
-    if (STAT_LOWERING_AURA_ABILITIES.has(cleanAbility)) {
-        if (isTargetCombatantImmuneToStatDrops(targetId)) {
-            return false;
-        }
-        if (isTargetAffectedByAbility(targetId, targetSide, 'flower veil', battlefield)) {
-            return false;
-        }
-    }
-
     // 1. Flower Gift requires Sunny / Harsh Sunlight / Desolate weather
     if (cleanAbility === 'flower gift') {
         const activeWeathers = battlefield ? getEffectsByCategory(battlefield, 'weather') : [];
@@ -220,6 +216,23 @@ export function isTargetAffectedByAbility(
             const inOther = Boolean(sideData.other && sideData.other.toLowerCase().includes(cleanAbility));
             const inExtraOther = Boolean(sideData.extraOther?.some((o) => o?.toLowerCase().includes(cleanAbility)));
             if (inFf || inExtraFf || inOther || inExtraOther) {
+                if (STAT_LOWERING_AURA_ABILITIES.has(cleanAbility)) {
+                    const loweredStat = AURA_LOWERED_STAT[cleanAbility] || 'str';
+                    const prot = resolveTargetProtection(
+                        targetId,
+                        targetSide,
+                        loweredStat,
+                        undefined,
+                        undefined,
+                        battlefield,
+                        isTargetAffectedByAbility
+                    );
+                    const isSourceUnique = RUIN_ABILITIES.has(cleanAbility);
+                    const contest = evaluateStatAuraContest(prot, isSourceUnique, 0);
+                    if (contest.isBlocked) {
+                        return false;
+                    }
+                }
                 return true;
             }
         }
@@ -343,6 +356,28 @@ export function isTargetAffectedByAbility(
                             continue;
                         }
 
+                        // Check stat-lowering aura protection & Unique vs. Unique Will Contest
+                        if (STAT_LOWERING_AURA_ABILITIES.has(cleanAbility)) {
+                            const loweredStat = AURA_LOWERED_STAT[cleanAbility] || 'str';
+                            const protection = resolveTargetProtection(
+                                targetId,
+                                targetSide,
+                                loweredStat,
+                                allCombatants,
+                                activeCharState,
+                                battlefield,
+                                isTargetAffectedByAbility
+                            );
+                            const isSourceUnique =
+                                RUIN_ABILITIES.has(cleanAbility) ||
+                                /\[\s*unique(?:\s+ability)?\s*\]/i.test(sourceTags);
+                            const sourceWill = getCombatantWill(source, activeCharState);
+                            const contest = evaluateStatAuraContest(protection, isSourceUnique, sourceWill);
+                            if (contest.isBlocked) {
+                                continue;
+                            }
+                        }
+
                         // Check explicit targeting configuration:
                         // If configuredTargets is empty ([]) or undefined, treat it as 0 targets selected (do NOT fall back to auto-targeting candidates)
                         const configuredTargets = getCombatantTargets(source);
@@ -408,24 +443,18 @@ export function isAllyAuraActive(
         try {
             const char = useCharacterStore.getState();
             if (char) {
-                const dummyCombatant: CombatantRowData = {
+                const dummyCombatant = {
                     id: char.identity.entityId || char.tokenId || '',
                     entityId: char.identity.entityId,
                     tokenId: char.tokenId || undefined,
                     name: char.identity.nickname || char.identity.species || '',
-                    actions: [
-                        { text: '', status: 'none' },
-                        { text: '', status: 'none' },
-                        { text: '', status: 'none' },
-                        { text: '', status: 'none' },
-                        { text: '', status: 'none' }
-                    ],
+                    actions: [{ text: '', status: 'none' }, { text: '', status: 'none' }, { text: '', status: 'none' }, { text: '', status: 'none' }, { text: '', status: 'none' }],
                     evadeUsed: false,
                     clashUsed: false,
                     heldItem: '',
                     initiative: '0',
                     status: 'Normal'
-                };
+                } as CombatantRowData;
                 inPc = isCombatantInPc(dummyCombatant, char.pcData);
             }
         } catch {

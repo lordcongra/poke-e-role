@@ -99,7 +99,10 @@ export function createEmptyBonuses(): CombatBonuses {
         spdAbilityNames: [],
         highCritItemNames: [],
         highCritPassiveNames: [],
-        highCritAbilityNames: []
+        highCritAbilityNames: [],
+        isUnique: false,
+        ignoreAllStatReductions: false,
+        ignoredStatReductions: new Set<string>()
     };
 }
 

@@ -10,6 +10,8 @@ import { saveToOwlbear, getIsRemoteSyncActive } from '../../utils/sync/obr';
 import OBR from '@owlbear-rodeo/sdk';
 import { syncHealthAndWill } from '../../utils/common/macroHelpers';
 import { getKnownAbility } from '../../data/abilities/knownAbilities';
+import { synthesizeAbilityTags } from '@/utils/tagParser/abilityTagSynthesizer';
+import { lookupAbilityDetails } from '@/utils/common/abilityLookupUtils';
 import { getBattleOrganizerStorageKey, readBattleOrganizerStateRaw } from '@/utils/sync/roomScopedStorage';
 import { sendBattleOrganizerFullSync } from '@/components/modals/battleOrganizer/battleOrganizerSyncHelpers';
 
@@ -74,22 +76,34 @@ export function updateAbilityData(
     updatesToSave['ability-boost-active'] = false;
     updatesToSave['ability-boost-level'] = 0;
     updatesToSave['ability-choice-index'] = 0;
-    if (known) {
-        newIdentity.abilityTags = known.tags;
-        newIdentity.abilityActive = known.autoActive ?? true;
-        updatesToSave['ability-tags'] = known.tags;
-        updatesToSave['ability-active'] = newIdentity.abilityActive;
-    } else if (customAbility) {
-        const customTags = `${customAbility.effect ?? ''} ${customAbility.description ?? ''}`.trim();
-        newIdentity.abilityTags = customTags;
-        newIdentity.abilityActive = true;
-        updatesToSave['ability-tags'] = customTags;
-        updatesToSave['ability-active'] = true;
-    } else {
-        newIdentity.abilityTags = '';
-        newIdentity.abilityActive = true;
-        updatesToSave['ability-tags'] = '';
-        updatesToSave['ability-active'] = true;
+
+    const baseTags = known?.tags || (customAbility ? `${customAbility.effect ?? ''} ${customAbility.description ?? ''}`.trim() : '');
+    const effect = customAbility?.effect || known?.summary || '';
+    const desc = customAbility?.description || '';
+    const synthesized = synthesizeAbilityTags(effect, desc, baseTags);
+
+    newIdentity.abilityTags = synthesized;
+    newIdentity.abilityActive = known ? (known.autoActive ?? true) : true;
+    updatesToSave['ability-tags'] = synthesized;
+    updatesToSave['ability-active'] = newIdentity.abilityActive;
+
+    // Trigger async official dataset lookup to synthesize full dataset tags if needed
+    if (cleanAbilityName) {
+        lookupAbilityDetails(cleanAbilityName, newIdentity.rank, synthesized)
+            .then((res) => {
+                if (res.tags && res.tags !== synthesized) {
+                    import('../useCharacterStore')
+                        .then(({ useCharacterStore }) => {
+                            const store = useCharacterStore.getState();
+                            const cur = (store.identity?.ability || '').replace(/\s*\(HA\)$/i, '').trim();
+                            if (cur.toLowerCase() === cleanAbilityName.toLowerCase()) {
+                                store.setIdentity('abilityTags', res.tags);
+                            }
+                        })
+                        .catch(() => {});
+                }
+            })
+            .catch(() => {});
     }
 }
 

@@ -13,7 +13,9 @@ import {
     resolveTargetHeldItemInfo,
     resolveTargetHeldItemInfoAsync
 } from '../abilityTargetingUtils';
-import { resolveChoiceTags } from '../../tagParser/parseCombatTags';
+import { resolveTargetProtection } from '../targeting/abilityStatProtection';
+import { resolveChoiceTags, createEmptyBonuses } from '../../tagParser/parseCombatTags';
+import { synthesizeAbilityTags } from '../../tagParser/abilityTagSynthesizer';
 import { flattenStateToMetadata } from '../../sync/flattenStateToMetadata';
 import { hydrateStateFromMetadata } from '../../sync/stateMapper';
 import { calculateStatTotal, calculateDefTotal, calculateSDefTotal, calculateBaseDamage } from '../combatMath';
@@ -664,63 +666,7 @@ describe('Ability Targeting System', () => {
                 }
             });
 
-            const dummyInvMods = {
-                stats: {},
-                skills: {},
-                def: 0,
-                spd: 0,
-                hp: 0,
-                will: 0,
-                init: 0,
-                dmg: 0,
-                acc: 0,
-                accSucc: 0,
-                dmgSucc: 0,
-                chance: 0,
-                seDmg: 0,
-                critDmg: 0,
-                firstHitDmg: 0,
-                firstHitAcc: 0,
-                gainTempHp: 0,
-                tempHpOnHit: 0,
-                tempHpDmgRatio: '',
-                neverMiss: false,
-                neverMissSourceNames: [],
-                highCritStacks: 0,
-                stackingHighCritStacks: 0,
-                ignoreLowAcc: 0,
-                addLowAcc: 0,
-                ignorePain: false,
-                roundHeal: 0,
-                roundDamage: 0,
-                roundWillRestore: 0,
-                roundWillDamage: 0,
-                loseAction: 0,
-                noReactions: false,
-                extraReactions: 0,
-                accFaceAddsDmg: 0,
-                accFaceAddsDmgLimit: 0,
-                itemNames: [],
-                accItemNames: [],
-                dmgItemNames: [],
-                accSuccItemNames: [],
-                dmgSuccItemNames: [],
-                passiveNames: [],
-                accPassiveNames: [],
-                dmgPassiveNames: [],
-                accSuccPassiveNames: [],
-                dmgSuccPassiveNames: [],
-                abilityNames: [],
-                accAbilityNames: [],
-                dmgAbilityNames: [],
-                accSuccAbilityNames: [],
-                dmgSuccAbilityNames: [],
-                defAbilityNames: [],
-                spdAbilityNames: [],
-                highCritItemNames: [],
-                highCritPassiveNames: [],
-                highCritAbilityNames: []
-            };
+            const dummyInvMods = createEmptyBonuses();
 
             // Str: 4 + 2 (Commander) - 2 (Tablets of Ruin) = 4
             expect(calculateStatTotal(CombatStat.STR, dondozoState, dummyInvMods)).toBe(4);
@@ -838,15 +784,14 @@ describe('Ability Targeting System', () => {
             };
             localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
 
-            // Ally protected by Flower Veil returns false for all 5 stat-lowering auras
-            for (const ab of auraAbilities) {
-                expect(isTargetAffectedByAbility('ally-guarded', 'player', ab)).toBe(false);
-            }
-
-            // Florges itself (Flower Veil bearer protecting itself) returns false for all 5 stat-lowering auras
-            for (const ab of auraAbilities) {
-                expect(isTargetAffectedByAbility('florges-1', 'player', ab)).toBe(false);
-            }
+            // Ally protected by Flower Veil returns false for Intimidate (Common), but Ruin Quartet pierces
+            expect(isTargetAffectedByAbility('ally-guarded', 'player', 'intimidate')).toBe(false);
+            expect(isTargetAffectedByAbility('florges-1', 'player', 'intimidate')).toBe(false);
+            expect(isTargetAffectedByAbility('ally-guarded', 'player', 'beads of ruin')).toBe(true);
+            expect(isTargetAffectedByAbility('ally-guarded', 'player', 'tablets of ruin')).toBe(true);
+            expect(isTargetAffectedByAbility('ally-guarded', 'player', 'sword of ruin')).toBe(true);
+            expect(isTargetAffectedByAbility('ally-guarded', 'player', 'vessel of ruin')).toBe(true);
+            expect(isTargetAffectedByAbility('florges-1', 'player', 'beads of ruin')).toBe(true);
 
             // Unguarded ally (not targeted by Flower Veil) returns true for all 5 stat-lowering auras
             for (const ab of auraAbilities) {
@@ -935,12 +880,18 @@ describe('Ability Targeting System', () => {
             expect(isTargetCombatantImmuneToStatDrops('metagross-inactive')).toBe(false);
             expect(isTargetCombatantImmuneToStatDrops('metagross-fainted')).toBe(false);
 
-            // Active Clear Body / White Smoke / Full Metal Body combatants are not affected by auras
-            for (const ab of auraAbilities) {
-                expect(isTargetAffectedByAbility('metagross-1', 'player', ab)).toBe(false);
-                expect(isTargetAffectedByAbility('torkoal-1', 'player', ab)).toBe(false);
-                expect(isTargetAffectedByAbility('solgaleo-1', 'player', ab)).toBe(false);
-            }
+            // Common aura (Intimidate) is blocked by Clear Body, White Smoke, and Full Metal Body
+            expect(isTargetAffectedByAbility('metagross-1', 'player', 'intimidate')).toBe(false);
+            expect(isTargetAffectedByAbility('torkoal-1', 'player', 'intimidate')).toBe(false);
+            expect(isTargetAffectedByAbility('solgaleo-1', 'player', 'intimidate')).toBe(false);
+
+            // Unique Ruin pierces Common Clear Body & White Smoke
+            expect(isTargetAffectedByAbility('metagross-1', 'player', 'tablets of ruin')).toBe(true);
+            expect(isTargetAffectedByAbility('torkoal-1', 'player', 'tablets of ruin')).toBe(true);
+
+            // Full Metal Body has [Unique] [Ignore Stat Reductions], so Will Contest determines outcome against Ruin
+            // Default 0 >= 0: Solgaleo blocks Tablets of Ruin
+            expect(isTargetAffectedByAbility('solgaleo-1', 'player', 'tablets of ruin')).toBe(false);
 
             // Inactive ability is affected normally
             expect(isTargetAffectedByAbility('metagross-inactive', 'player', 'intimidate')).toBe(true);
@@ -1998,6 +1949,233 @@ describe('Ability Targeting System', () => {
             const combatAbilityBadge = combatConditions.find((c) => c.id === 'active-ability');
             expect(combatAbilityBadge).toBeDefined();
             expect(combatAbilityBadge?.label).toBe('Ability: Huge Power (+2 STR)');
+        });
+    });
+
+    describe('Dynamic Ability Tag Synthesizer & Combat Resolution', () => {
+        describe('synthesizeAbilityTags', () => {
+            it('appends [Unique] if text contains "Unique Ability" or "[Unique]"', () => {
+                const text = 'Reduce by 2 the Special Defense of everyone in the field, except this Pokemon. Unique Ability.';
+                const tags = synthesizeAbilityTags(text, '');
+                expect(tags).toBe('[Unique]');
+
+                const existingUnique = synthesizeAbilityTags('Some effect', '', '[Unique]');
+                expect(existingUnique).toBe('[Unique]');
+            });
+
+            it('appends [Ignore Stat Reductions] for Flower Veil and Clear Body effects', () => {
+                const flowerVeilEffect = "User and allies in range can't have their Attributes/Traits reduced.";
+                expect(synthesizeAbilityTags(flowerVeilEffect, '')).toBe('[Ignore Stat Reductions]');
+
+                const clearBodyEffect = 'Other Pokemon cannot Increase or Reduce the Attributes of this Pokemon.';
+                expect(synthesizeAbilityTags(clearBodyEffect, '')).toBe('[Ignore Stat Reductions]');
+
+                const whiteSmokeEffect = 'Other Pokemon cannot reduce the Attributes of this Pokemon.';
+                expect(synthesizeAbilityTags(whiteSmokeEffect, '')).toBe('[Ignore Stat Reductions]');
+            });
+
+            it('appends both [Unique] and [Ignore Stat Reductions] for Full Metal Body', () => {
+                const fullMetalBodyEffect = 'Other Pokemon cannot Reduce the Attributes of this Pokemon. Unique Ability.';
+                const tags = synthesizeAbilityTags(fullMetalBodyEffect, '');
+                expect(tags).toContain('[Unique]');
+                expect(tags).toContain('[Ignore Stat Reductions]');
+            });
+
+            it('appends specific tags for Hyper Cutter, Big Pecks, and Keen Eye', () => {
+                const hyperCutterEffect = "This Pokemon can't have its Strength Attribute reduced by Moves, Abilities, or Items.";
+                expect(synthesizeAbilityTags(hyperCutterEffect, '')).toBe('[Ignore Str Reduction]');
+
+                const bigPecksEffect = 'This Pokemon cannot have its Defense reduced.';
+                expect(synthesizeAbilityTags(bigPecksEffect, '')).toBe('[Ignore Def Reduction]');
+
+                const keenEyeEffect = "cannot reduce this Pokemon's Accuracy";
+                expect(synthesizeAbilityTags(keenEyeEffect, '')).toBe('[Ignore Acc Reduction]');
+            });
+
+            it('preserves custom bracketed tags without duplicating', () => {
+                const result = synthesizeAbilityTags(
+                    'Unique Ability.',
+                    '',
+                    '[Target: All Foes] [Unique]'
+                );
+                expect(result).toBe('[Target: All Foes] [Unique]');
+
+                const appended = synthesizeAbilityTags(
+                    'Unique Ability.',
+                    '',
+                    '[Target: All Foes]'
+                );
+                expect(appended).toBe('[Target: All Foes] [Unique]');
+            });
+        });
+
+        describe('Combat Resolution: Stalemates, Piercing & Protection', () => {
+            it('Beads of Ruin ([Unique]) pierces Flower Veil ([Ignore Stat Reductions])', () => {
+                const boData = {
+                    battlefield: createDefaultBattlefield(),
+                    rounds: [
+                        {
+                            id: 'r1',
+                            roundNumber: 1,
+                            combatants: [
+                                {
+                                    id: 'florges-1',
+                                    name: 'Florges',
+                                    ability: 'Flower Veil',
+                                    abilityActive: true,
+                                    abilityTargetIds: ['florges-1', 'bellsprout-1'],
+                                    isPlayerSide: true,
+                                    isNPC: false
+                                },
+                                {
+                                    id: 'bellsprout-1',
+                                    name: 'Bellsprout',
+                                    ability: 'Chlorophyll',
+                                    abilityActive: true,
+                                    isPlayerSide: true,
+                                    isNPC: false
+                                },
+                                {
+                                    id: 'chi-yu-1',
+                                    name: 'Chi-Yu',
+                                    ability: 'Beads of Ruin',
+                                    abilityActive: true,
+                                    abilityTargetIds: ['bellsprout-1'],
+                                    isPlayerSide: false,
+                                    isNPC: true
+                                }
+                            ]
+                        }
+                    ],
+                    activeRoundIndex: 0
+                };
+                localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
+
+                // Flower Veil protects from stat drops but lacks [Unique], so Beads of Ruin ([Unique]) pierces it
+                expect(isTargetAffectedByAbility('bellsprout-1', 'player', 'beads of ruin')).toBe(true);
+            });
+
+            it('Beads of Ruin ([Unique]) vs Full Metal Body ([Unique] [Ignore Stat Reductions]): Will Contest determines outcome', () => {
+                const boData = {
+                    battlefield: createDefaultBattlefield(),
+                    rounds: [
+                        {
+                            id: 'r1',
+                            roundNumber: 1,
+                            combatants: [
+                                {
+                                    id: 'solgaleo-1',
+                                    name: 'Solgaleo',
+                                    ability: 'Full Metal Body',
+                                    abilityActive: true,
+                                    willCurr: 5,
+                                    willMax: 5,
+                                    isPlayerSide: true,
+                                    isNPC: false
+                                },
+                                {
+                                    id: 'chi-yu-1',
+                                    name: 'Chi-Yu',
+                                    ability: 'Beads of Ruin',
+                                    abilityActive: true,
+                                    abilityTargetIds: ['solgaleo-1'],
+                                    willCurr: 4,
+                                    willMax: 4,
+                                    isPlayerSide: false,
+                                    isNPC: true
+                                }
+                            ]
+                        }
+                    ],
+                    activeRoundIndex: 0
+                };
+
+                // Case 1: Solgaleo Will (5) >= Chi-Yu Will (4) -> Solgaleo blocks Beads of Ruin
+                localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
+                expect(isTargetAffectedByAbility('solgaleo-1', 'player', 'beads of ruin')).toBe(false);
+
+                // Case 2: Solgaleo Will (4) == Chi-Yu Will (4) -> targetWill >= sourceWill -> Solgaleo blocks
+                boData.rounds[0].combatants[0].willCurr = 4;
+                localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
+                expect(isTargetAffectedByAbility('solgaleo-1', 'player', 'beads of ruin')).toBe(false);
+
+                // Case 3: Solgaleo Will (3) < Chi-Yu Will (4) -> Chi-Yu pierces Full Metal Body
+                boData.rounds[0].combatants[0].willCurr = 3;
+                localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
+                expect(isTargetAffectedByAbility('solgaleo-1', 'player', 'beads of ruin')).toBe(true);
+            });
+
+            it('Intimidate (Common) is blocked by Flower Veil, Clear Body, and Hyper Cutter', () => {
+                const boData = {
+                    battlefield: createDefaultBattlefield(),
+                    rounds: [
+                        {
+                            id: 'r1',
+                            roundNumber: 1,
+                            combatants: [
+                                {
+                                    id: 'florges-1',
+                                    name: 'Florges',
+                                    ability: 'Flower Veil',
+                                    abilityActive: true,
+                                    abilityTargetIds: ['florges-1', 'bellsprout-1'],
+                                    isPlayerSide: true,
+                                    isNPC: false
+                                },
+                                {
+                                    id: 'bellsprout-1',
+                                    name: 'Bellsprout',
+                                    ability: 'Chlorophyll',
+                                    abilityActive: true,
+                                    isPlayerSide: true,
+                                    isNPC: false
+                                },
+                                {
+                                    id: 'metagross-1',
+                                    name: 'Metagross',
+                                    ability: 'Clear Body',
+                                    abilityActive: true,
+                                    isPlayerSide: true,
+                                    isNPC: false
+                                },
+                                {
+                                    id: 'kingler-1',
+                                    name: 'Kingler',
+                                    ability: 'Hyper Cutter',
+                                    abilityActive: true,
+                                    isPlayerSide: true,
+                                    isNPC: false
+                                },
+                                {
+                                    id: 'incineroar-1',
+                                    name: 'Incineroar',
+                                    ability: 'Intimidate',
+                                    abilityActive: true,
+                                    abilityTargetIds: ['bellsprout-1', 'metagross-1', 'kingler-1'],
+                                    isPlayerSide: false,
+                                    isNPC: true
+                                }
+                            ]
+                        }
+                    ],
+                    activeRoundIndex: 0
+                };
+                localStorage.setItem(getBattleOrganizerStorageKey(), JSON.stringify(boData));
+
+                // Blocked by Flower Veil
+                expect(isTargetAffectedByAbility('bellsprout-1', 'player', 'intimidate')).toBe(false);
+
+                // Blocked by Clear Body
+                expect(isTargetAffectedByAbility('metagross-1', 'player', 'intimidate')).toBe(false);
+
+                // Blocked by Hyper Cutter ([Ignore Str Reduction] matches Intimidate STR reduction)
+                expect(isTargetAffectedByAbility('kingler-1', 'player', 'intimidate')).toBe(false);
+
+                // Direct resolution test: both short and long stat keys are protected defensively
+                const combatants = boData.rounds[0].combatants as unknown as CombatantRowData[];
+                expect(resolveTargetProtection('kingler-1', 'player', 'str', combatants).hasProtection).toBe(true);
+                expect(resolveTargetProtection('kingler-1', 'player', 'strength', combatants).hasProtection).toBe(true);
+            });
         });
     });
 });

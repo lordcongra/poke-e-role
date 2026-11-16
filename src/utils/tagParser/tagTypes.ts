@@ -54,6 +54,9 @@ export interface CombatBonuses {
     highCritItemNames: string[];
     highCritPassiveNames: string[];
     highCritAbilityNames: string[];
+    isUnique: boolean;
+    ignoreAllStatReductions: boolean;
+    ignoredStatReductions: Set<string>;
 }
 
 export interface TagTriggers {

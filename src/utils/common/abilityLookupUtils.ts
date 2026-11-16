@@ -1,6 +1,7 @@
 import { useCharacterStore } from '@/store/useCharacterStore';
 import { getKnownAbility } from '@/data/abilities/knownAbilities';
 import { fetchAbilityData } from '@/utils/api/api';
+import { synthesizeAbilityTags } from '@/utils/tagParser/abilityTagSynthesizer';
 
 export interface AbilityLookupResult {
     name: string;
@@ -69,6 +70,8 @@ export async function lookupAbilityDetails(
             tags = `${tags} ${knownTagsTrimmed}`.trim();
         }
     }
+
+    tags = synthesizeAbilityTags(effect, description, tags);
 
     return {
         name,

@@ -10,6 +10,8 @@ import {
     syncHealthAndWill
 } from './macroHelpers';
 import { getKnownAbility } from '../../data/abilities/knownAbilities';
+import { synthesizeAbilityTags } from '@/utils/tagParser/abilityTagSynthesizer';
+import { lookupAbilityDetails } from '@/utils/common/abilityLookupUtils';
 import { calculateMaxHp, calculateMaxWill } from '../combat/combatUtils';
 
 /**
@@ -50,7 +52,12 @@ export function executeSpeciesChange(
     const custom = state.roomCustomAbilities?.find(
         (ca) => ca.name.trim().toLowerCase() === cleanDefAbility.toLowerCase()
     );
-    const initialTags = known?.tags || (custom ? `${custom.effect || ''} ${custom.description || ''}`.trim() : '');
+    const baseTags = known?.tags || (custom ? `${custom.effect || ''} ${custom.description || ''}`.trim() : '');
+    const initialTags = synthesizeAbilityTags(
+        custom?.effect || known?.summary,
+        custom?.description,
+        baseTags
+    );
 
     // ==========================================
     // MODE 1: BRAND NEW POKÉMON (Full Wipe & Fresh Stats)
@@ -115,6 +122,24 @@ export function executeSpeciesChange(
             weight: parseWeight(data.Weight),
             dexDescription: String(data.DexDescription || '')
         };
+
+        if (cleanDefAbility) {
+            lookupAbilityDetails(cleanDefAbility, 'Starter', initialTags)
+                .then((res) => {
+                    if (res.tags && res.tags !== initialTags) {
+                        import('../../store/useCharacterStore')
+                            .then(({ useCharacterStore }) => {
+                                const store = useCharacterStore.getState();
+                                const cur = (store.identity?.ability || '').replace(/\s*\(HA\)$/i, '').trim();
+                                if (cur.toLowerCase() === cleanDefAbility.toLowerCase()) {
+                                    store.setIdentity('abilityTags', res.tags);
+                                }
+                            })
+                            .catch(() => {});
+                    }
+                })
+                .catch(() => {});
+        }
 
         updatesToSave['name'] = finalNickname || newSpeciesName;
         updatesToSave['nickname'] = finalNickname;
@@ -280,6 +305,17 @@ export function executeSpeciesChange(
                 .toLowerCase() === cleanCurrentAbility.toLowerCase()
     );
     const finalAbility = canRetainAbility ? state.identity.ability : defaultAbility;
+    const cleanFinalAbility = finalAbility.replace(/\s*\(HA\)$/i, '').trim();
+    const finalKnown = getKnownAbility(cleanFinalAbility, state.identity.rank);
+    const finalCustom = state.roomCustomAbilities?.find(
+        (ca) => ca.name.trim().toLowerCase() === cleanFinalAbility.toLowerCase()
+    );
+    const finalBaseTags = finalKnown?.tags || (finalCustom ? `${finalCustom.effect || ''} ${finalCustom.description || ''}`.trim() : (canRetainAbility ? state.identity.abilityTags : ''));
+    const finalTags = synthesizeAbilityTags(
+        finalCustom?.effect || finalKnown?.summary,
+        finalCustom?.description,
+        finalBaseTags
+    );
 
     const newType1 = String(data.Type1 || state.identity.type1 || 'Normal');
     const newType2 = sanitizeType(data.Type2 !== undefined ? data.Type2 : state.identity.type2);
@@ -291,12 +327,12 @@ export function executeSpeciesChange(
         type2: newType2,
         availableAbilities: abilities,
         ability: finalAbility,
-        abilityActive: known?.autoActive ?? true,
+        abilityActive: finalKnown ? (finalKnown.autoActive ?? true) : (known?.autoActive ?? true),
         abilityBoostActive: false,
         abilityBoostLevel: 0,
         abilityChoiceIndex: 0,
         abilityTargetIds: [],
-        abilityTags: initialTags,
+        abilityTags: finalTags,
         learnset: learnsetArray,
         dexId: String(data.DexID || state.identity.dexId || ''),
         dexCategory: String(data.DexCategory || state.identity.dexCategory || ''),
@@ -304,6 +340,24 @@ export function executeSpeciesChange(
         weight: parseWeight(data.Weight) || state.identity.weight,
         dexDescription: String(data.DexDescription || state.identity.dexDescription || '')
     };
+
+    if (cleanFinalAbility) {
+        lookupAbilityDetails(cleanFinalAbility, state.identity.rank, finalTags)
+            .then((res) => {
+                if (res.tags && res.tags !== finalTags) {
+                    import('../../store/useCharacterStore')
+                        .then(({ useCharacterStore }) => {
+                            const store = useCharacterStore.getState();
+                            const cur = (store.identity?.ability || '').replace(/\s*\(HA\)$/i, '').trim();
+                            if (cur.toLowerCase() === cleanFinalAbility.toLowerCase()) {
+                                store.setIdentity('abilityTags', res.tags);
+                            }
+                        })
+                        .catch(() => {});
+                }
+            })
+            .catch(() => {});
+    }
 
     updatesToSave['species'] = newIdentity.species;
     updatesToSave['type1'] = newIdentity.type1;
