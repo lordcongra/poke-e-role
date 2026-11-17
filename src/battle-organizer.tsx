@@ -93,27 +93,29 @@ export function resolveThemeColors(): { primary: string; secondary: string } {
 }
 
 // Immediately apply theme and dynamic colors on script load to prevent any flash of default red
-try {
-    const params = new URLSearchParams(window.location.search);
-    const rawRoleParam = params.get('role');
-    if (rawRoleParam === 'GM' || rawRoleParam === 'PLAYER') {
-        useCharacterStore.setState({ role: rawRoleParam });
-    }
-    const initialTheme = params.get('theme') || localStorage.getItem('pokerole-theme') || 'dark';
-    if (initialTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-        document.body.setAttribute('data-theme', 'dark');
-        document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-        document.body.classList.remove('dark-mode');
-        document.body.setAttribute('data-theme', 'light');
-        document.documentElement.setAttribute('data-theme', 'light');
-    }
+if (typeof window !== 'undefined' && window.location.pathname.includes('battle-organizer.html')) {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const rawRoleParam = params.get('role');
+        if (rawRoleParam === 'GM' || rawRoleParam === 'PLAYER') {
+            useCharacterStore.setState({ role: rawRoleParam });
+        }
+        const initialTheme = params.get('theme') || localStorage.getItem('pokerole-theme') || 'dark';
+        if (initialTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.body.setAttribute('data-theme', 'dark');
+            document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+            document.body.classList.remove('dark-mode');
+            document.body.setAttribute('data-theme', 'light');
+            document.documentElement.setAttribute('data-theme', 'light');
+        }
 
-    const initialColors = resolveThemeColors();
-    applyDynamicColors(initialColors.primary, initialColors.secondary);
-} catch (e) {
-    console.warn('[battle-organizer] Immediate theme initialization failed:', e);
+        const initialColors = resolveThemeColors();
+        applyDynamicColors(initialColors.primary, initialColors.secondary);
+    } catch (e) {
+        console.warn('[battle-organizer] Immediate theme initialization failed:', e);
+    }
 }
 
 export function BattleOrganizerApp() {
@@ -391,17 +393,16 @@ export function BattleOrganizerApp() {
     );
 }
 
-const container = document.getElementById('root')!;
-const win = window as WindowWithReactRoot;
+const container = document.getElementById('root');
+const win = typeof window !== 'undefined' ? (window as WindowWithReactRoot) : undefined;
 
-if (!win.__REACT_ROOT__) {
+if (container && win && window.location.pathname.includes('battle-organizer.html') && !win.__REACT_ROOT__) {
     win.__REACT_ROOT__ = createRoot(container);
+    win.__REACT_ROOT__.render(
+        <StrictMode>
+            <ErrorBoundary>
+                <BattleOrganizerApp />
+            </ErrorBoundary>
+        </StrictMode>
+    );
 }
-
-win.__REACT_ROOT__.render(
-    <StrictMode>
-        <ErrorBoundary>
-            <BattleOrganizerApp />
-        </ErrorBoundary>
-    </StrictMode>
-);

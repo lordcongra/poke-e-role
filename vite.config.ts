@@ -49,6 +49,9 @@ export default defineConfig({
                 ]
             },
             workbox: {
+                navigateFallback: null,
+                navigateFallbackDenylist: [/roll-log\.html/, /initiative-tracker\.html/, /battle-organizer\.html/],
+                ignoreURLParametersMatching: [/.*/],
                 globPatterns: [
                     '**/*.{js,css,html,svg,png}',
                     'manifest.json',

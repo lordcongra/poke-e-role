@@ -145,15 +145,15 @@ export function RollLog() {
 }
 
 // ⚠️ HMR-Safe React Root Injection!
-const container = document.getElementById('root')!;
-const win = window as WindowWithReactRoot;
-if (!win.__REACT_ROOT__) {
+const container = document.getElementById('root');
+const win = typeof window !== 'undefined' ? (window as WindowWithReactRoot) : undefined;
+if (container && win && window.location.pathname.includes('roll-log.html') && !win.__REACT_ROOT__) {
     win.__REACT_ROOT__ = createRoot(container);
+    win.__REACT_ROOT__.render(
+        <StrictMode>
+            <ErrorBoundary>
+                <RollLog />
+            </ErrorBoundary>
+        </StrictMode>
+    );
 }
-win.__REACT_ROOT__.render(
-    <StrictMode>
-        <ErrorBoundary>
-            <RollLog />
-        </ErrorBoundary>
-    </StrictMode>
-);

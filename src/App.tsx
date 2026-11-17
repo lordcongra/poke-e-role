@@ -144,7 +144,7 @@ function App() {
                 />
 
                 {/* Background pre-warm iframes so OBR popovers load instantly on first use */}
-                {OBR.isAvailable && !isStandaloneMode && (
+                {OBR.isAvailable && !isStandaloneMode && window.self === window.top && (
                     <div
                         aria-hidden="true"
                         style={{
