@@ -1,6 +1,5 @@
-html,
-body,
-#root {
+body.roll-log-page,
+body.roll-log-page #root {
     margin: 0;
     padding: 0;
     width: 100%;

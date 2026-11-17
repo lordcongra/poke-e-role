@@ -27,6 +27,13 @@ export function RollLog() {
 
     const prevRollsCountRef = useRef(rolls.length);
     useEffect(() => {
+        document.body.classList.add('roll-log-page');
+        return () => {
+            document.body.classList.remove('roll-log-page');
+        };
+    }, []);
+
+    useEffect(() => {
         if (rolls.length > prevRollsCountRef.current && isMinimized) {
             setIsMinimized(false);
             if (OBR.isAvailable) {
