@@ -304,6 +304,68 @@
         font-weight: bold;
     }
 
+    /* --- LEARNSET TABLE --- */
+    .print-sheet__learnset-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.8rem;
+        border-top: 1px solid black;
+        border-left: 1px solid black;
+        color: black !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .print-sheet__learnset-row {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .print-sheet__learnset-rank {
+        width: 15%;
+        border-right: 1px solid black;
+        border-bottom: 1px solid black;
+        padding: 4px 6px;
+        text-align: left;
+        vertical-align: top;
+        font-weight: bold;
+        background-color: #f0f0f0 !important;
+        color: black !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .print-sheet__learnset-moves {
+        border-right: 1px solid black;
+        border-bottom: 1px solid black;
+        padding: 4px 6px;
+        text-align: left;
+        vertical-align: top;
+        color: black !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .print-sheet__learnset-pill {
+        display: inline-block;
+        border: 1px solid #777;
+        border-radius: 4px;
+        padding: 2px 6px;
+        margin: 2px 4px 2px 0;
+        font-size: 0.75rem;
+        background-color: #fafafa;
+        color: black !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .print-sheet__learnset-pill--learned {
+        font-weight: bold;
+        border-color: black;
+        background-color: #eaeaea;
+    }
+
     /* Column Widths */
     .print-sheet__col-check {
         width: 5%;
@@ -455,6 +517,16 @@
     .print-sheet-wrapper--compact .print-sheet__move-table td {
         padding: 2px;
         font-size: 0.7rem;
+    }
+    .print-sheet-wrapper--compact .print-sheet__learnset-table th,
+    .print-sheet-wrapper--compact .print-sheet__learnset-table td {
+        padding: 2px 4px;
+        font-size: 0.7rem;
+    }
+    .print-sheet-wrapper--compact .print-sheet__learnset-pill {
+        padding: 1px 4px;
+        font-size: 0.65rem;
+        margin: 1px 2px 1px 0;
     }
     .print-sheet-wrapper--compact .print-sheet__vitals-val {
         font-size: 0.8rem;

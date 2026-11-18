@@ -33,6 +33,7 @@ const CONTENT_VISIBILITY_OPTIONS: ToggleOption[] = [
     { key: 'hideCustomSkills', label: 'Hide Custom Skills' },
     { key: 'hideAge', label: 'Hide Age (Gender Only)' },
     { key: 'showOnlyActiveAbility', label: 'Show Active Ability Only' },
+    { key: 'showLearnset', label: 'Include Move Learnset' },
     { key: 'compactMode', label: 'Compact Layout (Fit More on Page 1)', fullWidth: true },
     { key: 'coreSkillsOnly', label: 'Display Core 3 Skill Categories Only (Centered)', fullWidth: true }
 ];

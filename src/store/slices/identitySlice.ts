@@ -207,6 +207,7 @@ export const createIdentitySlice: StateCreator<
             hideItems: false,
             hidePassives: false,
             hideNotes: false,
+            showLearnset: false,
             autoHideEmptySections: false,
             hideMoveDesc: false,
             hideKnowledgeSkills: false,

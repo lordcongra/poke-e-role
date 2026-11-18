@@ -128,6 +128,7 @@ export interface PrintConfig {
     hideItems?: boolean;
     hidePassives?: boolean;
     hideNotes?: boolean;
+    showLearnset?: boolean;
     autoHideEmptySections?: boolean;
 
     // Content Details

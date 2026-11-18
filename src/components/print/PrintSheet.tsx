@@ -9,6 +9,7 @@ import { PrintStatsGrid } from './PrintStatsGrid';
 import { PrintSkillsGrid } from './PrintSkillsGrid';
 import { PrintAbilitiesTable } from './PrintAbilitiesTable';
 import { PrintMovesTable } from './PrintMovesTable';
+import { PrintLearnset } from './PrintLearnset';
 import { PrintItemsNotes } from './PrintItemsNotes';
 import './PrintSheet.css';
 
@@ -121,6 +122,7 @@ export function PrintSheet() {
                     config={config}
                 />
                 <PrintMovesTable moves={moves} config={config} />
+                <PrintLearnset learnset={identity.learnset} moves={moves} config={config} />
                 <PrintItemsNotes inventory={inventory} passives={passives} notes={notes} config={config} />
             </div>
         </div>
