@@ -2,7 +2,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { PrintLearnset } from '../PrintLearnset';
-import type { MoveData, PrintConfig } from '../../../store/storeTypes';
+import type { MoveData, PrintConfig } from '@/store/storeTypes';
 
 const basePrintConfig: PrintConfig = {
     blankName: false,

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import type { MoveData, PrintConfig } from '../../store/storeTypes';
+import type { MoveData, PrintConfig } from '@/store/storeTypes';
 
-export const RANK_ORDER = [
+const RANK_ORDER = [
     'Starter',
     'Rookie',
     'Standard',
@@ -20,21 +20,21 @@ interface PrintLearnsetProps {
 }
 
 export function PrintLearnset({ learnset = [], moves = [], config }: PrintLearnsetProps) {
-    if (!config.showLearnset || !learnset || learnset.length === 0) {
-        return null;
-    }
+    const isVisible = Boolean(config.showLearnset && learnset && learnset.length > 0);
 
     const learnedSet = useMemo(() => {
+        if (!isVisible) return new Set<string>();
         return new Set(
             (moves || [])
                 .map((m) => m.name?.toLowerCase().trim())
                 .filter(Boolean)
         );
-    }, [moves]);
+    }, [isVisible, moves]);
 
     const groupedLearnset = useMemo(() => {
+        if (!isVisible) return {};
         const grouped: Record<string, string[]> = {};
-        for (const item of learnset) {
+        for (const item of learnset || []) {
             const name = item.Name?.trim();
             if (!name) continue;
             const rank = item.Learned?.trim() || 'Other';
@@ -44,9 +44,10 @@ export function PrintLearnset({ learnset = [], moves = [], config }: PrintLearns
             grouped[rank].push(name);
         }
         return grouped;
-    }, [learnset]);
+    }, [isVisible, learnset]);
 
     const sortedRanks = useMemo(() => {
+        if (!isVisible) return [];
         return Object.keys(groupedLearnset)
             .filter((rank) => groupedLearnset[rank] && groupedLearnset[rank].length > 0)
             .sort((a, b) => {
@@ -56,9 +57,9 @@ export function PrintLearnset({ learnset = [], moves = [], config }: PrintLearns
                 if (indexB === -1) indexB = 99;
                 return indexA - indexB;
             });
-    }, [groupedLearnset]);
+    }, [isVisible, groupedLearnset]);
 
-    if (sortedRanks.length === 0) {
+    if (!isVisible || sortedRanks.length === 0) {
         return null;
     }
 
