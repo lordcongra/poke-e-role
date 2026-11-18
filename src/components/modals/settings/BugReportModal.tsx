@@ -35,9 +35,7 @@ export function BugReportModal({ onClose }: BugReportModalProps) {
     const [showDiagnostics, setShowDiagnostics] = useState(false);
 
     // Initial diagnostic snapshot
-    const [diagnostics, setDiagnostics] = useState<BugReportDiagnostics>(() =>
-        collectDiagnostics({ identity })
-    );
+    const [diagnostics, setDiagnostics] = useState<BugReportDiagnostics>(() => collectDiagnostics({ identity }));
 
     // Fetch freshest diagnostics and check OBR scene selection if store hasn't populated yet
     useEffect(() => {

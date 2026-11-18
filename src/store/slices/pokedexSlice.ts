@@ -1,10 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type {
-    CharacterState,
-    PokedexSlice,
-    TrainerPokedexData,
-    TrainerPokedexEntry
-} from '../storeTypes';
+import type { CharacterState, PokedexSlice, TrainerPokedexData, TrainerPokedexEntry } from '../storeTypes';
 import { saveToOwlbear, getIsRemoteSyncActive } from '../../utils/sync/obr';
 
 function savePokedexToOwlbear(nextPokedex: TrainerPokedexData): void {
@@ -17,12 +12,9 @@ function savePokedexToOwlbear(nextPokedex: TrainerPokedexData): void {
     }
 }
 
-export const createPokedexSlice: StateCreator<
-    CharacterState,
-    [['zustand/devtools', never]],
-    [],
-    PokedexSlice
-> = (set) => ({
+export const createPokedexSlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], PokedexSlice> = (
+    set
+) => ({
     setPokedexEntry: (name, entry: Partial<TrainerPokedexEntry> | null) =>
         set(
             (state) => {
@@ -242,4 +234,3 @@ export const createPokedexSlice: StateCreator<
             'pokedex/setBall'
         )
 });
-

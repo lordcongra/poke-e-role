@@ -34,7 +34,9 @@ export interface HydrateSheetResult {
 export function isTrainerSheetMeta(meta?: Record<string, unknown>, fallbackMode?: string): boolean {
     const mode = String(meta?.['mode'] || fallbackMode || '');
     const rank = String(meta?.['rank'] || '');
-    const species = String(meta?.['species'] || '').trim().toLowerCase();
+    const species = String(meta?.['species'] || '')
+        .trim()
+        .toLowerCase();
     return mode === 'Trainer' || mode === 'Trainer (Special)' || rank === 'Trainer' || species === 'trainer';
 }
 

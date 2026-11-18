@@ -77,7 +77,8 @@ export function updateAbilityData(
     updatesToSave['ability-boost-level'] = 0;
     updatesToSave['ability-choice-index'] = 0;
 
-    const baseTags = known?.tags || (customAbility ? `${customAbility.effect ?? ''} ${customAbility.description ?? ''}`.trim() : '');
+    const baseTags =
+        known?.tags || (customAbility ? `${customAbility.effect ?? ''} ${customAbility.description ?? ''}`.trim() : '');
     const effect = customAbility?.effect || known?.summary || '';
     const desc = customAbility?.description || '';
     const synthesized = synthesizeAbilityTags(effect, desc, baseTags);
@@ -126,25 +127,27 @@ export function updateSpeciesAndNameData(
                 const boData = JSON.parse(raw);
                 if (boData && Array.isArray(boData.rounds)) {
                     let hasChanged = false;
-                    const updatedRounds = boData.rounds.map((round: { combatants?: Array<Record<string, unknown>> }) => {
-                        if (!round || !Array.isArray(round.combatants)) return round;
-                        const updatedCombatants = round.combatants.map((c) => {
-                            const cTokenId = c.tokenId as string | undefined;
-                            const cEntityId = c.entityId as string | undefined;
-                            const cId = c.id as string | undefined;
-                            const matches =
-                                (Boolean(tokenId) && cTokenId === tokenId) ||
-                                (Boolean(entityId) && (cEntityId === entityId || cId === entityId));
-                            if (matches) {
-                                if (c.name !== nextDisplayName) {
-                                    hasChanged = true;
-                                    return { ...c, name: nextDisplayName };
+                    const updatedRounds = boData.rounds.map(
+                        (round: { combatants?: Array<Record<string, unknown>> }) => {
+                            if (!round || !Array.isArray(round.combatants)) return round;
+                            const updatedCombatants = round.combatants.map((c) => {
+                                const cTokenId = c.tokenId as string | undefined;
+                                const cEntityId = c.entityId as string | undefined;
+                                const cId = c.id as string | undefined;
+                                const matches =
+                                    (Boolean(tokenId) && cTokenId === tokenId) ||
+                                    (Boolean(entityId) && (cEntityId === entityId || cId === entityId));
+                                if (matches) {
+                                    if (c.name !== nextDisplayName) {
+                                        hasChanged = true;
+                                        return { ...c, name: nextDisplayName };
+                                    }
                                 }
-                            }
-                            return c;
-                        });
-                        return { ...round, combatants: updatedCombatants };
-                    });
+                                return c;
+                            });
+                            return { ...round, combatants: updatedCombatants };
+                        }
+                    );
 
                     if (hasChanged) {
                         boData.rounds = updatedRounds;
@@ -413,15 +416,12 @@ export function syncPcStorage(
                     (k === state.tokenId ||
                         s.mapTokenId === state.tokenId ||
                         s.savedTokenItem?.id === state.tokenId)) ||
-                (state.identity.entityId &&
-                    (k === state.identity.entityId || s.entityId === state.identity.entityId))
+                (state.identity.entityId && (k === state.identity.entityId || s.entityId === state.identity.entityId))
         );
         if (matchEntry) {
             const [matchedKey, sum] = matchEntry;
             const cleanNick =
-                field === 'nickname'
-                    ? ((value as string) || '').trim()
-                    : (sum.fullMetadata?.nickname as string) || '';
+                field === 'nickname' ? ((value as string) || '').trim() : (sum.fullMetadata?.nickname as string) || '';
             const nextSpecies = field === 'species' ? (value as string) : sum.species;
             const nextDisplayName = cleanNick || nextSpecies || sum.name;
             const nextHp = typeof updatesToSave['hp-curr'] === 'number' ? updatesToSave['hp-curr'] : sum.hp;
@@ -470,4 +470,3 @@ export function syncPcStorage(
     }
     return nextPcData;
 }
-

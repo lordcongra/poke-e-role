@@ -1,17 +1,7 @@
 import type { TagBuilderConfig, RequirementGroup } from '../tagBuilderTypes';
-import {
-    MOVE_KEYWORDS_MAP,
-    MATCHUP_TARGET_MAP,
-    COMBAT_TARGET_NAME_MAP,
-    STAT_NORM_MAP
-} from './tagParserConstants';
+import { MOVE_KEYWORDS_MAP, MATCHUP_TARGET_MAP, COMBAT_TARGET_NAME_MAP, STAT_NORM_MAP } from './tagParserConstants';
 
-export {
-    MOVE_KEYWORDS_MAP,
-    MATCHUP_TARGET_MAP,
-    COMBAT_TARGET_NAME_MAP,
-    STAT_NORM_MAP
-};
+export { MOVE_KEYWORDS_MAP, MATCHUP_TARGET_MAP, COMBAT_TARGET_NAME_MAP, STAT_NORM_MAP };
 
 function parseBattlefieldDuration(durRaw?: string): number {
     if (!durRaw) return 4;
@@ -92,9 +82,16 @@ export function parseTagStringToConfig(tagStr: string, isMoveContext = false): P
     // Battlefield: Force Field
     const ffMatch = clean.match(/^force field:\s*([^,\]]+)(?:,\s*(-?\d+|scene))?$/i);
     if (ffMatch) {
-        return buildConfigResult('battlefield', 'Force Field', parseBattlefieldDuration(ffMatch[2]), condition, customMaxStacks, {
-            typeOption: ffMatch[1].trim()
-        });
+        return buildConfigResult(
+            'battlefield',
+            'Force Field',
+            parseBattlefieldDuration(ffMatch[2]),
+            condition,
+            customMaxStacks,
+            {
+                typeOption: ffMatch[1].trim()
+            }
+        );
     }
 
     // Battlefield: Hazard / Entry Hazard
@@ -108,25 +105,46 @@ export function parseTagStringToConfig(tagStr: string, isMoveContext = false): P
     // Battlefield: Weather
     const wMatch = clean.match(/^weather:\s*([^,\]]+)(?:,\s*(-?\d+|scene))?$/i);
     if (wMatch) {
-        return buildConfigResult('battlefield', 'Weather', parseBattlefieldDuration(wMatch[2]), condition, customMaxStacks, {
-            typeOption: wMatch[1].trim()
-        });
+        return buildConfigResult(
+            'battlefield',
+            'Weather',
+            parseBattlefieldDuration(wMatch[2]),
+            condition,
+            customMaxStacks,
+            {
+                typeOption: wMatch[1].trim()
+            }
+        );
     }
 
     // Battlefield: Terrain
     const tMatch = clean.match(/^terrain:\s*([^,\]]+)(?:,\s*(-?\d+|scene))?$/i);
     if (tMatch) {
-        return buildConfigResult('battlefield', 'Terrain', parseBattlefieldDuration(tMatch[2]), condition, customMaxStacks, {
-            typeOption: tMatch[1].trim()
-        });
+        return buildConfigResult(
+            'battlefield',
+            'Terrain',
+            parseBattlefieldDuration(tMatch[2]),
+            condition,
+            customMaxStacks,
+            {
+                typeOption: tMatch[1].trim()
+            }
+        );
     }
 
     // Battlefield: Battlefield (Other) / Field
     const bfMatch = clean.match(/^(?:battlefield|field):\s*([^,\]]+)(?:,\s*(-?\d+|scene))?$/i);
     if (bfMatch) {
-        return buildConfigResult('battlefield', 'Battlefield (Other)', parseBattlefieldDuration(bfMatch[2]), condition, customMaxStacks, {
-            typeOption: bfMatch[1].trim()
-        });
+        return buildConfigResult(
+            'battlefield',
+            'Battlefield (Other)',
+            parseBattlefieldDuration(bfMatch[2]),
+            condition,
+            customMaxStacks,
+            {
+                typeOption: bfMatch[1].trim()
+            }
+        );
     }
 
     // Move mechanics keywords (bracketed or unbracketed)
@@ -181,7 +199,13 @@ export function parseTagStringToConfig(tagStr: string, isMoveContext = false): P
     // Set Damage X
     const setDmgMatch = clean.match(/^set damage\s*(\d+)$/i);
     if (setDmgMatch) {
-        return buildConfigResult('move_mechanics', 'Set Damage', parseInt(setDmgMatch[1], 10) || 1, condition, customMaxStacks);
+        return buildConfigResult(
+            'move_mechanics',
+            'Set Damage',
+            parseInt(setDmgMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        );
     }
 
     // Damage Pool X
@@ -198,34 +222,61 @@ export function parseTagStringToConfig(tagStr: string, isMoveContext = false): P
 
     // Ignores Defense
     if (/^ignores?\s*def(?:ense)?$/i.test(clean)) {
-        return buildConfigResult(isMoveContext ? 'move_mechanics' : 'mechanic', 'Ignores Defense', 1, condition, customMaxStacks);
+        return buildConfigResult(
+            isMoveContext ? 'move_mechanics' : 'mechanic',
+            'Ignores Defense',
+            1,
+            condition,
+            customMaxStacks
+        );
     }
 
     // Buff: <stat> +X
     const buffMatch = clean.match(/^buff:\s*([^+\d\]]+?)\s*\+?(\d+)$/i);
     if (buffMatch) {
-        return buildConfigResult('mechanic', 'Encounter Buff', parseInt(buffMatch[2], 10) || 1, condition, customMaxStacks, {
-            typeOption: buffMatch[1].trim(),
-            reqGroup: 'none'
-        });
+        return buildConfigResult(
+            'mechanic',
+            'Encounter Buff',
+            parseInt(buffMatch[2], 10) || 1,
+            condition,
+            customMaxStacks,
+            {
+                typeOption: buffMatch[1].trim(),
+                reqGroup: 'none'
+            }
+        );
     }
 
     // Debuff: <stat> -X
     const debuffMatch = clean.match(/^debuff:\s*([^-\d\]]+?)\s*-?(\d+)$/i);
     if (debuffMatch) {
-        return buildConfigResult('mechanic', 'Encounter Debuff', parseInt(debuffMatch[2], 10) || 1, condition, customMaxStacks, {
-            typeOption: debuffMatch[1].trim(),
-            reqGroup: 'none'
-        });
+        return buildConfigResult(
+            'mechanic',
+            'Encounter Debuff',
+            parseInt(debuffMatch[2], 10) || 1,
+            condition,
+            customMaxStacks,
+            {
+                typeOption: debuffMatch[1].trim(),
+                reqGroup: 'none'
+            }
+        );
     }
 
     // Permanent: <stat> +X
     const permMatch = clean.match(/^permanent:\s*([^+\d\]]+?)\s*\+?(\d+)$/i);
     if (permMatch) {
-        return buildConfigResult('mechanic', 'Permanent Boost', parseInt(permMatch[2], 10) || 1, condition, customMaxStacks, {
-            typeOption: permMatch[1].trim(),
-            reqGroup: 'none'
-        });
+        return buildConfigResult(
+            'mechanic',
+            'Permanent Boost',
+            parseInt(permMatch[2], 10) || 1,
+            condition,
+            customMaxStacks,
+            {
+                typeOption: permMatch[1].trim(),
+                reqGroup: 'none'
+            }
+        );
     }
 
     // Status: <Name>
@@ -237,59 +288,120 @@ export function parseTagStringToConfig(tagStr: string, isMoveContext = false): P
     // Gain Temp HP X
     const gainTempHpMatch = clean.match(/^gain temp hp\s*(\d+)$/i);
     if (gainTempHpMatch) {
-        return buildConfigResult('mechanic', 'Gain Temp HP', parseInt(gainTempHpMatch[1], 10) || 1, condition, customMaxStacks);
+        return buildConfigResult(
+            'mechanic',
+            'Gain Temp HP',
+            parseInt(gainTempHpMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        );
     }
 
     // Temp HP +X on Hit
     const tempHpOnHitMatch = clean.match(/^temp hp\s*\+?(\d+)\s*on hit$/i);
     if (tempHpOnHitMatch) {
-        return buildConfigResult('mechanic', 'Temp HP on Hit', parseInt(tempHpOnHitMatch[1], 10) || 1, condition, customMaxStacks);
+        return buildConfigResult(
+            'mechanic',
+            'Temp HP on Hit',
+            parseInt(tempHpOnHitMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        );
     }
 
     // Temp HP X% Dmg
     const tempHpPctMatch = clean.match(/^temp hp\s*(\d+)%\s*dmg$/i);
     if (tempHpPctMatch) {
-        return buildConfigResult('mechanic', 'Temp HP % Dmg', parseInt(tempHpPctMatch[1], 10) || 1, condition, customMaxStacks);
+        return buildConfigResult(
+            'mechanic',
+            'Temp HP % Dmg',
+            parseInt(tempHpPctMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        );
     }
 
     // Acc Xs Add Dmg Limit Y
     const accLimitMatch = clean.match(/^acc\s*(\d+)s\s*add(?:s)?\s*(?:dmg|damage)(?:\s*dice)?(?:\s*limit)?\s*(\d+)$/i);
     if (accLimitMatch) {
-        return buildConfigResult('mechanic', 'Acc [X]s Add Dmg Limit [Y]', parseInt(accLimitMatch[1], 10) || 6, condition, customMaxStacks, {
-            value2: parseInt(accLimitMatch[2], 10) || 3
-        });
+        return buildConfigResult(
+            'mechanic',
+            'Acc [X]s Add Dmg Limit [Y]',
+            parseInt(accLimitMatch[1], 10) || 6,
+            condition,
+            customMaxStacks,
+            {
+                value2: parseInt(accLimitMatch[2], 10) || 3
+            }
+        );
     }
 
     // Ignore Low Acc X
     const ignoreLowAccMatch = clean.match(/^ignore low acc\s*(\d+)$/i);
     if (ignoreLowAccMatch) {
-        return buildConfigResult('mechanic', 'Ignore Low Acc', parseInt(ignoreLowAccMatch[1], 10) || 1, condition, customMaxStacks);
+        return buildConfigResult(
+            'mechanic',
+            'Ignore Low Acc',
+            parseInt(ignoreLowAccMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        );
     }
 
     // Turn Based effects
     const healRoundMatch = clean.match(/^heal\s*(\d+)\s*round end$/i);
     if (healRoundMatch) {
-        return buildConfigResult('turn_based', 'Heal Round End', parseInt(healRoundMatch[1], 10) || 1, condition, customMaxStacks);
+        return buildConfigResult(
+            'turn_based',
+            'Heal Round End',
+            parseInt(healRoundMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        );
     }
 
     const restoreWillRoundMatch = clean.match(/^restore\s*(\d+)\s*will round end$/i);
     if (restoreWillRoundMatch) {
-        return buildConfigResult('turn_based', 'Restore Will Round End', parseInt(restoreWillRoundMatch[1], 10) || 1, condition, customMaxStacks);
+        return buildConfigResult(
+            'turn_based',
+            'Restore Will Round End',
+            parseInt(restoreWillRoundMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        );
     }
 
     const dealDmgRoundMatch = clean.match(/^deal\s*(\d+)\s*damage at end of round$/i);
     if (dealDmgRoundMatch) {
-        return buildConfigResult('turn_based', 'Deal Damage End of Round', parseInt(dealDmgRoundMatch[1], 10) || 1, condition, customMaxStacks);
+        return buildConfigResult(
+            'turn_based',
+            'Deal Damage End of Round',
+            parseInt(dealDmgRoundMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        );
     }
 
     const reduceWillRoundMatch = clean.match(/^reduce will by\s*(\d+)\s*at end of round$/i);
     if (reduceWillRoundMatch) {
-        return buildConfigResult('turn_based', 'Reduce Will End of Round', parseInt(reduceWillRoundMatch[1], 10) || 1, condition, customMaxStacks);
+        return buildConfigResult(
+            'turn_based',
+            'Reduce Will End of Round',
+            parseInt(reduceWillRoundMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        );
     }
 
     const loseActionMatch = clean.match(/^lose\s*(\d+)\s*actions?$/i);
     if (loseActionMatch) {
-        return buildConfigResult('turn_based', 'Lose Action(s)', parseInt(loseActionMatch[1], 10) || 1, condition, customMaxStacks);
+        return buildConfigResult(
+            'turn_based',
+            'Lose Action(s)',
+            parseInt(loseActionMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        );
     }
 
     if (clean.toLowerCase() === 'no reactions') {
@@ -298,7 +410,13 @@ export function parseTagStringToConfig(tagStr: string, isMoveContext = false): P
 
     const extraReactionMatch = clean.match(/^(\d+)\s*extra reactions? per turn$/i);
     if (extraReactionMatch) {
-        return buildConfigResult('turn_based', 'Extra Reaction(s)', parseInt(extraReactionMatch[1], 10) || 1, condition, customMaxStacks);
+        return buildConfigResult(
+            'turn_based',
+            'Extra Reaction(s)',
+            parseInt(extraReactionMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        );
     }
 
     // Matchup tags: Immune: X, Resist: X, Weak: X, Remove Immunity: X, Remove Immunities
@@ -348,10 +466,17 @@ export function parseTagStringToConfig(tagStr: string, isMoveContext = false): P
     if (succMatch) {
         const isAcc = succMatch[1].toLowerCase().startsWith('acc');
         const typeOpt = succMatch[3]?.trim() || '';
-        return buildConfigResult('combat', isAcc ? 'Acc Succ' : 'Dmg Succ', parseInt(succMatch[2], 10) || 1, condition, customMaxStacks, {
-            typeOption: typeOpt,
-            reqGroup: typeOpt ? 'type' : 'none'
-        });
+        return buildConfigResult(
+            'combat',
+            isAcc ? 'Acc Succ' : 'Dmg Succ',
+            parseInt(succMatch[2], 10) || 1,
+            condition,
+            customMaxStacks,
+            {
+                typeOption: typeOpt,
+                reqGroup: typeOpt ? 'type' : 'none'
+            }
+        );
     }
 
     // Dmg / Acc with optional type/requirement
@@ -380,7 +505,13 @@ export function parseTagStringToConfig(tagStr: string, isMoveContext = false): P
         if (STAT_NORM_MAP[lowerStat]) {
             return buildConfigResult('stat', STAT_NORM_MAP[lowerStat], val, condition, customMaxStacks);
         }
-        return buildConfigResult('skill', rawName.charAt(0).toUpperCase() + rawName.slice(1), val, condition, customMaxStacks);
+        return buildConfigResult(
+            'skill',
+            rawName.charAt(0).toUpperCase() + rawName.slice(1),
+            val,
+            condition,
+            customMaxStacks
+        );
     }
 
     return null;

@@ -7,11 +7,7 @@ const dbCache = new Map<string, CachedDatabaseEntry>();
 
 function isIdbRequest<T>(value: unknown): value is IDBRequest<T> {
     return Boolean(
-        value &&
-            typeof value === 'object' &&
-            'onsuccess' in value &&
-            'onerror' in value &&
-            !('then' in value)
+        value && typeof value === 'object' && 'onsuccess' in value && 'onerror' in value && !('then' in value)
     );
 }
 
@@ -167,4 +163,3 @@ export async function runIdbTransaction<T>(
     const [, value] = await Promise.all([txCompletePromise, valuePromise]);
     return value;
 }
-

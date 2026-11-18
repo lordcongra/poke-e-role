@@ -166,12 +166,7 @@ export async function executeMultiTargetDamageRoll(
             tags.push(weatherInfo.tag);
         }
 
-        const fieldAuraInfo = getFieldAuraDamageBonus(
-            move.type,
-            state.activeBattlefield,
-            state.identity.isNPC,
-            state
-        );
+        const fieldAuraInfo = getFieldAuraDamageBonus(move.type, state.activeBattlefield, state.identity.isNPC, state);
         if (fieldAuraInfo.diceBonus !== 0) {
             effectiveBaseDamage += fieldAuraInfo.diceBonus;
         }
@@ -318,7 +313,10 @@ export async function executeMultiTargetDamageRoll(
     }
 
     // Check Stakeout
-    const cleanAbility = (state.identity.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+    const cleanAbility = (state.identity.ability || '')
+        .replace(/\s*\(HA\)$/i, '')
+        .trim()
+        .toLowerCase();
     const stakeoutTargetId = state.identity.abilityTargetIds?.[0];
     const isStakeoutActive =
         cleanAbility === 'stakeout' && state.identity.abilityActive !== false && Boolean(stakeoutTargetId);

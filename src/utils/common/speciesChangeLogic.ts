@@ -53,11 +53,7 @@ export function executeSpeciesChange(
         (ca) => ca.name.trim().toLowerCase() === cleanDefAbility.toLowerCase()
     );
     const baseTags = known?.tags || (custom ? `${custom.effect || ''} ${custom.description || ''}`.trim() : '');
-    const initialTags = synthesizeAbilityTags(
-        custom?.effect || known?.summary,
-        custom?.description,
-        baseTags
-    );
+    const initialTags = synthesizeAbilityTags(custom?.effect || known?.summary, custom?.description, baseTags);
 
     // ==========================================
     // MODE 1: BRAND NEW POKÉMON (Full Wipe & Fresh Stats)
@@ -310,7 +306,13 @@ export function executeSpeciesChange(
     const finalCustom = state.roomCustomAbilities?.find(
         (ca) => ca.name.trim().toLowerCase() === cleanFinalAbility.toLowerCase()
     );
-    const finalBaseTags = finalKnown?.tags || (finalCustom ? `${finalCustom.effect || ''} ${finalCustom.description || ''}`.trim() : (canRetainAbility ? state.identity.abilityTags : ''));
+    const finalBaseTags =
+        finalKnown?.tags ||
+        (finalCustom
+            ? `${finalCustom.effect || ''} ${finalCustom.description || ''}`.trim()
+            : canRetainAbility
+              ? state.identity.abilityTags
+              : '');
     const finalTags = synthesizeAbilityTags(
         finalCustom?.effect || finalKnown?.summary,
         finalCustom?.description,

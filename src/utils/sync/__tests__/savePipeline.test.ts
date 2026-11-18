@@ -69,11 +69,7 @@ describe('Save Pipeline, Reducer Purity & Sync Invariants', () => {
 
         await vi.advanceTimersByTimeAsync(200);
         expect(saveSpy).toHaveBeenCalledTimes(1);
-        expect(saveSpy).toHaveBeenCalledWith(
-            'tok-buffer-2',
-            expect.objectContaining({ 'str-base': 4 }),
-            METADATA_ID
-        );
+        expect(saveSpy).toHaveBeenCalledWith('tok-buffer-2', expect.objectContaining({ 'str-base': 4 }), METADATA_ID);
     });
 
     it('restores failed updates, notifies OBR, and dispatches pkr-save-error on storage failure', async () => {
@@ -123,11 +119,7 @@ describe('Save Pipeline, Reducer Purity & Sync Invariants', () => {
         setIsRemoteSyncActive(false);
         await vi.advanceTimersByTimeAsync(200);
 
-        expect(saveSpy).toHaveBeenCalledWith(
-            'tok-core-1',
-            expect.objectContaining({ 'str-base': 4 }),
-            METADATA_ID
-        );
+        expect(saveSpy).toHaveBeenCalledWith('tok-core-1', expect.objectContaining({ 'str-base': 4 }), METADATA_ID);
     });
 
     it('excludes cosmetic UI lock flags from token saves and PC summary sync', () => {
@@ -214,12 +206,9 @@ describe('Save Pipeline, Reducer Purity & Sync Invariants', () => {
         const baseIdentity = createTestCharacterState().identity;
 
         expect(resolveTargetCampaignId(pcData, baseIdentity, 'camp-public')).toBe('camp-public');
-        expect(
-            resolveTargetCampaignId(pcData, { ...baseIdentity, activeRoomCampaignId: 'camp-room' })
-        ).toBe('camp-room');
-        expect(resolveTargetCampaignId(pcData, { ...baseIdentity, activeRoomCampaignId: undefined })).toBe(
+        expect(resolveTargetCampaignId(pcData, { ...baseIdentity, activeRoomCampaignId: 'camp-room' })).toBe(
             'camp-room'
         );
+        expect(resolveTargetCampaignId(pcData, { ...baseIdentity, activeRoomCampaignId: undefined })).toBe('camp-room');
     });
 });
-

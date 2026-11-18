@@ -153,7 +153,11 @@ export async function executeGmClaimOverride(params: {
     ) => Promise<PcPokemonSummary>;
     savePcStorageFn: (data: PcStorageData) => void;
     broadcastPlayerPcFn: () => void;
-    broadcastGmPcFn: (payload: { campaignId?: string; trainer?: TrainerRoster; summaries?: PcPokemonSummary[] }) => void;
+    broadcastGmPcFn: (payload: {
+        campaignId?: string;
+        trainer?: TrainerRoster;
+        summaries?: PcPokemonSummary[];
+    }) => void;
 }): Promise<void> {
     const {
         conflict,

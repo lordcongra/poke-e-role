@@ -83,4 +83,3 @@ describe('itemLookupUtils - parseHeldItemNames & multi-item lookup', () => {
         expect(items[1].description).toBe('Boosts Attack but locks moves.');
     });
 });
-

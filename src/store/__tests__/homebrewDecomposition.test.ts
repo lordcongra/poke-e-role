@@ -203,10 +203,7 @@ describe('homebrew decomposition slices', () => {
             const store = useCharacterStore.getState();
             store.addCustomType(createTestType('Sound', '#CCCCCC'));
 
-            store.mergeCustomTypeData([
-                createTestType('Sound', '#999999'),
-                createTestType('Wood', '#8B4513')
-            ]);
+            store.mergeCustomTypeData([createTestType('Sound', '#999999'), createTestType('Wood', '#8B4513')]);
 
             const types = useCharacterStore.getState().roomCustomTypes;
             expect(types).toHaveLength(2);

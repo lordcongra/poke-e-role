@@ -28,7 +28,10 @@ import { escapeRegExp } from '@/utils/common/helper';
 export function resolveChoiceTags(desc: string, choiceIndex: number = 0): string {
     if (!desc || !desc.includes('Choice:')) return desc;
     return desc.replace(/\[\s*Choice\s*:\s*([^\]]+)\]/gi, (fullMatch, optionsStr) => {
-        const options = optionsStr.split('|').map((s: string) => s.trim()).filter(Boolean);
+        const options = optionsStr
+            .split('|')
+            .map((s: string) => s.trim())
+            .filter(Boolean);
         if (options.length === 0) return fullMatch;
         const activeIdx = ((choiceIndex % options.length) + options.length) % options.length;
         const selected = options[activeIdx];
@@ -288,12 +291,9 @@ export function parseCombatTags(
     const effectiveSideForTags: 'player' | 'foe' =
         sideForTags !== 'none' ? sideForTags : state?.identity.isNPC ? 'foe' : 'player';
     const charIdentifiers = state
-        ? ([
-              state.identity.entityId,
-              state.tokenId,
-              state.identity.nickname,
-              state.identity.species
-          ].filter(Boolean) as string[])
+        ? ([state.identity.entityId, state.tokenId, state.identity.nickname, state.identity.species].filter(
+              Boolean
+          ) as string[])
         : '';
     const isSuppressedByGas =
         state && isAbilitySuppressedByField(effectiveSideForTags, state.activeBattlefield || null, charIdentifiers);
@@ -436,7 +436,10 @@ export function parseCombatTags(
     });
 
     itemsToParse.forEach((item) => {
-        const resolvedDesc = resolveChoiceTags(item.desc, item.kind === 'ability' ? (state.identity.abilityChoiceIndex ?? 0) : 0);
+        const resolvedDesc = resolveChoiceTags(
+            item.desc,
+            item.kind === 'ability' ? (state.identity.abilityChoiceIndex ?? 0) : 0
+        );
         const description = resolvedDesc.toLowerCase();
         const name = item.name.trim();
         const boostLevel = item.boostLevel;

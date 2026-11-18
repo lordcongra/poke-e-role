@@ -99,18 +99,10 @@ describe('Ability Targeting System', () => {
         });
 
         it('resolves choice tags by index', () => {
-            expect(
-                resolveChoiceTags('[Choice: Str +1 (Same Gender) | Str -1 (Opposite Gender)]', 0)
-            ).toBe('[Str +1]');
-            expect(
-                resolveChoiceTags('[Choice: Str +1 (Same Gender) | Str -1 (Opposite Gender)]', 1)
-            ).toBe('[Str -1]');
-            expect(
-                resolveChoiceTags('[Choice: Str +1 (Lower Def) | Spe +1 (Lower SpD)]', 0)
-            ).toBe('[Str +1]');
-            expect(
-                resolveChoiceTags('[Choice: Str +1 (Lower Def) | Spe +1 (Lower SpD)]', 1)
-            ).toBe('[Spe +1]');
+            expect(resolveChoiceTags('[Choice: Str +1 (Same Gender) | Str -1 (Opposite Gender)]', 0)).toBe('[Str +1]');
+            expect(resolveChoiceTags('[Choice: Str +1 (Same Gender) | Str -1 (Opposite Gender)]', 1)).toBe('[Str -1]');
+            expect(resolveChoiceTags('[Choice: Str +1 (Lower Def) | Spe +1 (Lower SpD)]', 0)).toBe('[Str +1]');
+            expect(resolveChoiceTags('[Choice: Str +1 (Lower Def) | Spe +1 (Lower SpD)]', 1)).toBe('[Spe +1]');
         });
 
         it('serializes and hydrates ability-target-ids', () => {
@@ -414,18 +406,12 @@ describe('Ability Targeting System', () => {
 
             // Party Pokémon recalled
             expect(
-                isCombatantInPc(
-                    { id: 'c-bulba', entityId: 'party-mon-2', initiative: '10' } as any,
-                    testPcData as any
-                )
+                isCombatantInPc({ id: 'c-bulba', entityId: 'party-mon-2', initiative: '10' } as any, testPcData as any)
             ).toBe(true);
 
             // Boxed Pokémon not on map
             expect(
-                isCombatantInPc(
-                    { id: 'c-gengar', entityId: 'box-mon-1', initiative: '10' } as any,
-                    testPcData as any
-                )
+                isCombatantInPc({ id: 'c-gengar', entityId: 'box-mon-1', initiative: '10' } as any, testPcData as any)
             ).toBe(true);
 
             // Wild Pokémon collisions
@@ -445,17 +431,20 @@ describe('Ability Targeting System', () => {
             // Stale isInPc flag
             expect(
                 isCombatantInPc(
-                    { id: 'c-machamp-stale', entityId: 'box-mon-2', tokenId: 'tok-machamp', isInPc: true, initiative: '10' } as any,
+                    {
+                        id: 'c-machamp-stale',
+                        entityId: 'box-mon-2',
+                        tokenId: 'tok-machamp',
+                        isInPc: true,
+                        initiative: '10'
+                    } as any,
                     testPcData as any
                 )
             ).toBe(false);
 
             // Preserved orphan
             expect(
-                isCombatantInPc(
-                    { id: 'c-orphan-pc', isInPc: true, initiative: '10' } as any,
-                    testPcData as any
-                )
+                isCombatantInPc({ id: 'c-orphan-pc', isInPc: true, initiative: '10' } as any, testPcData as any)
             ).toBe(true);
         });
 
@@ -853,7 +842,13 @@ describe('Ability Targeting System', () => {
                                 name: 'Incineroar',
                                 ability: 'Intimidate',
                                 abilityActive: true,
-                                abilityTargetIds: ['metagross-1', 'torkoal-1', 'solgaleo-1', 'metagross-inactive', 'metagross-fainted'],
+                                abilityTargetIds: [
+                                    'metagross-1',
+                                    'torkoal-1',
+                                    'solgaleo-1',
+                                    'metagross-inactive',
+                                    'metagross-fainted'
+                                ],
                                 isPlayerSide: false,
                                 isNPC: true
                             },
@@ -862,7 +857,13 @@ describe('Ability Targeting System', () => {
                                 name: 'Tablets of Ruin User',
                                 ability: 'Tablets of Ruin',
                                 abilityActive: true,
-                                abilityTargetIds: ['metagross-1', 'torkoal-1', 'solgaleo-1', 'metagross-inactive', 'metagross-fainted'],
+                                abilityTargetIds: [
+                                    'metagross-1',
+                                    'torkoal-1',
+                                    'solgaleo-1',
+                                    'metagross-inactive',
+                                    'metagross-fainted'
+                                ],
                                 isPlayerSide: false,
                                 isNPC: true
                             }
@@ -1356,9 +1357,7 @@ describe('Ability Targeting System', () => {
             });
 
             // Preserve unmapped combatants from current round (such as Blastoise in PC)
-            const unmapped = currentRoundCombatants
-                .filter((c) => !matchedExistingIds.has(c.id))
-                .map((c) => ({ ...c }));
+            const unmapped = currentRoundCombatants.filter((c) => !matchedExistingIds.has(c.id)).map((c) => ({ ...c }));
 
             preservedCombatantRows.push(...unmapped);
 
@@ -1390,11 +1389,11 @@ describe('Ability Targeting System', () => {
                 if (abilityName.toLowerCase() === 'commander') {
                     const aSpecies = (a.species || '').toLowerCase();
                     const aName = (a.name || '').toLowerCase();
-                    const aIsDondozo = (aSpecies === 'dondozo' || aName === 'dondozo') ? 1 : 0;
+                    const aIsDondozo = aSpecies === 'dondozo' || aName === 'dondozo' ? 1 : 0;
 
                     const bSpecies = (b.species || '').toLowerCase();
                     const bName = (b.name || '').toLowerCase();
-                    const bIsDondozo = (bSpecies === 'dondozo' || bName === 'dondozo') ? 1 : 0;
+                    const bIsDondozo = bSpecies === 'dondozo' || bName === 'dondozo' ? 1 : 0;
 
                     return bIsDondozo - aIsDondozo;
                 }
@@ -1460,34 +1459,18 @@ describe('Ability Targeting System', () => {
             const override = { active: false, type: 'dice' as const, value: 0 };
 
             // Roll vs matching target
-            const matchingResult = await executeDamageRoll(
-                move,
-                state,
-                4,
-                false,
-                0,
-                0,
-                override,
-                undefined,
-                0,
-                { id: 'foe-gumshoos', name: 'Gumshoos' }
-            );
+            const matchingResult = await executeDamageRoll(move, state, 4, false, 0, 0, override, undefined, 0, {
+                id: 'foe-gumshoos',
+                name: 'Gumshoos'
+            });
 
             expect(matchingResult?.tags).toContain('Stakeout (+1 Damage)');
 
             // Roll vs non-matching target
-            const nonMatchingResult = await executeDamageRoll(
-                move,
-                state,
-                4,
-                false,
-                0,
-                0,
-                override,
-                undefined,
-                0,
-                { id: 'foe-rattata', name: 'Rattata' }
-            );
+            const nonMatchingResult = await executeDamageRoll(move, state, 4, false, 0, 0, override, undefined, 0, {
+                id: 'foe-rattata',
+                name: 'Rattata'
+            });
 
             expect(nonMatchingResult?.tags).not.toContain('Stakeout (+1 Damage)');
         });
@@ -1511,8 +1494,24 @@ describe('Ability Targeting System', () => {
             };
 
             const selections = [
-                { id: 'target-gumshoos', name: 'Gumshoos', def: 2, effectiveness: 0, isImmune: false, isEvaded: false, isPlayerSide: false },
-                { id: 'target-rattata', name: 'Rattata', def: 2, effectiveness: 0, isImmune: false, isEvaded: false, isPlayerSide: false }
+                {
+                    id: 'target-gumshoos',
+                    name: 'Gumshoos',
+                    def: 2,
+                    effectiveness: 0,
+                    isImmune: false,
+                    isEvaded: false,
+                    isPlayerSide: false
+                },
+                {
+                    id: 'target-rattata',
+                    name: 'Rattata',
+                    def: 2,
+                    effectiveness: 0,
+                    isImmune: false,
+                    isEvaded: false,
+                    isPlayerSide: false
+                }
             ];
 
             const override = { active: false, type: 'dice' as const, value: 0 };
@@ -1686,7 +1685,9 @@ describe('Ability Targeting System', () => {
 
                 if (!OBR.scene) (OBR as unknown as Record<string, unknown>).scene = {};
                 if (!OBR.scene.items) (OBR.scene as unknown as Record<string, unknown>).items = {};
-                (OBR.scene.items as unknown as Record<string, unknown>).getItems = vi.fn().mockResolvedValue([mockToken]);
+                (OBR.scene.items as unknown as Record<string, unknown>).getItems = vi
+                    .fn()
+                    .mockResolvedValue([mockToken]);
 
                 const result = await resolveTargetHeldItemInfoAsync('token-growlithe-1');
                 expect(result.targetName).toBe('Growlithe');
@@ -1697,7 +1698,11 @@ describe('Ability Targeting System', () => {
                 expect(resultByName.targetName).toBe('Growlithe');
                 expect(resultByName.heldItems).toBe('Charcoal');
             } finally {
-                Object.defineProperty(OBR, 'isAvailable', { value: originalIsAvailable, configurable: true, writable: true });
+                Object.defineProperty(OBR, 'isAvailable', {
+                    value: originalIsAvailable,
+                    configurable: true,
+                    writable: true
+                });
                 if (originalGetItems) {
                     (OBR.scene.items as unknown as Record<string, unknown>).getItems = originalGetItems;
                 }
@@ -1753,16 +1758,16 @@ describe('Ability Targeting System', () => {
                             name: 'The Spunch',
                             nickname: '',
                             species: 'Ditto',
-                            'inv-data': JSON.stringify([
-                                { name: 'Metal Powder', active: true }
-                            ])
+                            'inv-data': JSON.stringify([{ name: 'Metal Powder', active: true }])
                         }
                     }
                 };
 
                 if (!OBR.scene) (OBR as unknown as Record<string, unknown>).scene = {};
                 if (!OBR.scene.items) (OBR.scene as unknown as Record<string, unknown>).items = {};
-                (OBR.scene.items as unknown as Record<string, unknown>).getItems = vi.fn().mockResolvedValue([mockToken]);
+                (OBR.scene.items as unknown as Record<string, unknown>).getItems = vi
+                    .fn()
+                    .mockResolvedValue([mockToken]);
 
                 // 1. Live scene token has held item: resolves species 'Ditto' instead of stale 'The Spunch'
                 const result = await resolveTargetHeldItemInfoAsync('token-ditto-1');
@@ -1784,13 +1789,19 @@ describe('Ability Targeting System', () => {
                         }
                     }
                 };
-                (OBR.scene.items as unknown as Record<string, unknown>).getItems = vi.fn().mockResolvedValue([mockTokenNoItem]);
+                (OBR.scene.items as unknown as Record<string, unknown>).getItems = vi
+                    .fn()
+                    .mockResolvedValue([mockTokenNoItem]);
 
                 const resultFallback = await resolveTargetHeldItemInfoAsync('token-ditto-1');
                 expect(resultFallback.targetName).toBe('Ditto');
                 expect(resultFallback.heldItems).toBe('Quick Powder');
             } finally {
-                Object.defineProperty(OBR, 'isAvailable', { value: originalIsAvailable, configurable: true, writable: true });
+                Object.defineProperty(OBR, 'isAvailable', {
+                    value: originalIsAvailable,
+                    configurable: true,
+                    writable: true
+                });
                 if (originalGetItems) {
                     (OBR.scene.items as unknown as Record<string, unknown>).getItems = originalGetItems;
                 }
@@ -1955,7 +1966,8 @@ describe('Ability Targeting System', () => {
     describe('Dynamic Ability Tag Synthesizer & Combat Resolution', () => {
         describe('synthesizeAbilityTags', () => {
             it('appends [Unique] if text contains "Unique Ability" or "[Unique]"', () => {
-                const text = 'Reduce by 2 the Special Defense of everyone in the field, except this Pokemon. Unique Ability.';
+                const text =
+                    'Reduce by 2 the Special Defense of everyone in the field, except this Pokemon. Unique Ability.';
                 const tags = synthesizeAbilityTags(text, '');
                 expect(tags).toBe('[Unique]');
 
@@ -1975,14 +1987,16 @@ describe('Ability Targeting System', () => {
             });
 
             it('appends both [Unique] and [Ignore Stat Reductions] for Full Metal Body', () => {
-                const fullMetalBodyEffect = 'Other Pokemon cannot Reduce the Attributes of this Pokemon. Unique Ability.';
+                const fullMetalBodyEffect =
+                    'Other Pokemon cannot Reduce the Attributes of this Pokemon. Unique Ability.';
                 const tags = synthesizeAbilityTags(fullMetalBodyEffect, '');
                 expect(tags).toContain('[Unique]');
                 expect(tags).toContain('[Ignore Stat Reductions]');
             });
 
             it('appends specific tags for Hyper Cutter, Big Pecks, and Keen Eye', () => {
-                const hyperCutterEffect = "This Pokemon can't have its Strength Attribute reduced by Moves, Abilities, or Items.";
+                const hyperCutterEffect =
+                    "This Pokemon can't have its Strength Attribute reduced by Moves, Abilities, or Items.";
                 expect(synthesizeAbilityTags(hyperCutterEffect, '')).toBe('[Ignore Str Reduction]');
 
                 const bigPecksEffect = 'This Pokemon cannot have its Defense reduced.';
@@ -1993,18 +2007,10 @@ describe('Ability Targeting System', () => {
             });
 
             it('preserves custom bracketed tags without duplicating', () => {
-                const result = synthesizeAbilityTags(
-                    'Unique Ability.',
-                    '',
-                    '[Target: All Foes] [Unique]'
-                );
+                const result = synthesizeAbilityTags('Unique Ability.', '', '[Target: All Foes] [Unique]');
                 expect(result).toBe('[Target: All Foes] [Unique]');
 
-                const appended = synthesizeAbilityTags(
-                    'Unique Ability.',
-                    '',
-                    '[Target: All Foes]'
-                );
+                const appended = synthesizeAbilityTags('Unique Ability.', '', '[Target: All Foes]');
                 expect(appended).toBe('[Target: All Foes] [Unique]');
             });
         });
@@ -2179,4 +2185,3 @@ describe('Ability Targeting System', () => {
         });
     });
 });
-

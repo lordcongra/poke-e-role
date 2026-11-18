@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { Zap, Sliders, RotateCcw, Users, Eye } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { getAbilityBenefitSummary, getMaxBoost, getKnownAbility } from '../../data/abilities/knownAbilities';
-import { getAbilityTargetStance, getAbilityMaxTargets, resolveTargetHeldItemInfo, resolveTargetHeldItemInfoAsync } from '../../utils/combat/abilityTargetingUtils';
+import {
+    getAbilityTargetStance,
+    getAbilityMaxTargets,
+    resolveTargetHeldItemInfo,
+    resolveTargetHeldItemInfoAsync
+} from '../../utils/combat/abilityTargetingUtils';
 import { addRollLogEntry } from '../../utils/combat/diceRoller';
 import { AbilityMenuModal } from './AbilityMenuModal';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
@@ -46,7 +51,12 @@ export function AbilityTrackerControl() {
     const maxTargets = getAbilityMaxTargets(ability, resolvedTags, rank);
 
     const choiceMatch = resolvedTags.match(/\[\s*Choice\s*:\s*([^\]]+)\]/i);
-    const choiceOptions = choiceMatch ? choiceMatch[1].split('|').map((s) => s.trim()).filter(Boolean) : [];
+    const choiceOptions = choiceMatch
+        ? choiceMatch[1]
+              .split('|')
+              .map((s) => s.trim())
+              .filter(Boolean)
+        : [];
     const hasChoice = choiceOptions.length > 0;
     const activeChoiceIndex = hasChoice
         ? ((abilityChoiceIndex % choiceOptions.length) + choiceOptions.length) % choiceOptions.length
@@ -89,19 +99,12 @@ export function AbilityTrackerControl() {
         const charName = state.identity.nickname || state.identity.species || 'Pokemon';
         const charIcon = state.identity.tokenImageUrl || '';
         const activeTokenId = state.tokenId;
-        const resultMsg = (heldItems && heldItems !== 'None')
-            ? `${charName} frisked ${targetName} and identified their held item: **${heldItems}**!`
-            : `${charName} frisked ${targetName} — they are not holding any items.`;
+        const resultMsg =
+            heldItems && heldItems !== 'None'
+                ? `${charName} frisked ${targetName} and identified their held item: **${heldItems}**!`
+                : `${charName} frisked ${targetName} — they are not holding any items.`;
 
-        addRollLogEntry(
-            'Frisk',
-            resultMsg,
-            charIcon,
-            charName,
-            charName,
-            activeTokenId || undefined,
-            'ability'
-        );
+        addRollLogEntry('Frisk', resultMsg, charIcon, charName, charName, activeTokenId || undefined, 'ability');
     };
 
     const handleCycleBoost = () => {
@@ -202,15 +205,24 @@ export function AbilityTrackerControl() {
                             type="button"
                             onClick={handleCycleChoice}
                             className="action-button action-button--theme ability-tracker__choice-badge"
-                            style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '3px' }}
+                            style={{
+                                padding: '2px 7px',
+                                fontSize: '0.72rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px'
+                            }}
                             title={`Active Choice: ${activeChoice} (Click to cycle)`}
                         >
                             {activeChoice}
                         </button>
                     )}
 
-                    {abilityActive && displayBenefit && !hasBoostTag && !hasChoice && (
-                        cleanAbility === 'frisk' && abilityTargetIds.length > 0 ? (
+                    {abilityActive &&
+                        displayBenefit &&
+                        !hasBoostTag &&
+                        !hasChoice &&
+                        (cleanAbility === 'frisk' && abilityTargetIds.length > 0 ? (
                             <button
                                 type="button"
                                 onClick={handleBroadcastFrisk}
@@ -223,15 +235,20 @@ export function AbilityTrackerControl() {
                             <span className="ability-tracker__benefit" title={displayBenefit}>
                                 {displayBenefit}
                             </span>
-                        )
-                    )}
+                        ))}
 
                     {abilityActive && isPressure && (
                         <button
                             type="button"
                             onClick={() => setIsPressureModalOpen(true)}
                             className="action-button action-button--theme"
-                            style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '3px' }}
+                            style={{
+                                padding: '2px 7px',
+                                fontSize: '0.72rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px'
+                            }}
                             title="Trigger Pressure: Drain opposing Will"
                         >
                             <Zap size={11} /> Drain Will
@@ -243,7 +260,13 @@ export function AbilityTrackerControl() {
                             type="button"
                             onClick={() => setIsMedicineModalOpen(true)}
                             className="action-button action-button--theme"
-                            style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '3px' }}
+                            style={{
+                                padding: '2px 7px',
+                                fontSize: '0.72rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px'
+                            }}
                             title="Trigger Curious Medicine: Reset allies' buffs & debuffs"
                         >
                             <RotateCcw size={11} /> Reset Allies
@@ -255,7 +278,13 @@ export function AbilityTrackerControl() {
                             type="button"
                             onClick={() => setIsTargetModalOpen(true)}
                             className="action-button action-button--theme"
-                            style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '3px' }}
+                            style={{
+                                padding: '2px 7px',
+                                fontSize: '0.72rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px'
+                            }}
                             title={`Configure Ability Targets (${abilityTargetIds.length}/${maxTargets} selected)`}
                         >
                             <Users size={11} /> Targets ({abilityTargetIds.length}/{maxTargets})
@@ -275,17 +304,11 @@ export function AbilityTrackerControl() {
             </div>
 
             {isPressureModalOpen && (
-                <PressureDrainModal
-                    isOpen={isPressureModalOpen}
-                    onClose={() => setIsPressureModalOpen(false)}
-                />
+                <PressureDrainModal isOpen={isPressureModalOpen} onClose={() => setIsPressureModalOpen(false)} />
             )}
 
             {isMedicineModalOpen && (
-                <CuriousMedicineModal
-                    isOpen={isMedicineModalOpen}
-                    onClose={() => setIsMedicineModalOpen(false)}
-                />
+                <CuriousMedicineModal isOpen={isMedicineModalOpen} onClose={() => setIsMedicineModalOpen(false)} />
             )}
 
             {isTargetModalOpen && (

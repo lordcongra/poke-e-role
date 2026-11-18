@@ -1,17 +1,7 @@
 import { useMemo } from 'react';
 import type { MoveData, PrintConfig } from '@/store/storeTypes';
 
-const RANK_ORDER = [
-    'Starter',
-    'Rookie',
-    'Standard',
-    'Advanced',
-    'Expert',
-    'Ace',
-    'Master',
-    'Champion',
-    'Other'
-];
+const RANK_ORDER = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion', 'Other'];
 
 interface PrintLearnsetProps {
     learnset?: Array<{ Learned: string; Name: string }>;
@@ -24,11 +14,7 @@ export function PrintLearnset({ learnset = [], moves = [], config }: PrintLearns
 
     const learnedSet = useMemo(() => {
         if (!isVisible) return new Set<string>();
-        return new Set(
-            (moves || [])
-                .map((m) => m.name?.toLowerCase().trim())
-                .filter(Boolean)
-        );
+        return new Set((moves || []).map((m) => m.name?.toLowerCase().trim()).filter(Boolean));
     }, [isVisible, moves]);
 
     const groupedLearnset = useMemo(() => {

@@ -83,4 +83,3 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
         check.id
     );
 }
-

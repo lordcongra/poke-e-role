@@ -2,10 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { CharacterState, IdentitySlice } from '../storeTypes';
 import { parseLearnset } from '../../utils/common/macroHelpers';
 import { isStandaloneMode } from '../../utils/sync/storageAdapter';
-import {
-    loadInitialRoomAndSceneSettings,
-    ROOM_SETTINGS_KEYS
-} from './roomSettingsSlice';
+import { loadInitialRoomAndSceneSettings, ROOM_SETTINGS_KEYS } from './roomSettingsSlice';
 import { EXCLUDED_FROM_TOKEN_SAVE, OBR_KEY_MAP } from './identityConstants';
 import {
     handleInitiativeTrackerSetting,
@@ -29,12 +26,9 @@ const {
     initialSceneDefaultOffsetY
 } = loadInitialRoomAndSceneSettings();
 
-export const createIdentitySlice: StateCreator<
-    CharacterState,
-    [['zustand/devtools', never]],
-    [],
-    IdentitySlice
-> = (set) => ({
+export const createIdentitySlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], IdentitySlice> = (
+    set
+) => ({
     tokenId: null,
     role: isStandaloneMode ? 'GM' : 'PLAYER',
     identity: {

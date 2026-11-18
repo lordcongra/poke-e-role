@@ -261,8 +261,7 @@ async function updateSceneSettingsMetadata(
 
         const meta = await OBR.scene.getMetadata();
         const existing = meta[SCENE_SETTINGS_META_ID];
-        const sceneMeta =
-            existing && typeof existing === 'object' ? { ...(existing as Record<string, unknown>) } : {};
+        const sceneMeta = existing && typeof existing === 'object' ? { ...(existing as Record<string, unknown>) } : {};
         updater(sceneMeta);
         await OBR.scene.setMetadata({ [SCENE_SETTINGS_META_ID]: sceneMeta });
     } catch (error) {

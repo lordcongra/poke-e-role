@@ -98,7 +98,8 @@ const { mockIdb } = vi.hoisted(() => {
                                         tx.onerror?.(new Event('error'));
                                         return;
                                     }
-                                    if (pending === 0) schedule(() => !aborted && tx.oncomplete?.(new Event('complete')));
+                                    if (pending === 0)
+                                        schedule(() => !aborted && tx.oncomplete?.(new Event('complete')));
                                 };
                                 const enqueue = <T>(exec: () => T) => {
                                     pending++;
@@ -209,7 +210,12 @@ const { mockIdb } = vi.hoisted(() => {
     return { mockIdb: factory };
 });
 
-import { storageAdapter, isStandaloneMode, LOCAL_STORAGE_PREFIX, FOLDER_STORAGE_KEY } from '@/utils/sync/storageAdapter';
+import {
+    storageAdapter,
+    isStandaloneMode,
+    LOCAL_STORAGE_PREFIX,
+    FOLDER_STORAGE_KEY
+} from '@/utils/sync/storageAdapter';
 import { MIGRATION_FLAG_KEY, idbGetCharacter } from '@/utils/sync/standaloneIdb';
 import { homebrewStorage, type HomebrewStorageData } from '@/utils/sync/homebrewStorage';
 import {
@@ -369,11 +375,9 @@ describe('Storage consolidation & anti-resurrection invariants (B-07)', () => {
         useCharacterStore.getState().removeCustomType('Cosmic');
 
         expect(useCharacterStore.getState().roomCustomTypes).toEqual([]);
-        expect(saveSpy).toHaveBeenCalledWith(
-            expect.objectContaining({ customTypes: [] }),
-            undefined,
-            { allowEmpty: true }
-        );
+        expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ customTypes: [] }), undefined, {
+            allowEmpty: true
+        });
         await saveSpy.mock.results[0].value;
 
         const reloaded = await homebrewStorage.loadHomebrew();

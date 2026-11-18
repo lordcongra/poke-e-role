@@ -10,11 +10,7 @@ import type {
     CombatantRowData,
     BattleOrganizerTimerEffect
 } from '../../../types/battleOrganizerTypes';
-import {
-    createDefaultActions,
-    createDefaultCombatant,
-    createDefaultBattlefield
-} from './battleOrganizerUtils';
+import { createDefaultActions, createDefaultCombatant, createDefaultBattlefield } from './battleOrganizerUtils';
 import { detectMoveFieldEffect } from '../../../utils/combat/fieldEffectsData';
 import { applyForceFieldToSide } from './battlefieldPresetUtils';
 

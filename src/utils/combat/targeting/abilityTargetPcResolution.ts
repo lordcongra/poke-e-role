@@ -34,9 +34,7 @@ export function isCombatantInPc(c: CombatantRowData, pcData?: PcStorageData | nu
         } else if (!hasSpecificId && c.name) {
             const cleanName = c.name.trim().toLowerCase();
             summary = Object.values(resolvedPc.pokemonSummaries).find(
-                (s) =>
-                    s.name?.trim().toLowerCase() === cleanName ||
-                    s.species?.trim().toLowerCase() === cleanName
+                (s) => s.name?.trim().toLowerCase() === cleanName || s.species?.trim().toLowerCase() === cleanName
             );
         }
     }
@@ -125,11 +123,12 @@ export async function syncCombatantSentToPc(entityId: string, pcData?: PcStorage
             if (!r?.combatants) return;
             r.combatants.forEach((c) => {
                 const combatantHasId = Boolean(c.entityId || c.tokenId);
-                const isMatch = combatantHasId || summaryHasId
-                    ? idsToRemove.has(c.id) ||
-                      (Boolean(c.entityId) && idsToRemove.has(c.entityId!)) ||
-                      (Boolean(c.tokenId) && idsToRemove.has(c.tokenId!))
-                    : Boolean(summaryName && c.name && c.name.trim().toLowerCase() === summaryName);
+                const isMatch =
+                    combatantHasId || summaryHasId
+                        ? idsToRemove.has(c.id) ||
+                          (Boolean(c.entityId) && idsToRemove.has(c.entityId!)) ||
+                          (Boolean(c.tokenId) && idsToRemove.has(c.tokenId!))
+                        : Boolean(summaryName && c.name && c.name.trim().toLowerCase() === summaryName);
                 if (isMatch) {
                     if (c.id) idsToRemove.add(c.id);
                     if (c.tokenId) idsToRemove.add(c.tokenId);
@@ -155,11 +154,12 @@ export async function syncCombatantSentToPc(entityId: string, pcData?: PcStorage
             if (!r?.combatants) return;
             r.combatants.forEach((c) => {
                 const combatantHasId = Boolean(c.entityId || c.tokenId);
-                const isMatch = combatantHasId || summaryHasId
-                    ? idsToRemove.has(c.id) ||
-                      (Boolean(c.entityId) && idsToRemove.has(c.entityId!)) ||
-                      (Boolean(c.tokenId) && idsToRemove.has(c.tokenId!))
-                    : Boolean(summaryName && c.name && c.name.trim().toLowerCase() === summaryName);
+                const isMatch =
+                    combatantHasId || summaryHasId
+                        ? idsToRemove.has(c.id) ||
+                          (Boolean(c.entityId) && idsToRemove.has(c.entityId!)) ||
+                          (Boolean(c.tokenId) && idsToRemove.has(c.tokenId!))
+                        : Boolean(summaryName && c.name && c.name.trim().toLowerCase() === summaryName);
 
                 if (isMatch) {
                     if (!c.isInPc) {
@@ -338,11 +338,12 @@ export async function syncCombatantSentToMap(entityId: string, pcData?: PcStorag
             if (!r?.combatants) return;
             r.combatants.forEach((c) => {
                 const combatantHasId = Boolean(c.entityId || c.tokenId);
-                const isMatch = combatantHasId || summaryHasId
-                    ? idsToMatch.has(c.id) ||
-                      (Boolean(c.entityId) && idsToMatch.has(c.entityId!)) ||
-                      (Boolean(c.tokenId) && idsToMatch.has(c.tokenId!))
-                    : Boolean(summaryName && c.name && c.name.trim().toLowerCase() === summaryName);
+                const isMatch =
+                    combatantHasId || summaryHasId
+                        ? idsToMatch.has(c.id) ||
+                          (Boolean(c.entityId) && idsToMatch.has(c.entityId!)) ||
+                          (Boolean(c.tokenId) && idsToMatch.has(c.tokenId!))
+                        : Boolean(summaryName && c.name && c.name.trim().toLowerCase() === summaryName);
                 if (isMatch) {
                     if (c.id) idsToMatch.add(c.id);
                     if (c.tokenId) idsToMatch.add(c.tokenId);
@@ -358,11 +359,12 @@ export async function syncCombatantSentToMap(entityId: string, pcData?: PcStorag
             if (!r?.combatants) return;
             r.combatants.forEach((c) => {
                 const combatantHasId = Boolean(c.entityId || c.tokenId);
-                const isMatch = combatantHasId || summaryHasId
-                    ? idsToMatch.has(c.id) ||
-                      (Boolean(c.entityId) && idsToMatch.has(c.entityId!)) ||
-                      (Boolean(c.tokenId) && idsToMatch.has(c.tokenId!))
-                    : Boolean(summaryName && c.name && c.name.trim().toLowerCase() === summaryName);
+                const isMatch =
+                    combatantHasId || summaryHasId
+                        ? idsToMatch.has(c.id) ||
+                          (Boolean(c.entityId) && idsToMatch.has(c.entityId!)) ||
+                          (Boolean(c.tokenId) && idsToMatch.has(c.tokenId!))
+                        : Boolean(summaryName && c.name && c.name.trim().toLowerCase() === summaryName);
                 if (isMatch && c.isInPc) {
                     c.isInPc = false;
                     boChanged = true;
@@ -378,4 +380,3 @@ export async function syncCombatantSentToMap(entityId: string, pcData?: PcStorag
         console.warn('[abilityTargetingUtils] Failed to sync combatant sent to map:', err);
     }
 }
-

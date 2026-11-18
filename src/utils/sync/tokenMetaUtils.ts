@@ -29,7 +29,11 @@ export function parseCombatPoolsFromMeta(
 }
 
 function normalizeLabel(value?: string | null): string {
-    return typeof value === 'string' ? value.trim().toLowerCase() : String(value ?? '').trim().toLowerCase();
+    return typeof value === 'string'
+        ? value.trim().toLowerCase()
+        : String(value ?? '')
+              .trim()
+              .toLowerCase();
 }
 
 /**
@@ -115,4 +119,3 @@ export function buildClonedTokenMetadata(
     }
     return nextMeta;
 }
-

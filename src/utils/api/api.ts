@@ -272,8 +272,7 @@ export async function fetchAbilityData(abilityName: string): Promise<AbilityApiR
     // 2. Check Local Dataset
     await loadLocalDataset();
     const selectedUrl =
-        ABILITIES_URLS[cleanName] ||
-        (isDatasetLoaded ? null : formatLocalPath(`/dataset/abilities/${baseName}.json`));
+        ABILITIES_URLS[cleanName] || (isDatasetLoaded ? null : formatLocalPath(`/dataset/abilities/${baseName}.json`));
 
     // 3. Prevent Fetching non-existent Data
     if (!selectedUrl) {

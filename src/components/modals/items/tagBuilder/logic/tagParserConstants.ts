@@ -60,4 +60,3 @@ export const STAT_NORM_MAP: Record<string, string> = {
     cute: 'Cute',
     clever: 'Clever'
 };
-

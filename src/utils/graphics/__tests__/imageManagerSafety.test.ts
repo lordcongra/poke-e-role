@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-    autoCropTransparency,
-    MAX_AUTO_CROP_FILE_BYTES,
-    MAX_AUTO_CROP_DIMENSION
-} from '@/utils/graphics/imageManager';
+import { autoCropTransparency, MAX_AUTO_CROP_FILE_BYTES, MAX_AUTO_CROP_DIMENSION } from '@/utils/graphics/imageManager';
 
 describe('imageManagerSafety', () => {
     const originalImage = globalThis.Image;
@@ -99,4 +95,3 @@ describe('imageManagerSafety', () => {
         createElementSpy.mockRestore();
     });
 });
-

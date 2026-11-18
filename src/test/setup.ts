@@ -113,7 +113,10 @@ class MockImageBuilder {
         return this;
     }
     metadata(val: unknown) {
-        this.item.metadata = { ...(this.item.metadata as Record<string, unknown>), ...(val as Record<string, unknown>) };
+        this.item.metadata = {
+            ...(this.item.metadata as Record<string, unknown>),
+            ...(val as Record<string, unknown>)
+        };
         return this;
     }
     rotation(val: number) {
@@ -177,7 +180,10 @@ class MockGenericBuilder {
         return this;
     }
     metadata(val: unknown) {
-        this.item.metadata = { ...(this.item.metadata as Record<string, unknown>), ...(val as Record<string, unknown>) };
+        this.item.metadata = {
+            ...(this.item.metadata as Record<string, unknown>),
+            ...(val as Record<string, unknown>)
+        };
         return this;
     }
     build() {

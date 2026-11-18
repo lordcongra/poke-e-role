@@ -92,7 +92,7 @@ describe('initiativeHelpers', () => {
     describe('extractIsNpc and extractCharacterName', () => {
         it('extracts NPC status accurately across flat and nested metadata', () => {
             expect(extractIsNpc({ 'is-npc': true })).toBe(true);
-            expect(extractIsNpc({ 'isNPC': 'true' })).toBe(true);
+            expect(extractIsNpc({ isNPC: 'true' })).toBe(true);
             expect(extractIsNpc({ state: { identity: { isNPC: true } } })).toBe(true);
             expect(extractIsNpc({}, true)).toBe(true);
             expect(extractIsNpc({ 'is-npc': false })).toBe(false);
@@ -112,7 +112,7 @@ describe('initiativeHelpers', () => {
             const result = resolveStalemateTiebreakers('roller', [
                 { id: 'opp-1', tiebreaker: 4 },
                 { id: 'opp-2', tiebreaker: 4 }, // duplicate
-                { id: 'opp-3', tiebreaker: 0 }  // zero
+                { id: 'opp-3', tiebreaker: 0 } // zero
             ]);
 
             expect(result.opponentTiebreakers['opp-1']).toBe(4);
@@ -197,9 +197,9 @@ describe('initiativeHelpers', () => {
                 'https://obr.png'
             );
             // Explicitly saved pokeball-token.svg in metadata stays intact
-            expect(
-                resolveActiveTokenImage('/poke-e-role/pokeball-token.svg', '/poke-e-role/pokeball-token.svg')
-            ).toBe('/poke-e-role/pokeball-token.svg');
+            expect(resolveActiveTokenImage('/poke-e-role/pokeball-token.svg', '/poke-e-role/pokeball-token.svg')).toBe(
+                '/poke-e-role/pokeball-token.svg'
+            );
             // Custom image in store overrides empty/stale metadata image
             expect(resolveActiveTokenImage('local-img:123', 'https://old.png')).toBe('local-img:123');
             // Empty store image preserves metadata fallback unless explicitly cleared
@@ -237,4 +237,3 @@ describe('initiativeHelpers', () => {
         });
     });
 });
-

@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-    hasCombatBoostTags,
-    parseCombatBoostFromItem
-} from '@/utils/items/combatBoostParser';
+import { hasCombatBoostTags, parseCombatBoostFromItem } from '@/utils/items/combatBoostParser';
 
 describe('combatBoostParser', () => {
     describe('hasCombatBoostTags', () => {
@@ -112,4 +109,3 @@ describe('combatBoostParser', () => {
         });
     });
 });
-

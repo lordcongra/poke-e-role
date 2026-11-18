@@ -18,4 +18,3 @@ describe('useCharacterStore devtools middleware', () => {
         expect(useCharacterStore.getState().derived.happy).toBe(3);
     });
 });
-

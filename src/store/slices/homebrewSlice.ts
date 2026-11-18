@@ -63,12 +63,10 @@ import {
     mergeAllHomebrewData
 } from './homebrew/homebrewMergeOps';
 
-export const createHomebrewSlice: StateCreator<
-    CharacterState,
-    [['zustand/devtools', never]],
-    [],
-    HomebrewSlice
-> = (set, get) => ({
+export const createHomebrewSlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], HomebrewSlice> = (
+    set,
+    get
+) => ({
     isHomebrewInitialized: false,
     roomCustomTypes: [],
     roomCustomAbilities: [],

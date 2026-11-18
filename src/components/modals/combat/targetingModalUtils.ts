@@ -124,9 +124,7 @@ export function initializeMultiTargetRows(
     const rows: MultiTargetRowData[] = targets.map((t) => {
         const { targetDef, flatReduction } = calculateTargetDefAndFactors(t, isPhysicalMove, activeBattlefield, move);
         const isTera = activeTransformation === 'Terastallize' && t.isTera;
-        const effResult = isTera
-            ? { modifier: 1, isImmune: false }
-            : calculateDefaultEffectiveness(moveType, t.types);
+        const effResult = isTera ? { modifier: 1, isImmune: false } : calculateDefaultEffectiveness(moveType, t.types);
         return {
             id: t.id,
             name: t.name,
@@ -142,9 +140,7 @@ export function initializeMultiTargetRows(
     });
 
     const desc = (
-        typeof move === 'string'
-            ? move
-            : `${move?.desc || ''} ${move?.marker || ''} ${move?.attackAction?.tags || ''}`
+        typeof move === 'string' ? move : `${move?.desc || ''} ${move?.marker || ''} ${move?.attackAction?.tags || ''}`
     ).toLowerCase();
     const rawTarget = (
         typeof move === 'object' && move !== null
@@ -365,9 +361,7 @@ export function isNonRangedPhysicalMove(isPhysicalMove: boolean, move?: MoveData
             : `${move.name || ''} ${move.desc || ''} ${move.description || ''} ${move.marker || ''} ${move.attackAction?.tags || ''}`
     ).toLowerCase();
     const isRanged =
-        desc.includes('ranged move') ||
-        /\[\s*ranged(?:\s*move)?\s*\]/i.test(desc) ||
-        /\branged\s+move\b/i.test(desc);
+        desc.includes('ranged move') || /\[\s*ranged(?:\s*move)?\s*\]/i.test(desc) || /\branged\s+move\b/i.test(desc);
     return !isRanged;
 }
 
@@ -470,9 +464,7 @@ export function calculateTargetDefAndFactors(
             const hasAuroraVeil = activeFields.some((ff) => ff.name.toLowerCase().includes('aurora veil'));
 
             const hasActiveScreen =
-                (hasReflect && isPhysicalMove) ||
-                (hasLightScreen && !isPhysicalMove) ||
-                hasAuroraVeil;
+                (hasReflect && isPhysicalMove) || (hasLightScreen && !isPhysicalMove) || hasAuroraVeil;
 
             if (bypassScreens && hasActiveScreen) {
                 factors.push('Piercing Drill (Ignored Screens)');

@@ -263,4 +263,3 @@ export function validateAndSanitizeHomebrewBackup(raw: unknown): HomebrewStorage
 
     return sanitized;
 }
-

@@ -86,12 +86,7 @@ export default defineConfig({
     ],
 
     optimizeDeps: {
-        entries: [
-            'index.html',
-            'roll-log.html',
-            'initiative-tracker.html',
-            'battle-organizer.html'
-        ]
+        entries: ['index.html', 'roll-log.html', 'initiative-tracker.html', 'battle-organizer.html']
     },
 
     build: {

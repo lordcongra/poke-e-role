@@ -192,7 +192,8 @@ describe('PC Storage Standalone Bridge', () => {
 
 describe('Persistent storage & 7-day backup reminders (P-03)', () => {
     const originalTop = typeof window !== 'undefined' ? Object.getOwnPropertyDescriptor(window, 'top') : undefined;
-    const originalStorage = typeof navigator !== 'undefined' ? Object.getOwnPropertyDescriptor(navigator, 'storage') : undefined;
+    const originalStorage =
+        typeof navigator !== 'undefined' ? Object.getOwnPropertyDescriptor(navigator, 'storage') : undefined;
 
     beforeEach(() => {
         localStorage.clear();
@@ -222,9 +223,8 @@ describe('Persistent storage & 7-day backup reminders (P-03)', () => {
             configurable: true
         });
 
-        const { requestPersistentStorage, resetPersistentStorageCacheForTests } = await import(
-            '@/utils/sync/storageAdapter'
-        );
+        const { requestPersistentStorage, resetPersistentStorageCacheForTests } =
+            await import('@/utils/sync/storageAdapter');
         resetPersistentStorageCacheForTests();
 
         expect(await requestPersistentStorage()).toBe(true);
@@ -255,9 +255,7 @@ describe('Persistent storage & 7-day backup reminders (P-03)', () => {
         vi.spyOn(Date, 'now').mockReturnValue(baseNow + 10000);
         mod.markBackupComplete();
         expect(mod.hasUnbackedData(1, 0, 0, baseNow + 10001)).toBe(false);
-        expect(
-            mod.getBackupReminderReason(1, 0, 0, baseNow + 10000 + mod.BACKUP_STALE_THRESHOLD_MS + 1)
-        ).toBe('stale');
+        expect(mod.getBackupReminderReason(1, 0, 0, baseNow + 10000 + mod.BACKUP_STALE_THRESHOLD_MS + 1)).toBe('stale');
 
         // OBR third-party iframe mode
         vi.resetModules();
@@ -280,12 +278,7 @@ describe('Persistent storage & 7-day backup reminders (P-03)', () => {
 
         vi.spyOn(Date, 'now').mockReturnValue(baseNow + 4000);
         mod.markBackupComplete();
-        expect(
-            mod.hasUnbackedData(0, 0, 1, baseNow + 4000 + mod.BACKUP_STALE_THRESHOLD_MS + 1)
-        ).toBe(true);
-        expect(
-            mod.getBackupReminderReason(0, 0, 1, baseNow + 4000 + mod.BACKUP_STALE_THRESHOLD_MS + 1)
-        ).toBe('stale');
+        expect(mod.hasUnbackedData(0, 0, 1, baseNow + 4000 + mod.BACKUP_STALE_THRESHOLD_MS + 1)).toBe(true);
+        expect(mod.getBackupReminderReason(0, 0, 1, baseNow + 4000 + mod.BACKUP_STALE_THRESHOLD_MS + 1)).toBe('stale');
     });
 });
-

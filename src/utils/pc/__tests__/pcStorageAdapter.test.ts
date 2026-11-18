@@ -217,7 +217,10 @@ function createControlledPcIdbMock() {
                 } else if (needsUpgrade) {
                     entry.version = version;
                 }
-                const conn = { close: () => dbObj.onclose?.(new Event('close')), onversionchange: null as ((e: unknown) => void) | null };
+                const conn = {
+                    close: () => dbObj.onclose?.(new Event('close')),
+                    onversionchange: null as ((e: unknown) => void) | null
+                };
                 const dbObj = {
                     name,
                     version: entry.version,
@@ -227,8 +230,12 @@ function createControlledPcIdbMock() {
                         return {} as IDBObjectStore;
                     },
                     close: () => conn.close(),
-                    set onversionchange(fn: ((e: unknown) => void) | null) { conn.onversionchange = fn; },
-                    get onversionchange() { return conn.onversionchange; },
+                    set onversionchange(fn: ((e: unknown) => void) | null) {
+                        conn.onversionchange = fn;
+                    },
+                    get onversionchange() {
+                        return conn.onversionchange;
+                    },
                     onclose: null as ((e: unknown) => void) | null,
                     transaction(storeNames: string | string[]) {
                         const allowed = new Set(Array.isArray(storeNames) ? storeNames : [storeNames]);
@@ -239,18 +246,28 @@ function createControlledPcIdbMock() {
                             oncomplete: null as ((e: unknown) => void) | null,
                             onerror: null as ((e: unknown) => void) | null,
                             onabort: null as ((e: unknown) => void) | null,
-                            abort() { aborted = true; tx.onabort?.(new Event('abort')); },
+                            abort() {
+                                aborted = true;
+                                tx.onabort?.(new Event('abort'));
+                            },
                             objectStore(storeName: string) {
-                                if (!allowed.has(storeName) || !entry!.stores.has(storeName)) throw new Error(`Store ${storeName} not found`);
+                                if (!allowed.has(storeName) || !entry!.stores.has(storeName))
+                                    throw new Error(`Store ${storeName} not found`);
                                 const storeDef = entry!.stores.get(storeName)!;
                                 const finish = (err?: Error) => {
                                     pending--;
                                     if (aborted) return;
-                                    if (err) { tx.error = err; tx.onerror?.(new Event('error')); return; }
+                                    if (err) {
+                                        tx.error = err;
+                                        tx.onerror?.(new Event('error'));
+                                        return;
+                                    }
                                     if (pending === 0) {
                                         const emit = () => !aborted && tx.oncomplete?.(new Event('complete'));
-                                        if (deferNextComplete) { deferNextComplete = false; deferredCompleteTrigger = () => schedule(emit); }
-                                        else schedule(emit);
+                                        if (deferNextComplete) {
+                                            deferNextComplete = false;
+                                            deferredCompleteTrigger = () => schedule(emit);
+                                        } else schedule(emit);
                                     }
                                 };
                                 const enqueue = <T>(exec: () => T) => {
@@ -258,23 +275,45 @@ function createControlledPcIdbMock() {
                                     const r = makeReq<T>();
                                     schedule(() => {
                                         if (aborted) return;
-                                        try { r.result = exec(); r.onsuccess?.({ target: r }); finish(); }
-                                        catch (e) { r.error = e as Error; r.onerror?.({ target: r }); finish(e as Error); }
+                                        try {
+                                            r.result = exec();
+                                            r.onsuccess?.({ target: r });
+                                            finish();
+                                        } catch (e) {
+                                            r.error = e as Error;
+                                            r.onerror?.({ target: r });
+                                            finish(e as Error);
+                                        }
                                     });
                                     return r as unknown as IDBRequest<T>;
                                 };
                                 return {
                                     get: (k: IDBValidKey) => enqueue(() => storeDef.data.get(String(k))),
                                     getAll: () => enqueue(() => Array.from(storeDef.data.values())),
-                                    put: (val: unknown, key?: IDBValidKey) => enqueue(() => {
-                                        if (failNextWriteError) { const e = failNextWriteError; failNextWriteError = null; throw e; }
-                                        const k = storeDef.keyPath ? String((val as Record<string, unknown>)[storeDef.keyPath]) : String(key);
-                                        putCalls.push({ store: storeName, key: k });
-                                        storeDef.data.set(k, structuredClone(val));
-                                        return k as unknown as IDBValidKey;
-                                    }),
-                                    delete: (k: IDBValidKey) => enqueue(() => { storeDef.data.delete(String(k)); return undefined; }),
-                                    clear: () => enqueue(() => { storeDef.data.clear(); return undefined; })
+                                    put: (val: unknown, key?: IDBValidKey) =>
+                                        enqueue(() => {
+                                            if (failNextWriteError) {
+                                                const e = failNextWriteError;
+                                                failNextWriteError = null;
+                                                throw e;
+                                            }
+                                            const k = storeDef.keyPath
+                                                ? String((val as Record<string, unknown>)[storeDef.keyPath])
+                                                : String(key);
+                                            putCalls.push({ store: storeName, key: k });
+                                            storeDef.data.set(k, structuredClone(val));
+                                            return k as unknown as IDBValidKey;
+                                        }),
+                                    delete: (k: IDBValidKey) =>
+                                        enqueue(() => {
+                                            storeDef.data.delete(String(k));
+                                            return undefined;
+                                        }),
+                                    clear: () =>
+                                        enqueue(() => {
+                                            storeDef.data.clear();
+                                            return undefined;
+                                        })
                                 };
                             }
                         };
@@ -290,7 +329,10 @@ function createControlledPcIdbMock() {
         },
         deleteDatabase() {
             const req = makeReq<undefined>();
-            schedule(() => { factory.resetAll(); req.onsuccess?.({ target: req }); });
+            schedule(() => {
+                factory.resetAll();
+                req.onsuccess?.({ target: req });
+            });
             return req as unknown as IDBOpenDBRequest;
         }
     };
@@ -434,10 +476,7 @@ describe('PC JSON import & sanitization guards (S-07)', () => {
         expect(arrayRoot.success).toBe(false);
         expect(arrayRoot.error).toContain('root is not an object');
 
-        const oversized = await importPcBackupJson(
-            makeJsonFile('{}', MAX_PC_IMPORT_FILE_BYTES + 1),
-            base
-        );
+        const oversized = await importPcBackupJson(makeJsonFile('{}', MAX_PC_IMPORT_FILE_BYTES + 1), base);
         expect(oversized.success).toBe(false);
         expect(oversized.error).toContain('size limit');
     });
@@ -541,5 +580,3 @@ describe('PC JSON import & sanitization guards (S-07)', () => {
         expect(summary.type2).toBeUndefined();
     });
 });
-
-

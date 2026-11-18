@@ -147,8 +147,8 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
     state.inventory?.forEach((item) => {
         const isHeldItem = Boolean(
             state.identity.heldItem &&
-                item.name &&
-                state.identity.heldItem.trim().toLowerCase() === item.name.trim().toLowerCase()
+            item.name &&
+            state.identity.heldItem.trim().toLowerCase() === item.name.trim().toLowerCase()
         );
         const isEquippedOrActive = item.active !== false || isHeldItem;
 
@@ -166,7 +166,9 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
                 return; // Depleted (0 charges remaining), do not trigger
             }
 
-            const chargesInfo = effective.hasCharges ? `${effective.charges}/${effective.maxCharges} Charges` : undefined;
+            const chargesInfo = effective.hasCharges
+                ? `${effective.charges}/${effective.maxCharges} Charges`
+                : undefined;
             const isLeftovers = (item.name || '').trim().toLowerCase().includes('leftovers');
 
             if (isLeftovers && !fullItemText.toLowerCase().includes('heal')) {
@@ -215,9 +217,7 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
 
     // 4. Inspect Statuses: Burn, Poison, Badly Poisoned
     state.statuses?.forEach((status, idx) => {
-        const sName = (
-            status.name === 'Custom...' ? status.customName : status.name || status.customName || ''
-        )
+        const sName = (status.name === 'Custom...' ? status.customName : status.name || status.customName || '')
             .toLowerCase()
             .trim();
         if (!sName) return;
@@ -284,8 +284,7 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
                         state.activeBattlefield.other.remainingRounds === -1)) ||
                 state.activeBattlefield.extraOther?.some(
                     (o) =>
-                        o.name?.toLowerCase().includes('gravity') &&
-                        (o.remainingRounds > 0 || o.remainingRounds === -1)
+                        o.name?.toLowerCase().includes('gravity') && (o.remainingRounds > 0 || o.remainingRounds === -1)
                 )
             );
 
@@ -313,7 +312,8 @@ export function findRoundEndTriggers(state: CharacterState): RoundEndTrigger[] {
                 const abilityLower = (state.identity.ability || '').trim().toLowerCase();
                 const abilityActive = state.identity.abilityActive ?? true;
 
-                let fullAbilityTags = `${state.identity.abilityTags || ''} ${getAbilityText(state.identity.ability || '', state.roomCustomAbilities)}`.trim();
+                let fullAbilityTags =
+                    `${state.identity.abilityTags || ''} ${getAbilityText(state.identity.ability || '', state.roomCustomAbilities)}`.trim();
                 const known = getKnownAbility(state.identity.ability || '');
                 if (known) {
                     fullAbilityTags = `${fullAbilityTags} ${known.tags}`.trim();

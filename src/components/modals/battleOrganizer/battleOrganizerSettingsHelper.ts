@@ -245,7 +245,9 @@ export function getBattleOrganizerSettings(): BattleOrganizerSettings {
         const showCriticalMarks =
             rawCritMarks !== null ? rawCritMarks === 'true' : (DEFAULT_BO_SETTINGS.showCriticalMarks ?? true);
         const showCombatantChips =
-            rawCombatantChips !== null ? rawCombatantChips === 'true' : (DEFAULT_BO_SETTINGS.showCombatantChips ?? true);
+            rawCombatantChips !== null
+                ? rawCombatantChips === 'true'
+                : (DEFAULT_BO_SETTINGS.showCombatantChips ?? true);
 
         return {
             showBattlefield,

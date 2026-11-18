@@ -1,9 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import {
-    processTransformation,
-    processReversion,
-    type TransformationDraft
-} from '../transformationLogic';
+import { processTransformation, processReversion, type TransformationDraft } from '../transformationLogic';
 import { createFormBackup } from '../macroHelpers';
 import { calculateMaxHp } from '../../combat/combatMath';
 import { CombatStat } from '../../../types/enums';
@@ -18,7 +14,13 @@ vi.mock('../../api', () => ({
 
 const makeStats = (str = 2, dex = 2, vit = 2, spe = 2, ins = 2) => {
     const s = (base: number) => ({ base, rank: 0, limit: 5, buff: 0, debuff: 0 });
-    return { [CombatStat.STR]: s(str), [CombatStat.DEX]: s(dex), [CombatStat.VIT]: s(vit), [CombatStat.SPE]: s(spe), [CombatStat.INS]: s(ins) };
+    return {
+        [CombatStat.STR]: s(str),
+        [CombatStat.DEX]: s(dex),
+        [CombatStat.VIT]: s(vit),
+        [CombatStat.SPE]: s(spe),
+        [CombatStat.INS]: s(ins)
+    };
 };
 
 const createTestDraft = (state: CharacterState): TransformationDraft => ({
@@ -161,15 +163,12 @@ describe('transformationLogic', () => {
             const draft = createTestDraft(state);
             const updates: Record<string, unknown> = {};
 
-            processTransformation(
-                draft,
-                state,
-                updates,
-                'Terastallize',
-                undefined,
-                'Electric',
-                { category: 'Special', acc1: 'spe', acc2: 'none', dmg1: 'spe' }
-            );
+            processTransformation(draft, state, updates, 'Terastallize', undefined, 'Electric', {
+                category: 'Special',
+                acc1: 'spe',
+                acc2: 'none',
+                dmg1: 'spe'
+            });
 
             expect(draft.identity.terastallizeAffinity).toBe('Electric');
             expect(draft.identity.terastallizeBonusActive).toBe(true);
@@ -181,7 +180,11 @@ describe('transformationLogic', () => {
 
             // Reversion
             const activeTeraState = createTestCharacterState({
-                identity: { activeTransformation: 'Terastallize', terastallizeAffinity: 'Electric', terastallizeBonusActive: true },
+                identity: {
+                    activeTransformation: 'Terastallize',
+                    terastallizeAffinity: 'Electric',
+                    terastallizeBonusActive: true
+                },
                 moves: [teraBlast as MoveData]
             });
             const revertDraft = createTestDraft(activeTeraState);
@@ -197,13 +200,36 @@ describe('transformationLogic', () => {
 
     describe('Custom Forms & Stance Change', () => {
         const createForm = (overrides: Partial<CustomForm>): CustomForm => ({
-            id: 'f1', name: 'Form', description: '', tags: '', grantedMoves: [],
-            swapBaseStats: false, swapStatLimits: false, swapStatRanks: false, swapSkills: false,
-            swapMoves: false, swapTyping: false, swapAbilities: false, swapBuffs: false, swapDebuffs: false,
-            freshBuffs: false, freshDebuffs: false, wipeBuffs: false, wipeDebuffs: false,
-            swapStatuses: false, freshStatuses: false, wipeStatuses: false, restoreHp: false,
-            restoreWill: false, healHp: false, healWill: false, activationCostHp: 0, activationCostWill: 0,
-            tempHp: 0, tempWill: 0, ...overrides
+            id: 'f1',
+            name: 'Form',
+            description: '',
+            tags: '',
+            grantedMoves: [],
+            swapBaseStats: false,
+            swapStatLimits: false,
+            swapStatRanks: false,
+            swapSkills: false,
+            swapMoves: false,
+            swapTyping: false,
+            swapAbilities: false,
+            swapBuffs: false,
+            swapDebuffs: false,
+            freshBuffs: false,
+            freshDebuffs: false,
+            wipeBuffs: false,
+            wipeDebuffs: false,
+            swapStatuses: false,
+            freshStatuses: false,
+            wipeStatuses: false,
+            restoreHp: false,
+            restoreWill: false,
+            healHp: false,
+            healWill: false,
+            activationCostHp: 0,
+            activationCostWill: 0,
+            tempHp: 0,
+            tempWill: 0,
+            ...overrides
         });
 
         const bladeForm = createForm({
@@ -218,7 +244,21 @@ describe('transformationLogic', () => {
         it('applies custom form swap flags and cleans up grantedMoves on reversion', () => {
             const baseState = createTestCharacterState({
                 roomCustomForms: [bladeForm],
-                moves: [{ id: 'm-slash', name: 'Slash', type: 'Normal', category: 'Physical', acc1: 'str', acc2: 'none', dmg1: 'str', power: 2, desc: '', active: false, marker: '' }]
+                moves: [
+                    {
+                        id: 'm-slash',
+                        name: 'Slash',
+                        type: 'Normal',
+                        category: 'Physical',
+                        acc1: 'str',
+                        acc2: 'none',
+                        dmg1: 'str',
+                        power: 2,
+                        desc: '',
+                        active: false,
+                        marker: ''
+                    }
+                ]
             });
             const draft = createTestDraft(baseState);
             const updates: Record<string, unknown> = {};

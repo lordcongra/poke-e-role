@@ -5,8 +5,7 @@ export interface HurtModifierResult {
     tag: string;
 }
 
-const BRACKET_TAG_REGEX =
-    /\[\s*Hurt\s+(Penalty|Bonus)(?::\s*(\d+)\s*(?:per\s*HP|\/HP))?(?:\s*\(max\s*(\d+)\))?\s*\]/i;
+const BRACKET_TAG_REGEX = /\[\s*Hurt\s+(Penalty|Bonus)(?::\s*(\d+)\s*(?:per\s*HP|\/HP))?(?:\s*\(max\s*(\d+)\))?\s*\]/i;
 
 const NATURAL_PENALTY_REGEX =
     /(?:\*|\b)(?:Reduce|Remove)\s+(\d+)\s+Dic?e\s+from\s+the\s+Damage\s+Pool[\s\S]*?for\s+every\s+missing\s+(?:point\s+of\s+)?HP(?:[\s\S]*?Up\s+to\s+(\d+))?/i;
@@ -23,10 +22,7 @@ const NATURAL_BONUS_REGEX =
  *
  * Returns diceModifier and descriptive tag (e.g. "Eruption (-3 Dice: 3 Missing HP)").
  */
-export function parseMissingHpHurtModifier(
-    move: MoveData,
-    state: CharacterState
-): HurtModifierResult {
+export function parseMissingHpHurtModifier(move: MoveData, state: CharacterState): HurtModifierResult {
     if (!move || !state?.health) {
         return { diceModifier: 0, tag: '' };
     }
@@ -81,7 +77,10 @@ export function parseMissingHpHurtModifier(
     }
 
     const hpCurr = Number(state.health.hpCurr ?? (state.health as { currentHitPoints?: number }).currentHitPoints) || 0;
-    const hpMax = Math.max(1, Number(state.health.hpMax ?? (state.health as { maxHitPoints?: number }).maxHitPoints) || 1);
+    const hpMax = Math.max(
+        1,
+        Number(state.health.hpMax ?? (state.health as { maxHitPoints?: number }).maxHitPoints) || 1
+    );
     const missingHp = Math.max(0, hpMax - hpCurr);
 
     if (missingHp === 0) {
@@ -100,4 +99,3 @@ export function parseMissingHpHurtModifier(
 
     return { diceModifier, tag };
 }
-

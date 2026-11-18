@@ -16,12 +16,7 @@ import {
 
 export { AURA_LOWERED_STAT };
 
-export const RUIN_ABILITIES = new Set([
-    'tablets of ruin',
-    'sword of ruin',
-    'vessel of ruin',
-    'beads of ruin'
-]);
+export const RUIN_ABILITIES = new Set(['tablets of ruin', 'sword of ruin', 'vessel of ruin', 'beads of ruin']);
 
 export const STAT_LOWERING_AURA_ABILITIES = new Set([
     'tablets of ruin',
@@ -31,11 +26,7 @@ export const STAT_LOWERING_AURA_ABILITIES = new Set([
     'intimidate'
 ]);
 
-export const STAT_DROPS_IMMUNITY_ABILITIES = new Set([
-    'clear body',
-    'white smoke',
-    'full metal body'
-]);
+export const STAT_DROPS_IMMUNITY_ABILITIES = new Set(['clear body', 'white smoke', 'full metal body']);
 
 export const STAT_LOWERING_IMMUNITY_ABILITIES = STAT_DROPS_IMMUNITY_ABILITIES;
 
@@ -91,10 +82,14 @@ function checkTargetActiveAbility(
                     (activeEntityId && (matched.entityId === activeEntityId || matched.id === activeEntityId))
                 ) {
                     if (resolvedChar.identity?.ability) ability = resolvedChar.identity.ability;
-                    if (resolvedChar.identity?.abilityActive !== undefined) active = resolvedChar.identity.abilityActive;
+                    if (resolvedChar.identity?.abilityActive !== undefined)
+                        active = resolvedChar.identity.abilityActive;
                 }
             }
-            const clean = (ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+            const clean = (ability || '')
+                .replace(/\s*\(HA\)$/i, '')
+                .trim()
+                .toLowerCase();
             return predicate(clean) && active;
         }
     }
@@ -109,7 +104,10 @@ function checkTargetActiveAbility(
                 targetIds
             )
         ) {
-            const clean = (resolvedChar.identity?.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+            const clean = (resolvedChar.identity?.ability || '')
+                .replace(/\s*\(HA\)$/i, '')
+                .trim()
+                .toLowerCase();
             const active = resolvedChar.identity?.abilityActive !== false;
             return predicate(clean) && active;
         }
@@ -127,12 +125,7 @@ export function isTargetCombatantActiveNeutralizingGas(
     allCombatants?: CombatantRowData[],
     activeCharState?: CharacterState | null
 ): boolean {
-    return checkTargetActiveAbility(
-        targetId,
-        (clean) => clean === 'neutralizing gas',
-        allCombatants,
-        activeCharState
-    );
+    return checkTargetActiveAbility(targetId, (clean) => clean === 'neutralizing gas', allCombatants, activeCharState);
 }
 
 /**
@@ -143,12 +136,7 @@ export function isTargetCombatantImmuneToRuin(
     allCombatants?: CombatantRowData[],
     activeCharState?: CharacterState | null
 ): boolean {
-    return checkTargetActiveAbility(
-        targetId,
-        (clean) => RUIN_ABILITIES.has(clean),
-        allCombatants,
-        activeCharState
-    );
+    return checkTargetActiveAbility(targetId, (clean) => RUIN_ABILITIES.has(clean), allCombatants, activeCharState);
 }
 
 /**
@@ -181,7 +169,10 @@ export function isTargetAffectedByAbility(
         return false;
     }
 
-    const cleanAbility = abilityName.replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+    const cleanAbility = abilityName
+        .replace(/\s*\(HA\)$/i, '')
+        .trim()
+        .toLowerCase();
 
     // Neutralizing Gas self-immunity: Neutralizing Gas cannot negate another active Neutralizing Gas
     if (cleanAbility === 'neutralizing gas' && isTargetCombatantActiveNeutralizingGas(targetId)) {
@@ -208,10 +199,14 @@ export function isTargetAffectedByAbility(
         const sideData = targetSide === 'player' ? battlefield.playerSide : battlefield.foeSide;
         if (sideData) {
             const inFf = sideData.forceFields?.some(
-                (ff) => ff?.name?.toLowerCase().includes(cleanAbility) && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                (ff) =>
+                    ff?.name?.toLowerCase().includes(cleanAbility) &&
+                    (ff.remainingRounds > 0 || ff.remainingRounds === -1)
             );
             const inExtraFf = sideData.extraForceFields?.some(
-                (ff) => ff?.name?.toLowerCase().includes(cleanAbility) && (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                (ff) =>
+                    ff?.name?.toLowerCase().includes(cleanAbility) &&
+                    (ff.remainingRounds > 0 || ff.remainingRounds === -1)
             );
             const inOther = Boolean(sideData.other && sideData.other.toLowerCase().includes(cleanAbility));
             const inExtraOther = Boolean(sideData.extraOther?.some((o) => o?.toLowerCase().includes(cleanAbility)));
@@ -246,7 +241,9 @@ export function isTargetAffectedByAbility(
             }
             if (
                 battlefield.extraOther?.some(
-                    (o) => o?.name?.toLowerCase().includes('neutralizing gas') && (o.remainingRounds > 0 || o.remainingRounds === -1)
+                    (o) =>
+                        o?.name?.toLowerCase().includes('neutralizing gas') &&
+                        (o.remainingRounds > 0 || o.remainingRounds === -1)
                 )
             ) {
                 return true;
@@ -274,7 +271,10 @@ export function isTargetAffectedByAbility(
                     // Combatants in the PC cannot receive or be affected by auras
                     if (targetId) {
                         const matchedTargetCombatant = allCombatants.find((c) => matchesTarget(c, targetId));
-                        if (matchedTargetCombatant && isCombatantInPc(matchedTargetCombatant, activeCharState?.pcData)) {
+                        if (
+                            matchedTargetCombatant &&
+                            isCombatantInPc(matchedTargetCombatant, activeCharState?.pcData)
+                        ) {
                             return false;
                         }
                     }
@@ -316,7 +316,10 @@ export function isTargetAffectedByAbility(
                         if (c.isFainted) return false;
                         if (isCombatantInPc(c, activeCharState?.pcData)) return false;
                         if (!isCombatantAbilityActive(c)) return false;
-                        const cAb = (c.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+                        const cAb = (c.ability || '')
+                            .replace(/\s*\(HA\)$/i, '')
+                            .trim()
+                            .toLowerCase();
                         return cAb === cleanAbility;
                     });
 
@@ -327,7 +330,8 @@ export function isTargetAffectedByAbility(
                             continue;
                         }
 
-                        const sourceIsPlayer = typeof source.isPlayerSide === 'boolean' ? source.isPlayerSide : !source.isNPC;
+                        const sourceIsPlayer =
+                            typeof source.isPlayerSide === 'boolean' ? source.isPlayerSide : !source.isNPC;
                         const sourceSide: 'player' | 'foe' = sourceIsPlayer ? 'player' : 'foe';
 
                         // Verify stance match
@@ -344,7 +348,14 @@ export function isTargetAffectedByAbility(
                             const sourceIdentifiers = [source.id, source.tokenId, source.entityId, source.name].filter(
                                 Boolean
                             ) as string[];
-                            if (isTargetAffectedByAbility(sourceIdentifiers, sourceSide, 'neutralizing gas', battlefield)) {
+                            if (
+                                isTargetAffectedByAbility(
+                                    sourceIdentifiers,
+                                    sourceSide,
+                                    'neutralizing gas',
+                                    battlefield
+                                )
+                            ) {
                                 continue;
                             }
                         }
@@ -369,8 +380,7 @@ export function isTargetAffectedByAbility(
                                 isTargetAffectedByAbility
                             );
                             const isSourceUnique =
-                                RUIN_ABILITIES.has(cleanAbility) ||
-                                /\[\s*unique(?:\s+ability)?\s*\]/i.test(sourceTags);
+                                RUIN_ABILITIES.has(cleanAbility) || /\[\s*unique(?:\s+ability)?\s*\]/i.test(sourceTags);
                             const sourceWill = getCombatantWill(source, activeCharState);
                             const contest = evaluateStatAuraContest(protection, isSourceUnique, sourceWill);
                             if (contest.isBlocked) {
@@ -448,7 +458,13 @@ export function isAllyAuraActive(
                     entityId: char.identity.entityId,
                     tokenId: char.tokenId || undefined,
                     name: char.identity.nickname || char.identity.species || '',
-                    actions: [{ text: '', status: 'none' }, { text: '', status: 'none' }, { text: '', status: 'none' }, { text: '', status: 'none' }, { text: '', status: 'none' }],
+                    actions: [
+                        { text: '', status: 'none' },
+                        { text: '', status: 'none' },
+                        { text: '', status: 'none' },
+                        { text: '', status: 'none' },
+                        { text: '', status: 'none' }
+                    ],
                     evadeUsed: false,
                     clashUsed: false,
                     heldItem: '',
@@ -462,7 +478,10 @@ export function isAllyAuraActive(
         }
 
         if (!inPc) {
-            const cleanUserAb = userAbility.replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+            const cleanUserAb = userAbility
+                .replace(/\s*\(HA\)$/i, '')
+                .trim()
+                .toLowerCase();
             if (cleanUserAb === cleanAbility) {
                 if (!isAbilitySuppressedByField(side, battlefield)) {
                     return true;
@@ -492,7 +511,7 @@ export function isOpposingAuraActive(
 export function isVictoryStarActive(state: CharacterState): boolean {
     const sideName = resolveCharacterSide(state);
     const resolvedSide: 'player' | 'foe' = sideName !== 'none' ? sideName : state.identity.isNPC ? 'foe' : 'player';
-    const rollerId = state.identity.entityId || state.tokenId || state.identity.nickname || state.identity.species || '';
+    const rollerId =
+        state.identity.entityId || state.tokenId || state.identity.nickname || state.identity.species || '';
     return isTargetAffectedByAbility(rollerId, resolvedSide, 'victory star', state.activeBattlefield || null);
 }
-

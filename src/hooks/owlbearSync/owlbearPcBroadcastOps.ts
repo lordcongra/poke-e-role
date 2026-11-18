@@ -33,10 +33,7 @@ export function resolveTargetCampaignId(
     if (pcData.campaigns[pcData.activeCampaignId] && !pcData.campaigns[pcData.activeCampaignId].isPrivate) {
         return pcData.activeCampaignId;
     }
-    return (
-        Object.keys(pcData.campaigns || {}).find((k) => !pcData.campaigns[k]?.isPrivate) ||
-        pcData.activeCampaignId
-    );
+    return Object.keys(pcData.campaigns || {}).find((k) => !pcData.campaigns[k]?.isPrivate) || pcData.activeCampaignId;
 }
 
 /**

@@ -14,12 +14,7 @@ import { parseCombatTags } from '@/utils/tagParser/index';
 import { rollDicePlus } from '@/utils/combat/diceRoller';
 import { isTargetAffectedByAbility, matchesTarget } from '@/utils/combat/abilityTargetingUtils';
 import { resolveCharacterSide } from '@/utils/combat/combatantSideUtils';
-import {
-    getCharacterNickname,
-    formatTagString,
-    getStatStageModifier,
-    resolveAnalyticBonus
-} from './rollerCommon';
+import { getCharacterNickname, formatTagString, getStatStageModifier, resolveAnalyticBonus } from './rollerCommon';
 
 export async function executeDamageRoll(
     move: MoveData,
@@ -184,15 +179,15 @@ export async function executeDamageRoll(
 
     const sideName = resolveCharacterSide(state);
     const rollerSide: 'player' | 'foe' = sideName !== 'none' ? sideName : state.identity.isNPC ? 'foe' : 'player';
-    const rollerId = [
-        state.identity.entityId,
-        state.tokenId,
-        state.identity.nickname,
-        state.identity.species
-    ].filter((id): id is string => Boolean(id));
+    const rollerId = [state.identity.entityId, state.tokenId, state.identity.nickname, state.identity.species].filter(
+        (id): id is string => Boolean(id)
+    );
 
     if (!override.active || override.type !== 'flat') {
-        if (move.category === 'Special' && isTargetAffectedByAbility(rollerId, rollerSide, 'battery', state.activeBattlefield || null)) {
+        if (
+            move.category === 'Special' &&
+            isTargetAffectedByAbility(rollerId, rollerSide, 'battery', state.activeBattlefield || null)
+        ) {
             actualDicePool += 1;
             tags.push('Battery (+1 Damage)');
         }
@@ -216,7 +211,10 @@ export async function executeDamageRoll(
             }
         }
 
-        const cleanAbility = (state.identity.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+        const cleanAbility = (state.identity.ability || '')
+            .replace(/\s*\(HA\)$/i, '')
+            .trim()
+            .toLowerCase();
         if (cleanAbility === 'analytic' && state.identity.abilityActive !== false) {
             if (await resolveAnalyticBonus(state, rollerId, rollerSide)) {
                 actualDicePool += 1;
@@ -231,9 +229,7 @@ export async function executeDamageRoll(
                     ? { id: target, tokenId: target, entityId: target, name: target }
                     : target
                 : undefined;
-            const isMatched = Boolean(
-                stakeoutTargetId && targetObj && matchesTarget(targetObj, stakeoutTargetId)
-            );
+            const isMatched = Boolean(stakeoutTargetId && targetObj && matchesTarget(targetObj, stakeoutTargetId));
 
             const rawBase = calculateBaseDamage(move, state);
             const baseHadStakeout = baseDamage >= rawBase && rawBase > 0;
@@ -317,12 +313,7 @@ export async function executeDamageRoll(
             tags.push(weatherInfo.tag);
         }
 
-        const fieldAuraInfo = getFieldAuraDamageBonus(
-            move.type,
-            state.activeBattlefield,
-            state.identity.isNPC,
-            state
-        );
+        const fieldAuraInfo = getFieldAuraDamageBonus(move.type, state.activeBattlefield, state.identity.isNPC, state);
         if (fieldAuraInfo.diceBonus !== 0) {
             actualDicePool += fieldAuraInfo.diceBonus;
         }

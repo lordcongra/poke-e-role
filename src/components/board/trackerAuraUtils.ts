@@ -16,7 +16,10 @@ export async function removeCharacterFromAuraSources(
     state: CharacterState,
     onComplete?: () => void
 ): Promise<void> {
-    const cleanAbility = abilityName.replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+    const cleanAbility = abilityName
+        .replace(/\s*\(HA\)$/i, '')
+        .trim()
+        .toLowerCase();
     const charIdentifiers = [
         state.identity.entityId,
         state.tokenId,
@@ -41,7 +44,10 @@ export async function removeCharacterFromAuraSources(
             const activeRound = data.rounds?.[data.activeRoundIndex ?? 0] || data.rounds?.[0];
             if (activeRound?.combatants) {
                 activeRound.combatants.forEach((c) => {
-                    const cAb = (c.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+                    const cAb = (c.ability || '')
+                        .replace(/\s*\(HA\)$/i, '')
+                        .trim()
+                        .toLowerCase();
                     if (cAb === cleanAbility && Array.isArray(c.abilityTargetIds) && c.abilityTargetIds.length > 0) {
                         const originalLength = c.abilityTargetIds.length;
                         const filtered = c.abilityTargetIds.filter((tId) => {
@@ -104,10 +110,7 @@ export async function removeCharacterFromAuraSources(
  * Re-reads organizer storage, clears orphan aura associations across all combatants
  * in the active round, updates token metadata, and re-syncs state.
  */
-export async function refreshAndCleanAuraAssociations(
-    state?: CharacterState,
-    onComplete?: () => void
-): Promise<void> {
+export async function refreshAndCleanAuraAssociations(state?: CharacterState, onComplete?: () => void): Promise<void> {
     const currentState = state || useCharacterStore.getState();
     let boChanged = false;
     const tokensToUpdate: { tokenId: string; targetIds: string[] }[] = [];

@@ -277,11 +277,13 @@ describe('Combat Engine, Roller & Battle Organizer', () => {
             expect(healthyPenalties.isAsleep).toBe(false);
 
             store.addStatus();
-            const paralysisId = useCharacterStore.getState().statuses[useCharacterStore.getState().statuses.length - 1].id;
+            const paralysisId =
+                useCharacterStore.getState().statuses[useCharacterStore.getState().statuses.length - 1].id;
             store.updateStatus(paralysisId, 'name', 'Paralysis');
 
             store.addStatus();
-            const confusionId = useCharacterStore.getState().statuses[useCharacterStore.getState().statuses.length - 1].id;
+            const confusionId =
+                useCharacterStore.getState().statuses[useCharacterStore.getState().statuses.length - 1].id;
             store.updateStatus(confusionId, 'name', 'Confusion');
 
             const starterPenalties = getStatusPenalties(useCharacterStore.getState());
@@ -404,7 +406,11 @@ describe('Combat Engine, Roller & Battle Organizer', () => {
         });
 
         it('populates combatant action status', () => {
-            let mockCombatant: CombatantRowData = createDefaultCombatant('Pikachu', 'http://example.com/pika.png', true);
+            let mockCombatant: CombatantRowData = createDefaultCombatant(
+                'Pikachu',
+                'http://example.com/pika.png',
+                true
+            );
             mockCombatant.tokenId = 'token-pika';
             expect(mockCombatant.actions.every((a) => a.text === '')).toBe(true);
 
@@ -592,4 +598,3 @@ describe('Combat Engine, Roller & Battle Organizer', () => {
         });
     });
 });
-

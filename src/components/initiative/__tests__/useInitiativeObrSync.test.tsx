@@ -195,9 +195,7 @@ describe('useInitiativeObrSync (standalone loop safety)', () => {
         const charId = 'char-3';
         localStorage.setItem(
             'pkr_standalone_init_list',
-            JSON.stringify([
-                { id: charId, name: 'Bulbasaur', image: '', d6: 0, baseInit: 2, total: 0, tiebreaker: 0 }
-            ])
+            JSON.stringify([{ id: charId, name: 'Bulbasaur', image: '', d6: 0, baseInit: 2, total: 0, tiebreaker: 0 }])
         );
         mockGetLocalCharacters.mockResolvedValue([
             {

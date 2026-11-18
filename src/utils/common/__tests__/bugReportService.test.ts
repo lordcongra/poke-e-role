@@ -78,4 +78,3 @@ describe('bugReportService', () => {
         expect(parsed.embeds[0].fields[3].value).toBe('Sparky (Pikachu, Rank: Starter)');
     });
 });
-

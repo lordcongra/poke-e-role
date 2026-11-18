@@ -211,7 +211,10 @@ export function parseTokenPrivacyFlags(
 
 export function parseHeldItemsFromMetadata(rawMeta: Record<string, unknown>): string {
     if (!rawMeta || typeof rawMeta !== 'object') return '';
-    const meta = (rawMeta['pokerole-extension/stats'] || rawMeta['pokerole-pmd-extension/stats'] || rawMeta) as Record<string, unknown>;
+    const meta = (rawMeta['pokerole-extension/stats'] || rawMeta['pokerole-pmd-extension/stats'] || rawMeta) as Record<
+        string,
+        unknown
+    >;
     const stateObj = (meta?.state || meta) as Record<string, unknown>;
     const identityObj = (stateObj?.identity || meta?.identity || {}) as Record<string, unknown>;
 
@@ -694,7 +697,12 @@ export function getCombatantAbilityChoice(combatant: CombatantRowData): {
 } {
     const combatantTags = combatant.abilityTags || getKnownAbility(combatant.ability || '')?.tags || '';
     const choiceMatch = combatantTags.match(/\[\s*Choice\s*:\s*([^\]]+)\]/i);
-    const choiceOptions = choiceMatch ? choiceMatch[1].split('|').map((s) => s.trim()).filter(Boolean) : [];
+    const choiceOptions = choiceMatch
+        ? choiceMatch[1]
+              .split('|')
+              .map((s) => s.trim())
+              .filter(Boolean)
+        : [];
     const hasChoice = choiceOptions.length > 0;
     const choiceIndex = combatant.abilityChoiceIndex ?? 0;
     const activeChoiceIndex = hasChoice

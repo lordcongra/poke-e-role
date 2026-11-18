@@ -55,4 +55,3 @@ describe('rollLogSync event hygiene (P-07)', () => {
         expect(eventTypes).not.toContain('storage');
     });
 });
-

@@ -58,9 +58,15 @@ describe('targetingModalUtils', () => {
 
         it('returns +2 for double Super Effective matchup', () => {
             // Grass vs Water/Ground: 2 * 2 = 4x -> +2
-            expect(calculateDefaultEffectiveness('Grass', ['Water', 'Ground'])).toEqual({ modifier: 2, isImmune: false });
+            expect(calculateDefaultEffectiveness('Grass', ['Water', 'Ground'])).toEqual({
+                modifier: 2,
+                isImmune: false
+            });
             // Ice vs Dragon/Flying: 2 * 2 = 4x -> +2
-            expect(calculateDefaultEffectiveness('Ice', ['Dragon', 'Flying'])).toEqual({ modifier: 2, isImmune: false });
+            expect(calculateDefaultEffectiveness('Ice', ['Dragon', 'Flying'])).toEqual({
+                modifier: 2,
+                isImmune: false
+            });
         });
 
         it('returns -1 for single Not Very Effective matchup', () => {
@@ -72,7 +78,10 @@ describe('targetingModalUtils', () => {
 
         it('returns -2 for double Not Very Effective matchup', () => {
             // Grass vs Fire/Flying: 0.5 * 0.5 = 0.25x -> -2
-            expect(calculateDefaultEffectiveness('Grass', ['Fire', 'Flying'])).toEqual({ modifier: -2, isImmune: false });
+            expect(calculateDefaultEffectiveness('Grass', ['Fire', 'Flying'])).toEqual({
+                modifier: -2,
+                isImmune: false
+            });
             // Bug vs Fire/Flying: 0.5 * 0.5 = 0.25x -> -2
             expect(calculateDefaultEffectiveness('Bug', ['Fire', 'Flying'])).toEqual({ modifier: -2, isImmune: false });
         });
@@ -325,7 +334,16 @@ describe('targetingModalUtils', () => {
 
         it('preselects player allies up to maxTargets in target-all mode when targeting allies', () => {
             const allyMove: MoveData = { ...baseMove, desc: '[Target: All Allies]' };
-            const rows = initializeMultiTargetRows(combatants, 'Water', false, null, undefined, 'target-all', 2, allyMove);
+            const rows = initializeMultiTargetRows(
+                combatants,
+                'Water',
+                false,
+                null,
+                undefined,
+                'target-all',
+                2,
+                allyMove
+            );
             const selected = rows.filter((r) => r.selected);
             expect(selected).toHaveLength(2);
             expect(selected.every((r) => r.isPlayerSide)).toBe(true);
@@ -334,7 +352,16 @@ describe('targetingModalUtils', () => {
 
         it('preselects foes up to maxTargets in target-all mode when targeting foes', () => {
             const foeMove: MoveData = { ...baseMove, desc: '[Target: All Foes]' };
-            const rows = initializeMultiTargetRows(combatants, 'Water', false, null, undefined, 'target-all', 1, foeMove);
+            const rows = initializeMultiTargetRows(
+                combatants,
+                'Water',
+                false,
+                null,
+                undefined,
+                'target-all',
+                1,
+                foeMove
+            );
             const selected = rows.filter((r) => r.selected);
             expect(selected).toHaveLength(1);
             expect(selected[0].id).toBe('f1');
@@ -360,4 +387,3 @@ describe('targetingModalUtils', () => {
         });
     });
 });
-

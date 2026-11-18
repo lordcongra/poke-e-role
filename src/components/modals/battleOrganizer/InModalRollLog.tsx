@@ -416,8 +416,18 @@ export function InModalRollLog({
 
                             const matchedCombatant = combatants.find((c) => {
                                 if (r.tokenId && c.tokenId && r.tokenId === c.tokenId) return true;
-                                if (!r.tokenId && charName && c.name.toLowerCase().trim() === charName.toLowerCase().trim()) return true;
-                                if (!r.tokenId && c.name.trim() && r.label.toLowerCase().includes(c.name.toLowerCase().trim())) return true;
+                                if (
+                                    !r.tokenId &&
+                                    charName &&
+                                    c.name.toLowerCase().trim() === charName.toLowerCase().trim()
+                                )
+                                    return true;
+                                if (
+                                    !r.tokenId &&
+                                    c.name.trim() &&
+                                    r.label.toLowerCase().includes(c.name.toLowerCase().trim())
+                                )
+                                    return true;
                                 return false;
                             });
 

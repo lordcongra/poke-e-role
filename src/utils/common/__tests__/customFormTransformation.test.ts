@@ -18,19 +18,49 @@ vi.mock('../../api', () => ({
 }));
 
 const makeCustomForm = (overrides: Partial<CustomForm> = {}): CustomForm => ({
-    id: 'form-1', name: 'Blade Form', description: '', swapBaseStats: false, swapStatLimits: false,
-    swapStatRanks: false, swapSkills: false, swapMoves: false, swapTyping: false, swapAbilities: false,
-    swapBuffs: false, swapDebuffs: false, freshBuffs: false, freshDebuffs: false, wipeBuffs: false,
-    wipeDebuffs: false, swapStatuses: false, freshStatuses: false, wipeStatuses: false, restoreHp: false,
-    restoreWill: false, healHp: false, healWill: false, activationCostHp: 0, activationCostWill: 0,
-    grantedMoves: [], tags: '', tempHp: 0, tempWill: 0, ...overrides
+    id: 'form-1',
+    name: 'Blade Form',
+    description: '',
+    swapBaseStats: false,
+    swapStatLimits: false,
+    swapStatRanks: false,
+    swapSkills: false,
+    swapMoves: false,
+    swapTyping: false,
+    swapAbilities: false,
+    swapBuffs: false,
+    swapDebuffs: false,
+    freshBuffs: false,
+    freshDebuffs: false,
+    wipeBuffs: false,
+    wipeDebuffs: false,
+    swapStatuses: false,
+    freshStatuses: false,
+    wipeStatuses: false,
+    restoreHp: false,
+    restoreWill: false,
+    healHp: false,
+    healWill: false,
+    activationCostHp: 0,
+    activationCostWill: 0,
+    grantedMoves: [],
+    tags: '',
+    tempHp: 0,
+    tempWill: 0,
+    ...overrides
 });
 
 const createTestDraft = (state: CharacterState): TransformationDraft => ({
-    identity: { ...state.identity }, health: { ...state.health }, will: { ...state.will },
-    derived: { ...state.derived }, stats: JSON.parse(JSON.stringify(state.stats)),
-    socials: JSON.parse(JSON.stringify(state.socials)), moves: [...state.moves],
-    skills: { ...state.skills }, statuses: [...state.statuses], effects: [...state.effects],
+    identity: { ...state.identity },
+    health: { ...state.health },
+    will: { ...state.will },
+    derived: { ...state.derived },
+    stats: JSON.parse(JSON.stringify(state.stats)),
+    socials: JSON.parse(JSON.stringify(state.socials)),
+    moves: [...state.moves],
+    skills: { ...state.skills },
+    statuses: [...state.statuses],
+    effects: [...state.effects],
     trackers: { ...state.trackers }
 });
 
@@ -40,8 +70,12 @@ describe('customFormTransformation', () => {
             const form = makeCustomForm({ id: 'f-buff', freshBuffs: true });
             const state = createTestCharacterState({ roomCustomForms: [form] });
             const draft = createTestDraft(state);
-            Object.values(CombatStat).forEach((s) => { draft.stats[s].buff = 2; });
-            Object.values(SocialStat).forEach((s) => { draft.socials[s].buff = 3; });
+            Object.values(CombatStat).forEach((s) => {
+                draft.stats[s].buff = 2;
+            });
+            Object.values(SocialStat).forEach((s) => {
+                draft.socials[s].buff = 3;
+            });
             draft.derived.defBuff = 2;
             draft.derived.sdefBuff = 2;
 
@@ -52,7 +86,9 @@ describe('customFormTransformation', () => {
                 expect(draft.stats[s].buff).toBe(0);
                 expect(updates[`${s}-buff`]).toBe(0);
             });
-            Object.values(SocialStat).forEach((s) => { expect(draft.socials[s].buff).toBe(0); });
+            Object.values(SocialStat).forEach((s) => {
+                expect(draft.socials[s].buff).toBe(0);
+            });
             expect(draft.derived.defBuff).toBe(0);
             expect(draft.derived.sdefBuff).toBe(0);
             expect(updates['def-buff']).toBe(0);
@@ -63,8 +99,12 @@ describe('customFormTransformation', () => {
             const form = makeCustomForm({ id: 'f-debuff', wipeDebuffs: true });
             const state = createTestCharacterState({ roomCustomForms: [form] });
             const draft = createTestDraft(state);
-            Object.values(CombatStat).forEach((s) => { draft.stats[s].debuff = 2; });
-            Object.values(SocialStat).forEach((s) => { draft.socials[s].debuff = 1; });
+            Object.values(CombatStat).forEach((s) => {
+                draft.stats[s].debuff = 2;
+            });
+            Object.values(SocialStat).forEach((s) => {
+                draft.socials[s].debuff = 1;
+            });
             draft.derived.defDebuff = 2;
             draft.derived.sdefDebuff = 2;
 
@@ -75,7 +115,9 @@ describe('customFormTransformation', () => {
                 expect(draft.stats[s].debuff).toBe(0);
                 expect(updates[`${s}-debuff`]).toBe(0);
             });
-            Object.values(SocialStat).forEach((s) => { expect(draft.socials[s].debuff).toBe(0); });
+            Object.values(SocialStat).forEach((s) => {
+                expect(draft.socials[s].debuff).toBe(0);
+            });
             expect(draft.derived.defDebuff).toBe(0);
             expect(draft.derived.sdefDebuff).toBe(0);
             expect(updates['def-debuff']).toBe(0);
@@ -143,7 +185,10 @@ describe('customFormTransformation', () => {
     describe('CustomForm reversion cleanup', () => {
         it('wipes temp HP and temp Will on reversion when activeForm.restoreHp, restoreWill, or temp pools > 0', () => {
             const form = makeCustomForm({ id: 'f-rev', restoreHp: true, tempWill: 5 });
-            const baseState = createTestCharacterState({ health: { temporaryHitPoints: 0 }, will: { temporaryWill: 0 } });
+            const baseState = createTestCharacterState({
+                health: { temporaryHitPoints: 0 },
+                will: { temporaryWill: 0 }
+            });
             const baseBackup = createFormBackup(baseState);
             const transformedState = createTestCharacterState({
                 identity: { activeTransformation: 'Custom', activeFormId: 'f-rev', baseFormData: baseBackup },

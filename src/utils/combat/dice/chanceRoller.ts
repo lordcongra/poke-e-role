@@ -30,4 +30,3 @@ export async function executeChanceRoll(roll: RollSyncData): Promise<void> {
 
     await rollDicePlus(`${roll.chanceDice}d6>5`, label, 'chance', roll.chanceEffect || '');
 }
-

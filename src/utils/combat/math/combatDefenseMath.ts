@@ -129,4 +129,3 @@ export function calculateTargetDefensesFromMeta(meta: Record<string, unknown>): 
 
     return { def, spd };
 }
-

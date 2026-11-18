@@ -22,7 +22,10 @@ import {
 } from '../../utils/common/transformationLogic';
 import { executeSpeciesChange, sanitizeType } from '../../utils/common/speciesChangeLogic';
 
-export const createMacroSlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], MacroSlice> = (set, get) => ({
+export const createMacroSlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], MacroSlice> = (
+    set,
+    get
+) => ({
     setMode: (newMode) =>
         set((state) => {
             const wasTrainer = state.identity.mode !== 'Pokémon';

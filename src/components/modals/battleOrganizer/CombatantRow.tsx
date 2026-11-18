@@ -58,7 +58,12 @@ export function CombatantRow({
     const customStatuses = useCharacterStore((state) => state.roomCustomStatuses || []);
 
     const combinedStatusOptions = Array.from(
-        new Set(['Healthy', ...STATUS_OPTIONS.filter((s) => s !== 'Healthy'), 'Fainted', ...customStatuses.map((s) => s.name)])
+        new Set([
+            'Healthy',
+            ...STATUS_OPTIONS.filter((s) => s !== 'Healthy'),
+            'Fainted',
+            ...customStatuses.map((s) => s.name)
+        ])
     );
 
     const rawStatusList = (combatant.status || '')
@@ -350,7 +355,11 @@ export function CombatantRow({
                         type="button"
                         className={`bo-side-toggle-btn ${combatant.isPlayerSide ? 'bo-side-toggle-btn--player' : 'bo-side-toggle-btn--foe'}`}
                         onClick={handleToggleSide}
-                        title={isLocked ? 'Side locked by GM' : `Click to switch side (Current: ${combatant.isPlayerSide ? 'Player' : 'Foe'})`}
+                        title={
+                            isLocked
+                                ? 'Side locked by GM'
+                                : `Click to switch side (Current: ${combatant.isPlayerSide ? 'Player' : 'Foe'})`
+                        }
                         aria-label="Switch combatant side"
                         disabled={isLocked}
                     >
@@ -380,7 +389,13 @@ export function CombatantRow({
                                 className={`bo-form-badge bo-form-badge--${combatant.activeTransformation.toLowerCase()}`}
                                 title={`Form: ${combatant.activeTransformation}`}
                             >
-                                {combatant.activeTransformation === 'Terastallize' ? 'TERA' : combatant.activeTransformation === 'Gigantamax' ? 'G-MAX' : combatant.activeTransformation === 'Dynamax' ? 'D-MAX' : combatant.activeTransformation.toUpperCase()}
+                                {combatant.activeTransformation === 'Terastallize'
+                                    ? 'TERA'
+                                    : combatant.activeTransformation === 'Gigantamax'
+                                      ? 'G-MAX'
+                                      : combatant.activeTransformation === 'Dynamax'
+                                        ? 'D-MAX'
+                                        : combatant.activeTransformation.toUpperCase()}
                             </span>
                         )}
                         <input
@@ -393,49 +408,60 @@ export function CombatantRow({
                             aria-label="Combatant Name"
                             disabled={isLocked}
                         />
-                        {(Boolean(combatant.ability?.trim()) || Boolean(combatant.heldItem?.trim())) && showCombatantChips && (
-                            <div className="bo-combatant-badges">
-                                {combatant.ability?.trim() && (
-                                    <>
-                                        <button
-                                            type="button"
-                                            className="bo-pill--ability"
-                                            onClick={() => onViewAbility?.(combatant.ability!.trim(), combatant.rank, combatant.abilityTags)}
-                                            title={`Ability: ${combatant.ability.trim()} (Click to view description)`}
-                                            aria-label={`View ability ${combatant.ability.trim()} details`}
-                                        >
-                                            <Zap size={11} className="bo-pill-icon" />
-                                            <span className="bo-pill-text">{combatant.ability.trim()}</span>
-                                        </button>
-                                        {hasChoice && (
+                        {(Boolean(combatant.ability?.trim()) || Boolean(combatant.heldItem?.trim())) &&
+                            showCombatantChips && (
+                                <div className="bo-combatant-badges">
+                                    {combatant.ability?.trim() && (
+                                        <>
                                             <button
                                                 type="button"
-                                                className="bo-pill--choice"
-                                                onClick={handleCycleChoice}
-                                                title={isLocked ? `Choice: ${activeChoice} (Locked by GM)` : `Choice: ${activeChoice} (Click to cycle choice)`}
-                                                aria-label="Cycle Ability Choice"
-                                                disabled={isLocked}
+                                                className="bo-pill--ability"
+                                                onClick={() =>
+                                                    onViewAbility?.(
+                                                        combatant.ability!.trim(),
+                                                        combatant.rank,
+                                                        combatant.abilityTags
+                                                    )
+                                                }
+                                                title={`Ability: ${combatant.ability.trim()} (Click to view description)`}
+                                                aria-label={`View ability ${combatant.ability.trim()} details`}
                                             >
-                                                <SlidersHorizontal size={10} className="bo-pill-icon" />
-                                                <span className="bo-pill-text">{activeChoice}</span>
+                                                <Zap size={11} className="bo-pill-icon" />
+                                                <span className="bo-pill-text">{combatant.ability.trim()}</span>
                                             </button>
-                                        )}
-                                    </>
-                                )}
-                                {combatant.heldItem?.trim() && (
-                                    <button
-                                        type="button"
-                                        className="bo-pill--item"
-                                        onClick={() => onViewHeldItem?.(combatant.heldItem!.trim())}
-                                        title={`Held Item: ${combatant.heldItem.trim()} (Click to view description)`}
-                                        aria-label={`View held item ${combatant.heldItem.trim()} details`}
-                                    >
-                                        <Package size={11} className="bo-pill-icon" />
-                                        <span className="bo-pill-text">{combatant.heldItem.trim()}</span>
-                                    </button>
-                                )}
-                            </div>
-                        )}
+                                            {hasChoice && (
+                                                <button
+                                                    type="button"
+                                                    className="bo-pill--choice"
+                                                    onClick={handleCycleChoice}
+                                                    title={
+                                                        isLocked
+                                                            ? `Choice: ${activeChoice} (Locked by GM)`
+                                                            : `Choice: ${activeChoice} (Click to cycle choice)`
+                                                    }
+                                                    aria-label="Cycle Ability Choice"
+                                                    disabled={isLocked}
+                                                >
+                                                    <SlidersHorizontal size={10} className="bo-pill-icon" />
+                                                    <span className="bo-pill-text">{activeChoice}</span>
+                                                </button>
+                                            )}
+                                        </>
+                                    )}
+                                    {combatant.heldItem?.trim() && (
+                                        <button
+                                            type="button"
+                                            className="bo-pill--item"
+                                            onClick={() => onViewHeldItem?.(combatant.heldItem!.trim())}
+                                            title={`Held Item: ${combatant.heldItem.trim()} (Click to view description)`}
+                                            aria-label={`View held item ${combatant.heldItem.trim()} details`}
+                                        >
+                                            <Package size={11} className="bo-pill-icon" />
+                                            <span className="bo-pill-text">{combatant.heldItem.trim()}</span>
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                     </div>
                 </div>
             </td>

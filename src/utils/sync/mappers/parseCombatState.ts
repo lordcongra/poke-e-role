@@ -90,4 +90,3 @@ export function parseExtras(meta: Record<string, unknown>) {
         skill: parseFiniteNumber(meta['extra-skill'], 0)
     };
 }
-

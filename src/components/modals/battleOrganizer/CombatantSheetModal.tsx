@@ -391,7 +391,8 @@ export function CombatantSheetModal({
                             </h3>
                             <p className="bo-sheet-modal__no-token-desc text-subtext">
                                 Pokémon stored in the PC cannot be inspected or edited while a battle is in progress.
-                                Send this Pokémon out to the battlefield from PC storage to open and view its character sheet.
+                                Send this Pokémon out to the battlefield from PC storage to open and view its character
+                                sheet.
                             </p>
                             <button
                                 type="button"

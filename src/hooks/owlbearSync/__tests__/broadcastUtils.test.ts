@@ -88,12 +88,24 @@ describe('owlbearBroadcastUtils', () => {
         const part1 = '';
         const part2 = fullJson.slice(10);
 
-        await registeredHandler!({ data: { __chunked: true, msgId: 'm1', idx: 2, total: 3, chunk: part2 }, connectionId: 'c1' });
-        await registeredHandler!({ data: { __chunked: true, msgId: 'm1', idx: 2, total: 3, chunk: part2 }, connectionId: 'c1' });
-        await registeredHandler!({ data: { __chunked: true, msgId: 'm1', idx: 0, total: 3, chunk: part0 }, connectionId: 'c1' });
+        await registeredHandler!({
+            data: { __chunked: true, msgId: 'm1', idx: 2, total: 3, chunk: part2 },
+            connectionId: 'c1'
+        });
+        await registeredHandler!({
+            data: { __chunked: true, msgId: 'm1', idx: 2, total: 3, chunk: part2 },
+            connectionId: 'c1'
+        });
+        await registeredHandler!({
+            data: { __chunked: true, msgId: 'm1', idx: 0, total: 3, chunk: part0 },
+            connectionId: 'c1'
+        });
         expect(onPayload).not.toHaveBeenCalled();
 
-        await registeredHandler!({ data: { __chunked: true, msgId: 'm1', idx: 1, total: 3, chunk: part1 }, connectionId: 'c1' });
+        await registeredHandler!({
+            data: { __chunked: true, msgId: 'm1', idx: 1, total: 3, chunk: part1 },
+            connectionId: 'c1'
+        });
         expect(onPayload).toHaveBeenCalledTimes(1);
         expect(onPayload).toHaveBeenCalledWith({ msg: 'hello world', count: 42 });
     });
@@ -153,4 +165,3 @@ describe('owlbearBroadcastUtils', () => {
         expect(onPayload).toHaveBeenCalledWith({ ok: true });
     });
 });
-

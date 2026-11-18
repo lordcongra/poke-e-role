@@ -4,13 +4,9 @@ import type { HomebrewPayload } from '@/types/homebrewTypes';
 import { homebrewStorage, type HomebrewStorageData } from '@/utils/sync/homebrewStorage';
 import { syncHomebrewToApi } from '@/utils/api/api';
 
-export type HomebrewSet = Parameters<
-    StateCreator<CharacterState, [['zustand/devtools', never]], [], HomebrewSlice>
->[0];
+export type HomebrewSet = Parameters<StateCreator<CharacterState, [['zustand/devtools', never]], [], HomebrewSlice>>[0];
 
-export type HomebrewGet = Parameters<
-    StateCreator<CharacterState, [['zustand/devtools', never]], [], HomebrewSlice>
->[1];
+export type HomebrewGet = Parameters<StateCreator<CharacterState, [['zustand/devtools', never]], [], HomebrewSlice>>[1];
 
 export const saveHomebrewLocal = (state: CharacterState, options?: { allowEmpty?: boolean }): void => {
     if (!state.isHomebrewInitialized) return;
@@ -74,10 +70,7 @@ export const loadHomebrewLocalOp = async (set: HomebrewSet, _get: HomebrewGet): 
     }
 };
 
-export const applyHomebrewSync = (
-    set: HomebrewSet,
-    payload: HomebrewPayload & { needsBackup?: boolean }
-): void => {
+export const applyHomebrewSync = (set: HomebrewSet, payload: HomebrewPayload & { needsBackup?: boolean }): void => {
     const types = payload.customTypes || [];
     const abilities = payload.customAbilities || [];
     const moves = payload.customMoves || [];
@@ -112,11 +105,7 @@ export const markHomebrewBackedUp = (set: HomebrewSet, get: HomebrewGet): void =
     saveHomebrewLocal(get());
 };
 
-export const processHomebrewPayload = (
-    set: HomebrewSet,
-    get: HomebrewGet,
-    payload: HomebrewPayload
-): void => {
+export const processHomebrewPayload = (set: HomebrewSet, get: HomebrewGet, payload: HomebrewPayload): void => {
     set(
         {
             roomCustomTypes: payload.customTypes || [],

@@ -217,11 +217,17 @@ describe('macroParsers', () => {
             const greatTusk = convertApiPokemonToCustom({ Name: 'Great Tusk' });
             expect(greatTusk.Paradox).toBe(true);
 
-            const rayquaza = convertApiPokemonToCustom({ Name: 'Rayquaza', legendary: true } as unknown as PokemonApiResponse);
+            const rayquaza = convertApiPokemonToCustom({
+                Name: 'Rayquaza',
+                legendary: true
+            } as unknown as PokemonApiResponse);
             expect(rayquaza.Legendary).toBe(true);
             expect(rayquaza.Mythical).toBe(false);
 
-            const dialga = convertApiPokemonToCustom({ Name: 'Dialga', Legendary: true } as unknown as PokemonApiResponse);
+            const dialga = convertApiPokemonToCustom({
+                Name: 'Dialga',
+                Legendary: true
+            } as unknown as PokemonApiResponse);
             expect(dialga.Legendary).toBe(true);
         });
 

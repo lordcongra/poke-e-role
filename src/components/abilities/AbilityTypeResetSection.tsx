@@ -9,7 +9,17 @@ function TypePill({ typeName }: { typeName?: string }) {
     if (!typeName || typeName.toLowerCase() === 'none') return null;
     const bg = TYPE_COLORS[typeName] || 'var(--primary)';
     return (
-        <span style={{ backgroundColor: bg, color: '#fff', padding: '2px 7px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>
+        <span
+            style={{
+                backgroundColor: bg,
+                color: '#fff',
+                padding: '2px 7px',
+                borderRadius: '4px',
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                textShadow: '0 1px 2px rgba(0,0,0,0.6)'
+            }}
+        >
             {typeName}
         </span>
     );
@@ -25,14 +35,22 @@ export const AbilityTypeResetSection: React.FC = () => {
 
     useEffect(() => {
         let isMounted = true;
-        if (!species) { setBaseTypes(null); return; }
-        fetchBaseSpeciesTyping(species).then((res) => { if (isMounted) setBaseTypes(res); });
-        return () => { isMounted = false; };
+        if (!species) {
+            setBaseTypes(null);
+            return;
+        }
+        fetchBaseSpeciesTyping(species).then((res) => {
+            if (isMounted) setBaseTypes(res);
+        });
+        return () => {
+            isMounted = false;
+        };
     }, [species]);
 
     if (!baseTypes) return null;
 
-    const isTypingDifferent = (type1 || '').trim().toLowerCase() !== (baseTypes.type1 || '').trim().toLowerCase() ||
+    const isTypingDifferent =
+        (type1 || '').trim().toLowerCase() !== (baseTypes.type1 || '').trim().toLowerCase() ||
         (type2 || '').trim().toLowerCase() !== (baseTypes.type2 || '').trim().toLowerCase();
     const isProteanOrLibero = /protean|libero/i.test(currentAbility || '');
 
@@ -48,15 +66,30 @@ export const AbilityTypeResetSection: React.FC = () => {
     };
 
     return (
-        <div className="ability-modal__override-drawer" style={{ marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', padding: '6px 10px' }}>
+        <div
+            className="ability-modal__override-drawer"
+            style={{
+                marginTop: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '8px',
+                padding: '6px 10px'
+            }}
+        >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span className="text-subtext" style={{ fontSize: '0.72rem' }}>Current:</span>
+                    <span className="text-subtext" style={{ fontSize: '0.72rem' }}>
+                        Current:
+                    </span>
                     <TypePill typeName={type1} />
                     <TypePill typeName={type2} />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span className="text-subtext" style={{ fontSize: '0.72rem' }}>Base:</span>
+                    <span className="text-subtext" style={{ fontSize: '0.72rem' }}>
+                        Base:
+                    </span>
                     <TypePill typeName={baseTypes.type1} />
                     <TypePill typeName={baseTypes.type2} />
                 </div>
@@ -66,7 +99,15 @@ export const AbilityTypeResetSection: React.FC = () => {
                 className="action-button action-button--dark"
                 onClick={handleReset}
                 disabled={!isTypingDifferent}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', padding: '3px 8px', opacity: isTypingDifferent ? 1 : 0.5, cursor: isTypingDifferent ? 'pointer' : 'default' }}
+                style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '0.75rem',
+                    padding: '3px 8px',
+                    opacity: isTypingDifferent ? 1 : 0.5,
+                    cursor: isTypingDifferent ? 'pointer' : 'default'
+                }}
                 title={isTypingDifferent ? 'Reset to base species typing' : 'Already at base species typing'}
             >
                 <RotateCcw size={12} /> Reset to Base Type

@@ -70,4 +70,3 @@ describe('abilityLookupUtils', () => {
         expect(noDuplicate.tags).toBe('[Str +1]');
     });
 });
-

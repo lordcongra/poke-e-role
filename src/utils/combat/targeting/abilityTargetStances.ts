@@ -5,7 +5,13 @@ import { useCharacterStore } from '@/store/useCharacterStore';
 
 export { RANK_TARGET_LIMITS, getMaxTargetsForRank };
 
-export type AbilityTargetStance = 'allies-and-self' | 'allies-only' | 'foes' | 'all-except-self' | 'all-on-field' | 'none';
+export type AbilityTargetStance =
+    | 'allies-and-self'
+    | 'allies-only'
+    | 'foes'
+    | 'all-except-self'
+    | 'all-on-field'
+    | 'none';
 
 /**
  * Helper to parse ability target stance from tag strings.
@@ -46,7 +52,10 @@ export function getAbilityTargetStance(ability: string, tags?: string): AbilityT
     }
 
     if (!ability) return 'none';
-    const clean = ability.replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+    const clean = ability
+        .replace(/\s*\(HA\)$/i, '')
+        .trim()
+        .toLowerCase();
     switch (clean) {
         case 'flower gift':
         case 'steely spirit':
@@ -91,9 +100,7 @@ export function getAbilityTargetStance(ability: string, tags?: string): AbilityT
 
     try {
         const roomCustomAbilities = useCharacterStore.getState()?.roomCustomAbilities;
-        const custom = roomCustomAbilities?.find(
-            (ca) => ca.name?.trim().toLowerCase() === clean
-        );
+        const custom = roomCustomAbilities?.find((ca) => ca.name?.trim().toLowerCase() === clean);
         if (custom) {
             const customTags = `${custom.effect || ''} ${custom.description || ''}`.trim();
             const fromCustom = parseAbilityTargetStanceFromTags(customTags);
@@ -114,7 +121,10 @@ export function getAbilityMaxTargets(ability: string, tags?: string, rank?: stri
     if (cleanTags.includes('[target: single') || /\[target:\s*single\b/i.test(cleanTags)) {
         return 1;
     }
-    const cleanAbility = (ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+    const cleanAbility = (ability || '')
+        .replace(/\s*\(HA\)$/i, '')
+        .trim()
+        .toLowerCase();
     const singleTargetAbilities = new Set([
         'analytic',
         'costar',
@@ -178,4 +188,3 @@ export function isTargetInList(
         return false;
     });
 }
-

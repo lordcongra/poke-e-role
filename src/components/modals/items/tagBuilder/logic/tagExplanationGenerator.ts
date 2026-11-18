@@ -120,7 +120,7 @@ export function generateExplanation(config: TagBuilderConfig, builtTag: string):
     } else if (category === 'targeting') {
         base = `Targets ${target} within range`;
     } else if (category === 'choice') {
-        const choiceText = target === 'Custom Choice' ? (typeOption || '') : (target || typeOption || '');
+        const choiceText = target === 'Custom Choice' ? typeOption || '' : target || typeOption || '';
         base = `Allows selecting between: ${choiceText}`;
     }
 
@@ -150,4 +150,3 @@ export function generateExplanation(config: TagBuilderConfig, builtTag: string):
 
     return `${base} (always active).`;
 }
-

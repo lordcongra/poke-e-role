@@ -114,16 +114,39 @@ describe('combatMath', () => {
 
         it('subtracts ignoredPain correctly', () => {
             // HP <= 1 (raw penalty 3)
-            expect(getPainPenalty('str', createTestCharacterState({ health: { hpMax: 10, hpCurr: 1 }, trackers: { ignoredPain: 1 } }))).toBe(-2);
-            expect(getPainPenalty('str', createTestCharacterState({ health: { hpMax: 10, hpCurr: 1 }, trackers: { ignoredPain: 2 } }))).toBe(-1);
-            expect(getPainPenalty('str', createTestCharacterState({ health: { hpMax: 10, hpCurr: 1 }, trackers: { ignoredPain: 3 } }))).toBe(0);
+            expect(
+                getPainPenalty(
+                    'str',
+                    createTestCharacterState({ health: { hpMax: 10, hpCurr: 1 }, trackers: { ignoredPain: 1 } })
+                )
+            ).toBe(-2);
+            expect(
+                getPainPenalty(
+                    'str',
+                    createTestCharacterState({ health: { hpMax: 10, hpCurr: 1 }, trackers: { ignoredPain: 2 } })
+                )
+            ).toBe(-1);
+            expect(
+                getPainPenalty(
+                    'str',
+                    createTestCharacterState({ health: { hpMax: 10, hpCurr: 1 }, trackers: { ignoredPain: 3 } })
+                )
+            ).toBe(0);
 
             // HP <= floor(maxHp / 2) (raw penalty 1)
-            expect(getPainPenalty('str', createTestCharacterState({ health: { hpMax: 10, hpCurr: 4 }, trackers: { ignoredPain: 1 } }))).toBe(0);
+            expect(
+                getPainPenalty(
+                    'str',
+                    createTestCharacterState({ health: { hpMax: 10, hpCurr: 4 }, trackers: { ignoredPain: 1 } })
+                )
+            ).toBe(0);
         });
 
         it('returns 0 when pain is disabled or itemBuffs has ignorePain', () => {
-            const disabledState = createTestCharacterState({ health: { hpMax: 10, hpCurr: 1 }, identity: { pain: 'Disabled' } });
+            const disabledState = createTestCharacterState({
+                health: { hpMax: 10, hpCurr: 1 },
+                identity: { pain: 'Disabled' }
+            });
             expect(getPainPenalty('str', disabledState)).toBe(0);
 
             const lowHpState = createTestCharacterState({ health: { hpMax: 10, hpCurr: 1 } });
@@ -134,9 +157,14 @@ describe('combatMath', () => {
     describe('getStatusPenalties', () => {
         it('calculates Confusion penalty by rank tiers: -1 (Standard), -2 (Advanced/Expert), -3 (Master)', () => {
             const ranksAndPenalties: [Rank, number][] = [
-                ['Starter', -1], ['Rookie', -1], ['Standard', -1],
-                ['Advanced', -2], ['Expert', -2], ['Ace', -2],
-                ['Master', -3], ['Champion', -3]
+                ['Starter', -1],
+                ['Rookie', -1],
+                ['Standard', -1],
+                ['Advanced', -2],
+                ['Expert', -2],
+                ['Ace', -2],
+                ['Master', -3],
+                ['Champion', -3]
             ];
             for (const [rank, expectedPenalty] of ranksAndPenalties) {
                 const state = createTestCharacterState({

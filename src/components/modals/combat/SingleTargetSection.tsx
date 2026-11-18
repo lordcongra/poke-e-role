@@ -86,7 +86,14 @@ export function SingleTargetSection({
                     </div>
                 )}
                 {isImmune && (
-                    <div style={{ fontSize: '0.76rem', color: 'var(--semantic-danger)', marginTop: '4px', fontWeight: 600 }}>
+                    <div
+                        style={{
+                            fontSize: '0.76rem',
+                            color: 'var(--semantic-danger)',
+                            marginTop: '4px',
+                            fontWeight: 600
+                        }}
+                    >
                         Target is Immune — <strong>0 Damage</strong> will be dealt.
                     </div>
                 )}

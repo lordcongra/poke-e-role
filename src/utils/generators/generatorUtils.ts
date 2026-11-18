@@ -42,7 +42,12 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     const hasType2 = Boolean(type2 && type2 !== 'None');
 
     const rank = config.targetRank || state.identity.rank || 'Starter';
-    const { core: attributePoints, social: socialPoints, skills: rankSkill, skillLimit: maxSkillRank } = getRankPoints(rank);
+    const {
+        core: attributePoints,
+        social: socialPoints,
+        skills: rankSkill,
+        skillLimit: maxSkillRank
+    } = getRankPoints(rank);
 
     const { finalBaseStats, attributeLimits } = resolveBaseStatsAndLimits(pdRecord, state);
 

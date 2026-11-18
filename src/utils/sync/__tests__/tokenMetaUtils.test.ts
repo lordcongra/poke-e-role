@@ -101,4 +101,3 @@ describe('isTokenSpeciesCompatible', () => {
         expect(isTokenSpeciesCompatible('Pikachu', 'Sparky', '', '', '')).toBe(true);
     });
 });
-

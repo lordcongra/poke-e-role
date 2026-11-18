@@ -6,4 +6,3 @@ export type TreeItem = {
     meta?: Record<string, unknown>;
     activeTrans: string;
 };
-

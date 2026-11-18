@@ -131,12 +131,17 @@ export function mergeCustomPokemonData(set: HomebrewSet, get: HomebrewGet, pokem
 }
 
 export function mergeCustomItemData(set: HomebrewSet, get: HomebrewGet, items: CustomItem[]): void {
-    const mergedItems = mergeNamedEntityList(get().roomCustomItems, items, (i) => i.name, (item) => ({
-        ...item,
-        pocket: item.pocket || 'Misc',
-        category: item.category || 'Misc',
-        rarity: item.rarity || 'Uncommon'
-    }));
+    const mergedItems = mergeNamedEntityList(
+        get().roomCustomItems,
+        items,
+        (i) => i.name,
+        (item) => ({
+            ...item,
+            pocket: item.pocket || 'Misc',
+            category: item.category || 'Misc',
+            rarity: item.rarity || 'Uncommon'
+        })
+    );
     set({ roomCustomItems: mergedItems, needsBackup: true }, false, 'homebrew/mergeCustomItemData');
     syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, mergedItems);
     saveHomebrewLocal(get());
@@ -185,12 +190,17 @@ export function mergeAllHomebrewData(
     const mergedAbilities = mergeNamedEntityList(get().roomCustomAbilities, abilities, (a) => a.name);
     const mergedMoves = mergeNamedEntityList(get().roomCustomMoves, moves, (m) => m.name);
     const mergedPokemon = mergeNamedEntityList(get().roomCustomPokemon, pokemon, (p) => p.Name);
-    const mergedItems = mergeNamedEntityList(get().roomCustomItems, items, (i) => i.name, (item) => ({
-        ...item,
-        pocket: item.pocket || 'Misc',
-        category: item.category || 'Misc',
-        rarity: item.rarity || 'Uncommon'
-    }));
+    const mergedItems = mergeNamedEntityList(
+        get().roomCustomItems,
+        items,
+        (i) => i.name,
+        (item) => ({
+            ...item,
+            pocket: item.pocket || 'Misc',
+            category: item.category || 'Misc',
+            rarity: item.rarity || 'Uncommon'
+        })
+    );
     const mergedForms = mergeNamedEntityList(get().roomCustomForms, forms, (f) => f.name, normalizeCustomForm);
     const mergedStatuses = mergeNamedEntityList(get().roomCustomStatuses, statuses, (s) => s.name);
     const mergedFieldEffects =
@@ -216,7 +226,5 @@ export function mergeAllHomebrewData(
     syncHomebrewToApi(mergedPokemon, mergedMoves, mergedAbilities, mergedItems);
     saveHomebrewLocal(get());
 
-    if (!silent && OBR.isAvailable)
-        OBR.notification.show('[ ✓ ] Homebrew Workshop successfully merged!', 'SUCCESS');
+    if (!silent && OBR.isAvailable) OBR.notification.show('[ ✓ ] Homebrew Workshop successfully merged!', 'SUCCESS');
 }
-

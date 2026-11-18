@@ -32,8 +32,7 @@ export function applyRoomUpdatesToMeta(
         } else if (k === 'roomDefaultOffsetY') {
             const parsed = parseOptionalFiniteNumber(v);
             if (parsed !== undefined) roomMeta.roomDefaultOffsetY = parsed;
-        }
-        else if (k === 'roomHideHpBar') roomMeta.roomHideHpBar = Boolean(v);
+        } else if (k === 'roomHideHpBar') roomMeta.roomHideHpBar = Boolean(v);
         else if (k === 'roomHideHpText') roomMeta.roomHideHpText = Boolean(v);
         else if (k === 'roomHideWillBar') roomMeta.roomHideWillBar = Boolean(v);
         else if (k === 'roomHideWillText') roomMeta.roomHideWillText = Boolean(v);

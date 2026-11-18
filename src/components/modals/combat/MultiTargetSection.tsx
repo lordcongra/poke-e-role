@@ -238,7 +238,9 @@ export function MultiTargetSection({
                                                 }
                                             }}
                                             className="targeting-modal__select targeting-modal__select--compact text-label"
-                                            style={{ color: target.isImmune ? 'var(--semantic-danger)' : 'var(--text-main)' }}
+                                            style={{
+                                                color: target.isImmune ? 'var(--semantic-danger)' : 'var(--text-main)'
+                                            }}
                                         >
                                             <option value={2}>4x (+2)</option>
                                             <option value={1}>2x (+1)</option>

@@ -140,8 +140,8 @@ export const GmReactionRulesCard: React.FC<GmReactionRulesCardProps> = ({
                     </p>
                     <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
                         <em>
-                            Examples: Circle Throw / Feint (&darr;1), Dragon Tail (&darr;2), Shell Trap (&darr;3), Avalanche (&darr;4), Counter
-                            / Mirror Coat (&darr;5), Roar / Whirlwind (&darr;6).
+                            Examples: Circle Throw / Feint (&darr;1), Dragon Tail (&darr;2), Shell Trap (&darr;3),
+                            Avalanche (&darr;4), Counter / Mirror Coat (&darr;5), Roar / Whirlwind (&darr;6).
                         </em>
                     </div>
                 </div>

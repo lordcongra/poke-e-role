@@ -1,11 +1,7 @@
 import { Sparkles } from 'lucide-react';
 import { CombatStat } from '../../types/enums';
 import { STATUS_COLORS } from '../../data/constants';
-import {
-    parseCombatTags,
-    getStatusPenalties,
-    type BoostTrackerSource
-} from '../../utils/combat/combatUtils';
+import { parseCombatTags, getStatusPenalties, type BoostTrackerSource } from '../../utils/combat/combatUtils';
 import { getAbilityBenefitSummary } from '../../data/abilities/knownAbilities';
 import { resolveCharacterSide } from '../../utils/combat/combatantSideUtils';
 import { isTargetAffectedByAbility } from '../../utils/combat/abilityTargetingUtils';
@@ -263,14 +259,12 @@ export function buildTrackerConditions({
     const abilityTags = state.identity.abilityTags || '';
     const rank = state.identity.rank;
 
-    const INFORMATIONAL_ENTRY_ABILITIES = new Set([
-        'frisk',
-        'hospitality',
-        'costar',
-        'ball fetch'
-    ]);
+    const INFORMATIONAL_ENTRY_ABILITIES = new Set(['frisk', 'hospitality', 'costar', 'ball fetch']);
 
-    const cleanAbilityName = (abilityName || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+    const cleanAbilityName = (abilityName || '')
+        .replace(/\s*\(HA\)$/i, '')
+        .trim()
+        .toLowerCase();
 
     if (abilityName && abilityActive && !INFORMATIONAL_ENTRY_ABILITIES.has(cleanAbilityName)) {
         const hpCurr = Number(state.health.hpCurr) || 0;
@@ -288,9 +282,9 @@ export function buildTrackerConditions({
         // Only display abilities that provide real combat stat modifications, dice bonuses, or active damage/defense modifiers
         const isCombatModifier = Boolean(
             benefit &&
-                !benefit.toLowerCase().includes('(identify item)') &&
-                !benefit.toLowerCase().includes('(copy ally)') &&
-                !benefit.toLowerCase().includes('(restore ally)')
+            !benefit.toLowerCase().includes('(identify item)') &&
+            !benefit.toLowerCase().includes('(copy ally)') &&
+            !benefit.toLowerCase().includes('(restore ally)')
         );
 
         if (isCombatModifier) {
@@ -359,12 +353,9 @@ export function buildTrackerConditions({
         });
     }
 
-    const targetId = [
-        state.identity.entityId,
-        state.tokenId,
-        state.identity.nickname,
-        state.identity.species
-    ].filter(Boolean) as string[];
+    const targetId = [state.identity.entityId, state.tokenId, state.identity.nickname, state.identity.species].filter(
+        Boolean
+    ) as string[];
     const characterSide = resolveCharacterSide(state);
     const effectiveSide: 'player' | 'foe' =
         characterSide !== 'none' ? characterSide : state.identity.isNPC ? 'foe' : 'player';

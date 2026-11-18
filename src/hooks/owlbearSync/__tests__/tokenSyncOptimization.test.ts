@@ -220,11 +220,16 @@ describe('setupOwlbearTokenSync drag & debounce optimizations', () => {
 
         vi.clearAllMocks();
 
-        const damagedToken = makeCharacterToken('tok-1', 'ent-1', { x: 0, y: 0 }, {
-            'hp-curr': 0,
-            'will-curr': 0,
-            lastModified: 6000
-        });
+        const damagedToken = makeCharacterToken(
+            'tok-1',
+            'ent-1',
+            { x: 0, y: 0 },
+            {
+                'hp-curr': 0,
+                'will-curr': 0,
+                lastModified: 6000
+            }
+        );
         await itemsChangeRef.cb!([damagedToken]);
 
         expect(renderTokenGraphicsMock).toHaveBeenCalledTimes(1);

@@ -280,9 +280,7 @@ export async function restoreSettingsFromIndexedDB(): Promise<number> {
                                     const existing = localStorage.getItem(entry.key);
                                     if (existing === null) {
                                         const stringVal =
-                                            typeof entry.value === 'string'
-                                                ? entry.value
-                                                : JSON.stringify(entry.value);
+                                            typeof entry.value === 'string' ? entry.value : JSON.stringify(entry.value);
                                         localStorage.setItem(entry.key, stringVal);
                                         count++;
                                     }

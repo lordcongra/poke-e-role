@@ -77,12 +77,14 @@ describe('Dual-key elimination & METADATA_ID exclusivity', () => {
             updater([item]);
         });
 
-        await storageAdapter.saveCharacter('tok-modern', { 'hp-curr': 0, species: 'Eevee' }, 'pokerole-pmd-extension/stats');
+        await storageAdapter.saveCharacter(
+            'tok-modern',
+            { 'hp-curr': 0, species: 'Eevee' },
+            'pokerole-pmd-extension/stats'
+        );
 
         expect(updateItemsMock).toHaveBeenCalledTimes(1);
-        expect(item.metadata[METADATA_ID]).toEqual(
-            expect.objectContaining({ 'hp-curr': 0, species: 'Eevee' })
-        );
+        expect(item.metadata[METADATA_ID]).toEqual(expect.objectContaining({ 'hp-curr': 0, species: 'Eevee' }));
         expect(item.metadata['pokerole-pmd-extension/stats']).toBeUndefined();
     });
 
@@ -162,9 +164,7 @@ describe('Dual-key elimination & METADATA_ID exclusivity', () => {
         });
 
         expect(result.source).toBe('pc_summary');
-        expect(legacyToken.metadata[METADATA_ID]).toEqual(
-            expect.objectContaining({ 'hp-curr': 7, species: 'Riolu' })
-        );
+        expect(legacyToken.metadata[METADATA_ID]).toEqual(expect.objectContaining({ 'hp-curr': 7, species: 'Riolu' }));
         expect((legacyToken.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>)['hp-curr']).toBe(10);
     });
 

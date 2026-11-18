@@ -116,4 +116,3 @@ describe('pcSheetSyncUtils', () => {
         expect(hasSummaryStoreDrift(store, partialSummary)).toBe(true);
     });
 });
-

@@ -134,4 +134,3 @@ describe('sanitizeHomebrewData & validateAndSanitizeHomebrewBackup (S-07)', () =
         ).toEqual(['ValidType']);
     });
 });
-

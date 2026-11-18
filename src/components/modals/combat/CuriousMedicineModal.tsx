@@ -24,18 +24,15 @@ interface AllyTargetRow {
     combatant?: CombatantRowData;
 }
 
-export const CuriousMedicineModal: React.FC<CuriousMedicineModalProps> = ({
-    isOpen,
-    onClose,
-    sourceCombatant
-}) => {
+export const CuriousMedicineModal: React.FC<CuriousMedicineModalProps> = ({ isOpen, onClose, sourceCombatant }) => {
     const [isConfirming, setIsConfirming] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [initialized, setInitialized] = useState(false);
 
     // 1. Identify Source
     const charState = useCharacterStore();
-    const sourceName = sourceCombatant?.name || charState.identity.nickname || charState.identity.species || 'Combatant';
+    const sourceName =
+        sourceCombatant?.name || charState.identity.nickname || charState.identity.species || 'Combatant';
     const sourceIcon = sourceCombatant?.image || charState.identity.tokenImageUrl || '';
     const sourceTokenId = sourceCombatant?.tokenId || charState.tokenId || undefined;
     const sourceRank = (sourceCombatant as { rank?: string })?.rank || charState.identity.rank || 'Standard';
@@ -105,7 +102,14 @@ export const CuriousMedicineModal: React.FC<CuriousMedicineModalProps> = ({
         }
 
         return list;
-    }, [isOpen, userIsPlayer, charState.identity.entityId, charState.identity.nickname, charState.identity.species, charState.tokenId]);
+    }, [
+        isOpen,
+        userIsPlayer,
+        charState.identity.entityId,
+        charState.identity.nickname,
+        charState.identity.species,
+        charState.tokenId
+    ]);
 
     // Pre-select allies up to rank limit on open
     if (isOpen && !initialized && allies.length > 0) {
@@ -272,7 +276,8 @@ export const CuriousMedicineModal: React.FC<CuriousMedicineModalProps> = ({
                             </strong>
                         </div>
                         <p className="ability-entry-modal__confirm-text">
-                            Are you sure you want to reset all stat and defense buffs and debuffs to 0 for {selectedIds.length} ally/allies? This action is destructive and cannot be undone.
+                            Are you sure you want to reset all stat and defense buffs and debuffs to 0 for{' '}
+                            {selectedIds.length} ally/allies? This action is destructive and cannot be undone.
                         </p>
                     </div>
                 )}

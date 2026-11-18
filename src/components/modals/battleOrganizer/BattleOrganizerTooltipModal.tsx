@@ -39,9 +39,14 @@ export async function getAbilityTooltipInfo(
     if (details.tags) broadcastParts.push(`Tags: ${details.tags}`);
     if (details.effect) broadcastParts.push(`Effect: ${details.effect}`);
     if (details.summary && details.summary !== details.effect) broadcastParts.push(`Summary: ${details.summary}`);
-    if (details.description && details.description !== details.effect) broadcastParts.push(`Description: ${details.description}`);
+    if (details.description && details.description !== details.effect)
+        broadcastParts.push(`Description: ${details.description}`);
     const broadcastText =
-        broadcastParts.join('\n\n') || details.description || details.effect || details.summary || 'No description available.';
+        broadcastParts.join('\n\n') ||
+        details.description ||
+        details.effect ||
+        details.summary ||
+        'No description available.';
 
     return {
         title,
@@ -118,7 +123,9 @@ export function BattleOrganizerTooltipModal({ tooltipInfo, onClose }: BattleOrga
     const handleBroadcast = async () => {
         const text = tooltipInfo.broadcastText || tooltipInfo.effect || tooltipInfo.desc || '';
         const prefix = tooltipInfo.type === 'ability' ? 'Ability: ' : tooltipInfo.type === 'item' ? 'Item: ' : '';
-        const broadcastTitle = tooltipInfo.title.startsWith(prefix) ? tooltipInfo.title : `${prefix}${tooltipInfo.title}`;
+        const broadcastTitle = tooltipInfo.title.startsWith(prefix)
+            ? tooltipInfo.title
+            : `${prefix}${tooltipInfo.title}`;
         await broadcastInfo(broadcastTitle, text);
         onClose();
     };
@@ -219,11 +226,15 @@ export function BattleOrganizerTooltipModal({ tooltipInfo, onClose }: BattleOrga
                                 </div>
                             )}
 
-                            {tooltipInfo.summary && tooltipInfo.summary !== tooltipInfo.effect && tooltipInfo.summary !== tooltipInfo.desc && (
-                                <div style={{ marginBottom: '8px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                                    {tooltipInfo.summary}
-                                </div>
-                            )}
+                            {tooltipInfo.summary &&
+                                tooltipInfo.summary !== tooltipInfo.effect &&
+                                tooltipInfo.summary !== tooltipInfo.desc && (
+                                    <div
+                                        style={{ marginBottom: '8px', color: 'var(--text-muted)', fontSize: '0.85rem' }}
+                                    >
+                                        {tooltipInfo.summary}
+                                    </div>
+                                )}
 
                             {tooltipInfo.effect && (
                                 <div style={{ marginBottom: '8px', lineHeight: '1.4' }}>

@@ -95,7 +95,9 @@ export function BattlefieldSection({
         updateBattlefieldTerrain('name', val);
         if (prevIsGrassy && !newIsGrassy) {
             const extraHasGrassy = battlefield.extraTerrains?.some(
-                (t) => (t.name || '').toLowerCase().includes('grassy') && (t.remainingRounds > 0 || t.remainingRounds === -1)
+                (t) =>
+                    (t.name || '').toLowerCase().includes('grassy') &&
+                    (t.remainingRounds > 0 || t.remainingRounds === -1)
             );
             if (!extraHasGrassy) {
                 cleanupGrassyForceFields();
@@ -107,7 +109,9 @@ export function BattlefieldSection({
         updateBattlefieldTerrain('remainingRounds', val);
         if (val === 0 && (battlefield.terrain?.name || '').toLowerCase().includes('grassy')) {
             const extraHasGrassy = battlefield.extraTerrains?.some(
-                (t) => (t.name || '').toLowerCase().includes('grassy') && (t.remainingRounds > 0 || t.remainingRounds === -1)
+                (t) =>
+                    (t.name || '').toLowerCase().includes('grassy') &&
+                    (t.remainingRounds > 0 || t.remainingRounds === -1)
             );
             if (!extraHasGrassy) {
                 cleanupGrassyForceFields();
@@ -121,7 +125,8 @@ export function BattlefieldSection({
             (battlefield.terrain?.name || '').toLowerCase().includes('grassy') &&
             (battlefield.terrain?.remainingRounds > 0 || battlefield.terrain?.remainingRounds === -1);
         const extrasHaveGrassy = extras.some(
-            (t) => (t.name || '').toLowerCase().includes('grassy') && (t.remainingRounds > 0 || t.remainingRounds === -1)
+            (t) =>
+                (t.name || '').toLowerCase().includes('grassy') && (t.remainingRounds > 0 || t.remainingRounds === -1)
         );
         if (!mainHasGrassy && !extrasHaveGrassy) {
             cleanupGrassyForceFields();
@@ -165,7 +170,9 @@ export function BattlefieldSection({
                                         ? 'Visible to players (Click to hide from player sheets)'
                                         : 'Hidden from players (Click to broadcast active weather/terrain/fields to player sheets)'
                                 }
-                                aria-label={battlefield.broadcastToPlayers ? 'Broadcast to players' : 'Hidden from players'}
+                                aria-label={
+                                    battlefield.broadcastToPlayers ? 'Broadcast to players' : 'Hidden from players'
+                                }
                             >
                                 {battlefield.broadcastToPlayers ? <Eye size={12} /> : <EyeOff size={12} />}
                                 <span>{battlefield.broadcastToPlayers ? 'Live to Players' : 'GM Only'}</span>

@@ -28,12 +28,7 @@ interface HomebrewImportConfirmModalProps {
     onOverwrite: (data: HomebrewImportPayload) => void;
 }
 
-export function HomebrewImportConfirmModal({
-    data,
-    onCancel,
-    onMerge,
-    onOverwrite
-}: HomebrewImportConfirmModalProps) {
+export function HomebrewImportConfirmModal({ data, onCancel, onMerge, onOverwrite }: HomebrewImportConfirmModalProps) {
     return (
         <div className="homebrew-import__overlay">
             <div className="homebrew-import__content">
@@ -73,4 +68,3 @@ export function HomebrewImportConfirmModal({
         </div>
     );
 }
-

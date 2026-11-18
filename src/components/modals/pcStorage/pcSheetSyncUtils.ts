@@ -19,10 +19,9 @@ function hasIdentityChangedIgnoringUiLocks(
 ): boolean {
     if (nextIdentity === prevIdentity) return false;
 
-    const allKeys = new Set([
-        ...Object.keys(nextIdentity),
-        ...Object.keys(prevIdentity)
-    ]) as Set<keyof CharacterState['identity']>;
+    const allKeys = new Set([...Object.keys(nextIdentity), ...Object.keys(prevIdentity)]) as Set<
+        keyof CharacterState['identity']
+    >;
 
     for (const key of allKeys) {
         if (COSMETIC_UI_LOCK_KEYS.has(key)) continue;

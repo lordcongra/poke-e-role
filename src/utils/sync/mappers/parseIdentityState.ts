@@ -237,7 +237,12 @@ export function parseIdentity(
                 return undefined;
             }
             const raw = String(meta['ability-target-ids']).trim();
-            return raw ? raw.split(',').map((s) => s.trim()).filter(Boolean) : [];
+            return raw
+                ? raw
+                      .split(',')
+                      .map((s) => s.trim())
+                      .filter(Boolean)
+                : [];
         })(),
         availableAbilities: loadedAbilities,
         previousNativeAbility: String(meta['previous-native-ability'] || ''),
@@ -343,4 +348,3 @@ export function parseIdentity(
         dexDescription: String(meta['dex-description'] || '')
     };
 }
-

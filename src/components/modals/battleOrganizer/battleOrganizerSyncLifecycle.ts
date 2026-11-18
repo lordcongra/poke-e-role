@@ -229,4 +229,3 @@ export function applyStandaloneCharsToBattleOrganizerState(
         rounds: prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r))
     };
 }
-

@@ -232,9 +232,7 @@ export function useInitiativeObrSync({
                             });
                             const sortedList = sortCombatants(normalizedList);
                             if (isMounted) {
-                                setCombatants((prev) =>
-                                    areCombatantListsEqual(prev, sortedList) ? prev : sortedList
-                                );
+                                setCombatants((prev) => (areCombatantListsEqual(prev, sortedList) ? prev : sortedList));
                             }
                         }
                     }
@@ -536,4 +534,3 @@ export function useInitiativeObrSync({
         fetchAvailableCharacters
     };
 }
-

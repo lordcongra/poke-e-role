@@ -495,7 +495,9 @@ export async function setupOwlbearRoomSync(
             }
 
             if (BATTLEFIELD_META_ID in meta) {
-                useCharacterStore.getState().setActiveBattlefield(resolveBattlefieldForRole(meta[BATTLEFIELD_META_ID], role));
+                useCharacterStore
+                    .getState()
+                    .setActiveBattlefield(resolveBattlefieldForRole(meta[BATTLEFIELD_META_ID], role));
             } else {
                 useCharacterStore.getState().setActiveBattlefield(null);
             }

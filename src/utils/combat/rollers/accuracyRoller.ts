@@ -221,13 +221,13 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     const isPhysOrSpec = move.category === 'Physical' || move.category === 'Special';
     const sideName = resolveCharacterSide(state);
     const rollerSide: 'player' | 'foe' = sideName !== 'none' ? sideName : state.identity.isNPC ? 'foe' : 'player';
-    const rollerId = [
-        state.identity.entityId,
-        state.tokenId,
-        state.identity.nickname,
-        state.identity.species
-    ].filter((id): id is string => Boolean(id));
-    if (isPhysOrSpec && isTargetAffectedByAbility(rollerId, rollerSide, 'victory star', state.activeBattlefield || null)) {
+    const rollerId = [state.identity.entityId, state.tokenId, state.identity.nickname, state.identity.species].filter(
+        (id): id is string => Boolean(id)
+    );
+    if (
+        isPhysOrSpec &&
+        isTargetAffectedByAbility(rollerId, rollerSide, 'victory star', state.activeBattlefield || null)
+    ) {
         if (!tags.includes('Victory Star (Never Miss)')) {
             tags.push('Victory Star (Never Miss)');
         }
@@ -236,7 +236,10 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
         }
     }
 
-    if (move.category === 'Special' && isTargetAffectedByAbility(rollerId, rollerSide, 'battery', state.activeBattlefield || null)) {
+    if (
+        move.category === 'Special' &&
+        isTargetAffectedByAbility(rollerId, rollerSide, 'battery', state.activeBattlefield || null)
+    ) {
         if (!tags.includes('Battery (+1 Damage)')) {
             tags.push('Battery (+1 Damage)');
         }
@@ -363,4 +366,3 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
         chanceOptions
     );
 }
-

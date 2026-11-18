@@ -366,19 +366,28 @@ export function useBattleOrganizerTokenWatch({
                             }
 
                             let nextAbilityBoostLevel = combatant.abilityBoostLevel;
-                            if (metaAbilityBoostLevel !== undefined && metaAbilityBoostLevel !== combatant.abilityBoostLevel) {
+                            if (
+                                metaAbilityBoostLevel !== undefined &&
+                                metaAbilityBoostLevel !== combatant.abilityBoostLevel
+                            ) {
                                 nextAbilityBoostLevel = metaAbilityBoostLevel;
                                 updated = true;
                             }
 
                             let nextAbilityBoostActive = combatant.abilityBoostActive;
-                            if (metaAbilityBoostActive !== undefined && metaAbilityBoostActive !== combatant.abilityBoostActive) {
+                            if (
+                                metaAbilityBoostActive !== undefined &&
+                                metaAbilityBoostActive !== combatant.abilityBoostActive
+                            ) {
                                 nextAbilityBoostActive = metaAbilityBoostActive;
                                 updated = true;
                             }
 
                             let nextAbilityChoiceIndex = combatant.abilityChoiceIndex;
-                            if (metaAbilityChoiceIndex !== undefined && metaAbilityChoiceIndex !== combatant.abilityChoiceIndex) {
+                            if (
+                                metaAbilityChoiceIndex !== undefined &&
+                                metaAbilityChoiceIndex !== combatant.abilityChoiceIndex
+                            ) {
                                 nextAbilityChoiceIndex = metaAbilityChoiceIndex;
                                 updated = true;
                             }
@@ -578,8 +587,15 @@ export function useBattleOrganizerTokenWatch({
 
                             const targetCombatant = currentRound.combatants.find((c) => {
                                 if (targetTokenId && c.tokenId === targetTokenId) return true;
-                                if (currState.identity.entityId && c.entityId === currState.identity.entityId) return true;
-                                if (!targetTokenId && !currState.identity.entityId && charName && c.name.toLowerCase().trim() === charName) return true;
+                                if (currState.identity.entityId && c.entityId === currState.identity.entityId)
+                                    return true;
+                                if (
+                                    !targetTokenId &&
+                                    !currState.identity.entityId &&
+                                    charName &&
+                                    c.name.toLowerCase().trim() === charName
+                                )
+                                    return true;
                                 return false;
                             });
                             if (!targetCombatant) return prev;

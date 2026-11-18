@@ -136,4 +136,3 @@ export function extractMoveTags(desc: string): ParsedTagPill[] {
 
     return pills;
 }
-

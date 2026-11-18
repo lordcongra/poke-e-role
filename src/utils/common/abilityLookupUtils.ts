@@ -37,9 +37,7 @@ export async function lookupAbilityDetails(
     let customAbility: { name: string; description?: string; effect?: string } | undefined;
     try {
         const customAbilities = useCharacterStore.getState().roomCustomAbilities || [];
-        customAbility = customAbilities.find(
-            (ca) => ca.name.trim().toLowerCase() === cleanName.toLowerCase()
-        );
+        customAbility = customAbilities.find((ca) => ca.name.trim().toLowerCase() === cleanName.toLowerCase());
     } catch {
         // Ignore store access errors in isolated environments
     }
@@ -81,4 +79,3 @@ export async function lookupAbilityDetails(
         tags
     };
 }
-

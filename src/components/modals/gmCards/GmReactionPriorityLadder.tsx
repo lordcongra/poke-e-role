@@ -60,18 +60,64 @@ export const GmReactionPriorityLadder: React.FC<GmReactionPriorityLadderProps> =
         }
     };
 
-    const renderColumn = (title: string, sub: string, color: string, isReaction: boolean, list: ReactionLadderTier[]) => (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', backgroundColor: 'var(--panel-bg)', padding: '10px', borderRadius: '6px', border: `1px solid ${color}` }}>
+    const renderColumn = (
+        title: string,
+        sub: string,
+        color: string,
+        isReaction: boolean,
+        list: ReactionLadderTier[]
+    ) => (
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+                backgroundColor: 'var(--panel-bg)',
+                padding: '10px',
+                borderRadius: '6px',
+                border: `1px solid ${color}`
+            }}
+        >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontWeight: 'bold', color, display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}>
+                <span
+                    style={{
+                        fontWeight: 'bold',
+                        color,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '0.8rem'
+                    }}
+                >
                     {isReaction ? <ArrowUp size={14} /> : <ArrowDown size={14} />} {title}
                 </span>
                 <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{sub}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {list.map((item) => (
-                    <div key={item.tier} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 8px', borderRadius: '4px', backgroundColor: 'var(--panel-alt)', fontSize: '0.76rem' }}>
-                        <span style={{ backgroundColor: color, color: '#FFFFFF', fontWeight: 'bold', padding: '1px 6px', borderRadius: '3px', minWidth: '28px', textAlign: 'center' }}>
+                    <div
+                        key={item.tier}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            backgroundColor: 'var(--panel-alt)',
+                            fontSize: '0.76rem'
+                        }}
+                    >
+                        <span
+                            style={{
+                                backgroundColor: color,
+                                color: '#FFFFFF',
+                                fontWeight: 'bold',
+                                padding: '1px 6px',
+                                borderRadius: '3px',
+                                minWidth: '28px',
+                                textAlign: 'center'
+                            }}
+                        >
                             {item.tier}
                         </span>
                         <span style={{ color: 'var(--text-main)', lineHeight: '1.3' }}>{item.moves.join(', ')}</span>
@@ -82,9 +128,29 @@ export const GmReactionPriorityLadder: React.FC<GmReactionPriorityLadderProps> =
     );
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px', backgroundColor: 'var(--panel-alt)', borderRadius: '6px', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
-                <strong style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>12-Tier Reaction Priority Ladder</strong>
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                padding: '12px',
+                backgroundColor: 'var(--panel-alt)',
+                borderRadius: '6px',
+                border: '1px solid var(--border)'
+            }}
+        >
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    borderBottom: '1px solid var(--border)',
+                    paddingBottom: '8px'
+                }}
+            >
+                <strong style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>
+                    12-Tier Reaction Priority Ladder
+                </strong>
                 <button
                     type="button"
                     className="action-button action-button--dark gm-card-item-broadcast-btn"
@@ -97,22 +163,60 @@ export const GmReactionPriorityLadder: React.FC<GmReactionPriorityLadderProps> =
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ padding: '6px 10px', backgroundColor: 'var(--panel-bg)', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '0.75rem', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                <div
+                    style={{
+                        padding: '6px 10px',
+                        backgroundColor: 'var(--panel-bg)',
+                        borderRadius: '4px',
+                        border: '1px solid var(--border)',
+                        fontSize: '0.75rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: '4px'
+                    }}
+                >
                     <span style={{ fontWeight: 'bold', color: '#00ACC1' }}>Reactions:</span>
                     <span style={{ color: 'var(--text-muted)' }}>[Main Action Declared] ➔ [Reaction Declared] ➔</span>
                     <span style={{ fontWeight: 'bold', color: '#00ACC1' }}>[Reaction Resolves]</span>
                     <span style={{ color: 'var(--text-muted)' }}>➔ [Main Action Resolves]</span>
                 </div>
-                <div style={{ padding: '6px 10px', backgroundColor: 'var(--panel-bg)', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '0.75rem', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                <div
+                    style={{
+                        padding: '6px 10px',
+                        backgroundColor: 'var(--panel-bg)',
+                        borderRadius: '4px',
+                        border: '1px solid var(--border)',
+                        fontSize: '0.75rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: '4px'
+                    }}
+                >
                     <span style={{ fontWeight: 'bold', color: '#7E57C2' }}>Late Reactions:</span>
-                    <span style={{ color: 'var(--text-muted)' }}>[Main Action Declared] ➔ [Main Action Resolves] ➔ [Late Reaction Declared] ➔</span>
+                    <span style={{ color: 'var(--text-muted)' }}>
+                        [Main Action Declared] ➔ [Main Action Resolves] ➔ [Late Reaction Declared] ➔
+                    </span>
                     <span style={{ fontWeight: 'bold', color: '#7E57C2' }}>[Late Reaction Resolves]</span>
                 </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
-                {renderColumn('Reactions (Resolve BEFORE Action)', 'Higher Resolves First', '#00ACC1', true, REACTIONS_LADDER)}
-                {renderColumn('Late Reactions (Resolve AFTER Action)', 'Lower Resolves First', '#7E57C2', false, LATE_REACTIONS_LADDER)}
+                {renderColumn(
+                    'Reactions (Resolve BEFORE Action)',
+                    'Higher Resolves First',
+                    '#00ACC1',
+                    true,
+                    REACTIONS_LADDER
+                )}
+                {renderColumn(
+                    'Late Reactions (Resolve AFTER Action)',
+                    'Lower Resolves First',
+                    '#7E57C2',
+                    false,
+                    LATE_REACTIONS_LADDER
+                )}
             </div>
         </div>
     );

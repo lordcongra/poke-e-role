@@ -287,7 +287,11 @@ export function useBattleOrganizerTokenSync({
                         : '';
                 }
 
-                if (syncOptions.syncAbilityBoost || combatant.abilityBoostActive !== undefined || combatant.abilityBoostLevel !== undefined) {
+                if (
+                    syncOptions.syncAbilityBoost ||
+                    combatant.abilityBoostActive !== undefined ||
+                    combatant.abilityBoostLevel !== undefined
+                ) {
                     if (combatant.abilityBoostActive !== undefined) {
                         updates['ability-boost-active'] = Boolean(combatant.abilityBoostActive);
                     }

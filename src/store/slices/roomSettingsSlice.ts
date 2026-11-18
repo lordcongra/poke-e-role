@@ -110,7 +110,8 @@ export function loadInitialRoomAndSceneSettings(): InitialRoomAndSceneSettings {
     let initialSceneDefaultOffsetX: number | null = null;
     let initialSceneDefaultOffsetY: number | null = null;
     try {
-        const storedSceneScale = typeof localStorage !== 'undefined' ? localStorage.getItem('pkr_scene_default_scale') : null;
+        const storedSceneScale =
+            typeof localStorage !== 'undefined' ? localStorage.getItem('pkr_scene_default_scale') : null;
         if (storedSceneScale) {
             const parsed = Number(storedSceneScale);
             if (!isNaN(parsed) && parsed >= 25 && parsed <= 300) {
@@ -403,4 +404,3 @@ export const createRoomSettingsSlice: StateCreator<
         }
     }
 });
-

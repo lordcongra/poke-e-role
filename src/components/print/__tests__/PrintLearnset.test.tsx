@@ -80,11 +80,7 @@ describe('PrintLearnset', () => {
 
         await act(async () => {
             root.render(
-                <PrintLearnset
-                    learnset={learnset}
-                    moves={[]}
-                    config={{ ...basePrintConfig, showLearnset: false }}
-                />
+                <PrintLearnset learnset={learnset} moves={[]} config={{ ...basePrintConfig, showLearnset: false }} />
             );
         });
 
@@ -94,13 +90,7 @@ describe('PrintLearnset', () => {
 
     it('returns null and does not render when learnset is empty or undefined', async () => {
         await act(async () => {
-            root.render(
-                <PrintLearnset
-                    learnset={[]}
-                    moves={[]}
-                    config={{ ...basePrintConfig, showLearnset: true }}
-                />
-            );
+            root.render(<PrintLearnset learnset={[]} moves={[]} config={{ ...basePrintConfig, showLearnset: true }} />);
         });
 
         expect(container.innerHTML).toBe('');
@@ -127,11 +117,7 @@ describe('PrintLearnset', () => {
 
         await act(async () => {
             root.render(
-                <PrintLearnset
-                    learnset={learnset}
-                    moves={[]}
-                    config={{ ...basePrintConfig, showLearnset: true }}
-                />
+                <PrintLearnset learnset={learnset} moves={[]} config={{ ...basePrintConfig, showLearnset: true }} />
             );
         });
 
@@ -141,8 +127,8 @@ describe('PrintLearnset', () => {
         const title = container.querySelector('.print-sheet__section-title');
         expect(title?.textContent).toBe('Move Learnset');
 
-        const rankHeaders = Array.from(container.querySelectorAll('.print-sheet__learnset-rank')).map(
-            (el) => el.textContent?.trim()
+        const rankHeaders = Array.from(container.querySelectorAll('.print-sheet__learnset-rank')).map((el) =>
+            el.textContent?.trim()
         );
 
         // Sort order must be chronological: Starter first, then Rookie
@@ -161,13 +147,13 @@ describe('PrintLearnset', () => {
         const rows = container.querySelectorAll('.print-sheet__learnset-row');
         expect(rows).toHaveLength(2);
 
-        const starterPills = Array.from(rows[0].querySelectorAll('.print-sheet__learnset-pill')).map(
-            (p) => p.textContent?.trim()
+        const starterPills = Array.from(rows[0].querySelectorAll('.print-sheet__learnset-pill')).map((p) =>
+            p.textContent?.trim()
         );
         expect(starterPills).toEqual(['Tackle', 'Tail Whip']);
 
-        const rookiePills = Array.from(rows[1].querySelectorAll('.print-sheet__learnset-pill')).map(
-            (p) => p.textContent?.trim()
+        const rookiePills = Array.from(rows[1].querySelectorAll('.print-sheet__learnset-pill')).map((p) =>
+            p.textContent?.trim()
         );
         expect(rookiePills).toEqual(['Quick Attack']);
     });
@@ -180,10 +166,7 @@ describe('PrintLearnset', () => {
         ];
 
         // Currently learned / equipped moves on character
-        const currentMoves: MoveData[] = [
-            mockMove('Thunder Shock'),
-            mockMove('Iron Tail')
-        ];
+        const currentMoves: MoveData[] = [mockMove('Thunder Shock'), mockMove('Iron Tail')];
 
         await act(async () => {
             root.render(
@@ -196,8 +179,8 @@ describe('PrintLearnset', () => {
         });
 
         // Thunderbolt is NOT learned
-        const thunderboltPill = Array.from(container.querySelectorAll('.print-sheet__learnset-pill')).find(
-            (el) => el.textContent?.includes('Thunderbolt')
+        const thunderboltPill = Array.from(container.querySelectorAll('.print-sheet__learnset-pill')).find((el) =>
+            el.textContent?.includes('Thunderbolt')
         );
         expect(thunderboltPill).toBeDefined();
         expect(thunderboltPill?.classList.contains('print-sheet__learnset-pill--learned')).toBe(false);
@@ -205,8 +188,8 @@ describe('PrintLearnset', () => {
         expect(thunderboltPill?.querySelector('strong')).toBeNull();
 
         // Thunder Shock IS learned
-        const thundershockPill = Array.from(container.querySelectorAll('.print-sheet__learnset-pill')).find(
-            (el) => el.textContent?.includes('Thunder Shock')
+        const thundershockPill = Array.from(container.querySelectorAll('.print-sheet__learnset-pill')).find((el) =>
+            el.textContent?.includes('Thunder Shock')
         );
         expect(thundershockPill).toBeDefined();
         expect(thundershockPill?.classList.contains('print-sheet__learnset-pill--learned')).toBe(true);
@@ -214,8 +197,8 @@ describe('PrintLearnset', () => {
         expect(thundershockPill?.querySelector('strong')?.textContent).toBe('✓ Thunder Shock');
 
         // Iron Tail IS learned (case-insensitive & whitespace tolerant)
-        const ironTailPill = Array.from(container.querySelectorAll('.print-sheet__learnset-pill')).find(
-            (el) => el.textContent?.includes('Iron Tail')
+        const ironTailPill = Array.from(container.querySelectorAll('.print-sheet__learnset-pill')).find((el) =>
+            el.textContent?.includes('Iron Tail')
         );
         expect(ironTailPill).toBeDefined();
         expect(ironTailPill?.classList.contains('print-sheet__learnset-pill--learned')).toBe(true);

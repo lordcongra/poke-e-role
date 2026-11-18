@@ -1,10 +1,4 @@
-import type {
-    PcStorageData,
-    PcBox,
-    CampaignProfile,
-    PcPokemonSummary,
-    TrainerRoster
-} from '@/types/pcStorageTypes';
+import type { PcStorageData, PcBox, CampaignProfile, PcPokemonSummary, TrainerRoster } from '@/types/pcStorageTypes';
 
 export function createDefaultBox(index: number): PcBox {
     return {
@@ -110,7 +104,10 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
             if (tid.startsWith('__pmd_') || t.profileType === 'storage') {
                 t.profileType = 'storage';
                 if (!rawTrainerName.trim() || rawTrainerName === 'Trainer') {
-                    t.name = typeof t.playerName === 'string' && t.playerName.trim() ? `${t.playerName}'s Storage` : 'PMD Storage';
+                    t.name =
+                        typeof t.playerName === 'string' && t.playerName.trim()
+                            ? `${t.playerName}'s Storage`
+                            : 'PMD Storage';
                 }
             }
 
@@ -266,4 +263,3 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
 
     return data;
 }
-

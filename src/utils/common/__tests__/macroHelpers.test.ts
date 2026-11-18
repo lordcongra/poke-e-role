@@ -13,19 +13,21 @@ import { createTestCharacterState } from '../../../test/testStateHelpers';
 describe('macroHelpers', () => {
     describe('convertMovesToMax', () => {
         it('boosts offensive moves by +2 power and adds [Acc +2] while retaining bracketed tags', () => {
-            const moves: MoveData[] = [{
-                id: 'm1',
-                name: 'Flamethrower',
-                type: 'Fire',
-                category: 'Special',
-                acc1: 'spe',
-                acc2: 'none',
-                dmg1: 'spe',
-                power: 3,
-                desc: 'A fiery blast. [High Crit] [Charge]',
-                active: false,
-                marker: ''
-            }];
+            const moves: MoveData[] = [
+                {
+                    id: 'm1',
+                    name: 'Flamethrower',
+                    type: 'Fire',
+                    category: 'Special',
+                    acc1: 'spe',
+                    acc2: 'none',
+                    dmg1: 'spe',
+                    power: 3,
+                    desc: 'A fiery blast. [High Crit] [Charge]',
+                    active: false,
+                    marker: ''
+                }
+            ];
 
             const converted = convertMovesToMax(moves, []);
             expect(converted).toHaveLength(1);
@@ -37,19 +39,21 @@ describe('macroHelpers', () => {
         });
 
         it('converts status moves into Max Guard with 0 power and shield description', () => {
-            const statusMoves: MoveData[] = [{
-                id: 'm2',
-                name: 'Protect',
-                type: 'Normal',
-                category: 'Status',
-                acc1: 'none',
-                acc2: 'none',
-                dmg1: 'none',
-                power: 0,
-                desc: 'Protects the user from harm.',
-                active: false,
-                marker: ''
-            }];
+            const statusMoves: MoveData[] = [
+                {
+                    id: 'm2',
+                    name: 'Protect',
+                    type: 'Normal',
+                    category: 'Status',
+                    acc1: 'none',
+                    acc2: 'none',
+                    dmg1: 'none',
+                    power: 0,
+                    desc: 'Protects the user from harm.',
+                    active: false,
+                    marker: ''
+                }
+            ];
 
             const converted = convertMovesToMax(statusMoves, []);
             expect(converted).toHaveLength(1);
@@ -75,19 +79,21 @@ describe('macroHelpers', () => {
                     maxMoveEffect: 'Creates a gravitational field.'
                 }
             ];
-            const cosmicMove: MoveData[] = [{
-                id: 'm3',
-                name: 'Meteor Beam',
-                type: 'Cosmic',
-                category: 'Special',
-                acc1: 'spe',
-                acc2: 'none',
-                dmg1: 'spe',
-                power: 4,
-                desc: 'Beams from outer space. [Area]',
-                active: false,
-                marker: ''
-            }];
+            const cosmicMove: MoveData[] = [
+                {
+                    id: 'm3',
+                    name: 'Meteor Beam',
+                    type: 'Cosmic',
+                    category: 'Special',
+                    acc1: 'spe',
+                    acc2: 'none',
+                    dmg1: 'spe',
+                    power: 4,
+                    desc: 'Beams from outer space. [Area]',
+                    active: false,
+                    marker: ''
+                }
+            ];
 
             const converted = convertMovesToMax(cosmicMove, customTypes);
             expect(converted[0].name).toBe('G-Max Singularity');
@@ -267,7 +273,13 @@ describe('macroHelpers', () => {
                 [CombatStat.VIT]: { base: 5, rank: 0, limit: 5, buff: 0, debuff: 0 }
             };
             const newIdentity = { ...state.identity, rank: 'Starter' as Rank };
-            const healthGainPrevented = { hpBase: 4, hpCurr: 5, hpMax: 6, temporaryHitPoints: 0, temporaryHitPointsMax: 0 };
+            const healthGainPrevented = {
+                hpBase: 4,
+                hpCurr: 5,
+                hpMax: 6,
+                temporaryHitPoints: 0,
+                temporaryHitPointsMax: 0
+            };
             const willDummy = { willBase: 3, willCurr: 3, willMax: 4, temporaryWill: 0, temporaryWillMax: 0 };
             const updatesToSave: Record<string, unknown> = {};
 

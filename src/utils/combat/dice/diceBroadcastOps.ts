@@ -106,9 +106,7 @@ export async function resolveCarDiceTheme(playerId: string): Promise<{
             isOutdatedCarDetected = true;
         }
 
-        const allThemes = roomMeta['com.grupos-acciones.dice/roomDiceThemes'] as
-            | Record<string, unknown>
-            | undefined;
+        const allThemes = roomMeta['com.grupos-acciones.dice/roomDiceThemes'] as Record<string, unknown> | undefined;
 
         if (allThemes && allThemes.players) {
             const playersMap = allThemes.players as Record<string, Record<string, unknown>>;

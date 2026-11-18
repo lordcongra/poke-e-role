@@ -32,7 +32,9 @@ const syncHealthWillForPassives = (
     return { health: newHealth, will: newWill };
 };
 
-export const createPassivesSlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], PassivesSlice> = (set) => ({
+export const createPassivesSlice: StateCreator<CharacterState, [['zustand/devtools', never]], [], PassivesSlice> = (
+    set
+) => ({
     passives: [],
 
     addPassive: () =>

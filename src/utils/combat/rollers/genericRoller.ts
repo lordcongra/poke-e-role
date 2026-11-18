@@ -1,10 +1,5 @@
 import { useCharacterStore } from '@/store/useCharacterStore';
-import {
-    getStatusPenalties,
-    getAbilityText,
-    getRankBonusStats,
-    getPainPenalty
-} from '@/utils/combat/combatMath';
+import { getStatusPenalties, getAbilityText, getRankBonusStats, getPainPenalty } from '@/utils/combat/combatMath';
 import { parseCombatTags } from '@/utils/tagParser/index';
 import { rollDicePlus } from '@/utils/combat/diceRoller';
 import {
@@ -184,4 +179,3 @@ export async function rollGeneric(
         `${nickname} rolled ${actionName}!${finalTags}`
     );
 }
-

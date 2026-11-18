@@ -68,11 +68,11 @@ export function getWeatherDamageBonus(
         currentState?.identity?.abilityActive !== false &&
         (rawAbility.toLowerCase() === 'mega sol' || /\[\s*self\s+weather\s*:\s*sun\s*\]/i.test(allAbilityTags));
     const hasSelfSunPassive =
-        currentState?.passives?.some((p) => p.active !== false && /\[\s*self\s+weather\s*:\s*sun\s*\]/i.test(p.desc || '')) ||
+        currentState?.passives?.some(
+            (p) => p.active !== false && /\[\s*self\s+weather\s*:\s*sun\s*\]/i.test(p.desc || '')
+        ) ||
         currentState?.inventory?.some(
-            (i) =>
-                i.active !== false &&
-                /\[\s*self\s+weather\s*:\s*sun\s*\]/i.test(`${i.desc || ''} ${i.tags || ''}`)
+            (i) => i.active !== false && /\[\s*self\s+weather\s*:\s*sun\s*\]/i.test(`${i.desc || ''} ${i.tags || ''}`)
         );
     const hasSelfSun = Boolean(hasSelfSunAbility || hasSelfSunPassive);
 
@@ -184,7 +184,7 @@ export function getWeatherDamageBonus(
         }
     }
 
-    const resolvedSide = currentState ? resolveCharacterSide(currentState) : (isNPC ? 'foe' : 'player');
+    const resolvedSide = currentState ? resolveCharacterSide(currentState) : isNPC ? 'foe' : 'player';
 
     // Side Grassy Terrain check: In Pokerole, Grassy Terrain (+1 Grass Damage) ONLY applies to the side it is on
     if (cleanType === 'grass' && battlefield) {
@@ -192,8 +192,8 @@ export function getWeatherDamageBonus(
             resolvedSide === 'foe'
                 ? battlefield.foeSide
                 : resolvedSide === 'player'
-                ? battlefield.playerSide
-                : undefined;
+                  ? battlefield.playerSide
+                  : undefined;
         if (side) {
             const sideHasGrassy = Boolean(
                 side.forceFields?.some(
@@ -260,4 +260,3 @@ export function getWeatherDamageBonus(
 
     return { diceBonus, flatPenalty, tag: tagDescriptions.join(', ') };
 }
-

@@ -64,12 +64,25 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
 
     const resolvedTags = propSourceTags || sourceCombatant?.abilityTags || charIdentity.abilityTags || '';
     const stance = useMemo(() => getAbilityTargetStance(abilityName, resolvedTags), [abilityName, resolvedTags]);
-    const maxTargets = useMemo(() => getAbilityMaxTargets(abilityName, resolvedTags, sourceRank), [abilityName, resolvedTags, sourceRank]);
+    const maxTargets = useMemo(
+        () => getAbilityMaxTargets(abilityName, resolvedTags, sourceRank),
+        [abilityName, resolvedTags, sourceRank]
+    );
     const isNeutralizingGas = useMemo(() => {
-        return abilityName.replace(/\s*\(HA\)$/i, '').trim().toLowerCase() === 'neutralizing gas';
+        return (
+            abilityName
+                .replace(/\s*\(HA\)$/i, '')
+                .trim()
+                .toLowerCase() === 'neutralizing gas'
+        );
     }, [abilityName]);
     const isRuinAbility = useMemo(() => {
-        return RUIN_ABILITIES.has(abilityName.replace(/\s*\(HA\)$/i, '').trim().toLowerCase());
+        return RUIN_ABILITIES.has(
+            abilityName
+                .replace(/\s*\(HA\)$/i, '')
+                .trim()
+                .toLowerCase()
+        );
     }, [abilityName]);
 
     // Load matching round combatants from Battle Organizer storage
@@ -112,11 +125,11 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
                 return filtered.sort((a, b) => {
                     const aSpecies = (a.species || '').toLowerCase();
                     const aName = (a.name || '').toLowerCase();
-                    const aIsDondozo = (aSpecies === 'dondozo' || aName === 'dondozo') ? 1 : 0;
+                    const aIsDondozo = aSpecies === 'dondozo' || aName === 'dondozo' ? 1 : 0;
 
                     const bSpecies = (b.species || '').toLowerCase();
                     const bName = (b.name || '').toLowerCase();
-                    const bIsDondozo = (bSpecies === 'dondozo' || bName === 'dondozo') ? 1 : 0;
+                    const bIsDondozo = bSpecies === 'dondozo' || bName === 'dondozo' ? 1 : 0;
 
                     return bIsDondozo - aIsDondozo;
                 });
@@ -135,15 +148,16 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
             return isTargetCombatantActiveNeutralizingGas(candId, candidates);
         }
         if (isRuinAbility) {
-            const candAb = (candidate.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+            const candAb = (candidate.ability || '')
+                .replace(/\s*\(HA\)$/i, '')
+                .trim()
+                .toLowerCase();
             return RUIN_ABILITIES.has(candAb);
         }
         return false;
     };
 
-    const rawTargetIds = sourceCombatant
-        ? sourceCombatant.abilityTargetIds
-        : charIdentity.abilityTargetIds;
+    const rawTargetIds = sourceCombatant ? sourceCombatant.abilityTargetIds : charIdentity.abilityTargetIds;
 
     // Initial targets from source: if unconfigured (undefined), default to eligible aura targets so they can be unchecked
     const initialTargets = useMemo(() => {
@@ -225,7 +239,10 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
                         }
                     }
                 } catch (e) {
-                    console.warn('[AbilityTargetSelectorModal] Failed to persist auto-cleaned targets to organizer:', e);
+                    console.warn(
+                        '[AbilityTargetSelectorModal] Failed to persist auto-cleaned targets to organizer:',
+                        e
+                    );
                 }
             }
         } else if (!isOpen && initialized) {
@@ -347,9 +364,10 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
                 const targetId = selectedIds[0];
                 const { targetName, heldItems } = await resolveTargetHeldItemInfoAsync(targetId);
                 const sourceIcon = sourceCombatant?.image || charIdentity.tokenImageUrl || '';
-                const resultMsg = (heldItems && heldItems !== 'None')
-                    ? `${sourceName} frisked ${targetName} and identified their held item: **${heldItems}**!`
-                    : `${sourceName} frisked ${targetName} — they are not holding any items.`;
+                const resultMsg =
+                    heldItems && heldItems !== 'None'
+                        ? `${sourceName} frisked ${targetName} and identified their held item: **${heldItems}**!`
+                        : `${sourceName} frisked ${targetName} — they are not holding any items.`;
 
                 addRollLogEntry(
                     'Frisk',
@@ -403,7 +421,9 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
 
                 {/* Counter & Warning */}
                 <div className="ability-target-modal__counter-bar">
-                    <span className={`ability-target-modal__counter ${isExceedingLimit ? 'ability-target-modal__counter--danger' : ''}`}>
+                    <span
+                        className={`ability-target-modal__counter ${isExceedingLimit ? 'ability-target-modal__counter--danger' : ''}`}
+                    >
                         Selected: <strong>{selectedIds.length}</strong> / {maxTargets} Targets
                     </span>
                     {isExceedingLimit && (
@@ -427,8 +447,13 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
                                 const isImmune = isCandidateImmune(candidate);
                                 const isDisabled = isInPc || isImmune;
                                 const selected = isTargetSelected(candidate);
-                                const isSelf = matchesTarget(candidate, sourceId) || (sourceTokenId && matchesTarget(candidate, sourceTokenId));
-                                const candIsPlayer = typeof candidate.isPlayerSide === 'boolean' ? candidate.isPlayerSide : !candidate.isNPC;
+                                const isSelf =
+                                    matchesTarget(candidate, sourceId) ||
+                                    (sourceTokenId && matchesTarget(candidate, sourceTokenId));
+                                const candIsPlayer =
+                                    typeof candidate.isPlayerSide === 'boolean'
+                                        ? candidate.isPlayerSide
+                                        : !candidate.isNPC;
 
                                 return (
                                     <label
@@ -529,18 +554,10 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
                         </button>
                     </div>
                     <div className="ability-target-modal__actions-right">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="action-button action-button--dark"
-                        >
+                        <button type="button" onClick={onClose} className="action-button action-button--dark">
                             Cancel
                         </button>
-                        <button
-                            type="button"
-                            onClick={handleSave}
-                            className="action-button action-button--theme"
-                        >
+                        <button type="button" onClick={handleSave} className="action-button action-button--theme">
                             <Check size={13} /> Save Targets
                         </button>
                     </div>
@@ -549,4 +566,3 @@ export const AbilityTargetSelectorModal: React.FC<AbilityTargetSelectorModalProp
         </div>
     );
 };
-

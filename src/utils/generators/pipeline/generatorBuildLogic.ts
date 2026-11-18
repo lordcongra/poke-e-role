@@ -26,9 +26,7 @@ import {
 } from './generatorOptionsParser';
 
 function getRandomFallbackSpecies(state: CharacterState): string | null {
-    const customNames = state.roomCustomPokemon
-        .filter((p) => state.role === 'GM' || !p.gmOnly)
-        .map((p) => p.Name);
+    const customNames = state.roomCustomPokemon.filter((p) => state.role === 'GM' || !p.gmOnly).map((p) => p.Name);
     const candidates = [...new Set([...Object.keys(SPECIES_URLS), ...customNames])];
     return candidates.length > 0 ? candidates[Math.floor(Math.random() * candidates.length)] : null;
 }
@@ -55,7 +53,8 @@ export async function resolveGeneratorSpecies(config: GeneratorConfig, state: Ch
         let allowedRecommendedRanks: string[] | undefined = undefined;
         if (config.filterRecommendedRank) {
             let targetRank: string = config.targetRank || state.identity.rank || 'Starter';
-            if (config.recommendedRankMode === 'exact') targetRank = (config.exactRecommendedRank as string) || targetRank;
+            if (config.recommendedRankMode === 'exact')
+                targetRank = (config.exactRecommendedRank as string) || targetRank;
             else if (config.recommendedRankMode === 'custom') {
                 const customVal = config.customSlotRecommendedRanks?.[config.slotIndex ?? 0];
                 if (customVal && customVal !== 'match') targetRank = customVal;
@@ -101,15 +100,23 @@ export async function resolveGeneratorSpecies(config: GeneratorConfig, state: Ch
             }
         }
         if (eligible.length === 0 && filterOpts.filterRecommendedRank) {
-            eligible = filterPokemonLookupPool(lookupIndex, resolvedTypes, { ...filterOpts, filterRecommendedRank: false });
+            eligible = filterPokemonLookupPool(lookupIndex, resolvedTypes, {
+                ...filterOpts,
+                filterRecommendedRank: false
+            });
         }
         if (eligible.length === 0 && filterOpts.allowedGenerations && filterOpts.allowedGenerations.length < 9) {
-            eligible = filterPokemonLookupPool(lookupIndex, resolvedTypes, { ...filterOpts, filterRecommendedRank: false, allowedGenerations: undefined });
+            eligible = filterPokemonLookupPool(lookupIndex, resolvedTypes, {
+                ...filterOpts,
+                filterRecommendedRank: false,
+                allowedGenerations: undefined
+            });
         }
 
-        speciesName = eligible.length > 0
-            ? eligible[Math.floor(Math.random() * eligible.length)].name
-            : getRandomFallbackSpecies(state) || speciesName;
+        speciesName =
+            eligible.length > 0
+                ? eligible[Math.floor(Math.random() * eligible.length)].name
+                : getRandomFallbackSpecies(state) || speciesName;
     } catch (e) {
         console.warn('[GeneratorUtils] Candidate species lookup failed, using fallback pool:', e);
         speciesName = getRandomFallbackSpecies(state) || speciesName;
@@ -155,10 +162,13 @@ export function createGeneratorFakeState(
     baseStats: Record<string, number>,
     limits: Record<string, number>
 ): CharacterState {
-    const socials = Object.values(SocialStat).reduce((acc, s) => {
-        acc[s] = { base: 1, rank: 0, buff: 0, debuff: 0, limit: 5 };
-        return acc;
-    }, {} as CharacterState['socials']);
+    const socials = Object.values(SocialStat).reduce(
+        (acc, s) => {
+            acc[s] = { base: 1, rank: 0, buff: 0, debuff: 0, limit: 5 };
+            return acc;
+        },
+        {} as CharacterState['socials']
+    );
 
     const stats = { ...state.stats };
     for (const s of Object.values(CombatStat)) {
@@ -228,8 +238,16 @@ export async function extractEvolutionChainAndMoves(
             ? moveObject.map((m) =>
                   typeof m === 'object' && m
                       ? {
-                            name: String((m as Record<string, unknown>).Name || (m as Record<string, unknown>).Move || ''),
-                            rank: String((m as Record<string, unknown>).Learned || (m as Record<string, unknown>).Learn || (m as Record<string, unknown>).Level || (m as Record<string, unknown>).Rank || 'Other')
+                            name: String(
+                                (m as Record<string, unknown>).Name || (m as Record<string, unknown>).Move || ''
+                            ),
+                            rank: String(
+                                (m as Record<string, unknown>).Learned ||
+                                    (m as Record<string, unknown>).Learn ||
+                                    (m as Record<string, unknown>).Level ||
+                                    (m as Record<string, unknown>).Rank ||
+                                    'Other'
+                            )
                         }
                       : { name: String(m), rank: 'Other' }
               )
@@ -237,7 +255,14 @@ export async function extractEvolutionChainAndMoves(
               ? Object.entries(moveObject).flatMap(([rank, list]) =>
                     Array.isArray(list)
                         ? list.map((m) => ({
-                              name: typeof m === 'string' ? m : String((m as Record<string, unknown>).Name || (m as Record<string, unknown>).Move || ''),
+                              name:
+                                  typeof m === 'string'
+                                      ? m
+                                      : String(
+                                            (m as Record<string, unknown>).Name ||
+                                                (m as Record<string, unknown>).Move ||
+                                                ''
+                                        ),
                               rank
                           }))
                         : []
@@ -256,7 +281,8 @@ export async function extractEvolutionChainAndMoves(
             if (pe.isTrueEvo) {
                 currentTrueDepth++;
                 if (trueEvoCount === 1) offset = config.evo2Stage1Offset;
-                else if (trueEvoCount >= 2) offset = currentTrueDepth === 1 ? config.evo3Stage2Offset : config.evo3Stage1Offset;
+                else if (trueEvoCount >= 2)
+                    offset = currentTrueDepth === 1 ? config.evo3Stage2Offset : config.evo3Stage1Offset;
             }
             const peMaxRank = Math.max(0, currentRankIndex - offset);
             extractMoves(pe.data.Moves, peMaxRank, legalMoveNames);
@@ -305,14 +331,23 @@ export function parseMoveData(
     const accString = `Accuracy: ${rawAcc1}${rawAcc2 && rawAcc2.toLowerCase() !== 'none' ? ` + ${rawAcc2}` : ''}`;
 
     const isAttr = rawDmg2 && rawDmg2 !== 'None' && parseStatOptions(rawDmg2).length > 0;
-    const dmgText = rawDmg1 && rawDmg2 && rawDmg2 !== 'None'
-        ? (isAttr ? `${rawDmg1} / ${rawDmg2}` : `${rawDmg1} + ${rawDmg2}`)
-        : (!rawDmg1 && rawDmg2 && rawDmg2 !== 'None' ? rawDmg2 : rawDmg1);
+    const dmgText =
+        rawDmg1 && rawDmg2 && rawDmg2 !== 'None'
+            ? isAttr
+                ? `${rawDmg1} / ${rawDmg2}`
+                : `${rawDmg1} + ${rawDmg2}`
+            : !rawDmg1 && rawDmg2 && rawDmg2 !== 'None'
+              ? rawDmg2
+              : rawDmg1;
     const dmgString = cat === 'Status' ? '' : `Damage: ${dmgText}`;
 
     const rawDesc = String(data.Effect || data.Description || '');
     const retainedTags = rawDesc.match(/\[.*?\]/g)?.join(' ') || '';
-    const cleanDesc = rawDesc.replace(/\[.*?\]/g, '').trim().replace(/\n\nAccuracy:[\s\S]*/i, '').trim();
+    const cleanDesc = rawDesc
+        .replace(/\[.*?\]/g, '')
+        .trim()
+        .replace(/\n\nAccuracy:[\s\S]*/i, '')
+        .trim();
 
     const finalDesc =
         `${cleanDesc}\n\n${accString}${dmgString ? '\n' + dmgString : ''}${retainedTags ? '\n\n' + retainedTags : ''}`.trim();
@@ -360,9 +395,10 @@ export async function fetchAndParseMoves(
     const uniqueMoveNames = [...new Set(legalMoveNames)];
     const fetchedMoves = await fetchList(uniqueMoveNames);
 
-    const uniqueOverrankNames = allowOverrank && overrankMoveNames.length > 0
-        ? [...new Set(overrankMoveNames)].filter((name) => !uniqueMoveNames.includes(name))
-        : [];
+    const uniqueOverrankNames =
+        allowOverrank && overrankMoveNames.length > 0
+            ? [...new Set(overrankMoveNames)].filter((name) => !uniqueMoveNames.includes(name))
+            : [];
     const fetchedOverrankMoves = await fetchList(uniqueOverrankNames);
 
     return { fetchedMoves, fetchedOverrankMoves };
@@ -387,7 +423,17 @@ export function allocateBuildStats(
     draftedMoves: TempMove[],
     effectiveBias: string | undefined
 ): void {
-    const args = [generatedAttributes, generatedSocials, generatedSkills, adjustedAttributePoints, socialPoints, rankSkill, attributeLimits, fakeState, maxSkillRank] as const;
+    const args = [
+        generatedAttributes,
+        generatedSocials,
+        generatedSkills,
+        adjustedAttributePoints,
+        socialPoints,
+        rankSkill,
+        attributeLimits,
+        fakeState,
+        maxSkillRank
+    ] as const;
     const resolvedBias = effectiveBias || config.combatBias || 'auto';
     if (buildType === 'wild') {
         assignWildStats(...args, config, customSkillsList);

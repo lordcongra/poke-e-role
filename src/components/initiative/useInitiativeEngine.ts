@@ -12,13 +12,7 @@ export function useInitiativeEngine() {
     const layoutOps = useInitiativeLayout();
 
     // 2. OBR / Local Persistence & Synchronization Hook
-    const {
-        isReady,
-        isGM,
-        availableChars,
-        availableObrChars,
-        fetchAvailableCharacters
-    } = useInitiativeObrSync({
+    const { isReady, isGM, availableChars, availableObrChars, fetchAvailableCharacters } = useInitiativeObrSync({
         combatants,
         setCombatants,
         activeTurnId,

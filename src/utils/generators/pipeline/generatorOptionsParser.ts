@@ -77,4 +77,3 @@ export function parseSkillOptions(value: string): string[] {
     }
     return results;
 }
-

@@ -21,10 +21,7 @@ export default defineConfig([
         },
         rules: {
             '@typescript-eslint/no-explicit-any': 'error',
-            '@typescript-eslint/no-unused-vars': [
-                'error',
-                { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
-            ],
+            '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
             'no-empty': ['error', { allowEmptyCatch: true }],
             'react-hooks/rules-of-hooks': 'error',
             'react-hooks/exhaustive-deps': 'warn',
@@ -33,10 +30,7 @@ export default defineConfig([
             'react-hooks/purity': 'off',
             'react-hooks/globals': 'off',
             'react-hooks/preserve-manual-memoization': 'off',
-            'react-refresh/only-export-components': [
-                'warn',
-                { allowConstantExport: true }
-            ]
+            'react-refresh/only-export-components': ['warn', { allowConstantExport: true }]
         }
     },
     {

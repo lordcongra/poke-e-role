@@ -28,11 +28,7 @@ function getTokenMeta(item: Item): Record<string, unknown> {
     );
 }
 
-function queueTokenDeletionWithAttachments(
-    token: Item,
-    sceneItems: Item[],
-    duplicateIdsToDelete: string[]
-): void {
+function queueTokenDeletionWithAttachments(token: Item, sceneItems: Item[], duplicateIdsToDelete: string[]): void {
     duplicateIdsToDelete.push(token.id);
     const { characterTokens: attachedChars, allAttachedChildren } = separateAttachments(sceneItems, token.id);
     if (attachedChars.length > 0) {
@@ -51,7 +47,12 @@ function syncLiveTokenToSummary(
     updateSummary: (summary: PcPokemonSummary) => void,
     requireOnMapSync: boolean
 ): void {
-    const { hp: curHp, maxHp: curMaxHp, will: curWill, maxWill: curMaxWill } = parseCombatPoolsFromMeta(tMeta, {
+    const {
+        hp: curHp,
+        maxHp: curMaxHp,
+        will: curWill,
+        maxWill: curMaxWill
+    } = parseCombatPoolsFromMeta(tMeta, {
         hp: sum.hp,
         maxHp: sum.maxHp,
         will: sum.will,
@@ -314,7 +315,14 @@ export async function reconcileSceneTokens(sceneItems: Item[], role: 'PLAYER' | 
                         }
                     });
                 } else if (tokenLastMod > sumLastMod && tokenLastMod > 0) {
-                    syncLiveTokenToSummary(primaryToken, sum, tMeta, tokenLastMod, freshStore.updatePokemonSummary, false);
+                    syncLiveTokenToSummary(
+                        primaryToken,
+                        sum,
+                        tMeta,
+                        tokenLastMod,
+                        freshStore.updatePokemonSummary,
+                        false
+                    );
                 }
 
                 if (sum.mapTokenId !== primaryToken.id) {

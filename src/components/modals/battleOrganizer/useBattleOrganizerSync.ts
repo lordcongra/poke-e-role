@@ -1,11 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { isStandaloneMode, storageAdapter } from '@/utils/sync/storageAdapter';
-import {
-    getBattleOrganizerStorageKey,
-    getEffectiveRoomId,
-    getRollLogStorageKey
-} from '@/utils/sync/roomScopedStorage';
+import { getBattleOrganizerStorageKey, getEffectiveRoomId, getRollLogStorageKey } from '@/utils/sync/roomScopedStorage';
 import { useCharacterStore } from '@/store/useCharacterStore';
 import { EXTENSION_ID } from '@/hooks/owlbearSync/owlbearSyncConstants';
 import { registerSafeBroadcastListener } from '@/hooks/owlbearSync/owlbearBroadcastUtils';

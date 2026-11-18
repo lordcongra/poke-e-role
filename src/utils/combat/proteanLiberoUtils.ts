@@ -86,4 +86,3 @@ export async function fetchBaseSpeciesTyping(speciesName: string): Promise<BaseS
     const type2 = sanitizeType(data.Type2);
     return { type1, type2 };
 }
-

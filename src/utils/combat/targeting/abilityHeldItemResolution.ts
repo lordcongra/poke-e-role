@@ -83,7 +83,7 @@ export function resolveTargetHeldItemInfo(
                         const combatantMeta = (combatant as { metadata?: Record<string, unknown> }).metadata;
                         fallbackTargetName = combatantMeta
                             ? extractCharacterName(combatantMeta, combatant.name || targetId)
-                            : (combatant.name || targetId);
+                            : combatant.name || targetId;
                         if (combatant.heldItem !== undefined) {
                             const trimmed = combatant.heldItem.trim();
                             if (trimmed) {
@@ -121,7 +121,9 @@ export function resolveTargetHeldItemInfo(
                 const trimmed = summary.heldItem.trim();
                 if (trimmed) return { targetName, heldItems: trimmed };
             }
-            const meta = (summary.fullMetadata || summary.savedTokenItem?.metadata) as Record<string, unknown> | undefined;
+            const meta = (summary.fullMetadata || summary.savedTokenItem?.metadata) as
+                | Record<string, unknown>
+                | undefined;
             if (meta) {
                 const parsed = parseHeldItemsFromMetadata(meta);
                 if (parsed) {
@@ -212,12 +214,10 @@ export async function resolveTargetHeldItemInfoAsync(
         try {
             const items = await OBR.scene.items.getItems();
             for (const item of items) {
-                const rawMeta = (
-                    item.metadata?.[STATS_META_ID] ||
+                const rawMeta = (item.metadata?.[STATS_META_ID] ||
                     item.metadata?.['pokerole-extension/stats'] ||
                     item.metadata?.['pokerole-pmd-extension/stats'] ||
-                    item.metadata
-                ) as Record<string, unknown> | undefined;
+                    item.metadata) as Record<string, unknown> | undefined;
                 const stateObj = (rawMeta?.state || rawMeta) as Record<string, unknown> | undefined;
                 const identityObj = (stateObj?.identity || rawMeta?.identity || {}) as Record<string, unknown>;
 
@@ -263,4 +263,3 @@ export async function resolveTargetHeldItemInfoAsync(
         heldItems: fallback.heldItems
     };
 }
-

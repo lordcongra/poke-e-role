@@ -267,10 +267,7 @@ describe('findRoundEndTriggers', () => {
     });
 
     it('detects Leftovers specified on identity.heldItem when not in inventory', () => {
-        const state = createMockCharacterState(
-            { inventory: [] },
-            { heldItem: 'Leftovers' }
-        );
+        const state = createMockCharacterState({ inventory: [] }, { heldItem: 'Leftovers' });
 
         const triggers = findRoundEndTriggers(state);
         const leftoversTrigger = triggers.find((t) => t.source.toLowerCase() === 'leftovers');

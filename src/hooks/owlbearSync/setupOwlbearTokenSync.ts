@@ -10,11 +10,7 @@ import { setActiveTokenId, hasPendingUpdates, getIsPcSheetActive, setIsRemoteSyn
 import { harvestTokensItemArt } from '../../utils/graphics/itemArtCatalog';
 import { METADATA_ID, getEffectiveScaleAndOffsets, type TransformData } from './owlbearSyncConstants';
 import { reconcileSceneTokens } from './reconcileSceneTokens';
-import {
-    extractLiveAccessoryBundles,
-    hasAttachmentDiff,
-    sanitizeAttachmentBundles
-} from '@/utils/pc/pcAttachmentOps';
+import { extractLiveAccessoryBundles, hasAttachmentDiff, sanitizeAttachmentBundles } from '@/utils/pc/pcAttachmentOps';
 import { findMatchingTrainerEntries } from '@/hooks/owlbearSync/owlbearPcSyncUtils';
 import { parseCombatPoolsFromMeta } from '@/utils/sync/tokenMetaUtils';
 
@@ -226,7 +222,10 @@ export async function setupOwlbearTokenSync(params: {
         if (deletedTokenIds.length > 0) {
             const store = useCharacterStore.getState();
             if (store.tokenId && deletedTokenIds.includes(store.tokenId)) {
-                const isPc = Boolean(store.identity.entityId && (getIsPcSheetActive() || store.pcData?.pokemonSummaries?.[store.identity.entityId]));
+                const isPc = Boolean(
+                    store.identity.entityId &&
+                    (getIsPcSheetActive() || store.pcData?.pokemonSummaries?.[store.identity.entityId])
+                );
                 const nextId = isPc && store.identity.entityId ? store.identity.entityId : '';
                 setActiveTokenId(isPc && store.identity.entityId ? store.identity.entityId : null);
                 store.setTokenData(nextId, store.role || 'PLAYER');

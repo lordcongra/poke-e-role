@@ -36,7 +36,8 @@ export function buildTagString(config: TagBuilderConfig): string {
         else tag = `[${target}]`;
     } else if (category === 'mechanic') {
         if (!target) return '';
-        if (target === 'High Crit' || target === 'High Critical') tag = typeOption ? `[High Critical: ${typeOption}]` : `[High Critical]`;
+        if (target === 'High Crit' || target === 'High Critical')
+            tag = typeOption ? `[High Critical: ${typeOption}]` : `[High Critical]`;
         else if (target === 'Stacking High Crit') tag = `[Stacking High Crit]`;
         else if (target === 'Never Miss') tag = typeOption ? `[Never Miss: ${typeOption}]` : `[Never Miss]`;
         else if (target === 'Ignore Pain') tag = typeOption ? `[Ignore Pain: ${typeOption}]` : `[Ignore Pain]`;
@@ -107,7 +108,7 @@ export function buildTagString(config: TagBuilderConfig): string {
         if (!target) return '';
         tag = `[Target: ${target}]`;
     } else if (category === 'choice') {
-        const choiceText = target === 'Custom Choice' ? (typeOption || '') : (target || typeOption || '');
+        const choiceText = target === 'Custom Choice' ? typeOption || '' : target || typeOption || '';
         if (choiceText.trim()) {
             tag = `[Choice: ${choiceText.trim()}]`;
         }
@@ -148,11 +149,6 @@ export {
 
 export { generateExplanation } from './logic/tagExplanationGenerator';
 
-export {
-    extractTagsFromText,
-    extractItemTags,
-    extractMoveTags,
-    type ParsedTagPill
-} from './logic/tagPillExtractors';
+export { extractTagsFromText, extractItemTags, extractMoveTags, type ParsedTagPill } from './logic/tagPillExtractors';
 
 export type { TagBuilderConfig } from './tagBuilderTypes';

@@ -8,10 +8,7 @@ import { buildTrainerSummary } from '@/utils/pc/pcTrainerOps';
  * Hydrates a Trainer's standalone sheet metadata from IndexedDB and builds
  * a `PcPokemonSummary` for PC sheet viewing.
  */
-export function usePcTrainerSummary(
-    trainer: TrainerRoster | undefined,
-    isPmdMode: boolean
-): PcPokemonSummary | null {
+export function usePcTrainerSummary(trainer: TrainerRoster | undefined, isPmdMode: boolean): PcPokemonSummary | null {
     const [localMeta, setLocalMeta] = useState<Record<string, unknown> | null>(null);
 
     useEffect(() => {
@@ -49,4 +46,3 @@ export function usePcTrainerSummary(
         [trainer, isPmdMode, localMeta]
     );
 }
-

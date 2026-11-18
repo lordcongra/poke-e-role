@@ -139,14 +139,18 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                                       ? Boolean(meta['is-player-side'])
                                       : !isNPC;
 
-                            const rawTargetMeta = matchingChar?.metadata?.['ability-target-ids'] ?? meta['ability-target-ids'];
+                            const rawTargetMeta =
+                                matchingChar?.metadata?.['ability-target-ids'] ?? meta['ability-target-ids'];
                             const abilityTargetIds = shouldReset
                                 ? []
                                 : existing?.abilityTargetIds !== undefined
                                   ? existing.abilityTargetIds
                                   : rawTargetMeta !== undefined
                                     ? String(rawTargetMeta).trim()
-                                        ? String(rawTargetMeta).split(',').map((s) => s.trim()).filter(Boolean)
+                                        ? String(rawTargetMeta)
+                                              .split(',')
+                                              .map((s) => s.trim())
+                                              .filter(Boolean)
                                         : []
                                     : [];
 
@@ -293,7 +297,10 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                               ? existing.abilityTargetIds
                               : rawTargetMeta !== undefined
                                 ? String(rawTargetMeta).trim()
-                                    ? String(rawTargetMeta).split(',').map((s) => s.trim()).filter(Boolean)
+                                    ? String(rawTargetMeta)
+                                          .split(',')
+                                          .map((s) => s.trim())
+                                          .filter(Boolean)
                                     : []
                                 : [];
 
@@ -411,7 +418,8 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                             if (existing) {
                                 return {
                                     ...row,
-                                    isPlayerSide: existing.isPlayerSide !== undefined ? existing.isPlayerSide : row.isPlayerSide,
+                                    isPlayerSide:
+                                        existing.isPlayerSide !== undefined ? existing.isPlayerSide : row.isPlayerSide,
                                     abilityTargetIds: shouldReset
                                         ? []
                                         : existing.abilityTargetIds !== undefined
@@ -431,7 +439,9 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                             combatants: preservedCombatantRows
                         };
 
-                        const playerTargets = preservedCombatantRows.filter((c) => c.isPlayerSide && !c.isFainted).length;
+                        const playerTargets = preservedCombatantRows.filter(
+                            (c) => c.isPlayerSide && !c.isFainted
+                        ).length;
                         const foeTargets = preservedCombatantRows.filter((c) => !c.isPlayerSide && !c.isFainted).length;
 
                         return {
@@ -533,7 +543,9 @@ export function useBattleOrganizerTokenImport({ state, updateState }: UseBattleO
                         const globalStore = useCharacterStore.getState();
                         if (globalStore.tokenId) {
                             const isMatched = targetCombatantsToReset.some(
-                                (c) => c.tokenId === globalStore.tokenId || (c.entityId && c.entityId === globalStore.tokenId)
+                                (c) =>
+                                    c.tokenId === globalStore.tokenId ||
+                                    (c.entityId && c.entityId === globalStore.tokenId)
                             );
                             if (isMatched) {
                                 globalStore.updateTracker('actions', 0);

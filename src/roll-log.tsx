@@ -73,7 +73,10 @@ export function RollLog() {
             <div className={`roll-log__container ${isMinimized ? 'roll-log__container--minimized' : ''}`}>
                 <div className={`roll-log__header ${isMinimized ? 'roll-log__header--minimized' : ''}`}>
                     <h3 className="roll-log__title text-title-primary">
-                        <Dices size={18} /> Roll Log {isMinimized && rolls.length > 0 && <span className="roll-log__count-badge">({rolls.length})</span>}
+                        <Dices size={18} /> Roll Log{' '}
+                        {isMinimized && rolls.length > 0 && (
+                            <span className="roll-log__count-badge">({rolls.length})</span>
+                        )}
                     </h3>
                     <div className="roll-log__header-actions">
                         {rolls.length > 0 && !isMinimized && (
@@ -108,8 +111,8 @@ export function RollLog() {
                     </div>
                 </div>
 
-                {!isMinimized && (
-                    rolls.length === 0 ? (
+                {!isMinimized &&
+                    (rolls.length === 0 ? (
                         <div
                             className="text-subtext"
                             style={{
@@ -133,8 +136,7 @@ export function RollLog() {
                                 />
                             ))}
                         </div>
-                    )
-                )}
+                    ))}
             </div>
 
             {factorsModalData && (

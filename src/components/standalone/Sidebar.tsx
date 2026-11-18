@@ -147,7 +147,9 @@ export function Sidebar() {
                         {hasUnbackedChanges && (
                             <span
                                 className="sidebar__backup-badge"
-                                title={backupReminderReason === 'stale' ? 'Backup overdue (7+ days)' : 'Unbacked changes'}
+                                title={
+                                    backupReminderReason === 'stale' ? 'Backup overdue (7+ days)' : 'Unbacked changes'
+                                }
                             />
                         )}
                     </button>

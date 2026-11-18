@@ -107,9 +107,7 @@ describe('itemUsageEffects', () => {
             };
             const health = createHealth({ hpCurr: 0, hpMax: 8 });
             const will = createWill({ willCurr: 0, willMax: 5 });
-            const statuses: StatusItem[] = [
-                { id: 'status-faint', name: 'Fainted', customName: '', rounds: 0 }
-            ];
+            const statuses: StatusItem[] = [{ id: 'status-faint', name: 'Fainted', customName: '', rounds: 0 }];
 
             const result = applyItemUsageEffects(item, health, will, statuses);
 
@@ -129,9 +127,7 @@ describe('itemUsageEffects', () => {
             };
             const health = createHealth({ hpCurr: 0, hpMax: 12 });
             const will = createWill();
-            const statuses: StatusItem[] = [
-                { id: 'status-faint', name: 'Fainted', customName: '', rounds: 0 }
-            ];
+            const statuses: StatusItem[] = [{ id: 'status-faint', name: 'Fainted', customName: '', rounds: 0 }];
 
             const result = applyItemUsageEffects(item, health, will, statuses);
 
@@ -168,9 +164,7 @@ describe('itemUsageEffects', () => {
             };
             const health = createHealth();
             const will = createWill();
-            const statuses: StatusItem[] = [
-                { id: 'burn-2', name: '2nd Degree Burn', customName: '', rounds: 0 }
-            ];
+            const statuses: StatusItem[] = [{ id: 'burn-2', name: '2nd Degree Burn', customName: '', rounds: 0 }];
 
             const result = applyItemUsageEffects(item, health, will, statuses);
 
@@ -233,4 +227,3 @@ describe('itemUsageEffects', () => {
         });
     });
 });
-

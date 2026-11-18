@@ -688,12 +688,7 @@ export interface CharacterState
         SyncSlice,
         PcSlice {}
 
-export type CharacterSliceCreator<T> = StateCreator<
-    CharacterState,
-    [['zustand/devtools', never]],
-    [],
-    T
->;
+export type CharacterSliceCreator<T> = StateCreator<CharacterState, [['zustand/devtools', never]], [], T>;
 
 export type SliceCreator<T> = CharacterSliceCreator<T>;
 

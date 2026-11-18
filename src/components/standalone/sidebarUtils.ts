@@ -1,11 +1,7 @@
 import type { LocalCharacter, LocalFolder } from '@/utils/sync/storageAdapter';
 import type { TreeItem } from './sidebarTypes';
 
-export function buildTreeItems(
-    chars: LocalCharacter[],
-    flds: LocalFolder[],
-    customOrder: string[]
-): TreeItem[] {
+export function buildTreeItems(chars: LocalCharacter[], flds: LocalFolder[], customOrder: string[]): TreeItem[] {
     const orderMap = new Map<string, number>();
     customOrder.forEach((id, index) => orderMap.set(id, index));
 
@@ -79,4 +75,3 @@ export function parseStandaloneInitTags(savedList: string | null): Record<string
         return {};
     }
 }
-

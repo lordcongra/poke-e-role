@@ -91,4 +91,3 @@ export function readBattleOrganizerStateRaw(roomId?: string): string | null {
 
     return null;
 }
-

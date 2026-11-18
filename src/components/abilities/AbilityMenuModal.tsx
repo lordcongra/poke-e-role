@@ -731,10 +731,7 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
             </div>
 
             {isPressureModalOpen && (
-                <PressureDrainModal
-                    isOpen={isPressureModalOpen}
-                    onClose={() => setIsPressureModalOpen(false)}
-                />
+                <PressureDrainModal isOpen={isPressureModalOpen} onClose={() => setIsPressureModalOpen(false)} />
             )}
             {isCuriousMedicineModalOpen && (
                 <CuriousMedicineModal

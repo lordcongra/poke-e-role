@@ -151,9 +151,7 @@ export function createDefaultCustomPokemon(
     };
 }
 
-export function createDefaultCustomForm(
-    template: boolean | 'mega' | 'aegislash' | 'stance' = false
-): CustomForm {
+export function createDefaultCustomForm(template: boolean | 'mega' | 'aegislash' | 'stance' = false): CustomForm {
     const isMega = template === true || template === 'mega';
     const isStance = template === 'aegislash' || template === 'stance';
 

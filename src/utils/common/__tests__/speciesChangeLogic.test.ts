@@ -76,9 +76,7 @@ describe('speciesChangeLogic', () => {
             BaseHP: 5,
             Ability1: 'Static',
             Ability2: 'Surge Surfer (HA)',
-            Moves: [
-                { Learned: 'Starter', Move: 'Thunderbolt' }
-            ],
+            Moves: [{ Learned: 'Starter', Move: 'Thunderbolt' }],
             DexID: '026',
             DexCategory: 'Mouse',
             Height: '0.8 m',

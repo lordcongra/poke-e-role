@@ -40,7 +40,8 @@ export const PressureDrainModal: React.FC<PressureDrainModalProps> = ({
 
     // 1. Identify Source
     const charState = useCharacterStore();
-    const sourceName = sourceCombatant?.name || charState.identity.nickname || charState.identity.species || 'Combatant';
+    const sourceName =
+        sourceCombatant?.name || charState.identity.nickname || charState.identity.species || 'Combatant';
     const sourceIcon = sourceCombatant?.image || charState.identity.tokenImageUrl || '';
     const sourceTokenId = sourceCombatant?.tokenId || charState.tokenId || undefined;
     const sourceRank = (sourceCombatant as { rank?: string })?.rank || charState.identity.rank || 'Standard';
@@ -238,8 +239,9 @@ export const PressureDrainModal: React.FC<PressureDrainModalProps> = ({
                             return (
                                 <div
                                     key={foe.id}
-                                    className={`ability-entry-modal__row ${isSelected ? 'ability-entry-modal__row--selected' : ''
-                                        } ${isDisabled ? 'ability-entry-modal__row--disabled' : ''}`}
+                                    className={`ability-entry-modal__row ${
+                                        isSelected ? 'ability-entry-modal__row--selected' : ''
+                                    } ${isDisabled ? 'ability-entry-modal__row--disabled' : ''}`}
                                     onClick={() => handleToggle(foe.id)}
                                 >
                                     <div className="ability-entry-modal__row-left">
@@ -277,8 +279,8 @@ export const PressureDrainModal: React.FC<PressureDrainModalProps> = ({
                             </strong>
                         </div>
                         <p className="ability-entry-modal__confirm-text">
-                            Are you sure you want to drain Will from {selectedIds.length} target(s)? This directly modifies
-                            their Will in the combat tracker and broadcasts the event to the roll log.
+                            Are you sure you want to drain Will from {selectedIds.length} target(s)? This directly
+                            modifies their Will in the combat tracker and broadcasts the event to the roll log.
                         </p>
                     </div>
                 )}
@@ -318,4 +320,3 @@ export const PressureDrainModal: React.FC<PressureDrainModalProps> = ({
         </div>
     );
 };
-

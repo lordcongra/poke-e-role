@@ -353,11 +353,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                             {hasUnbackedChanges && (
                                 <span
                                     className="pc-header__backup-badge"
-                                    title={
-                                        reminderReason === 'stale'
-                                            ? 'Backup overdue (7+ days)'
-                                            : 'Unbacked changes'
-                                    }
+                                    title={reminderReason === 'stale' ? 'Backup overdue (7+ days)' : 'Unbacked changes'}
                                 />
                             )}
                         </button>

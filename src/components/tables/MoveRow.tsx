@@ -467,8 +467,8 @@ export const MoveRow = memo(function MoveRow({
                                 rolls.
                                 <br />
                                 <br />
-                                Are you abandoning your previous attack, or is this a Reaction move where you want to keep
-                                your previously banked dice?
+                                Are you abandoning your previous attack, or is this a Reaction move where you want to
+                                keep your previously banked dice?
                             </p>
                             <div className="moves-table__modal-actions">
                                 <button

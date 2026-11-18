@@ -33,12 +33,7 @@ export function addCustomType(set: HomebrewSet, get: HomebrewGet, typeObject: Cu
     saveHomebrewLocal(get());
 }
 
-export function updateCustomType(
-    set: HomebrewSet,
-    get: HomebrewGet,
-    oldName: string,
-    newType: CustomType
-): void {
+export function updateCustomType(set: HomebrewSet, get: HomebrewGet, oldName: string, newType: CustomType): void {
     const currentTypes = get().roomCustomTypes;
     const newTypes = currentTypes.map((customType) => (customType.name === oldName ? newType : customType));
     set({ roomCustomTypes: newTypes, needsBackup: true }, false, 'homebrew/updateCustomType');
@@ -56,7 +51,10 @@ export function duplicateCustomType(set: HomebrewSet, get: HomebrewGet, name: st
     const target = currentTypes.find((t) => t.name === name);
     if (!target) return;
 
-    const copyName = findUniqueCopyName(currentTypes.map((t) => t.name), target.name);
+    const copyName = findUniqueCopyName(
+        currentTypes.map((t) => t.name),
+        target.name
+    );
     const newType = { ...target, name: copyName };
     const newTypes = [...currentTypes, newType];
     set({ roomCustomTypes: newTypes, needsBackup: true }, false, 'homebrew/duplicateCustomType');
@@ -85,10 +83,7 @@ export function updateCustomAbility<K extends keyof CustomAbility>(
     const newAbilities = updateItemField(get().roomCustomAbilities, id, field, value);
     const updatedAbility = newAbilities.find((a) => a.id === id);
     set({ roomCustomAbilities: newAbilities, needsBackup: true }, false, 'homebrew/updateCustomAbility');
-    if (
-        updatedAbility &&
-        get().identity.ability?.trim().toLowerCase() === updatedAbility.name.trim().toLowerCase()
-    ) {
+    if (updatedAbility && get().identity.ability?.trim().toLowerCase() === updatedAbility.name.trim().toLowerCase()) {
         const customTags = `${updatedAbility.effect || ''} ${updatedAbility.description || ''}`.trim();
         get().setIdentity('abilityTags', customTags);
     }
@@ -160,11 +155,7 @@ export function duplicateCustomMove(set: HomebrewSet, get: HomebrewGet, id: stri
 
 // ----------------- Custom Pokémon Ops -----------------
 
-export function addCustomPokemon(
-    set: HomebrewSet,
-    get: HomebrewGet,
-    initialData?: Partial<CustomPokemon>
-): void {
+export function addCustomPokemon(set: HomebrewSet, get: HomebrewGet, initialData?: Partial<CustomPokemon>): void {
     const newPokemonItem = createDefaultCustomPokemon(get().roomCustomPokemon, initialData);
     const newPokemon = [...get().roomCustomPokemon, newPokemonItem];
     set({ roomCustomPokemon: newPokemon, needsBackup: true }, false, 'homebrew/addCustomPokemon');
@@ -366,7 +357,10 @@ export function duplicateCustomFieldEffect(set: HomebrewSet, get: HomebrewGet, i
     const target = currentEffects.find((e) => e.id === id);
     if (!target) return;
 
-    const copyName = findUniqueCopyName(currentEffects.map((e) => e.name), target.name);
+    const copyName = findUniqueCopyName(
+        currentEffects.map((e) => e.name),
+        target.name
+    );
     const newEffects = [
         ...currentEffects,
         {

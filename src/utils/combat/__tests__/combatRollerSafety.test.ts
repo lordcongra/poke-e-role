@@ -2,13 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '@/store/useCharacterStore';
 import { createTestCharacterState } from '@/test/testStateHelpers';
-import {
-    rollStatus,
-    rollAccuracy,
-    executeDamageRoll,
-    rollSkillCheck,
-    rollGeneric
-} from '../combatRoller';
+import { rollStatus, rollAccuracy, executeDamageRoll, rollSkillCheck, rollGeneric } from '../combatRoller';
 import { hasTailwindActive } from '../rollers/rollerCommon';
 import type { MoveData, StatusItem, SkillCheck } from '@/store/storeTypes';
 import { CombatStat, Skill } from '@/types/enums';
@@ -414,15 +408,7 @@ describe('combatRoller Safety Test Suite', () => {
             };
 
             const override = { active: false, type: 'dice' as const, value: 0 };
-            const result = await executeDamageRoll(
-                move,
-                useCharacterStore.getState(),
-                4,
-                false,
-                0,
-                0,
-                override
-            );
+            const result = await executeDamageRoll(move, useCharacterStore.getState(), 4, false, 0, 0, override);
 
             // Base 4 + 2 banked = 6 dice
             expect(result.diceToRoll).toBe(6);

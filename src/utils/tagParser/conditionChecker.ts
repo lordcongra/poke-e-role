@@ -163,21 +163,19 @@ export function checkCondition(
                 (ca) => ca.name.trim().toLowerCase() === rawAbility.toLowerCase()
             );
             const allAbilityTags = `${state.identity?.abilityTags || ''} ${known?.tags || ''} ${customAbility?.effect || ''} ${customAbility?.description || ''}`;
-            if (
-                rawAbility.toLowerCase() === 'mega sol' ||
-                /\[\s*self\s+weather\s*:\s*sun\s*\]/i.test(allAbilityTags)
-            ) {
+            if (rawAbility.toLowerCase() === 'mega sol' || /\[\s*self\s+weather\s*:\s*sun\s*\]/i.test(allAbilityTags)) {
                 return true;
             }
         }
-        if (state.passives?.some((p) => p.active !== false && /\[\s*self\s+weather\s*:\s*sun\s*\]/i.test(p.desc || ''))) {
+        if (
+            state.passives?.some((p) => p.active !== false && /\[\s*self\s+weather\s*:\s*sun\s*\]/i.test(p.desc || ''))
+        ) {
             return true;
         }
         if (
             state.inventory?.some(
                 (i) =>
-                    i.active !== false &&
-                    /\[\s*self\s+weather\s*:\s*sun\s*\]/i.test(`${i.desc || ''} ${i.tags || ''}`)
+                    i.active !== false && /\[\s*self\s+weather\s*:\s*sun\s*\]/i.test(`${i.desc || ''} ${i.tags || ''}`)
             )
         ) {
             return true;

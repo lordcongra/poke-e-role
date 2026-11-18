@@ -1,6 +1,6 @@
 /**
  * Ability Targeting Facade
- * 
+ *
  * Re-exports targeting sub-domain utilities from modular sub-files:
  * - abilityTargetStances: Stance parsing, rank targets, and matching
  * - abilityTargetPcResolution: PC presence detection and state sync
@@ -19,11 +19,7 @@ export {
     isTargetInList
 } from './targeting/abilityTargetStances';
 
-export {
-    isCombatantInPc,
-    syncCombatantSentToPc,
-    syncCombatantSentToMap
-} from './targeting/abilityTargetPcResolution';
+export { isCombatantInPc, syncCombatantSentToPc, syncCombatantSentToMap } from './targeting/abilityTargetPcResolution';
 
 export {
     RUIN_ABILITIES,
@@ -42,7 +38,4 @@ export {
     isVictoryStarActive
 } from './targeting/abilityFieldChecks';
 
-export {
-    resolveTargetHeldItemInfo,
-    resolveTargetHeldItemInfoAsync
-} from './targeting/abilityHeldItemResolution';
+export { resolveTargetHeldItemInfo, resolveTargetHeldItemInfoAsync } from './targeting/abilityHeldItemResolution';

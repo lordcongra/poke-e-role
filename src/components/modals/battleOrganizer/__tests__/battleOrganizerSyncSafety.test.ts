@@ -66,7 +66,10 @@ describe('battleOrganizerSyncSafety (B-01)', () => {
         vi.clearAllMocks();
         localStorage.clear();
         setBattleOrganizerOpen(false);
-        useCharacterStore.setState({ role: 'PLAYER', pcData: { version: 2, activeCampaignId: '', campaigns: {}, pokemonSummaries: {} } });
+        useCharacterStore.setState({
+            role: 'PLAYER',
+            pcData: { version: 2, activeCampaignId: '', campaigns: {}, pokemonSummaries: {} }
+        });
         (OBR.player.getRole as ReturnType<typeof vi.fn>).mockResolvedValue('PLAYER');
     });
 
@@ -152,12 +155,16 @@ describe('battleOrganizerSyncSafety (B-01)', () => {
 
         const playerOverwritePayload: BattleOrganizerState = {
             battlefield: { ...gmState.battlefield, location: 'Wiped Arena' },
-            rounds: [{ id: 'round-1', roundNumber: 1, combatants: [gmState.rounds[0].combatants[0]], endOfRoundEffects: '' }],
+            rounds: [
+                { id: 'round-1', roundNumber: 1, combatants: [gmState.rounds[0].combatants[0]], endOfRoundEffects: '' }
+            ],
             activeRoundIndex: 0
         };
         syncListener?.({ data: playerOverwritePayload, connectionId: 'player-conn' });
 
-        const persisted = JSON.parse(localStorage.getItem(getBattleOrganizerStorageKey()) || '{}') as BattleOrganizerState;
+        const persisted = JSON.parse(
+            localStorage.getItem(getBattleOrganizerStorageKey()) || '{}'
+        ) as BattleOrganizerState;
         expect(persisted.rounds[0].combatants).toHaveLength(2);
         expect(persisted.rounds[0].combatants[1].id).toBe('c-npc-hidden');
         expect(persisted.battlefield.location).toBe(gmState.battlefield.location);
@@ -236,7 +243,13 @@ describe('battleOrganizerSyncSafety (B-01)', () => {
         const sendMock = OBR.broadcast.sendMessage as ReturnType<typeof vi.fn>;
         expect(sendMock).toHaveBeenCalledWith(
             BATTLE_ORGANIZER_COMBATANT_PATCH_CHANNEL,
-            { roundIndex: 0, combatantId: 'c-player', tokenId: 'tok-player', entityId: undefined, patch: { hpCurr: 7 } },
+            {
+                roundIndex: 0,
+                combatantId: 'c-player',
+                tokenId: 'tok-player',
+                entityId: undefined,
+                patch: { hpCurr: 7 }
+            },
             { destination: 'REMOTE' }
         );
 

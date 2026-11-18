@@ -133,10 +133,7 @@ export function applyForceFieldToSide(
  * Removes all instances of a Force Field matching effectName from a Battlefield Side.
  * Clears matches in base slots (setting remainingRounds: 0, name: '') and filters them from extraForceFields.
  */
-export function removeForceFieldFromSide(
-    side: BattlefieldSideData,
-    effectName: string
-): BattlefieldSideData {
+export function removeForceFieldFromSide(side: BattlefieldSideData, effectName: string): BattlefieldSideData {
     const cleanTarget = effectName.toLowerCase().trim();
     const updated = { ...side };
     const forceFields = updated.forceFields.map((f) =>

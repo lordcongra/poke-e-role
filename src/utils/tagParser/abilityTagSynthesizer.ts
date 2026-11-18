@@ -11,7 +11,7 @@
  * - [Ignore Str Reduction] for Strength reduction immunity (Hyper Cutter)
  * - [Ignore Def Reduction] for Defense reduction immunity (Big Pecks)
  * - [Ignore Acc Reduction] for Accuracy reduction immunity (Keen Eye)
- * 
+ *
  * Preserves custom bracketed tags without duplication.
  */
 export function synthesizeAbilityTags(
@@ -50,8 +50,7 @@ export function synthesizeAbilityTags(
     const hasUniqueTag = seenTags.has('[unique]') || seenTags.has('[unique ability]');
     if (!hasUniqueTag) {
         const isUniqueText =
-            /\bunique\s+ability\b/i.test(fullText) ||
-            /\[\s*unique(?:\s+ability)?\s*\]/i.test(fullText);
+            /\bunique\s+ability\b/i.test(fullText) || /\[\s*unique(?:\s+ability)?\s*\]/i.test(fullText);
         if (isUniqueText) {
             addTag('[Unique]');
         }
@@ -65,8 +64,12 @@ export function synthesizeAbilityTags(
         seenTags.has('[ignore all stat reduction]');
     if (!hasIgnoreAllStatTag) {
         const isTotalStatReduction =
-            /\b(?:cannot|can't)\s+(?:have\s+(?:their|its)\s+)?(?:attributes(?:\/traits)?|stats?)\s+reduced\b/i.test(fullText) ||
-            /\b(?:cannot|can't)\s+(?:increase\s+or\s+)?reduce\s+(?:the\s+)?(?:attributes(?:\/traits)?|stats?)\b/i.test(fullText) ||
+            /\b(?:cannot|can't)\s+(?:have\s+(?:their|its)\s+)?(?:attributes(?:\/traits)?|stats?)\s+reduced\b/i.test(
+                fullText
+            ) ||
+            /\b(?:cannot|can't)\s+(?:increase\s+or\s+)?reduce\s+(?:the\s+)?(?:attributes(?:\/traits)?|stats?)\b/i.test(
+                fullText
+            ) ||
             /\bimmune\s+to\s+(?:all\s+)?(?:stat|attribute)\s+reductions?\b/i.test(fullText) ||
             /\[\s*ignore\s+(?:all\s+)?stat\s+reductions?\s*\]/i.test(fullText);
         if (isTotalStatReduction) {
@@ -114,7 +117,9 @@ export function synthesizeAbilityTags(
         seenTags.has('[ignore accuracy reductions]');
     if (!hasIgnoreAccTag) {
         const isAccReduction =
-            /\b(?:cannot|can't)\s+(?:have\s+(?:their|its)\s+)?accuracy(?:\s+attribute|\s+rolls)?\s+reduced\b/i.test(fullText) ||
+            /\b(?:cannot|can't)\s+(?:have\s+(?:their|its)\s+)?accuracy(?:\s+attribute|\s+rolls)?\s+reduced\b/i.test(
+                fullText
+            ) ||
             /\b(?:cannot|can't)\s+(?:have\s+successes\s+removed\s+from\s+its\s+accuracy\s+rolls)\b/i.test(fullText) ||
             /\b(?:cannot|can't)\s+reduce\s+(?:this\s+pokemon's\s+|the\s+)?accuracy\b/i.test(fullText) ||
             /\[\s*ignore\s+acc(?:uracy)?\s+reductions?\s*\]/i.test(fullText);

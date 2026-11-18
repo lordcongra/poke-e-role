@@ -3,7 +3,11 @@ import { CombatStat, SocialStat, Skill } from '@/types/enums';
 import { parseCombatTags, type CombatBonuses } from '@/utils/tagParser/index';
 import { getEffectsByCategory } from '@/utils/combat/fieldEffectsData';
 import { resolveCharacterSide, isFlowerGiftActiveForSide } from '@/utils/combat/combatantSideUtils';
-import { isAbilitySuppressedByField, isTargetUnderIntimidate, isTargetAffectedByAbility } from '@/utils/combat/abilityTargetingUtils';
+import {
+    isAbilitySuppressedByField,
+    isTargetUnderIntimidate,
+    isTargetAffectedByAbility
+} from '@/utils/combat/abilityTargetingUtils';
 import { shouldShiftTypeForAbility } from '@/utils/combat/proteanLiberoUtils';
 
 // Sub-module math re-exports
@@ -29,14 +33,25 @@ export {
 };
 
 export const ATTRIBUTE_MAPPING: Record<string, string> = {
-    Strength: 'str', Dexterity: 'dex', Vitality: 'vit', Special: 'spe',
-    Insight: 'ins', Tough: 'tou', Cool: 'coo', Beauty: 'bea',
-    Cute: 'cut', Clever: 'cle', Will: 'will'
+    Strength: 'str',
+    Dexterity: 'dex',
+    Vitality: 'vit',
+    Special: 'spe',
+    Insight: 'ins',
+    Tough: 'tou',
+    Cool: 'coo',
+    Beauty: 'bea',
+    Cute: 'cut',
+    Clever: 'cle',
+    Will: 'will'
 };
 
 export function getAbilityText(abilityName: string, customAbilities?: CustomAbility[]): string {
     if (!abilityName || !customAbilities) return '';
-    const cleanName = abilityName.replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+    const cleanName = abilityName
+        .replace(/\s*\(HA\)$/i, '')
+        .trim()
+        .toLowerCase();
     const custom = customAbilities.find((ability) => ability.name.trim().toLowerCase() === cleanName);
     return custom ? `${custom.description} ${custom.effect}` : '';
 }
@@ -50,7 +65,10 @@ export function isCharacterAbilityActive(state: CharacterState): boolean {
     const side = resolveCharacterSide(state);
     const effectiveSide: 'player' | 'foe' = side !== 'none' ? side : state.identity.isNPC ? 'foe' : 'player';
     const charIdentifiers = [
-        state.identity.entityId, state.tokenId, state.identity.nickname, state.identity.species
+        state.identity.entityId,
+        state.tokenId,
+        state.identity.nickname,
+        state.identity.species
     ].filter(Boolean) as string[];
     return !isAbilitySuppressedByField(effectiveSide, state.activeBattlefield || null, charIdentifiers);
 }
@@ -104,9 +122,9 @@ export function getStatusPenalties(state: CharacterState) {
     const abilityString = (state.identity.ability || '').toLowerCase();
     const charSide = resolveCharacterSide(state);
     const effectiveSide: 'player' | 'foe' = charSide !== 'none' ? charSide : state.identity.isNPC ? 'foe' : 'player';
-    const targetId = [
-        state.identity.entityId, state.tokenId, state.identity.nickname, state.identity.species
-    ].filter(Boolean) as string[];
+    const targetId = [state.identity.entityId, state.tokenId, state.identity.nickname, state.identity.species].filter(
+        Boolean
+    ) as string[];
 
     const activeStatuses = state.statuses.map((status) =>
         (status.name === 'Custom...' ? status.customName : status.name).toLowerCase()
@@ -123,8 +141,10 @@ export function getStatusPenalties(state: CharacterState) {
             if (!abilityString.includes('limber')) paralysisDexterityPenalty = Math.min(paralysisDexterityPenalty, -2);
         } else if (statusName === 'sleep') {
             if (
-                !abilityString.includes('insomnia') && !abilityString.includes('vital spirit') &&
-                !abilityString.includes('sweet veil') && !isTargetAffectedByAbility(targetId, effectiveSide, 'sweet veil', state.activeBattlefield || null)
+                !abilityString.includes('insomnia') &&
+                !abilityString.includes('vital spirit') &&
+                !abilityString.includes('sweet veil') &&
+                !isTargetAffectedByAbility(targetId, effectiveSide, 'sweet veil', state.activeBattlefield || null)
             ) {
                 isAsleep = true;
             }
@@ -144,7 +164,10 @@ export function calculateStatTotal(
 ): number {
     if (!statKey) return 0;
     if (statKey.includes('/')) {
-        const parts = statKey.split('/').map((s) => s.trim()).filter(Boolean);
+        const parts = statKey
+            .split('/')
+            .map((s) => s.trim())
+            .filter(Boolean);
         if (parts.length > 0) {
             return Math.max(0, ...parts.map((p) => calculateStatTotal(p, state, itemBuffs, factorTags)));
         }
@@ -159,14 +182,31 @@ export function calculateStatTotal(
             (state.stats as Record<string, StatData> | undefined)?.[statKey.toLowerCase().trim()];
         if (!statistic) return 0;
         let total =
-            statistic.base + statistic.rank + statistic.buff - statistic.debuff + (itemBuffs.stats[normalizedStat] || 0);
+            statistic.base +
+            statistic.rank +
+            statistic.buff -
+            statistic.debuff +
+            (itemBuffs.stats[normalizedStat] || 0);
 
         if (normalizedStat === CombatStat.DEX && state.activeBattlefield) {
             const sideName = resolveCharacterSide(state);
-            const side = sideName === 'foe' ? state.activeBattlefield.foeSide : sideName === 'player' ? state.activeBattlefield.playerSide : undefined;
+            const side =
+                sideName === 'foe'
+                    ? state.activeBattlefield.foeSide
+                    : sideName === 'player'
+                      ? state.activeBattlefield.playerSide
+                      : undefined;
             const hasTailwind = Boolean(
-                side?.forceFields?.some((ff) => ff?.name?.toLowerCase().includes('tailwind') && (ff.remainingRounds > 0 || ff.remainingRounds === -1)) ||
-                side?.extraForceFields?.some((ff) => ff?.name?.toLowerCase().includes('tailwind') && (ff.remainingRounds > 0 || ff.remainingRounds === -1))
+                side?.forceFields?.some(
+                    (ff) =>
+                        ff?.name?.toLowerCase().includes('tailwind') &&
+                        (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                ) ||
+                side?.extraForceFields?.some(
+                    (ff) =>
+                        ff?.name?.toLowerCase().includes('tailwind') &&
+                        (ff.remainingRounds > 0 || ff.remainingRounds === -1)
+                )
             );
             if (hasTailwind) {
                 total += 2;
@@ -175,22 +215,55 @@ export function calculateStatTotal(
         }
 
         const charSide = resolveCharacterSide(state);
-        const effectiveSide: 'player' | 'foe' = charSide !== 'none' ? charSide : state.identity.isNPC ? 'foe' : 'player';
-        const targetId = [state.identity.entityId, state.tokenId, state.identity.nickname, state.identity.species].filter(Boolean) as string[];
-        const isDondozo = (state.identity.species || '').trim().toLowerCase() === 'dondozo' || (state.identity.nickname || '').trim().toLowerCase() === 'dondozo';
-        const checkAbility = (ability: string) => isTargetAffectedByAbility(targetId, effectiveSide, ability, state.activeBattlefield || null);
+        const effectiveSide: 'player' | 'foe' =
+            charSide !== 'none' ? charSide : state.identity.isNPC ? 'foe' : 'player';
+        const targetId = [
+            state.identity.entityId,
+            state.tokenId,
+            state.identity.nickname,
+            state.identity.species
+        ].filter(Boolean) as string[];
+        const isDondozo =
+            (state.identity.species || '').trim().toLowerCase() === 'dondozo' ||
+            (state.identity.nickname || '').trim().toLowerCase() === 'dondozo';
+        const checkAbility = (ability: string) =>
+            isTargetAffectedByAbility(targetId, effectiveSide, ability, state.activeBattlefield || null);
 
         if (normalizedStat === CombatStat.STR) {
-            if (checkAbility('flower gift')) { total += 2; factorTags?.push('Flower Gift (+2 Strength)'); }
-            if (checkAbility('intimidate')) { total -= 1; factorTags?.push('Intimidate (-1 Strength)'); }
-            if (checkAbility('tablets of ruin')) { total -= 2; factorTags?.push('Tablets of Ruin (-2 Strength)'); }
-            if (isDondozo && checkAbility('commander')) { total += 2; factorTags?.push('Commander (+2 Strength)'); }
+            if (checkAbility('flower gift')) {
+                total += 2;
+                factorTags?.push('Flower Gift (+2 Strength)');
+            }
+            if (checkAbility('intimidate')) {
+                total -= 1;
+                factorTags?.push('Intimidate (-1 Strength)');
+            }
+            if (checkAbility('tablets of ruin')) {
+                total -= 2;
+                factorTags?.push('Tablets of Ruin (-2 Strength)');
+            }
+            if (isDondozo && checkAbility('commander')) {
+                total += 2;
+                factorTags?.push('Commander (+2 Strength)');
+            }
         } else if (normalizedStat === CombatStat.DEX) {
-            if (isDondozo && checkAbility('commander')) { total += 2; factorTags?.push('Commander (+2 Dexterity)'); }
+            if (isDondozo && checkAbility('commander')) {
+                total += 2;
+                factorTags?.push('Commander (+2 Dexterity)');
+            }
         } else if (normalizedStat === CombatStat.SPE) {
-            if (checkAbility('battery')) { total += 1; factorTags?.push('Battery (+1 Special)'); }
-            if (checkAbility('vessel of ruin')) { total -= 2; factorTags?.push('Vessel of Ruin (-2 Special)'); }
-            if (isDondozo && checkAbility('commander')) { total += 2; factorTags?.push('Commander (+2 Special)'); }
+            if (checkAbility('battery')) {
+                total += 1;
+                factorTags?.push('Battery (+1 Special)');
+            }
+            if (checkAbility('vessel of ruin')) {
+                total -= 2;
+                factorTags?.push('Vessel of Ruin (-2 Special)');
+            }
+            if (isDondozo && checkAbility('commander')) {
+                total += 2;
+                factorTags?.push('Commander (+2 Special)');
+            }
         }
 
         return Math.max(1, total);
@@ -198,7 +271,10 @@ export function calculateStatTotal(
 
     if (Object.values(SocialStat).includes(normalizedStat as SocialStat)) {
         const statistic = state.socials[normalizedStat as SocialStat];
-        return Math.max(1, statistic.base + statistic.rank + statistic.buff - statistic.debuff + (itemBuffs.stats[normalizedStat] || 0));
+        return Math.max(
+            1,
+            statistic.base + statistic.rank + statistic.buff - statistic.debuff + (itemBuffs.stats[normalizedStat] || 0)
+        );
     }
 
     return 0;
@@ -207,7 +283,10 @@ export function calculateStatTotal(
 export function calculateSkillTotal(skillKey: string, state: CharacterState, itemBuffs: CombatBonuses): number {
     if (!skillKey || skillKey === 'none') return 0;
     if (skillKey.includes('/')) {
-        const parts = skillKey.split('/').map((s) => s.trim()).filter(Boolean);
+        const parts = skillKey
+            .split('/')
+            .map((s) => s.trim())
+            .filter(Boolean);
         if (parts.length > 0) {
             return Math.max(0, ...parts.map((p) => calculateSkillTotal(p, state, itemBuffs)));
         }
@@ -268,20 +347,41 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState, itemB
     let teraBonus = 0;
     if (state.identity.activeTransformation === 'Terastallize' && move.type === state.identity.terastallizeAffinity) {
         if (state.identity.terastallizeBonusActive) {
-            const matchesOriginal = state.identity.type1 === state.identity.terastallizeAffinity || state.identity.type2 === state.identity.terastallizeAffinity;
+            const matchesOriginal =
+                state.identity.type1 === state.identity.terastallizeAffinity ||
+                state.identity.type2 === state.identity.terastallizeAffinity;
             teraBonus = matchesOriginal ? 3 : 2;
         } else {
             teraBonus = 1;
         }
     }
 
-    const customFirstHitTag = (invMods.firstHitDmg !== 0 && state.trackers.firstHitDmg) ? invMods.firstHitDmg : 0;
-    const cleanAbility = (state.identity.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
-    const stakeoutBonus = (cleanAbility === 'stakeout' && state.identity.abilityActive !== false && Boolean(state.identity.abilityTargetIds?.[0])) ? 1 : 0;
+    const customFirstHitTag = invMods.firstHitDmg !== 0 && state.trackers.firstHitDmg ? invMods.firstHitDmg : 0;
+    const cleanAbility = (state.identity.ability || '')
+        .replace(/\s*\(HA\)$/i, '')
+        .trim()
+        .toLowerCase();
+    const stakeoutBonus =
+        cleanAbility === 'stakeout' &&
+        state.identity.abilityActive !== false &&
+        Boolean(state.identity.abilityTargetIds?.[0])
+            ? 1
+            : 0;
     const paralysisPenalty = normalizedDamageStatistic === 'dex' ? statuses.paralysisDexterityPenalty : 0;
     const hurtMod = parseMissingHpHurtModifier(move, state);
 
-    return Math.max(1, move.power + scalingValue + extraDice + sameTypeAttackBonus + teraBonus + customFirstHitTag + paralysisPenalty + stakeoutBonus + hurtMod.diceModifier);
+    return Math.max(
+        1,
+        move.power +
+            scalingValue +
+            extraDice +
+            sameTypeAttackBonus +
+            teraBonus +
+            customFirstHitTag +
+            paralysisPenalty +
+            stakeoutBonus +
+            hurtMod.diceModifier
+    );
 }
 
 export function calculateTotalDamage(move: MoveData, state: CharacterState, itemBuffs?: CombatBonuses): number {
@@ -306,7 +406,9 @@ function getSharedHighestResource(
         if (activeForm?.[flagKey] && state.identity.baseFormData) {
             try {
                 const baseData = JSON.parse(state.identity.baseFormData) as Record<string, unknown>;
-                const poolObj = (resourceKey === 'hpMax' ? baseData.health : baseData.will) as Record<string, unknown> | undefined;
+                const poolObj = (resourceKey === 'hpMax' ? baseData.health : baseData.will) as
+                    | Record<string, unknown>
+                    | undefined;
                 const baseVal = Number(baseData[resourceKey] ?? poolObj?.[resourceKey]) || 0;
                 if (baseVal > 0) return Math.max(currentValue, baseVal);
             } catch {
@@ -321,7 +423,9 @@ function getSharedHighestResource(
             if (f[flagKey] && state.identity.formSaves?.[f.id]) {
                 try {
                     const savedData = JSON.parse(state.identity.formSaves[f.id]) as Record<string, unknown>;
-                    const poolObj = (resourceKey === 'hpMax' ? savedData.health : savedData.will) as Record<string, unknown> | undefined;
+                    const poolObj = (resourceKey === 'hpMax' ? savedData.health : savedData.will) as
+                        | Record<string, unknown>
+                        | undefined;
                     const savedVal = Number(savedData[resourceKey] ?? poolObj?.[resourceKey]) || 0;
                     if (savedVal > highestSaved) highestSaved = savedVal;
                 } catch {
@@ -337,7 +441,8 @@ function getSharedHighestResource(
 
 export function calculateMaxHp(state: CharacterState, itemBuffs?: CombatBonuses): number {
     const abilityText = getEffectiveAbilityText(state);
-    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
+    const invMods =
+        itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
     const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
     const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
 
@@ -352,7 +457,8 @@ export function calculateMaxHp(state: CharacterState, itemBuffs?: CombatBonuses)
 
 export function calculateMaxWill(state: CharacterState, itemBuffs?: CombatBonuses): number {
     const abilityText = getEffectiveAbilityText(state);
-    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
+    const invMods =
+        itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
     const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
 
     const rankBonus = getRankBonusStats(state.identity.rank).will;
@@ -363,7 +469,8 @@ export function calculateMaxWill(state: CharacterState, itemBuffs?: CombatBonuse
 
 export function calculateDefTotal(state: CharacterState, itemBuffs?: CombatBonuses): number {
     const abilityText = getEffectiveAbilityText(state);
-    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
+    const invMods =
+        itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
     const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
     const rankBonus = getRankBonusStats(state.identity.rank).def;
 
@@ -380,19 +487,35 @@ export function calculateDefTotal(state: CharacterState, itemBuffs?: CombatBonus
 
     const charSide = resolveCharacterSide(state);
     const effectiveSide: 'player' | 'foe' = charSide !== 'none' ? charSide : state.identity.isNPC ? 'foe' : 'player';
-    const targetId = [state.identity.entityId, state.tokenId, state.identity.nickname, state.identity.species].filter(Boolean) as string[];
-    const isDondozo = (state.identity.species || '').trim().toLowerCase() === 'dondozo' || (state.identity.nickname || '').trim().toLowerCase() === 'dondozo';
+    const targetId = [state.identity.entityId, state.tokenId, state.identity.nickname, state.identity.species].filter(
+        Boolean
+    ) as string[];
+    const isDondozo =
+        (state.identity.species || '').trim().toLowerCase() === 'dondozo' ||
+        (state.identity.nickname || '').trim().toLowerCase() === 'dondozo';
 
-    const checkAbility = (ability: string) => isTargetAffectedByAbility(targetId, effectiveSide, ability, state.activeBattlefield || null);
+    const checkAbility = (ability: string) =>
+        isTargetAffectedByAbility(targetId, effectiveSide, ability, state.activeBattlefield || null);
     const ruinPenalty = checkAbility('sword of ruin') ? 2 : 0;
     const commanderBonus = isDondozo && checkAbility('commander') ? 2 : 0;
 
-    return Math.max(1, vitTotal + state.derived.defBuff - state.derived.defDebuff + invMods.def + rankBonus + weatherBonus - ruinPenalty + commanderBonus);
+    return Math.max(
+        1,
+        vitTotal +
+            state.derived.defBuff -
+            state.derived.defDebuff +
+            invMods.def +
+            rankBonus +
+            weatherBonus -
+            ruinPenalty +
+            commanderBonus
+    );
 }
 
 export function calculateSDefTotal(state: CharacterState, itemBuffs?: CombatBonuses): number {
     const abilityText = getEffectiveAbilityText(state);
-    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
+    const invMods =
+        itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
     const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
     const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
 
@@ -410,17 +533,29 @@ export function calculateSDefTotal(state: CharacterState, itemBuffs?: CombatBonu
     let flowerGiftBonus = 0;
     if (state.activeBattlefield) {
         const sideName = resolveCharacterSide(state);
-        if (isFlowerGiftActiveForSide(sideName, state.activeBattlefield, state.identity.ability, state.identity.abilityActive)) {
+        if (
+            isFlowerGiftActiveForSide(
+                sideName,
+                state.activeBattlefield,
+                state.identity.ability,
+                state.identity.abilityActive
+            )
+        ) {
             flowerGiftBonus = 2;
         }
     }
 
     const charSide = resolveCharacterSide(state);
     const effectiveSide: 'player' | 'foe' = charSide !== 'none' ? charSide : state.identity.isNPC ? 'foe' : 'player';
-    const targetId = [state.identity.entityId, state.tokenId, state.identity.nickname, state.identity.species].filter(Boolean) as string[];
-    const isDondozo = (state.identity.species || '').trim().toLowerCase() === 'dondozo' || (state.identity.nickname || '').trim().toLowerCase() === 'dondozo';
+    const targetId = [state.identity.entityId, state.tokenId, state.identity.nickname, state.identity.species].filter(
+        Boolean
+    ) as string[];
+    const isDondozo =
+        (state.identity.species || '').trim().toLowerCase() === 'dondozo' ||
+        (state.identity.nickname || '').trim().toLowerCase() === 'dondozo';
 
-    const checkAbility = (ability: string) => isTargetAffectedByAbility(targetId, effectiveSide, ability, state.activeBattlefield || null);
+    const checkAbility = (ability: string) =>
+        isTargetAffectedByAbility(targetId, effectiveSide, ability, state.activeBattlefield || null);
     const ruinSDefPenalty = checkAbility('beads of ruin') ? 2 : 0;
     const commanderSDefBonus = isDondozo && checkAbility('commander') ? 2 : 0;
 
@@ -456,12 +591,22 @@ export function calculateBaseAccuracy(move: MoveData, state: CharacterState, ite
 
     const attributeTotal = calculateStatTotal(move.acc1, state, invMods);
     const skillTotal = calculateSkillTotal(move.acc2, state, invMods);
-    const rankSkillBonus = (move.acc2 && move.acc2.toLowerCase() !== 'none') ? getRankBonusStats(state.identity.rank).skillDice : 0;
-    const customFirstHitAccTag = (invMods.firstHitAcc !== 0 && state.trackers.firstHitAcc) ? invMods.firstHitAcc : 0;
+    const rankSkillBonus =
+        move.acc2 && move.acc2.toLowerCase() !== 'none' ? getRankBonusStats(state.identity.rank).skillDice : 0;
+    const customFirstHitAccTag = invMods.firstHitAcc !== 0 && state.trackers.firstHitAcc ? invMods.firstHitAcc : 0;
     const normalizedAcc1 = (ATTRIBUTE_MAPPING[move.acc1] || move.acc1 || '').toLowerCase().trim();
     const paralysisPenalty = normalizedAcc1 === 'dex' ? statuses.paralysisDexterityPenalty : 0;
 
-    return Math.max(1, attributeTotal + skillTotal + state.trackers.globalAcc + invMods.acc + customFirstHitAccTag + rankSkillBonus + paralysisPenalty);
+    return Math.max(
+        1,
+        attributeTotal +
+            skillTotal +
+            state.trackers.globalAcc +
+            invMods.acc +
+            customFirstHitAccTag +
+            rankSkillBonus +
+            paralysisPenalty
+    );
 }
 
 /**
@@ -481,9 +626,15 @@ export function calculateScalarLoyaltyHappiness(
         case 'Rookie':
             return { loyalty: 1, happiness: Math.floor(Math.random() * 2) + 1 };
         case 'Standard':
-            return memberIndex === 0 ? { loyalty: 5, happiness: 4 } : { loyalty: 2, happiness: Math.floor(Math.random() * 2) + 2 };
+            return memberIndex === 0
+                ? { loyalty: 5, happiness: 4 }
+                : { loyalty: 2, happiness: Math.floor(Math.random() * 2) + 2 };
         case 'Advanced':
-            return memberIndex === 0 ? { loyalty: 5, happiness: 5 } : memberIndex === 1 ? { loyalty: 4, happiness: 4 } : { loyalty: 3, happiness: 3 };
+            return memberIndex === 0
+                ? { loyalty: 5, happiness: 5 }
+                : memberIndex === 1
+                  ? { loyalty: 4, happiness: 4 }
+                  : { loyalty: 3, happiness: 3 };
         case 'Expert':
             return { loyalty: memberIndex < 2 ? 5 : 4, happiness: memberIndex < 2 ? 5 : 4 };
         case 'Ace':

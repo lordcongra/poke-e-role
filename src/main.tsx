@@ -61,8 +61,6 @@ if (!win.__REACT_ROOT__) {
 
 win.__REACT_ROOT__.render(
     <StrictMode>
-        <ErrorBoundary>
-            {renderRootContent()}
-        </ErrorBoundary>
+        <ErrorBoundary>{renderRootContent()}</ErrorBoundary>
     </StrictMode>
 );

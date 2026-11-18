@@ -43,11 +43,15 @@ export function getFieldAuraDamageBonus(
         }
     }
 
-    const resolvedSide = charState ? resolveCharacterSide(charState) : (isNPC ? 'foe' : 'player');
+    const resolvedSide = charState ? resolveCharacterSide(charState) : isNPC ? 'foe' : 'player';
     const rollerSide: 'player' | 'foe' =
-        resolvedSide === 'foe' ? 'foe' : resolvedSide === 'player' ? 'player' : (isNPC ? 'foe' : 'player');
+        resolvedSide === 'foe' ? 'foe' : resolvedSide === 'player' ? 'player' : isNPC ? 'foe' : 'player';
     const rollerId = charState
-        ? charState.identity.entityId || charState.tokenId || charState.identity.nickname || charState.identity.species || ''
+        ? charState.identity.entityId ||
+          charState.tokenId ||
+          charState.identity.nickname ||
+          charState.identity.species ||
+          ''
         : '';
 
     const checkAuraOnField = (auraName: string): boolean => {
@@ -58,7 +62,10 @@ export function getFieldAuraDamageBonus(
 
         // 2. Self has active aura and is not suppressed by Neutralizing Gas
         if (charState) {
-            const selfAbility = (charState.identity.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+            const selfAbility = (charState.identity.ability || '')
+                .replace(/\s*\(HA\)$/i, '')
+                .trim()
+                .toLowerCase();
             if (selfAbility === auraName && charState.identity.abilityActive !== false) {
                 if (!isTargetAffectedByAbility(rollerId, rollerSide, AURA_NAMES.NEUTRALIZING_GAS, battlefield)) {
                     return true;
@@ -76,11 +83,23 @@ export function getFieldAuraDamageBonus(
                     if (activeRound?.combatants && Array.isArray(activeRound.combatants)) {
                         const hasActive = activeRound.combatants.some((c: CombatantRowData) => {
                             if (c.isFainted || c.abilityActive === false) return false;
-                            const ab = (c.ability || '').replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+                            const ab = (c.ability || '')
+                                .replace(/\s*\(HA\)$/i, '')
+                                .trim()
+                                .toLowerCase();
                             if (ab !== auraName) return false;
-                            const cSide = (typeof c.isPlayerSide === 'boolean' ? c.isPlayerSide : !c.isNPC) ? 'player' : 'foe';
-                            const cIdentifiers = [c.id, c.tokenId, c.entityId, c.name].filter((val): val is string => Boolean(val));
-                            return !isTargetAffectedByAbility(cIdentifiers, cSide, AURA_NAMES.NEUTRALIZING_GAS, battlefield);
+                            const cSide = (typeof c.isPlayerSide === 'boolean' ? c.isPlayerSide : !c.isNPC)
+                                ? 'player'
+                                : 'foe';
+                            const cIdentifiers = [c.id, c.tokenId, c.entityId, c.name].filter((val): val is string =>
+                                Boolean(val)
+                            );
+                            return !isTargetAffectedByAbility(
+                                cIdentifiers,
+                                cSide,
+                                AURA_NAMES.NEUTRALIZING_GAS,
+                                battlefield
+                            );
                         });
                         if (hasActive) return true;
                     }
@@ -129,4 +148,3 @@ export function getFieldAuraDamageBonus(
 
     return { diceBonus: 0, tag: '' };
 }
-

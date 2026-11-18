@@ -33,11 +33,26 @@ const {
             isReady: sceneIsReadyMock,
             getMetadata: sceneGetMetadataMock,
             onMetadataChange: sceneOnMetadataChangeMock,
-            items: { getItems: itemsGetItemsMock, deleteItems: itemsDeleteItemsMock, addItems: vi.fn().mockResolvedValue(undefined), updateItems: itemsUpdateItemsMock }
+            items: {
+                getItems: itemsGetItemsMock,
+                deleteItems: itemsDeleteItemsMock,
+                addItems: vi.fn().mockResolvedValue(undefined),
+                updateItems: itemsUpdateItemsMock
+            }
         },
         notification: { show: vi.fn() }
     };
-    return { isBackupSceneMock, renderTokenGraphicsForMetaMock, sceneIsReadyMock, sceneGetMetadataMock, sceneOnMetadataChangeMock, itemsGetItemsMock, itemsDeleteItemsMock, itemsUpdateItemsMock, mockObr };
+    return {
+        isBackupSceneMock,
+        renderTokenGraphicsForMetaMock,
+        sceneIsReadyMock,
+        sceneGetMetadataMock,
+        sceneOnMetadataChangeMock,
+        itemsGetItemsMock,
+        itemsDeleteItemsMock,
+        itemsUpdateItemsMock,
+        mockObr
+    };
 });
 
 vi.mock('@owlbear-rodeo/sdk', () => ({ default: mockObr }));
@@ -57,11 +72,7 @@ vi.mock('@/hooks/owlbearSync/setupOwlbearTokenSync', () => ({
 
 import { reconcileSceneTokens } from '@/hooks/owlbearSync/reconcileSceneTokens';
 import { setupOwlbearRoomSync } from '@/hooks/owlbearSync/setupOwlbearRoomSync';
-import {
-    METADATA_ID,
-    BATTLEFIELD_META_ID,
-    INITIATIVE_ACTIVE_META_KEY
-} from '@/hooks/owlbearSync/owlbearSyncConstants';
+import { METADATA_ID, BATTLEFIELD_META_ID, INITIATIVE_ACTIVE_META_KEY } from '@/hooks/owlbearSync/owlbearSyncConstants';
 import { useCharacterStore } from '@/store/useCharacterStore';
 
 function makeToken(id: string, entityId: string, lastModified: number, overrides: Partial<Item> = {}): Item {
@@ -180,7 +191,9 @@ describe('reconcileSceneTokens & room/scene sync hardening', () => {
         expect(itemsUpdateItemsMock).toHaveBeenCalledWith(['tok-legacy'], expect.any(Function));
         expect('ruleset' in legacyToken.metadata).toBe(false);
         expect('ruleset' in (legacyToken.metadata[METADATA_ID] as Record<string, unknown>)).toBe(false);
-        expect('ruleset' in (legacyToken.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>)).toBe(false);
+        expect('ruleset' in (legacyToken.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>)).toBe(
+            false
+        );
         expect((legacyToken.metadata[METADATA_ID] as Record<string, unknown>)['hp-curr']).toBe(5);
     });
 
@@ -218,7 +231,10 @@ describe('reconcileSceneTokens & room/scene sync hardening', () => {
         });
 
         const emptySide: BattlefieldData['playerSide'] = {
-            forceFields: [{ name: 'None', remainingRounds: 0 }, { name: 'None', remainingRounds: 0 }],
+            forceFields: [
+                { name: 'None', remainingRounds: 0 },
+                { name: 'None', remainingRounds: 0 }
+            ],
             entryHazard: 'None',
             cover: 'None',
             other: 'None'

@@ -272,4 +272,3 @@ export function parsePokedex(meta: Record<string, unknown>): TrainerPokedexData 
         return {};
     }
 }
-

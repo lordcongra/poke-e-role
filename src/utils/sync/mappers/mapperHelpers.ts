@@ -67,4 +67,3 @@ export const mapSkill = (val: string, parsedExtraCats: ExtraCategory[]): string 
     }
     return 'none';
 };
-

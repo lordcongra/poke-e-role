@@ -45,11 +45,7 @@ export function hasPotentialRoundAdvanceTriggers(
     const hasActiveWeather = activeWeathers.some((w) => {
         const n = (w.name || '').toLowerCase();
         return (
-            n.includes('sand') ||
-            n.includes('hail') ||
-            n.includes('sun') ||
-            n.includes('rain') ||
-            n.includes('snow')
+            n.includes('sand') || n.includes('hail') || n.includes('sun') || n.includes('rain') || n.includes('snow')
         );
     });
     const hasActiveTerrain = activeTerrains.some((t) => (t.name || '').toLowerCase().includes('grassy'));

@@ -284,13 +284,17 @@ export async function importPcBackupJson(
                     const hasAnyPokemon =
                         (Array.isArray(incomingCamp.teamParty) && incomingCamp.teamParty.some(Boolean)) ||
                         (Array.isArray(incomingCamp.boxes) &&
-                            incomingCamp.boxes.some((b) => isPlainRecord(b) && Array.isArray(b.slots) && b.slots.some(Boolean))) ||
+                            incomingCamp.boxes.some(
+                                (b) => isPlainRecord(b) && Array.isArray(b.slots) && b.slots.some(Boolean)
+                            )) ||
                         Object.values(campTrainers).some(
                             (tr) =>
                                 isPlainRecord(tr) &&
                                 ((Array.isArray(tr.party) && tr.party.some(Boolean)) ||
                                     (Array.isArray(tr.boxes) &&
-                                        tr.boxes.some((b) => isPlainRecord(b) && Array.isArray(b.slots) && b.slots.some(Boolean))))
+                                        tr.boxes.some(
+                                            (b) => isPlainRecord(b) && Array.isArray(b.slots) && b.slots.some(Boolean)
+                                        )))
                         );
 
                     if (!hasAnyPokemon && Object.keys(mergedCampaigns).length > 0) {
@@ -330,11 +334,7 @@ export async function importPcBackupJson(
                             const boxName = safeNonEmptyString(b.name, 'PMD Box');
                             for (const s of Array.isArray(b.slots) ? b.slots : []) {
                                 if (typeof s === 'string' && s)
-                                    depositEntityIntoBoxes(
-                                        existingCamp.boxes,
-                                        resolveEntityId(s, undefined),
-                                        boxName
-                                    );
+                                    depositEntityIntoBoxes(existingCamp.boxes, resolveEntityId(s, undefined), boxName);
                             }
                         }
                         continue;
@@ -399,7 +399,8 @@ export async function importPcBackupJson(
                         for (const b of Array.isArray(inTr.boxes) ? inTr.boxes : []) {
                             if (!isPlainRecord(b)) continue;
                             for (const s of Array.isArray(b.slots) ? b.slots : []) {
-                                if (typeof s === 'string' && s && mergedSummaries[s]) mergedSummaries[s].trainerId = tId;
+                                if (typeof s === 'string' && s && mergedSummaries[s])
+                                    mergedSummaries[s].trainerId = tId;
                             }
                         }
                     } else {
@@ -447,7 +448,11 @@ export async function importPcBackupJson(
 
                 // Merge campaign boxes
                 existingCamp.boxes = existingCamp.boxes || [];
-                if (existingCamp.boxes.length === 0 && Array.isArray(incomingCamp.boxes) && incomingCamp.boxes.length > 0) {
+                if (
+                    existingCamp.boxes.length === 0 &&
+                    Array.isArray(incomingCamp.boxes) &&
+                    incomingCamp.boxes.length > 0
+                ) {
                     existingCamp.boxes = incomingCamp.boxes;
                 } else if (Array.isArray(incomingCamp.boxes) && incomingCamp.boxes.length > 0) {
                     for (let bIdx = 0; bIdx < incomingCamp.boxes.length; bIdx++) {

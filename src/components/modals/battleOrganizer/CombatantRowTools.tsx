@@ -45,7 +45,9 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
     const combatantTags = combatant.abilityTags || getKnownAbility(combatant.ability || '')?.tags || '';
     const hasPressure = Boolean(combatant.ability?.toLowerCase().includes('pressure'));
     const hasCuriousMedicine = Boolean(combatant.ability?.toLowerCase().includes('curious medicine'));
-    const hasTargetableAbility = Boolean(combatant.ability && getAbilityTargetStance(combatant.ability, combatantTags) !== 'none');
+    const hasTargetableAbility = Boolean(
+        combatant.ability && getAbilityTargetStance(combatant.ability, combatantTags) !== 'none'
+    );
     const targetCount = combatant.abilityTargetIds?.length || 0;
     const maxTargets = getAbilityMaxTargets(combatant.ability || '', combatantTags, combatant.rank);
 
@@ -94,12 +96,12 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
     const hasActiveAbility = Boolean(
         combatant.ability?.trim() &&
         (hasTargetableAbility ||
-         hasBoostTag ||
-         hasChoice ||
-         hasPressure ||
-         hasCuriousMedicine ||
-         Boolean(combatantTags) ||
-         Boolean(getKnownAbility(combatant.ability)))
+            hasBoostTag ||
+            hasChoice ||
+            hasPressure ||
+            hasCuriousMedicine ||
+            Boolean(combatantTags) ||
+            Boolean(getKnownAbility(combatant.ability)))
     );
 
     return (
@@ -164,7 +166,11 @@ export const CombatantRowTools: React.FC<CombatantRowToolsProps> = ({
                         type="button"
                         className="bo-reaction-toggle bo-reaction-toggle--medicine"
                         onClick={() => setShowMedicineModal(true)}
-                        title={isLocked ? 'Curious Medicine: Locked by GM' : "Trigger Curious Medicine: Reset allies' buffs/debuffs"}
+                        title={
+                            isLocked
+                                ? 'Curious Medicine: Locked by GM'
+                                : "Trigger Curious Medicine: Reset allies' buffs/debuffs"
+                        }
                         aria-label="Trigger Curious Medicine"
                         disabled={isLocked}
                     >

@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Item } from '@owlbear-rodeo/sdk';
-import {
-    calculateRelativeAttachment,
-    applyRelativeAttachment,
-    rehomeTokenSubtree
-} from '../rehomeEngine';
+import { calculateRelativeAttachment, applyRelativeAttachment, rehomeTokenSubtree } from '../rehomeEngine';
 
 function createMockItem(overrides: Partial<Item> = {}): Item {
     return {
@@ -218,4 +214,3 @@ describe('rehomeEngine', () => {
         });
     });
 });
-

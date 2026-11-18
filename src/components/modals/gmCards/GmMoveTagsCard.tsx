@@ -22,11 +22,7 @@ import {
     Clock,
     Target
 } from 'lucide-react';
-import {
-    MOVE_TAGS_DATA,
-    formatMoveTagBroadcast,
-    type MoveTagEntry
-} from '../../../data/gmScreenData';
+import { MOVE_TAGS_DATA, formatMoveTagBroadcast, type MoveTagEntry } from '../../../data/gmScreenData';
 import { broadcastInfo } from '../../../utils/combat/diceRoller';
 
 interface GmMoveTagsCardProps {
@@ -135,7 +131,12 @@ export const GmMoveTagsCard: React.FC<GmMoveTagsCardProps> = ({ onBroadcastTag }
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%' }}>
                     <Search
                         size={15}
-                        style={{ position: 'absolute', left: '10px', color: 'var(--text-muted)', pointerEvents: 'none' }}
+                        style={{
+                            position: 'absolute',
+                            left: '10px',
+                            color: 'var(--text-muted)',
+                            pointerEvents: 'none'
+                        }}
                     />
                     <input
                         type="text"
@@ -279,9 +280,7 @@ export const GmMoveTagsCard: React.FC<GmMoveTagsCardProps> = ({ onBroadcastTag }
                                 >
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         {getBadgeIcon(tag.badgeIcon, 18, tagColor)}
-                                        <strong style={{ color: tagColor, fontSize: '0.96rem' }}>
-                                            {tag.name}
-                                        </strong>
+                                        <strong style={{ color: tagColor, fontSize: '0.96rem' }}>{tag.name}</strong>
                                         <span
                                             style={{
                                                 fontSize: '0.72rem',
@@ -308,7 +307,14 @@ export const GmMoveTagsCard: React.FC<GmMoveTagsCardProps> = ({ onBroadcastTag }
                                 </div>
 
                                 {/* Summary */}
-                                <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--text-sub)', lineHeight: '1.4' }}>
+                                <p
+                                    style={{
+                                        margin: 0,
+                                        fontSize: '0.84rem',
+                                        color: 'var(--text-sub)',
+                                        lineHeight: '1.4'
+                                    }}
+                                >
                                     {tag.summary}
                                 </p>
 

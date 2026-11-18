@@ -198,8 +198,7 @@ export function useBattleOrganizer() {
                 const abilityBoostChanged =
                     prevCombatant.abilityBoostActive !== updated.abilityBoostActive ||
                     prevCombatant.abilityBoostLevel !== updated.abilityBoostLevel;
-                const abilityChoiceChanged =
-                    prevCombatant.abilityChoiceIndex !== updated.abilityChoiceIndex;
+                const abilityChoiceChanged = prevCombatant.abilityChoiceIndex !== updated.abilityChoiceIndex;
 
                 if (
                     statusChanged ||
@@ -501,7 +500,10 @@ export function useBattleOrganizer() {
                             stats['ability-target-ids'] = '';
                             item.metadata['pokerole-extension/stats'] = stats;
 
-                            const pmdStats = (item.metadata['pokerole-pmd-extension/stats'] || {}) as Record<string, unknown>;
+                            const pmdStats = (item.metadata['pokerole-pmd-extension/stats'] || {}) as Record<
+                                string,
+                                unknown
+                            >;
                             pmdStats['ability-target-ids'] = '';
                             item.metadata['pokerole-pmd-extension/stats'] = pmdStats;
 

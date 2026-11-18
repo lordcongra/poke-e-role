@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-    applyForceFieldToSide,
-    removeForceFieldFromSide
-} from '../battlefieldPresetUtils';
+import { applyForceFieldToSide, removeForceFieldFromSide } from '../battlefieldPresetUtils';
 import type { BattlefieldSideData } from '../../../../types/battleOrganizerTypes';
 
 describe('battlefieldPresetUtils: force field management', () => {
@@ -53,4 +50,3 @@ describe('battlefieldPresetUtils: force field management', () => {
         expect(cleaned.extraForceFields?.[0].name).toBe('Safeguard');
     });
 });
-

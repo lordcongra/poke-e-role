@@ -12,7 +12,7 @@ export const AURA_LOWERED_STAT: Record<string, string> = {
     'sword of ruin': 'def',
     'vessel of ruin': 'spe',
     'beads of ruin': 'spd',
-    'intimidate': 'str'
+    intimidate: 'str'
 };
 
 export interface TargetProtectionResult {
@@ -21,10 +21,7 @@ export interface TargetProtectionResult {
     targetWill: number;
 }
 
-export function getCombatantWill(
-    combatant?: CombatantRowData,
-    activeCharState?: CharacterState | null
-): number {
+export function getCombatantWill(combatant?: CombatantRowData, activeCharState?: CharacterState | null): number {
     if (activeCharState && combatant) {
         const activeTokenId = activeCharState.tokenId;
         const activeEntityId = activeCharState.identity?.entityId;
@@ -32,7 +29,13 @@ export function getCombatantWill(
             (activeTokenId && (combatant.tokenId === activeTokenId || combatant.id === activeTokenId)) ||
             (activeEntityId && (combatant.entityId === activeEntityId || combatant.id === activeEntityId))
         ) {
-            return activeCharState.will?.willCurr ?? activeCharState.will?.willMax ?? combatant.willCurr ?? combatant.willMax ?? 0;
+            return (
+                activeCharState.will?.willCurr ??
+                activeCharState.will?.willMax ??
+                combatant.willCurr ??
+                combatant.willMax ??
+                0
+            );
         }
     }
     if (activeCharState && !combatant) {
@@ -80,20 +83,36 @@ export function resolveTargetProtection(
                 (activeEntityId && (matchedTarget.entityId === activeEntityId || matchedTarget.id === activeEntityId))
             ) {
                 if (activeCharState.identity?.ability) abilityName = activeCharState.identity.ability;
-                if (activeCharState.identity?.abilityActive !== undefined) abilityActive = activeCharState.identity.abilityActive;
+                if (activeCharState.identity?.abilityActive !== undefined)
+                    abilityActive = activeCharState.identity.abilityActive;
                 if (activeCharState.identity?.abilityTags) abilityTags = activeCharState.identity.abilityTags;
             }
         }
 
         if (abilityActive && abilityName) {
-            const cleanAb = abilityName.replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+            const cleanAb = abilityName
+                .replace(/\s*\(HA\)$/i, '')
+                .trim()
+                .toLowerCase();
             let fullTags = abilityTags;
             if (cleanAb === 'clear body' || cleanAb === 'white smoke') {
-                fullTags = synthesizeAbilityTags('Other Pokemon cannot reduce the Attributes of this Pokemon.', '', fullTags);
+                fullTags = synthesizeAbilityTags(
+                    'Other Pokemon cannot reduce the Attributes of this Pokemon.',
+                    '',
+                    fullTags
+                );
             } else if (cleanAb === 'full metal body') {
-                fullTags = synthesizeAbilityTags('Other Pokemon cannot Reduce the Attributes of this Pokemon. Unique Ability.', '', fullTags);
+                fullTags = synthesizeAbilityTags(
+                    'Other Pokemon cannot Reduce the Attributes of this Pokemon. Unique Ability.',
+                    '',
+                    fullTags
+                );
             } else if (cleanAb === 'hyper cutter') {
-                fullTags = synthesizeAbilityTags("This Pokemon can't have its Strength Attribute reduced by Moves, Abilities, or Items.", '', fullTags);
+                fullTags = synthesizeAbilityTags(
+                    "This Pokemon can't have its Strength Attribute reduced by Moves, Abilities, or Items.",
+                    '',
+                    fullTags
+                );
             } else if (cleanAb === 'big pecks') {
                 fullTags = synthesizeAbilityTags('This Pokemon cannot have its Defense reduced.', '', fullTags);
             } else if (cleanAb === 'keen eye') {
@@ -112,7 +131,10 @@ export function resolveTargetProtection(
                 bonuses.ignoredStatReductions.has(loweredStat) ||
                 (statKey === 'str' && bonuses.ignoredStatReductions.has('strength')) ||
                 (statKey === 'def' && bonuses.ignoredStatReductions.has('defense')) ||
-                (statKey === 'spd' && (bonuses.ignoredStatReductions.has('special defense') || bonuses.ignoredStatReductions.has('sp. def') || bonuses.ignoredStatReductions.has('sp def'))) ||
+                (statKey === 'spd' &&
+                    (bonuses.ignoredStatReductions.has('special defense') ||
+                        bonuses.ignoredStatReductions.has('sp. def') ||
+                        bonuses.ignoredStatReductions.has('sp def'))) ||
                 (statKey === 'spe' && bonuses.ignoredStatReductions.has('special')) ||
                 (statKey === 'acc' && bonuses.ignoredStatReductions.has('accuracy'));
 
@@ -134,14 +156,29 @@ export function resolveTargetProtection(
             )
         ) {
             if (activeCharState.identity?.abilityActive !== false && activeCharState.identity?.ability) {
-                const cleanAb = activeCharState.identity.ability.replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
+                const cleanAb = activeCharState.identity.ability
+                    .replace(/\s*\(HA\)$/i, '')
+                    .trim()
+                    .toLowerCase();
                 let fullTags = activeCharState.identity.abilityTags || '';
                 if (cleanAb === 'clear body' || cleanAb === 'white smoke') {
-                    fullTags = synthesizeAbilityTags('Other Pokemon cannot reduce the Attributes of this Pokemon.', '', fullTags);
+                    fullTags = synthesizeAbilityTags(
+                        'Other Pokemon cannot reduce the Attributes of this Pokemon.',
+                        '',
+                        fullTags
+                    );
                 } else if (cleanAb === 'full metal body') {
-                    fullTags = synthesizeAbilityTags('Other Pokemon cannot Reduce the Attributes of this Pokemon. Unique Ability.', '', fullTags);
+                    fullTags = synthesizeAbilityTags(
+                        'Other Pokemon cannot Reduce the Attributes of this Pokemon. Unique Ability.',
+                        '',
+                        fullTags
+                    );
                 } else if (cleanAb === 'hyper cutter') {
-                    fullTags = synthesizeAbilityTags("This Pokemon can't have its Strength Attribute reduced by Moves, Abilities, or Items.", '', fullTags);
+                    fullTags = synthesizeAbilityTags(
+                        "This Pokemon can't have its Strength Attribute reduced by Moves, Abilities, or Items.",
+                        '',
+                        fullTags
+                    );
                 } else if (cleanAb === 'big pecks') {
                     fullTags = synthesizeAbilityTags('This Pokemon cannot have its Defense reduced.', '', fullTags);
                 } else if (cleanAb === 'keen eye') {

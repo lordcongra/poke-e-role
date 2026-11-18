@@ -189,7 +189,15 @@ export const showTypeSelect = (category: string, target: string): boolean => {
             !['Init', 'Chance', 'Crit Dmg', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'].includes(target)) ||
         (category === 'matchup' && target !== 'Remove Immunities') ||
         (category === 'mechanic' &&
-            ['Ignore Pain', 'Encounter Buff', 'Encounter Debuff', 'Permanent Boost', 'High Critical', 'High Crit', 'Never Miss'].includes(target)) ||
+            [
+                'Ignore Pain',
+                'Encounter Buff',
+                'Encounter Debuff',
+                'Permanent Boost',
+                'High Critical',
+                'High Crit',
+                'Never Miss'
+            ].includes(target)) ||
         (category === 'move_mechanics' && ['High Critical', 'Never Miss'].includes(target))
     );
 };

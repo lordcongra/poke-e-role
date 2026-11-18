@@ -143,9 +143,7 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
             const resolution = resolveStalemateTiebreakers(
                 tokenId,
                 stalemateTokens.map((opponent) => {
-                    const opponentMeta = opponent.metadata[INITIATIVE_KEY] as
-                        | { tiebreaker?: number }
-                        | undefined;
+                    const opponentMeta = opponent.metadata[INITIATIVE_KEY] as { tiebreaker?: number } | undefined;
                     return { id: opponent.id, tiebreaker: opponentMeta?.tiebreaker };
                 })
             );
@@ -231,4 +229,3 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
         return 0;
     }
 }
-

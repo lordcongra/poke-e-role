@@ -103,10 +103,7 @@ export function sanitizeCombatantPatch(rawPatch: unknown): CombatantPatchData {
 /**
  * Builds a minimal allowlisted patch containing only fields that changed from `prev`.
  */
-export function pickAllowlistedCombatantPatch(
-    updated: CombatantRowData,
-    prev?: CombatantRowData
-): CombatantPatchData {
+export function pickAllowlistedCombatantPatch(updated: CombatantRowData, prev?: CombatantRowData): CombatantPatchData {
     const patch: Record<string, unknown> = {};
     for (const key of COMBATANT_PATCH_ALLOWLIST) {
         const nextVal = updated[key];
@@ -148,10 +145,7 @@ export async function sendBattleOrganizerCombatantPatch(
     }
 }
 
-function matchesPatchedCombatant(
-    c: CombatantRowData,
-    payload: BattleOrganizerCombatantPatchPayload
-): boolean {
+function matchesPatchedCombatant(c: CombatantRowData, payload: BattleOrganizerCombatantPatchPayload): boolean {
     if (payload.combatantId && c.id === payload.combatantId) return true;
     if (payload.tokenId && c.tokenId && c.tokenId === payload.tokenId) return true;
     if (payload.entityId && c.entityId && c.entityId === payload.entityId) return true;
@@ -171,9 +165,7 @@ export function applyCombatantPatchToState(
     }
 
     const roundIdx =
-        typeof payload.roundIndex === 'number' && payload.roundIndex >= 0
-            ? payload.roundIndex
-            : state.activeRoundIndex;
+        typeof payload.roundIndex === 'number' && payload.roundIndex >= 0 ? payload.roundIndex : state.activeRoundIndex;
     const targetRound = state.rounds[roundIdx];
     if (!targetRound || !Array.isArray(targetRound.combatants)) {
         return { nextState: state, changed: false };

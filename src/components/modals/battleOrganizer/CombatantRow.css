@@ -379,7 +379,10 @@
     text-overflow: ellipsis;
     box-sizing: border-box;
     cursor: pointer;
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
 }
 
 .bo-pill--choice:hover:not(:disabled) {
@@ -421,7 +424,10 @@
     background-color: var(--panel-alt, #242424);
     color: var(--text-muted, #888);
     cursor: pointer;
-    transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+    transition:
+        color 0.15s,
+        border-color 0.15s,
+        background-color 0.15s;
 }
 
 .bo-th-chip-toggle:hover {
@@ -659,7 +665,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, filter 0.15s ease;
+    transition:
+        color 0.15s ease,
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        filter 0.15s ease;
 }
 
 .bo-reaction-toggle:hover {
@@ -755,7 +765,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.15s ease, border-color 0.15s ease;
+    transition:
+        color 0.15s ease,
+        border-color 0.15s ease;
 }
 
 .bo-boost-step-btn:hover:not(:disabled) {

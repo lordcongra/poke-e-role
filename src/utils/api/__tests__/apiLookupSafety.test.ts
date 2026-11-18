@@ -67,4 +67,3 @@ describe('apiLookupSafety', () => {
         expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 });
-

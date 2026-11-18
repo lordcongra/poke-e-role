@@ -60,7 +60,11 @@ export function CombatantsTable({
                                             type="button"
                                             className={`bo-th-chip-toggle ${showCombatantChips ? 'bo-th-chip-toggle--active' : ''}`}
                                             onClick={onToggleCombatantChips}
-                                            title={showCombatantChips ? 'Hide Ability & Held Item Badges' : 'Show Ability & Held Item Badges'}
+                                            title={
+                                                showCombatantChips
+                                                    ? 'Hide Ability & Held Item Badges'
+                                                    : 'Show Ability & Held Item Badges'
+                                            }
                                             aria-label="Toggle Ability & Held Item Badges"
                                         >
                                             <Zap size={11} />

@@ -46,14 +46,36 @@ interface BattleOrganizerModalProps {
 
 export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrganizerModalProps) {
     const {
-        battlefield, rounds, currentRound, activeRoundIndex,
-        pullFromInitiative, syncToSheets, refreshTokenStats,
-        addRound, duplicateRound, deleteRound, setActiveRoundIndex, advanceRound,
-        addCombatant, updateCombatant, updateCombatantHp, updateCombatantWill,
-        deleteCombatant, rollCombatantInitiative, sortCombatantsByInitiative,
-        updateBattlefield, updateBattlefieldWeather, updateBattlefieldTerrain, updateBattlefieldOther,
-        updatePlayerSide, updateFoeSide, updateEndOfRoundEffects, updateRoundNumber,
-        activateFieldEffectFromMove, clearBattlefield, clearAll
+        battlefield,
+        rounds,
+        currentRound,
+        activeRoundIndex,
+        pullFromInitiative,
+        syncToSheets,
+        refreshTokenStats,
+        addRound,
+        duplicateRound,
+        deleteRound,
+        setActiveRoundIndex,
+        advanceRound,
+        addCombatant,
+        updateCombatant,
+        updateCombatantHp,
+        updateCombatantWill,
+        deleteCombatant,
+        rollCombatantInitiative,
+        sortCombatantsByInitiative,
+        updateBattlefield,
+        updateBattlefieldWeather,
+        updateBattlefieldTerrain,
+        updateBattlefieldOther,
+        updatePlayerSide,
+        updateFoeSide,
+        updateEndOfRoundEffects,
+        updateRoundNumber,
+        activateFieldEffectFromMove,
+        clearBattlefield,
+        clearAll
     } = useBattleOrganizer();
 
     const { showSceneSwapModal, handleClearForNewScene, handleKeepCurrentBattle } = useSceneSwapDetection({
@@ -301,11 +323,12 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
 
     const handlePrintClick = () => (onPrint ? onPrint() : window.print());
 
-    const contentModeClass = boSettings.showBattlefield && !boSettings.showRoundTracker
-        ? 'bo-modal__content--battlefield-only'
-        : !boSettings.showBattlefield && boSettings.showRoundTracker
-          ? 'bo-modal__content--rounds-only'
-          : '';
+    const contentModeClass =
+        boSettings.showBattlefield && !boSettings.showRoundTracker
+            ? 'bo-modal__content--battlefield-only'
+            : !boSettings.showBattlefield && boSettings.showRoundTracker
+              ? 'bo-modal__content--rounds-only'
+              : '';
 
     const layoutModeClass = boSettings.rollLogMode === 'full-sidebar' ? 'bo-modal__content--with-sidebar' : '';
     const rollLogMode = boSettings.rollLogMode || 'floating';

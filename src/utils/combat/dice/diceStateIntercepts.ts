@@ -40,9 +40,7 @@ async function persistOffSheetIntercept(
         summaries[rollingTokenId] ||
         Object.values(summaries).find(
             (s) =>
-                s.entityId === summaryKey ||
-                s.mapTokenId === rollingTokenId ||
-                s.savedTokenItem?.id === rollingTokenId
+                s.entityId === summaryKey || s.mapTokenId === rollingTokenId || s.savedTokenItem?.id === rollingTokenId
         );
 
     if (!existingSummary) return;
@@ -132,9 +130,7 @@ export async function executePinnedStateIntercepts(params: PinnedStateInterceptP
         if (tempGained > 0) {
             const store = useCharacterStore.getState();
             const isMatchingToken = store.tokenId === rollingTokenId;
-            const currentTempMax = isMatchingToken
-                ? store.health.temporaryHitPointsMax || 0
-                : rollingTempHpMax;
+            const currentTempMax = isMatchingToken ? store.health.temporaryHitPointsMax || 0 : rollingTempHpMax;
 
             if (tempGained > currentTempMax) {
                 if (isMatchingToken) {
@@ -210,4 +206,3 @@ export async function executePinnedStateIntercepts(params: PinnedStateInterceptP
 
     return finalMsg;
 }
-

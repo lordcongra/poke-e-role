@@ -81,4 +81,3 @@ export async function rollStatus(status: StatusItem, state: CharacterState) {
         status.id
     );
 }
-
