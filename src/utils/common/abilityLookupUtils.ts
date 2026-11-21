@@ -13,7 +13,7 @@ export interface AbilityLookupResult {
 
 /**
  * Looks up ability details by name across custom abilities, known rules constants,
- * and the local/remote PokéRole dataset.
+ * and the local/remote Pokerole dataset.
  */
 export async function lookupAbilityDetails(
     abilityName: string,

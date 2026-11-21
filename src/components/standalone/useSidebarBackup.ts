@@ -44,7 +44,7 @@ export function useSidebarBackup() {
                 pcData: pcData
             };
 
-            downloadJson(backup, `PokeRole_Master_Backup_${new Date().toISOString().split('T')[0]}.json`);
+            downloadJson(backup, `Pokerole_Master_Backup_${new Date().toISOString().split('T')[0]}.json`);
             markBackupComplete();
             setIsBackupModalOpen(false);
         } catch (error) {

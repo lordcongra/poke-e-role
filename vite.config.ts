@@ -19,9 +19,9 @@ export default defineConfig({
             registerType: 'autoUpdate',
             includeAssets: ['pokeball-token.svg', 'manifest.json'],
             manifest: {
-                name: 'PokéRole Character Sheet',
-                short_name: 'PokéRole',
-                description: 'Offline-first PokéRole TTRPG Character Sheet & GM Toolkit',
+                name: 'Pokerole Character Sheet',
+                short_name: 'Pokerole',
+                description: 'Offline-first Pokerole TTRPG Character Sheet & GM Toolkit',
                 theme_color: '#121212',
                 background_color: '#121212',
                 display: 'standalone',

@@ -36,7 +36,7 @@ export interface ItemLookupResult {
 }
 
 /**
- * Looks up item data by name from the PokéRole dataset, homebrew items, and known items constants.
+ * Looks up item data by name from the Pokerole dataset, homebrew items, and known items constants.
  * Assembles the official description / effect alongside canonical tags (e.g. [Acc +2], [Dmg +1: Fire]).
  */
 export async function lookupItemDetails(rawName: string): Promise<ItemLookupResult | null> {
