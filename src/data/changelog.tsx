@@ -142,11 +142,14 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 icon: Compass,
                 badge: 'New Feature',
                 summary:
-                    'Run solo adventures or introduce randomized GM answers and unexpected twists to any campaign with the all-new Solo Play Oracle launcher in the global toolbar!',
+                    'Run solo adventures, automate randomized Pokémon battle encounters, or introduce unexpected GM answers and narrative twists to any campaign with the all-new Solo Play Oracle!',
                 details: (
                     <div>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
                             <strong>Dedicated Global Toolbar Launcher:</strong> Open the full Solo Play Oracle modal at any time from the main toolbar. Perfect for solo adventurers playing on their own, or GMs and players looking for randomized scene prompts, encounter seeds, and unpredictable narrative twists.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Automated Battle Oracle:</strong> Run exciting and unpredictable solo Pokémon battles with an automated opponent! Target your active character sheet, map tokens, or custom wild encounters, set tactical behaviors (Aggressive, Tactical, Wild Instinct, or Balanced), and let the Oracle randomize move choices, clash decisions, and defensive evade reactions on the fly.
                         </p>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
                             <strong>Fate Checks with Odds & Chaos:</strong> Ask yes/no fate questions with configurable likelihoods (from Sure Thing to Impossible) and an adjustable Chaos Factor that increases the odds of extreme outcomes and unexpected complications.
@@ -185,6 +188,12 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     <strong>Solo Play Toolbar Access:</strong> Added a dedicated <em>Solo Play</em> launcher to the
                     global toolbar! Players can now open an integrated oracle toolkit to run full solo adventures
                     or use it during standard campaigns to roll randomized answers and unexpected encounter twists.
+                </li>
+                <li>
+                    <strong>Automated Battle Oracle:</strong> Run automated solo battles with randomized move selection
+                    for any sheet, scene token, or custom opponent. Choose combat behavioral styles (Aggressive,
+                    Tactical, Wild Instinct, or Balanced) to roll unpredictable attacks, clash responses, and evade reactions
+                    that can be logged straight to your adventure journal.
                 </li>
                 <li>
                     <strong>Fate Checks & Prompts:</strong> Ask yes/no fate questions weighted by odds and chaos, roll on
