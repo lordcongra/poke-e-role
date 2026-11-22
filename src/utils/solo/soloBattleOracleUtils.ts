@@ -37,20 +37,18 @@ export interface BattleTargetInfo {
 }
 
 /**
- * Normalizes and extracts candidate moves from a move pool, respecting the
- * 3 + Insight limit and active move toggles.
+ * Normalizes and extracts candidate moves from a move pool, respecting
+ * active move toggles. Preserves full move pool beyond standard limit to support
+ * homebrew moves in tactics and clash evaluation.
  */
-export function extractCandidateMoves(moves: MoveData[], insight: number = 1): MoveData[] {
+export function extractCandidateMoves(moves: MoveData[], _insight: number = 1): MoveData[] {
     if (!Array.isArray(moves)) return [];
 
     const validMoves = moves.filter((m) => m && typeof m.name === 'string' && m.name.trim().length > 0);
     const activeMoves = validMoves.filter((m) => m.active === true);
     const pool = activeMoves.length > 0 ? activeMoves : validMoves;
 
-    const maxInsight = Math.max(0, Number.isFinite(insight) ? Math.floor(insight) : 1);
-    const maxMoves = Math.max(1, 3 + maxInsight);
-
-    return pool.slice(0, maxMoves);
+    return pool;
 }
 
 /**
@@ -319,18 +317,23 @@ export function extractTokenTargetInfo(
     },
     metaId: string = 'pokerole-extension/stats'
 ): BattleTargetInfo {
-    const meta = (item.metadata?.[metaId] || item.metadata || {}) as Record<string, unknown>;
+    const meta = (item.metadata?.[metaId] ||
+        item.metadata?.['pokerole-pmd-extension/stats'] ||
+        item.metadata ||
+        {}) as Record<string, unknown>;
     const name =
         (typeof meta['character-name'] === 'string' && meta['character-name'].trim()) ||
+        (typeof meta['nickname'] === 'string' && meta['nickname'].trim()) ||
+        (typeof meta['species'] === 'string' && meta['species'].trim()) ||
         (typeof meta['name'] === 'string' && meta['name'].trim()) ||
         item.text?.plainText?.trim() ||
         item.name?.trim() ||
         'Token';
 
     const hpCurr = Number(meta['hp-curr'] ?? meta['hpCurr'] ?? 5);
-    const hpMax = Number(meta['hp-max'] ?? meta['hpMax'] ?? 5);
+    const hpMax = Number(meta['hp-max-display'] ?? meta['hp-max'] ?? meta['hpMax'] ?? 5);
     const willCurr = Number(meta['will-curr'] ?? meta['willCurr'] ?? 4);
-    const willMax = Number(meta['will-max'] ?? meta['willMax'] ?? 4);
+    const willMax = Number(meta['will-max-display'] ?? meta['will-max'] ?? meta['willMax'] ?? 4);
 
     const statsObj = meta.stats as Record<string, Record<string, number>> | undefined;
     let insight = 1;

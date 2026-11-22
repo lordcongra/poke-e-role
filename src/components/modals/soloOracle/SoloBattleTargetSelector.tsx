@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
-import { Activity, Heart, Flame, Brain, Search, X, Check } from 'lucide-react';
+import { Activity, Heart, Sparkles, Brain, Search, X, Check } from 'lucide-react';
 import { NumberSpinner } from '@/components/ui/NumberSpinner';
 import type { BattleTargetInfo } from '@/utils/solo/soloBattleOracleUtils';
 
@@ -168,12 +168,12 @@ export function SoloBattleTargetSelector({
                         {activeTarget.hpCurr} / {activeTarget.hpMax}
                     </span>
                     <span className="solo-battle__stat-chip" title="Current / Maximum Willpower">
-                        <Flame size={13} color="#f59e0b" />
+                        <Sparkles size={13} color="#f59e0b" />
                         {activeTarget.willCurr} / {activeTarget.willMax}
                     </span>
                     <span className="solo-battle__stat-chip" title="Insight (Controls active move limit: 3 + Insight)">
                         <Brain size={13} color="var(--primary)" />
-                        Ins {activeTarget.insight} (Limit: {3 + activeTarget.insight})
+                        Ins {activeTarget.insight} (Standard Limit: {3 + activeTarget.insight})
                     </span>
                 </div>
             </div>

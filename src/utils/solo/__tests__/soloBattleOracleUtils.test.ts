@@ -32,7 +32,7 @@ const mockMove = (partial: Partial<MoveData>): MoveData => ({
 
 describe('soloBattleOracleUtils', () => {
     describe('extractCandidateMoves', () => {
-        it('caps moves at 3 + Insight', () => {
+        it('preserves all valid moves without hard-capping to 3 + Insight for homebrew support', () => {
             const moves: MoveData[] = [
                 mockMove({ id: '1', name: 'Tackle' }),
                 mockMove({ id: '2', name: 'Tail Whip' }),
@@ -42,14 +42,16 @@ describe('soloBattleOracleUtils', () => {
                 mockMove({ id: '6', name: 'Super Fang' })
             ];
 
-            // Insight = 1 -> Limit = 4
-            const candidates1 = extractCandidateMoves(moves, 1);
-            expect(candidates1).toHaveLength(4);
-            expect(candidates1.map((m) => m.name)).toEqual(['Tackle', 'Tail Whip', 'Bite', 'Growl']);
-
-            // Insight = 2 -> Limit = 5
-            const candidates2 = extractCandidateMoves(moves, 2);
-            expect(candidates2).toHaveLength(5);
+            const candidates = extractCandidateMoves(moves, 1);
+            expect(candidates).toHaveLength(6);
+            expect(candidates.map((m) => m.name)).toEqual([
+                'Tackle',
+                'Tail Whip',
+                'Bite',
+                'Growl',
+                'Hyper Fang',
+                'Super Fang'
+            ]);
         });
 
         it('respects active move toggles when at least one move is active', () => {
@@ -249,15 +251,17 @@ describe('soloBattleOracleUtils', () => {
     });
 
     describe('extractTokenTargetInfo', () => {
-        it('extracts token metadata, hp, will, insight and moves', () => {
+        it('extracts token metadata, hp, will, insight and moves with hp-max-display and will-max-display support', () => {
             const rawToken = {
                 id: 'token-123',
                 metadata: {
                     'pokerole-extension/stats': {
                         'character-name': 'Arbok',
                         'hp-curr': 8,
+                        'hp-max-display': 12,
                         'hp-max': 10,
                         'will-curr': 3,
+                        'will-max-display': 6,
                         'will-max': 5,
                         'ins-base': 2,
                         'moves-data': JSON.stringify([{ name: 'Poison Sting', category: 'Physical', power: 1 }])
@@ -269,12 +273,38 @@ describe('soloBattleOracleUtils', () => {
             expect(info.id).toBe('token-123');
             expect(info.name).toBe('Arbok');
             expect(info.hpCurr).toBe(8);
-            expect(info.hpMax).toBe(10);
+            expect(info.hpMax).toBe(12);
             expect(info.willCurr).toBe(3);
-            expect(info.willMax).toBe(5);
+            expect(info.willMax).toBe(6);
             expect(info.insight).toBe(2);
             expect(info.moves).toHaveLength(1);
             expect(info.moves[0].name).toBe('Poison Sting');
+        });
+
+        it('supports pokerole-pmd-extension/stats and nickname/species naming with fallback max values', () => {
+            const rawToken = {
+                id: 'token-pmd-1',
+                metadata: {
+                    'pokerole-pmd-extension/stats': {
+                        nickname: 'Sparky',
+                        species: 'Pikachu',
+                        'hp-curr': 4,
+                        'hp-max': 8,
+                        'will-curr': 2,
+                        'will-max': 4,
+                        'ins-base': 3
+                    }
+                }
+            };
+
+            const info = extractTokenTargetInfo(rawToken);
+            expect(info.id).toBe('token-pmd-1');
+            expect(info.name).toBe('Sparky');
+            expect(info.hpCurr).toBe(4);
+            expect(info.hpMax).toBe(8);
+            expect(info.willCurr).toBe(2);
+            expect(info.willMax).toBe(4);
+            expect(info.insight).toBe(3);
         });
     });
 });

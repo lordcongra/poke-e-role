@@ -296,7 +296,7 @@ export function SoloBattleTab({ activeCampaign, chaosFactor }: SoloBattleTabProp
                     }}
                 >
                     <span className="text-subtext" style={{ fontWeight: 600 }}>
-                        Candidate Moves ({candidateMoves.length} / {3 + activeTarget.insight})
+                        Candidate Moves: {candidateMoves.length} (Standard Limit: {3 + activeTarget.insight})
                     </span>
                     <span className="text-subtext" style={{ fontSize: '0.75rem' }}>
                         Live Probability Distribution
