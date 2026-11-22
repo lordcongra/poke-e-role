@@ -37,18 +37,13 @@ export interface BattleTargetInfo {
 }
 
 /**
- * Normalizes and extracts candidate moves from a move pool, respecting
- * active move toggles. Preserves full move pool beyond standard limit to support
- * homebrew moves in tactics and clash evaluation.
+ * Normalizes and extracts candidate moves from a move pool. Preserves full move pool
+ * beyond standard limit to support homebrew moves in tactics and clash evaluation.
  */
 export function extractCandidateMoves(moves: MoveData[], _insight: number = 1): MoveData[] {
     if (!Array.isArray(moves)) return [];
 
-    const validMoves = moves.filter((m) => m && typeof m.name === 'string' && m.name.trim().length > 0);
-    const activeMoves = validMoves.filter((m) => m.active === true);
-    const pool = activeMoves.length > 0 ? activeMoves : validMoves;
-
-    return pool;
+    return moves.filter((m) => m && typeof m.name === 'string' && m.name.trim().length > 0);
 }
 
 /**
@@ -218,11 +213,23 @@ export function rollWildInstinct(
         behavior = 'Desperate Strike';
         description = 'The wild Pokémon strikes with reckless ferocity and all-out power!';
         if (damagingMoves.length > 0) {
-            // Sort by power descending to pick the strongest damaging attack
-            const sorted = [...damagingMoves].sort((a, b) => (b.power || 0) - (a.power || 0));
-            selectedMove = sorted[0];
+            // Randomly select among damaging moves weighted by power (minimum weight 1)
+            const weights = damagingMoves.map((m) => Math.max(1, m.power || 1));
+            const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+            const roll = randomFn() * totalWeight;
+            let acc = 0;
+            for (let i = 0; i < damagingMoves.length; i++) {
+                acc += weights[i];
+                if (roll <= acc) {
+                    selectedMove = damagingMoves[i];
+                    break;
+                }
+            }
+            if (!selectedMove) {
+                selectedMove = damagingMoves[damagingMoves.length - 1];
+            }
         } else if (moves.length > 0) {
-            selectedMove = moves[0];
+            selectedMove = moves[Math.floor(randomFn() * moves.length)];
         }
         directive = selectedMove
             ? formatMoveDirective(cleanName, selectedMove.name)

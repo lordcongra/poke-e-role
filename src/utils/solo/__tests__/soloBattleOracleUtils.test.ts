@@ -54,7 +54,7 @@ describe('soloBattleOracleUtils', () => {
             ]);
         });
 
-        it('respects active move toggles when at least one move is active', () => {
+        it('returns all valid moves regardless of active (used this round) status', () => {
             const moves: MoveData[] = [
                 mockMove({ id: '1', name: 'Tackle', active: false }),
                 mockMove({ id: '2', name: 'Tail Whip', active: true }),
@@ -63,7 +63,7 @@ describe('soloBattleOracleUtils', () => {
             ];
 
             const candidates = extractCandidateMoves(moves, 1);
-            expect(candidates.map((m) => m.name)).toEqual(['Tail Whip', 'Bite']);
+            expect(candidates.map((m) => m.name)).toEqual(['Tackle', 'Tail Whip', 'Bite', 'Growl']);
         });
 
         it('filters out empty or unnamed moves', () => {
@@ -190,12 +190,34 @@ describe('soloBattleOracleUtils', () => {
             expect(['Bite', 'Crunch']).toContain(res.selectedMove?.name);
         });
 
-        it('d6 = 5 or 6 triggers Desperate Strike and picks highest power damaging move', () => {
-            const res = rollWildInstinct(moves, 'Ekans', 6);
-            expect(res.d6Roll).toBe(6);
-            expect(res.behavior).toBe('Desperate Strike');
-            expect(res.selectedMove?.name).toBe('Crunch');
-            expect(res.directive).toBe("Roll Crunch on Ekans's sheet!");
+        it('d6 = 5 or 6 triggers Desperate Strike and weights damaging moves by power', () => {
+            // Power: Bite=2, Crunch=3 (total 5).
+            // randomFn returning 0.1 -> roll = 0.5 <= 2 -> Bite
+            const resBite = rollWildInstinct(moves, 'Ekans', 6, () => 0.1);
+            expect(resBite.d6Roll).toBe(6);
+            expect(resBite.behavior).toBe('Desperate Strike');
+            expect(resBite.selectedMove?.name).toBe('Bite');
+            expect(resBite.directive).toBe("Roll Bite on Ekans's sheet!");
+
+            // randomFn returning 0.9 -> roll = 4.5 > 2 -> Crunch
+            const resCrunch = rollWildInstinct(moves, 'Ekans', 6, () => 0.9);
+            expect(resCrunch.d6Roll).toBe(6);
+            expect(resCrunch.behavior).toBe('Desperate Strike');
+            expect(resCrunch.selectedMove?.name).toBe('Crunch');
+            expect(resCrunch.directive).toBe("Roll Crunch on Ekans's sheet!");
+        });
+
+        it('d6 = 5 or 6 falls back to random selection among non-damaging moves if no damaging moves exist', () => {
+            const supportMoves: MoveData[] = [
+                mockMove({ id: '1', name: 'Leer', category: 'Status' }),
+                mockMove({ id: '2', name: 'Growl', category: 'Status' })
+            ];
+
+            const res1 = rollWildInstinct(supportMoves, 'Ekans', 5, () => 0.1);
+            expect(res1.selectedMove?.name).toBe('Leer');
+
+            const res2 = rollWildInstinct(supportMoves, 'Ekans', 5, () => 0.9);
+            expect(res2.selectedMove?.name).toBe('Growl');
         });
     });
 

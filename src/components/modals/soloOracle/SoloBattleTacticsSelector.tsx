@@ -18,7 +18,7 @@ export function SoloBattleTacticsSelector({
     return (
         <div className="solo-battle__tactics-section">
             <span className="text-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Zap size={15} color="var(--primary)" /> AI Tactics Mode
+                <Zap size={15} color="var(--primary)" /> Tactics Mode
             </span>
             <div className="solo-battle__tactics-pills">
                 <button
