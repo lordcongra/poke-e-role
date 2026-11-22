@@ -45,9 +45,34 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px;
+    padding: 10px 16px;
     border-bottom: 1px solid var(--border);
     background-color: var(--panel-alt, var(--row-odd));
+    gap: 12px;
+}
+
+.solo-oracle-modal__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.solo-oracle-modal__header-campaign-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 1 360px;
+    min-width: 120px;
+    max-width: 380px;
+}
+
+.solo-oracle-modal__header-campaign-wrap .solo-log__campaign-select {
+    width: 100%;
+    min-width: 0;
+    text-overflow: ellipsis;
 }
 
 .solo-oracle-modal__title {
@@ -58,6 +83,8 @@
     font-size: 1.1rem;
     font-weight: 700;
     color: var(--primary);
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .solo-oracle-modal__popout-btn {
@@ -748,10 +775,28 @@
     .solo-oracle-modal__header {
         padding: 8px 10px;
         gap: 6px;
+        flex-wrap: wrap;
     }
 
     .solo-oracle-modal__title {
         font-size: 0.95rem;
+    }
+
+    .solo-oracle-modal__header-actions {
+        gap: 6px;
+        flex: 1 1 auto;
+        justify-content: flex-end;
+    }
+
+    .solo-oracle-modal__header-campaign-wrap {
+        flex: 1 1 auto;
+        min-width: 90px;
+        max-width: 220px;
+    }
+
+    .solo-oracle-modal__guide-btn {
+        flex-shrink: 0;
+        white-space: nowrap;
     }
 
     .solo-oracle-modal__body {
@@ -764,14 +809,14 @@
         gap: 8px;
     }
 
-    .solo-log__campaign-select-wrap {
+    .solo-log__header-toolbar .solo-log__campaign-select-wrap {
         width: 100%;
         display: flex;
         align-items: center;
         gap: 6px;
     }
 
-    .solo-log__campaign-select {
+    .solo-log__header-toolbar .solo-log__campaign-select {
         flex: 1;
         min-width: 0;
         max-width: none;
@@ -1101,8 +1146,29 @@
     gap: 5px;
 }
 
-.solo-battle__fate-btn {
-    padding: 4px 10px;
-    font-size: 0.8rem;
-    white-space: nowrap;
+.solo-battle__fate-react-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+    .solo-battle__reaction-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .solo-battle__fate-react-actions {
+        width: 100%;
+    }
+
+    .solo-battle__fate-react-actions .solo-fate__odds-select {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .solo-battle__fate-react-actions .solo-battle__fate-btn {
+        flex: 1;
+        min-width: 0;
+    }
 }

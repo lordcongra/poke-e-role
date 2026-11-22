@@ -167,10 +167,10 @@ export function SoloOracleModal({ onClose }: SoloOracleModalProps) {
                 {/* Modal Header */}
                 <div className="solo-oracle-modal__header">
                     <h3 className="solo-oracle-modal__title text-title-primary">
-                        <Compass size={20} /> Solo Play Oracle & Prompts
+                        <Compass size={20} /> Solo Play
                     </h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div className="solo-log__campaign-select-wrap">
+                    <div className="solo-oracle-modal__header-actions">
+                        <div className="solo-log__campaign-select-wrap solo-oracle-modal__header-campaign-wrap">
                             <Folder size={15} color="var(--primary)" />
                             <select
                                 className="solo-log__campaign-select"

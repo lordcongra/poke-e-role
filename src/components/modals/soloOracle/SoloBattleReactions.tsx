@@ -48,7 +48,7 @@ export function SoloBattleReactions({
                     >
                         <HelpCircle size={14} /> Does It React? (Fate Oracle)
                     </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div className="solo-battle__fate-react-actions">
                         <select
                             className="solo-fate__odds-select"
                             value={reactionOdds}
