@@ -31,10 +31,18 @@ export interface FateCheckResult {
 
 export type PromptCategory = 'disposition' | 'twist' | 'hazard' | 'rumor' | 'ruin';
 
+export interface CampaignData {
+    chaosFactor: number;
+    threads: string[];
+    characters: string[];
+    lastFateCheck?: FateCheckResult | null;
+}
+
 export interface SoloOracleState {
     chaosFactor: number;
     threads: string[];
     characters: string[];
+    campaignData?: Record<string, CampaignData>;
     lastFateCheck?: FateCheckResult | null;
 }
 
@@ -42,10 +50,79 @@ export const DEFAULT_SOLO_STATE: SoloOracleState = {
     chaosFactor: 5,
     threads: ['Find out what is agitating wild Pokémon in the area'],
     characters: ['Rival Trainer', 'Local Pokémon Professor'],
+    campaignData: {
+        'Main Campaign': {
+            chaosFactor: 5,
+            threads: ['Find out what is agitating wild Pokémon in the area'],
+            characters: ['Rival Trainer', 'Local Pokémon Professor'],
+            lastFateCheck: null
+        }
+    },
     lastFateCheck: null
 };
 
 export const SOLO_STORAGE_KEY = 'pkr_solo_oracle_state';
+
+/**
+ * Retrieves the campaign-specific data for a given campaign name with fallback.
+ */
+export function getCampaignData(state: SoloOracleState, campaign: string): CampaignData {
+    if (state.campaignData && state.campaignData[campaign]) {
+        return state.campaignData[campaign];
+    }
+    if (campaign === 'Main Campaign' && state.threads && state.characters) {
+        return {
+            chaosFactor: state.chaosFactor ?? 5,
+            threads: state.threads,
+            characters: state.characters,
+            lastFateCheck: state.lastFateCheck ?? null
+        };
+    }
+    return {
+        chaosFactor: 5,
+        threads: ['Find out what is agitating wild Pokémon in the area'],
+        characters: ['Rival Trainer', 'Local Pokémon Professor'],
+        lastFateCheck: null
+    };
+}
+
+/**
+ * Updates a specific campaign's data within the SoloOracleState.
+ */
+export function updateCampaignData(
+    state: SoloOracleState,
+    campaign: string,
+    partial: Partial<CampaignData>
+): SoloOracleState {
+    const current = getCampaignData(state, campaign);
+    const updatedCampaign: CampaignData = {
+        ...current,
+        ...partial
+    };
+    const nextCampaignData = {
+        ...(state.campaignData || {}),
+        [campaign]: updatedCampaign
+    };
+
+    return {
+        ...state,
+        ...(campaign === 'Main Campaign' ? updatedCampaign : {}),
+        campaignData: nextCampaignData
+    };
+}
+
+/**
+ * Removes a campaign's data when the campaign is deleted.
+ */
+export function removeCampaignData(state: SoloOracleState, campaign: string): SoloOracleState {
+    if (!state.campaignData || !state.campaignData[campaign]) return state;
+    const nextCampaignData = { ...state.campaignData };
+    delete nextCampaignData[campaign];
+    return {
+        ...state,
+        campaignData: nextCampaignData
+    };
+}
 
 /**
  * Retrieves the threshold boundaries for a given odds value (-4 to +4) and Chaos Factor (1 to 9).
@@ -218,20 +295,24 @@ export function rollPokemonPrompt(
 /**
  * Formats a Fate Check into a RollSyncData payload and broadcasts it to the room/local roll log.
  */
-export async function broadcastFateCheckRoll(fateResult: FateCheckResult): Promise<void> {
+export async function broadcastFateCheckRoll(fateResult: FateCheckResult, question?: string): Promise<void> {
     const characterName = useCharacterStore.getState().identity.nickname || 'Solo Oracle';
     const tokenId = useCharacterStore.getState().tokenId || undefined;
 
     const eventWarning = fateResult.isRandomEvent ? ' ⚡ [RANDOM EVENT]' : '';
     const rollDetails = `(d100: ${fateResult.roll} vs ${fateResult.target})`;
+    const trimmedQuestion = question?.trim();
+    const questionPrefix = trimmedQuestion ? `"${trimmedQuestion}" ➔ ` : '';
 
     const rollData: RollSyncData = {
         id: crypto.randomUUID(),
         player: 'Solo Oracle',
         characterName,
         tokenId,
-        label: `Fate Check: ${fateResult.oddsLabel} (Chaos ${fateResult.chaosFactor})`,
-        result: `${fateResult.result}${eventWarning} ${rollDetails}`,
+        label: trimmedQuestion
+            ? `Fate: "${trimmedQuestion}"`
+            : `Fate Check: ${fateResult.oddsLabel} (Chaos ${fateResult.chaosFactor})`,
+        result: `${questionPrefix}${fateResult.result}${eventWarning} ${rollDetails}`,
         icon: '🧭',
         rollType: 'solo-oracle',
         isCrit: fateResult.result === 'Exceptional Yes',
@@ -276,6 +357,8 @@ export function getStoredSoloOracleState(): SoloOracleState {
             chaosFactor: typeof parsed.chaosFactor === 'number' ? Math.max(1, Math.min(9, parsed.chaosFactor)) : 5,
             threads: Array.isArray(parsed.threads) ? parsed.threads : DEFAULT_SOLO_STATE.threads,
             characters: Array.isArray(parsed.characters) ? parsed.characters : DEFAULT_SOLO_STATE.characters,
+            campaignData:
+                parsed.campaignData && typeof parsed.campaignData === 'object' ? parsed.campaignData : undefined,
             lastFateCheck: parsed.lastFateCheck || null
         };
     } catch {

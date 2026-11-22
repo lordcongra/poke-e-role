@@ -134,6 +134,8 @@ export function GlobalToolbar() {
                 hash.startsWith('#lookup')
             ) {
                 setActiveModal('gm-screen');
+            } else if (modalParam === 'solo-oracle' || hash.startsWith('#solo-oracle')) {
+                setActiveModal('solo-oracle');
             }
 
             const savedExpanded = localStorage.getItem('pkr_global_toolbar_expanded');

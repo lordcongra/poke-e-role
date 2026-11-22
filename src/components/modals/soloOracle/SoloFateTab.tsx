@@ -8,12 +8,21 @@ interface SoloFateTabProps {
     chaosFactor: number;
     onChaosChange: (val: number) => void;
     lastResult: FateCheckResult | null;
-    onRollFate: (odds: number) => void;
+    lastQuestion?: string;
+    onRollFate: (odds: number, question?: string) => void;
     onGoToPrompts: () => void;
 }
 
-export function SoloFateTab({ chaosFactor, onChaosChange, lastResult, onRollFate, onGoToPrompts }: SoloFateTabProps) {
+export function SoloFateTab({
+    chaosFactor,
+    onChaosChange,
+    lastResult,
+    lastQuestion,
+    onRollFate,
+    onGoToPrompts
+}: SoloFateTabProps) {
     const [selectedOdds, setSelectedOdds] = useState<number>(0);
+    const [question, setQuestion] = useState<string>('');
 
     const { target, exceptionalYesThreshold, exceptionalNoThreshold } = getFateThresholds(selectedOdds, chaosFactor);
 
@@ -84,12 +93,23 @@ export function SoloFateTab({ chaosFactor, onChaosChange, lastResult, onRollFate
                 </div>
             </div>
 
-            {/* Action Row */}
+            {/* Question Input & Action Row */}
+            <div className="solo-fate__question-box">
+                <input
+                    type="text"
+                    className="solo-fate__question-input"
+                    placeholder="Type your Fate question (e.g., 'Is there shelter nearby?', 'Does the wild PKMN notice me?')..."
+                    value={question}
+                    onChange={(e) => setQuestion(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && onRollFate(selectedOdds, question)}
+                />
+            </div>
+
             <div className="solo-fate__roll-action">
                 <button
                     type="button"
                     className="action-button action-button--theme solo-fate__roll-btn"
-                    onClick={() => onRollFate(selectedOdds)}
+                    onClick={() => onRollFate(selectedOdds, question)}
                 >
                     <Dices size={20} /> Ask the Oracle (Roll 1d100)
                 </button>
@@ -98,6 +118,13 @@ export function SoloFateTab({ chaosFactor, onChaosChange, lastResult, onRollFate
             {/* Roll Result Display */}
             {lastResult && (
                 <div className="solo-fate__result-card">
+                    {lastQuestion && (
+                        <div className="solo-fate__result-question">
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Question:</span> &ldquo;
+                            <strong>{lastQuestion}</strong>&rdquo;
+                        </div>
+                    )}
+
                     <div className={`solo-fate__result-badge ${getResultBadgeClass(lastResult.result)}`}>
                         {lastResult.result}
                     </div>

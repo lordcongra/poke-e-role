@@ -3,13 +3,20 @@ import { Plus, Trash2, Dices, BookOpen, Users } from 'lucide-react';
 import { broadcastPromptRoll } from '@/utils/solo/oracleUtils';
 
 interface SoloTrackerTabProps {
+    activeCampaign: string;
     threads: string[];
     characters: string[];
     onUpdateThreads: (threads: string[]) => void;
     onUpdateCharacters: (characters: string[]) => void;
 }
 
-export function SoloTrackerTab({ threads, characters, onUpdateThreads, onUpdateCharacters }: SoloTrackerTabProps) {
+export function SoloTrackerTab({
+    activeCampaign,
+    threads,
+    characters,
+    onUpdateThreads,
+    onUpdateCharacters
+}: SoloTrackerTabProps) {
     const [newThreadInput, setNewThreadInput] = useState('');
     const [newCharInput, setNewCharInput] = useState('');
     const [randomPickMessage, setRandomPickMessage] = useState<string | null>(null);
@@ -61,21 +68,34 @@ export function SoloTrackerTab({ threads, characters, onUpdateThreads, onUpdateC
             <div className="solo-tracker__columns">
                 {/* Active Threads List */}
                 <div className="solo-tracker__card">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '4px'
+                        }}
+                    >
                         <h4 className="solo-prompts__section-title">
                             <BookOpen size={16} /> Active Threads ({threads.length})
                         </h4>
-                        {threads.length > 0 && (
-                            <button
-                                type="button"
-                                className="action-button action-button--dark"
-                                style={{ padding: '3px 8px', fontSize: '0.75rem' }}
-                                onClick={handlePickRandomThread}
-                                title="Pick a random thread from the list"
-                            >
-                                <Dices size={12} /> Random
-                            </button>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span className="solo-oracle-modal__campaign-tag" style={{ fontSize: '0.72rem' }}>
+                                📁 {activeCampaign}
+                            </span>
+                            {threads.length > 0 && (
+                                <button
+                                    type="button"
+                                    className="action-button action-button--dark"
+                                    style={{ padding: '3px 8px', fontSize: '0.75rem' }}
+                                    onClick={handlePickRandomThread}
+                                    title="Pick a random thread from the list"
+                                >
+                                    <Dices size={12} /> Random
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     <div className="solo-tracker__input-row">
@@ -126,21 +146,34 @@ export function SoloTrackerTab({ threads, characters, onUpdateThreads, onUpdateC
 
                 {/* Active Characters / NPCs List */}
                 <div className="solo-tracker__card">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '4px'
+                        }}
+                    >
                         <h4 className="solo-prompts__section-title">
                             <Users size={16} /> Characters & NPCs ({characters.length})
                         </h4>
-                        {characters.length > 0 && (
-                            <button
-                                type="button"
-                                className="action-button action-button--dark"
-                                style={{ padding: '3px 8px', fontSize: '0.75rem' }}
-                                onClick={handlePickRandomCharacter}
-                                title="Pick a random character from the list"
-                            >
-                                <Dices size={12} /> Random
-                            </button>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span className="solo-oracle-modal__campaign-tag" style={{ fontSize: '0.72rem' }}>
+                                📁 {activeCampaign}
+                            </span>
+                            {characters.length > 0 && (
+                                <button
+                                    type="button"
+                                    className="action-button action-button--dark"
+                                    style={{ padding: '3px 8px', fontSize: '0.75rem' }}
+                                    onClick={handlePickRandomCharacter}
+                                    title="Pick a random character from the list"
+                                >
+                                    <Dices size={12} /> Random
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     <div className="solo-tracker__input-row">

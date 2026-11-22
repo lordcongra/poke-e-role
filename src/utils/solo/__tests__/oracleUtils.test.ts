@@ -9,6 +9,9 @@ import {
     rollPokemonPrompt,
     getStoredSoloOracleState,
     saveStoredSoloOracleState,
+    getCampaignData,
+    updateCampaignData,
+    removeCampaignData,
     SOLO_STORAGE_KEY,
     DEFAULT_SOLO_STATE
 } from '../oracleUtils';
@@ -173,6 +176,34 @@ describe('oracleUtils', () => {
             expect(read.chaosFactor).toBe(7);
             expect(read.threads).toHaveLength(2);
             expect(read.characters).toHaveLength(2);
+        });
+
+        it('manages campaign-scoped lists and chaos factors independently', () => {
+            let state = DEFAULT_SOLO_STATE;
+
+            // Main Campaign has default values
+            const mainData = getCampaignData(state, 'Main Campaign');
+            expect(mainData.chaosFactor).toBe(5);
+
+            // Update Johto Nuzlocke campaign
+            state = updateCampaignData(state, 'Johto Nuzlocke', {
+                chaosFactor: 7,
+                threads: ['Defeat Whitney in Goldenrod City'],
+                characters: ['Whitney', 'Miltank']
+            });
+
+            const johtoData = getCampaignData(state, 'Johto Nuzlocke');
+            expect(johtoData.chaosFactor).toBe(7);
+            expect(johtoData.threads).toEqual(['Defeat Whitney in Goldenrod City']);
+            expect(johtoData.characters).toEqual(['Whitney', 'Miltank']);
+
+            // Main Campaign remains untouched
+            const mainDataAfter = getCampaignData(state, 'Main Campaign');
+            expect(mainDataAfter.chaosFactor).toBe(5);
+
+            // Removing campaign deletes its data
+            state = removeCampaignData(state, 'Johto Nuzlocke');
+            expect(state.campaignData?.['Johto Nuzlocke']).toBeUndefined();
         });
     });
 });

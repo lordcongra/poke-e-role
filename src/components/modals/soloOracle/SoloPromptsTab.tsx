@@ -16,7 +16,11 @@ interface PromptDisplay {
     description?: string;
 }
 
-export function SoloPromptsTab() {
+interface SoloPromptsTabProps {
+    onLogPrompt?: (prompt: { label: string; result: string; details?: string; roll: number }) => void;
+}
+
+export function SoloPromptsTab({ onLogPrompt }: SoloPromptsTabProps) {
     const [latestPrompt, setLatestPrompt] = useState<PromptDisplay | null>(null);
 
     const handleRollEventFocus = async () => {
@@ -29,6 +33,12 @@ export function SoloPromptsTab() {
         };
         setLatestPrompt(display);
         await broadcastPromptRoll('Event Focus', entry.name, `d100: ${roll} - ${entry.description}`);
+        onLogPrompt?.({
+            label: 'Event Focus',
+            result: entry.name,
+            details: `d100: ${roll} - ${entry.description}`,
+            roll
+        });
     };
 
     const handleRollActionTheme = async () => {
@@ -42,6 +52,12 @@ export function SoloPromptsTab() {
         };
         setLatestPrompt(display);
         await broadcastPromptRoll('Action & Theme', text, `Action: ${actionWord}, Theme: ${themeWord}`);
+        onLogPrompt?.({
+            label: 'Action & Theme',
+            result: text,
+            details: `Action: ${actionWord} (d100: ${actionRoll}) | Theme: ${themeWord} (d100: ${themeRoll})`,
+            roll: actionRoll
+        });
     };
 
     const handleRollPokemonPrompt = async (cat: PromptCategory) => {
@@ -54,6 +70,12 @@ export function SoloPromptsTab() {
         };
         setLatestPrompt(display);
         await broadcastPromptRoll(result.label, result.text, `d20: ${result.roll}`);
+        onLogPrompt?.({
+            label: result.label,
+            result: result.text,
+            details: `d20: ${result.roll}`,
+            roll: result.roll
+        });
     };
 
     return (
