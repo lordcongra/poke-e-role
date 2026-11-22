@@ -41,7 +41,8 @@ import {
     Bug,
     HardDrive,
     Share2,
-    Laptop
+    Laptop,
+    Compass
 } from 'lucide-react';
 import './GlobalToolbar.css';
 
@@ -501,6 +502,16 @@ export function GlobalToolbar() {
                         </span>
                     </button>
 
+                    <button
+                        type="button"
+                        className="global-toolbar__btn--theme-header action-button"
+                        onClick={toggleTheme}
+                        title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                        aria-label="Toggle Theme"
+                    >
+                        {isDark ? <Sun size={14} color="#F8D030" /> : <Moon size={14} color="#A890F0" />}
+                    </button>
+
                     {activeTokenId && (
                         <button
                             type="button"
@@ -661,19 +672,11 @@ export function GlobalToolbar() {
 
                         <button
                             type="button"
-                            className="global-toolbar__btn action-button--neutral-hover"
-                            onClick={toggleTheme}
-                            title="Toggle Dark/Light Mode"
+                            className="global-toolbar__btn action-button--primary-hover"
+                            onClick={() => setActiveModal('solo-oracle')}
+                            title="Open Solo Play Oracle & Prompts"
                         >
-                            {isDark ? (
-                                <>
-                                    <Sun size={16} color="#F8D030" /> Light
-                                </>
-                            ) : (
-                                <>
-                                    <Moon size={16} color="#A890F0" /> Dark
-                                </>
-                            )}
+                            <Compass size={16} color="var(--primary)" /> Solo Play
                         </button>
 
                         <button

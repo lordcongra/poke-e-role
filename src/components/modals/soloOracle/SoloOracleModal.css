@@ -1,0 +1,498 @@
+.solo-oracle-modal__overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+    backdrop-filter: blur(2px);
+}
+
+.solo-oracle-modal__content {
+    background-color: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 100%;
+    max-width: 780px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.solo-oracle-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background-color: var(--panel-alt, var(--row-odd));
+}
+
+.solo-oracle-modal__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.solo-oracle-modal__close-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.solo-oracle-modal__close-btn:hover {
+    color: var(--semantic-danger, #ff5555);
+    background-color: color-mix(in srgb, var(--semantic-danger, #ff5555) 15%, transparent);
+}
+
+.solo-oracle-modal__nav {
+    display: flex;
+    gap: 4px;
+    padding: 8px 16px;
+    background-color: var(--bg);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+}
+
+.solo-oracle-modal__tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.solo-oracle-modal__tab-btn:hover {
+    color: var(--text-main);
+    background-color: var(--row-odd);
+}
+
+.solo-oracle-modal__tab-btn--active {
+    color: var(--primary);
+    background-color: var(--panel-bg);
+    border-color: var(--border);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.solo-oracle-modal__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Fate Tab */
+.solo-fate-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.solo-fate__config-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+}
+
+@media (min-width: 580px) {
+    .solo-fate__config-grid {
+        grid-template-columns: auto 1fr;
+    }
+}
+
+.solo-fate__chaos-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background-color: var(--panel-alt, var(--row-odd));
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.solo-fate__odds-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background-color: var(--panel-alt, var(--row-odd));
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.solo-fate__odds-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+@media (max-width: 460px) {
+    .solo-fate__odds-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.solo-fate__odds-btn {
+    padding: 6px 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-align: center;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background-color: var(--bg);
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.solo-fate__odds-btn:hover {
+    border-color: var(--primary);
+    background-color: var(--row-odd);
+}
+
+.solo-fate__odds-btn--active {
+    background-color: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+.solo-fate__target-preview {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    padding: 4px 6px;
+    border-radius: 4px;
+    background-color: var(--bg);
+    border: 1px dashed var(--border);
+}
+
+.solo-fate__roll-action {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.solo-fate__roll-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+/* Result Card */
+.solo-fate__result-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background-color: var(--panel-alt, var(--row-odd));
+    box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.15);
+}
+
+.solo-fate__result-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 800;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+.solo-fate__result-badge--exc-yes {
+    background-color: #2e7d32;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(46, 125, 50, 0.5);
+}
+
+.solo-fate__result-badge--yes {
+    background-color: #1565c0;
+    color: #ffffff;
+}
+
+.solo-fate__result-badge--no {
+    background-color: #c62828;
+    color: #ffffff;
+}
+
+.solo-fate__result-badge--exc-no {
+    background-color: #b71c1c;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(183, 28, 28, 0.6);
+}
+
+.solo-fate__result-details {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.solo-fate__random-event-alert {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 6px;
+    background-color: color-mix(in srgb, #ff9800 15%, var(--panel-bg));
+    border: 1px solid #ff9800;
+    color: var(--text-main);
+}
+
+.solo-fate__random-event-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    color: #ff9800;
+}
+
+/* Prompts Tab */
+.solo-prompts-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.solo-prompts__section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    background-color: var(--panel-alt, var(--row-odd));
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.solo-prompts__section-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+}
+
+.solo-prompts__buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+}
+
+.solo-prompts__card {
+    padding: 12px;
+    border-radius: 6px;
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.solo-prompts__card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.solo-prompts__card-body {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.solo-prompts__card-desc {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+/* Tracker Tab */
+.solo-tracker-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.solo-tracker__columns {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+@media (min-width: 600px) {
+    .solo-tracker__columns {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.solo-tracker__card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    background-color: var(--panel-alt, var(--row-odd));
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.solo-tracker__input-row {
+    display: flex;
+    gap: 6px;
+}
+
+.solo-tracker__input {
+    flex: 1;
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    color: var(--text-main);
+    font-size: 0.85rem;
+}
+
+.solo-tracker__input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.solo-tracker__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.solo-tracker__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 8px;
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.solo-tracker__item-text {
+    flex: 1;
+    word-break: break-word;
+}
+
+.solo-tracker__delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s ease;
+}
+
+.solo-tracker__delete-btn:hover {
+    color: var(--semantic-danger, #ff5555);
+}
+
+.solo-tracker__highlight-box {
+    padding: 8px 12px;
+    background-color: color-mix(in srgb, var(--primary) 15%, var(--panel-bg));
+    border: 1px solid var(--primary);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+/* Guide Tab */
+.solo-guide-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    line-height: 1.5;
+    font-size: 0.9rem;
+    color: var(--text-main);
+}
+
+.solo-guide__section {
+    padding: 12px;
+    background-color: var(--panel-alt, var(--row-odd));
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.solo-guide__header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0;
+}
+
+.solo-guide__step-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding-left: 20px;
+}
+
+.solo-guide__example-box {
+    padding: 8px 12px;
+    border-left: 3px solid var(--primary);
+    background-color: var(--bg);
+    border-radius: 0 4px 4px 0;
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--text-muted);
+}

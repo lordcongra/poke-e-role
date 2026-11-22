@@ -15,6 +15,7 @@ import { PrintBattleOrganizer } from '../print/PrintBattleOrganizer';
 import { TrainerGeneratorModal } from '../modals/trainerGenerator';
 import { BugReportModal, PlatformGuideModal } from '../modals/settings';
 import { PcStorageModal } from '../modals/pcStorage/PcStorageModal';
+import { SoloOracleModal } from '../modals/soloOracle/SoloOracleModal';
 
 export type ActiveModal =
     | 'homebrew'
@@ -33,6 +34,7 @@ export type ActiveModal =
     | 'bug-report'
     | 'pc'
     | 'platform-guide'
+    | 'solo-oracle'
     | null;
 
 export interface ToolbarModalsProps {
@@ -81,6 +83,7 @@ export const ToolbarModals: React.FC<ToolbarModalsProps> = ({
                 />
             )}
             {activeModal === 'platform-guide' && <PlatformGuideModal onClose={onClose} />}
+            {activeModal === 'solo-oracle' && <SoloOracleModal onClose={onClose} />}
 
             {isPrintingBattleOrganizer && <PrintBattleOrganizer onDone={onDonePrintingBattleOrganizer} />}
         </>
