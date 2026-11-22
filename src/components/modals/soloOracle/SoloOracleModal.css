@@ -1051,7 +1051,7 @@
     color: var(--text-muted);
 }
 
-/* Defensive Reactions & Maneuvers */
+/* Defensive Reactions & Fate Oracle */
 .solo-battle__reactions-section {
     display: flex;
     flex-direction: column;
@@ -1091,21 +1091,18 @@
     gap: 8px;
 }
 
+.solo-oracle-modal__guide-btn {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
 .solo-battle__fate-btn {
     padding: 4px 10px;
     font-size: 0.8rem;
     white-space: nowrap;
-}
-
-.solo-battle__maneuvers-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.solo-battle__maneuver-btn {
-    padding: 4px 10px;
-    font-size: 0.8rem;
-    border-radius: 4px;
 }

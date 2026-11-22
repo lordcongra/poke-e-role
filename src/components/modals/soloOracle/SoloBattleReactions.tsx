@@ -7,7 +7,6 @@ export interface SoloBattleReactionsProps {
     reactionOdds: number;
     onChangeReactionOdds: (odds: number) => void;
     onRollFateReaction: () => void;
-    onManeuver: (m: 'cover' | 'struggle') => void;
 }
 
 export function SoloBattleReactions({
@@ -15,8 +14,7 @@ export function SoloBattleReactions({
     onClash,
     reactionOdds,
     onChangeReactionOdds,
-    onRollFateReaction,
-    onManeuver
+    onRollFateReaction
 }: SoloBattleReactionsProps) {
     return (
         <div className="solo-battle__reactions-section">
@@ -72,27 +70,6 @@ export function SoloBattleReactions({
                         </button>
                     </div>
                 </div>
-            </div>
-
-            {/* Situational Maneuvers */}
-            <div className="solo-battle__maneuvers-row">
-                <span className="text-subtext" style={{ fontSize: '0.78rem', minWidth: '85px' }}>
-                    Maneuvers:
-                </span>
-                <button
-                    type="button"
-                    className="action-button action-button--dark solo-battle__maneuver-btn"
-                    onClick={() => onManeuver('cover')}
-                >
-                    Cover an Ally
-                </button>
-                <button
-                    type="button"
-                    className="action-button action-button--dark solo-battle__maneuver-btn"
-                    onClick={() => onManeuver('struggle')}
-                >
-                    Desperation Struggle
-                </button>
             </div>
         </div>
     );

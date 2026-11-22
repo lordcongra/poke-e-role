@@ -12,8 +12,7 @@ import {
     formatMoveDirective,
     formatClashDirective,
     formatEvadeDirective,
-    formatCoverDirective,
-    formatStruggleDirective,
+    formatFateReactionDirective,
     extractTokenTargetInfo
 } from '../soloBattleOracleUtils';
 
@@ -234,14 +233,18 @@ describe('soloBattleOracleUtils', () => {
             expect(formatEvadeDirective('Ekans')).toBe("Roll Evade on Ekans's sheet!");
         });
 
-        it('formatCoverDirective produces valid cover directive', () => {
-            expect(formatCoverDirective('Ekans', 'Pikachu')).toBe(
-                "Roll Cover (Dexterity + Brawl/Alert) on Ekans's sheet to protect Pikachu!"
-            );
-        });
+        it('formatFateReactionDirective produces clean reaction directives without auto-selecting moves', () => {
+            const yesRes = formatFateReactionDirective('Ekans', 'Yes');
+            expect(yesRes.directive).toBe('Yes, Ekans reacts!');
 
-        it('formatStruggleDirective produces valid struggle directive', () => {
-            expect(formatStruggleDirective('Ekans')).toBe("Roll Desperation Struggle on Ekans's sheet!");
+            const noRes = formatFateReactionDirective('Ekans', 'No');
+            expect(noRes.directive).toBe('No, Ekans does not react!');
+
+            const excYesRes = formatFateReactionDirective('Ekans', 'Exceptional Yes');
+            expect(excYesRes.directive).toBe('Exceptional Yes! Ekans reacts swiftly!');
+
+            const excNoRes = formatFateReactionDirective('Ekans', 'Exceptional No');
+            expect(excNoRes.directive).toBe('Exceptional No! Ekans does not react!');
         });
     });
 

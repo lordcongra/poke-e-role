@@ -1,5 +1,6 @@
 import type { MoveData } from '@/store/storeTypes';
 import { parseMoves } from '@/utils/sync/mappers/parseCharacterFeatures';
+import type { FateResultType } from '@/utils/solo/oracleUtils';
 
 export type TacticsMode = 'equal' | 'aggressive' | 'tactical' | 'wild' | 'custom';
 
@@ -214,7 +215,7 @@ export function rollWildInstinct(
         }
         directive = selectedMove
             ? formatMoveDirective(cleanName, selectedMove.name)
-            : formatStruggleDirective(cleanName);
+            : `No moves available on ${cleanName}'s sheet!`;
     } else {
         behavior = 'Desperate Strike';
         description = 'The wild Pokémon strikes with reckless ferocity and all-out power!';
@@ -227,7 +228,7 @@ export function rollWildInstinct(
         }
         directive = selectedMove
             ? formatMoveDirective(cleanName, selectedMove.name)
-            : formatStruggleDirective(cleanName);
+            : `No moves available on ${cleanName}'s sheet!`;
     }
 
     return {
@@ -276,18 +277,34 @@ export function formatEvadeDirective(pokemonName: string): string {
     return `Roll Evade on ${pName}'s sheet!`;
 }
 
-export function formatCoverDirective(pokemonName: string, allyName?: string): string {
+export function formatFateReactionDirective(
+    pokemonName: string,
+    result: FateResultType
+): { directive: string; note: string } {
     const pName = pokemonName?.trim() || 'Active Pokémon';
-    const ally = allyName?.trim();
-    if (ally) {
-        return `Roll Cover (Dexterity + Brawl/Alert) on ${pName}'s sheet to protect ${ally}!`;
+    switch (result) {
+        case 'Exceptional Yes':
+            return {
+                directive: `Exceptional Yes! ${pName} reacts swiftly!`,
+                note: `${pName} reacts with exceptional speed or tactical advantage.`
+            };
+        case 'Yes':
+            return {
+                directive: `Yes, ${pName} reacts!`,
+                note: `${pName} reacts in time.`
+            };
+        case 'Exceptional No':
+            return {
+                directive: `Exceptional No! ${pName} does not react!`,
+                note: `${pName} is completely caught flat-footed or a severe complication ensues.`
+            };
+        case 'No':
+        default:
+            return {
+                directive: `No, ${pName} does not react!`,
+                note: `${pName} fails to react in time and takes the hit directly.`
+            };
     }
-    return `Roll Cover (Dexterity + Brawl/Alert) on ${pName}'s sheet!`;
-}
-
-export function formatStruggleDirective(pokemonName: string): string {
-    const pName = pokemonName?.trim() || 'Active Pokémon';
-    return `Roll Desperation Struggle on ${pName}'s sheet!`;
 }
 
 /**

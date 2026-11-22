@@ -14,8 +14,7 @@ import {
     formatMoveDirective,
     formatClashDirective,
     formatEvadeDirective,
-    formatCoverDirective,
-    formatStruggleDirective,
+    formatFateReactionDirective,
     extractTokenTargetInfo,
     type TacticsMode,
     type CustomWeights,
@@ -67,7 +66,7 @@ export function SoloBattleTab({ activeCampaign, chaosFactor }: SoloBattleTabProp
     // 4. Directive Result State
     const [currentDirective, setCurrentDirective] = useState<string>('');
     const [directiveContext, setDirectiveContext] = useState<string>('');
-    const [directiveType, setDirectiveType] = useState<'move' | 'reaction' | 'maneuver'>('move');
+    const [directiveType, setDirectiveType] = useState<'move' | 'reaction'>('move');
     const [loggedFeedback, setLoggedFeedback] = useState<boolean>(false);
 
     // 5. Reaction & Fate Check State
@@ -184,10 +183,8 @@ export function SoloBattleTab({ activeCampaign, chaosFactor }: SoloBattleTabProp
     const handleChooseMove = () => {
         setLoggedFeedback(false);
         if (candidateMoves.length === 0) {
-            setCurrentDirective(
-                `No moves configured for ${activeTarget.name}. ${formatStruggleDirective(activeTarget.name)}`
-            );
-            setDirectiveContext('Fallback Struggle (No candidate moves)');
+            setCurrentDirective(`No moves configured on ${activeTarget.name}'s sheet.`);
+            setDirectiveContext('No candidate moves available on sheet');
             setDirectiveType('move');
             return;
         }
@@ -237,39 +234,12 @@ export function SoloBattleTab({ activeCampaign, chaosFactor }: SoloBattleTabProp
         setFateReactionResult(result);
         setLoggedFeedback(false);
 
-        const isPositive = result.result === 'Yes' || result.result === 'Exceptional Yes';
-        if (isPositive) {
-            const clashMove = selectClashMove(candidateMoves);
-            if (clashMove && result.result === 'Exceptional Yes') {
-                setCurrentDirective(formatClashDirective(activeTarget.name, clashMove.name));
-                setDirectiveContext(
-                    `Fate Reaction: ${result.result} (Roll ${result.roll} vs ${result.target}) — Aggressive counter-attack!`
-                );
-            } else {
-                setCurrentDirective(formatEvadeDirective(activeTarget.name));
-                setDirectiveContext(
-                    `Fate Reaction: ${result.result} (Roll ${result.roll} vs ${result.target}) — Successfully reacts defensively.`
-                );
-            }
-        } else {
-            setCurrentDirective(`${activeTarget.name} fails to react in time! (Takes the hit directly)`);
-            setDirectiveContext(
-                `Fate Reaction: ${result.result} (Roll ${result.roll} vs ${result.target}) — Caught off-guard.`
-            );
-        }
+        const outcome = formatFateReactionDirective(activeTarget.name, result.result);
+        setCurrentDirective(outcome.directive);
+        setDirectiveContext(
+            `Fate Check: ${result.result} (Roll ${result.roll} vs ${result.target}, Odds ${result.oddsLabel}) — ${outcome.note}`
+        );
         setDirectiveType('reaction');
-    };
-
-    const handleManeuver = (maneuver: 'cover' | 'struggle') => {
-        setLoggedFeedback(false);
-        if (maneuver === 'cover') {
-            setCurrentDirective(formatCoverDirective(activeTarget.name));
-            setDirectiveContext('Situational Maneuver: Intercept an attack targeting an ally');
-        } else {
-            setCurrentDirective(formatStruggleDirective(activeTarget.name));
-            setDirectiveContext('Desperation Maneuver: Strength + Brawl, Power 1, Recoil 1');
-        }
-        setDirectiveType('maneuver');
     };
 
     const handleLogToHistory = async () => {
@@ -280,12 +250,7 @@ export function SoloBattleTab({ activeCampaign, chaosFactor }: SoloBattleTabProp
                 type: 'battle',
                 roll: fateReactionResult ? fateReactionResult.roll : 0,
                 result: currentDirective,
-                label:
-                    directiveType === 'reaction'
-                        ? 'Battle Reaction'
-                        : directiveType === 'maneuver'
-                          ? 'Combat Maneuver'
-                          : 'Battle Move Directive',
+                label: directiveType === 'reaction' ? 'Battle Reaction' : 'Battle Move Directive',
                 details: `${activeTarget.name} | ${directiveContext}`
             });
             setLoggedFeedback(true);
@@ -400,14 +365,13 @@ export function SoloBattleTab({ activeCampaign, chaosFactor }: SoloBattleTabProp
                 </div>
             )}
 
-            {/* 6. Defensive Reactions & Situational Maneuvers */}
+            {/* 6. Defensive Reactions */}
             <SoloBattleReactions
                 onEvade={handleEvade}
                 onClash={handleClash}
                 reactionOdds={reactionOdds}
                 onChangeReactionOdds={setReactionOdds}
                 onRollFateReaction={handleRollFateReaction}
-                onManeuver={handleManeuver}
             />
         </div>
     );

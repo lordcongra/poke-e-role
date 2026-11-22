@@ -186,6 +186,16 @@ export function SoloOracleModal({ onClose }: SoloOracleModalProps) {
                             </select>
                         </div>
 
+                        <button
+                            type="button"
+                            className={`action-button ${activeTab === 'guide' ? 'action-button--theme' : 'action-button--dark'} solo-oracle-modal__guide-btn`}
+                            onClick={() => setActiveTab((prev) => (prev === 'guide' ? 'oracle' : 'guide'))}
+                            title="Solo Play Guide"
+                            aria-label="Solo Play Guide"
+                        >
+                            <HelpCircle size={15} /> Guide
+                        </button>
+
                         {isStandaloneMode && !isPoppedOutWindow && (
                             <button
                                 type="button"
@@ -246,13 +256,6 @@ export function SoloOracleModal({ onClose }: SoloOracleModalProps) {
                         onClick={() => setActiveTab('tracker')}
                     >
                         <BookOpen size={14} /> Campaign Lists
-                    </button>
-                    <button
-                        type="button"
-                        className={`solo-oracle-modal__tab-btn ${activeTab === 'guide' ? 'solo-oracle-modal__tab-btn--active' : ''}`}
-                        onClick={() => setActiveTab('guide')}
-                    >
-                        <HelpCircle size={14} /> Solo Guide
                     </button>
                 </div>
 
