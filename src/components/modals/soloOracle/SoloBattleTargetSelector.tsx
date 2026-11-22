@@ -1,5 +1,6 @@
+import { useState, useMemo } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
-import { Activity, Heart, Flame, Brain } from 'lucide-react';
+import { Activity, Heart, Flame, Brain, Search, X, Check } from 'lucide-react';
 import { NumberSpinner } from '@/components/ui/NumberSpinner';
 import type { BattleTargetInfo } from '@/utils/solo/soloBattleOracleUtils';
 
@@ -32,6 +33,14 @@ export function SoloBattleTargetSelector({
     onChangeCustomInsight,
     activeTarget
 }: SoloBattleTargetSelectorProps) {
+    const [tokenSearch, setTokenSearch] = useState('');
+
+    const filteredTokens = useMemo(() => {
+        const query = tokenSearch.trim().toLowerCase();
+        if (!query) return sceneTokens;
+        return sceneTokens.filter((t) => t.name.toLowerCase().includes(query));
+    }, [sceneTokens, tokenSearch]);
+
     return (
         <div className="solo-battle__target-section">
             <div className="solo-battle__target-header">
@@ -67,22 +76,63 @@ export function SoloBattleTargetSelector({
 
             {targetType === 'token' && OBR.isAvailable && (
                 <div className="solo-battle__token-select-wrap">
-                    <select
-                        className="solo-log__campaign-select"
-                        value={selectedTokenId}
-                        onChange={(e) => onSelectTokenId(e.target.value)}
-                        style={{ width: '100%' }}
-                    >
-                        {sceneTokens.length === 0 ? (
-                            <option value="">No character tokens found on scene</option>
-                        ) : (
-                            sceneTokens.map((t) => (
-                                <option key={t.id} value={t.id}>
-                                    {t.name} (HP: {t.hpCurr}/{t.hpMax}, Moves: {t.moves.length})
-                                </option>
-                            ))
+                    <div className="solo-battle__token-search-bar">
+                        <Search size={14} className="solo-battle__token-search-icon" />
+                        <input
+                            type="text"
+                            className="solo-battle__token-search-input text-label"
+                            placeholder="Search scene tokens..."
+                            value={tokenSearch}
+                            onChange={(e) => setTokenSearch(e.target.value)}
+                        />
+                        {tokenSearch && (
+                            <button
+                                type="button"
+                                className="solo-battle__token-search-clear"
+                                onClick={() => setTokenSearch('')}
+                                title="Clear search"
+                                aria-label="Clear search"
+                            >
+                                <X size={14} />
+                            </button>
                         )}
-                    </select>
+                    </div>
+
+                    <div className="solo-battle__token-list">
+                        {sceneTokens.length === 0 ? (
+                            <div className="solo-battle__token-empty text-subtext">
+                                No character tokens found on scene
+                            </div>
+                        ) : filteredTokens.length === 0 ? (
+                            <div className="solo-battle__token-empty text-subtext">
+                                No tokens match &quot;{tokenSearch}&quot;
+                            </div>
+                        ) : (
+                            filteredTokens.map((t) => {
+                                const isSelected = t.id === selectedTokenId;
+                                return (
+                                    <button
+                                        key={t.id}
+                                        type="button"
+                                        className={`solo-battle__token-item ${isSelected ? 'solo-battle__token-item--selected' : ''}`}
+                                        onClick={() => onSelectTokenId(t.id)}
+                                    >
+                                        <div className="solo-battle__token-item-info">
+                                            <span className="solo-battle__token-item-name text-label">{t.name}</span>
+                                            <span className="solo-battle__token-item-meta text-subtext">
+                                                HP: {t.hpCurr}/{t.hpMax} • Moves: {t.moves.length}
+                                            </span>
+                                        </div>
+                                        {isSelected && (
+                                            <span className="solo-battle__token-item-check" title="Selected Target">
+                                                <Check size={14} color="var(--primary)" />
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })
+                        )}
+                    </div>
                 </div>
             )}
 

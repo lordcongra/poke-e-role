@@ -873,7 +873,130 @@
 }
 
 .solo-battle__token-select-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
     margin-top: 2px;
+}
+
+.solo-battle__token-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: border-color 0.2s ease;
+}
+
+.solo-battle__token-search-bar:focus-within {
+    border-color: var(--primary);
+}
+
+.solo-battle__token-search-icon {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.solo-battle__token-search-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 0.85rem;
+    outline: none;
+    padding: 0;
+}
+
+.solo-battle__token-search-clear {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border-radius: 2px;
+    transition: color 0.15s ease;
+}
+
+.solo-battle__token-search-clear:hover {
+    color: var(--text-main);
+}
+
+.solo-battle__token-list {
+    max-height: 140px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-right: 2px;
+}
+
+.solo-battle__token-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 10px;
+    background-color: var(--panel-alt, var(--row-odd));
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    color: var(--text-main);
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.solo-battle__token-item:hover {
+    background-color: var(--row-even);
+    border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+}
+
+.solo-battle__token-item--selected {
+    background-color: color-mix(in srgb, var(--primary) 12%, var(--panel-alt, var(--row-odd)));
+    border-color: var(--primary);
+}
+
+.solo-battle__token-item-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
+}
+
+.solo-battle__token-item-name {
+    font-weight: 600;
+}
+
+.solo-battle__token-item-meta {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.solo-battle__token-item-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.solo-battle__token-empty {
+    padding: 12px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    background-color: var(--bg);
+    border: 1px dashed var(--border);
+    border-radius: 4px;
 }
 
 .solo-battle__custom-inputs {
