@@ -1,6 +1,6 @@
 import { openIdbDatabase, runIdbTransaction } from '@/utils/sync/idbHelpers';
 
-export type SoloLogEntryType = 'fate' | 'prompt';
+export type SoloLogEntryType = 'fate' | 'prompt' | 'battle';
 
 export interface SoloLogEntry {
     id: string;

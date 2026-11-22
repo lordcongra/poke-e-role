@@ -11,6 +11,7 @@ import {
     RUIN_ANOMALIES,
     type EventFocusEntry
 } from '@/data/soloOracleData';
+export { ODDS_LEVELS } from '@/data/soloOracleData';
 import { broadcastRollLog } from '@/utils/combat/rollLogSync';
 import { useCharacterStore } from '@/store/useCharacterStore';
 import type { RollSyncData } from '@/hooks/owlbearSync/owlbearSyncConstants';

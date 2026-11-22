@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Compass, Sparkles, BookOpen, HelpCircle, History, Folder, ExternalLink, X } from 'lucide-react';
+import { Compass, Sparkles, BookOpen, HelpCircle, History, Folder, ExternalLink, X, Swords } from 'lucide-react';
 import { SoloFateTab } from './SoloFateTab';
+import { SoloBattleTab } from './SoloBattleTab';
 import { SoloPromptsTab } from './SoloPromptsTab';
 import { SoloLogTab } from './SoloLogTab';
 import { SoloTrackerTab } from './SoloTrackerTab';
@@ -30,7 +31,7 @@ interface SoloOracleModalProps {
     onClose: () => void;
 }
 
-type TabType = 'oracle' | 'prompts' | 'log' | 'tracker' | 'guide';
+type TabType = 'oracle' | 'battle' | 'prompts' | 'log' | 'tracker' | 'guide';
 
 export function SoloOracleModal({ onClose }: SoloOracleModalProps) {
     const [state, setState] = useState<SoloOracleState>(() => getStoredSoloOracleState());
@@ -220,6 +221,13 @@ export function SoloOracleModal({ onClose }: SoloOracleModalProps) {
                     </button>
                     <button
                         type="button"
+                        className={`solo-oracle-modal__tab-btn ${activeTab === 'battle' ? 'solo-oracle-modal__tab-btn--active' : ''}`}
+                        onClick={() => setActiveTab('battle')}
+                    >
+                        <Swords size={14} /> Battle Oracle
+                    </button>
+                    <button
+                        type="button"
                         className={`solo-oracle-modal__tab-btn ${activeTab === 'prompts' ? 'solo-oracle-modal__tab-btn--active' : ''}`}
                         onClick={() => setActiveTab('prompts')}
                     >
@@ -259,6 +267,10 @@ export function SoloOracleModal({ onClose }: SoloOracleModalProps) {
                             onRollFate={handleRollFate}
                             onGoToPrompts={() => setActiveTab('prompts')}
                         />
+                    )}
+
+                    {activeTab === 'battle' && (
+                        <SoloBattleTab activeCampaign={activeCampaign} chaosFactor={activeData.chaosFactor} />
                     )}
 
                     {activeTab === 'prompts' && <SoloPromptsTab onLogPrompt={handleLogPrompt} />}
