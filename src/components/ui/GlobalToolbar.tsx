@@ -456,7 +456,7 @@ export function GlobalToolbar() {
                     <span className="global-toolbar__caret">
                         <ChevronDown size={18} />
                     </span>
-                    TABLE TOOLS & SETTINGS
+                    Global Toolbar
                 </div>
 
                 <div className="global-toolbar__header-actions" onClick={(e) => e.stopPropagation()}>

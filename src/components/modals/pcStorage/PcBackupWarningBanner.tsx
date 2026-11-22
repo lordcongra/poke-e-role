@@ -12,7 +12,7 @@ export const PcBackupWarningBanner: React.FC<PcBackupWarningBannerProps> = ({ on
             <span className="pc-modal__warning-text text-subtext">
                 <strong>New Feature:</strong> PC Storage has undergone aggressive bug-testing, but edge cases may still
                 occur that could cause unexpected behavior or data loss. If you encounter any bugs, please report them
-                using the <strong>Report Bug</strong> button in Table Tools &amp; Settings! Additionally, unless you are
+                using the <strong>Report Bug</strong> button in the Global Toolbar! Additionally, unless you are
                 actively wanting to bug test, please do not try to push the limits of the sheet without first backing up
                 your tokens, as stability cannot be guaranteed under extreme stress.
             </span>
