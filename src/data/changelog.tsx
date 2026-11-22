@@ -26,10 +26,11 @@ import {
     Sparkles,
     MousePointerClick,
     HardDrive,
-    Target
+    Target,
+    Compass
 } from 'lucide-react';
 
-export const CURRENT_VERSION = '3.7.7';
+export const CURRENT_VERSION = '3.7.8';
 
 export interface ChangelogHighlight {
     id: string;
@@ -130,6 +131,69 @@ export function getChangelogDiff(lastSeenVersion: string | null): ChangelogDiffR
 }
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
+    {
+        version: '3.7.8',
+        date: 'November 2026',
+        highlights: [
+            {
+                id: 'solo-play-oracle',
+                version: '3.7.8',
+                title: 'Solo Play Oracle & Campaign Toolkit',
+                icon: Compass,
+                badge: 'New Feature',
+                summary:
+                    'Run solo adventures or introduce randomized GM answers and unexpected twists to any campaign with the all-new Solo Play Oracle launcher in the global toolbar!',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Dedicated Global Toolbar Launcher:</strong> Open the full Solo Play Oracle modal at any time from the main toolbar. Perfect for solo adventurers playing on their own, or GMs and players looking for randomized scene prompts, encounter seeds, and unpredictable narrative twists.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Fate Checks with Odds & Chaos:</strong> Ask yes/no fate questions with configurable likelihoods (from Sure Thing to Impossible) and an adjustable Chaos Factor that increases the odds of extreme outcomes and unexpected complications.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Creative Prompt & Spark Tables:</strong> Roll for action cues, thematic sparks, sensory details, and encounter elements when you need quick inspiration during play.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Multi-Campaign Quest & NPC Tracking:</strong> Keep separate journals, track open quest threads, catalog recurring NPCs, and log key scene developments across multiple independent solo adventures.
+                        </p>
+                    </div>
+                )
+            }
+        ],
+        changes: [
+            <strong
+                key="solo-play-oracle-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Compass size={16} /> Solo Play Oracle & Adventure Toolkit
+            </strong>,
+            <ul
+                key="solo-play-oracle-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Solo Play Toolbar Access:</strong> Added a dedicated <em>Solo Play</em> launcher to the
+                    global toolbar! Players can now open an integrated oracle toolkit to run full solo adventures
+                    or use it during standard campaigns to roll randomized answers and unexpected encounter twists.
+                </li>
+                <li>
+                    <strong>Fate Checks & Prompts:</strong> Ask yes/no fate questions weighted by odds and chaos, roll on
+                    thematic spark and encounter tables, and track open quest threads, key NPCs, and adventure logs
+                    with multi-campaign support.
+                </li>
+            </ul>
+        ]
+    },
     {
         version: '3.7.7',
         date: 'November 2026',

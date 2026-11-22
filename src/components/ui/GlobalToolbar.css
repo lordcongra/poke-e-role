@@ -283,40 +283,69 @@
 .global-toolbar__init-group {
     display: flex;
     width: 100%;
+    max-width: 100%;
     min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: 4px;
 }
 
 .global-toolbar__btn--init-main {
+    flex: 1 1 0px !important;
+    min-width: 0 !important;
+    width: 0 !important;
     border-radius: 4px 0 0 4px;
     border-right: none;
 }
 
 .global-toolbar__btn--init-cog {
+    flex: 0 0 28px !important;
+    width: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+    padding: 0 !important;
     border-radius: 0 4px 4px 0;
-    padding: 6px 8px;
-    width: auto;
-    flex-shrink: 0;
     border-left: 1px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Battle Organizer Split Button specific logic */
 .global-toolbar__bo-group {
     display: flex;
     width: 100%;
+    max-width: 100%;
     min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: 4px;
 }
 
 .global-toolbar__btn--bo-main {
+    flex: 1 1 0px !important;
+    min-width: 0 !important;
+    width: 0 !important;
     border-radius: 4px 0 0 4px;
     border-right: none;
 }
 
 .global-toolbar__btn--bo-cog {
+    flex: 0 0 28px !important;
+    width: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+    padding: 0 !important;
     border-radius: 0 4px 4px 0;
-    padding: 6px 8px;
-    width: auto;
-    flex-shrink: 0;
     border-left: 1px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.global-toolbar__btn--init-cog svg,
+.global-toolbar__btn--bo-cog svg {
+    flex-shrink: 0;
 }
 
 /* Generator Split Button specific logic */
@@ -495,5 +524,33 @@
         min-height: 32px;
         padding: 4px 6px;
         font-size: 0.74rem;
+    }
+
+    .global-toolbar__init-group,
+    .global-toolbar__bo-group {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+
+    .global-toolbar__btn--init-main,
+    .global-toolbar__btn--bo-main {
+        flex: 1 1 0px !important;
+        min-width: 0 !important;
+        width: 0 !important;
+        padding: 6px 4px !important;
+        font-size: 0.74rem;
+        gap: 3px;
+    }
+
+    .global-toolbar__btn--init-cog,
+    .global-toolbar__btn--bo-cog {
+        flex: 0 0 28px !important;
+        width: 28px !important;
+        min-width: 28px !important;
+        max-width: 28px !important;
+        padding: 0 !important;
     }
 }

@@ -154,15 +154,6 @@ body {
         grid-template-columns: 1fr !important;
     }
 
-    .global-toolbar__row {
-        flex-wrap: wrap !important;
-    }
-
-    .global-toolbar__btn {
-        flex: 1 1 45% !important;
-        min-width: 120px;
-    }
-
     .targeting-modal__content,
     .transformation-modal__content,
     .restore-modal__content {
